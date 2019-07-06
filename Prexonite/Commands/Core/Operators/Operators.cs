@@ -1,4 +1,4 @@
-﻿// This is the output code from your template
+// This is the output code from your template
 // you only get syntax-highlighting here - not intellisense
 using System;
 using System.Reflection;
@@ -16,20 +16,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Addition _instance = new Addition();
-		public static Addition Instance
-		{
-			get { return _instance; }
-		}
+		public static Addition Instance { get; } = new Addition();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Addition operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Addition; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Addition;
 		
 		#region PCommand implementation
 		
@@ -45,10 +38,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVAdditionMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVAdditionMethod;
 		
 		
 		#endregion
@@ -62,20 +52,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Subtraction _instance = new Subtraction();
-		public static Subtraction Instance
-		{
-			get { return _instance; }
-		}
+		public static Subtraction Instance { get; } = new Subtraction();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Subtraction operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Subtraction; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Subtraction;
 		
 		#region PCommand implementation
 		
@@ -91,10 +74,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVSubtractionMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVSubtractionMethod;
 		
 		
 		#endregion
@@ -108,20 +88,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Multiplication _instance = new Multiplication();
-		public static Multiplication Instance
-		{
-			get { return _instance; }
-		}
+		public static Multiplication Instance { get; } = new Multiplication();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Multiplication operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Multiplication; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Multiplication;
 		
 		#region PCommand implementation
 		
@@ -137,10 +110,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVMultiplyMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVMultiplyMethod;
 		
 		
 		#endregion
@@ -154,20 +124,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Division _instance = new Division();
-		public static Division Instance
-		{
-			get { return _instance; }
-		}
+		public static Division Instance { get; } = new Division();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Division operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Division; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Division;
 		
 		#region PCommand implementation
 		
@@ -183,10 +146,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVDivisionMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVDivisionMethod;
 		
 		
 		#endregion
@@ -200,20 +160,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Modulus _instance = new Modulus();
-		public static Modulus Instance
-		{
-			get { return _instance; }
-		}
+		public static Modulus Instance { get; } = new Modulus();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Modulus operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Modulus; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Modulus;
 		
 		#region PCommand implementation
 		
@@ -229,10 +182,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVModulusMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVModulusMethod;
 		
 		
 		#endregion
@@ -246,20 +196,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Power _instance = new Power();
-		public static Power Instance
-		{
-			get { return _instance; }
-		}
+		public static Power Instance { get; } = new Power();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Power operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Power; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Power;
 		
 		#region PCommand implementation
 		
@@ -268,13 +211,11 @@ namespace Prexonite.Commands.Core.Operators{
 			if(args.Length < 2)
 				throw new PrexoniteException("The Power operator requires two arguments.");
 
-			
-			PValue rleft,rright;
 			var left = args[0];
 			var right = args[1];
 			if (
-				!(left.TryConvertTo(sctx, PType.Real, out rleft) &&
-				right.TryConvertTo(sctx, PType.Real, out rright)))
+				!(left.TryConvertTo(sctx, PType.Real, out var rleft) &&
+				right.TryConvertTo(sctx, PType.Real, out var rright)))
 					throw new PrexoniteException("The arguments supplied to the power operator are invalid (cannot be converted to Real).");
 			return System.Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value));			
 		}
@@ -283,10 +224,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Runtime.RaiseToPowerMethod; }
-		}
+		protected override MethodInfo OperationMethod => Runtime.RaiseToPowerMethod;
 		
 	
 		public override void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
@@ -319,20 +257,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly BitwiseAnd _instance = new BitwiseAnd();
-		public static BitwiseAnd Instance
-		{
-			get { return _instance; }
-		}
+		public static BitwiseAnd Instance { get; } = new BitwiseAnd();
 		#endregion
 		
 		///<summary>
 		///The alias used for the BitwiseAnd operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.BitwiseAnd; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.BitwiseAnd;
 		
 		#region PCommand implementation
 		
@@ -348,10 +279,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVBitwiseAndMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVBitwiseAndMethod;
 		
 		
 		#endregion
@@ -365,20 +293,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly BitwiseOr _instance = new BitwiseOr();
-		public static BitwiseOr Instance
-		{
-			get { return _instance; }
-		}
+		public static BitwiseOr Instance { get; } = new BitwiseOr();
 		#endregion
 		
 		///<summary>
 		///The alias used for the BitwiseOr operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.BitwiseOr; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.BitwiseOr;
 		
 		#region PCommand implementation
 		
@@ -394,10 +315,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVBitwiseOrMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVBitwiseOrMethod;
 		
 		
 		#endregion
@@ -411,20 +329,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly ExclusiveOr _instance = new ExclusiveOr();
-		public static ExclusiveOr Instance
-		{
-			get { return _instance; }
-		}
+		public static ExclusiveOr Instance { get; } = new ExclusiveOr();
 		#endregion
 		
 		///<summary>
 		///The alias used for the ExclusiveOr operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.ExclusiveOr; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.ExclusiveOr;
 		
 		#region PCommand implementation
 		
@@ -440,10 +351,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVExclusiveOrMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVExclusiveOrMethod;
 		
 		
 		#endregion
@@ -457,20 +365,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Equality _instance = new Equality();
-		public static Equality Instance
-		{
-			get { return _instance; }
-		}
+		public static Equality Instance { get; } = new Equality();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Equality operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Equality; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Equality;
 		
 		#region PCommand implementation
 		
@@ -486,10 +387,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVEqualityMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVEqualityMethod;
 		
 		
 		#endregion
@@ -503,20 +401,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly Inequality _instance = new Inequality();
-		public static Inequality Instance
-		{
-			get { return _instance; }
-		}
+		public static Inequality Instance { get; } = new Inequality();
 		#endregion
 		
 		///<summary>
 		///The alias used for the Inequality operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.Inequality; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.Inequality;
 		
 		#region PCommand implementation
 		
@@ -532,10 +423,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVInequalityMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVInequalityMethod;
 		
 		
 		#endregion
@@ -549,20 +437,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly GreaterThan _instance = new GreaterThan();
-		public static GreaterThan Instance
-		{
-			get { return _instance; }
-		}
+		public static GreaterThan Instance { get; } = new GreaterThan();
 		#endregion
 		
 		///<summary>
 		///The alias used for the GreaterThan operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.GreaterThan; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.GreaterThan;
 		
 		#region PCommand implementation
 		
@@ -578,10 +459,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVGreaterThanMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVGreaterThanMethod;
 		
 		
 		#endregion
@@ -595,20 +473,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly GreaterThanOrEqual _instance = new GreaterThanOrEqual();
-		public static GreaterThanOrEqual Instance
-		{
-			get { return _instance; }
-		}
+		public static GreaterThanOrEqual Instance { get; } = new GreaterThanOrEqual();
 		#endregion
 		
 		///<summary>
 		///The alias used for the GreaterThanOrEqual operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.GreaterThanOrEqual; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.GreaterThanOrEqual;
 		
 		#region PCommand implementation
 		
@@ -624,10 +495,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVGreaterThanOrEqualMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVGreaterThanOrEqualMethod;
 		
 		
 		#endregion
@@ -641,20 +509,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly LessThan _instance = new LessThan();
-		public static LessThan Instance
-		{
-			get { return _instance; }
-		}
+		public static LessThan Instance { get; } = new LessThan();
 		#endregion
 		
 		///<summary>
 		///The alias used for the LessThan operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.LessThan; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.LessThan;
 		
 		#region PCommand implementation
 		
@@ -670,10 +531,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVLessThanMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVLessThanMethod;
 		
 		
 		#endregion
@@ -687,20 +545,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly LessThanOrEqual _instance = new LessThanOrEqual();
-		public static LessThanOrEqual Instance
-		{
-			get { return _instance; }
-		}
+		public static LessThanOrEqual Instance { get; } = new LessThanOrEqual();
 		#endregion
 		
 		///<summary>
 		///The alias used for the LessThanOrEqual operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.LessThanOrEqual; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.LessThanOrEqual;
 		
 		#region PCommand implementation
 		
@@ -716,10 +567,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVLessThanOrEqualMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVLessThanOrEqualMethod;
 		
 		
 		#endregion
@@ -733,20 +581,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly UnaryNegation _instance = new UnaryNegation();
-		public static UnaryNegation Instance
-		{
-			get { return _instance; }
-		}
+		public static UnaryNegation Instance { get; } = new UnaryNegation();
 		#endregion
 		
 		///<summary>
 		///The alias used for the UnaryNegation operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.UnaryNegation; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.UnaryNegation;
 		
 		#region PCommand implementation
 		
@@ -763,10 +604,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVUnaryNegationMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVUnaryNegationMethod;
 		
 		
 		#endregion
@@ -780,20 +618,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly OnesComplement _instance = new OnesComplement();
-		public static OnesComplement Instance
-		{
-			get { return _instance; }
-		}
+		public static OnesComplement Instance { get; } = new OnesComplement();
 		#endregion
 		
 		///<summary>
 		///The alias used for the OnesComplement operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.OnesComplement; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.OnesComplement;
 		
 		#region PCommand implementation
 		
@@ -810,10 +641,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVOnesComplementMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVOnesComplementMethod;
 		
 		
 		#endregion
@@ -827,20 +655,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly LogicalNot _instance = new LogicalNot();
-		public static LogicalNot Instance
-		{
-			get { return _instance; }
-		}
+		public static LogicalNot Instance { get; } = new LogicalNot();
 		#endregion
 		
 		///<summary>
 		///The alias used for the LogicalNot operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.LogicalNot; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.LogicalNot;
 		
 		#region PCommand implementation
 		
@@ -857,10 +678,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return Compiler.Cil.Compiler.PVLogicalNotMethod; }
-		}
+		protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVLogicalNotMethod;
 		
 		
 		#endregion

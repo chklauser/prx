@@ -56,6 +56,8 @@
     <GrammarFragment Include="Compiler\Grammar\Parser*.atg" />
     <Compile Remove="Parser.cs" />
     <Compile Remove="Scanner.cs" />
+    <None Include="Parser.cs" />
+    <None Include="Scanner.cs" />
     <None Remove="prxlib\legacy_symbols.pxs" />
     <None Remove="prxlib\prx.core.pxs" />
     <None Remove="prxlib\prx.prim.pxs" />
@@ -67,6 +69,7 @@
     <EmbeddedResource Include="prxlib\sh.pxs" />
     <EmbeddedResource Include="prxlib\sys.pxs" />
     <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
+    <TextTemplate Include="**\*.tt" />
   </ItemGroup>
   <ItemGroup>
     <Grammar Include="PTypeExpression.atg" />
@@ -110,18 +113,26 @@
   <Target Name="PrexoniteScanner" Outputs="$(ProjectDir)/Compiler/Scanner.cs" Inputs="$(ProjectDir)/Compiler/$(PrexoniteScannerDefinition)">
     <Exec Command="&quot;$(ToolsDirectory)/csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)/Compiler" />
   </Target>
-
-  <ItemGroup>
-    <!-- This is a temporary artifact. The file gets copied into Compiler/Parser or Compiler/Internal and *should* be deleted afterwards.
-         Sometimes, the deletion does not happen. In that case, the file must not be submitted to the compiler or we get duplicate definitions. -->
-    <None Include="Parser.cs" />
-    <None Include="Scanner.cs" />
-  </ItemGroup>
+  
+  <!-- Text Template -->
+  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
+    <!-- https://notquitepure.info/2018/12/12/T4-Templates-at-Build-Time-With-Dotnet-Core/ -->
+    <!-- Need to temporarily remove C# files from the 'Compile' group -->
+    <ItemGroup>
+      <Compile Remove="Commands\Core\Operators\Operators.cs"/>
+    </ItemGroup>
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tt %(TextTemplate.Identity)"/>
+    <!-- Re-add C# files to the Compile group -->
+    <ItemGroup>
+      <Compile Include="Commands\Core\Operators\Operators.cs"/>
+    </ItemGroup>
+  </Target>
 
   <!-- NUGET References -->
   <ItemGroup>
     <PackageReference Include="Lokad.ILPack" Version="0.1.1" />
     <PackageReference Include="PxCoco" Version="1.91.1" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <DotNetCliToolReference Include="T5.TextTransform.Tool" Version="1.1.0" />
   </ItemGroup>
 </Project>

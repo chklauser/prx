@@ -1,4 +1,4 @@
-﻿//< Assembly Name="System.Core.dll" >
+//< Assembly Name="System.Core.dll" >
  
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable RedundantNameQualifier
@@ -22,13 +22,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class ast_Interpreted : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -36,13 +30,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class ast_CilStatic : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -53,13 +41,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.FullyIsolated
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -68,13 +50,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class ast_StoredInterpreted : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -83,13 +59,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class ast_StoredCilStatic : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     
@@ -102,13 +72,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.JustAvailableForLinking
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -116,13 +80,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class lang_ext_Interpreted : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -130,13 +88,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class lang_ext_CilStatic : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -147,13 +99,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.FullyIsolated
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -162,13 +108,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class lang_ext_StoredInterpreted : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -177,13 +117,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class lang_ext_StoredCilStatic : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     
@@ -196,13 +130,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.JustAvailableForLinking
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -210,13 +138,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class macro_Interpreted : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -224,13 +146,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class macro_CilStatic : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -241,13 +157,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.FullyIsolated
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -256,13 +166,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class macro_StoredInterpreted : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -271,13 +175,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class macro_StoredCilStatic : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     
@@ -290,13 +188,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.JustAvailableForLinking
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -304,13 +196,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class misc_Interpreted : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -318,13 +204,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class misc_CilStatic : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -335,13 +215,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.FullyIsolated
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -350,13 +224,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class misc_StoredInterpreted : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -365,13 +233,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class misc_StoredCilStatic : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     
@@ -384,13 +246,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.JustAvailableForLinking
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -398,13 +254,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class struct_Interpreted : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -412,13 +262,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class struct_CilStatic : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -429,13 +273,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.FullyIsolated
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -444,13 +282,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class struct_StoredInterpreted : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -459,13 +291,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class struct_StoredCilStatic : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     
@@ -478,13 +304,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.JustAvailableForLinking
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
 
@@ -619,10 +439,42 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
+
+    [TestFixture]
+    [GeneratedCode("VMTestConfiguration.tt","0.0")]
+    internal class ShellExtensions_Interpreted : PrexoniteTests.Tests.ShellExtensions
+    {
+        public ShellExtensions_Interpreted()
+        {
+            CompileToCil = false;
+        } 
+    }
+
+    [TestFixture]
+    [GeneratedCode("VMTestConfiguration.tt","0.0")]
+    internal class ShellExtensions_CilStatic : PrexoniteTests.Tests.ShellExtensions
+    {
+        public ShellExtensions_CilStatic()
+        {
+            CompileToCil = true;
+            StaticLinking = FunctionLinking.FullyStatic;
+        } 
+    }
+
+    [TestFixture]
+    [GeneratedCode("VMTestConfiguration.tt","0.0")]
+    internal class ShellExtensions_CilIsolated : PrexoniteTests.Tests.ShellExtensions
+    {
+        public ShellExtensions_CilIsolated()
+        {
+            CompileToCil = true;
+            StaticLinking = FunctionLinking.FullyIsolated;
+        } 
+    }
+
 }
 
 // ReSharper enable RedundantExplicitArrayCreation
 // ReSharper enable InconsistentNaming
-
 
 

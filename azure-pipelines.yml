@@ -17,6 +17,8 @@ stages:
       buildConfiguration: 'Release'
     jobs:
       - job: build_test
+        timeoutInMinutes: 5
+        cancelTimeoutInMinutes: 1
         strategy:
           matrix:
             Windows:

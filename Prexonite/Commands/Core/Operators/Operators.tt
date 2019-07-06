@@ -26,20 +26,13 @@ namespace Prexonite.Commands.Core.Operators{
 		{
 		}
 		
-		private static readonly <#=className#> _instance = new <#=className#>();
-		public static <#=className#> Instance
-		{
-			get { return _instance; }
-		}
+		public static <#=className#> Instance { get; } = new <#=className#>();
 		#endregion
 		
 		///<summary>
 		///The alias used for the <#=op.PrxName#> operation by the compiler.
 		///</summary>
-		public static string DefaultAlias
-		{
-			get { return OperatorNames.Prexonite.<#=op.PrxName#>; }
-		}
+		public static string DefaultAlias => OperatorNames.Prexonite.<#=op.PrxName#>;
 		
 		#region PCommand implementation
 		
@@ -48,13 +41,12 @@ namespace Prexonite.Commands.Core.Operators{
 			if(args.Length < <#=argc#>)
 				throw new PrexoniteException("The <#=op.PrxName#> operator requires <#=errMsg#>.");
 
-<# if(op.PrxName == "Power") { #>			
-			PValue rleft,rright;
+<# if(op.PrxName == "Power") { #>
 			var left = args[0];
 			var right = args[1];
 			if (
-				!(left.TryConvertTo(sctx, PType.Real, out rleft) &&
-				right.TryConvertTo(sctx, PType.Real, out rright)))
+				!(left.TryConvertTo(sctx, PType.Real, out var rleft) &&
+				right.TryConvertTo(sctx, PType.Real, out var rright)))
 					throw new PrexoniteException("The arguments supplied to the power operator are invalid (cannot be converted to Real).");
 			return System.Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value));			
 <# } else if(op.Arity == Arity.Binary) { #>
@@ -68,10 +60,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region CIL extension
 		
-		protected override MethodInfo OperationMethod
-		{
-			get { return <#=op.MethodName#>; }
-		}
+		protected override MethodInfo OperationMethod => <#=op.MethodName#>;
 		
 <# if(op.PrxName == "Power") { #>	
 		public override void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
