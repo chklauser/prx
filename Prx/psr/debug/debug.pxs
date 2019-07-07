@@ -27,9 +27,9 @@
 
 
 build does require(
-    @"psr\debug\disassembler.pxs",
-    @"psr\misc.pxs",    
-    @"psr\struct.pxs"
+    @"psr/debug/disassembler.pxs",
+    @"psr/misc.pxs",    
+    @"psr/struct.pxs"
 );
 
 Imports { 

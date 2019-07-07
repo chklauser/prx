@@ -40,4 +40,4 @@
 
 
 
-build does require(@"psr\ast.pxs", @"psr\macro.pxs", @"psr\impl\prop.pxs");
+build does require(@"psr/ast.pxs", @"psr/macro.pxs", @"psr/impl/prop.pxs");

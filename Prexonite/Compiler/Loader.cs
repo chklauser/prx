@@ -740,7 +740,7 @@ namespace Prexonite.Compiler
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
             _loadedFiles.Add(file.FullName);
-            _loadPaths.Push(file.DirectoryName);
+            LoadPaths.Push(file.DirectoryName);
             try
             {
                 using (Stream str = new FileStream(
@@ -766,7 +766,7 @@ namespace Prexonite.Compiler
             }
             finally
             {
-                _loadPaths.Pop();
+                LoadPaths.Pop();
             }
         }
 
@@ -913,42 +913,55 @@ namespace Prexonite.Compiler
 
         #region Load Path and file table
 
-        private readonly Stack<string> _loadPaths = new Stack<string>();
+        public Stack<string> LoadPaths { get; } = new Stack<string>();
 
-        public Stack<string> LoadPaths
-        {
-            get { return _loadPaths; }
+        /// <summary>
+        /// The platform-independent directory separator used by this application. Can be controlled via the
+        /// <see cref="DirectorySeparatorKey"/> meta entry. Defaults to <c>/</c> (forward slash).
+        /// </summary>
+        [PublicAPI]
+        public char DirectorySeparator {
+            get
+            {
+                if (ParentApplication.Meta.TryGetValue(DirectorySeparatorKey, out var value) 
+                    && value.IsText && value.Text.Length == 1)
+                {
+                    return value.Text[0];
+                }
+
+                return '/';
+            }
         }
-
+        
         private static readonly string _imageLocation =
             (new FileInfo(Assembly.GetExecutingAssembly().Location)).DirectoryName;
 
-        public FileInfo ApplyLoadPaths(string pathPostfix)
+        public FileInfo ApplyLoadPaths(string pathSuffix)
         {
-            if (pathPostfix == null)
-                throw new ArgumentNullException(nameof(pathPostfix));
-            var path = pathPostfix;
+            if (pathSuffix == null)
+                throw new ArgumentNullException(nameof(pathSuffix));
+            var path = pathSuffix.Replace(DirectorySeparator, Path.DirectorySeparatorChar);
 
             //Try to find in process environment
             if (File.Exists(path))
                 return new FileInfo(path);
 
             //Try to find in load paths
-            foreach (var pathPrefix in _loadPaths)
-                if (File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
+            foreach (var pathPrefix in LoadPaths)
+                if (File.Exists((path = Path.Combine(pathPrefix, pathSuffix))))
                     return new FileInfo(path);
 
             //Try to find in engine paths
             foreach (var pathPrefix in ParentEngine.Paths)
-                if (File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
+                if (File.Exists((path = Path.Combine(pathPrefix, pathSuffix))))
                     return new FileInfo(path);
 
             //Try to find in current directory
-            if (File.Exists((path = Path.Combine(Environment.CurrentDirectory, pathPostfix))))
+            if (File.Exists((path = Path.Combine(Environment.CurrentDirectory, pathSuffix))))
                 return new FileInfo(path);
 
             //Try to find next to image
-            if (File.Exists((path = Path.Combine(_imageLocation, pathPostfix))))
+            if (File.Exists((path = Path.Combine(_imageLocation, pathSuffix))))
                 return new FileInfo(path);
 
             //Not found
@@ -957,10 +970,7 @@ namespace Prexonite.Compiler
 
         private readonly SymbolCollection _loadedFiles = new SymbolCollection();
 
-        public SymbolCollection LoadedFiles
-        {
-            get { return _loadedFiles; }
-        }
+        public SymbolCollection LoadedFiles => _loadedFiles;
 
         #endregion
 
@@ -1432,6 +1442,6 @@ namespace Prexonite.Compiler
             MessageId = "Cil")] public const string CilHintsKey = "cilhints";
 
         public const string ObjectCreationFallbackPrefix = "create_";
-
+        private const string DirectorySeparatorKey = @"\directory_separator";
     }
 }
