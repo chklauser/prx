@@ -56,8 +56,6 @@
     <GrammarFragment Include="Compiler\Grammar\Parser*.atg" />
     <Compile Remove="Parser.cs" />
     <Compile Remove="Scanner.cs" />
-    <None Include="Parser.cs" />
-    <None Include="Scanner.cs" />
     <None Remove="prxlib\legacy_symbols.pxs" />
     <None Remove="prxlib\prx.core.pxs" />
     <None Remove="prxlib\prx.prim.pxs" />
@@ -70,6 +68,17 @@
     <EmbeddedResource Include="prxlib\sys.pxs" />
     <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
     <TextTemplate Include="**\*.tt" />
+
+    <!-- Generated files (tracked manually because they might only appear in the middle of the build process and, 
+         in that case, would not be discovered automaticaly. -->
+    <Compile Remove="$(ProjectDir)\Compiler\Parser.cs"/>
+    <Compile Remove="$(ProjectDir)\Internal\Parser.cs"/>
+    <Compile Remove="$(ProjectDir)\Internal\Scanner.cs"/>
+    <Compile Remove="Commands\Core\Operators\Operators.cs" />
+    <Compile Include="$(ProjectDir)\Compiler\Parser.cs"/>
+    <Compile Include="$(ProjectDir)\Internal\Parser.cs"/>
+    <Compile Include="$(ProjectDir)\Internal\Scanner.cs"/>
+    <Compile Include="Commands\Core\Operators\Operators.cs" />
   </ItemGroup>
   <ItemGroup>
     <Grammar Include="PTypeExpression.atg" />
@@ -85,7 +94,7 @@
   <UsingTask TaskName="Merge" AssemblyFile="$(PxCocoTaskAssembly)" /> -->
 
   <!-- PType Expression Parser Target -->
-  <Target Name="ExpressionParser" BeforeTargets="BeforeBuild">
+  <Target Name="PTypeExpressionParser" BeforeTargets="BeforeBuild">
     <Message Text="Building type expression parser." />
     <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)">
       <Output TaskParameter="OutputFiles" ItemName="PTypeExpressionParserFiles" />
@@ -96,6 +105,7 @@
 
   <!-- Prexonite Parser Target -->
   <Target Name="PrexoniteParser" DependsOnTargets="PrexoniteGrammar" BeforeTargets="BeforeBuild">
+    <Message Text="Building prexonite parser." />
     <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)">
       <Output TaskParameter="OutputFiles" ItemName="PrexoniteParserFiles" />
     </PxCoco>
@@ -106,6 +116,7 @@
 
   <!-- Prexonite Grammar Merging Target -->
   <Target Name="PrexoniteGrammar" Outputs="$(ProjectDir)Prexonite__gen.atg" Inputs="@(GrammarFragment->'%(FullPath)')">
+    <Message Text="Merging Prexonite Grammar fragments." />
     <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg" RelativePathRoot="$(ProjectDir)">
     </Merge>
     <Message Text="$(PrexoniteGrammarDefinition) is now ready." />
@@ -117,15 +128,24 @@
   <!-- Text Template -->
   <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
     <!-- https://notquitepure.info/2018/12/12/T4-Templates-at-Build-Time-With-Dotnet-Core/ -->
-    <!-- Need to temporarily remove C# files from the 'Compile' group -->
-    <ItemGroup>
-      <Compile Remove="Commands\Core\Operators\Operators.cs"/>
-    </ItemGroup>
-    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tt %(TextTemplate.Identity)"/>
-    <!-- Re-add C# files to the Compile group -->
-    <ItemGroup>
-      <Compile Include="Commands\Core\Operators\Operators.cs"/>
-    </ItemGroup>
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tt %(TextTemplate.Identity)" />
+  </Target>
+
+  <Target Name="TextTemplateClean" AfterTargets="Clean">
+    <Delete Files="@(Generated)" />
+  </Target>
+  
+  <Target Name="PrexoniteParserClean" AfterTargets="Clean">
+    <Delete Files="$(ProjectDir)\Compiler\Parser.cs" />
+  </Target>
+  
+  <Target Name="PTypeExpressionParserClean" AfterTargets="Clean">
+    <Delete Files="$(ProjectDir)\Internal\Parser.cs;$(ProjectDir)\Internal\Scanner.cs" />
+  </Target>
+  
+  <Target Name="PrexoniteGrammerClean" AfterTargets="Clean">
+    <!-- On Windows, deletion will fail because some build process retains a handle to this file. -->
+    <!-- <Delete Files="$(PrexoniteGrammarDefinition)" /> -->
   </Target>
 
   <!-- NUGET References -->

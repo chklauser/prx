@@ -86,13 +86,21 @@ Desktop.ini
 # Ignore merge by-products
 *.orig
 
-# Ignore unused scanner/parser output (all files that the project actually uses are under version control)
+# Ignore unused scanner/parser output (generated on each build)
+Prexonite/Compiler/Parser.cs
+Prexonite/Internal/Parser.cs
+Prexonite/Internal/Scanner.cs
+# TODO: implement cross-platform CSFlex (Prexonite\Compiler\Lexer.xs)
 Prexonite/Compiler/Scanner.cs
+Prexonite/Prexonite__gen.atg
 Prexonite/Parser.cs
 Prexonite/Parser.cs.old
 Prexonite/Scanner.cs
 Prexonite/Scanner.cs.old
+Prexonite/Commands/Core/Operators/Operators.cs
 PrexoniteTests/OldPrexoniteTests.csproj.xml
+PrexoniteTests/Tests/Configurations/PsrUnitTests.cs
+PrexoniteTests/Tests/Configurations/VMTestConfigurations.cs
 
 # Ignore NuGet packages folder
 packages/*
