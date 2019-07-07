@@ -220,7 +220,7 @@ namespace Prexonite
 
                     builder.Append(func.Meta.GetDefault(PFunction.LogicalIdKey, func.Id).Text);
 
-                    if (pointer < code.Count)
+                    if (0 <= pointer && pointer < code.Count)
                     {
                         builder.Append(" around instruction ");
 

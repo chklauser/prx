@@ -26,7 +26,7 @@
 
  
 build does require(
-    @"psr\experimental\indentation.pxs"
+    @"psr/experimental/indentation.pxs"
 );
 
 function create_args_option_base as create_option_base(aliases,desc)
