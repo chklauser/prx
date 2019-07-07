@@ -170,9 +170,9 @@ namespace PrexoniteTests.Tests
         public void TestStringEscape()
         {
             var sEscaped = @"This is a \n followed by a \ttab and an umlaut: \x" +
-                ((int) 'ä').ToString("X") +
+                ((int) 'Ã¤').ToString("X") +
                     " escape sequence.";
-            var sUnescaped = "This is a \n followed by a \ttab and an umlaut: ä escape sequence.";
+            var sUnescaped = "This is a \n followed by a \ttab and an umlaut: Ã¤ escape sequence.";
 
             var escaped = PType.String.CreatePValue(sEscaped);
             PValue unescaped;
