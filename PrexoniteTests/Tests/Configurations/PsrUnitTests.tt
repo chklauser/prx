@@ -1,7 +1,8 @@
 ﻿<#@ template debug="true" hostSpecific="true" #>
 <#@ output extension=".cs" #>
 <#@ import namespace="System.IO" #>
-<#@ import namespace="System.Collections.Generic" #> 
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Text.RegularExpressions" #> 
 // ReSharper disable RedundantUsingDirective
 using System;
 using System.Reflection;
@@ -56,7 +57,7 @@ namespace PrexoniteTests.Tests.Configurations
 
 <#      foreach(var testCase in testFile.TestCases) { #>
             [Test]
-            public void <#=testCase.Replace(System.IO.Path.DirectorySeparatorChar,'_').Replace('$','_').Replace('\'','_')#>()
+            public void <#=Regex.Replace(testCase, @"[^a-zA-Z0-9_]", "_")#>()
             {
                 RunUnitTest(@"<#=testCase#>");
             } 

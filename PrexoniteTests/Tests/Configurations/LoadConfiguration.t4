@@ -32,14 +32,21 @@
 		var ds = spec.Split(configDependencySep);
 		return new Dependency
 		{
-			FileName = ds[0],
-			Dependencies = ds.Skip(1)
+			FileName = _normalizePath(ds[0]),
+			Dependencies = ds.Skip(1).Select(_normalizePath)
 		};
 	}
+	
+    // Normalize directory separator for cross-platform testing
+    private static string _normalizePath(string path) => path
+        .Replace('/', System.IO.Path.DirectorySeparatorChar)
+        .Replace('\\', System.IO.Path.DirectorySeparatorChar);
+        
 
     // [(test_file_name, [under_test], [test_deps], [test_case])] 
     IEnumerable<Configuration> _getTestConfiguration()
     {
+
         var path = Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
         using(var sr = new StreamReader(
                 new FileStream(path, FileMode.Open, FileAccess.Read), 
@@ -47,16 +54,12 @@
         {
             string line = sr.ReadLine();
             while(line != null && line.Length > 2)
-            {
-                // Normalize directory separator for cross-platform testing 
-                line = line.Replace('/', System.IO.Path.DirectorySeparatorChar);
-                line = line.Replace('\\', System.IO.Path.DirectorySeparatorChar);
-                
+            {   
                 var fs = line.Split(new [] {configSectionSep},4);
                 if(fs.Length < 4)
                     continue;
 
-                var tfn = fs[0];
+                var tfn = _normalizePath(fs[0]);
                 var entrySep = new []{configEntrySep};
                 var underTest = fs[1].Split(entrySep).Skip(1).Select(_getDependencies);
                 var deps      = fs[2].Split(entrySep).Skip(1).Select(_getDependencies);
