@@ -34,6 +34,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
+using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -450,7 +451,7 @@ namespace Prexonite.Types
         /// <param name="cond">The details of the call.</param>
         /// <returns>The actual member to consider or <c>null</c> if this kind of member is not applicable after all.</returns>
         [ContractAnnotation("candidate:null => null ; candidate:notnull => canbenull")]
-        private static MemberInfo _discover(MemberInfo candidate, [NotNull] call_conditions cond)
+        private static MemberInfo _discover(MemberInfo candidate, [NN] call_conditions cond)
         {
             if (candidate == null)
             {
@@ -610,13 +611,9 @@ namespace Prexonite.Types
                         }
                         catch (TargetInvocationException exc)
                         {
-                            if (exc.InnerException is PrexoniteRuntimeException innerRt)
-                                throw innerRt.InnerException;
-                            else
-                                throw;
-                        }
-                        catch (Exception e)
-                        {
+                            if (exc.InnerException is PrexoniteRuntimeException innerRt 
+                                && innerRt.InnerException is {} inner)
+                                throw inner;
                             throw;
                         }
                     }
@@ -671,7 +668,6 @@ namespace Prexonite.Types
             out PValue ret)
         {
             ret = null;
-            object result;
             foreach(var candidate in candidates)
             {
                 if (_try_execute_single(candidate, cond, subject, out ret))

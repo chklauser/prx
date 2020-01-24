@@ -41,6 +41,7 @@ using Prexonite.Commands.Text;
 using Prexonite.Types;
 using Char = Prexonite.Commands.Core.Char;
 using Debug = Prexonite.Commands.Core.Debug;
+using Range = Prexonite.Commands.List.Range;
 using TypeExpressionScanner = Prexonite.Internal.Scanner;
 using TypeExpressionParser = Prexonite.Internal.Parser;
 

@@ -29,6 +29,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using JetBrains.Annotations;
+using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -326,7 +327,7 @@ namespace Prexonite
             return new Instruction(OpCode.sset, arguments, callExpr);
         }
 
-        public static Instruction CreateFunctionCall(int arguments, [NotNull] string id, bool justEffect, [CanBeNull] ModuleName moduleName)
+        public static Instruction CreateFunctionCall(int arguments, [NN] string id, bool justEffect, [CanBeNull] ModuleName moduleName)
         {
             if(id == null)
                 throw new ArgumentNullException(nameof(id));

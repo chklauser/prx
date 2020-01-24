@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal
@@ -152,20 +151,6 @@ namespace Prexonite.Compiler.Build.Internal
         public void SymmetricExceptWith(IEnumerable<ModuleName> other)
         {
             ExceptWith(other);
-        }
-
-        public bool TryGetValue(string id, out ModuleName moduleName)
-        {
-            if(Contains(id))
-            {
-                moduleName = this[id];
-                return true;
-            }
-            else
-            {
-                moduleName = null;
-                return false;
-            }
         }
     }
 }
