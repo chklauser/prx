@@ -7,6 +7,10 @@ trigger:
   paths:
     exclude:
     - PxCoco/*
+pr:
+  paths:
+    exclude:
+    - PxCoco/*
 
 stages:
   - stage: build_test
