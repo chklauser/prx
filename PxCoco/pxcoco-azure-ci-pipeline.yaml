@@ -12,6 +12,14 @@ trigger:
     include:
     - PxCoco/*
 
+pr:
+  branches:
+    include:
+      - '*'
+  paths:
+    include:
+    - PxCoco/*
+
 pool:
   vmImage: 'windows-2019'
 
@@ -19,9 +27,9 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: DotNetCoreInstaller@0
+- task: UseDotNet@2
   inputs:
-    version: '2.2.300'
+    version: '3.1.x'
 
 - task: DotNetCoreCLI@2
   displayName: Restore (Win)
