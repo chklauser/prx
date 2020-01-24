@@ -90,11 +90,9 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        // ReSharper disable once UnusedParameter.Local
         public CompilerPass(Application app, bool makeAvailableForLinking)
         {
-            // TODO: respect 'makeAvailableForLinking' again https://github.com/chklauser/prx/issues/115
-            MakeAvailableForLinking = true;
+            MakeAvailableForLinking = makeAvailableForLinking;
             if (MakeAvailableForLinking)
             {
                 var sequenceName = _createNextTypeName(app?.Id);
@@ -120,10 +118,7 @@ namespace Prexonite.Compiler.Cil
                     typeof (ReturnMode).MakeByRefType(),
                 };
 
-            
-            // TODO: Once .NET Core 3.x has support for DynamicMethod.DefineParameter, emit dynamic methods again
             var makeAvailableForLinking = MakeAvailableForLinking;
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (makeAvailableForLinking)
             {
                 //Create method stub
@@ -152,25 +147,24 @@ namespace Prexonite.Compiler.Cil
 
                 return dm;
             }
-            //var cilm =
-            //    new DynamicMethod
-            //        (
-            //        id,
-            //        typeof (void),
-            //        parameterTypes,
-            //        typeof (Runtime));
 
-            //cilm.DefineParameter(1, ParameterAttributes.In, "source");
-            //cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
-            //cilm.DefineParameter(3, ParameterAttributes.In, "args");
-            //cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-            //cilm.DefineParameter(5, ParameterAttributes.Out, "result");
+            var cilm =
+                new DynamicMethod
+                    (
+                    id,
+                    typeof (void),
+                    parameterTypes,
+                    typeof (Runtime));
 
-            //Implementations.Add(id, cilm);
+            cilm.DefineParameter(1, ParameterAttributes.In, "source");
+            cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
+            cilm.DefineParameter(3, ParameterAttributes.In, "args");
+            cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
+            cilm.DefineParameter(5, ParameterAttributes.Out, "result");
 
-            //return cilm;
+            Implementations.Add(id, cilm);
 
-            throw new NotSupportedException("Cannot emit dynamic methods. Make functions available for linking instead.");
+            return cilm;
         }
 
         private static string _mkFieldName(string id)
