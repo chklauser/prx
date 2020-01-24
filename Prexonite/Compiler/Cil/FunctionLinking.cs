@@ -55,7 +55,7 @@ namespace Prexonite.Compiler.Cil
         Static = 2,
 
         /// <summary>
-        ///     The CIL implementation is completely independant of other implementations.
+        ///     The CIL implementation is completely independent of other implementations.
         /// </summary>
         FullyIsolated = Isolated | ByName,
 
