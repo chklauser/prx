@@ -93,4 +93,21 @@
     {
         return "Unit_" + _toIdentifier(fileName);
     }
+
+    string _validTestName(string richName)
+    {
+        // This used to be a simple Regex.Replace(testCase, @"[^a-zA-Z0-9_]", "_")
+        // but in the move to .NET 3.1 + Mono.TextTemplate + dotnet local tools we somehow lost the
+        // advanced capability of loading NuGet assemblies into T4 templates.
+        // So... we grudgingly implement that Regex by hand.
+        var cs = richName.ToCharArray();
+        for (var i = 0; i < cs.Length; i++)
+        {
+            if ((cs[i] < 'a' || 'z' < cs[i]) && (cs[i] < 'A' || 'Z' < cs[i]) && (cs[i] < '0' || '9' < cs[i]) && cs[i] != '_')
+            {
+                cs[i] = '_';
+            }
+        }
+        return new string(cs);
+    }
 #>

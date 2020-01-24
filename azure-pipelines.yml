@@ -22,24 +22,35 @@ stages:
         strategy:
           matrix:
             Windows:
-              vmImage: 'windows-2019'
+              vmImage: 'windows-latest'
               jobSuffix: win
             Linux:
-              vmImage: 'ubuntu-16.04'
+              vmImage: 'ubuntu-latest'
               jobSuffix: linux
         displayName: Build/Test
         pool:
           vmImage: '$(vmImage)'
         steps:
-        - task: DotNetCoreInstaller@0
+        - task: UseDotNet@2
           inputs:
-            version: '2.2.300'
+            version: '3.1.x'
+
+        - task: NuGetAuthenticate@0
         
         - task: DotNetCoreCLI@2
           displayName: Restore
           inputs:
             command: restore
             projects: '$(solution)'
+            selectOrConfig: 'config'
+            nugetConfigPath: NuGet.Config
+
+        - task: DotNetCoreCLI@2
+          displayName: Restore Tools
+          inputs:
+            command: custom
+            custom: tool
+            arguments: 'restore'
             selectOrConfig: 'config'
             nugetConfigPath: NuGet.Config
         
@@ -49,16 +60,6 @@ stages:
             command: build
             projects: '$(solution)'
             arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
-            
-        - task: Bash@3
-          displayName: DEBUG PsrUnitTests.cs
-          condition: always()
-          inputs:
-            targetType: inline
-            script: |
-              pwd
-              stat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs 
-              cat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs || true
         
         - task: DotNetCoreCLI@2
           displayName: Unit Test

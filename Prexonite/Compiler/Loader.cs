@@ -34,9 +34,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.AccessControl;
 using System.Text;
 using JetBrains.Annotations;
+using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
@@ -139,14 +139,14 @@ namespace Prexonite.Compiler
             }
         }
 
-        public void PushScope([NotNull] DeclarationScope scope)
+        public void PushScope([NN] DeclarationScope scope)
         {
             if (scope == null)
                 throw new ArgumentNullException(nameof(scope));
             _declarationScopes.Push(scope);
         }
 
-        [NotNull]
+        [NN]
         public DeclarationScope PopScope()
         {
             return _declarationScopes.Pop();
@@ -1261,18 +1261,18 @@ namespace Prexonite.Compiler
 
         private class SymbolSerializationPartitioner : SymbolHandler<string, Object>
         {
-            [NotNull]
+            [NN]
             private readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new List<KeyValuePair<string, NamespaceSymbol>>();
 
-            [NotNull]
+            [NN]
             private readonly IDictionary<Symbol,QualifiedId> _previousSymbols;
 
-            public SymbolSerializationPartitioner([NotNull] IDictionary<Symbol, QualifiedId> previousSymbols)
+            public SymbolSerializationPartitioner([NN] IDictionary<Symbol, QualifiedId> previousSymbols)
             {
                 _previousSymbols = previousSymbols;
             }
 
-            [NotNull]
+            [NN]
             public IEnumerable<KeyValuePair<string, NamespaceSymbol>> NamespaceSymbols
             {
                 get { return _namespaceSymbols; }

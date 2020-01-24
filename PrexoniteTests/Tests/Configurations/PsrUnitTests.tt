@@ -57,7 +57,7 @@ namespace PrexoniteTests.Tests.Configurations
 
 <#      foreach(var testCase in testFile.TestCases) { #>
             [Test]
-            public void <#=Regex.Replace(testCase, @"[^a-zA-Z0-9_]", "_")#>()
+            public void <#=_validTestName(testCase)#>()
             {
                 RunUnitTest(@"<#=testCase#>");
             } 

@@ -39,19 +39,5 @@ namespace Prexonite.Compiler
         {
             return item.Id;
         }
-
-        public bool TryGetValue(string id, out MacroCommand macroCommand)
-        {
-            if(Contains(id))
-            {
-                macroCommand = this[id];
-                return true;
-            }
-            else
-            {
-                macroCommand = null;
-                return false;
-            }
-        }
     }
 }

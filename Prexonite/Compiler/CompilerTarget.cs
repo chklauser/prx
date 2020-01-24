@@ -35,6 +35,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Annotations;
+using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
@@ -85,7 +86,7 @@ namespace Prexonite.Compiler
         private readonly Loader _loader;
         private readonly CompilerTarget _parentTarget;
 
-        [NotNull]
+        [JetBrains.Annotations.NotNull]
         private readonly SymbolStore _importScope;
 
         private MacroSession _macroSession;
@@ -315,7 +316,7 @@ namespace Prexonite.Compiler
 
         #region Symbol Lookup / Combined Symbol Proxy
 
-        [NotNull]
+        [NN]
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]
@@ -346,7 +347,7 @@ namespace Prexonite.Compiler
 
         private volatile CompilerTargetAstFactory _factory;
 
-        [NotNull]
+        [NN]
         public IAstFactory Factory
         {
             get
@@ -367,7 +368,7 @@ namespace Prexonite.Compiler
 
         private class CompilerTargetAstFactory : AstFactoryBase
         {
-            [NotNull] private readonly CompilerTarget _target;
+            [NN] private readonly CompilerTarget _target;
 
             public CompilerTargetAstFactory(CompilerTarget target)
             {
@@ -900,7 +901,7 @@ namespace Prexonite.Compiler
         #region Functions/Commands
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args,[NotNull] string id, [CanBeNull] ModuleName moduleName, bool justEffect = false)
+        public void EmitFunctionCall(ISourcePosition position, int args,[NN] string id, [CanBeNull] ModuleName moduleName, bool justEffect = false)
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
