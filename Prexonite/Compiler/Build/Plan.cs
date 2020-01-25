@@ -40,8 +40,7 @@ namespace Prexonite.Compiler.Build
         private static readonly ISource[] _stdLibModules =
         {
             Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
-            Source.FromEmbeddedResource("prxlib.sh.pxs")
+            Source.FromEmbeddedResource("prxlib.prx.core.pxs")
         };
 
         public static IPlan CreateDefault()
