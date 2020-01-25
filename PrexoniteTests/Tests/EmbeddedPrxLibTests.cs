@@ -23,12 +23,6 @@ namespace PrexoniteTests.Tests
         }
         
         [Test]
-        public void Sh()
-        {
-            _checkEmbeddedResource("prxlib.sh.pxs");
-        }
-        
-        [Test]
         public void PrxPrim()
         {
             _checkEmbeddedResource("prxlib.prx.prim.pxs");
