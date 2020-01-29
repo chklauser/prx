@@ -27,48 +27,53 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Annotations;
+
+#nullable enable
 
 namespace Prexonite.Compiler.Symbolic
 {
     public abstract class SymbolStoreBuilder
     {
-        public abstract void Forward(SymbolOrigin sourceDescription, [NotNull] ISymbolView<Symbol> source, [NotNull] IEnumerable<SymbolTransferDirective> directives);
+        public abstract void Forward(SymbolOrigin sourceDescription, [JetBrains.Annotations.NotNull] ISymbolView<Symbol> source, [JetBrains.Annotations.NotNull] IEnumerable<SymbolTransferDirective> directives);
         public abstract SymbolStore ToSymbolStore();
 
-        [NotNull]
-        public static SymbolStoreBuilder Create(ISymbolView<Symbol> existingNamespace)
+        [JetBrains.Annotations.NotNull]
+        public static SymbolStoreBuilder Create(ISymbolView<Symbol>? existingNamespace)
         {
-            return new Impl(existingNamespace);
+            return new Impl{ ExistingNamespace = existingNamespace };
         }
 
-        [NotNull]
+        [JetBrains.Annotations.NotNull]
         public static SymbolStoreBuilder Create()
         {
             return new Impl();
         }
+        
+        public abstract ISymbolView<Symbol>? ExistingNamespace { get; set; }
 
         #region Internal data structures
 
         private sealed class ImportStatement : List<SymbolTransferDirective>
         {
-            [NotNull] private readonly ISymbolView<Symbol> _source;
-            [NotNull] private readonly SymbolOrigin _origin;
+            [JetBrains.Annotations.NotNull] private readonly ISymbolView<Symbol> _source;
+            [JetBrains.Annotations.NotNull] private readonly SymbolOrigin _origin;
 
-            [NotNull]
+            [JetBrains.Annotations.NotNull]
             public ISymbolView<Symbol> Source
             {
                 get { return _source; }
             }
 
-            [NotNull]
+            [JetBrains.Annotations.NotNull]
             public SymbolOrigin Origin
             {
                 get { return _origin; }
             }
 
-            public ImportStatement([NotNull] ISymbolView<Symbol> source, [NotNull] SymbolOrigin origin)
+            public ImportStatement([JetBrains.Annotations.NotNull] ISymbolView<Symbol> source, [JetBrains.Annotations.NotNull] SymbolOrigin origin)
             {
                 if (source == null) throw new ArgumentNullException(nameof(source));
                 if (origin == null) throw new ArgumentNullException(nameof(origin));
@@ -86,7 +91,7 @@ namespace Prexonite.Compiler.Symbolic
             }
 
             [ContractAnnotation("=>true,statement:notnull;=>false,statement:null")]
-            public bool TryGet(SymbolOrigin origin, out ImportStatement statement)
+            public bool TryGet(SymbolOrigin origin, [NotNullWhen(true)] out ImportStatement? statement)
             {
                 if (Contains(origin))
                 {
@@ -107,20 +112,14 @@ namespace Prexonite.Compiler.Symbolic
 
         private class Impl : SymbolStoreBuilder
         {
-            [CanBeNull] private readonly ISymbolView<Symbol> _existingNamespace;
+            public override ISymbolView<Symbol>? ExistingNamespace { get; set; }
 
-            [NotNull] private readonly ImportStatementSet _statements = new ImportStatementSet();
-
-            public Impl([CanBeNull] ISymbolView<Symbol> existingNamespace = null)
-            {
-                _existingNamespace = existingNamespace;
-            }
+            [JetBrains.Annotations.NotNull] private readonly ImportStatementSet _statements = new ImportStatementSet();
 
             public override void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source,
                 IEnumerable<SymbolTransferDirective> directives)
             {
-                ImportStatement statement;
-                if (!_statements.TryGet(sourceDescription, out statement))
+                if (!_statements.TryGet(sourceDescription, out var statement))
                     _statements.Add(statement = new ImportStatement(source, sourceDescription));
 
                 statement.AddRange(directives);
@@ -128,7 +127,7 @@ namespace Prexonite.Compiler.Symbolic
 
             public override SymbolStore ToSymbolStore()
             {
-                return SymbolStore.Create(_existingNamespace, _statements.SelectMany(_applyDirectives));
+                return SymbolStore.Create(ExistingNamespace, _statements.SelectMany(_applyDirectives));
             }
 
             private IEnumerable<SymbolInfo> _applyDirectives(ImportStatement import)
@@ -147,8 +146,7 @@ namespace Prexonite.Compiler.Symbolic
                         onWildcard: () => { isWildcard = true; },
                         onRename: r =>
                             {
-                                List<string> destinations;
-                                if (!renames.TryGetValue(r.OriginalName, out destinations))
+                                if (!renames.TryGetValue(r.OriginalName, out var destinations))
                                     renames.Add(r.OriginalName, destinations = new List<string>());
                                 destinations.Add(r.NewName);
                             },
@@ -166,11 +164,10 @@ namespace Prexonite.Compiler.Symbolic
             private IEnumerable<SymbolInfo> _applyDirectivesSelective(ImportStatement import,
                 ISymbolView<Symbol> symbolSource)
             {
-                return import.SelectMaybe(SymbolTransferDirective.Matching(() => null, rename =>
+                return import.SelectMaybe(SymbolTransferDirective.Matching<SymbolInfo?>(() => null, rename =>
                     {
-                        Symbol symbol;
                         var originalName = rename.OriginalName;
-                        if (!symbolSource.TryGet(originalName, out symbol))
+                        if (!symbolSource.TryGet(originalName, out var symbol))
                         {
                             symbol = _createSymbolNotFoundSymbol(import, originalName);
                         }
@@ -182,7 +179,7 @@ namespace Prexonite.Compiler.Symbolic
                 // ReSharper restore ImplicitlyCapturedClosure
             }
 
-            [NotNull]
+            [JetBrains.Annotations.NotNull]
             private static IEnumerable<SymbolInfo> _applyDirectivesWildcard(ImportStatement import,
                 IEnumerable<KeyValuePair<string, Symbol>> symbolSource,
                 HashSet<string> drops, Dictionary<string, List<string>> renames)
@@ -197,14 +194,13 @@ namespace Prexonite.Compiler.Symbolic
                         })
                     // ReSharper disable ImplicitlyCapturedClosure
                     .SelectMany(kvp => // ReSharper restore ImplicitlyCapturedClosure
-                        {
-                            List<string> destinationNames;
-                            if (renames.TryGetValue(kvp.Key, out destinationNames))
-                                return
-                                    destinationNames.Select(d => _createSymbolInfo(import, d, kvp.Value));
-                            else
-                                return _createSymbolInfo(import, kvp.Key, kvp.Value).Singleton();
-                        })
+                    {
+                        var (key, value) = kvp;
+                        if (renames.TryGetValue(key, out var destinationNames))
+                            return destinationNames.Select(d => _createSymbolInfo(import, d, value));
+                        else
+                            return _createSymbolInfo(import, key, value).Singleton();
+                    })
                     .Append(_missingErrorSymbols(import, renames, mentioned));
             }
 
@@ -225,7 +221,8 @@ namespace Prexonite.Compiler.Symbolic
 
             private static SymbolTransferDirective _findOffendingDirective(string name, ImportStatement import)
             {
-                return import.Find(directive => _matchingName(name, directive));
+                // We should always find a matching name because it must have triggered this error path.
+                return import.Find(directive => _matchingName(name, directive))!;
             }
 
             private static bool _matchingName(string name, SymbolTransferDirective directive)

@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+
+#nullable enable
 
 namespace Prexonite
 {
@@ -8,7 +11,7 @@ namespace Prexonite
     /// An empty scope. Will never return elements.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class EmptySymbolView<T> : ISymbolView<T>
+    public class EmptySymbolView<T> : ISymbolView<T> where T: class
     {
         public IEnumerator<KeyValuePair<string, T>> GetEnumerator()
         {
@@ -20,15 +23,12 @@ namespace Prexonite
             return GetEnumerator();
         }
 
-        public bool TryGet(string id, out T value)
+        public bool TryGet(string id, [NotNullWhen(true)] out T? value)
         {
-            value = default (T);
+            value = default;
             return false;
         }
 
-        public bool IsEmpty
-        {
-            get { return true; }
-        }
+        public bool IsEmpty => true;
     }
 }

@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
@@ -661,6 +660,21 @@ namespace Prexonite.Compiler
             var cla = scanner.Peek();
 
             return c.kind == _lid || (isId(c) && cla.kind == _colon);
+        }
+
+        /// <summary>
+        /// Ensures the next two tokens represent <c>namespace import</c>. 
+        /// </summary>
+        /// <para>While <c>namespace</c> is a reserved keyword, <c>import</c> is only a contextual keyword.</para>
+        /// <returns><c>true</c> if the next two tokens match; <c>false</c> otherwise</returns>
+        protected bool isNamespaceImport() //LL(2)
+        {
+            scanner.ResetPeek();
+            var c = la;
+            var cla = scanner.Peek();
+
+            return c.kind == _namespace && 
+                   cla.kind == _id && cla.val.Equals("import", StringComparison.InvariantCultureIgnoreCase);
         }
 
         public bool isAssignmentOperator() //LL2

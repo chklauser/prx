@@ -104,7 +104,15 @@ namespace prx.cli.repl
         if(supportsTabs)
             __console.Tab = ->tabHook;
         
-        println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
+        print(
+            "Entering Prexonite INTERACTIVE MODE.\n", 
+            "Type :quit to quit.\n",
+            "\"<stmt>\" executes a statement.\n",
+            "\"=<expr>\" evaluates an expression.\n", 
+            "\":<GlobalStatement>\" or \"global <GlobalStatement>\" inserts global code.\n",
+            "\"import <Namespace>.*\" extends namesapce imports for this session.\n",
+            "\"import clear\" restores default namespace imports.\n"
+        );
         
         //Either create a new application or use the one compiled in 'prx\main'.
         if(app == null)
@@ -125,6 +133,22 @@ namespace prx.cli.repl
         if(Not app.Functions.Contains("exit"))
             buffer.AppendLine("function exit(c) does System::Environment.Exit(c ?? 0);");
         buffer.AppendLine("declare exit as quit;");
+
+        // Top-level namespace import for common standard library functions and 
+        // user-defined imports.
+        // The user can modify the `import_specs` list via the `import` directive.
+        // We retain the original default import spec so that the user 
+        // can reset the import statement with `import clear`
+        var default_import_specs = ["sys.*","sys.seq.*"];
+        var import_specs = default_import_specs >> to_list;
+
+        function render_import_statement() {
+            var importSpec = import_specs >> foldr((l,r) => if(r == "") l else "$l,$r","");  
+            return "namespace import $importSpec;";
+        }
+
+        buffer.AppendLine(render_import_statement());
+
         ldr.LoadFromString(buffer.ToString);
         buffer.Length = 0;
         
@@ -177,8 +201,6 @@ namespace prx.cli.repl
         //Function that shortens a string
         var shortenTo = 30;
         function shortened(s) = if(s.Length <= shortenTo) s else (s.Substring(0,shortenTo-3) + "...");
-        var default_import_specs = ["sys.*","sys.seq.*"];
-        var importSpecs = default_import_specs >> to_list;
         
         //Get 'raw' using showPrompt (passing the value of the variable 'prompt' 
         // from inside 'app') until 'raw' is ":quit".
@@ -191,8 +213,7 @@ namespace prx.cli.repl
         {        
             var lowRaw = raw.ToLower;
             var funcId = nextFuncId; //<-- get the first unique function id
-            var cmd = "r"; //<-- assume execution of code            
-            var importSpec = importSpecs >> foldr((l,r) => if(r == "") l else "$l,$r","");
+            var cmd = "r"; //<-- assume execution of code
             
             if(lowRaw == ":r" or lowRaw == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
             {
@@ -208,7 +229,7 @@ namespace prx.cli.repl
             else if(raw.StartsWith("=")) //force compilation as an expression
             {
                 raw = raw.Substring(1);
-                buffer.Append = "function $(funcId)() namespace import $importSpec does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
+                buffer.Append = "function $(funcId)() does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
                 if(Not tryLoad)
                 {
                     printErrors;
@@ -235,18 +256,35 @@ namespace prx.cli.repl
             }
             else if(lowRaw.StartsWith("import "))
             {
+                cmd = "g"; //do not execute anything
                 var spec = raw.Substring(7).Trim();
-                if(spec == "clear")
-                    importSpecs = default_import_specs >> to_list;
-                else
-                    importSpecs[] = spec;
+                var old_specs;
+                if(spec == "clear") 
+                {
+                    old_specs = null;
+                    import_specs = default_import_specs >> to_list;
+                }
+                else 
+                {
+                    old_specs = import_specs >> to_list;
+                    import_specs[] = spec;
+                }
+                // Apply the new imports; 
+                buffer.Append(render_import_statement());
+                println(buffer);
+                if(not tryLoad) 
+                {
+                    printErrors;
+                    // restore old specs; otherwise the 
+                    import_specs = old_specs;
+                }
             }
             else
             {
     executeStatement:
                 //First, try to compile the code as an expression
-                buffer.AppendFormat(" function {0}() namespace import {3} does println = \"{1} = \" + ( \n{2}\n ) ; ", 
-                    [funcId, shortened(raw).Escape, raw, importSpec]~Object<"System.Object[]">);
+                buffer.AppendFormat(" function {0}() does println = \"{1} = \" + ( \n{2}\n ) ; ", 
+                    [funcId, shortened(raw).Escape, raw]~Object<"System.Object[]">);
                 if(Not tryLoad)
                 {
                     //should that fail, try to compile the code as a statement
@@ -254,8 +292,8 @@ namespace prx.cli.repl
                     var evalCode = lastCode;
 
                     funcId = nextFuncId;
-                    buffer.AppendFormat(" function {0}() namespace import {2} {{ \n{1}\n ; }} ", 
-                        [funcId, raw, importSpec]~Object<"System.Object[]">);
+                    buffer.AppendFormat(" function {0}() {{ \n{1}\n ; }} ", 
+                        [funcId, raw]~Object<"System.Object[]">);
 
                     if(Not tryLoad)
                     {

@@ -114,7 +114,7 @@ namespace Prexonite.Compiler.Build.Internal
                 defaults.InheritFrom(planOptions);
             compilationTarget = compilationTarget ?? InstantiateForBuild();
             Debug.Assert(compilationTarget.Module.Name == _module.Name);
-            var lowPrioritySymbols = defaults.Symbols;
+            var lowPrioritySymbols = defaults.ExternalSymbols;
             SymbolStore predef;
             if(lowPrioritySymbols.IsEmpty)
             {

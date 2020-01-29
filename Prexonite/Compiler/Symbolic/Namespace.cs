@@ -1,5 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+
+#nullable enable
 
 namespace Prexonite.Compiler.Symbolic
 {
@@ -12,6 +15,6 @@ namespace Prexonite.Compiler.Symbolic
 
         public abstract IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator();
         public abstract bool IsEmpty { get; }
-        public abstract bool TryGet(string id, out Symbol value);
+        public abstract bool TryGet(string id, [NotNullWhen(true)] out Symbol? value);
     }
 }

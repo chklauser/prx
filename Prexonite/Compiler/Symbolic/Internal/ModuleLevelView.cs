@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using JetBrains.Annotations;
 
+#nullable enable
+
 namespace Prexonite.Compiler.Symbolic.Internal
 {
     internal class ModuleLevelView : SymbolStore
@@ -12,7 +14,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// The scope that this filter wraps.
         /// </summary>
         [NotNull]
-        private readonly SymbolStore _backingStore;
+        private SymbolStore _backingStore;
 
         /// <summary>
         /// Maps namespaces to already constructed proxies.
@@ -25,13 +27,8 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         private ModuleLevelView([NotNull] SymbolStore backingStore, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
-            if (backingStore == null)
-                throw new ArgumentNullException(nameof(backingStore));
-            if (localProxies == null)
-                throw new ArgumentNullException(nameof(localProxies));
-
-            _backingStore = backingStore;
-            _localProxies = localProxies;
+            _backingStore = backingStore ?? throw new ArgumentNullException(nameof(backingStore));
+            _localProxies = localProxies ?? throw new ArgumentNullException(nameof(localProxies));
         }
 
         public static ModuleLevelView Create([NotNull] SymbolStore externalScope)
@@ -63,8 +60,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             /// This information is transient. It will not be serialized to disk.
             /// </para>
             /// </remarks>
-            [CanBeNull]
-            private string _prefix;
+            private string? _prefix;
 
             internal LocalNamespaceImpl([NotNull] ISymbolView<Symbol> externalScope, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
             {
@@ -72,16 +68,18 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 _localView = new ModuleLevelView(_exportScope, localProxies);
             }
 
-            public override string Prefix
+            public override string? Prefix
             {
-                get { return _prefix; }
+                get => _prefix;
                 set
                 {
                     if (value == null)
                         throw new ArgumentNullException(nameof(value));
 
                     if (_prefix != null)
-                        throw new InvalidOperationException(String.Format("The prefix for this namespace is already assigned. (Existing prefix: '{0}', new prefix: '{1}')",_prefix,value));
+                        throw new InvalidOperationException( 
+                            "The prefix for this namespace is already assigned. " 
+                            + $"(Existing prefix: '{_prefix}', new prefix: '{value}')");
 
                     _prefix = value;
                 }
@@ -92,7 +90,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 return ReferenceEquals(_localView._localProxies, view._localProxies);
             }
 
-            public override bool TryGetExported(string id, out Symbol exported)
+            public override bool TryGetExported(string id, out Symbol? exported)
             {
                 exported = null;
                 return _exportScope.IsDeclaredLocally(id) && _exportScope.TryGet(id, out exported);
@@ -111,13 +109,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                     _exportScope.Declare(newExport.Key, newExport.Value);
             }
 
-            public override IEnumerable<KeyValuePair<string, Symbol>> Exports
-            {
-                get
-                {
-                    return _exportScope.LocalDeclarations;
-                }
-            }
+            public override IEnumerable<KeyValuePair<string, Symbol>> Exports => _exportScope.LocalDeclarations;
 
             public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
             {
@@ -125,31 +117,23 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
 
 
-            public override bool TryGet(string id, out Symbol value)
+            public override bool TryGet(string id, out Symbol? value)
             {
                 return _localView.TryGet(id, out value);
             }
 
-            public override bool IsEmpty
-            {
-                get
-                {
-                    return _localView.IsEmpty;
-                }
-            }
+            public override bool IsEmpty => _localView.IsEmpty;
         }
 
         private Symbol _filterSymbol(Symbol symbol)
         {
-            NamespaceSymbol nsSymbol;
-            if (symbol.TryGetNamespaceSymbol(out nsSymbol))
+            if (symbol.TryGetNamespaceSymbol(out var nsSymbol))
             {
                 var ns = nsSymbol.Namespace;
-                var localNamespace = ns as LocalNamespaceImpl;
-                // Check if we already have a wrap 
-                // this happens when an alias to a wrapped namespace is declared 
+                // Check if we already have a wrap.
+                // This happens when an alias to a wrapped namespace is declared 
                 // but hasn't been accessed from this namespace until now
-                if (localNamespace != null)
+                if (ns is LocalNamespaceImpl localNamespace)
                 {
                     if (localNamespace.HasSameRootAs(this))
                     {
@@ -165,9 +149,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
                             GetType().Name, localNamespace.Prefix);
                     }
                 }
-
-                localNamespace = _localProxies.GetOrAdd(ns,
-                    externalNs => new LocalNamespaceImpl(externalNs,_localProxies));
+                
+                localNamespace = _localProxies.GetOrAdd(ns, (externalNs, proxies) => 
+                    new LocalNamespaceImpl(externalNs, proxies), _localProxies);
 
                 return Symbol.CreateNamespace(localNamespace, nsSymbol.Position);
             }
@@ -182,10 +166,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             return new LocalNamespaceImpl(externalScope, _localProxies);
         }
 
-        public override bool IsEmpty
-        {
-            get { return _backingStore.IsEmpty; }
-        }
+        public override bool IsEmpty => _backingStore.IsEmpty;
 
         public override void Declare(string id, Symbol symbol)
         {
@@ -202,10 +183,13 @@ namespace Prexonite.Compiler.Symbolic.Internal
             _backingStore.ClearLocalDeclarations();
         }
 
-        public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations
+        public override ISymbolView<Symbol>? ExternalScope
         {
-            get { return _backingStore.LocalDeclarations; }
+            get => _backingStore.ExternalScope;
+            set => _backingStore.ExternalScope = value;
         }
+
+        public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations => _backingStore.LocalDeclarations;
 
         public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
         {
@@ -219,7 +203,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        public override bool TryGet(string id, out Symbol value)
+        public override bool TryGet(string id, out Symbol? value)
         {
             if (_backingStore.TryGet(id, out value))
             {

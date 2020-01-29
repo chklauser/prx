@@ -61,6 +61,7 @@ namespace Prexonite.Compiler
         public const string ImportExpected = "P.ImportExpected";
         public const string UnexpectedWildcard = "P.UnexpectedWildcard";
         public const string QualifiedIdPartsAfterWildcard = "P.QualifiedIdPartsAfterWildcard";
+        public const string NonTopLevelNamespaceImport = "P.NonTopLevelNamespaceImport";
 
         #endregion
 

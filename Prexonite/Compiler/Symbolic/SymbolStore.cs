@@ -25,9 +25,12 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Types;
+
+#nullable enable
 
 namespace Prexonite.Compiler.Symbolic
 {
@@ -52,15 +55,14 @@ namespace Prexonite.Compiler.Symbolic
 
         /// <summary>
         /// Looks up a symbol entry in this scope. On success, it stores the result in <paramref name="value"/>.
-        /// Does not generate error symbols for non-existant symbols. It might, however, return error symbols
+        /// Does not generate error symbols for non-existent symbols. It might, however, return error symbols
         /// for other error conditions (such as symbol name conflicts).
         /// </summary>
         /// <param name="id">The symbolic ID to look up.</param>
         /// <param name="value">On success, contains the symbol. Otherwise null.</param>
         /// <returns>True on success; false otherwise.</returns>
         [PublicAPI]
-        [ContractAnnotation("=> true,value:notnull; => false,value:null")]
-        public abstract bool TryGet([NotNull] string id, out Symbol value);
+        public abstract bool TryGet(string id, [NotNullWhen(true)] out Symbol? value);
 
         /// <summary>
         /// Indicates whether this store has no symbols to offer at all. (Includes parent/unified symbols)
@@ -75,8 +77,8 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="conflictUnionSource">A sequence of symbols, possibly from multiple stores, that the newly created store should provide a unified view of.</param>
         /// <returns>A new symbol store.</returns>
         [PublicAPI]
-        [NotNull]
-        public static SymbolStore Create([CanBeNull] ISymbolView<Symbol> parent = null, [CanBeNull] IEnumerable<SymbolInfo> conflictUnionSource = null)
+        [JetBrains.Annotations.NotNull]
+        public static SymbolStore Create(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
         {
             return new ConflictUnionFallbackStore(parent,conflictUnionSource);
         }
@@ -87,7 +89,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="id">The symbolic id for this entry.</param>
         /// <param name="symbol">The actual symbol entry to be added to the store.</param>
         [PublicAPI]
-        public abstract void Declare([NotNull] string id, [NotNull] Symbol symbol);
+        public abstract void Declare(string id, Symbol symbol);
 
         /// <summary>
         /// Indicates whether a declaration for the supplied symbolic id exists locally (was declared via <see cref="Declare"/>).
@@ -95,7 +97,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="id">The symbolic id to look up.</param>
         /// <returns>True if there is a local definition for <paramref name="id"/>; false if there is no definition for <paramref name="id"/> or if the only definition(s) for <paramref name="id"/> are not local.</returns>
         [PublicAPI]
-        public abstract bool IsDeclaredLocally([NotNull] string id);
+        public abstract bool IsDeclaredLocally(string id);
 
         /// <summary>
         /// Removes all local declarations from this symbol store.
@@ -105,9 +107,16 @@ namespace Prexonite.Compiler.Symbolic
         public abstract void ClearLocalDeclarations();
 
         /// <summary>
+        /// Gets or sets the surrounding scope for this symbol store. 
+        /// </summary>
+        /// <exception cref="System.NotSupportedException">If this kind of symbol store does not support surrounding scopes.</exception>
+        [PublicAPI]
+        public abstract ISymbolView<Symbol>? ExternalScope { get; set; }
+
+        /// <summary>
         /// Provides access to all local declarations of a symbol store (symbols that were declared via <see cref="Declare"/>).
         /// </summary>
-        [NotNull]
+        [JetBrains.Annotations.NotNull]
         public abstract IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations { get; }
 
         //TODO (Ticket #108) Find a good place for the method CreateSymbolNotFoundError
@@ -117,9 +126,9 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="id">The symbolic id that could not be resolved.</param>
         /// <param name="position">The source position where to report the error.</param>
         /// <returns>An error symbol with a message indicating that the supplied id could not be resolved.</returns>
-        internal static Symbol _CreateSymbolNotFoundError([NotNull] string id, [NotNull]  ISourcePosition position)
+        internal static Symbol _CreateSymbolNotFoundError(string id, ISourcePosition position)
         {
-            var msg = Message.Error(string.Format("Cannot resolve symbol {0}.", id), position,
+            var msg = Message.Error($"Cannot resolve symbol {id}.", position,
                                     MessageClasses.SymbolNotResolved);
             return Symbol.CreateMessage(msg, Symbol.CreateNil(position));
         }
@@ -138,8 +147,7 @@ namespace Prexonite.Compiler.Symbolic
                         throw new PrexoniteException(
                             "Not enough arguments for SymbolStore.TryGet(symbolicId, resultVar).");
                     var symbolic = (string)args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value;
-                    Symbol symbol;
-                    if(TryGet(symbolic,out symbol))
+                    if(TryGet(symbolic,out var symbol))
                     {
                         args[1].IndirectCall(sctx, new[] {sctx.CreateNativePValue(symbol)});
                         result = true;
