@@ -75,7 +75,11 @@ namespace Prexonite.Compiler
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
             _options = options;
-            _topLevelView = ModuleLevelView.Create(_options.Symbols);
+            
+            // See comment at the declaration of these fields
+            _externalSymbols = _options.ExternalSymbols;
+            _topLevelImports = SymbolStore.Create(_externalSymbols);
+            _topLevelView = ModuleLevelView.Create(SymbolStore.Create(_topLevelImports));
 
             _functionTargets = new SymbolTable<CompilerTarget>();
             _functionTargetsIterator = new FunctionTargetsIterator(this);
@@ -128,6 +132,19 @@ namespace Prexonite.Compiler
         #region Global Symbol Table
 
         private readonly Stack<DeclarationScope> _declarationScopes = new Stack<DeclarationScope>();
+        
+        // For the top-level (outside of all namespaces and functions), we use a stack of symbol stores. 
+        // From "outside" to "inside", the stack looks as follows:
+        //  * _externalSymbols  (contains symbols exported by other modules)
+        //  * _topLevelImports  (contains symbols brought into scope by top-level `namespace import` statements) 
+        //  * "topLevelSymbols" (contains symbols defined - and exported - on the top level)
+        //  * _topLevelView     (a ModuleLevelView adapter through which symbols are accessed; ensures our contributions
+        //                       to namespaces remain separated from imported/linked namespace contents)
+        // 
+        // NOTE: "topLevelSymbols" refers to the symbol store within the _topLevelView. 
+        
+        private readonly ISymbolView<Symbol> _externalSymbols;
+        private SymbolStore _topLevelImports;
         private readonly ModuleLevelView _topLevelView;
 
         [CanBeNull]
@@ -168,6 +185,21 @@ namespace Prexonite.Compiler
                 else
                     return scope.Store;
             }
+        }
+
+        /// <summary>
+        /// Replace the symbols imported at the top level with the supplied set of symbols.
+        /// </summary>
+        /// <para>
+        /// Imported symbols are not part of the set of exported symbols by the module being compiled. Replacing
+        /// top-level imports is a relatively expensive operation and should not occur more than once per module.
+        /// </para>
+        /// <param name="importedSymbols">The new set of symbols to import at the top level.</param>
+        public void ReplaceTopLevelImports([NN] SymbolStoreBuilder importedSymbols)
+        {
+            importedSymbols.ExistingNamespace = _externalSymbols;
+            _topLevelImports = importedSymbols.ToSymbolStore();
+            _topLevelView.ExternalScope = _topLevelImports;
         }
 
         #endregion

@@ -25,31 +25,28 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
-using JetBrains.Annotations;
+using System.Diagnostics.CodeAnalysis;
+
+#nullable enable
 
 namespace Prexonite
 {
-    public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>>
+    public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: class
     {
-        [ContractAnnotation("=>true,value:notnull;=>false,value:canbenull")]
-        bool TryGet(string id, out T value);
+        bool TryGet(string id, [NotNullWhen(true)] out T? value);
         bool IsEmpty { get; }
     }
 
     public static class SymbolViewExtensions
     {
-        public static T GetOrDefault<T>([NotNull] this ISymbolView<T> view, [NotNull] string key, T defaultValue)
+        public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue) where T: class
         {
-            T result;
-            if (view.TryGet(key, out result))
-                return result;
-            else
-                return defaultValue;
+            return view.TryGet(key, out var result) ? result : defaultValue;
         }
 
-        public static bool Contains<T>([NotNull] this ISymbolView<T> view, [NotNull] string key)
+        public static bool Contains<T>(this ISymbolView<T> view, string key) where T: class
         {
-            T dummy;
+            T? dummy;
             return view.TryGet(key, out dummy);
         }
  

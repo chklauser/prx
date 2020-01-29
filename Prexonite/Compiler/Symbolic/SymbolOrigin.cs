@@ -106,7 +106,7 @@ namespace Prexonite.Compiler.Symbolic
 
             public override string Description
             {
-                get { return String.Format("import out of namespace {0}",NamespaceId); }
+                get { return String.Format("import from namespace {0}",NamespaceId); }
             }
 
             public override ISourcePosition Position

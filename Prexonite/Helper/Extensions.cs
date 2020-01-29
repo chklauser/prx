@@ -27,10 +27,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
-using JetBrains.Annotations;
 
 namespace Prexonite
 {
@@ -86,7 +86,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Constructs a human-readable enumeration of the form "x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>, …, x<sub>n-2</sub>, x<sub>n-1</sub>, and x<sub>n</sub>".
+        /// Constructs a human-readable enumeration of the form "x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>, â€¦, x<sub>n-2</sub>, x<sub>n-1</sub>, and x<sub>n</sub>".
         /// </summary>
         /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
         /// <param name="source">The enumeration to convert to a string.</param>
@@ -127,7 +127,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Constructs a machine-readable, comma-separated list. ("x<sub>1</sub>, x<sub>2</sub>, …, x<sub>n</sub>").
+        /// Constructs a machine-readable, comma-separated list. ("x<sub>1</sub>, x<sub>2</sub>, â€¦, x<sub>n</sub>").
         /// </summary>
         /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
         /// <param name="source">The enumeration to convert to a string.</param>
@@ -257,24 +257,29 @@ namespace Prexonite
             // ReSharper restore LoopCanBeConvertedToQuery
         }
 
+        #nullable enable
+        
         [DebuggerNonUserCode]
+        [return:NotNull]
         public static IEnumerable<TResult> SelectMaybe<TSource, TResult>(
-            this IEnumerable<TSource> source, Func<TSource, TResult> func) where TResult : class
+            [NotNull] this IEnumerable<TSource> source, [NotNull] Func<TSource, TResult?> func) where TResult : class
         {
             if (func == null)
-                throw new ArgumentNullException("func");
+                throw new ArgumentNullException(nameof(func));
             Contract.Requires(source != null);
             Contract.EndContractBlock();
 
             // ReSharper disable LoopCanBeConvertedToQuery
-            foreach (var item in source)
+            foreach (var item in source!)
             {
-                var y = func(item);
+                var y = func(item!);
                 if (y != null)
                     yield return y;
             }
             // ReSharper restore LoopCanBeConvertedToQuery
         }
+        
+        #nullable restore
 
         [DebuggerNonUserCode]
         public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source,
@@ -395,7 +400,7 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        [NotNull]
+        [JetBrains.Annotations.NotNull]
         public static IDictionary<TK, TC> ToGroupedDictionary<TK, TV, TC>(this IEnumerable<TV> items, Func<TV, TK> keySelector)
             where TC : ICollection<TV>, new()
         {
@@ -441,12 +446,12 @@ namespace Prexonite
         /// <param name="exceptionSet">The set of elements to be excluded from the sequence.</param>
         /// <returns>The original sequence with all elements also in the <paramref name="exceptionSet"/> removed.</returns>
         /// <remarks><para>This is a streaming operator. The order of elements in the sequence is not changed. Multiple instances of the same element in the input sequence are retained (if they are not filtered out).</para></remarks>
-        public static IEnumerable<T> Except<T>([NotNull] this IEnumerable<T> sequence, [NotNull] ISet<T> exceptionSet)
+        public static IEnumerable<T> Except<T>([JetBrains.Annotations.NotNull] this IEnumerable<T> sequence, [JetBrains.Annotations.NotNull] ISet<T> exceptionSet)
         {
             return sequence.Where(x => !exceptionSet.Contains(x));
         }
 
-        public static IEnumerable<T> WithActionAfter<T>([NotNull] this IEnumerable<T> sequence, [NotNull] Action action)
+        public static IEnumerable<T> WithActionAfter<T>([JetBrains.Annotations.NotNull] this IEnumerable<T> sequence, [JetBrains.Annotations.NotNull] Action action)
         {
             if (sequence == null)
                 throw new ArgumentNullException("sequence");

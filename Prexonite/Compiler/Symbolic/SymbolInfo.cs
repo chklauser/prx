@@ -25,41 +25,24 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Diagnostics;
 
+#nullable enable
+
 namespace Prexonite.Compiler.Symbolic
 {
     [DebuggerDisplay("{Name}: ({Symbol}, {Origin})")]
     public sealed class SymbolInfo
     {
-        private readonly Symbol _symbol;
-        private readonly SymbolOrigin _origin;
-        private readonly string _name;
-
         public SymbolInfo(Symbol symbol, SymbolOrigin origin, string name)
         {
-            if (symbol == null)
-                throw new System.ArgumentNullException(nameof(symbol));
-            if (origin == null)
-                throw new System.ArgumentNullException(nameof(origin));
-            if (symbol == null)
-                throw new System.ArgumentNullException(nameof(symbol));
-            _symbol = symbol;
-            _origin = origin;
-            _name = name;
+            Symbol = symbol ?? throw new System.ArgumentNullException(nameof(symbol));
+            Origin = origin ?? throw new System.ArgumentNullException(nameof(origin));
+            Name = name ?? throw new System.ArgumentNullException(nameof(name));
         }
 
-        public Symbol Symbol
-        {
-            get { return _symbol; }
-        }
+        public Symbol Symbol { get; }
 
-        public SymbolOrigin Origin
-        {
-            get { return _origin; }
-        }
+        public SymbolOrigin Origin { get; }
 
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name { get; }
     }
 }

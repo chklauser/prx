@@ -49,6 +49,7 @@ DeclarationLevel
     |   GlobalCode
     |   BuildBlock
     |   FunctionDefinition<out func>
+    |   IF(isNamespaceImport()) NamespaceImport
     |   NamespaceDeclaration
     )
 }
@@ -716,7 +717,7 @@ FunctionDefinition<out PFunction func>
                                         var importBuilder = SymbolStoreBuilder.Create();
                                     .)
         namespace
-        ImportContextualKeyword<out importKeywordPosition>
+        ImportContextualKeyword<out importKeywordPosition, false>
         NsTransferSpec<importBuilder>
         {
             comma
@@ -1026,15 +1027,49 @@ NsTransferSource<out hasWildcard, out specRoot>
                                     .)
 .
 
-ImportContextualKeyword<out ISourcePosition importKeywordPosition>
+ImportContextualKeyword<out ISourcePosition importKeywordPosition, bool alternativelyExpectBrace>
                                     (.  string importKeyword; .)
 =                                   (.  importKeywordPosition = GetPosition(); .)
 // the `import` keyword, as a contextual keyword
 GlobalId<out importKeyword>         (.  if(!Engine.StringsAreEqual(importKeyword,"import")){
                                             Loader.ReportMessage(Message.Error(
-                                                System.String.Format("Expected keyword 'import' or '{' instead of \"{0}\".",importKeyword),
+                                                System.String.Format("Expected keyword 'import'" 
+                                                    + (alternativelyExpectBrace ? " or '{'" : "") 
+                                                    + " instead of \"{0}\".",importKeyword),
                                                 importKeywordPosition, MessageClasses.ImportExpected));
                                         } 
+                                    .)
+.
+
+NamespaceImport                     (.  ISourcePosition importKeywordPosition;
+                                        SymbolStoreBuilder builder = SymbolStoreBuilder.Create();
+                                        // Namespace import statements are only legal on the very top level; 
+                                        // In namespaces and functions, you need to use the `import` modifier of the
+                                        // namespace/function declaration.
+                                        // In case of a violation, we'll keep parsing to recover from the error, but we
+                                        // won't make any changes to symbol tables. 
+                                        bool illegal = false;
+                                    .)
+=
+namespace                           (.  if(Loader.CurrentScope != null) {
+                                          illegal = true;
+                                          Loader.ReportMessage(Message.Error(
+                                            "Cannot use `namespace import` inside a namespace or function. " + 
+                                            "Use the `namespace|function xxx import yyy { ... }` syntax instead.", 
+                                            GetPosition(),
+                                            MessageClasses.NonTopLevelNamespaceImport));
+                                        }
+                                    .)
+ImportContextualKeyword<out importKeywordPosition, false>
+NsTransferSpec<builder>
+{   comma
+    [   NsTransferSpec<builder>
+    ]
+}
+semicolon                           (.  if(!illegal) 
+                                        {
+                                            Loader.ReplaceTopLevelImports(builder);
+                                        }
                                     .)
 .
 
@@ -1051,7 +1086,7 @@ NsQualifiedId<out fullNsId>         (.  var declBuilder = _prepareDeclScope(full
 [                                   (.  ISourcePosition importKeywordPosition;
                                         _pushLexerState(Lexer.Transfer);
                                     .)
-    ImportContextualKeyword<out importKeywordPosition>
+    ImportContextualKeyword<out importKeywordPosition, false>
     // optional explicit import from current namespace exports
     (                               (.  var groupPos = GetPosition();
                                         origin = new SymbolOrigin.NamespaceImport(declBuilder.Prefix,groupPos);

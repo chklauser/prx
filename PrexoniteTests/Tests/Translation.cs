@@ -1151,6 +1151,125 @@ function main = a.g+a.h;
         }
 
         [Test]
+        public void TopLevelNamespaceImport()
+        {
+            Compile(@"
+
+namespace a 
+{
+  function f(x) = 2*x;
+}
+
+namespace import a.*;
+
+function main(y) = f(y + 2);
+
+");
+            
+            Expect(20, 8);
+        }
+
+        [Test]
+        public void TopLevelNamespaceImportMultiple()
+        {
+            Compile(@"
+
+namespace a 
+{
+  function f(x) = 2*x;
+}
+namespace b 
+{
+  namespace c
+  {
+    function g(x) = 7 + x;
+  }
+}
+
+namespace import a.*, b.c.g;
+
+function main(y) = f(g(y));
+
+");
+            
+            Expect(20, 3);
+        }
+
+        [Test]
+        public void TopLevelImportReplacement()
+        {
+            Compile(@"
+
+namespace a 
+{
+  function f(x) = 2*x;
+}
+
+namespace b
+{
+  function f(x) = x/2; 
+}
+
+namespace import a.*;
+// This set of imports should completely replace the other set of imports
+namespace import b.*;
+
+function main(y) = f(y + 2);
+
+");
+            
+            Expect(5, 8);
+        }
+
+        [Test]
+        public void TopLevelImportsDoNotShadow()
+        {
+            Compile(@"
+
+function f(x) = x*2;
+
+namespace a
+{
+  function f(x) = x/2; 
+}
+
+namespace import a.*;
+
+function main(y) = f(y + 2);
+
+");
+            
+            Expect(20, 8);
+        }
+
+        [Test]
+        public void TopLevelImportIllegalInNamespace()
+        {
+            CompileInvalid(@"
+namespace a 
+{
+    function f(x) = 2*x;
+}
+
+namespace b 
+{
+    namespace import a.f;
+    function g(x) = f(x + 2);
+}
+
+function main(x) = b.g(3 * x);
+", "namespace", "import", "inside");
+        }
+
+        [Test]
+        public void TopLevelImportMustResolveSymbol()
+        {
+            CompileInvalid(@"
+namespace import this_symbol_does_not_exist.*;
+", "this_symbol_does_not_exist");
+        }
+
+        [Test]
         public void NamespaceExtensionCrossModule()
         {
             var plan = Plan.CreateSelfAssembling(StandardLibraryPreference.None);

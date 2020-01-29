@@ -552,11 +552,11 @@ namespace prx.cli
                 // Copy exported declarations
                 // Loader acts as if it had declared everything that our target module exports
                 rt.debug(target);
+                ldr = new Prexonite::Compiler::Loader(opt);
                 foreach(var kvp in target.Symbols)
                 {
-                    opt.Symbols.Declare(kvp.Key, kvp.Value);
+                    ldr.Symbols.Declare(kvp.Key, kvp.Value);
                 }
-                ldr = new Prexonite::Compiler::Loader(opt);
             }
 
             // Store serialized representation of target module (only target module)

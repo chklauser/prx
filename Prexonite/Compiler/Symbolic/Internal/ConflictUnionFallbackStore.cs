@@ -30,16 +30,18 @@ using System.Linq;
 using System.Threading;
 using Prexonite.Properties;
 
+#nullable enable
+
 namespace Prexonite.Compiler.Symbolic.Internal
 {
-    internal class ConflictUnionFallbackStore : SymbolStore
+    internal sealed class ConflictUnionFallbackStore : SymbolStore
     {
-        private readonly ISymbolView<Symbol> _parent;
-        private readonly SymbolTable<Symbol> _union;
-        private SymbolTable<Symbol> _local;
+        private ISymbolView<Symbol>? _parent;
+        private readonly SymbolTable<Symbol>? _union;
+        private SymbolTable<Symbol>? _local;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        internal ConflictUnionFallbackStore(ISymbolView<Symbol> parent = null, IEnumerable<SymbolInfo> conflictUnionSource = null)
+        internal ConflictUnionFallbackStore(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
         {
             _parent = parent;
 
@@ -54,28 +56,32 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         private static KeyValuePair<string, Symbol> _unifySymbols(IGrouping<string, SymbolInfo> source)
         {
-            using (var e = source.GetEnumerator())
+            using var e = source.GetEnumerator();
+            // ReSharper disable NotResolvedInText
+            if (!e.MoveNext())
+                throw new ArgumentOutOfRangeException("conflictUnionSource", source.Key, Resources.ConflictUnionFallbackStore__unifySymbols_Invalid_key_in_source_for_symbol_store_);
+            // ReSharper restore NotResolvedInText
+
+            var unionInfo = e.Current;
+            Debug.Assert(unionInfo != null, nameof(unionInfo) + " != null");
+            var x = unionInfo;
+
+            while (e.MoveNext())
             {
-                if (!e.MoveNext())
-                    // ReSharper disable NotResolvedInText
-                    throw new ArgumentOutOfRangeException("conflictUnionSource", source.Key, Resources.ConflictUnionFallbackStore__unifySymbols_Invalid_key_in_source_for_symbol_store_);
-                // ReSharper restore NotResolvedInText
-
-                var unionInfo = e.Current;
-                var x = unionInfo;
-
-                while (e.MoveNext())
+                var y = e.Current;
+                Debug.Assert(y != null, nameof(y) + " != null");
+                var merged = _merge(x, y);
+                if (merged == null)
                 {
-                    var y = e.Current;
-                    var merged = _merge(x, y);
-                    if (merged == null)
-                        return _unifySymbolsDualMode(new SymbolInfo(x.Symbol, x.Origin, unionInfo.Name), y, e);
-                    else
-                        x = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(x.Origin,y.Origin),x.Name);
+                    return _unifySymbolsDualMode(new SymbolInfo(x.Symbol, x.Origin, unionInfo.Name), y, e);
                 }
-
-                return new KeyValuePair<string, Symbol>(unionInfo.Name, x.Symbol);
+                else
+                {
+                    x = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(x.Origin, y.Origin),x.Name);
+                }
             }
+
+            return new KeyValuePair<string, Symbol>(unionInfo.Name, x.Symbol);
         }
 
         private static KeyValuePair<string, Symbol> _unifySymbolsDualMode(SymbolInfo first, SymbolInfo second, IEnumerator<SymbolInfo> e)
@@ -86,6 +92,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             while (e.MoveNext())
             {
                 var y = e.Current;
+                Debug.Assert(y != null, nameof(y) + " != null");
 
                 var merged = _merge(x1, y);
                 if (merged != null)
@@ -125,6 +132,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             while (e.MoveNext())
             {
                 var y = e.Current;
+                Debug.Assert(y != null, nameof(y) + " != null");
                 int i;
                 for (i = 0; i < xs.Count; i++)
                 {
@@ -132,7 +140,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                     var merged = _merge(thisSymbol, y);
                     if (merged != null)
                     {
-                        xs[i] = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(thisSymbol.Origin,y.Origin),thisSymbol.Name);
+                        xs[i] = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(thisSymbol.Origin, y.Origin),thisSymbol.Name);
                         break;
                     }
                 }
@@ -144,8 +152,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
             }
 
-            var msg = string.Format("There are {0} incompatible declarations of the symbol {1}. They originate from {2}.",
-                                    xs.Count, first.Name, symbols.Select(s => s.Origin).ToEnumerationString());
+            var msg =
+                $"There are {xs.Count} incompatible declarations of the symbol {first.Name}. " +
+                $"They originate from {symbols.Select(s => s.Origin).ToEnumerationString()}.";
             return new KeyValuePair<string, Symbol>(first.Name,
                                                     Symbol.CreateMessage(Message.Create(MessageSeverity.Error, msg, first.Origin.Position,
                                                                                 MessageClasses.SymbolConflict), xs[0].Symbol));
@@ -192,62 +201,67 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        private static readonly ISymbolHandler<MergeContext, Symbol> _mergeHandler = new MergeHandler();
+        private static readonly ISymbolHandler<MergeContext, Symbol?> _mergeHandler = new MergeHandler();
 
-        private static Symbol _merge(SymbolInfo thisSymbol, SymbolInfo otherSymbol)
+        private static Symbol? _merge(SymbolInfo thisSymbol, SymbolInfo otherSymbol)
         {
-            return new MergeContext {ThisInfo = thisSymbol, OtherInfo = otherSymbol}.Merge();
+            return new MergeContext(thisSymbol, otherSymbol).Merge();
         }
 
         private sealed class MergeContext
         {
-            public SymbolInfo ThisInfo { get; set; }
-            public SymbolInfo OtherInfo { get; set; }
+            public SymbolInfo ThisInfo { get; }
+            public SymbolInfo OtherInfo { get; }
+
+            public MergeContext(SymbolInfo thisInfo, SymbolInfo otherInfo)
+            {
+                ThisInfo = thisInfo;
+                OtherInfo = otherInfo;
+            }
 
             public MergeContext Invert()
             {
-                return new MergeContext{ThisInfo = OtherInfo, OtherInfo = ThisInfo};
+                return new MergeContext(OtherInfo, ThisInfo);
             }
 
-            public Symbol Merge()
+            public Symbol? Merge()
             {
                 return ThisInfo.Symbol.HandleWith(_mergeHandler, this);
             }
         }
 
-        private sealed class MergeHandler : ISymbolHandler<MergeContext, Symbol>
+        private sealed class MergeHandler : ISymbolHandler<MergeContext, Symbol?>
         {
-            public Symbol HandleReference(ReferenceSymbol thisSymbol, MergeContext mergeContext)
+            public Symbol? HandleReference(ReferenceSymbol thisSymbol, MergeContext mergeContext)
             {
                 return _handleSymbol(thisSymbol, mergeContext);
             }
 
-            public Symbol HandleNil(NilSymbol thisSymbol, MergeContext mergeContext)
+            public Symbol? HandleNil(NilSymbol thisSymbol, MergeContext mergeContext)
             {
                 return _handleSymbol(thisSymbol, mergeContext);
             }
 
-            public Symbol HandleExpand(ExpandSymbol thisSymbol, MergeContext mergeContext)
+            public Symbol? HandleExpand(ExpandSymbol thisSymbol, MergeContext mergeContext)
             {
                 return _handleSymbol(thisSymbol, mergeContext);
             }
 
-            public Symbol HandleDereference(DereferenceSymbol thisSymbol, MergeContext mergeContext)
+            public Symbol? HandleDereference(DereferenceSymbol thisSymbol, MergeContext mergeContext)
             {
                 return _handleSymbol(thisSymbol, mergeContext);
             }
 
-            private Symbol _handleSymbol(Symbol thisSymbol, MergeContext mergeContext)
+            private Symbol? _handleSymbol(Symbol thisSymbol, MergeContext mergeContext)
             {
                 // In general, non-message symbols must be equal modulo messages.
-                var messageSymbol = mergeContext.OtherInfo.Symbol as MessageSymbol;
-                if (messageSymbol != null)
+                if (mergeContext.OtherInfo.Symbol is MessageSymbol messageSymbol)
                     return HandleMessage(messageSymbol, mergeContext.Invert());
                 else
                     return thisSymbol.Equals(mergeContext.OtherInfo.Symbol) ? thisSymbol : null;
             }
 
-            public Symbol HandleMessage(MessageSymbol thisSymbol, MergeContext mergeContext)
+            public Symbol? HandleMessage(MessageSymbol thisSymbol, MergeContext mergeContext)
             {
                 if (ReferenceEquals(thisSymbol, mergeContext.OtherInfo.Symbol))
                     return thisSymbol;
@@ -256,11 +270,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 var innerInfo = new SymbolInfo(thisSymbol.InnerSymbol, mergeContext.ThisInfo.Origin,
                     mergeContext.ThisInfo.Name);
                 var innerUnionSymbol = thisSymbol.InnerSymbol.HandleWith(this,
-                    new MergeContext
-                    {
-                        ThisInfo = innerInfo,
-                        OtherInfo = mergeContext.OtherInfo
-                    });
+                    new MergeContext(innerInfo, mergeContext.OtherInfo));
                 if (innerUnionSymbol == null) // the underlying self is not the same
                     return null;
 
@@ -270,36 +280,31 @@ namespace Prexonite.Compiler.Symbolic.Internal
                     return Symbol.CreateMessage(thisSymbol.Message, innerUnionSymbol);
             }
 
-            public Symbol HandleNamespace(NamespaceSymbol self, MergeContext mergeContext)
+            public Symbol? HandleNamespace(NamespaceSymbol self, MergeContext mergeContext)
             {
                 var otherSymbol = mergeContext.OtherInfo.Symbol;
-                var messageSymbol = otherSymbol as MessageSymbol;
-                if (messageSymbol != null)
+                if (otherSymbol is MessageSymbol messageSymbol)
                     return HandleMessage(messageSymbol, mergeContext.Invert());
                 else if (self.Equals(otherSymbol))
                 {
                     return self;
                 }
-                else
+                else if (otherSymbol is NamespaceSymbol otherNamespaceSymbol)
                 {
-                    var otherNamespaceSymbol = otherSymbol as NamespaceSymbol;
-                    if (otherNamespaceSymbol == null)
-                        return null;
-                    else
-                    {
-                        // Two distinct namespaces collide
-                        // Create a merged view of the namespace
-                        var exportedFromThis = _exportedFrom(self, mergeContext.ThisInfo);
-                        var exportedFromOther = _exportedFrom(otherNamespaceSymbol, mergeContext.OtherInfo);
-                        var merged = new MergedNamespace(Create(conflictUnionSource:
-                                        exportedFromThis.Append(exportedFromOther)));
-                        return Symbol.CreateNamespace(merged,
-                            mergeContext.ThisInfo.Origin.Position);
-                    }
+                    // Two distinct namespaces collide
+                    // Create a merged view of the namespace
+                    var exportedFromThis = _exportedFrom(self, mergeContext.ThisInfo);
+                    var exportedFromOther = _exportedFrom(otherNamespaceSymbol, mergeContext.OtherInfo);
+                    var merged = new MergedNamespace(Create(conflictUnionSource:
+                        exportedFromThis.Append(exportedFromOther)));
+                    return Symbol.CreateNamespace(merged,
+                        mergeContext.ThisInfo.Origin.Position);
                 }
+                else
+                    return null;
             }
 
-            private IEnumerable<SymbolInfo> _exportedFrom(NamespaceSymbol nsSymbol, SymbolInfo nsInfo)
+            private static IEnumerable<SymbolInfo> _exportedFrom(NamespaceSymbol nsSymbol, SymbolInfo nsInfo)
             {
                 return nsSymbol.Namespace.Select(entry => new SymbolInfo(entry.Value,nsInfo.Origin,entry.Key));
             }
@@ -307,37 +312,43 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         private bool _notInUnion(KeyValuePair<string, Symbol> entry)
         {
-            return !_union.ContainsKey(entry.Key);
+            return !_union!.ContainsKey(entry.Key);
         }
 
         private bool _notInLocal(KeyValuePair<string, Symbol> entry)
         {
-            return !_local.ContainsKey(entry.Key);
+            return !_local!.ContainsKey(entry.Key);
         }
 
         private bool _notInLocalAndUnion(KeyValuePair<string, Symbol> entry)
         {
             var key = entry.Key;
-            return !_union.ContainsKey(key) && !_local.ContainsKey(key);
+            return !_union!.ContainsKey(key) && !_local!.ContainsKey(key);
         }
 
         public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
         {
-            var local = Volatile.Read(ref _local);
-            if (local == null)
-                if (_union == null)
-                    if (_parent == null)
-                        return Enumerable.Empty<KeyValuePair<string, Symbol>>().GetEnumerator();
-                    else
-                        return _parent.GetEnumerator();
-                else if (_parent == null)
-                    return _union.GetEnumerator();
-                else
-                    return _union.Append(_parent.Where(_notInUnion)).GetEnumerator();
-            else
+            ISymbolView<Symbol>? parentOpt;
+            SymbolTable<Symbol>? localOpt;
+            _lock.EnterReadLock();
+            try
             {
-                return _readLockEnumerable(_assembleEnumerator(local));
+                parentOpt = _parent;
+                localOpt = _local;
             }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            return (localOpt, _union, parentOpt) switch
+            {
+                (null, null, null) => Enumerable.Empty<KeyValuePair<string, Symbol>>().GetEnumerator(),
+                (null, null, {} parent) => parent.GetEnumerator(),
+                (null, {} union, null) => union.GetEnumerator(),
+                (null, {} union, {} parent) => union.Append(parent.Where(_notInUnion)).GetEnumerator(),
+                ({} local, _ , _) => _readLockEnumerable(_assembleEnumerator(local, parentOpt))
+            };
         }
 
         private IEnumerator<KeyValuePair<string, Symbol>> _readLockEnumerable(IEnumerable<KeyValuePair<string, Symbol>> sequence)
@@ -354,45 +365,38 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        private IEnumerable<KeyValuePair<string, Symbol>> _assembleEnumerator(IEnumerable<KeyValuePair<string, Symbol>> local)
+        private IEnumerable<KeyValuePair<string, Symbol>> _assembleEnumerator(IEnumerable<KeyValuePair<string, Symbol>> local, IEnumerable<KeyValuePair<string, Symbol>>? parentOpt)
         {
-            if (_union == null)
-                if (_parent == null)
-                    return local;
-                else
-                    return local.Append(_parent.Where(_notInLocal));
-            else if (_parent == null)
-                return local.Append(_union.Where(_notInLocal));
-            else
-                return
-                    local.Append(_union.Where(_notInLocal)).Append(_parent.Where(_notInLocalAndUnion));
+            return (_union, parentOpt) switch
+            {
+                (null, null) => local,
+                (null, {} parent) => local.Append(parent.Where(_notInLocal)),
+                ({} union, null) => local.Append(union.Where(_notInLocal)),
+                ({} union, {} parent) => local.Append(union.Where(_notInLocal)).Append(parent.Where(_notInLocalAndUnion))
+            };
         }
 
-        public override bool TryGet(string id, out Symbol value)
+        public override bool TryGet(string id, out Symbol? value)
         {
-            var local = Volatile.Read(ref _local);
-            if (local != null)
+            _lock.EnterReadLock();
+            try
             {
-                _lock.EnterReadLock();
-                try
+                if (_local is {} local && local.TryGetValue(id, out value))
+                    return true;
+                
+                if (_union != null && _union.TryGetValue(id, out value))
                 {
-                    if (local.TryGetValue(id, out value))
-                        return true;
+                    return true;
                 }
-                finally
+                
+                if (_parent != null && _parent.TryGet(id, out value))
                 {
-                    _lock.ExitReadLock();
+                    return true;
                 }
             }
-            
-            if (_union != null && _union.TryGetValue(id, out value))
+            finally
             {
-                return true;
-            }
-
-            if (_parent != null && _parent.TryGet(id, out value))
-            {
-                return true;
+                _lock.ExitReadLock();
             }
             
             value = null;
@@ -403,28 +407,17 @@ namespace Prexonite.Compiler.Symbolic.Internal
         {
             get
             {
-                var local = Volatile.Read(ref _local);
-                bool localIsEmpty;
-                if (local != null)
+                _lock.EnterReadLock();
+                try
                 {
-                    _lock.EnterReadLock();
-                    try
-                    {
-                        localIsEmpty = _local.Count == 0;
-                    }
-                    finally
-                    {
-                        _lock.ExitReadLock();
-                    }
+                    return (_local == null || _local.Count == 0)
+                           && (_union == null || _union.Count == 0)
+                           && (_parent == null || _parent.IsEmpty);
                 }
-                else
+                finally
                 {
-                    localIsEmpty = true;
+                    _lock.ExitReadLock();
                 }
-                return
-                    localIsEmpty
-                        && (_union == null || _union.Count == 0)
-                        && (_parent == null || _parent.IsEmpty);
             }
         }
 
@@ -485,6 +478,34 @@ namespace Prexonite.Compiler.Symbolic.Internal
                     if (_local != null)
                         foreach (var symbol in _local)
                             yield return symbol;
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            }
+        }
+
+        public override ISymbolView<Symbol>? ExternalScope
+        {
+            get
+            {
+                _lock.EnterReadLock();
+                try
+                {
+                    return _parent;
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            }
+            set
+            {
+                _lock.EnterReadLock();
+                try
+                {
+                    _parent = value;
                 }
                 finally
                 {

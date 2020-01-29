@@ -129,7 +129,7 @@ function uniqueIdCounter(x)[compiler]
 function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
 
 declare(
-    isFunctionCall = error(here,"PSR.Obsolete",@"isFunctionCall is deprecated. Use checking functions from the psr\\macro instead.",null)
+    isFunctionCall = error(here,"PSR.Obsolete",@"isFunctionCall is deprecated. Use checking functions from the psr\macro instead.",null)
 );
 
 function isMemberAccess(id, node)[is compiler;] =

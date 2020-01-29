@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
+#nullable enable
+
 namespace Prexonite.Compiler.Symbolic.Internal
 {
     /// <summary>
@@ -22,8 +24,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// <remarks>
         /// Use <see cref="DerivePhysicalName"/> to generate physical names based on this prefix.
         /// </remarks>
-        [CanBeNull]
-        public abstract string Prefix { get; set; }
+        public abstract string? Prefix { get; set; }
 
         /// <summary>
         /// Uses the <see cref="Prefix"/> to derive a physical name for a given logical name. 
@@ -64,7 +65,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// <returns>true if the symbol is found among the symbols exported by this module; false otherwise</returns>
         /// <remarks><para>This method can fail to return a symbol that is available via <see cref="ISymbolView{T}.TryGet"/>.</para></remarks>
         [ContractAnnotation("=>true,exported:notnull;=>false,exported:null")]
-        public abstract bool TryGetExported(string id, out Symbol exported);
+        public abstract bool TryGetExported(string id, out Symbol? exported);
 
         /// <summary>
         /// Adds a set of declarations to the exports of this namespace. Will replace conflicting symbols instead of merging with them.

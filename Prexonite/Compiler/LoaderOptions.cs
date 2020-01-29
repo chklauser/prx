@@ -28,6 +28,8 @@ using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 
+#nullable enable
+
 namespace Prexonite.Compiler
 {
     [DebuggerStepThrough]
@@ -35,73 +37,64 @@ namespace Prexonite.Compiler
     {
         #region Construction
 
-        public LoaderOptions([CanBeNull] Engine parentEngine, [CanBeNull] Application targetApplication)
+        public LoaderOptions(Engine? parentEngine, Application? targetApplication)
         {
             ParentEngine = parentEngine;
             TargetApplication = targetApplication;
-            Symbols = SymbolStore.Create();
+            ExternalSymbols = new EmptySymbolView<Symbol>();
         }
 
-        public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, [NotNull] ISymbolView<Symbol> externalSymbols)
+        public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, ISymbolView<Symbol>? externalSymbols)
         {
-            if (parentEngine == null)
-                throw new ArgumentNullException(nameof(parentEngine));
-            if (targetApplication == null)
-                throw new ArgumentNullException(nameof(targetApplication));
-            if (externalSymbols == null)
-                throw new ArgumentNullException(nameof(externalSymbols));
-            
-            ParentEngine = parentEngine;
-            TargetApplication = targetApplication;
-            Symbols = SymbolStore.Create(externalSymbols);
+            ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
+            TargetApplication = targetApplication ?? throw new ArgumentNullException(nameof(targetApplication));
+            ExternalSymbols = externalSymbols ?? throw new ArgumentNullException(nameof(externalSymbols));
         }
 
         #endregion
 
         #region Properties
 
-        [CanBeNull]
-        public Engine ParentEngine { get; }
+        public Engine? ParentEngine { get; }
 
-        [CanBeNull]
-        public Application TargetApplication { get; }
+        public Application? TargetApplication { get; }
 
         [NotNull]
-        public SymbolStore Symbols { get; }
+        public ISymbolView<Symbol> ExternalSymbols { get; }
 
         private bool? _registerCommands;
         public bool RegisterCommands
         {
-            get { return _registerCommands ?? true; }
-            set { _registerCommands = value; }
+            get => _registerCommands ?? true;
+            set => _registerCommands = value;
         }
 
         private bool? _reconstructSymbols;
         public bool ReconstructSymbols
         {
-            get { return _reconstructSymbols ?? true; }
-            set { _reconstructSymbols = value; }
+            get => _reconstructSymbols ?? true;
+            set => _reconstructSymbols = value;
         }
 
         private bool? _storeSymbols;
         public bool StoreSymbols
         {
-            get { return _storeSymbols ?? true; }
-            set { _storeSymbols = value; }
+            get => _storeSymbols ?? true;
+            set => _storeSymbols = value;
         }
 
         private bool? _useIndicesLocally;
         public bool UseIndicesLocally
         {
-            get { return _useIndicesLocally ?? true; }
-            set { _useIndicesLocally = value; }
+            get => _useIndicesLocally ?? true;
+            set => _useIndicesLocally = value;
         }
 
         private bool? _storeSourceInformation;
         public bool StoreSourceInformation
         {
-            get { return _storeSourceInformation ?? false; }
-            set { _storeSourceInformation = value; }
+            get => _storeSourceInformation ?? false;
+            set => _storeSourceInformation = value;
         }
 
         private bool? _preflightModeEnabled;
@@ -114,8 +107,8 @@ namespace Prexonite.Compiler
         /// </summary>
         public bool PreflightModeEnabled
         {
-            get { return _preflightModeEnabled ?? false; }
-            set { _preflightModeEnabled = value; }
+            get => _preflightModeEnabled ?? false;
+            set => _preflightModeEnabled = value;
         }
 
         private bool? _flagLiteralsEnabled;
@@ -127,8 +120,8 @@ namespace Prexonite.Compiler
         [PublicAPI]
         public bool FlagLiteralsEnabled
         {
-            get { return _flagLiteralsEnabled ?? false; }
-            set { _flagLiteralsEnabled = value; }
+            get => _flagLiteralsEnabled ?? false;
+            set => _flagLiteralsEnabled = value;
         }
 
         #endregion
@@ -138,13 +131,13 @@ namespace Prexonite.Compiler
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
-            _registerCommands = _registerCommands ?? options._registerCommands;
-            _reconstructSymbols = _reconstructSymbols ?? options._reconstructSymbols;
-            _storeSymbols = _storeSymbols ?? options._storeSymbols;
-            _useIndicesLocally = _useIndicesLocally ?? options._useIndicesLocally;
-            _storeSourceInformation = _storeSourceInformation ?? options._storeSourceInformation;
-            _preflightModeEnabled = _preflightModeEnabled ?? options._preflightModeEnabled;
-            _flagLiteralsEnabled = _flagLiteralsEnabled ?? options._flagLiteralsEnabled;
+            _registerCommands ??= options._registerCommands;
+            _reconstructSymbols ??= options._reconstructSymbols;
+            _storeSymbols ??= options._storeSymbols;
+            _useIndicesLocally ??= options._useIndicesLocally;
+            _storeSourceInformation ??= options._storeSourceInformation;
+            _preflightModeEnabled ??= options._preflightModeEnabled;
+            _flagLiteralsEnabled ??= options._flagLiteralsEnabled;
         }
     }
 }
