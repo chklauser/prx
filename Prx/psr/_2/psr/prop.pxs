@@ -1,0 +1,19 @@
+name psr::prop;
+references {
+	prx/1.0,
+	psr::ast,
+	psr::$macro
+};
+
+namespace psr.prop.v1
+	import prx.v1(*), psr.ast(SI, unique_id => uniqueId), psr.macro.v1(*)
+{
+    build does add("../../impl/prop.pxs");
+}
+
+namespace psr.prop
+{
+}
+export(*), psr.prop.v1(
+    prop, struct_prop
+);

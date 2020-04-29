@@ -1,0 +1,261 @@
+name psr::ast;
+references { prx/1.0 };
+
+namespace psr.ast.v1 import prx.v1(*)
+{
+	build does add("../../impl/ast.pxs");
+}
+
+namespace psr.ast 
+{
+    namespace SI 
+        import sys(*)
+    {
+        declare ref var is_gvar, is_gref, is_func;
+
+        function eq(l,r) = l~Int == r~Int;
+
+        function lvar(id) = 
+            if(id is null)
+                static var cache ??= Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable
+            else
+                Prexonite::Compiler::SymbolEntry.LocalObjectVariable(id);
+
+        function lref(id) = 
+            if(id is null)
+                static var cache ??= Prexonite::Compiler::SymbolInterpretations.LocalReferenceVariable
+            else
+                Prexonite::Compiler::SymbolEntry.LocalReferenceVariable(id);
+
+        function gvar(id, m) {
+            static var cache ??= Prexonite::Compiler::SymbolInterpretations.GlobalObjectVariable;
+            return 
+                if(id is Prexonite::Compiler::SymbolEntry)
+                    if(is_gvar(id.Interpretation))
+                        id
+                    else
+                        throw "Supplied symbol entry ($id) is not a global object variable, but was used in SI.gvar."
+                else if(var args.Count >= 2 and id is String)
+                    new Prexonite::Compiler::SymbolEntry(cache, id, m)
+                else if(var args.Count == 0)
+                    cache
+                else
+                    throw "Global variable symbol entry requires a module name.";
+            
+        }
+
+        function gref(id, m) {
+            static var cache ??= Prexonite::Compiler::SymbolInterpretations.GlobalReferenceVariable;
+            return 
+                if(id is Prexonite::Compiler::SymbolEntry)
+                    if(is_gref(id.Interpretation))
+                        id
+                    else
+                        throw "Supplied symbol entry ($id) is not a global object variable, but was used in SI.gref."
+                else if(var args.Count >= 2 and id is String)
+                    new Prexonite::Compiler::SymbolEntry(cache, id, m)
+                else if(var args.Count == 0)
+                    cache
+                else
+                    throw "Global variable symbol entry requires a module name.";
+            
+        }
+
+        function func(id,m) {
+            static var cache ??= Prexonite::Compiler::SymbolInterpretations.Function;
+            return 
+                if(id is Prexonite::PFunction) 
+                    new Prexonite::Compiler::SymbolEntry(cache, id.Id, id.ParentApplication.Module.Name)
+                else if(id is Prexonite::Compiler::SymbolEntry)
+                    if(is_func(id.Interpretation))
+                        id
+                    else
+                        throw "Supplied symbol entry ($func) is not a function, but was used in SI.func."
+                else if(var args.Count >= 3 and id is String)
+                    new Prexontie::Compiler::SymbolEntry(cache, func, m)
+                else
+                    cache;
+        }
+
+        function cmd(id) = 
+            if(id is null)
+                static var cache ??= Prexonite::Compiler::SymbolInterpretations.Command
+            else
+                Prexonite::Compiler::SymbolEntry.Command(id);
+
+        function mcmd(id) = 
+            if(id is null)
+                static var cache ??= Prexonite::Compiler::SymbolInterpretations.MacroCommand
+            else
+                Prexonite::Compiler::SymbolEntry.MacroCommand(id);
+
+        var get = Prexonite::Types::PCall.Get;
+        var set = Prexonite::Types::PCall.Set;
+
+        namespace ret
+        {
+            var exit = Prexonite::Compiler::Ast::ReturnVariant.Exit;
+            var set =  Prexonite::Compiler::Ast::ReturnVariant.Set;
+            var $continue = Prexonite::Compiler::Ast::ReturnVariant.Continue;
+            var $break = Prexonite::Compiler::Ast::ReturnVariant.Break;
+        }
+
+        ref is_lvar = eq(?, lvar);
+        ref is_lref = eq(?, lref);
+        ref is_gvar = eq(?, gvar);
+        ref is_gref = eq(?, gref);
+        ref is_func = eq(?, func);
+        ref is_cmd = eq(?, cmd);
+        ref is_mcmd = eq(?, mcmd);
+        function is_obj(s) = is_lvar(s) || is_gvar(s);
+        function is_ref(s) = is_lref(s) || is_gref(s);
+        function is_global(s) = is_gvar(s) || is_gref(s);
+        function is_local(s) = is_lvar(s) || is_lref(s);
+        function make_global(s) => 
+            if(is_obj(s))
+                gvar
+            else if(is_ref(s))
+                gref
+            else
+                throw "$s cannot be made global.";
+        function make_local(s) => 
+            if(is_obj(s))
+                lvar
+            else if(is_ref(s))
+                lref
+            else
+                throw "$s cannot be made local.";
+        function make_obj(s) =>
+            if(is_local(s))
+                lvar
+            else if(is_global(s))
+                gvar
+            else
+                throw "$s cannot be made object.";
+        function make_ref(s) =>
+            if(is_local(s))
+                lref
+            else if(is_global(s))
+                gref
+            else
+                throw "$s cannot be made reference.";
+        var no_location = Prexonite::Compiler::NoSourcePosition.Instance;
+    }
+
+    namespace SI 
+    {
+    }
+    export(*), SI.ret(exit => ret\exit, set => ret\set, $continue => ret\continue, $break => ret\break);
+
+
+    // Internal
+    namespace SI.i 
+        import sys(*)
+    {
+        function gvar(id) = 
+            if(id is not string)
+                "SI.i.gvar(id) requires an id~String, and not $(rt.boxed(id))"
+            else 
+                SI.gvar(id,null);
+        function gref(id) =
+            if(id is not string)
+                "SI.i.gref(id) requires an id~String, and not $(rt.boxed(id))"
+            else 
+                SI.gref(id,null);
+        function func(id) =
+            if(id is not string)
+                "SI.i.func(id) requires an id~String, and not $(rt.boxed(id))"
+            else 
+                SI.func(id,null);
+    }
+
+    // Macros 
+    namespace SI.m
+    {
+
+    } export(*), SI(func, mcmd => cmd, is_func, is_mcmd => is_cmd);
+
+    // Internal
+    namespace SI.m.i 
+        import sys(*)
+    {
+        function func(id) =
+            if(id is not string)
+                "SI.m.i.func(id) requires an id~String, and not $(rt.boxed(id))"
+            else 
+                SI.m.func(id,null);
+    }
+
+    // EntityRef
+    namespace EntityRef
+        import sys(*)
+    {
+        function func(arg1, arg2) =
+            if(arg1 is Prexonite::PFunction)
+                ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1.Id,arg1.ParentApplication.Module.Name)
+            else if(arg1 is not Null and arg2 is not Null)
+                ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1,arg2)
+            else
+                throw "SI.e.func(function_reference) or SI.e.func(id,module_name). Null values are not acceptable.";
+        ref is_func = ? is Object<"Prexonite.Modular.EntityRef+Function">;
+
+        function cmd(id) =
+            if(id is not null)
+                ~Object<"Prexonite.Modular.EntityRef+Command">.Create(id)
+            else
+                throw "SI.e.cmd(id), id must not be null.";
+        ref is_cmd = ? is Object<"Prexonite.Modular.EntityRef+Command">;
+
+        function mcmd(arg1) =
+            if(arg1 is Prexonite::Compiler::Macro::MacroCommand)
+                ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1.Id)
+            else if(arg1 is not Null)
+                ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1)
+            else
+                throw "SI.e.mcmd(id), id must not be null.";
+        ref is_mcmd = ? is Object<"Prexonite.Modular.EntityRef+MacroCommand">;
+
+        function lvar(id) =
+            if(id is not null)
+                ~Object<"Prexonite.Modular.EntityRef+Variable+Local">.Create(id)
+            else
+                throw "SI.e.lvar(id), id must not be null.";
+        ref is_lvar = ? is Object<"Prexonite.Modular.EntityRef+Variable+Local">;
+
+        function gvar(id,mname) =
+            if(id is not null and mname is not null)
+                ~Object<"Prexonite.Modular.EntityRef+Variable+Global">.Create(id,mname)
+            else
+                throw "SI.e.gvar(id,module_name), neither id nor module_name must be null.";
+        ref is_gvar = ? is Object<"Prexonite.Modular.EntityRef+Variable+Global">;
+    }
+
+    // Symbols
+    namespace Symbol
+        import sys(*)
+    {
+        function entity(e,pos) = Prexonite::Compiler::Symbolic::Symbol.CreateReference(e,pos);
+        function dereference as deref(inner, pos) = Prexonite::Compiler::Symbolic::Symbol.CreateDereference(inner,pos);
+        function nil(pos) = Prexonite::Compiler::Symbolic::Symbol.CreateNil(pos);
+        function expand(inner, pos) = Prexonite::Compiler::Symbolic::Symbol.CreateExpand(inner, pos);
+        function message(msg, inner, pos) = Prexonite::Compiler::Symbolic::Symbol.CreateMessage(msg, inner, pos);
+    }
+
+    namespace SI
+    {
+        namespace e {} export EntityRef(*);
+        namespace s {} export Symbol(*);
+    }
+} 
+export(*), psr.ast.v1(
+    ast\withPos => with_pos,
+    ast3\withPos => with_pos3,
+    ast2\withPos => with_pos2,
+    ast\simple => simple,
+    ast2\simple => simple2,
+    ast3\simple => simple3,
+    subBlocks => sub_blocks,
+    uniqueId => unique_id,
+    isMemberAccess => is_member_access,
+    localMeta => local_meta
+);
