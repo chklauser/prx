@@ -1,4 +1,4 @@
-// Prexonite
+﻿// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -432,24 +432,24 @@ references {
         }
 
         [Test]
-        public void RelativeDependency()
+        public void DependencyRelativeToSearchPath()
         {
             const string pathFound = "stack/found.pxs";
             const string pathLost = "stack/lost.pxs";
-            using (MockFile(pathFound, "name found;references{lost}"))
-            using (MockFile(pathLost, "name lost;"))
+            using (MockFile(pathFound, @"name stack\found;references{stack\lost}"))
+            using (MockFile(pathLost, @"name stack\lost;"))
             {
                 var emptyCount = Sam.TargetDescriptions.Count;
                 var desc =
                     Sam.AssembleAsync(
-                        Source.FromString(@"name finder;references{""./stack/found.pxs""};"), CancellationToken.None).Result;
+                        Source.FromString(@"name finder;references{stack\found};"), CancellationToken.None).Result;
                 Assert.That(desc, Is.Not.Null);
                 Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
 
                 // Does the primary module depend on lost and found?
-                var foundModuleName = new ModuleName("found", new Version(0, 0));
-                var lostModuleName = new ModuleName("lost", new Version(0, 0));
+                var foundModuleName = new ModuleName("stack\\found", new Version(0, 0));
+                var lostModuleName = new ModuleName("stack\\lost", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
                 Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
 
@@ -537,7 +537,7 @@ references {
                 // Does the primary module depend on lost and found?
                 var foundModuleName = new ModuleName("found", new Version(0, 0));
                 var lostModuleName = new ModuleName("lost", new Version(0, 0));
-                var baseModuelName = new ModuleName("base", new Version(0, 0));
+                var baseModuleName = new ModuleName("base", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
                 Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
                 Assert.That(desc.Dependencies, Contains.Item(lostModuleName), string.Format("Primary is expected to depend on {0}.", lostModuleName));
@@ -549,7 +549,7 @@ references {
 
                 // Does found depend on base?
                 // ReSharper disable PossibleNullReferenceException
-                Assert.That(foundTarget.Dependencies, Contains.Item(baseModuelName), string.Format("{1} is expected to depend on {0}.", baseModuelName, foundModuleName));
+                Assert.That(foundTarget.Dependencies, Contains.Item(baseModuleName), string.Format("{1} is expected to depend on {0}.", baseModuleName, foundModuleName));
                 Assert.That(foundTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", foundModuleName));
 
                 // does SAM contain the lost module?
@@ -558,7 +558,7 @@ references {
                 Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostModuleName));
                 // ReSharper restore PossibleNullReferenceException
 
-                Assert.That(lostTarget.Dependencies, Contains.Item(baseModuelName), string.Format("{1} is expected to depend on {0}.", baseModuelName, lostTarget));
+                Assert.That(lostTarget.Dependencies, Contains.Item(baseModuleName), string.Format("{1} is expected to depend on {0}.", baseModuleName, lostTarget));
                 Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostTarget));
             }
         }
