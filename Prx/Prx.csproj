@@ -31,6 +31,14 @@
     <EmbeddedResource Include="src\prx_interactive.pxs" />
     <EmbeddedResource Include="src\prx_lib.pxs" />
     <EmbeddedResource Include="src\prx_main.pxs" />
+    <None Update="psr\_2\psr\prop.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="psr\**\*.pxs" CopyToOutputDirectory="Always" />
+    <None Include="samples\**\*.pxs" CopyToPublishDirectory="Always" />
   </ItemGroup>
   
   <PropertyGroup>
