@@ -207,7 +207,7 @@ Add System::Xml to Imports;
             var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
-            var symbols = ldr.TopLevelSymbols;
+            var symbols = ldr.Symbols;
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.Function, "f\\1", target.Module.Name), LookupSymbolEntry(symbols, @"f\1"));
@@ -237,7 +237,7 @@ Add System::Xml to Imports;
             var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
-            var symbols = ldr.TopLevelSymbols;
+            var symbols = ldr.Symbols;
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.Function, "name1", target.Module.Name), LookupSymbolEntry(symbols, "name1"));
@@ -280,7 +280,7 @@ Add System::Xml to Imports;
             ldr.LoadFromString(input1);
             Assert.AreEqual(
                 0, ldr.ErrorCount, "The compiler reported errors in the first chunk of code.");
-            var symbols = ldr.TopLevelSymbols;
+            var symbols = ldr.Symbols;
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1", target.Module.Name),
@@ -558,16 +558,16 @@ function func3(param1, param2)
 
             //func1
             Assert.IsTrue(target.Functions.Contains("func1"), "func1 is not in the function table");
-            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.TopLevelSymbols, "func1").Interpretation);
+            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func1").Interpretation);
             Assert.AreEqual(0, target.Functions["func1"].Parameters.Count);
 
             Assert.IsTrue(target.Functions.Contains("func2"), "func2 is not in the function table");
-            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.TopLevelSymbols, "func2").Interpretation);
+            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func2").Interpretation);
             Assert.AreEqual(3, target.Functions["func2"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func2"].Parameters[1]);
 
             Assert.IsTrue(target.Functions.Contains("func3"), "func3 is not in the function table");
-            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.TopLevelSymbols, "func3").Interpretation);
+            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func3").Interpretation);
             Assert.AreEqual(2, target.Functions["func3"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func3"].Parameters[1]);
             Assert.AreEqual(1, target.Functions["func3"].ImportedNamespaces.Count);
@@ -1041,40 +1041,40 @@ var d as e, f;
             Assert.IsFalse(target.Variables.ContainsKey("f"), "No Variable f must exist.");
 
 
-            Assert.IsTrue(ldr.TopLevelSymbols.Contains("a"), "Symbol a must exist.");
-            var a = LookupSymbolEntry(ldr.TopLevelSymbols, "a");
+            Assert.IsTrue(ldr.Symbols.Contains("a"), "Symbol a must exist.");
+            var a = LookupSymbolEntry(ldr.Symbols, "a");
             Assert.IsTrue(a.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol a must be global object variable.");
 
-            Assert.IsTrue(ldr.TopLevelSymbols.Contains("b"), "Symbol b must exist.");
-            var b = LookupSymbolEntry(ldr.TopLevelSymbols, "b");
+            Assert.IsTrue(ldr.Symbols.Contains("b"), "Symbol b must exist.");
+            var b = LookupSymbolEntry(ldr.Symbols, "b");
             Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol b must be global object variable.");
             Assert.IsTrue(target.Variables.ContainsKey(b.InternalId),
                 "Symbol b must point to a physical variable.");
 
-            Assert.IsTrue(ldr.TopLevelSymbols.Contains("c"), "Symbol c must exist.");
-            var c = LookupSymbolEntry(ldr.TopLevelSymbols, "c");
+            Assert.IsTrue(ldr.Symbols.Contains("c"), "Symbol c must exist.");
+            var c = LookupSymbolEntry(ldr.Symbols, "c");
             Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol c must be global object variable.");
             Assert.IsTrue(target.Variables.ContainsKey(c.InternalId),
                 "Symbol c must point to a physical variable.");
             Assert.IsTrue(b.InternalId == c.InternalId, "Symbols b and c must point to the same variable.");
 
-            Assert.IsTrue(ldr.TopLevelSymbols.Contains("d"), "Symbol d must exist.");
-            var d = LookupSymbolEntry(ldr.TopLevelSymbols, "d");
+            Assert.IsTrue(ldr.Symbols.Contains("d"), "Symbol d must exist.");
+            var d = LookupSymbolEntry(ldr.Symbols, "d");
             Assert.IsTrue(d.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol d must be global object variable.");
 
-            Assert.IsTrue(ldr.TopLevelSymbols.Contains("e"), "Symbol e must exist.");
-            var e = LookupSymbolEntry(ldr.TopLevelSymbols, "e");
+            Assert.IsTrue(ldr.Symbols.Contains("e"), "Symbol e must exist.");
+            var e = LookupSymbolEntry(ldr.Symbols, "e");
             Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol e must be global object variable.");
             Assert.IsTrue(target.Variables.ContainsKey(e.InternalId),
                 "Symbol e must point to a physical variable.");
 
-            Assert.IsTrue(ldr.TopLevelSymbols.Contains("f"), "Symbol f must exist.");
-            var f = LookupSymbolEntry(ldr.TopLevelSymbols, "f");
+            Assert.IsTrue(ldr.Symbols.Contains("f"), "Symbol f must exist.");
+            var f = LookupSymbolEntry(ldr.Symbols, "f");
             Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol f must be global object variable.");
             Assert.IsTrue(target.Variables.ContainsKey(f.InternalId),
@@ -1090,7 +1090,7 @@ var d as e, f;
             var ldr = _compile(@"
 declare function main/the_module/0.1;
 ");
-            var mainSym = LookupSymbolEntry(ldr.TopLevelSymbols, "main");
+            var mainSym = LookupSymbolEntry(ldr.Symbols, "main");
             Assert.That(mainSym.InternalId,Is.EqualTo("main"));
             Assert.That(mainSym.Interpretation,Is.EqualTo(SymbolInterpretations.Function));
             Assert.That(mainSym.Module, Is.EqualTo(target.Module.Cache["the_module", new Version(0, 1)]));
