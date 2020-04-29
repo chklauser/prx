@@ -3479,32 +3479,32 @@ function f as alias1, alias2(){}
 function as alias3, alias4{}
 ");
             Assert.IsTrue(target.Functions.Contains("f"),"Function f not defined");
-            var entryF = LookupSymbolEntry(ldr.TopLevelSymbols, "F");
+            var entryF = LookupSymbolEntry(ldr.Symbols, "F");
             Assert.IsNotNull(entryF,"No symbol table entry for `f` exists");
             Assert.IsTrue(entryF.Interpretation == SymbolInterpretations.Function,"Symbol f is not declared as a function");
             Assert.IsTrue(target.Functions.Contains(entryF.InternalId));
 
-            var alias1 = LookupSymbolEntry(ldr.TopLevelSymbols, "alias1");
+            var alias1 = LookupSymbolEntry(ldr.Symbols, "alias1");
             Assert.IsNotNull(alias1, "No symbol table entry for `alias1` exists");
             Assert.IsTrue(alias1.Interpretation == SymbolInterpretations.Function, "Symbol alias1 is not declared as a function");
             Assert.IsTrue(target.Functions.Contains(alias1.InternalId));
             Assert.AreSame(target.Functions[entryF.InternalId], target.Functions[alias1.InternalId]);
             Assert.IsFalse(target.Functions.Contains("alias1"));
 
-            var alias2 = LookupSymbolEntry(ldr.TopLevelSymbols, "alias2");
+            var alias2 = LookupSymbolEntry(ldr.Symbols, "alias2");
             Assert.IsNotNull(alias2, "No symbol table entry for `alias2` exists");
             Assert.IsTrue(alias2.Interpretation == SymbolInterpretations.Function, "Symbol alias2 is not declared as a function");
             Assert.IsTrue(target.Functions.Contains(alias2.InternalId));
             Assert.AreSame(target.Functions[entryF.InternalId], target.Functions[alias2.InternalId]);
             Assert.IsFalse(target.Functions.Contains("alias2"));
 
-            var alias3 = LookupSymbolEntry(ldr.TopLevelSymbols, "alias3");
+            var alias3 = LookupSymbolEntry(ldr.Symbols, "alias3");
             Assert.IsNotNull(alias3, "No symbol table entry for `alias3` exists");
             Assert.IsTrue(alias3.Interpretation == SymbolInterpretations.Function, "Symbol alias3 is not declared as a function");
             Assert.IsTrue(target.Functions.Contains(alias3.InternalId));
             Assert.IsFalse(target.Functions.Contains("alias3"));
 
-            var alias4 = LookupSymbolEntry(ldr.TopLevelSymbols, "alias4");
+            var alias4 = LookupSymbolEntry(ldr.Symbols, "alias4");
             Assert.IsNotNull(alias4, "No symbol table entry for `alias4` exists");
             Assert.IsTrue(alias4.Interpretation == SymbolInterpretations.Function, "Symbol alias4 is not declared as a function");
             Assert.IsTrue(target.Functions.Contains(alias4.InternalId));

@@ -1,4 +1,4 @@
-// Prexonite
+﻿// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -190,9 +190,9 @@ function main(x)
             var mn = ldr.ParentApplication.Module.Name;
 
             {
-                Assert.That(ldr.TopLevelSymbols.Contains("f"), Is.True,
+                Assert.That(ldr.Symbols.Contains("f"), Is.True,
                     "Symbol table must contain an entry for 'f'.");
-                var entry = LookupSymbolEntry(ldr.TopLevelSymbols,"f");
+                var entry = LookupSymbolEntry(ldr.Symbols,"f");
                 Assert.That(entry,Is.InstanceOf<DereferenceSymbol>());
                 var deref = (DereferenceSymbol) entry;
                 Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
@@ -204,9 +204,9 @@ function main(x)
             }
 
             {
-                Assert.That(ldr.TopLevelSymbols.Contains("g"), Is.True,
+                Assert.That(ldr.Symbols.Contains("g"), Is.True,
                     "Symbol table must contain an entry for 'g'.");
-                var entry = LookupSymbolEntry(ldr.TopLevelSymbols, "g");
+                var entry = LookupSymbolEntry(ldr.Symbols, "g");
                 Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
                 var deref = (DereferenceSymbol)entry;
                 Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
@@ -217,9 +217,9 @@ function main(x)
             }
 
             {
-                Assert.That(ldr.TopLevelSymbols.Contains("p"), Is.True,
+                Assert.That(ldr.Symbols.Contains("p"), Is.True,
                     "Symbol table must contain an entry for 'p'.");
-                var entry = LookupSymbolEntry(ldr.TopLevelSymbols, "p");
+                var entry = LookupSymbolEntry(ldr.Symbols, "p");
                 Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
                 var deref = (DereferenceSymbol)entry;
                 Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
@@ -526,14 +526,14 @@ function main()
 function f = 17;
 ");
             Symbol f;
-            if(!ldr.TopLevelSymbols.TryGet("f",out f))
+            if(!ldr.Symbols.TryGet("f",out f))
                 Assert.Fail("Expected module level symbol f to exist.");
 
             var scopea = SymbolStore.Create();
             scopea.Declare("g",f);
             var nsa = new MergedNamespace(scopea);
             var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
-            ldr.TopLevelSymbols.Declare("a",a);
+            ldr.Symbols.Declare("a",a);
 
             Compile(ldr, @"
 function main()
@@ -554,7 +554,7 @@ function main()
 function f = 17;
 ");
             Symbol f;
-            if (!ldr.TopLevelSymbols.TryGet("f", out f))
+            if (!ldr.Symbols.TryGet("f", out f))
                 Assert.Fail("Expected module level symbol f to exist.");
 
             var scopea = SymbolStore.Create();
@@ -567,7 +567,7 @@ function f = 17;
             var nsb = new MergedNamespace(scopeb);
             var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
 
-            ldr.TopLevelSymbols.Declare("b",b);
+            ldr.Symbols.Declare("b",b);
 
             Compile(ldr, @"
 function main()
@@ -588,7 +588,7 @@ function main()
 function f = 17;
 ");
             Symbol f;
-            if (!ldr.TopLevelSymbols.TryGet("f", out f))
+            if (!ldr.Symbols.TryGet("f", out f))
                 Assert.Fail("Expected module level symbol f to exist.");
 
             var scopea = SymbolStore.Create();
@@ -601,7 +601,7 @@ function f = 17;
             var nsb = new MergedNamespace(scopeb);
             var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
 
-            ldr.TopLevelSymbols.Declare("b", b);
+            ldr.Symbols.Declare("b", b);
 
             Compile(ldr, @"
 declare(z = sym(""b"",""a""));
