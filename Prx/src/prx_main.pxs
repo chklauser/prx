@@ -55,7 +55,8 @@ namespace prx.cli
                 @"timer\reset",
                 @"createBenchmark",
                 @"__console",
-                @"host\self_assembling_build_plan"])
+                @"host\self_assembling_build_plan",
+                @"host\prx_path"])
             engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
 
         //Set up the console
@@ -92,14 +93,12 @@ namespace prx.cli
         var interactive = 6;  //Launching the interactive console after compilation
         var arg = 7;          //Gathering arguments for the application
         var reference = 8;    //Next argument defines an additional moduel to load
+        var search_path = 9;  //Next argument is an additional search path
     }
 
     function prx\main()
     {
         var arguments = var args;
-        print("args: ");
-        arguments >> each(print(?," "));
-        println;
         originalArgs = arguments;
 
         if(arguments == null or arguments.Length == 0)
@@ -113,7 +112,9 @@ namespace prx.cli
         //Define default settings
         var state = states.run;      //Run the compiled application b default
         var arg_reverse_state = state;
+        var state_after_option = state;
         var sourceFiles = [];
+        var searchPaths = [];
         var verbose = false;
         var headerOnly = false;
         var debugging = false;
@@ -124,6 +125,17 @@ namespace prx.cli
 
         var scriptArgs = [];
 
+        function expect_option_argument(new_state)
+        {
+            state_after_option = state;
+            state = new_state;
+        }
+
+        function restore_after_option
+        {
+            state = state_after_option;
+        }
+
         //Interpret arguments one by one
         foreach(var current in arguments)
         {
@@ -131,32 +143,51 @@ namespace prx.cli
                 continue;
             else if(state == states.arg) //ignore options after -a
                 scriptArgs[] = current;
+            else if(state == states.search_path)
+            {
+                searchPaths += current;
+                restore_after_option;
+            }
+            else if(state == states.reference)
+            {
+                // add but expect additional arguments
+                sourceFiles.Add = current;
+                restore_after_option;
+            }            
+            else if(state == states.target)
+            {
+                targetPath = current;
+                restore_after_option;
+            }
             else if(current.StartsWith("-"))
                 if(current == "-c")         //  -c Compile
                     state = states.compile;
                 else if(current == "-t")    //  -t Target
-                    state = states.target;
+                    expect_option_argument = states.target;
                 else if(current == "-i")    //  -i Interactive
                     state = states.interactive;
                 else if(current == "-r")    //  -r  Reference
-                    state = states.reference;
-                else if(current == "-v")    //  -v  Verbose
+                    expect_option_argument = states.reference;
+                else if(current == "-v" or current == "--verbose")    //  -v  Verbose
                     verbose = true;
-                else if(current == "-h")    //  -h  Header only
+                else if(current == "-h" or current == "--header")    //  -h  Header only
                     headerOnly = true;
-                else if(current == "-a")    //  -a  Arguments
+                else if(current == "-a" || current == "--")    //  -a  Arguments
                 {
                     arg_reverse_state = state;
                     state = states.arg;
                 }
-                else if(current == "-b")    //  -b  disable tab completion (for piped input)
+                else if(current == "-b" or current == "--no-tab")    //  -b  disable tab completion (for piped input)
                     supportsTabs = false;
-                else if(current == "-d")    //  -d  Debugging
+                else if(current == "-d" or current == "--debug")    //  -d  Debugging
                     debugging = true;
-                else if(current == "-nowarn")
+                else if(current == "-nowarn" or current == "--nowarn")
+                    // the single dash `-nowarn` is recognized for backwards compatibility
                     suppressWarnings = true;
                 else if(current == "--legacy")
                     useLegacyLoader = true;
+                else if(current == "-s" or current == "--search-path")
+                    expect_option_argument = states.search_path;
                 else if(current == "-?")    //  -h  Help
                 {
                     displayHelp;
@@ -164,8 +195,6 @@ namespace prx.cli
                 }
                 else
                     red = () => println("Unknown option " + current + "."); //see *1*
-            else if(state == states.reference)
-                sourceFiles.Add = current; // add but expect additional arguments
             else if(state == states.compile Or state == states.run Or state == states.interactive)
             {
                 sourceFiles.Add = current;
@@ -177,8 +206,6 @@ namespace prx.cli
                     state = states.arg;
                 }
             }
-            else if(state == states.target)
-                targetPath = current;
         }
 
         //*1*: 'red' is a function that takes in another function/lambda expression
@@ -206,6 +233,13 @@ namespace prx.cli
                  else
                     @"prx_interactive_app"
                 )+ ".c.pxs";
+
+        // Set up search path
+        var plan = host\self_assembling_build_plan;
+        var prx_path = host\prx_path;
+        plan.SearchPaths.Add(System::IO::Path.Combine(prx_path, "psr", "_2"));
+        plan.SearchPaths.Add(System::Environment.CurrentDirectory);
+        searchPaths >> each(plan.SearchPaths.Add(?));
 
         //Report
         if(verbose)
@@ -242,23 +276,28 @@ namespace prx.cli
 
     function displayHelp does print(
         "Usage:\n" +
-        "\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -d | -a <arguments...> | -b]\n" +
+        "\tprx [-v | -d | -b | -s <search_path> | -r <reference> | -i] <module> [--] [<arguments...>]\n" +
+        "\tprx -c [-t <target>] [-v | -d | -b | -s <search_path> | -r <reference>] <module>\n" +
         "\tprx -i\n" +
         "\tprx -?\n" +
+        "\tprx --legacy <sources...> [-v | -d | -h] -c [-t <target>]\n" +
+        "\tprx --legacy <sources...> [-v | -d | -b] (-i | [-a <arguments...>])\n" +
         "\n" +
-        "List the required source files (*.pxs) after the -c switch.\n" +
-        "Define the name of the output file using -t.\n"+
+        "Run scripts with `prx ./file_name.pxs` or with `prx module.name`." +
+        "Enter interactive mode (with or without a source module) using the `-i` switch.\n"+
+        "Produce a compiled version of a module using the `-c` switch.\n"+
+        "Use `--search-path` look for modules and files in additional directories. \n"+
         "\n"+
-        "The default action is storing the compiled application in the target file.\n"+
-        "Run the application instead by using the -r switch.\n"+
-        "Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
-        "-v enables additional output.\n"+
-        "-h extracts declarations (only with -c).\n"+
-        "-b disables tab completion (tab completion only supported on windows).\n"+
-        "-a forwards the rest of the arguments to the executing script.\n" +
-        "-d enables debugging mode\n" +
-        "-nowarn disables all warnings\n" +
-        "--legacy uses Prexonite 1 loader\n");
+        "--verbose -v          enables additional output.\n"+
+        "--header -h           extracts declarations (only with -c).\n"+
+        "--no-tab -b           disables tab completion (tab completion only supported on windows).\n"+
+        "-- -a                 forwards the rest of the arguments to the executing script.\n" +
+        "--debug -d            enables debugging mode\n" +
+        "--search-path <path>  also searches for files/modules in that directory.\n" + 
+        "          -s <path>   Can be specifield multiple times.\n" +
+        "-r <module>           load an additional module\n" +
+        "--nowarn              disables all warnings\n" +
+        "--legacy              uses Prexonite 1 loader\n");
 
     function execute_legacy(options)
     {
@@ -421,11 +460,7 @@ namespace prx.cli
 
     function assemble_from_file_async(plan,file)
     {
-        plan.SearchPaths.Add(System::IO::Path.GetDirectoryName(file));
-        var desc = plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromFile(
-                file, System::Text::Encoding.UTF8),
-            System::Threading::CancellationToken.None);
-        return desc;
+        return plan.ResolveAndAssembleAsync(file, System::Threading::CancellationToken.None);
     }
 
     function execute_plan(options)
