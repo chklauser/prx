@@ -27,10 +27,11 @@ using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    public abstract class Symbol : IEquatable<Symbol>
+    public abstract class Symbol : IEquatable<Symbol>, IObject
     {
         public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Symbolic");
 
@@ -160,6 +161,56 @@ namespace Prexonite.Compiler.Symbolic
             else return Equals((Symbol) obj);
         }
         public abstract override int GetHashCode();
+
+        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        {
+            static PValue assignOutParameter(StackContext stackContext, PValue[] innerArgs, object value, bool found)
+            {
+                if (innerArgs.Length > 0)
+                {
+                    var wrappedValue = found ? stackContext.CreateNativePValue(value) : PType.Null;   
+                    innerArgs[0].IndirectCall(stackContext, new[] {wrappedValue});
+                }
+                return stackContext.CreateNativePValue(found);
+            }
+
+            bool found;
+            switch (id.ToUpperInvariant())
+            {
+                case "TRYGETNAMESPACESYMBOL":
+                    found = TryGetNamespaceSymbol(out var namespaceSymbol);
+                    result = assignOutParameter(sctx, args, namespaceSymbol, found);
+                    return true;
+                
+                case "TRYGETNILSYMBOL":
+                    found = TryGetNilSymbol(out var nilSymbol);
+                    result = assignOutParameter(sctx, args, nilSymbol, found);
+                    return true;
+                
+                case "TRYGETREFERENCESYMBOL":
+                    found = TryGetReferenceSymbol(out var referenceSymbol);
+                    result = assignOutParameter(sctx, args, referenceSymbol, found);
+                    return true;
+                
+                case "TRYGETDEREFERENCESYMBOL":
+                    found = TryGetDereferenceSymbol(out var dereferenceSymbol);
+                    result = assignOutParameter(sctx, args, dereferenceSymbol, found);
+                    return true;
+                
+                case "TRYGETMESSAGESYMBOL":
+                    found = TryGetMessageSymbol(out var messageSymbol);
+                    result = assignOutParameter(sctx, args, messageSymbol, found);
+                    return true;
+                case "TRYGETEXPANDSYMBOL":
+                    found = TryGetExpandSymbol(out var expandSymbol);
+                    result = assignOutParameter(sctx, args, expandSymbol, found);
+                    return true;
+
+            }
+
+            result = PType.Null;
+            return false;
+        }
     }
 
     public abstract class WrappingSymbol : Symbol

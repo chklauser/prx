@@ -39,18 +39,13 @@ namespace Prexonite.Compiler.Build
     public interface ISelfAssemblingPlan : IPlan
     {
         /// <summary>
-        /// A mutable list of path prefixes to use for searching mentioned modules. 
-        /// This object is updated concurrently, use <see cref="SearchPathsLock"/> 
-        /// to coordinate access to it.
+        /// A mutable list of path prefixes to use for searching mentioned modules. Implementations is guaranteed to be
+        /// thread-safe, but enumeration may not be consistent.
         /// </summary>
+        /// <para>Behavior is not defined if the search path is being modified while this build plan is
+        /// assembling modules.</para>
         [NotNull, PublicAPI]
         IList<string> SearchPaths { get; }
-
-        /// <summary>
-        /// The lock used to coordinate access to <see cref="SearchPaths"/>.
-        /// </summary>
-        [NotNull]
-        SemaphoreSlim SearchPathsLock { get; }
 
         /// <summary>
         /// Reads self-assembly instructions in the header of the provided source 
