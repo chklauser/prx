@@ -592,6 +592,10 @@ namespace Prexonite
                     case OpCode.newclo:
                         var vars = ins.GenericArgument as string[];
                         func = _getTargetApplication(moduleName).Functions[id];
+                        if (func == null)
+                        {
+                            throw PhysicalFunctionNotFoundException(id, moduleName);
+                        }
                         if (vars == null)
                         {
                             MetaEntry[] entries;
@@ -961,9 +965,7 @@ namespace Prexonite
                             func = _getTargetApplication(moduleName).Functions[id];
                         }
                         if (func == null)
-                            throw PrexoniteRuntimeException.CreateRuntimeException
-                                (
-                                    this, "No function with the physical name " + id + " exists.");
+                            throw PhysicalFunctionNotFoundException(id, moduleName);
 #if NoCil
                         FunctionContext fctx =
                             new FunctionContext(
@@ -1233,6 +1235,11 @@ namespace Prexonite
             } while (!needToReturn);
 
             return _pointer < codeLength;
+        }
+
+        private PrexoniteRuntimeException PhysicalFunctionNotFoundException(string id, ModuleName moduleName)
+        {
+            return PrexoniteRuntimeException.CreateRuntimeException(this, "No function with the physical name " + id + (moduleName == null ? " exists." : $" exists in module {moduleName}."));
         }
 
         private Application _getTargetApplication(ModuleName moduleName)
