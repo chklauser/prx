@@ -125,15 +125,6 @@ namespace Prexonite.Compiler.Macro.Commands
 
         protected override void DoExpand(MacroContext context)
         {
-            if (!context.CallerIsMacro())
-            {
-                context.ReportMessage(
-                    Message.Error(
-                        string.Format(Resources.Reference_can_only_be_used_in_a_macro_context, Alias),
-                        context.Invocation.Position, MessageClasses.ReferenceUsage));
-                return;
-            }
-            
             if (context.Invocation.Arguments.Count == 0)
             {
                 context.ReportMessage(
