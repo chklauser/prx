@@ -436,20 +436,20 @@ references {
         {
             const string pathFound = "stack/found.pxs";
             const string pathLost = "stack/lost.pxs";
-            using (MockFile(pathFound, @"name stack\found;references{stack\lost}"))
-            using (MockFile(pathLost, @"name stack\lost;"))
+            using (MockFile(pathFound, @"name stack::found;references{stack::lost}"))
+            using (MockFile(pathLost, @"name stack::lost;"))
             {
                 var emptyCount = Sam.TargetDescriptions.Count;
                 var desc =
                     Sam.AssembleAsync(
-                        Source.FromString(@"name finder;references{stack\found};"), CancellationToken.None).Result;
+                        Source.FromString(@"name finder;references{stack::found};"), CancellationToken.None).Result;
                 Assert.That(desc, Is.Not.Null);
                 Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
 
                 // Does the primary module depend on lost and found?
-                var foundModuleName = new ModuleName("stack\\found", new Version(0, 0));
-                var lostModuleName = new ModuleName("stack\\lost", new Version(0, 0));
+                var foundModuleName = new ModuleName("stack.found", new Version(0, 0));
+                var lostModuleName = new ModuleName("stack.lost", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
                 Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
 
