@@ -135,17 +135,17 @@ namespace PrexoniteTests.Tests.Configurations
 
             if (!target.IsSuccessful)
             {
-                TestContext.Error.WriteLine("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
+                container.OneTimeSetupLog.WriteLine("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
 
                 if(target.Exception != null)
-                    TestContext.Error.WriteLine(target.Exception);
+                    container.OneTimeSetupLog.WriteLine(target.Exception);
 
                 foreach (var error in target.Messages.Where(m => m.Severity == MessageSeverity.Error))
-                    TestContext.Error.WriteLine("Error: {0}", error);
+                    container.OneTimeSetupLog.WriteLine("Error: {0}", error);
                 foreach (var warning in target.Messages.Where(m => m.Severity == MessageSeverity.Warning))
-                    TestContext.WriteLine("Warning: {0}", warning);
+                    container.OneTimeSetupLog.WriteLine("Warning: {0}", warning);
                 foreach (var info in target.Messages.Where(m => m.Severity == MessageSeverity.Info))
-                    TestContext.WriteLine("Info: {0}", info);
+                    container.OneTimeSetupLog.WriteLine("Info: {0}", info);
                 Assert.Fail("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
             }
 
