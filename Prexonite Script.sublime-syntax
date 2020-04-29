@@ -1,0 +1,252 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: Prexonite Script
+file_extensions:
+  - pxs
+scope: source.pxs
+contexts:
+  main:
+    - include: global
+  any:
+    - include: comments
+    - match: '(?i)(?<!\.)\b(is|not|as)\b(?!\$|''|\\|\p{Alnum})'
+      scope: keyword.operator.source.pxs
+  any-low:
+    - include: storage-keywords
+    - match: '(?i)(?<!\.)\bdeclare\b(?!\$|''|\\|\p{Alnum})'
+      scope: keyword.other.declare.source.pxs
+    - include: identifiers
+    - match: \(
+      comment: parentheses introduces local
+      captures:
+        0: punctuation.parentheses.opening.source.pxs
+      push:
+        - match: \)
+          captures:
+            0: punctuation.parentheses.closing.source.pxs
+          pop: true
+        - include: local
+    - match: '\{'
+      comment: block
+      captures:
+        0: punctuation.braces.opening.source.pxs
+      push:
+        - meta_scope: block.source.source.pxs
+        - match: '\}'
+          captures:
+            0: punctuation.braces.closing.source.pxs
+          pop: true
+        - include: local
+    - include: smart-strings
+  asm:
+    - include: comments
+    - include: numeric-constants
+    - include: version-literals
+    - include: boolean-constants
+  boolean-constants:
+    - match: '\b(true|false)\b(?!\$|''|\\|\p{Alnum})'
+      scope: constant.language.source.pxs
+  comments:
+    - match: //
+      push:
+        - meta_scope: comment.line.double-slash.source.pxs
+        - match: \n
+          pop: true
+    - match: /\*
+      push:
+        - meta_scope: comment.block.source.pxs
+        - match: \*/
+          pop: true
+  dumb-strings:
+    - match: '"'
+      captures:
+        0: punctuation.string.doublequotes.source.pxs
+      push:
+        - meta_scope: string.quoted.double.escaped.source.pxs
+        - match: '"'
+          captures:
+            0: punctuation.string.doublequotes.source.pxs
+          pop: true
+        - include: escape-sequences
+    - match: '@"'
+      captures:
+        0: punctuation.string.doublequotes.source.pxs
+      push:
+        - meta_scope: string.quoted.double.verbatim.source.pxs
+        - match: '"'
+          captures:
+            0: punctuation.string.doublequotes.source.pxs
+          pop: true
+        - include: verbatim-escape-sequences
+  escape-sequences:
+    - match: '\\([\\"&0abfnrvt$])'
+      scope: constant.character.escape.source.pxs
+    - match: '\\x\h{1,4}'
+      scope: constant.character.escape.unicode.source.pxs
+    - match: '\\u\h{4}'
+      scope: constant.character.escape.unicode.source.pxs
+    - match: '\\U\h{8}'
+      scope: constant.character.escape.unicode.source.pxs
+  global:
+    - include: any
+    - match: '(?i)(?<!\.)\b(add|to|namespace|build|import|export|enabled|disabled)\b(?!\$|''|\\|\p{Alnum})'
+      comment: Keywords that are only valid on a global scope. (Related to meta, usually)
+      scope: keyword.other.meta.source.pxs
+    - match: "="
+      comment: assigment introduces local
+      captures:
+        0: keyword.operator.assigment.source.pxs
+      push:
+        - match: ;
+          pop: true
+        - include: local
+    - match: '\['
+      push:
+        - meta_scope: block.meta.source.pxs
+        - match: '\]'
+          pop: true
+        - include: meta
+    - include: any-low
+  identifiers:
+    - match: \$"
+      captures:
+        0: punctuation.string.doublequotes.source.pxs
+      push:
+        - meta_content_scope: variable.other.identifier.source.pxs
+        - match: '"'
+          captures:
+            0: punctuation.string.doublequotes.source.pxs
+          pop: true
+        - include: escape-sequences
+    - match: '\$((\p{Alnum}|\\|\$|''|_|::)+)'
+      captures:
+        1: variable.other.identifier.source.pxs
+    - match: \$
+      scope: variable.other.identifier.source.pxs
+    - match: '(\p{Alpha}|\\|''|_)(\p{Alnum}|\\|\$|''|_|::)*'
+      scope: variable.other.identifier.source.pxs
+  interpolation:
+    - match: '(\$)((\p{Alnum}|\\|''|\$|_)+)(&?)'
+      comment: Single identifier interpolation
+      scope: string.interpolated.identifier.source.pxs
+      captures:
+        1: punctuation.string.interpolated.source.pxs
+        2: variable.other.source.pxs
+        4: punctuation.string.interpolated.source.pxs
+    - match: \$\(
+      comment: Expression interpolation, originally
+      captures:
+        0: punctuation.string.interpolated.source.pxs
+      push:
+        - meta_content_scope: string.interpolated.expression.source.pxs
+        - match: \)
+          captures:
+            0: punctuation.string.interpolated.source.pxs
+          pop: true
+        - include: local
+  local:
+    - include: any
+    - include: null-literal
+    - match: (?i)(?<!\.)\b(static)\b
+      scope: storage.modifier.source.pxs
+    - match: '(?i)(?<!\.)\b(if|else|unless|while|until|do|for|foreach|in|using|throw|try|catch|finally|return|yield|break|continue|this|method|namespace|import|export)\b(?!\$|''|\\|\p{Alnum})'
+      scope: keyword.control.source.pxs
+    - match: '(?i)(?<!\.)\b(and|or|mod|coroutine|as|new)\b(?!\$|''|\\|\p{Alnum})'
+      scope: keyword.operator.source.pxs
+    - match: (\+|-|\+\+|--|\*|/|==|!=|<|>|<=|>=|\|>|<\||=>|\?|\.|:|\^|\||&|=|\?\?|>>|<<|->)
+      scope: keyword.operator.source.pxs
+    - match: (?i)(?<!\.)\b(asm)\s*\(
+      comment: Inline assembler expression
+      captures:
+        1: keyword.other.asm.source.pxs
+      push:
+        - meta_scope: block.asm.source.pxs
+        - match: \)
+          pop: true
+        - include: asm
+    - match: '(?i)(?<!\.)\b(asm)\s*\{'
+      comment: Inline assembler block
+      captures:
+        1: keyword.other.asm.source.pxs
+      push:
+        - meta_scope: block.asm.source.pxs
+        - match: '\}'
+          pop: true
+        - include: asm
+    - match: '\['
+      push:
+        - meta_scope: block.meta.source.pxs
+        - match: '\]'
+          pop: true
+        - include: local
+    - include: any-low
+  meta:
+    - include: comments
+    - include: boolean-constants
+    - include: version-literals
+    - include: numeric-constants
+    - include: dumb-strings
+    - match: '(?i)(?<!\.)\b(is|enabled|disabled|not)\b(?!\$|''|\\|\p{Alnum})'
+      scope: keyword.other.meta.source.pxs
+    - include: identifiers
+    - match: '\{'
+      comment: meta list
+      captures:
+        0: punctuation.braces.opening.source.pxs
+      push:
+        - meta_scope: list.meta.source.source.pxs
+        - match: '\}'
+          captures:
+            0: punctuation.braces.closing.source.pxs
+          pop: true
+        - include: meta
+  null-literal:
+    - match: (?i)\b(?<!\.)null\b
+      scope: constant.language.nullptr.source.pxs
+  numeric-constants:
+    - match: '\b(\d(\d|'')*)?\.(\d(\d|'')*)[eE][-]?(\d(\d|'')*)\b'
+      scope: constant.numeric.real.source.pxs
+    - include: real-like-constant
+    - match: '\b(\d(\d|'')*)\b|\b0x((\d|[A-Fa-f])(\d|''|[A-Fa-f])*)\b'
+      scope: constant.numeric.integer.source.pxs
+  operator-shortnames:
+    - match: (?i)\((\+|-|\*|/|(?<!\.)mod|\^|&|\|(?<!\.)xor|==|!=|>|>=|<=|<|-\.|\+\+|--)\)
+      comment: These are treated specially, because they are identifiers from a lexical standpoint.
+      scope: keyword.operator.shortname.source.pxs
+  real-like-constant:
+    - match: \b(\d(\d|')*)\.(\d(\d|')*)\b
+      scope: constant.numeric.real_like.source.pxs
+  smart-strings:
+    - match: '"'
+      captures:
+        0: punctuation.string.doublequotes.source.pxs
+      push:
+        - meta_scope: string.quoted.double.escaped.source.pxs
+        - match: '"'
+          captures:
+            0: punctuation.string.doublequotes.source.pxs
+          pop: true
+        - include: escape-sequences
+        - include: interpolation
+    - match: '@"'
+      captures:
+        0: punctuation.string.doublequotes.source.pxs
+      push:
+        - meta_scope: string.quoted.double.verbatim.source.pxs
+        - match: '"'
+          captures:
+            0: punctuation.string.doublequotes.source.pxs
+          pop: true
+        - include: verbatim-escape-sequences
+        - include: interpolation
+  storage-keywords:
+    - match: '(?i)(?<!\.)\b(var|ref|function|command|macro|lazy)\b(?!\$|''|\\|\p{Alnum})'
+      scope: storage.type.interpretation.source.pxs
+  verbatim-escape-sequences:
+    - match: '""'
+      scope: constant.character.escape.source.pxs
+  version-literals:
+    - match: \b(\d(\d|')*)\.(\d(\d|')*)\.(\d(\d|')*)(\.(\d(\d|')*))?\b
+      scope: constant.numeric.version.source.pxs
+    - include: real-like-constant
