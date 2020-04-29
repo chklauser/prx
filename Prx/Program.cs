@@ -282,13 +282,15 @@ namespace Prx
 
             #endregion
 
+            var prxPath = GetPrxPath();
+            
             #region Self-assembling build plan reference
 
             engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, args) => sctx.CreateNativePValue(plan));
+            engine.Commands.AddHostCommand(@"host\prx_path", (sctx, args) => sctx.CreateNativePValue(prxPath));
 
             #endregion
 
-            var prxPath = GetPrxPath();
             var bootstrapPath = Path.Combine(prxPath, PrxScriptFileName);
             var (entryPath, deleteSrc) = _ensureSourceAvailable(bootstrapPath, prxPath);
 
@@ -330,7 +332,6 @@ namespace Prx
 #endif
             }
 
-
             if (deleteSrc)
                 Directory.Delete(Path.Combine(prxPath ,"src"), true);
 
@@ -343,7 +344,7 @@ namespace Prx
                 return null;
             
             var app = result.Item1;
-            app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName()!.Version!.ToString();
             return app;
 
         }
