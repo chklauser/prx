@@ -472,16 +472,47 @@ namespace Prexonite.Compiler.Symbolic.Internal
         {
             get
             {
-                _lock.EnterReadLock();
+                IEnumerator<KeyValuePair<string, Symbol>>? enumerator = null;
                 try
                 {
-                    if (_local != null)
-                        foreach (var symbol in _local)
-                            yield return symbol;
+                    _lock.EnterReadLock();
+                    try
+                    {
+                        if (_local == null)
+                        {
+                            yield break;
+                        }
+
+                        enumerator = _local.GetEnumerator();
+                    }
+                    finally
+                    {
+                        _lock.ExitReadLock();
+                    }
+
+                    while (true)
+                    {
+                        _lock.EnterReadLock();
+                        try
+                        {
+                            if (enumerator.MoveNext())
+                            {
+                                yield return enumerator.Current;
+                            }
+                            else
+                            {
+                                yield break;
+                            }
+                        }
+                        finally
+                        {
+                            _lock.ExitReadLock();
+                        }
+                    }
                 }
                 finally
                 {
-                    _lock.ExitReadLock();
+                    enumerator?.Dispose();
                 }
             }
         }
