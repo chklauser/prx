@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
@@ -10,51 +12,29 @@ namespace Prexonite.Compiler
     public class DeclarationScope
     {
         [NotNull]
-        private readonly LocalNamespace _namespace;
+        public Namespace Namespace => _LocalNamespace;
 
         [NotNull]
-        private readonly SymbolStore _store;
-        private readonly QualifiedId _pathPrefix;
+        internal LocalNamespace _LocalNamespace { get; }
 
-        [NotNull]
-        public Namespace Namespace
-        {
-            get { return _namespace; }
-        }
-
-        [NotNull]
-        internal LocalNamespace _LocalNamespace
-        {
-            get { return _namespace; }
-        }
-
-        public QualifiedId PathPrefix
-        {
-            get { return _pathPrefix; }
-        }
+        public QualifiedId PathPrefix { get; }
 
         /// <summary>
         /// Symbol store for symbols local to the scope (private, not necessarily exported)
         /// </summary>
-        public SymbolStore Store
-        {
-            get { return _store; }
-        }
+        [NotNull]
+        public SymbolStore Store { get; }
 
         internal DeclarationScope([NotNull] LocalNamespace ns, QualifiedId pathPrefix, [NotNull] SymbolStore store)
         {
-            if (ns == null) throw new ArgumentNullException(nameof(ns));
-            if (store == null)
-                throw new ArgumentNullException(nameof(store));
-                
-            _namespace = ns;
-            _pathPrefix = pathPrefix;
-            _store = store;
+            _LocalNamespace = ns ?? throw new ArgumentNullException(nameof(ns));
+            PathPrefix = pathPrefix;
+            Store = store ?? throw new ArgumentNullException(nameof(store));
         }
 
         public override string ToString()
         {
-            return _pathPrefix.ToString();
+            return PathPrefix.ToString();
         }
     }
 }

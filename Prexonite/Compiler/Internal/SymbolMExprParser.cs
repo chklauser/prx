@@ -58,23 +58,21 @@ namespace Prexonite.Compiler.Internal
         {
             symbol = null;
 
-            List<MExpr> elements;
-            if (!expr.TryMatchHead(SymbolMExprSerializer.CrossReferenceHead, out elements))
+            if (!expr.TryMatchHead(SymbolMExprSerializer.CrossReferenceHead, out List<MExpr> elements))
                 return false;
 
             var currentScope = symbols;
             for (var i = 0; i < elements.Count; i++)
             {
                 var element = elements[i];
-                string symbolName;
-                if (!element.TryMatchStringAtom(out symbolName))
+                if (!element.TryMatchStringAtom(out var symbolName))
                     throw new ErrorMessageException(Message.Error(
-                        string.Format("Symbolic reference must be consist only of symbol names. Found {0} {1} instead.", (element != null ? element.GetType().ToString() : ""), element),
+                        $"Symbolic reference must be consist only of symbol names. Found {(element.GetType())} {element} instead.",
                         element.Position, MessageClasses.SymbolNotResolved));
                 if (!currentScope.TryGet(symbolName, out symbol))
                     throw new ErrorMessageException(
                        Message.Error(
-                           String.Format("Cannot find symbol {0} referred to by delcaration {1}.", symbolName, expr),
+                           $"Cannot find symbol {symbolName} referred to by declaration {expr}.",
                            expr.Position, MessageClasses.SymbolNotResolved));
 
                 // If this is not the last element in the sequence, it must refer to a namespace symbol
@@ -95,9 +93,6 @@ namespace Prexonite.Compiler.Internal
                     if (abortMessage != null)
                         throw new ErrorMessageException(abortMessage);
 
-                    // Impossible. Condition required to convey that fact to null-analysis
-                    if (nsSym == null)
-                        throw new PrexoniteException("Namespace symbol was expected to exist. Internal error (\"impossible condition\").");
                     currentScope = nsSym.Namespace;
                 }
             }
@@ -112,11 +107,8 @@ namespace Prexonite.Compiler.Internal
         [NotNull]
         public Symbol Parse( [NotNull] MExpr expr)
         {
-            MExpr innerSymbolExpr;
             Symbol innerSymbol;
-            List<MExpr> elements;
-            object raw;
-            if (expr.TryMatchHead(SymbolMExprSerializer.DereferenceHead, out innerSymbolExpr))
+            if (expr.TryMatchHead(SymbolMExprSerializer.DereferenceHead, out MExpr innerSymbolExpr))
             {
                 innerSymbol = Parse(innerSymbolExpr);
                 return Symbol.CreateDereference(innerSymbol, expr.Position);
@@ -129,7 +121,7 @@ namespace Prexonite.Compiler.Internal
             {
                 return innerSymbol;
             }
-            else if (expr.TryMatchHead(SymbolMExprSerializer.ErrorHead, out elements) && elements.Count == 4)
+            else if (expr.TryMatchHead(SymbolMExprSerializer.ErrorHead, out List<MExpr> elements) && elements.Count == 4)
             {
                 return _parseMessage(MessageSeverity.Error, expr, elements);
             }
@@ -146,7 +138,7 @@ namespace Prexonite.Compiler.Internal
                 innerSymbol = Parse(innerSymbolExpr);
                 return Symbol.CreateExpand(innerSymbol, expr.Position);
             }
-            else if (expr.TryMatchAtom(out raw) && raw == null)
+            else if (expr.TryMatchAtom(out var raw) && raw == null)
             {
                 return Symbol.CreateNil(expr.Position);
             }
@@ -166,9 +158,7 @@ namespace Prexonite.Compiler.Internal
             Debug.Assert(elements[2] != null);
             Debug.Assert(elements[3] != null);
             var position = _parsePosition(elements[0]);
-            object rawMessageClass;
-            string messageText;
-            if (elements[1].TryMatchAtom(out rawMessageClass) && elements[2].TryMatchStringAtom(out messageText))
+            if (elements[1].TryMatchAtom(out var rawMessageClass) && elements[2].TryMatchStringAtom(out var messageText))
             {
                 var message = Message.Create(severity, messageText, position,
                     (rawMessageClass == null ? null : rawMessageClass.ToString()));
@@ -185,22 +175,15 @@ namespace Prexonite.Compiler.Internal
         [NotNull]
         private static ISourcePosition _parsePosition([NotNull] MExpr expr)
         {
-            MExpr fileExpr;
-            MExpr lineExpr;
-            MExpr columnExpr;
-            string file;
-            int line;
-            int column;
-            List<MExpr> hereArgs;
-            if (expr.TryMatchHead(SymbolMExprSerializer.SourcePositionHead, out fileExpr, out lineExpr,
-                                  out columnExpr)
-                && fileExpr.TryMatchStringAtom(out file)
-                && lineExpr.TryMatchIntAtom(out line)
-                && columnExpr.TryMatchIntAtom(out column))
+            if (expr.TryMatchHead(SymbolMExprSerializer.SourcePositionHead, out var fileExpr, out var lineExpr,
+                    out var columnExpr)
+                && fileExpr.TryMatchStringAtom(out var file)
+                && lineExpr.TryMatchIntAtom(out var line)
+                && columnExpr.TryMatchIntAtom(out var column))
             {
                 return new SourcePosition(file, line, column);
             }
-            else if(expr.TryMatchHead(HerePositionHead, out hereArgs))
+            else if(expr.TryMatchHead(HerePositionHead, out List<MExpr> hereArgs))
             {
                 return expr.Position;
             }

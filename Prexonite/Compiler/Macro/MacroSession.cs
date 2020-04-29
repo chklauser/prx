@@ -41,15 +41,9 @@ namespace Prexonite.Compiler.Macro
     /// </summary>
     public class MacroSession : IDisposable
     {
-        [NotNull]
-        private readonly CompilerTarget _target;
-
         [CanBeNull]
         private LoaderOptions _options;
-        [NotNull]
-        private readonly SymbolStore _globalSymbols;
-        [NotNull]
-        private readonly ReadOnlyCollectionView<string> _outerVariables;
+
         [NotNull]
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         [NotNull]
@@ -65,9 +59,6 @@ namespace Prexonite.Compiler.Macro
         [NotNull]
         private readonly List<PValue> _transportStore = new List<PValue>();
 
-        [NotNull]
-        private readonly IAstFactory _astFactory;
-
         /// <summary>
         ///     Creates a new macro expansion session for the specified compiler target.
         /// </summary>
@@ -77,11 +68,11 @@ namespace Prexonite.Compiler.Macro
             if(target == null)
                 throw new ArgumentNullException(nameof(target));
 
-            _target = target;
-            _astFactory = _target.Factory;
+            Target = target;
+            Factory = Target.Factory;
             
-            _globalSymbols = SymbolStore.Create(_target.Loader.TopLevelSymbols);
-            _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
+            GlobalSymbols = SymbolStore.Create(Target.Loader.Symbols);
+            OuterVariables = new ReadOnlyCollectionView<string>(Target.OuterVariables);
 
             _buildCommandToken = target.Loader.RequestBuildCommands();
         }
@@ -89,24 +80,17 @@ namespace Prexonite.Compiler.Macro
         /// <summary>
         ///     Provides read-only access to the global symbol table.
         /// </summary>
-        public SymbolStore GlobalSymbols
-        {
-            get { return _globalSymbols; }
-        }
+        [NotNull]
+        public SymbolStore GlobalSymbols { get; }
 
         /// <summary>
         ///     The target that this macro expansion session covers.
         /// </summary>
-        public CompilerTarget Target
-        {
-            [DebuggerStepThrough]
-            get { return _target; }
-        }
+        [NotNull]
+        public CompilerTarget Target { [DebuggerStepThrough] get; }
 
-        public ReadOnlyCollectionView<string> OuterVariables
-        {
-            get { return _outerVariables; }
-        }
+        [NotNull]
+        public ReadOnlyCollectionView<string> OuterVariables { get; }
 
         /// <summary>
         ///     A copy of the loader options in effect during this macro expansion.
@@ -117,28 +101,20 @@ namespace Prexonite.Compiler.Macro
             {
                 if (_options == null)
                 {
-                    _options = new LoaderOptions(_target.Loader.ParentEngine,
-                        _target.Loader.ParentApplication);
-                    _options.InheritFrom(_target.Loader.Options);
+                    _options = new LoaderOptions(Target.Loader.ParentEngine,
+                        Target.Loader.ParentApplication);
+                    _options.InheritFrom(Target.Loader.Options);
                 }
-                return _target.Loader.Options;
+                return Target.Loader.Options;
             }
         }
 
-        public ILoopBlock CurrentLoopBlock
-        {
-            get { return _target.CurrentLoopBlock; }
-        }
+        public ILoopBlock CurrentLoopBlock => Target.CurrentLoopBlock;
 
-        public AstBlock CurrentBlock
-        {
-            get { return _target.CurrentBlock; }
-        }
+        public AstBlock CurrentBlock => Target.CurrentBlock;
 
-        public IAstFactory Factory
-        {
-            get { return _astFactory; }
-        }
+        [NotNull]
+        public IAstFactory Factory { get; }
 
         /// <summary>
         ///     Allocates a temporary variable for this macro expansion session.
@@ -151,7 +127,7 @@ namespace Prexonite.Compiler.Macro
         /// </remarks>
         public string AllocateTemporaryVariable()
         {
-            var temp = _target.RequestTemporaryVariable();
+            var temp = Target.RequestTemporaryVariable();
             Debug.Assert(!_allocationList.Contains(temp));
             Debug.Assert(!_releaseList.Contains(temp));
             _allocationList.Add(temp);
@@ -182,21 +158,20 @@ namespace Prexonite.Compiler.Macro
             {
                 foreach (var temp in _releaseList)
                 {
-                    _target.FreeTemporaryVariable(temp);
+                    Target.FreeTemporaryVariable(temp);
                     _allocationList.Remove(temp);
                 }
 
                 //Remove those that weren't freed to persistent variables
                 foreach (var temp in _allocationList)
                 {
-                    _target.PromoteTemporaryVariable(temp);
+                    Target.PromoteTemporaryVariable(temp);
                 }
             }
             finally
             {
                 var ldr = Target.Loader;
-                if (ldr != null)
-                    ldr.ReleaseBuildCommands(_buildCommandToken);
+                ldr?.ReleaseBuildCommands(_buildCommandToken);
             }
         }
 
@@ -220,10 +195,7 @@ namespace Prexonite.Compiler.Macro
 
             public void Expand(CompilerTarget target, MacroContext context)
             {
-                if (MacroCommand == null)
-                    return;
-
-                MacroCommand.Expand(context);
+                MacroCommand?.Expand(context);
             }
 
             public bool TryExpandPartially(CompilerTarget target, MacroContext context)
