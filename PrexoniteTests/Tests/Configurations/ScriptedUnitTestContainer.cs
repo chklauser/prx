@@ -56,6 +56,11 @@ namespace PrexoniteTests.Tests.Configurations
         public const string DumpRequestFlag = "request_dump";
 
         protected abstract UnitTestConfiguration Runner { get; }
+        
+        // NOTE: the RunUnitTest method relies on the fact that StringWriter.ToString() prints the contents.
+        // If you change the TextWriter implementation, you need to account for that. 
+        public TextWriter OneTimeSetupLog { get; } = new StringWriter();
+        private bool _oneTimeSetupPrinted = false;
 
         public void Initialize()
         {
@@ -74,16 +79,16 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 var psrTestsPath =
                     Path.GetFullPath(Path.Combine(slnPath, "PrexoniteTests", "psr-tests"));
-                Console.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
+                OneTimeSetupLog.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
                 Engine.Paths.Add(psrTestsPath);
 
                 var prxPath = Path.GetFullPath(Path.Combine(slnPath, @"Prx"));
-                Console.WriteLine("inferred prx path: " + prxPath, "Engine.Path");
+                OneTimeSetupLog.WriteLine("inferred prx path: " + prxPath, "Engine.Path");
                 Engine.Paths.Add(prxPath);
             }
             else
             {
-                Console.WriteLine("CANNOT INFER solution PATH: " + slnPath, "Engine.Path");
+                OneTimeSetupLog.WriteLine("CANNOT INFER solution PATH: " + slnPath, "Engine.Path");
             }
         }
 
@@ -94,7 +99,11 @@ namespace PrexoniteTests.Tests.Configurations
 
         protected void RunUnitTest(string testCaseId)
         {
-            Console.WriteLine("---- SNIP end of stored representation ----");
+            if (!_oneTimeSetupPrinted)
+            {
+                TestContext.WriteLine(OneTimeSetupLog);
+                _oneTimeSetupPrinted = true;
+            }
 
             var tc = Application.Functions[testCaseId];
             Assert.That(tc, Is.Not.Null, "Test case " + testCaseId + " not found.");
@@ -118,8 +127,8 @@ namespace PrexoniteTests.Tests.Configurations
             }
             else
             {
-                Console.WriteLine("Test failed. Result:");
-                Console.WriteLine(eObj);
+                TestContext.WriteLine("Test failed. Result:");
+                TestContext.WriteLine(eObj);
                 Assert.Fail("Test failed");
             }
         }
@@ -134,20 +143,26 @@ namespace PrexoniteTests.Tests.Configurations
                     app =>
                     new KeyValuePair<ModuleName, Task<ITarget>>(app.Module.Name, ModuleCache.BuildAsync(app.Module.Name)))
                     .ToDictionary(k => k.Key, k => k.Value);
-            foreach (var entry in tasks)
+            var printedRepresentation = false;
+            foreach (var (name, targetTask) in tasks)
             {
-                var name = entry.Key;
-                var target = entry.Value.Result;
+                printedRepresentation = true;
+                var target = targetTask.Result;
 
-                Console.WriteLine();
-                Console.WriteLine("##################################  begin of stored representation for {0} ",name);
+                OneTimeSetupLog.WriteLine();
+                OneTimeSetupLog.WriteLine("##################################  begin of stored representation for {0} ",name);
 
                 var opt = new LoaderOptions(Engine, new Application(target.Module), target.Symbols)
                     {ReconstructSymbols = false, RegisterCommands = false, StoreSymbols = true};
                 var ldr = new Loader(opt);
-                ldr.Store(Console.Out);
+                ldr.Store(OneTimeSetupLog);
 
-                Console.WriteLine("##################################    end of stored representation for {0} ----------", name);
+                OneTimeSetupLog.WriteLine("##################################    end of stored representation for {0} ----------", name);
+            }
+
+            if (printedRepresentation)
+            {
+                TestContext.WriteLine("---- SNIP end of stored representation ----");
             }
         }
 
