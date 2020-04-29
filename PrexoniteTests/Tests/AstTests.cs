@@ -122,21 +122,21 @@ namespace PrexoniteTests.Tests
 
         private static void _placeholderArgvProcessing(List<AstExpr> argv)
         {
-            Console.WriteLine("ARGV implicit:");
+            TestContext.WriteLine("ARGV implicit:");
             foreach (var expr in argv)
-                Console.WriteLine("\t{0}", expr);
+                TestContext.WriteLine("\t{0}", expr);
 
             AstPlaceholder.DeterminePlaceholderIndices(argv.MapMaybe(x => x as AstPlaceholder));
 
-            Console.WriteLine("ARGV explicit:");
+            TestContext.WriteLine("ARGV explicit:");
             foreach (var expr in argv)
-                Console.WriteLine("\t{0}", expr);
+                TestContext.WriteLine("\t{0}", expr);
 
             AstPartiallyApplicable.RemoveRedundantPlaceholders(argv);
 
-            Console.WriteLine("ARGV minimal:");
+            TestContext.WriteLine("ARGV minimal:");
             foreach (var expr in argv)
-                Console.WriteLine("\t{0}", expr);
+                TestContext.WriteLine("\t{0}", expr);
         }
 
         [Test]

@@ -1,4 +1,4 @@
-﻿// Prexonite
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -149,7 +149,7 @@ namespace PrexoniteTests.Tests
             catch (Exception e)
             {
                 Trace.TraceEvent(TraceEventType.Error, 0, "Exception during tear down (deletion of temp dir): {0}", e);
-                Console.WriteLine(e);
+                TestContext.WriteLine(e);
             }
         }
 
@@ -169,7 +169,7 @@ namespace PrexoniteTests.Tests
             catch (Exception e)
             {
                 Trace.TraceEvent(TraceEventType.Error, 0, "Exception during fixture tear down (last ditch effort, deletion of temp dir): {0}", e);
-                Console.WriteLine(e);
+                TestContext.WriteLine(e);
             }
         }
 

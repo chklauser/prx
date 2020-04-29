@@ -311,7 +311,7 @@ function main(check, n)
                     if (s.ParentEngine.Stack.Count > 2)
                     {
                         foreach (var stackContext in s.ParentEngine.Stack)
-                            Console.WriteLine(" - " + stackContext);
+                            TestContext.WriteLine(" - " + stackContext);
 
                         throw new PrexoniteException("Stack size is not constant.");
                     }

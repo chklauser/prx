@@ -1,4 +1,4 @@
-﻿// Prexonite
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -504,7 +504,7 @@ function main()
             Expect(rv =>
                        {
                            var r = rv.CallToString(sctx).Split('|');
-                           Console.WriteLine(rv);
+                           TestContext.WriteLine(rv);
                            Assert.That((object) r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
 
                            Assert.That(r[0], Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
@@ -1292,7 +1292,7 @@ namespace a {
             var moduleTwo = plan.Build(moduleTwoDesc.Name);
             Assert.That(moduleTwo.Messages.Where(m => m.Severity == MessageSeverity.Error),Is.Empty,"Modules should compile without any error messages.");
             foreach (var message in moduleTwo.Messages)
-                Console.WriteLine(message);
+                TestContext.WriteLine(message);
             Assert.That(moduleTwo.Exception,Is.Null);
 
             var symbols = moduleTwo.Symbols;

@@ -59,7 +59,7 @@ namespace PrexoniteTests.Tests
             #endregion 
             public void ReportMessage(Message message)
             {
-                Console.WriteLine(message);
+                TestContext.WriteLine(message);
             }
         }
             
