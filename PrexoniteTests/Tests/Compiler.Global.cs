@@ -354,7 +354,7 @@ mul
 ret.value
 ");
 
-            Console.Write(target.StoreInString());
+            TestContext.Write(target.StoreInString());
 
             Assert.AreEqual(
                 expected.Count,

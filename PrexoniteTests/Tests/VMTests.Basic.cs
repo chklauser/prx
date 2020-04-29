@@ -90,7 +90,7 @@ function test1(x)
             var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             foreach (var s in ldr.Errors)
-                Console.WriteLine(s);
+                TestContext.WriteLine(s);
 
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation");
 
@@ -133,7 +133,7 @@ function test1(x)
             var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             foreach (var s in ldr.Errors)
-                Console.WriteLine(s);
+                TestContext.WriteLine(s);
             Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
             Assert.IsTrue(
                 ldr.Errors[0].Text.Contains("Return value assignment is no longer supported."),
@@ -163,7 +163,7 @@ function complicated(x,y) does
             var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             foreach (var s in ldr.Errors)
-                Console.WriteLine(s);
+                TestContext.WriteLine(s);
             Assert.AreEqual(0, ldr.ErrorCount);
 
             var rnd = new Random();
@@ -218,7 +218,7 @@ function test1(x) does
             target.Variables["J"].Value = j;
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            Console.WriteLine(target.StoreInString());
+            TestContext.WriteLine(target.StoreInString());
 
             //Expectation
             var x0 = rnd.Next(1, 589);
@@ -253,7 +253,7 @@ function test1(x) does
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            Console.WriteLine(target.StoreInString());
+            TestContext.WriteLine(target.StoreInString());
 
             var rnd = new Random();
             const int j0 = 0;
@@ -292,7 +292,7 @@ function fib(n) does
 
             for (var n = 1; n <= 6; n++)
             {
-                Console.WriteLine("\nFib(" + n + ") do ");
+                TestContext.WriteLine("\nFib(" + n + ") do ");
                 var expected = _fibonacci(n);
                 var fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
@@ -346,7 +346,7 @@ function fib(n) does asm
 
             for (var n = 1; n <= 6; n++)
             {
-                Console.WriteLine("\nFib(" + n + ") do ");
+                TestContext.WriteLine("\nFib(" + n + ") do ");
                 var expected = _fibonacci(n);
                 var fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
@@ -525,13 +525,13 @@ function conditions(x,y)
             const string xT = "2112";
             const string xx = "11122";
 
-            Console.WriteLine("// TRUE  - TRUE ");
+            TestContext.WriteLine("// TRUE  - TRUE ");
             Expect(tt, true, true);
-            Console.WriteLine("// TRUE  - FALSE");
+            TestContext.WriteLine("// TRUE  - FALSE");
             Expect(tx, true, false);
-            Console.WriteLine("// FALSE - TRUE ");
+            TestContext.WriteLine("// FALSE - TRUE ");
             Expect(xT, false, true);
-            Console.WriteLine("// FALSE - FALSE");
+            TestContext.WriteLine("// FALSE - FALSE");
             Expect(xx, false, false);
         }
 

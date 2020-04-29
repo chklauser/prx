@@ -45,14 +45,14 @@ namespace PrexoniteTests.Tests
         {
             const string input1 = "";
             var ldr = new Loader(engine, target);
-            Console.WriteLine("-- Compiling fixture");
+            TestContext.WriteLine("-- Compiling fixture");
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
             var stored = ldr.Options.TargetApplication.StoreInString();
-            Console.WriteLine(stored);
+            TestContext.WriteLine(stored);
 
-            Console.WriteLine("-- Compiling stored result");
+            TestContext.WriteLine("-- Compiling stored result");
             var reldr = new Loader(engine, new Application());
             reldr.LoadFromString(stored);
             var restored = reldr.Options.TargetApplication.StoreInString();
@@ -86,7 +86,7 @@ Add System::Xml To Imports;
             Assert.AreEqual(0, ldr.ErrorCount);
 
             var stored = ldr.Options.TargetApplication.StoreInString();
-            Console.WriteLine(stored);
+            TestContext.WriteLine(stored);
 
             var reldr = new Loader(engine, new Application());
             reldr.LoadFromString(stored);
@@ -137,14 +137,14 @@ function func2(arg0, arg1, arg2)
             Assert.AreEqual(0, ldr.ErrorCount);
 
             var stored = ldr.Options.TargetApplication.StoreInString();
-            Console.WriteLine("//== 1st Store");
-            Console.WriteLine(stored);
+            TestContext.WriteLine("//== 1st Store");
+            TestContext.WriteLine(stored);
 
             var reldr = new Loader(engine, new Application());
             reldr.LoadFromString(stored);
             var restored = reldr.Options.TargetApplication.StoreInString();
-            Console.WriteLine("//== 2nd Store");
-            Console.WriteLine(restored);
+            TestContext.WriteLine("//== 2nd Store");
+            TestContext.WriteLine(restored);
 
             //The two of them are not supposed to be equal because of a debug feature
             /*Assert.IsTrue(Engine.StringsAreEqual(stored, restored),
@@ -181,17 +181,17 @@ coroutine mapf(ref f, xs) does
 meta_entry " + numberToStore + @";
 ");
             foreach (var error in ldr.Errors)
-                Console.WriteLine("ERROR: {0}", error);
+                TestContext.WriteLine("ERROR: {0}", error);
             Assert.AreEqual(0, ldr.ErrorCount, "no errors expected");
             var stored = ldr.Options.TargetApplication.StoreInString();
-            Console.WriteLine("//== 1st Store");
-            Console.WriteLine(stored);
+            TestContext.WriteLine("//== 1st Store");
+            TestContext.WriteLine(stored);
 
             var reldr = new Loader(engine, new Application());
             reldr.LoadFromString(stored);
             var restored = ldr.Options.TargetApplication.StoreInString();
-            Console.WriteLine("//== 2nd Store");
-            Console.WriteLine(restored);
+            TestContext.WriteLine("//== 2nd Store");
+            TestContext.WriteLine(restored);
 
             Assert.AreEqual(stored, restored);
             Assert.AreEqual(numberToStore, ldr.Options.TargetApplication.Meta["meta_entry"].Text);

@@ -80,9 +80,9 @@ namespace Prx.Tests
             ldr.LoadFromString("function MyAssemblerFunction does asm {" + assemblerCode + "\n}");
             if (ldr.ErrorCount != 0)
             {
-                Console.WriteLine("--------------- Assembler Code --------------------");
-                Console.WriteLine(assemblerCode);
-                Console.WriteLine("---------------- End Asm Code ---------------------");
+                TestContext.WriteLine("--------------- Assembler Code --------------------");
+                TestContext.WriteLine(assemblerCode);
+                TestContext.WriteLine("---------------- End Asm Code ---------------------");
                 foreach (var error in ldr.Errors)
                     Assert.Fail(string.Format("Error in the expected assembler code: {0}", error));
             }
@@ -112,18 +112,18 @@ namespace Prx.Tests
         private void _writeErrorsWarnings(Loader ldr)
         {
             foreach (var line in ldr.Errors)
-                Console.Error.WriteLine(line);
+                TestContext.Error.WriteLine(line);
 
             if (ldr.Warnings.Count > 0)
             {
-                Console.WriteLine();
-                Console.WriteLine("Warnings:");
+                TestContext.WriteLine();
+                TestContext.WriteLine("Warnings:");
                 foreach (var warning in ldr.Warnings)
-                    Console.WriteLine(warning);
-                Console.WriteLine();
+                    TestContext.WriteLine(warning);
+                TestContext.WriteLine();
             }
 
-            Console.WriteLine(target.StoreInString());
+            TestContext.WriteLine(target.StoreInString());
         }
 
         private Loader _justCompile(string input)

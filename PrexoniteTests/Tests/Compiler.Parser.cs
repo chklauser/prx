@@ -65,7 +65,7 @@ function func0
             ldr.LoadFromString(input1);
             foreach (var message in ldr.Errors)
             {
-                Console.WriteLine(message);
+                TestContext.WriteLine(message);
             }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -217,7 +217,7 @@ function instruction {}
             Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
             Assert.AreEqual("begin", ((AstExplicitGoTo) block[i]).Destination);
 
-            Console.WriteLine(target.StoreInString());
+            TestContext.WriteLine(target.StoreInString());
         }
 
         [Test]
@@ -364,7 +364,7 @@ ret.value
 ret.break
 ret.continue
 ");
-            Console.Write(target.StoreInString());
+            TestContext.Write(target.StoreInString());
 
             Assert.AreEqual(
                 expected.Count, actual.Count, "Expected and actual instruction count missmatch.");

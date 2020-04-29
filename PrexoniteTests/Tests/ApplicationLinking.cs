@@ -229,11 +229,11 @@ namespace PrexoniteTests.Tests
             f2.Code.Add(new Instruction(OpCode.ldc_string,helloModules));
             f2.Code.Add(new Instruction(OpCode.ret_value));
 
-            Console.WriteLine("=========== Module {0} ==========", m1.Name);
-            a1.Store(Console.Out);
-            Console.WriteLine();
-            Console.WriteLine("=========== Module {0} ==========", m2.Name);
-            a2.Store(Console.Out);
+            TestContext.WriteLine("=========== Module {0} ==========", m1.Name);
+            a1.Store(TestContext.Out);
+            TestContext.WriteLine();
+            TestContext.WriteLine("=========== Module {0} ==========", m2.Name);
+            a2.Store(TestContext.Out);
 
             var eng = new Engine();
 
@@ -244,9 +244,9 @@ namespace PrexoniteTests.Tests
             }
             catch (PrexoniteRuntimeException e)
             {
-                Console.WriteLine("EXPECTED EXCEPTION");
-                Console.WriteLine(e.Message);
-                Console.WriteLine("END OF EXPECTED EXCEPTION");
+                TestContext.WriteLine("EXPECTED EXCEPTION");
+                TestContext.WriteLine(e.Message);
+                TestContext.WriteLine("END OF EXPECTED EXCEPTION");
             }
 
             Application.Link(a1, a2);
