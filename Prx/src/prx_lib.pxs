@@ -28,7 +28,9 @@ namespace prx.cli
     import sys.*
 {
     //Access to an experimental terminal
-    declare command __console, host\self_assembling_build_plan;
+    declare command __console;
+    //Access to build infrastructure of the host
+    declare command host\self_assembling_build_plan, host\prx_path;
 
     //Not all environments may support colors...
     var supportsColors = (supportsColors ?? true)~Bool;
