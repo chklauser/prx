@@ -114,7 +114,7 @@ function reify_position(context, position)[compiler]{
 	var pos = context.Invocation.Position;
 	var create = context.Factory;
 
-	var ctorNode = create.ObjectCreation(pos,create.ConstantTypeExpression(pos,"Object(\"Prexonite.Compiler.SourcePosition\")"));
+	var ctorNode = create.CreateObject(pos, create.ConstantType(pos, "Object(\"Prexonite.Compiler.SourcePosition\")"));
 	ctorNode.Arguments.Add(create.Constant(pos, position.File));
 	ctorNode.Arguments.Add(create.Constant(pos, position.Line));
 	ctorNode.Arguments.Add(create.Constant(pos, position.Column));
@@ -297,11 +297,61 @@ function macro\report_any(message, severity)
     return reportMessage;
 }
 
+macro macro\newclo(func_call_proto) {
+    // The function needs to get passed as a function call prototype. 
+    // Either an AstIndirectCall for functions or a AstExpand for macros.
+
+    function report_error(message) {
+        context.ReportMessage(Prexonite::Compiler::MessageSeverity.Error,
+            message,
+            context.Invocation.Position);
+    }
+
+    var ref_node;
+    if(func_call_proto is Prexonite::Compiler::Ast::AstIndirectCall) {
+        if(func_call_proto.Subject is Prexonite::Compiler::Ast::AstReference) {
+            ref_node = func_call_proto.Subject;
+        } else {
+            // Nice error handling not yet available.
+            report_error("macro\\newclo requries a function call or macro expansion prototype. " 
+                + "Found indirect call with non-reference subject: " 
+                + "$(func_call_proto.Subject)~$(func_call_proto.Subject.GetType)");
+            return null;
+        }
+
+    } else if(func_call_proto is Prexonite::Compiler::Ast::AstExpand) {
+        ref_node = func_call_proto;
+    } else {
+        report_error("macro\\newclo requires a function call or macro expansion prototype. Found: "
+            + "$(func_call_proto.Subject)~$(func_call_proto.Subject.GetType)");
+        return null;
+    }
+
+    var entity_ref = ref_node.Entity;
+    if(entity_ref is not Object<"Prexonite.Modular.EntityRef+Function">) {
+        report_error("macro\\newclo requires a function call or macro expansion prototype. " 
+            + "Found reference to: $(entity_ref)");
+        return null;
+    }
+
+    // AsmInstruction is not an expression. We need to submit it as a statement and then
+    // disable the default expression safety feature that kicks in if a macro doesn't produce
+    // an expression.
+    context.SuppressDefaultExpression = true;
+    context.Block.Statements.Add(ast("AsmInstruction", new Prexonite::Instruction(
+        Prexonite::OpCode.newclo, 
+        entity_ref.Id, 
+        0, 
+        context.IsJustEffect, 
+        entity_ref.ModuleName)));
+    return null;
+}
+
 macro macro\report_error(message)
 {
     establish_macro_context;
 
-    ref impl = asm( newclo macro\report_any );
+    ref impl = macro\newclo(macro\report_any);
 
     return impl(message, "Error");
 }
@@ -310,7 +360,7 @@ macro macro\report_warning(message)
 {
     establish_macro_context;
 
-    ref impl = asm( newclo macro\report_any );
+    ref impl = macro\newclo(macro\report_any);
 
     return impl(message, "Warning");
 }
@@ -319,7 +369,7 @@ macro macro\report_info(message)
 {
     establish_macro_context;
 
-    ref impl = asm( newclo macro\report_any );
+    ref impl = macro\newclo(macro\report_any);
 
     return impl(message, "Info");
 }
@@ -572,7 +622,7 @@ build
     >> where(AstNode_t.IsAssignableFrom(?))
     >> var node_ts;
 
-    var impl = SI.e.func(asm(ldr.app).Functions[@"macro\_check_is_node_t"]);
+    var impl = SI.e.func(macro\reference(macro\_check_is_node_t));
 
     foreach(new var node_t in node_ts)
     {
@@ -1216,22 +1266,22 @@ macro ast\ret\generic_proc(expr, kind)
 
 macro ast\ret\val as ast\ret(expr)
 {
-    return asm(newclo ast\ret\generic_proc).(expr,"exit");
+    return macro\newclo(ast\ret\generic_proc).(expr,"exit");
 }
 
 macro ast\ret\continue as ast\yield(expr)
 {
-    return asm(newclo ast\ret\generic_proc).(expr,"continue");
+    return macro\newclo(ast\ret\generic_proc).(expr,"continue");
 }
 
 macro ast\ret\break(expr)
 {
-    return asm(newclo ast\ret\generic_proc).(expr,"break");
+    return macro\newclo(ast\ret\generic_proc).(expr,"break");
 }
 
 macro ast\ret\set(expr)
 {
-    return asm(newclo ast\ret\generic_proc).(expr,"set");
+    return macro\newclo(ast\ret\generic_proc).(expr,"set");
 }
 
 //Evaluate Ast nodes (really executing them, so watch out!)
@@ -1344,37 +1394,33 @@ macro ast\with_arguments as ast\args (astN)
     assignAst.Arguments.Add(astN);
     context.Block.Add(assignAst);
 
-
-    if(args.Count > 1)
+    ref getArguments;
+    var argumentsV;
+    var assignAst;
+    if(args.Count > 2)
     {
-        ref getArguments;
-        var argumentsV;
-        var assignAst;
-        if(args.Count > 2)
-        {
-            var getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
-            argumentsV = tempalloc;
-            assignAst = ast\lvar(SI.set, argumentsV);
-            assignAst.Arguments.Add(getArguments);
-            context.Block.Add(assignAst);
+        var getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
+        argumentsV = tempalloc;
+        assignAst = ast\lvar(SI.set, argumentsV);
+        assignAst.Arguments.Add(getArguments);
+        context.Block.Add(assignAst);
 
-            function getArguments = ast\lvar(SI.get, argumentsV);
-        }
-        else
-        {
-            function getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
-        }
-
-        foreach(var argN in var args >> skip(1))
-        {
-            var assignAst = ast\member(getArguments, SI.get, "Add");
-            assignAst.Arguments.Add(argN);
-            context.Block.Add(assignAst);
-        }
-
-        if(argumentsV is not null)
-            tempfree(argumentsV);
+        function getArguments = ast\lvar(SI.get, argumentsV);
     }
+    else
+    {
+        function getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
+    }
+
+    foreach(var argN in var args >> skip(1))
+    {
+        var assignAst = ast\member(getArguments, SI.get, "Add");
+        assignAst.Arguments.Add(argN);
+        context.Block.Add(assignAst);
+    }
+
+    if(argumentsV is not null)
+        tempfree(argumentsV);
 
     context.Block.Expression = ast\lvar(SI.get, astV);
     tempfree(astV);

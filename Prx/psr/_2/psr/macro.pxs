@@ -1,0 +1,124 @@
+name psr::$macro;
+references {
+	prx/1.0,
+	psr::ast
+};
+
+namespace psr.macro.v1
+	import prx.v1(*), psr.ast.v1(*)
+{
+    build does add("../../impl/macro.pxs");
+}
+
+namespace psr.macro
+{
+}
+export(*), psr.macro.v1(
+    is_in_macro,
+    establish_macro_context,
+    macro\get_context => get_context,
+    macro\newclo => newclo,
+    macro\report_error => report_error,
+    macro\report_warning => report_warning,
+    macro\report_info => report_info,
+    // TODO: get_SI should be eliminated in favour of the v2 re-implementation of SI
+    macro\getSI => get_SI,
+    tempalloc,
+    tempfree,
+    create_global_variable,
+    optimize\ref => optimize_ref,
+    optimize,
+    ast\read => read_ast,
+    macro\internal_id => internal_id_of,
+    __FILE__,
+    __LINE__,
+    __COLUMN__,
+    __COL__,
+    CURRENT_FILE,
+    CURRENT_LINE,
+    CURRENT_COLUMN
+);
+
+namespace psr.macro
+    import sys(*), psr.macro.v1.reify_position
+{
+    macro CURRENT_POSITION as __POS__, __POSITION__ = reify_position(context, context.Invocation.Position);
+}
+
+namespace psr.macro.ast
+    import sys(*), psr.macro.__POSITION__
+{
+    build {
+        // Automatically re-export `ast_is_xxx` symbols as `is_xxx` from the `psr.macro.ast` namespace
+        var ldr = GetLoader;
+        if(not ldr.Symbols.TryGet("psr", var psrSym = ?)) {
+            ldr.ReportMessage(new Prexonite::Compiler::Message(
+                "Cannot find namespace `psr` while looking up psr.macro.v1 to export ast_is_* symbols.",
+                psr.macro.__POSITION__,
+                "PSR"));
+        }
+        var psrNs = Prexonite::Compiler::Symbolic::NamespaceSymbol.UnwrapNamespaceSymbol(psrSym, __POSITION__, ldr, null);
+        if(psrNs == null) {
+            // Error has already been reported by UnwrapNamespaceSymbol
+            return;
+        }
+
+        if(not psrNs.Namespace.TryGet("macro", var macroSym = ?)) {
+            ldr.ReportMessage(new Prexonite::Compiler::Message(
+                "Cannot find namespace `macro` while looking up psr.macro.v1 to export ast_is_* symbols.",
+                psr.macro.__POSITION__,
+                "PSR"));
+        }
+        var macroNs = Prexonite::Compiler::Symbolic::NamespaceSymbol.UnwrapNamespaceSymbol(macroSym, __POSITION__, ldr, null);
+        if(macroNs == null) {
+            // Error has already been reported by UnwrapNamespaceSymbol
+            return;
+        }
+
+        if(not macroNs.Namespace.TryGet("v1", var v1Sym = ?)) {
+            ldr.ReportMessage(new Prexonite::Compiler::Message(
+                "Cannot find namespace `v1` while looking up psr.macro.v1 to export ast_is_* symbols.",
+                psr.macro.__POSITION__,
+                "PSR"));
+        }
+        var v1Ns = Prexonite::Compiler::Symbolic::NamespaceSymbol.UnwrapNamespaceSymbol(v1Sym, __POSITION__, ldr, null);
+        if(v1Ns == null) {
+            // Error has already been reported by UnwrapNamespaceSymbol
+            return;
+        }
+
+        var ignoreCase = System::StringComparison.InvariantCultureIgnoreCase;
+        foreach(var entry in v1Ns.Namespace.Exports~System::Collections::IEnumerable) {
+            if(not entry.Key.StartsWith("ast_is_", ignoreCase)) {
+                continue;
+            }
+
+            ldr.Symbols.Declare(entry.Key.Substring(4), entry.Value);
+        }
+    }
+}
+export(*), psr.macro.v1(
+    ast\macro => node1,
+    ast2\macro => node2,
+    ast3\macro => node3,
+    ast\null => $null,
+    ast\expand_macro => expand_macro,
+    ast\call => call,
+    ast\cmd => cmd,
+    ast\lvar => lvar,
+    ast\lref => lref,
+    ast\func => func,
+    ast\gvar => gvar,
+    ast\gref => gref,
+    ast\member => member,
+    ast\const => const,
+    ast\ret\val => $return,
+    ast\ret\continue => $yield,
+    ast\ret\break => $break,
+    ast\ret\set => set,
+    ast\run => run,
+    ast\eval => eval,
+    ast\with_arguments => with_args,
+    ast\new\const => $new,
+    ast_is_call => is_call,
+);
