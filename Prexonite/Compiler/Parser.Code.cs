@@ -136,13 +136,11 @@ namespace Prexonite.Compiler
             {
                 var localNs = _tryGetLocalNamespace(currentLookupScope, nsId, idPosition);
 
-                prefix = prefix + new QualifiedId(nsId);
+                prefix += new QualifiedId(nsId);
 
                 // Create namespace if necessary
-                if (localNs == null)
-                {
-                    localNs = ((ModuleLevelView) Loader.TopLevelSymbols).CreateLocalNamespace(new EmptySymbolView<Symbol>());
-                }
+                localNs ??= ((ModuleLevelView) Loader.TopLevelSymbols).CreateLocalNamespace(
+                    new EmptySymbolView<Symbol>());
 
                 // Make sure the namespace is exported from the current module and not just accessible via external declarations
                 _declareNamespaceAsExported(surroundingNamespace, declScopeStore, nsId, isOutermostNs, idPosition, localNs, prefix);
@@ -1037,9 +1035,8 @@ namespace Prexonite.Compiler
             Debug.Assert(id != null);
             Debug.Assert(ptrCount > 0);
 
-            Symbol symbol;
             var position = GetPosition();
-            if (!Symbols.TryGet(id, out symbol))
+            if (!Symbols.TryGet(id, out var symbol))
             {
                 Loader.ReportMessage(Message.Error(string.Format(Resources.Parser__assembleReference_SymbolNotDefined, id),position,MessageClasses.SymbolNotResolved));
                 return Create.Null(position);
