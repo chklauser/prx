@@ -24,11 +24,13 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Prexonite.Compiler.Build.Internal;
+using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
@@ -40,7 +42,10 @@ namespace Prexonite.Compiler.Build
         private static readonly ISource[] _stdLibModules =
         {
             Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.core.pxs")
+            Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
+            Source.FromEmbeddedResource("prxlib.sys.pxs"),
+            Source.FromEmbeddedResource("prxlib.prx.v1.pxs"),
+            Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs")
         };
 
         public static IPlan CreateDefault()
@@ -64,8 +69,7 @@ namespace Prexonite.Compiler.Build
                 await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));
 
                 // Describe standard library. Dependencies must be satisfied
-                var stdlib = await plan.AssembleAsync(Source.FromEmbeddedResource("prxlib.sys.pxs"), token);
-                plan.StandardLibrary.Add(stdlib.Name);
+                plan.StandardLibrary.Add(new ModuleName("sys", new Version(0, 0)));
             }
             return plan;
         }
