@@ -48,8 +48,7 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
-            string detailedError;
-            return TryDynamicCall(sctx, args, call, id, out result, out detailedError);
+            return TryDynamicCall(sctx, args, call, id, out result, out _);
         }
 
         private static bool _require(PValue[] args, ref int index, out PValue rawValue)
