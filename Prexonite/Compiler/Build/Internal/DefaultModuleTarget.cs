@@ -89,10 +89,10 @@ namespace Prexonite.Compiler.Build.Internal
         {
             if (loader == null)
                 throw new ArgumentNullException(nameof(loader));
-            Debug.Assert(loader.TopLevelSymbols!= null,"Loader.TopLevelSymbols must not be null.");
+            Debug.Assert(loader.TopLevelSymbols != null,"Loader.TopLevelSymbols must not be null.");
             var exported = SymbolStore.Create();
-            foreach (var decl in loader.TopLevelSymbols.LocalDeclarations)
-                exported.Declare(decl.Key, decl.Value);
+            foreach (var (id, symbol) in loader.TopLevelSymbols.LocalDeclarations)
+                exported.Declare(id, symbol);
             var messages = loader.Errors.Append(loader.Warnings).Append(loader.Infos);
             if (additionalMessages != null)
                 messages = additionalMessages.Append(messages);

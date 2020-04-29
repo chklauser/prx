@@ -37,31 +37,21 @@ using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
 
+#nullable enable
+
 namespace Prexonite.Compiler.Build.Internal
 {
     public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     {
         private static readonly TraceSource _trace = Plan.Trace;
 
-        private readonly IList<string> _searchPaths = new List<string>();
+        [NotNull]
+        private readonly AdHocTaskCache<string, PreflightResult> _preflightCache = new AdHocTaskCache<string, PreflightResult>();
 
         [NotNull]
-        private readonly AdHocTaskCache<String, PreflightResult> _preflightCache = new AdHocTaskCache<String, PreflightResult>();
+        private readonly AdHocTaskCache<string, ITargetDescription> _targetCreationCache = new AdHocTaskCache<string, ITargetDescription>();
 
-        [NotNull]
-        private readonly AdHocTaskCache<String, ITargetDescription> _targetCreationCache = new AdHocTaskCache<String, ITargetDescription>();
-
-        private readonly SemaphoreSlim _searchPathsLock = new SemaphoreSlim(1);
-
-        public IList<string> SearchPaths
-        {
-            get { return _searchPaths; }
-        }
-
-        public SemaphoreSlim SearchPathsLock
-        {
-            get { return _searchPathsLock; }
-        }
+        public IList<string> SearchPaths { get; } = new ThreadSafeList<string>();
 
         public Encoding Encoding { get; set; }
 
@@ -87,6 +77,18 @@ namespace Prexonite.Compiler.Build.Internal
             return _assembleAsync(source, token, SelfAssemblyMode.RecurseIntoFileSystem);
         }
 
+        [PublicAPI]
+        public async Task<ITargetDescription> ResolveAndAssembleAsync(string refSpec, CancellationToken token)
+        {
+            var resolvedRefSpec = await _resolveRefSpec(_parseRefSpec(new MetaEntry(refSpec)), token, SelfAssemblyMode.RecurseIntoFileSystem);
+            if (resolvedRefSpec.ErrorMessage != null)
+            {
+                return _wrapErrorInTargetDescription(resolvedRefSpec.ErrorMessage, resolvedRefSpec.ModuleName);
+            }
+
+            return TargetDescriptions[resolvedRefSpec!.ModuleName];
+        }
+
         /// <summary>
         /// <para>Offers a module in source form to the self-assembling build plan.</para>
         /// <para>Unlike <see cref="AssembleAsync"/>, this method does <em>not</em> search the file system for dependencies. It simply takes note of 
@@ -109,26 +111,33 @@ namespace Prexonite.Compiler.Build.Internal
 
             if (primaryPreflight.ErrorMessage != null)
             {
-                var errorMessage = Message.Error(primaryPreflight.ErrorMessage, NoSourcePosition.Instance,
-                    MessageClasses.SelfAssembly);
-
-                if (primaryPreflight.ModuleName != null)
-                {
-                    return CreateDescription(primaryPreflight.ModuleName, Source.FromString(""),
-                        NoSourcePosition.MissingFileName,
-                        Enumerable.Empty<ModuleName>(),
-                        new[] {errorMessage});
-                }
-                else
-                {
-                    throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.",
-                        new[] {errorMessage});
-                }
+                var message = primaryPreflight.ErrorMessage;
+                var moduleName = primaryPreflight.ModuleName;
+                return _wrapErrorInTargetDescription(message, moduleName);
             }
             else
             {
                 token.ThrowIfCancellationRequested();
                 return await _performCreateTargetDescription(primaryPreflight, source, token, mode);
+            }
+        }
+
+        private ITargetDescription _wrapErrorInTargetDescription(string message, ModuleName? moduleName)
+        {
+            var errorMessage = Message.Error(message, NoSourcePosition.Instance,
+                MessageClasses.SelfAssembly);
+
+            if (moduleName != null)
+            {
+                return CreateDescription(moduleName, Source.FromString(""),
+                    NoSourcePosition.MissingFileName,
+                    Enumerable.Empty<ModuleName>(),
+                    new[] {errorMessage});
+            }
+            else
+            {
+                throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.",
+                    new[] {errorMessage});
             }
         }
 
@@ -139,10 +148,7 @@ namespace Prexonite.Compiler.Build.Internal
         }
 
         private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>();
-        public ISet<ModuleName> StandardLibrary
-        {
-            get { return _standardLibrary; }
-        }
+        public ISet<ModuleName> StandardLibrary => _standardLibrary;
 
 
         [NotNull]
@@ -196,8 +202,7 @@ namespace Prexonite.Compiler.Build.Internal
                                    StoreSourceInformation = false,
                                });
 
-            TextReader sourceReader;
-            if (!source.TryOpen(out sourceReader))
+            if (!source.TryOpen(out var sourceReader))
             {
                 var errorResult = new PreflightResult
                                       {
@@ -206,19 +211,17 @@ namespace Prexonite.Compiler.Build.Internal
                                       };
                 return errorResult;
             }
-            ldr.LoadFromReader(sourceReader, refSpec.ResolvedPath != null ? refSpec.ResolvedPath.ToString() : null);
+            ldr.LoadFromReader(sourceReader, refSpec.ResolvedPath?.ToString());
 
             // Extract preflight information
-            ModuleName theModuleName;
-            if (!ModuleName.TryParse(app.Meta[Module.NameKey], out theModuleName))
+            if (!ModuleName.TryParse(app.Meta[Module.NameKey], out var theModuleName))
                 theModuleName = app.Module.Name;
 
-            MetaEntry noStdLibEntry;
             var result = new PreflightResult
             {
                 ModuleName = theModuleName,
                 SuppressStandardLibrary =
-                    app.Meta.TryGetValue(Module.NoStandardLibraryKey, out noStdLibEntry) && noStdLibEntry.Switch,
+                    app.Meta.TryGetValue(Module.NoStandardLibraryKey, out var noStdLibEntry) && noStdLibEntry.Switch,
                 Path = reportedPath
             };
 
@@ -229,26 +232,23 @@ namespace Prexonite.Compiler.Build.Internal
             return result;
         }
 
-        [CanBeNull]
-        private FileInfo _getPath([NotNull] ISource source)
+        private FileInfo? _getPath([NotNull] ISource source)
         {
-            var fileSource = source as FileSource;
-            return fileSource != null ? fileSource.File : null;
+            return source is FileSource fileSource ? fileSource.File : null;
         }
 
         [NotNull]
         private static readonly Regex _fileReferencePattern = new Regex(@"^(\.|/|:)");
 
-        private RefSpec _parseRefSpec(MetaEntry entry)
+        private static RefSpec _parseRefSpec(MetaEntry entry)
         {
-            ModuleName moduleName;
-            string text = null;
+            string? text = null;
             if (entry.IsText && _fileReferencePattern.IsMatch(text = entry.Text))
             {
                 // This is a file path reference specification
                 return new RefSpec { RawPath = text };
             }
-            else if (ModuleName.TryParse(entry, out moduleName))
+            else if (ModuleName.TryParse(entry, out var moduleName))
             {
                 // This is a module name reference specification
                 return new RefSpec { ModuleName = moduleName };
@@ -273,21 +273,20 @@ namespace Prexonite.Compiler.Build.Internal
                 return refSpec;
 
             var pathCandidateCount = 0;
-            IEnumerator<FileInfo> candidateSequence = null;
+            IEnumerator<FileInfo>? candidateSequence = null;
             var expectedModuleName = refSpec.ModuleName;
             try
             {
                 while (refSpec.ModuleName == null || !TargetDescriptions.Contains(refSpec.ModuleName))
                 {
                     if (candidateSequence == null)
-                        candidateSequence = _pathCandidates(refSpec, token).GetEnumerator();
+                        candidateSequence = _pathCandidates(refSpec).GetEnumerator();
 
                     if (!candidateSequence.MoveNext())
                     {
                         var msg =
-                            String.Format(
-                                "Failed to find a file that matches the reference specification {0}. {1} path(s) searched.",
-                                refSpec, pathCandidateCount);
+                            $"Failed to find a file that matches the reference specification {refSpec}. " +
+                            $"{pathCandidateCount} path(s) searched.";
                         _trace.TraceEvent(TraceEventType.Error, 0, msg);
                         refSpec.ErrorMessage = msg;
                         break;
@@ -328,8 +327,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
             finally
             {
-                if (candidateSequence != null)
-                    candidateSequence.Dispose();
+                candidateSequence?.Dispose();
             }
 
             Debug.Assert(refSpec.ErrorMessage != null || TargetDescriptions.Contains(refSpec.ModuleName));
@@ -345,7 +343,6 @@ namespace Prexonite.Compiler.Build.Internal
                 {
                     var src = Source.FromFile(candidate, Encoding);
                     await Task.Yield();
-                    await _addToSearchPaths(candidate, actualToken);
                     return await _performCreateTargetDescription(result, src, actualToken, mode);
                 }, token);
         }
@@ -409,18 +406,17 @@ namespace Prexonite.Compiler.Build.Internal
         private RefSpec _forbidFileRefSpec(RefSpec refSpec)
         {
             if (refSpec.ModuleName == null)
-                refSpec.ErrorMessage = refSpec.ErrorMessage ?? Resources.SelfAssemblingPlan__forbidFileRefSpec_notallowed;
+                refSpec.ErrorMessage ??= Resources.SelfAssemblingPlan__forbidFileRefSpec_notallowed;
             return refSpec;
         }
 
-        private IEnumerable<FileInfo> _pathCandidates(RefSpec refSepc, CancellationToken token)
+        private IEnumerable<FileInfo> _pathCandidates(RefSpec refSpec)
         {
-            var resolvedPath = refSepc.ResolvedPath;
+            var resolvedPath = refSpec.ResolvedPath;
             if (resolvedPath != null)
                 yield return resolvedPath;
 
-            var prefixes = _copySearchPaths(token).Result;
-            var rawPath = refSepc.RawPath;
+            var rawPath = refSpec.RawPath;
 
             // Prefer a path, if one was provided.
             if (rawPath != null)
@@ -428,18 +424,21 @@ namespace Prexonite.Compiler.Build.Internal
                 if (Path.IsPathRooted(rawPath))
                 {
                     // Path is absolute, just try it
-                    yield return _safelyCreateFileInfo(rawPath);
+                    if (_safelyCreateFileInfo(rawPath) is {} absolutePath)
+                    {
+                        yield return absolutePath;
+                    }
                 }
                 else
                 {
                     // Path is relative. We won't try the process working directory unless
                     //  explicitly instructed to (by adding '.' to the search paths)
-                    foreach (var candidate in _combineWithSearchPaths(prefixes, rawPath))
+                    foreach (var candidate in _combineWithSearchPaths(SearchPaths, rawPath))
                         yield return candidate;
                 }
             }
 
-            var moduleName = refSepc.ModuleName;
+            var moduleName = refSpec.ModuleName;
             if (moduleName != null)
             {
 
@@ -447,7 +446,7 @@ namespace Prexonite.Compiler.Build.Internal
                 while (true) // while there are '.' in the module name...
                 {
                     // ... try each search path in turn ...
-                    foreach (var candidate in _combineWithSearchPaths(prefixes, splitPrefix + ".pxs"))
+                    foreach (var candidate in _combineWithSearchPaths(SearchPaths, splitPrefix + ".pxs"))
                         yield return candidate;
 
                     // ... convert the last '.' to a '/' (or platform equivalent) ...
@@ -468,14 +467,14 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        private static IEnumerable<FileInfo> _combineWithSearchPaths(string[] prefixes, string rawPath)
+        private static IEnumerable<FileInfo> _combineWithSearchPaths(IEnumerable<string> prefixes, string rawPath)
         {
-            return prefixes.Select(prefix => _safelyCreateFileInfo(Path.Combine(prefix, rawPath)));
+            return prefixes.SelectMaybe(prefix => _safelyCreateFileInfo(Path.Combine(prefix, rawPath)));
         }
 
-        private static FileInfo _safelyCreateFileInfo(string path)
+        private static FileInfo? _safelyCreateFileInfo(string path)
         {
-            FileInfo candidate;
+            FileInfo? candidate;
             try
             {
                 candidate = new FileInfo(path);
@@ -492,7 +491,7 @@ namespace Prexonite.Compiler.Build.Internal
                     ex is NotSupportedException)
                 {
                     _trace.TraceEvent(TraceEventType.Error, 0,
-                        "Error while handling file path \"{0}\". Treating file as non-existent instead of reporting exception: ",
+                        "Error while handling file path \"{0}\". Treating file as non-existent instead of reporting exception: {1}",
                         path, ex);
                 }
                 else
@@ -503,38 +502,6 @@ namespace Prexonite.Compiler.Build.Internal
             return candidate;
         }
 
-        private async Task<string[]> _copySearchPaths(CancellationToken token)
-        {
-            string[] prefixes;
-
-            await SearchPathsLock.WaitAsync(token);
-            try
-            {
-                prefixes = SearchPaths.ToArray();
-            }
-            finally
-            {
-                SearchPathsLock.Release();
-            }
-            return prefixes;
-        }
-
-        private async Task _addToSearchPaths(FileInfo resolvedPath, CancellationToken token)
-        {
-            await SearchPathsLock.WaitAsync(token);
-            try
-            {
-                if (!SearchPaths.Contains(resolvedPath.DirectoryName))
-                {
-                    SearchPaths.Add(resolvedPath.DirectoryName);
-                }
-            }
-            finally
-            {
-                SearchPathsLock.Release();
-            }
-        }
-
         internal SelfAssemblingPlan()
         {
             Encoding = Encoding.UTF8;
@@ -543,50 +510,37 @@ namespace Prexonite.Compiler.Build.Internal
 
     internal class PreflightResult
     {
-        [CanBeNull]
-        public volatile ModuleName ModuleName;
+        public volatile ModuleName? ModuleName;
 
         [NotNull]
         public readonly List<RefSpec> References = new List<RefSpec>();
 
-        [CanBeNull]
-        public volatile string ErrorMessage;
+        public volatile string? ErrorMessage;
 
-        public FileInfo Path;
+        public FileInfo? Path;
 
         public volatile bool SuppressStandardLibrary;
 
-        public bool IsValid
-        {
-            get { return ErrorMessage == null && References.All(x => x.IsValid); }
-        }
+        public bool IsValid => ErrorMessage == null && References.All(x => x.IsValid);
     }
 
     internal class RefSpec
     {
-        [CanBeNull]
-        public volatile ModuleName ModuleName;
+        public volatile ModuleName? ModuleName;
 
-        [CanBeNull]
-        public volatile string RawPath;
+        public volatile string? RawPath;
 
-        [CanBeNull]
-        public volatile FileInfo ResolvedPath;
+        public volatile FileInfo? ResolvedPath;
 
-        [CanBeNull]
-        public volatile ISource Source;
+        public volatile ISource? Source;
 
-        [CanBeNull]
-        public volatile string ErrorMessage;
+        public volatile string? ErrorMessage;
 
-        public bool IsValid
-        {
-            get { return ErrorMessage == null; }
-        }
+        public bool IsValid => ErrorMessage == null;
 
         public override string ToString()
         {
-            var sb = new StringBuilder("reference ");
+            var sb = new StringBuilder();
             if (ModuleName != null)
                 sb.Append(ModuleName);
             if (ResolvedPath != null)

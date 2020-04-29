@@ -16,6 +16,8 @@ namespace Prexonite.Compiler.Symbolic.Internal
         [NotNull]
         private SymbolStore _backingStore;
 
+        internal SymbolStore BackingStore => _backingStore;
+
         /// <summary>
         /// Maps namespaces to already constructed proxies.
         /// </summary>

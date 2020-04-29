@@ -83,6 +83,22 @@ namespace Prexonite.Compiler
             set => _storeSymbols = value;
         }
 
+        private bool? _dumpExternalSymbols;
+
+        /// <summary>
+        /// Indicates whether the loader will include external symbols when storing a representation of the application.
+        /// </summary>
+        /// <para>
+        /// This is only useful to diagnose the symbol environment that the loader is working with. While the resulting
+        /// image can be loaded it should not be used in production code as it effectively re-exports all of the symbols
+        /// of all of its dependencies (including conflicts).
+        /// </para>
+        public bool DumpExternalSymbols
+        {
+            get => _dumpExternalSymbols ?? false;
+            set => _dumpExternalSymbols = value;
+        }
+
         private bool? _useIndicesLocally;
         public bool UseIndicesLocally
         {
@@ -134,6 +150,7 @@ namespace Prexonite.Compiler
             _registerCommands ??= options._registerCommands;
             _reconstructSymbols ??= options._reconstructSymbols;
             _storeSymbols ??= options._storeSymbols;
+            _dumpExternalSymbols ??= options._dumpExternalSymbols;
             _useIndicesLocally ??= options._useIndicesLocally;
             _storeSourceInformation ??= options._storeSourceInformation;
             _preflightModeEnabled ??= options._preflightModeEnabled;

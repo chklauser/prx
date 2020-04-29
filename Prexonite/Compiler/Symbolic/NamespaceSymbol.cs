@@ -1,7 +1,7 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using JetBrains.Annotations;
 using Prexonite.Properties;
 
@@ -74,36 +74,36 @@ namespace Prexonite.Compiler.Symbolic
         }
 
         private static readonly UnwrapHandler _unwrapHandler = new UnwrapHandler();
-        private class UnwrapHandler : SymbolHandler<Tuple<IMessageSink,ISourcePosition,IList<Message>>, NamespaceSymbol>
+        private class UnwrapHandler : SymbolHandler<(IMessageSink? sink,ISourcePosition position,IList<Message>? errors), NamespaceSymbol?>
         {
-            public override NamespaceSymbol HandleMessage(MessageSymbol self, Tuple<IMessageSink,ISourcePosition,IList<Message>> argument)
+            public override NamespaceSymbol? HandleMessage(MessageSymbol self, (IMessageSink? sink,ISourcePosition position,IList<Message>? errors) argument)
             {
-                if (self.Message.Severity == MessageSeverity.Error && argument.Item3 != null)
+                if (self.Message.Severity == MessageSeverity.Error && argument.errors != null)
                 {
-                    argument.Item3.Add(self.Message);
+                    argument.errors.Add(self.Message);
                     return self.InnerSymbol.HandleWith(this, argument);
                 }
                 else
                 {
-                    argument.Item1.ReportMessage(self.Message);
+                    argument.sink?.ReportMessage(self.Message);
                     // Collect further messages but return null to indicate that there was an error
                     self.InnerSymbol.HandleWith(this, argument);
                     return null;
                 }
-               }
+            }
 
-            protected override NamespaceSymbol HandleSymbolDefault(Symbol self, Tuple<IMessageSink,ISourcePosition,IList<Message>> argument)
+            protected override NamespaceSymbol? HandleSymbolDefault(Symbol self, (IMessageSink?,ISourcePosition,IList<Message>?) argument)
             {
-                var msg = Message.Error(String.Format(Resources.Parser_NamespaceExpected, "symbol", self), argument.Item2,
+                var (sink, position, errors) = argument;
+                var msg = Message.Error(string.Format(Resources.Parser_NamespaceExpected, "symbol", self), position,
                     MessageClasses.NamespaceExcepted);
-                if (argument.Item3 != null)
-                    argument.Item3.Add(msg);
-                else
-                    argument.Item1.ReportMessage(msg);
+                errors?.Add(msg);
+                if(errors != null || msg.Severity != MessageSeverity.Error)
+                    sink?.ReportMessage(msg);
                 return null;
             }
 
-            public override NamespaceSymbol HandleNamespace(NamespaceSymbol self, Tuple<IMessageSink,ISourcePosition,IList<Message>> argument)
+            public override NamespaceSymbol HandleNamespace(NamespaceSymbol self, (IMessageSink?,ISourcePosition,IList<Message>?) argument)
             {
                 return self;
             }
@@ -117,9 +117,8 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="messageSink"></param>
         /// <param name="errors">If non-null, collects instead of reports errors (other messages are reported directly); Otherwise errors are reported too.</param>
         /// <returns>The namespace symbol or null if the symbol is not actually a namespace symbol (has already been reported as an error). If an error collection list (<paramref name="errors"/>) has been supplied, can be non-null when errors are present)</returns>
-        [CanBeNull]
-        public static NamespaceSymbol UnwrapNamespaceSymbol([NotNull] Symbol symbol, [NotNull] ISourcePosition symbolPosition,
-            [NotNull]IMessageSink messageSink, [CanBeNull] IList<Message> errors = null)
+        public static NamespaceSymbol? UnwrapNamespaceSymbol([NotNull] Symbol symbol, [NotNull] ISourcePosition symbolPosition,
+            IMessageSink? messageSink, IList<Message>? errors = null)
         {
             if (symbol == null)
                 throw new ArgumentNullException(nameof(symbol));
@@ -128,7 +127,7 @@ namespace Prexonite.Compiler.Symbolic
             if (symbolPosition == null)
                 throw new ArgumentNullException(nameof(symbolPosition));
 
-            return symbol.HandleWith(_unwrapHandler, Tuple.Create(messageSink, symbolPosition, errors));
+            return symbol.HandleWith(_unwrapHandler, (messageSink, symbolPosition, errors));
         }
     }
 }
