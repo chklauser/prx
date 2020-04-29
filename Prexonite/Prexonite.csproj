@@ -60,9 +60,10 @@
     <None Remove="prxlib\prx.core.pxs" />
     <None Remove="prxlib\prx.prim.pxs" />
     <None Remove="prxlib\sys.pxs" />
-    <EmbeddedResource Include="prxlib\legacy_symbols.pxs" />
     <EmbeddedResource Include="prxlib\prx.core.pxs" />
     <EmbeddedResource Include="prxlib\prx.prim.pxs" />
+    <EmbeddedResource Include="prxlib\prx.v1.pxs" />
+    <EmbeddedResource Include="prxlib\prx.v1.prelude.pxs" />
     <EmbeddedResource Include="prxlib\sys.pxs" />
     <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
     <TextTemplate Include="**\*.tt" />

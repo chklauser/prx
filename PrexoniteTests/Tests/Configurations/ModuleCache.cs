@@ -78,8 +78,8 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 var moduleName = new ModuleName("prx.v1", new Version(0, 0));
                 var desc = Cache.CreateDescription(moduleName,
-                                                   Source.FromEmbeddedResource("prxlib.legacy_symbols.pxs"),
-                                                   "prxlib/legacy_symbols.pxs",
+                                                   Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs"),
+                                                   "prxlib/prx.v1.prelude.pxs",
                                                    Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(desc);
                 Cache.Build(moduleName);
@@ -97,19 +97,21 @@ namespace PrexoniteTests.Tests.Configurations
         /// Description of the module containing legacy symbols.
         /// </summary>
         private static ITargetDescription LegacySymbolsDescription =>
-                _legacySymbolsDescription ?? (_legacySymbolsDescription = _loadLegacySymbols());
+                _legacySymbolsDescription ??= _loadLegacySymbols();
         // ReSharper restore InconsistentNaming
 
-        private static ITargetDescription StdlibDescription
-        {
-            get { return _stdlibDescription ?? (_stdlibDescription = _loadStdlib());  }
-        }
+        private static ITargetDescription StdlibDescription => _stdlibDescription ??= _loadStdlib();
 
         private static ITargetDescription _loadStdlib()
         {
             Trace.CorrelationManager.StartLogicalOperation("Load stdlib");
             try
             {
+                var v1Name = new ModuleName("prx", new Version(1, 0));
+                var v1Desc = Cache.CreateDescription(v1Name, Source.FromEmbeddedResource("prxlib.prx.v1.pxs"),
+                    "prxlib/prx.v1.pxs", Enumerable.Empty<ModuleName>());
+                Cache.TargetDescriptions.Add(v1Desc);
+                
                 var primName = new ModuleName("prx.prim", new Version(0, 0));
                 var primDesc = Cache.CreateDescription(primName, Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
                     "prxlib/prx.prim.pxs", Enumerable.Empty<ModuleName>());
