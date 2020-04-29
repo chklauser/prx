@@ -134,14 +134,14 @@ namespace PrexoniteTests.Tests
             finally
             {
                 foreach (var s in ldr.Errors)
-                    Console.WriteLine("ERROR: " + s);
+                    TestContext.WriteLine("ERROR: " + s);
                 foreach (var s in ldr.Warnings)
-                    Console.WriteLine("WARNING: " + s);
+                    TestContext.WriteLine("WARNING: " + s);
                 foreach (var s in ldr.Infos)
-                    Console.WriteLine("INFO: " + s);
+                    TestContext.WriteLine("INFO: " + s);
 
                 if(!SkipStore)
-                    Console.WriteLine(ldr.StoreInString());
+                    TestContext.WriteLine(ldr.StoreInString());
             }
         }
 
@@ -170,11 +170,11 @@ namespace PrexoniteTests.Tests
             {
                 foreach (var s in ldr.Errors)
                 {
-                    Console.Error.WriteLine(s);
+                    TestContext.Error.WriteLine(s);
                 }
             }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors detected while loading stored code.");
-            Console.WriteLine(ldr.StoreInString());
+            TestContext.WriteLine(ldr.StoreInString());
             return ldr;
         }
 
@@ -236,14 +236,14 @@ namespace PrexoniteTests.Tests
             }
             catch (AccessViolationException)
             {
-                Console.WriteLine(
+                TestContext.WriteLine(
                     "Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
                 Compiler.StoreDebugImplementation(target, engine);
                 throw;
             }
             catch (InvalidProgramException)
             {
-                Console.WriteLine(
+                TestContext.WriteLine(
                     "Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
                 Compiler.StoreDebugImplementation(target, engine);
                 throw;
