@@ -1,6 +1,12 @@
 ﻿//PRX
 
-Name prx::v1;
+// Because there is no such thing as a top-level `namespace export`
+// we are including an alternative Prexonite 1.0 module that dumps the symbols into
+// the top level scope. 
+// Use `prx/1.0` and and `namespace import prx.v1(*)` whenever possible.
+// This module should only be used in situations where the former is not an option.
+
+Name prx::prelude/1.0;
 
 declare {
 	command:

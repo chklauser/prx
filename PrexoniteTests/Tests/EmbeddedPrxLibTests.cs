@@ -12,9 +12,14 @@ namespace PrexoniteTests.Tests
         [Test]
         public void LegacySymbols()
         {
-            _checkEmbeddedResource("prxlib.legacy_symbols.pxs");
+            _checkEmbeddedResource("prxlib.prx.v1.pxs");
         }
 
+        [Test]
+        public void LegacyPrelude()
+        {
+            _checkEmbeddedResource("prxlib.prx.v1.prelude.pxs");
+        }
         
         [Test]
         public void PrxCore()
