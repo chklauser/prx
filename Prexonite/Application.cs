@@ -80,7 +80,7 @@ namespace Prexonite
         public const string InitializationGeneration = InitializationId;
 
         /// <summary>
-        ///     Meta table key used for stroing the offset in the initialization function where
+        ///     Meta table key used for storing the offset in the initialization function where
         ///     execution should continue to complete initialization.
         /// </summary>
         [Obsolete("Prexonite no longer stores the initialization offset in a meta table.")]

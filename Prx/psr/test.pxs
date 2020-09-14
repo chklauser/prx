@@ -58,12 +58,9 @@ function test\load_plugins
     
     function trace(f,xs)
     {
-        var cargs = var args;
         return coroutine () => {
-            //println("TRACE.$(cargs >> count)(",cargs >> map(boxed(?)) >> foldl((l,r) => l + ", " + r,""),")");
             foreach(var x in xs)
             {
-                //print("ind [$(boxed(f))] of ($(boxed(x))) = ");
                 println(f.(x));
                 yield x;
             }
@@ -73,7 +70,6 @@ function test\load_plugins
     var plugins_key = @"test\plugins";
     var app = asm(ldr.app);
     println("::>>TEST-PLUGINS (",app.Compound >> count,")");
-    //println(all(trace(x => "->$x<-",app.Compound)));
         
     app.Compound
     >> trace(x => "comp: $(x.Module.Name)")
@@ -93,8 +89,43 @@ function test\load_plugins
     loaded = true;
 }
 
+/// test filters are functions that take a test case function and transform it, 
+/// returning a potentially modified test function. The initialization code of test 
+/// plugins should register their test functions.
 var test\test_filters as test_filters = [];
 
+/// private; see register_test_filter
+///     filter~(testFunction => testFunction)
+function test\register_test_filter\impl(filter) {
+    if(filter is null)
+        return;
+    test\test_filters[] = filter;
+}
+
+macro test\register_test_filter as register_test_filter(filter)
+{
+    // Ensure this module is registered as a test plugin module
+    var plugins_key = @"test\plugins";
+    var self_registered_key = @"test\plugins\registered_self";
+    var app = context.Application;
+    if(not app.Meta[self_registered_key].Switch) {
+        app.Meta[self_registered_key] = true~Prexonite::MetaEntry;
+        var additional_entries = [app.Module.Name.ToMetaEntry()]~Object<"Prexonite.MetaEntry[]">;
+        app.Meta[plugins_key] = app.Meta[plugins_key].AddToList(additional_entries);
+    }
+
+    // Emit call to register_test_filter\impl
+    var call = context.Factory.IndirectCall(context.Invocation.Position, 
+        context.Factory.Reference(context.Invocation.Position, entityref_to(test\register_test_filter\impl)), 
+        context.Invocation.Call);
+    var args >> each(call.Arguments.Add(?));
+    return call;
+}
+
+
+/// run_test(ui~Structure, testFunc~IIndirectCall)
+///     ui: a structure like the one returned from basic_ui; `null` means the basic ui gets used.
+///     testFunc: the test code
 function test\run_test as run_test(ui, testFunc)
 {
     ui ??= basic_ui;
@@ -106,7 +137,13 @@ function test\run_test as run_test(ui, testFunc)
     println("::>>TEST-FILTERS");
     test_filters >> each(println("\t-> ",?));
     println("::<<END TEST-FILTERS");
-    testFunc = test_filters >> foldl(?1.(?0), testFunc);
+    function create_transparent_wrapper(inner, original, filter) {
+        var s = new Structure;
+        s.\\("Call") = (self,id) => call\member(original, id, var args >> skip(2));
+        s.\\("IndirectCall") = (self) => filter.(inner, *skip(1, var args));
+        return s;
+    }
+    testFunc = test_filters >> foldl(new transparent_wrapper(?0, testFunc, ?1), testFunc);
     
     ui.begin_running(testFunc);
     var res = run_single_test(testFunc);
@@ -126,6 +163,10 @@ function test\list_tests as list_tests()
         >> where(f => tags >> forall(f.Meta[?] then ?.Switch));       
 }
 
+/// run_tests(ui~Structure, testFunc~IIndirectCall)
+///     ui: a structure like the one returned from basic_ui
+///     testFunc: the test code
+/// run_tests(testFunc~IIndirectCall)
 function test\run_tests as run_tests()
 {
     var args;

@@ -1,0 +1,16 @@
+name psr::test::meta_macro;
+references {
+    prx/1.0
+};
+
+namespace psr.test.meta_macro.v1 import psr.test.v1(*) {
+    build does add("../../../test/meta_macro.pxs");
+}
+
+namespace psr.test.meta_macro {}
+export psr.test.v1(
+    test\execute_single_macro => execute_single_macro,
+    test\run_single_macro_inspect => run_single_macro_inspect,
+    test\run_single_macro => run_single_macro,
+    test\macro_filter => macro_filter
+);

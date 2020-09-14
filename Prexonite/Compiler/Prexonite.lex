@@ -226,8 +226,9 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     "@"     { return tok(Parser._at); }
     ">>"	{ return tok(Parser._appendright); }
     "<<"	{ return tok(Parser._appendleft); }
+    "!"     { return tok(Parser._not); }
 
-    .|\n    { Console.WriteLine("Rogue Character: \"{0}\"", yytext()); }
+    .|\n    { throw new PrexoniteException(System.String.Format("Invalid character \"{0}\" detected on line {1} in {2}.", yytext(), yyline, File)); }
 }
 
 <String> {
