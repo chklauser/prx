@@ -1,0 +1,34 @@
+name psr::test;
+references {
+    prx/1.0
+};
+test\version "0.2";
+
+namespace psr.test.v1 {
+    // NOTE: test is not split up into impl and dependencies because it must not
+    // have any dependencies.
+    build does add("../../test.pxs");
+}
+
+namespace psr.test {} export psr.test.v1(
+    test\run_test => run_test,
+    test\run_tests => run_tests,
+    test\list_tests => list_tests,
+    test\load_plugins => load_plugins
+);
+
+namespace psr.test 
+    import sys(*)
+{
+    function test_filters = psr.test.v1.test\test_filters >> seq.to_list;
+}
+
+namespace psr.test.ui {} export psr.test.v1(
+    test\basic_ui => basic
+);
+
+namespace psr.test.assertions {} export psr.test.v1(
+    test\assert => assert, 
+    test\assert_eq => assert_eq, 
+    test\assert_neq => assert_neq
+);
