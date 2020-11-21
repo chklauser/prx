@@ -33,6 +33,7 @@ build does require("prx_interactive.pxs", "prx_lib.pxs");
 namespace prx.cli
     import sys.*,
            sys.seq.*,
+           prx.cli(host),
            prx.cli.repl(ldr,prx\interactive)
 {
     var engine = new Prexonite::Engine; //<-- the engine that we will run in
@@ -62,10 +63,10 @@ namespace prx.cli
         //Set up the console
         if(supportsTabs)
            {
-            __console.OutColor = ::ConsoleColor.White;
-            __console.PromptColor = ::ConsoleColor.Red;
-            __console.ErrorColor = ::ConsoleColor.Green;
-            __console.DoBeep = false;
+            host.console.OutColor = ::ConsoleColor.White;
+            host.console.PromptColor = ::ConsoleColor.Red;
+            host.console.ErrorColor = ::ConsoleColor.Green;
+            host.console.DoBeep = false;
         }
     }
 
@@ -235,8 +236,8 @@ namespace prx.cli
                 )+ ".c.pxs";
 
         // Set up search path
-        var plan = host\self_assembling_build_plan;
-        var prx_path = host\prx_path;
+        var plan = host.self_assembling_build_plan;
+        var prx_path = host.prx_path;
         plan.SearchPaths.Add(System::IO::Path.Combine(prx_path, "psr", "_2"));
         plan.SearchPaths.Add(System::Environment.CurrentDirectory);
         searchPaths >> each(plan.SearchPaths.Add(?));
@@ -471,7 +472,7 @@ namespace prx.cli
         // Additionally, programs could access prx.cli code at no additional cost,
         // since it has also been assembled via that plan.
         // The application would not have access to state of this instance of prx.cli, however.
-        var plan = host\self_assembling_build_plan;
+        var plan = host.self_assembling_build_plan;
         var target;
         function is_info(msg) = msg.Severity~Int == Prexonite::Compiler::MessageSeverity.Info;
         function is_warning(msg) = msg.Severity~Int == Prexonite::Compiler::MessageSeverity.Warning;

@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using Prexonite.Properties;
@@ -376,7 +377,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             };
         }
 
-        public override bool TryGet(string id, out Symbol? value)
+        public override bool TryGet(string id, [NotNullWhen(true)] out Symbol? value)
         {
             _lock.EnterReadLock();
             try

@@ -220,6 +220,9 @@ namespace Prexonite
 
                     builder.Append(func.Meta.GetDefault(PFunction.LogicalIdKey, func.Id).Text);
 
+                    builder.Append(" module ");
+                    builder.Append(func.ParentApplication.Module.Name);
+
                     if (0 <= pointer && pointer < code.Count)
                     {
                         builder.Append(" around instruction ");

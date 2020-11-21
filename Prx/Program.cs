@@ -109,6 +109,12 @@ namespace Prx
         private static Application _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole)
         {
             var plan = Plan.CreateSelfAssembling();
+            var opts = new LoaderOptions(engine, null);
+            if (plan.Options != null)
+            {
+                opts.InheritFrom(plan.Options);
+            }
+            plan.Options = opts;
 
             #region Stopwatch commands
 

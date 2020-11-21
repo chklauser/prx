@@ -11,6 +11,7 @@ namespace prx.prim
     boxed = ref command "boxed",
     string_concat = ref command "string_concat",
     map = ref command "map",
+    flat_map = ref command "flat_map",
     select = ref command "select",
     foldl = ref command "foldl",
     foldr = ref command "foldr",

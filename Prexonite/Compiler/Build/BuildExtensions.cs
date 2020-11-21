@@ -43,14 +43,7 @@ namespace Prexonite.Compiler.Build
 
         public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name)
         {
-            return BuildAsync(plan, name, CancellationToken.None);
-        }
-
-        public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name, CancellationToken token)
-        {
-            var buildTasks = plan.BuildAsync(name.Singleton(), token);
-            Debug.Assert(buildTasks.Count == 1,"Expected build task dictionary for a single module to only contain a single task.");
-            return buildTasks[name];
+            return plan.BuildAsync(name, CancellationToken.None);
         }
 
         public static Tuple<Application,ITarget> Load(this IPlan plan, ModuleName name)

@@ -1,0 +1,115 @@
+name psr_tests::run_tests/2.0;
+references {
+    prx::cli,
+    psr::test,
+    @".\make_test_configuration.pxs"
+};
+
+namespace psr_tests.run_tests
+    import 
+        sys(*),
+        sys.seq(*),
+        sys.text(*),
+        sys.rt(compile_to_cil),
+        prx.cli(timer, host),
+        psr.test.make_test_configuration(get_test_file_names, create_source_file)
+{
+
+    var no_cancellation = System::Threading::CancellationToken.None;
+
+    // load_from_descriptions~Dictionary<ModuleName, Tuple<Application, ITarget>>
+    function load_from_descriptions(targetDescriptionTasks, cil_enabled) {
+        var names = (targetDescriptionTasks >> map(t => t.Result.Name) >> to_list)
+            ~Object<"System.Collections.Generic.IEnumerable`1[Prexonite.Modular.ModuleName]">;
+        if(cil_enabled) {
+            return Prexonite::Compiler::Cil::Compiler.CompileModulesAsync(
+                host.self_assembling_build_plan,
+                names, 
+                Prexonite::Compiler::Cil::FunctionLinking.FullyStatic,
+                no_cancellation).Result;
+        } else {
+            // taskMap~Dictionary<ModuleName, Task<Tuple<Application, ITarget>>>
+            var taskMap = host.self_assembling_build_plan.LoadAsync(names, no_cancellation);
+            System::Threading::Tasks::Task.WaitAll(taskMap.Values >> map(?~Object<"System.Threading.Tasks.Task`1[System.Tuple`2[Prexonite.Application,Prexonite.Compiler.Build.ITarget]]">) >> to_list);
+            var resultMap =  new Object<"System.Collections.Generic.Dictionary`2[Prexonite.Modular.ModuleName,System.Tuple`2[Prexonite.Application,Prexonite.Compiler.Build.ITarget]]">;
+            foreach(var entry in taskMap) {
+                resultMap[entry.Key] = entry.Value.Result;
+            }
+            return resultMap;
+        }
+    }
+
+    function main
+    {
+        print("Deriving build plan...");
+        var targetDescriptionTasks = [];
+        timer.start;
+        foreach(var file_path in get_test_file_names) {
+            var src = new source_file(file_path);
+            targetDescriptionTasks[] =  host.self_assembling_build_plan.AssembleAsync(src, no_cancellation);
+        }
+        System::Threading::Tasks::Task.WaitAll(targetDescriptionTasks~Object<"System.Threading.Tasks.Task[]">);
+        timer.stop;
+        var totalCompTime = timer.elapsed;
+        println("done.");
+        timer.reset;
+
+        print("Compiling $(targetDescriptionTasks.Count) test modules (and their dependencies)...");
+        timer.start;
+        var testSuiteMap = load_from_descriptions(targetDescriptionTasks, var args >> exists(?.Contains("cil")));
+        timer.stop;
+        totalCompTime += timer.elapsed;
+        println("done.");
+        timer.reset;
+
+        // Check for compile errors
+        var success = true;
+        foreach(var  testSuite in testSuiteMap) {
+            var target = testSuite.Value.Item2;
+            if(target.IsSuccessful) {
+                continue;
+            }
+            success = false;
+
+            println("Failed to compile $(target.Name) or one of its dependencies:");
+            foreach(var m in target.Messages) {
+                println(m);
+            }
+            if(target.Exception is not null) {
+                println(target.Exception);
+            }
+        }
+        if(not success) {
+            throw "One or more test suites failed to compile.";
+        }
+
+        timer.start;
+        foreach(var suite in testSuiteMap.Values) {
+            psr.test.run_tests_in_app(suite.Item1);
+        }
+        timer.stop;
+        var displayTotal = false;
+        var total = 0;
+        var fieldWidth = 6;
+    
+        if(totalCompTime is not null)
+        {
+            println("\tBuild  : ",setright(fieldWidth,totalCompTime),"ms");
+            total += totalCompTime;
+            displayTotal = true;
+        }
+    
+        println("\tTests  : ",setright(fieldWidth,timer.elapsed),"ms");
+        total += timer.elapsed;
+    
+        if(displayTotal)
+        {
+            println("\tOverall: ",setright(fieldWidth,total),"ms");
+        }
+    
+        timer.reset;
+    }
+
+} export(main)
+
+function main does psr_tests.run_tests.main(*var args);

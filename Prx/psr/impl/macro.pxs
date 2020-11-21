@@ -1343,7 +1343,7 @@ function ast\eval\impl(loader, expr) [is compiler;]
     // This block will be the root block of a function.
     // The AST factory API does not support construction of root blocks,
     //    since that is not something that an ordinary macro does.
-    var block = Prexonite::Compielr::Ast::AstBlock.CreateRootBlock(
+    var block = Prexonite::Compiler::Ast::AstBlock.CreateRootBlock(
         expr.Position,
         Prexonite::Compiler::Symbolic::SymbolStore.Create(loader.Symbols,null),
         "Block",

@@ -190,7 +190,7 @@ namespace Prexonite.Compiler.Build.Internal
             token.ThrowIfCancellationRequested();
 
             // Perform preflight parse
-            var eng = new Engine { ExecutionProhibited = true };
+            var eng = _createPreflightEngine();
             var app = new Application();
             var ldr =
                 new Loader(new LoaderOptions(eng, app)
@@ -232,7 +232,22 @@ namespace Prexonite.Compiler.Build.Internal
             return result;
         }
 
-        private FileInfo? _getPath([NotNull] ISource source)
+        private Engine _createPreflightEngine()
+        {
+            var compilationEngine = LeaseBuildEngine();
+            try
+            {
+                // We cannot modify a shared engine from the pool, but we can clone one (cloning is far cheaper than
+                // instantiating a new one).
+                return new Engine(compilationEngine) {ExecutionProhibited = true};
+            }
+            finally
+            {
+                ReturnBuildEngine(compilationEngine);
+            }
+        }
+
+        private static FileInfo? _getPath([NotNull] ISource source)
         {
             return source is FileSource fileSource ? fileSource.File : null;
         }
@@ -279,8 +294,7 @@ namespace Prexonite.Compiler.Build.Internal
             {
                 while (refSpec.ModuleName == null || !TargetDescriptions.Contains(refSpec.ModuleName))
                 {
-                    if (candidateSequence == null)
-                        candidateSequence = _pathCandidates(refSpec).GetEnumerator();
+                    candidateSequence ??= _pathCandidates(refSpec).GetEnumerator();
 
                     if (!candidateSequence.MoveNext())
                     {
@@ -384,7 +398,7 @@ namespace Prexonite.Compiler.Build.Internal
                     });
 
             // Assemble dependencies, including standard library (unless suppressed)
-            var deps = refSpecs.Where(r => r.ModuleName != null).Select(r => r.ModuleName);
+            var deps = refSpecs.Where(r => r.ModuleName != null).Select(r => r.ModuleName!);
             if (!result.SuppressStandardLibrary)
                 deps = deps.Append(StandardLibrary);
 
@@ -406,7 +420,8 @@ namespace Prexonite.Compiler.Build.Internal
         private RefSpec _forbidFileRefSpec(RefSpec refSpec)
         {
             if (refSpec.ModuleName == null)
-                refSpec.ErrorMessage ??= Resources.SelfAssemblingPlan__forbidFileRefSpec_notallowed;
+                Interlocked.CompareExchange(ref refSpec.ErrorMessage, 
+                    Resources.SelfAssemblingPlan__forbidFileRefSpec_notallowed, null);
             return refSpec;
         }
 

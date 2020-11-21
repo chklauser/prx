@@ -50,6 +50,8 @@ function test\run_single_test as run_single_test(testFunc)
 declare function test\basic_ui;
 declare test\basic_ui as basic_ui;
 
+var test\diagnostics = false;
+
 function test\load_plugins
 {
     static var loaded ??= false;
@@ -61,7 +63,9 @@ function test\load_plugins
         return coroutine () => {
             foreach(var x in xs)
             {
-                println(f.(x));
+                if(test\diagnostics) {
+                    println(f.(x));
+                }
                 yield x;
             }
         };
@@ -69,7 +73,9 @@ function test\load_plugins
     
     var plugins_key = @"test\plugins";
     var app = asm(ldr.app);
-    println("::>>TEST-PLUGINS (",app.Compound >> count,")");
+    if(test\diagnostics) {
+        println("::>>TEST-PLUGINS (",app.Compound >> count,")");
+    }
         
     app.Compound
     >> trace(x => "comp: $(x.Module.Name)")
@@ -84,7 +90,9 @@ function test\load_plugins
     >> seqconcat
     >> trace(x => "init: $(x.Module.Name)")
     >> each(?.EnsureInitialization(asm(ldr.eng)));
-    println("::<<END TEST-PLUGINS");
+    if(test\diagnostics) {
+        println("::<<END TEST-PLUGINS");
+    }
     
     loaded = true;
 }
@@ -134,9 +142,11 @@ function test\run_test as run_test(ui, testFunc)
     
     test\load_plugins;
     
-    println("::>>TEST-FILTERS");
-    test_filters >> each(println("\t-> ",?));
-    println("::<<END TEST-FILTERS");
+    if(test\diagnostics) {
+        println("::>>TEST-FILTERS");
+        test_filters >> each(println("\t-> ",?));
+        println("::<<END TEST-FILTERS");
+    }
     function create_transparent_wrapper(inner, original, filter) {
         var s = new Structure;
         s.\\("Call") = (self,id) => call\member(original, id, var args >> skip(2));
@@ -159,11 +169,11 @@ function test\list_tests as list_tests()
 {
     var tags = append(["test"], var args >> map(?~String)) >> all;
     
-    return asm(ldr.app).Functions 
-        >> where(f => tags >> forall(f.Meta[?] then ?.Switch));       
+    return asm(ldr.app).Compound
+        >> flat_map(?.Functions) >> where(f => tags >> forall(f.Meta[?] then ?.Switch));       
 }
 
-/// run_tests(ui~Structure, testFunc~IIndirectCall)
+/// run_tests(ui~Structure, tags...~String)
 ///     ui: a structure like the one returned from basic_ui
 ///     testFunc: the test code
 /// run_tests(testFunc~IIndirectCall)
@@ -186,7 +196,7 @@ function test\run_tests as run_tests()
     
     ui.search_tests(args);
     
-    var tests = call(list_tests(?),args) >> all;
+    var tests = list_tests(*args) >> all;
     
     ui.begin_suite(tests);
     

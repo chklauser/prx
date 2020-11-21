@@ -6,7 +6,8 @@ namespace prx.test.make_test_configuration
 {
 
     function get_test_file_names(path,pattern)[import System::IO] =
-        ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
+        ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories)
+        >> where(f => not (f.Contains(@"\\_2\\") or f.Contains("/_2/")));
 
     function under_test = "under_test";
     function test_dependencies = "test_dependencies";
@@ -163,6 +164,7 @@ namespace prx.test.make_test_configuration
         return c;
     }
 
-} export(main, write_config_file, get_config, read_config, read_config_file, to_config, write_config, create_config);
+} export(main, write_config_file, get_config, read_config, read_config_file, to_config, write_config, 
+         create_config, get_test_file_names);
 
-function main = sys.call(prx.test.make_test_configuration.main(?),var args);
+function main = prx.test.make_test_configuration.main(*var args);

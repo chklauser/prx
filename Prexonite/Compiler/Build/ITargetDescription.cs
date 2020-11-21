@@ -35,20 +35,16 @@ namespace Prexonite.Compiler.Modular
 
 namespace Prexonite.Compiler.Build
 {
-    public interface ITargetDescription
+    public interface ITargetDescription : IDependent<ModuleName>
     {
         [NotNull]
         IReadOnlyCollection<ModuleName> Dependencies { get; }
 
         [NotNull]
-        ModuleName Name
-        {
-            get;
-        }
-
-        [NotNull]
         IReadOnlyList<Message> BuildMessages { get; }
 
         Task<ITarget> BuildAsync([NotNull] IBuildEnvironment build, [NotNull] IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
+
+        IEnumerable<ModuleName> IDependent<ModuleName>.GetDependencies() => Dependencies;
     }
 }
