@@ -16,6 +16,7 @@ declare {
         string_concat,
 		concat,
 		map,
+		flat_map,
 		select,
 		foldl,
 		foldr,

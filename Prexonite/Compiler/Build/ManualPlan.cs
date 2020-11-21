@@ -1,54 +1,43 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
+using Microsoft.Extensions.ObjectPool;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
+using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Build
 {
     public class ManualPlan : IPlan
     {
-        private readonly HashSet<IBuildWatcher> _buildWatchers = new HashSet<IBuildWatcher>();
-        private readonly TargetDescriptionSet _targetDescriptions = TargetDescriptionSet.Create();
-
-        public ISet<IBuildWatcher> BuildWatchers
+        private readonly DefaultObjectPool<Engine> _enginePool;
+        private class EnginePoolPolicy : IPooledObjectPolicy<Engine>
         {
-            get { return _buildWatchers; }
+            private readonly ManualPlan _inner;
+
+            public EnginePoolPolicy(ManualPlan inner)
+            {
+                _inner = inner;
+            }
+
+            public Engine Create() =>
+                _inner.Options?.ParentEngine switch
+                {
+                    { } x => new Engine(x),
+                    _ => new Engine()
+                };
+
+            public bool Return(Engine obj) => true;
         }
 
-        public TargetDescriptionSet TargetDescriptions
-        {
-            get { return _targetDescriptions; }
-        }
+        public ISet<IBuildWatcher> BuildWatchers { get; } = new HashSet<IBuildWatcher>();
+
+        public TargetDescriptionSet TargetDescriptions { get; } = TargetDescriptionSet.Create();
 
         /// <summary>
         /// Creates an <see cref="ITargetDescription"/> from an <see cref="ISource"/> with manually specified dependencies.
@@ -61,7 +50,7 @@ namespace Prexonite.Compiler.Build
         /// <returns></returns>
         /// <exception cref="ArgumentException">Dependencies must not contain multiple versions of the same module.</exception>
         /// <remarks>You will have to make sure that this plan contains a target description for each dependency before this target description can be built.</remarks>
-        public ITargetDescription CreateDescription([NotNull] ModuleName moduleName, [NotNull] ISource source, [CanBeNull] string fileName, [NotNull] IEnumerable<ModuleName> dependencies, [CanBeNull] IEnumerable<Message> buildMessages = null)
+        public ITargetDescription CreateDescription(ModuleName moduleName, ISource source, string? fileName, IEnumerable<ModuleName> dependencies, IEnumerable<Message>? buildMessages = null)
         {
             return new ManualTargetDescription(moduleName, source, fileName, dependencies, buildMessages);
         }
@@ -113,25 +102,33 @@ namespace Prexonite.Compiler.Build
             return new TaskMap<ModuleName, ITarget>(5, TargetDescriptions.Count);
         }
 
-        public Task<Tuple<Application, ITarget>> LoadAsync(ModuleName name, CancellationToken token)
+        public IDictionary<ModuleName, Task<Tuple<Application, ITarget>>> LoadAsync(IEnumerable<ModuleName> names, CancellationToken token)
         {
+            if (names == null)
+                throw new ArgumentNullException(nameof(names));
             var taskMap = CreateTaskMap();
-            var description = _prepareBuild(name);
-            return BuildWithMapAsync(description, taskMap, token).ContinueWith(buildTask =>
+            return names.ToDictionary(name => name, name =>
+            {
+                var description = _prepareBuild(name);
+                return BuildWithMapAsync(description, taskMap, token).ContinueWith(buildTask =>
                 {
                     var target = buildTask.Result;
                     var app = new Application(target.Module);
                     _linkDependencies(taskMap, app, description, token);
                     return Tuple.Create(app, target);
                 }, token);
+            });
         }
 
-        [CanBeNull] private LoaderOptions _options;
-        public LoaderOptions Options
+        protected ManualPlan()
         {
-            get { return _options; }
-            set { _options = value; }
+            _enginePool = new DefaultObjectPool<Engine>(new EnginePoolPolicy(this), Environment.ProcessorCount);
         }
+
+        public LoaderOptions? Options { get; set; }
+
+        internal Engine LeaseBuildEngine() => _enginePool.Get();
+        internal void ReturnBuildEngine(Engine buildEngine) => _enginePool.Return(buildEngine);
 
         private void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
         {
@@ -206,34 +203,34 @@ namespace Prexonite.Compiler.Build
             depMap.AddRange(deps);
 
             token.ThrowIfCancellationRequested();
-
+            
             var buildTask = GetBuildEnvironmentAsync(taskMap, desc,
                 token)
-                .ContinueWith(bet =>
-                                  {
-                                      var instance =
-                                          new Application(
-                                              bet.Result.Module);
-                                      Plan.Trace.TraceEvent(
-                                          TraceEventType.Verbose, 0,
-                                          "Linking compile-time dependencies for module {0}.",
-                                          bet.Result.Module.Name);
-                                      _linkDependencies(taskMap,
-                                          instance, targetDescription,
-                                          token);
-                                      token
-                                          .ThrowIfCancellationRequested
-                                          ();
-                                      return BuildTargetAsync(bet, desc,
-                                          depMap, token);
-                                  }, token);
+                .ContinueWith(async bet =>
+                {
+                    try
+                    {
+                        var instance = new Application(bet.Result.Module);
+                        Plan.Trace.TraceEvent(TraceEventType.Verbose, 0,
+                            "Linking compile-time dependencies for module {0}.", bet.Result.Module.Name);
+                        _linkDependencies(taskMap, instance, targetDescription, token);
+                        token.ThrowIfCancellationRequested();
+                        var target = await BuildTargetAsync(bet, desc, depMap, token);
+                        return target;
+                    }
+                    finally
+                    {
+                        bet.Dispose();
+                    }
+                }, token);
             return buildTask.Unwrap();
         }
 
         protected virtual Task<ITarget> BuildTargetAsync(Task<IBuildEnvironment> buildEnvironment, ITargetDescription description, Dictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
         {
             var buildTask = description.BuildAsync(buildEnvironment.Result, dependencies, token);
-            Debug.Assert(buildTask != null, "Task for building target is null.", string.Format("{0}.BuildAsync returned null instead of a Task.", description.GetType().Name));
+            Debug.Assert(buildTask != null, "Task for building target is null.",
+                $"{description.GetType().Name}.BuildAsync returned null instead of a Task.");
             return buildTask;
         }
     }

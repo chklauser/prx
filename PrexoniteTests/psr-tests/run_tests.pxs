@@ -1,85 +1,118 @@
-﻿var totalCompTime;
+name psr_tests::run_tests;
+references {
+    prx::cli,
+    prx/1.0
+};
 
-build
+namespace psr_tests.run_tests
+    import 
+        sys(*),
+        sys.seq(*),
+        sys.text(*),
+        sys.rt(compile_to_cil),
+        prx.cli(timer)
 {
-    function req_ex(path)
+
+    var totalCompTime;
+    
+    namespace v1 
+        import prx.v1(*)
     {
-        print("Begin compiling $path ...");
-        timer\start;
-        require(path);
-        timer\stop;
-        println("done.\n\t",timer\elapsed,"ms");
-        totalCompTime += timer\elapsed;
-        timer\reset;
+        build
+        {
+            var eng = asm(ldr.eng);
+            function req_ex(path)
+            {
+                print("Begin compiling $path ...");
+                timer.start;
+                require(path);
+                timer.stop;
+                println("done.\n\t",timer.elapsed,"ms");
+                totalCompTime += timer.elapsed;
+                timer.reset;
+            }
+        
+            ([  @"psr\ast.pxs",
+                @"psr\test.pxs",
+                @"ast.test.pxs",
+        
+                @"psr\macro.pxs",
+                @"psr\test\meta_macro.pxs",
+                @"macro.test.pxs",
+        
+                @"psr\struct.pxs",
+                @"psr\stack.pxs",
+                @"psr\queue.pxs",
+                @"psr\set.pxs",
+                @"struct.test.pxs",
+        
+                @"psr\prop.pxs",
+                @"psr\pattern.pxs",
+                @"lang-ext.test.pxs",
+        
+                @"psr\misc.pxs",
+                @"misc.test.pxs",
+            ]) >> each(req_ex(?));
+        
+            println("Total compilation time: $(totalCompTime)ms");
+        
+            var app = asm(ldr.app);
+            app.Functions.Remove(->req_ex);
+            app.Meta["totalCompTime"] = totalCompTime.ToString~Prexonite::MetaEntry;
+        }
+
+        {
+            var app = asm(ldr.app);
+            if(app.Meta["totalCompTime"].Text.Length > 0) {
+                totalCompTime = app.Meta["totalCompTime"].Text~Int;
+            }
+        }
+    }
+    
+    function main
+    {
+        var cilTime = null;
+        if(var args >> exists(?.Contains("cil")))
+        {
+            print("Compiling to CIL...");
+            timer.start;
+            compile_to_cil;
+            timer.stop;
+            println("done.\n\t",cilTime = timer.elapsed,"ms");
+            timer.reset;
+        }
+        timer.start;
+        v1.run_tests;
+        timer.stop;
+        var displayTotal = false;
+        var total = 0;
+        var fieldWidth = 6;
+    
+        if(totalCompTime is not null)
+        {
+            println("\tBuild  : ",setright(fieldWidth,totalCompTime),"ms");
+            total += totalCompTime;
+            displayTotal = true;
+        }
+    
+        if(cilTime is not null)
+        {
+            println("\tCil    : ",setright(fieldWidth,cilTime),"ms");
+            total += cilTime;
+            displayTotal = true;
+        }
+    
+        println("\tTests  : ",setright(fieldWidth,timer.elapsed),"ms");
+        total += timer.elapsed;
+    
+        if(displayTotal)
+        {
+            println("\tOverall: ",setright(fieldWidth,total),"ms");
+        }
+    
+        timer.reset;
     }
 
-    ([  @"psr\ast.pxs",
-        @"psr\test.pxs",
-        @"ast.test.pxs",
-
-        @"psr\macro.pxs",
-        @"psr\test\meta_macro.pxs",
-        @"macro.test.pxs",
-
-        @"psr\struct.pxs",
-        @"psr\stack.pxs",
-        @"psr\queue.pxs",
-        @"psr\set.pxs",
-        @"struct.test.pxs",
-
-        @"psr\prop.pxs",
-        @"psr\pattern.pxs",
-        @"lang-ext.test.pxs",
-
-        @"psr\misc.pxs",
-        @"misc.test.pxs",
-    ]) >> each(req_ex(?));
-
-    println("Total compilation time: $(totalCompTime)ms");
-
-    (asm(ldr.app)).Functions.Remove(->req_ex);
 }
 
-function main
-{
-    var cilTime = null;
-    if(var args >> exists(?.Contains("cil")))
-    {
-        print("Compiling to CIL...");
-        timer\start;
-        CompileToCil;
-        timer\stop;
-        println("done.\n\t",cilTime = timer\elapsed,"ms");
-        timer\reset;
-    }
-    timer\start;
-    run_tests;
-    timer\stop;
-    var displayTotal = false;
-    var total = 0;
-    var fieldWidth = 6;
-
-    if(totalCompTime is not null)
-    {
-        println("\tBuild  : ",setright(fieldWidth,totalCompTime),"ms");
-        total += totalCompTime;
-        displayTotal = true;
-    }
-
-    if(cilTime is not null)
-    {
-        println("\tCil    : ",setright(fieldWidth,cilTime),"ms");
-        total += cilTime;
-        displayTotal = true;
-    }
-
-    println("\tTests  : ",setright(fieldWidth,timer\elapsed),"ms");
-    total += timer\elapsed;
-
-    if(displayTotal)
-    {
-        println("\tOverall: ",setright(fieldWidth,total),"ms");
-    }
-
-    timer\reset;
-}
+function main does psr_tests.run_tests.main(*var args);

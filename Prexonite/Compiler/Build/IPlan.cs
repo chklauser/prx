@@ -53,7 +53,15 @@ namespace Prexonite.Compiler.Build
         IDictionary<ModuleName,Task<ITarget>> BuildAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
 
         [NotNull]
-        Task<Tuple<Application,ITarget>> LoadAsync([NotNull] ModuleName name, CancellationToken token);
+        Task<ITarget> BuildAsync([NotNull] ModuleName name, CancellationToken token) => 
+            BuildAsync(name.Singleton(), token)[name];
+
+        [NotNull]
+        Task<Tuple<Application, ITarget>> LoadAsync([NotNull] ModuleName name, CancellationToken token) => 
+            LoadAsync(name.Singleton(), token)[name];
+
+        [NotNull]
+        IDictionary<ModuleName, Task<Tuple<Application,ITarget>>> LoadAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
 
         [CanBeNull]
         LoaderOptions Options { get; set; }

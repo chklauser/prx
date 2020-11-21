@@ -1,30 +1,7 @@
-﻿// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -38,30 +15,22 @@ namespace Prexonite.Modular
     [DebuggerDisplay("{Id},{Version}")]
     public sealed class ModuleName : IEquatable<ModuleName>
     {
-        private readonly string _id;
-
         /// <summary>
         /// The name of the named module. Should be a dotted identifier. Must not contain a comma (U+002C ',') or white space (Unicode category Zs).
         /// </summary>
-        public string Id
-        {
-            get { return _id; }
-        }
+        public string Id { get; }
 
-        private readonly Version _version;
         public static readonly PType PType = PType.Object[typeof(ModuleName)];
+        private static readonly Version ZeroVersion = new Version();
 
         /// <summary>
         /// The version of the named module. Consists of four 32bit integers (signed, but non-negative).
         /// </summary>
-        public Version Version
-        {
-            get { return _version; }
-        }
+        public Version Version { get; }
 
         public ModuleName(string id, Version version)
         {
-            if (String.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(id))
                 throw new ArgumentException(Resources.ModuleName_Module_id_cannot_be_null_or_empty_,nameof(id));
 
             if (version == null)
@@ -74,8 +43,8 @@ namespace Prexonite.Modular
 // ReSharper restore PossibleNullReferenceException
 #endif
 
-            _id = id;
-            _version = version;
+            Id = id;
+            Version = version;
         }
 
         /// <summary>
@@ -85,11 +54,11 @@ namespace Prexonite.Modular
         /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
-        public bool Equals(ModuleName other)
+        public bool Equals(ModuleName? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Engine.StringsAreEqual(other._id, _id) && Equals(other._version, _version);
+            return Engine.StringsAreEqual(other.Id, Id) && Equals(other.Version, Version);
         }
 
         /// <summary>
@@ -99,7 +68,7 @@ namespace Prexonite.Modular
         /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
         /// </returns>
         /// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>. </param><filterpriority>2</filterpriority>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -118,16 +87,16 @@ namespace Prexonite.Modular
         {
             unchecked
             {
-                return (_id.GetHashCode()*397) ^ _version.GetHashCode();
+                return (Id.GetHashCode()*397) ^ Version.GetHashCode();
             }
         }
 
-        public static bool operator ==(ModuleName left, ModuleName right)
+        public static bool operator ==(ModuleName? left, ModuleName? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(ModuleName left, ModuleName right)
+        public static bool operator !=(ModuleName? left, ModuleName? right)
         {
             return !Equals(left, right);
         }
@@ -149,7 +118,7 @@ namespace Prexonite.Modular
         /// <para>"Name, 1.0"</para>
         /// <para>"Name.Dots, 1.2.4"</para> 
         /// </remarks>
-        public static bool TryParse(string rawName, out ModuleName name)
+        public static bool TryParse(string rawName, [NotNullWhen(true)] out ModuleName? name)
         {
             return TryParse(new MetaEntry(rawName), out name);
         }
@@ -168,7 +137,7 @@ namespace Prexonite.Modular
         /// <para>{Name,"1.0.0"}</para> 
         /// <para>{Name,{"1","2","3","4"}}</para>
         /// </remarks>
-        public static bool TryParse(MetaEntry entry, out ModuleName name)
+        public static bool TryParse(MetaEntry entry, [NotNullWhen(true)] out ModuleName? name)
         {
             name = null;
             if(entry == null)
@@ -178,7 +147,7 @@ namespace Prexonite.Modular
                 return false;
 
             string id;
-            string rawVersion = null;
+            string? rawVersion = null;
             if(entry.IsText)
             {
                 id = entry.Text;
@@ -237,9 +206,9 @@ namespace Prexonite.Modular
                 || rawVersion != null && rawVersion.Length == 0)
                 return false;
 
-            Version v;
+            Version? v;
             if (rawVersion == null)
-                v = new Version();
+                v = ZeroVersion;
             else
                 if (!Version.TryParse(rawVersion, out v))
                     return false;
@@ -254,12 +223,16 @@ namespace Prexonite.Modular
 
         public override string ToString()
         {
-            return _id + "," + _version;
+            if (Version == ZeroVersion)
+            {
+                return Id;
+            }
+            return Id + "," + Version;
         }
 
         public MetaEntry ToMetaEntry()
         {
-            return new MetaEntry(new MetaEntry[] {_id, _version.ToString()});
+            return new MetaEntry(new MetaEntry[] {Id, Version.ToString()});
         }
 
         public static implicit operator MetaEntry(ModuleName name)

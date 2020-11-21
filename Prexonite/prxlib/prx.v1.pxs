@@ -13,6 +13,7 @@ namespace prx.v1 {
             string_concat,
             concat,
             map,
+            flat_map,
             select,
             foldl,
             foldr,

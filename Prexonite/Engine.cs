@@ -119,7 +119,6 @@ namespace Prexonite
         #region PType map
 
         private readonly Dictionary<Type, PType> _pTypeMap;
-        private readonly PTypeMapIterator _ptypemapiterator;
 
         /// <summary>
         ///     Provides access to the PType to CLR <see cref = "System.Type">Type</see> mapping.
@@ -128,11 +127,7 @@ namespace Prexonite
         ///     The property uses a proxy type to hide implementation details.
         /// </remarks>
         /// <seealso cref = "PTypeMapIterator" />
-        public PTypeMapIterator PTypeMap
-        {
-            [DebuggerStepThrough]
-            get { return _ptypemapiterator; }
-        }
+        public PTypeMapIterator PTypeMap { get; }
 
         /// <summary>
         ///     Proxy type that is used to provide access to the <see cref = "PType" /> to CLR <see cref = "System.Type">Type</see> mapping.
@@ -234,18 +229,13 @@ namespace Prexonite
         #region PType registry
 
         private readonly SymbolTable<Type> _pTypeRegistry;
-        private readonly PTypeRegistryIterator _pTypeRegistryIterator;
 
         /// <summary>
         ///     Provides access to the dictionary of <see cref = "PType">PTypes</see> registered 
         ///     for recognition in type expressions.
         /// </summary>
         /// <seealso cref = "PTypeRegistryIterator" />
-        public PTypeRegistryIterator PTypeRegistry
-        {
-            [DebuggerStepThrough]
-            get { return _pTypeRegistryIterator; }
-        }
+        public PTypeRegistryIterator PTypeRegistry { get; }
 
         /// <summary>
         ///     The proxy class that is used to provide access to the <see cref = "Prexonite.Engine.PTypeRegistry" />
@@ -398,7 +388,7 @@ namespace Prexonite
             if (value == null)
                 return PType.Null.CreatePValue();
             else
-                return _ptypemapiterator[value.GetType()].CreatePValue(value);
+                return PTypeMap[value.GetType()].CreatePValue(value);
         }
 
         #region CreatePType
@@ -583,16 +573,10 @@ namespace Prexonite
 
         #region Command management
 
-        private readonly CommandTable _commandTable;
-
         /// <summary>
         ///     A proxy to list commands provided by the engine.
         /// </summary>
-        public CommandTable Commands
-        {
-            [DebuggerStepThrough]
-            get { return _commandTable; }
-        }
+        public CommandTable Commands { [DebuggerStepThrough] get; }
 
         #endregion
 
@@ -601,13 +585,7 @@ namespace Prexonite
         /// <summary>
         ///     Provides access to the search paths used by this particular engine.
         /// </summary>
-        public List<String> Paths
-        {
-            [DebuggerStepThrough]
-            get { return _paths; }
-        }
-
-        private readonly List<String> _paths = new List<string>();
+        public List<string> Paths { get; } = new List<string>();
 
         #endregion
 
@@ -628,7 +606,7 @@ namespace Prexonite
 
             //PTypes
             _pTypeMap = new Dictionary<Type, PType>();
-            _ptypemapiterator = new PTypeMapIterator(this);
+            PTypeMap = new PTypeMapIterator(this);
             //int
             PTypeMap[typeof (int)] = PType.Int;
             PTypeMap[typeof (long)] = PType.Int;
@@ -661,18 +639,20 @@ namespace Prexonite
 
             //Registry
             _pTypeRegistry = new SymbolTable<Type>();
-            _pTypeRegistryIterator = new PTypeRegistryIterator(this);
-            PTypeRegistry[IntPType.Literal] = typeof (IntPType);
-            PTypeRegistry[BoolPType.Literal] = typeof (BoolPType);
-            PTypeRegistry[RealPType.Literal] = typeof (RealPType);
-            PTypeRegistry[CharPType.Literal] = typeof (CharPType);
-            PTypeRegistry[StringPType.Literal] = typeof (StringPType);
-            PTypeRegistry[NullPType.Literal] = typeof (NullPType);
-            PTypeRegistry[ObjectPType.Literal] = typeof (ObjectPType);
-            PTypeRegistry[ListPType.Literal] = typeof (ListPType);
-            PTypeRegistry[StructurePType.Literal] = typeof (StructurePType);
-            PTypeRegistry[HashPType.Literal] = typeof (HashPType);
-            PTypeRegistry[StructurePType.Literal] = typeof (StructurePType);
+            PTypeRegistry = new PTypeRegistryIterator(this)
+            {
+                [IntPType.Literal] = typeof(IntPType),
+                [BoolPType.Literal] = typeof(BoolPType),
+                [RealPType.Literal] = typeof(RealPType),
+                [CharPType.Literal] = typeof(CharPType),
+                [StringPType.Literal] = typeof(StringPType),
+                [NullPType.Literal] = typeof(NullPType),
+                [ObjectPType.Literal] = typeof(ObjectPType),
+                [ListPType.Literal] = typeof(ListPType),
+                [StructurePType.Literal] = typeof(StructurePType),
+                [HashPType.Literal] = typeof(HashPType),
+                [StructurePType.Literal] = typeof(StructurePType)
+            };
 
             //Assembly registry
             _registeredAssemblies = new List<Assembly>();
@@ -681,7 +661,7 @@ namespace Prexonite
                 _registeredAssemblies.Add(Assembly.Load(assName.FullName));
 
             //Commands
-            _commandTable = new CommandTable();
+            Commands = new CommandTable();
             PCommand cmd;
 
             Commands.AddEngineCommand(PrintAlias, ConsolePrint.Instance);
@@ -698,6 +678,7 @@ namespace Prexonite
 
             Commands.AddEngineCommand(MapAlias, cmd = Map.Instance);
             Commands.AddEngineCommand(SelectAlias, cmd);
+            Commands.AddEngineCommand(FlatMap.Alias, FlatMap.Instance);
 
             Commands.AddEngineCommand(FoldLAlias, FoldL.Instance);
 
@@ -864,6 +845,21 @@ namespace Prexonite
             Commands.AddEngineCommand(CreateSourcePosition.Alias, CreateSourcePosition.Instance);
 
             Commands.AddEngineCommand(SeqConcat.Alias, SeqConcat.Instance);
+        }
+
+        internal Engine(Engine prototype)
+        {
+            _stackSlot = Thread.AllocateDataSlot();
+            _meta = prototype.Meta.Clone();
+            _pTypeMap = new Dictionary<Type, PType>(prototype._pTypeMap);
+            PTypeMap = new PTypeMapIterator(this);
+            _pTypeRegistry = new SymbolTable<Type>(prototype._pTypeRegistry.Count);
+            _pTypeRegistry.AddRange(prototype._pTypeRegistry);
+            PTypeRegistry = new PTypeRegistryIterator(this);
+            _registeredAssemblies = new List<Assembly>(prototype._registeredAssemblies);
+            Commands = new CommandTable();
+            Commands.AddRange(prototype.Commands);
+            
         }
 
         /// <summary>

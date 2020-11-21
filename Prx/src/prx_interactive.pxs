@@ -102,7 +102,7 @@ namespace prx.cli.repl
     function prx\interactive()
     {
         if(supportsTabs)
-            __console.Tab = ->tabHook;
+            host.console.Tab = ->tabHook;
         
         print(
             "Entering Prexonite INTERACTIVE MODE.\n", 

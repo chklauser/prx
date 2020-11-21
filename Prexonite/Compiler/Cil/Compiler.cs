@@ -34,11 +34,15 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Lokad.ILPack;
 using Prexonite.Commands;
+using Prexonite.Compiler.Build;
 using Prexonite.Modular;
 using Prexonite.Types;
 using CilException = Prexonite.PrexoniteException;
+using Module = Prexonite.Modular.Module;
 
 #endregion
 
@@ -162,6 +166,41 @@ namespace Prexonite.Compiler.Cil
                 func.Declaration.CilImplementation = pass.GetDelegate(func.Id);
                 pass.LinkMetadata(func);
             }
+        }
+
+        [PublicAPI]
+        public static async Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(IPlan plan, IEnumerable<ModuleName> moduleNames,
+            Engine engine, FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
+        {
+            var dependencyClosure = new DependencyAnalysis<ModuleName, ITargetDescription>(
+                moduleNames.Select(m => plan.TargetDescriptions[m]),
+                false);
+            var compiledApplications = new Dictionary<ModuleName, Tuple<Application, ITarget>>();
+            
+            foreach (var group in dependencyClosure.GetMutuallyRecursiveGroups())
+            {
+                var groupTargets = await Task.WhenAll(group.Select(t => plan.LoadAsync(t.Name, ct)));
+                foreach(var (_, groupTarget) in groupTargets)
+                {
+                    groupTarget.ThrowIfFailed(plan.TargetDescriptions[groupTarget.Name]);
+                }
+                
+                Compile(groupTargets.SelectMany(t => t.Item1.Functions), engine, linking);
+                
+                foreach (var groupTarget in groupTargets)
+                {
+                    compiledApplications[groupTarget.Item2.Name] = groupTarget;
+                }
+            }
+            
+            return compiledApplications;
+        }
+
+        [PublicAPI]
+        public static Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(StackContext sctx, IPlan plan, IEnumerable<ModuleName> moduleNames,
+            FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
+        {
+            return CompileModulesAsync(plan, moduleNames, sctx.ParentEngine, linking, ct);
         }
 
         public static bool TryCompile(PFunction func, Engine targetEngine)

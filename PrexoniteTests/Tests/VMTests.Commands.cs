@@ -84,6 +84,22 @@ function main()
         }
 
         [Test]
+        public void FlatMapImplementation()
+        {
+            Compile(@"
+function main() {
+    coroutine f(n) {
+        for(var i = 1; i <= n; i++)
+            yield i;
+    }
+    return var args >> flat_map(f(?), [1,0], []) >> foldl( (l,r) => l + "","" + r, """");
+}
+");
+            
+            Expect(",1,1,2,3,1,2,3,4", 3,4);
+        }
+
+        [Test]
         public void FoldLCommandImplementation()
         {
             Compile(

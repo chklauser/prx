@@ -36,8 +36,8 @@ namespace Prexonite
 {
     /// <summary>
     /// </summary>
-    /// <typeparam name = "TKey"></typeparam>
-    /// <typeparam name = "TValue"></typeparam>
+    /// <typeparam name = "TKey">Identifier for nodes.</typeparam>
+    /// <typeparam name = "TValue">Nodes of the dependency graph.</typeparam>
     public class DependencyAnalysis<TKey, TValue> where
                                                       TValue : class, IDependent<TKey>
     {

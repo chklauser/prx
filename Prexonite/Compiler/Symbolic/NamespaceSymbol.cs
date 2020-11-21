@@ -10,23 +10,17 @@ namespace Prexonite.Compiler.Symbolic
     [DebuggerDisplay("{ToString()}")]
     public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
     {
-        private readonly Namespace _namespace;
-        private readonly ISourcePosition _position;
-
-        public Namespace Namespace
-        {
-            get { return _namespace; }
-        }
+        public Namespace Namespace { get; }
 
         public override string ToString()
         {
-            return String.Format("namespace");
+            return "namespace";
         }
 
         private NamespaceSymbol([NotNull] ISourcePosition position, [NotNull] Namespace @namespace)
         {
-            _position = position;
-            _namespace = @namespace;
+            Position = position;
+            Namespace = @namespace;
         }
 
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
@@ -34,19 +28,16 @@ namespace Prexonite.Compiler.Symbolic
             return handler.HandleNamespace(this, argument);
         }
 
-        public override ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public override ISourcePosition Position { get; }
 
-        public override bool Equals(Symbol other)
+        public override bool Equals(Symbol? other)
         {
             if (ReferenceEquals(other, this)) return true;
             if (ReferenceEquals(other, null)) return false;
-            return (other is NamespaceSymbol) && _equalsNonNull((NamespaceSymbol)other);
+            return other is NamespaceSymbol nsSymbol && _equalsNonNull(nsSymbol);
         }
 
-        public bool Equals(NamespaceSymbol other)
+        public bool Equals(NamespaceSymbol? other)
         {
             if (ReferenceEquals(other, this)) return true;
             return !ReferenceEquals(other, null) && _equalsNonNull(other);
@@ -59,7 +50,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public override int GetHashCode()
         {
-            return _namespace.GetHashCode();
+            return Namespace.GetHashCode();
         }
 
         internal static NamespaceSymbol _Create([NotNull] Namespace @namespace, [NotNull] ISourcePosition position)

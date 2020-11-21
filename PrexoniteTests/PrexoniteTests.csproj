@@ -35,6 +35,10 @@
     <TextTemplate Include="**\*.tt" />
   </ItemGroup>
   
+  <ItemGroup>
+    <Folder Include="psr-tests\_2" />
+  </ItemGroup>
+  
   <!-- Text Template -->
   <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
     <!-- https://notquitepure.info/2018/12/12/T4-Templates-at-Build-Time-With-Dotnet-Core/ -->

@@ -1,0 +1,1 @@
+﻿.\ast.test.pxs>|compiler_is_loaded|test_ast_withpos_null|test_ast_withpos_memcall|test_ast_simple_memcall|test_ast_memcall|test_unique_id_counter|test_is_member_access|test_local_meta|test_si_fields|test_si_is_star|test_si_make_star|test_si_m_is_star|test_sub_blocks

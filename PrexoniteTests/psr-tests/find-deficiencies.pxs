@@ -1,13 +1,21 @@
+name psr_tests::find_deficiencies;
+references {
+    prx::cli,
+    prx/1.0
+};
 
 build does require("run_tests.pxs");
 
-function main
+namespace import sys.*, sys.seq.*;
+
+Entry find_deficiencies\main;
+function find_deficiencies\main
 {
     println;
     println("================= DEFICIENCIES ================");
     (asm(ldr.app).Functions)
-    >> where(?.Meta then ?[Prexonite::PFunction.VolatileKey] then ?.Switch)
+    >> filter(?.Meta then ?[Prexonite::PFunction.VolatileKey] then ?.Switch)
     >> each(f => println(f,"\n\t",f.Meta[Prexonite::PFunction.DeficiencyKey].Text,"\n"));
 }
 
-{ CompileToCil; }
+{ rt.compile_to_cil; }

@@ -27,10 +27,31 @@
 namespace prx.cli
     import sys.*
 {
-    //Access to an experimental terminal
-    declare command __console;
-    //Access to build infrastructure of the host
-    declare command host\self_assembling_build_plan, host\prx_path;
+    // Declare commands that are only available in the prx host.
+    namespace timer {
+        declare(
+            start = ref command @"timer\start",
+            stop = ref command @"timer\stop",
+            reset = ref command @"timer\reset",
+            elapsed = ref command @"timer\elapsed",
+        );
+    }
+    
+    namespace host {
+        declare(
+            //Access to an experimental terminal
+            console = ref command "__console",
+            //Access to build infrastructure of the host
+            prx_path = ref command @"host\prx_path",
+            self_assembling_build_plan = ref command @"host\self_assembling_build_plan"
+        );
+    }
+    
+    namespace benchmark {
+        declare(
+            create_benchmark = ref command "createBenchmark" 
+        )
+    }
 
     //Not all environments may support colors...
     var supportsColors = (supportsColors ?? true)~Bool;
@@ -84,7 +105,7 @@ namespace prx.cli
         
     function readline = 
         if(supportsTabs)
-            __console.ReadLine
+            host.console.ReadLine
         else
             System::Console.ReadLine;
         

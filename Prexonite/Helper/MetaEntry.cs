@@ -367,6 +367,7 @@ namespace Prexonite
 
         #endregion
 
+        [PublicAPI]
         public static MetaEntry[] CreateArray(StackContext sctx, List<PValue> elements)
         {
             var proto = new List<MetaEntry>(elements.Count);

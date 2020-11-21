@@ -1,0 +1,130 @@
+name psr_tests::make_test_configuration/2.0;
+references {
+    prx::cli
+};
+
+namespace psr.test.make_test_configuration
+    import sys.*,
+           sys.seq,
+           sys.seq(to_list,skip,map, filter),
+           prx.cli.host
+{
+
+    function get_test_file_names(path,pattern)[import System::IO] =
+        ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
+
+    function under_test = "under_test";
+    function test_dependencies = "test_dependencies";
+    function config_file_separator = "|";
+    function config_section_separator = ">";
+    function config_dependency_separator = "<";
+
+    function create_config(testCases)
+    {
+        var s = new Structure;
+        s.\("test_cases") = testCases;      // ~[String]
+        return s;
+    }
+
+    var no_cancellation = System::Threading::CancellationToken.None;
+
+    function create_source_file(file_path) =
+        Prexonite::Compiler::Build::Source.FromFile(file_path, 
+            static var utf8 ??= System::Text::Encoding.UTF8);
+
+    function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
+    {
+        print("Reading $file_name ...");
+        var src = new source_file(file_name);
+        var targetDescription = host.self_assembling_build_plan.AssembleAsync(src, no_cancellation).Result;
+        var target = host.self_assembling_build_plan.BuildAsync(targetDescription.Name, no_cancellation).Result;
+        println("done. ", if(target.IsSuccessful) "" else " There were errors:");
+        if(not target.IsSuccessful) {
+            target.Messages >> seq.each(println(?));
+            if(target.Exception is not null) {
+                println(target.Exception);
+            }
+        }
+
+        var testCases = target.Module.Functions >> filter(f => f.Meta["test"].Switch) >> map(?.Id) >> to_list;
+
+        println("\t", file_name," ",testCases.Count," test cases");
+
+        return new config(testCases);
+    }
+
+    //write_config writes the configuration <config> to the supplied <textWriter>.
+    //  - textWriter, an object that behaves like a System.IO.TextWriter
+    //  - config, [test_file_name:{test_cases}]
+    function write_config(textWriter, config)
+    {
+        foreach(var kvp in config)
+        {
+            textWriter.Write(kvp.Key);
+            textWriter.Write(config_section_separator);
+            foreach(var d in kvp.Value.test_cases)
+                textWriter.Write("$(config_file_separator)$(d)");
+            textWriter.WriteLine;
+        }
+    }
+
+    function write_config_file(file_name, config)[import {System::IO, System::Text}]
+    {
+        using(var tw = new ::StreamWriter(
+                new ::FileStream(file_name,::FileMode.Create,::FileAccess.Write),
+                ::Encoding.UTF8))
+            write_config(tw, config);
+    }
+
+    function to_config(config)
+    {
+        var s;
+        using(var sw = new ::StringWriter)
+        {
+            write_config(sw,config);
+            s = sw.ToString;
+        }
+        return s;
+    }
+
+    function get_config(path) =
+        get_test_file_names(path) >> map(tfn => tfn: read_metadata(tfn));
+
+    function main(path)
+    {
+        write_config_file("testconfig.txt",get_config(path));
+    }
+
+    function read_config(textReader)
+    {
+        var config = [];
+        var line;
+        for(; do line = textReader.ReadLine; while line is not null and line.Length > 0)
+        {
+            var fs = line.Split(config_section_separator);
+            if(fs.Count != 2)
+                throw "Unexpected number of sections (separated by '$(config_section_separator)'). Expected 2. Line: $line";
+
+            config[] = fs[0]: new config(
+                (fs[1].Split(config_file_separator) >> skip(1) >> to_list),
+            );
+        }
+        return config;
+    }
+
+    function read_config_file(fileName)[import {System::IO, System::Text}]
+    {
+        var c;
+        using(var tr = new ::StreamReader(
+                new ::FileStream(fileName, ::FileMode.Open, ::FileAccess.Read),
+                ::Encoding.UTF8))
+            c = read_config(tr);
+
+        return c;
+    }
+
+} export(main, write_config_file, get_config, read_config, read_config_file, to_config, write_config, 
+         create_config, get_test_file_names, create_source_file);
+
+Entry make_test_configuration\main;
+function make_test_configuration\main = psr.test.make_test_configuration.main(*var args);

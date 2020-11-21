@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using JetBrains.Annotations;
+using System.Diagnostics.CodeAnalysis;
 
 #nullable enable
 
@@ -13,7 +13,6 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// <summary>
         /// The scope that this filter wraps.
         /// </summary>
-        [NotNull]
         private SymbolStore _backingStore;
 
         internal SymbolStore BackingStore => _backingStore;
@@ -24,16 +23,15 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// <remarks>
         /// This dictionary is shared between all child-<see cref="ModuleLevelView"/>s. 
         /// </remarks>
-        [NotNull]
         private readonly ConcurrentDictionary<Namespace, LocalNamespaceImpl> _localProxies;
 
-        private ModuleLevelView([NotNull] SymbolStore backingStore, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+        private ModuleLevelView(SymbolStore backingStore, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
             _backingStore = backingStore ?? throw new ArgumentNullException(nameof(backingStore));
             _localProxies = localProxies ?? throw new ArgumentNullException(nameof(localProxies));
         }
 
-        public static ModuleLevelView Create([NotNull] SymbolStore externalScope)
+        public static ModuleLevelView Create(SymbolStore externalScope)
         {
             return new ModuleLevelView(externalScope, new ConcurrentDictionary<Namespace, LocalNamespaceImpl>());
         }
@@ -43,13 +41,11 @@ namespace Prexonite.Compiler.Symbolic.Internal
             /// <summary>
             /// Wrapper around the symbols of this namespace coming from external sources.
             /// </summary>
-            [NotNull]
             private readonly ModuleLevelView _localView;
 
             /// <summary>
             /// Holds module-local exports. Uses <see cref="_localView"/> as its external scope.
             /// </summary>
-            [NotNull]
             private readonly SymbolStore _exportScope;
 
             /// <summary>
@@ -64,7 +60,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             /// </remarks>
             private string? _prefix;
 
-            internal LocalNamespaceImpl([NotNull] ISymbolView<Symbol> externalScope, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+            internal LocalNamespaceImpl(ISymbolView<Symbol> externalScope, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
             {
                 _exportScope = Create(externalScope);
                 _localView = new ModuleLevelView(_exportScope, localProxies);
@@ -119,7 +115,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
 
 
-            public override bool TryGet(string id, out Symbol? value)
+            public override bool TryGet(string id, [NotNullWhen(true)] out Symbol? value)
             {
                 return _localView.TryGet(id, out value);
             }
@@ -205,7 +201,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        public override bool TryGet(string id, out Symbol? value)
+        public override bool TryGet(string id, [NotNullWhen(true)] out Symbol? value)
         {
             if (_backingStore.TryGet(id, out value))
             {
