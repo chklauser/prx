@@ -248,10 +248,10 @@ namespace psr.ast
     }
 } 
 export(*), psr.ast.v1(
-    ast\withPos => with_pos,
+    ast\withPos => with_pos1,
     ast3\withPos => with_pos3,
     ast2\withPos => with_pos2,
-    ast\simple => simple,
+    ast\simple => simple1,
     ast2\simple => simple2,
     ast3\simple => simple3,
     subBlocks => sub_blocks,

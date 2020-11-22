@@ -652,18 +652,11 @@ macro test_ast\with_arguments[test]
         return n;
     }
 
-    println("stage-1");
-
     var n = ast\with_arguments(var a = mkNode);
-    println("stage-15");
     assert(n is not null,@"ast\with_arguments returned null #1");
-    println("stage-2");
     assert_eq(n,a,"Reference remains the same. #1");
-    println("stage-3");
     assert_eq(n.Arguments.Count,1,"No additional arguments added.");
-    println("stage-4");
     assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #1");
-    println("stage-5");
     assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #1");
 
     var n = ast\with_arguments(var a = mkNode, ast\const(5));
