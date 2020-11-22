@@ -214,7 +214,7 @@ function test\basic_ui
     s.\\("search_tests") = (self,tags) =>
     {
         println("Prexonite Tests v", asm(ldr.app).Meta[@"test\version"].Text);
-        print("Searching for tests marked with [" + (tags >> foldr(concat(?,"; ",?),"]...")) );
+        print("Searching for tests marked with [" + (tags >> foldr(concat(?,"; ",?),"test]...")) );
     };
     
     s.\\("begin_suite") = (self,tests) =>

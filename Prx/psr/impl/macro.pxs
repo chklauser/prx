@@ -674,9 +674,9 @@ function ast_is_effect(n) = ast_is_Node(n);
 function ast_is_something_obsolete as ast_is_MacroInvocation, ast_is_GetSetSymbol, ast_is_GetSetReference(_)[\sps] = false;
 
 declare(
-    ast_is_MacroInvocation = warn(pos("macro.pxs",607,0),"PSR.Obsolete",@"MacroInvocation nodes no longer exist. Use Expand instead.",sym "ast_is_MacroInvocation"),
-    ast_is_GetSetSymbol = warn(pos("macro.pxs",608,0),"PSR.Obsolete",@"GetSetSymbol nodes no longer exist. Use IndirectCall of Reference instead.",sym "ast_is_GetSetSymbol"),
-    ast_is_GetSetReference = warn(pos("macro.pxs",609,0),"PSR.Obsolete",@"GetSetReference nodes no longer exist. Use Reference instead.",sym "ast_is_GetSetReference")
+    ast_is_MacroInvocation = warn(here,"PSR.Obsolete",@"MacroInvocation nodes no longer exist. Use Expand instead.",sym "ast_is_MacroInvocation"),
+    ast_is_GetSetSymbol = warn(here,"PSR.Obsolete",@"GetSetSymbol nodes no longer exist. Use IndirectCall of Reference instead.",sym "ast_is_GetSetSymbol"),
+    ast_is_GetSetReference = warn(here,"PSR.Obsolete",@"GetSetReference nodes no longer exist. Use Reference instead.",sym "ast_is_GetSetReference")
 );
 
 //Optimization

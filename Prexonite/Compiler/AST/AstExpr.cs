@@ -1,40 +1,16 @@
-﻿// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using JetBrains.Annotations;
+﻿#nullable enable
+using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite.Compiler.Ast
 {
     public abstract class AstExpr : AstNode
     {
-        protected AstExpr([NotNull] ISourcePosition position)
+        protected AstExpr([JetBrains.Annotations.NotNull] ISourcePosition position)
             : base(position)
         {
         }
 
-        internal AstExpr([NotNull] Parser p)
+        internal AstExpr([JetBrains.Annotations.NotNull] Parser p)
             : base(p)
         {
         }
@@ -46,8 +22,17 @@ namespace Prexonite.Compiler.Ast
 
         #region Implementation of AstExpr
 
-        [ContractAnnotation("=>true,expr:notnull; =>false,expr:canbenull")]
-        public abstract bool TryOptimize([NotNull] CompilerTarget target, out AstExpr expr);
+        /// <summary>
+        /// Gives the node a chance to replace itself with a simpler node after inspecting its children. On returning
+        /// <c>true</c>, the <c>out</c> parameter <paramref name="expr"/> holds the replacement node.
+        /// </summary>
+        /// <para>Note that the node may still have simplified its internals/children even when the method returns
+        /// <c>false</c>.</para>
+        /// <param name="target">The context in which to perform optimizations.</param>
+        /// <param name="expr">If <c>true</c> is returned, holds the replacement expression.</param>
+        /// <returns><c>true</c> if <c>this</c> node should be replaced by <paramref name="expr"/>;
+        /// <c>false</c> otherwise</returns>
+        public abstract bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr);
 
         #endregion
 

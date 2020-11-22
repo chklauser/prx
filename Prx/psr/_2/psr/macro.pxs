@@ -11,7 +11,11 @@ namespace psr.macro.v1
 }
 
 namespace psr.macro
+    import psr.macro.v1.macro\getSI
 {
+    declare(
+        get_SI = warn(here,"PSR.Obsolete","get_SI is deprecated. Use node3(\"IndirectCall\",node3(\"Reference\",entityref_to(psr.ast.SI._))) instead.",sym "macro\\getSI"),
+    );
 }
 export(*), psr.macro.v1(
     is_in_macro,
@@ -21,8 +25,6 @@ export(*), psr.macro.v1(
     macro\report_error => report_error,
     macro\report_warning => report_warning,
     macro\report_info => report_info,
-    // TODO: get_SI should be eliminated in favour of the v2 re-implementation of SI
-    macro\getSI => get_SI,
     tempalloc,
     tempfree,
     create_global_variable,
@@ -115,7 +117,7 @@ export(*), psr.macro.v1(
     ast\ret\val => $return,
     ast\ret\continue => $yield,
     ast\ret\break => $break,
-    ast\ret\set => set,
+    ast\ret\set => return_set,
     ast\run => run,
     ast\eval => eval,
     ast\with_arguments => with_args,

@@ -1,0 +1,697 @@
+name psr::macro::test;
+references {
+    psr::test,
+    psr::test::meta_macro,
+    psr::ast,
+    psr::$macro,
+};
+
+namespace import 
+    sys.*,
+    sys.seq.*,
+    psr.ast,
+    psr.ast.SI,
+    psr.macro.*,
+    psr.test.assertions.*,
+    psr.test.meta_macro.run_single_macro_inspect,
+    sys.rt(boxed),
+    sys.ct(entityref_to,call\macro,macro_reference);
+
+
+function test_file()[test]
+{
+    var file = "macro.test.pxs";
+    var actual = __FILE__;
+    assert(actual.Contains(file), "__FILE__ is expected to contain $file. Actual: $actual");
+
+    var actual = CURRENT_FILE;
+    assert(actual.Contains(file), "CURRENT_FILE is expected to contain $file. Actual: $actual");
+}
+
+macro test_pos[test]
+{
+    // -- FILE --
+    var file = "macro.test.pxs";
+    var actual = call\macro([__FILE__]);
+    assert_eq(actual.Count,0,
+        "__FILE__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __FILE__ to return a constant. Actual: $(boxed(actual))");
+    assert(actual.Constant is String, "Expect __FILE__ to be a string constant");
+    var actual = __FILE__;
+    assert(actual.Contains(file), "__FILE__ is expected to contain $file. Actual: $actual");
+
+    var actual = call\macro([CURRENT_FILE]);
+    assert_eq(actual.Count,0,
+        "CURRENT_FILE should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect CURRENT_FILE to return a constant");
+    assert(actual.Constant is String, "Expect CURRENT_FILE to be a string constant");
+    var actual = CURRENT_FILE;
+    assert(actual.Contains(file), "CURRENT_FILE is expected to contain $file. Actual: $actual");
+
+    // -- LINE --
+    var actual = call\macro([__LINE__]);
+    assert_eq(actual.Count,0,
+        "__LINE__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __LINE__ to return a constant");
+    assert(actual.Constant is Int, "Expect __LINE__ to be an integer constant");
+    var oldLine = actual = __LINE__;
+    assert(actual > 0, "__LINE__ is expected to be positive. Actual: $actual");
+
+    var actual = call\macro([CURRENT_LINE]);
+    assert_eq(actual.Count,0,
+        "CURRENT_LINE should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect CURRENT_LINE to return a constant");
+    assert(actual.Constant is Int, "Expect CURRENT_LINE to be an integer constant");
+    var actual = CURRENT_LINE;
+    assert(actual > oldLine, "CURRENT_LINE is expected to be larger than $oldLine. Actual: $actual");
+
+    // -- COLUMN --
+    var actual = call\macro([__COLUMN__]);
+    assert_eq(actual.Count,0,
+        "__COLUMN__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __COLUMN__ to return a constant");
+    assert(actual.Constant is Int, "Expect __COLUMN__ to be an integer constant");
+    var oldColumn = //STOP!
+    var actual = __COLUMN__; // DO NOT MERGE LINES!
+        //  __COLUMN__ is at the exact same column as CURRENT_COLUMN below!
+    assert(actual > 0, "__COLUMN__ is expected to be positive. Actual: $actual");
+
+    var actual = call\macro([CURRENT_COLUMN]);
+    assert_eq(actual.Count,0,
+        "CURRENT_COLUMN should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect CURRENT_COLUMN to return a constant");
+    assert(actual.Constant is Int, "Expect CURRENT_COLUMN to be an integer constant");
+    var actual = CURRENT_COLUMN;
+    assert_eq(actual,oldColumn);
+
+    var actual = call\macro([__COL__]);
+    assert_eq(actual.Count,0,
+        "__COL__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __COL__ to return a constant");
+    assert(actual.Constant is Int, "Expect __COL__ to be an integer constant");
+    var actual = __COL__;
+    assert_eq(actual,oldColumn);
+
+    // -- POSITION --
+    var actual = __POSITION__;
+    assert(actual is not null, "__POSITION__ is not null");
+    assert_eq(actual.File, __FILE__, "__POSITION__.File");
+    assert(actual.Column > 0, "__POSITION__.Column > 0; Actual: $(boxed(actual.Column))");
+    assert(actual.Line > oldLine, "__POSITION__.Line > $oldLine; Actual: $(boxed(actual.Line))");
+
+    var actual = CURRENT_POSITION;
+    assert(actual is not null, "CURRENT_POSITION is not null");
+    assert_eq(actual.File, __FILE__, "CURRENT_POSITION.File");
+    assert(actual.Column > 0, "CURRENT_POSITION.Column > 0; Actual: $(boxed(actual.Column))");
+    assert(actual.Line > oldLine, "CURRENT_POSITION.Line > $oldLine; Actual: $(boxed(actual.Line))");
+
+    var actual = __POS__;
+    assert(actual is not null, "__POS__ is not null");
+    assert_eq(actual.File, __FILE__, "__POS__.File");
+    assert(actual.Column > 0, "__POS__.Column > 0; Actual: $(boxed(actual.Column))");
+    assert(actual.Line > oldLine, "__POS__.Line > $oldLine; Actual: $(boxed(actual.Line))");
+}
+
+function is_in_macro_explicit(context) = is_in_macro(context);
+
+macro materialize_is_in_macro
+{
+    return new Prexonite::Compiler::Ast::AstConstant("--test--",-1,-1,is_in_macro);
+}
+
+function test\not_in_macro as not_in_macro = materialize_is_in_macro;
+
+macro test_is_in_macro[test]
+{
+    function in_macro = materialize_is_in_macro;
+    assert_eq(in_macro,true, "nested function is in macro");
+    assert_eq(not_in_macro,false, "top-level function is not in macro");
+
+    assert_eq(is_in_macro_explicit(context), false, "test macro is not expanded in a macro");
+}
+
+macro do_establish_context
+{
+    establish_macro_context;
+}
+
+macro test_establish_macro_context[test]
+{
+    function nested
+    {
+        do_establish_context;
+    }
+
+    var sharedList = ->nested.Function.Meta[Prexonite::PFunction.SharedNamesKey].List;
+    assert(sharedList >> exists(e => e.Text == "context"),
+        "Establish macro context must make context available in nested function. Actual: " +
+        foldl((l,r) => l + ", " + r.ToString, "", sharedList));
+}
+
+macro test_reports\macro
+{
+    report_error("AN_ERRORE");
+    report_warning("A_WARNINGW");
+    report_info("INFOI");
+}
+
+function test_reports[test]
+{
+    var ldr = run_single_macro_inspect(asm(ldr.app).Functions[entityref_to(test_reports\macro).Id]);
+    assert_eq(ldr.Errors.Count,1,"Exactly one error expected.");
+    assert_eq(ldr.Warnings.Count,1,"Exactly one warning expected.");
+    assert_eq(ldr.Infos.Count,1,"Exactly one info expected.");
+
+    assert_eq(ldr.Errors[0].Text,"AN_ERRORE");
+    assert_eq(ldr.Warnings[0].Text,"A_WARNINGW");
+    assert_eq(ldr.Infos[0].Text,"INFOI");
+}
+
+function test_ast_is_expression[test]
+{
+    var constN = ast.node3("Constant",3);
+    var condN = ast.node3("Condition", constN);
+
+    assert_eq(ast.is_expression(constN),true,"Constant node should be expression");
+    assert_eq(ast.is_expression(condN),false,"Condition node should not be expression");
+
+    assert_eq(ast.is_expression(true),false,"$(boxed(true)) is not an expression");
+}
+
+function test_ast_is_effect[test]
+{
+    var isEffect = ast.call(entityref_to(test_ast_is_effect));
+    var notEffect = ast.node3("CreateClosure",entityref_to(test_ast_is_effect));
+
+    assert_eq(ast.is_effect(isEffect), true, "$(boxed(isEffect)) is a node.");
+    assert_eq(ast.is_effect(notEffect), true, "$(boxed(notEffect)) is a node.");
+
+    assert_eq(ast.is_effect(true),false,"$(boxed(true)) is not a node.");
+}
+
+function test_ast_is_partially_applicable[test]
+{
+    var pa = ast.call(entityref_to(test_ast_is_partially_applicable));
+    var npa = ast.node3("CreateClosure", entityref_to(test_ast_is_partially_applicable));
+
+    assert_eq(ast.is_partially_applicable(pa), true, "$(boxed(pa)) is partially applicable");
+    assert_eq(ast.is_partially_applicable(npa), false, "$(boxed(npa)) is not partially applicable");
+
+    assert_eq(ast.is_partially_applicable(true), false, "$(boxed(true)) is not partially applicable");
+}
+
+function test_ast_is_partial_application[test]
+{
+    var pa = ast.call(entityref_to(test_ast_is_partial_application));
+    pa.Arguments.Add(ast.node3("Null"));
+
+    assert_eq(ast.is_partial_application(pa), false, "$(boxed(pa)) is not a partial application (no placeholders)");
+
+    pa.Arguments.Add(ast.node3("Placeholder"));
+
+    assert_eq(ast.is_partial_application(pa),true, "$(boxed(pa)) is a partial application");
+
+    assert_eq(ast.is_partial_application(true),false, "$(boxed(true)) is not a partial application");
+}
+
+function test_ast_is_CreateClosure[test]
+{
+    var cc = ast.node3("CreateClosure", entityref_to(test_ast_is_CreateClosure));
+    var ncc = ast.call(entityref_to(test_ast_is_CreateClosure));
+
+    assert_eq(ast.is_CreateClosure(cc),true,"$(boxed(cc)) is a CreateClosure node");
+    assert_eq(ast.is_CreateClosure(ncc),false,"$(boxed(ncc)) is not a CreateClosure node");
+    assert_eq(ast.is_CreateClosure(true),false,"$(boxed(true)) is not a CreateClosure node");
+}
+
+function test_ast_is_node[test]
+{
+    var node = ast.node3("Null");
+    var nonNode = new Structure;
+    var nonNode2 = new System::Object;
+
+    assert_eq(ast.is_Node(node),true,"$(boxed(node)) is an AST node");
+    assert_eq(ast.is_Node(nonNode),false,"$(boxed(nonNode)) is not an AST node");
+    assert_eq(ast.is_node(nonNode2),false,"$(boxed(nonNode)) is not an AST node");
+}
+
+macro test_temp_51
+{
+    var t;
+    var ts = [];
+
+    for(var i = 0; i < 51; i++)
+        ts[] = t = tempalloc;
+
+    for(var i = 0; i < 50; i++)
+        tempfree(ts[i]);
+
+    return ast.node1("Constant",t);
+}
+
+function test_temp[test]
+{
+    var t1 = test_temp_51;
+    var t2 = test_temp_51;
+
+    assert_neq(t1,t2,"Variable should be unique");
+
+    assert_eq(->test_temp.Variables.Count,54,"Function should have 54 local variables.");
+}
+
+function test_mk_constant_expr(a,b,context) =
+        context.Factory.BinaryOperation(context.Invocation.Position,
+            ast.node1("Constant",a), Prexonite::Compiler::Ast::BinaryOperator.Addition,  ast.node1("Constant", b));
+
+macro test_optimize[test]
+{
+    var a = 3;
+    var b = 5;
+
+    function mk_test = test_mk_constant_expr(a,b,context);
+
+    var t = mk_test();
+
+    optimize(t);
+
+    assert(ast.is_Constant(t),"Expect t=$(boxed(t)) to be a constant node.");
+    assert_eq(t.Constant,a+b,"$a + $b == $(a+b)");
+
+    var myCtx = context;
+    var t2 = mk_test();
+
+    optimize(myCtx,t2);
+
+    assert(ast.is_Constant(t2),"Expect t2=$(boxed(t2)) to be a constant node.");
+    assert_eq(t2.Constant,a+b,"$a + $b == $(a+b)");
+
+    var t3_i = null;
+    function t3(nt3) = t3_i = nt3 ?? t3_i ?? mk_test();
+
+    optimize(t3);
+
+    assert_eq(ast.is_Constant(t3),true,"Expect t3=$(boxed(t3)) to be a constant node.");
+    assert_eq(t3.Constant,a+b,"$a + $b == $(a+b)");
+}
+
+macro test_read[test]
+{
+    assert_eq(read_ast(null) is Null, true, "ast\\read(null) is null");
+
+    var a = 3;
+    var b = 5;
+
+    function mk_test = test_mk_constant_expr(a,b,context);
+
+    var t1 = mk_test();
+
+    var r1 = read_ast(t1);
+    assert_eq(r1, a+b, "Constant folding of r1 → $(boxed(t1)) expected.");
+
+    var myCtx = context;
+    var t2 = mk_test();
+    var r2 = read_ast(myCtx, t2);
+    assert_eq(r2, a+b, "Constant folding of r2 → $(boxed(t2)) expected.");
+
+    function assert_listeq(xs,ys,msg)
+    {
+        if(ys is not List)
+            ys = ys >> to_list;
+
+        assert_eq(xs is List, true, "$msg List value expected, encountered $(boxed(xs))");
+        assert_eq(var c = xs.Count,ys.Count,"$msg List length mismatch");
+        for(var i = 0; i < c; i++)
+            assert_eq(xs[i],ys[i], "$msg Lists differ at index $i");
+    }
+
+    var listlit = ast.node1("ListLiteral");
+    ([1,2,3] )>> each(ast.node1("Constant",?) then listlit.Elements.Add(?));
+    assert_listeq(read_ast(listlit),[1,2,3],"List literal should be recognized.");
+
+    function assert_kvpeq(x,y,msg)
+    {
+        assert_eq(x is Prexonite::Types::PValueKeyValuePair,true,"$msg Key value pair expected, encountered $(boxed(x))");
+        assert_eq(x.Key, y.Key, "$msg Keys should be equal");
+        assert_eq(x.Value, y.Value, "$msg Values should be equal");
+    }
+
+    var kvp = ast.node1("KeyValuePair", ast.node1("Constant", a), ast.node1("Constant", b));
+    assert_kvpeq(read_ast(kvp), a:b, "Key value pair should be recognized");
+
+    var hashlit = ast.node1("HashLiteral");
+    hashlit.Elements.Add(kvp);
+    hashlit.Elements.Add(ast.node1("KeyValuePair", ast.node1("Constant", b), ast.node1("Constant", a)));
+    var rh = read_ast(hashlit);
+    assert_eq(rh.Count,2,"Hash table literal should contain two entries");
+    assert_kvpeq(rh[0],a:b,"Should contain a → b @ index 0");
+    assert_kvpeq(rh[1],b:a,"Should contain b → a @ index 1");
+
+    //partial application
+    var t3 = mk_test();
+    var r3 = read_ast(?);
+
+    function ext_test
+    {
+        assert_eq(r3.(t3), a+b, "Constant folding of r3 → $(boxed(t3)) expected.");
+    }
+
+    assert_eq(->ext_test.Function.Meta[Prexonite::PFunction.SharedNamesKey].List >> count,4,"Only share necessary variables with ext_test.");
+
+    ext_test();
+}
+
+function test_macro_internal_id_static[test]
+{
+    assert_eq(internal_id_of(ast.node1),"ast\\macro");
+
+    assert_eq(internal_id_of(call\macro),"call\\macro");
+}
+
+macro test_macro_internal_id[test]
+{
+    var invk = ast.node3("Expand", entityref_to(ast.node1));
+
+    var c = call\macro([internal_id_of(invk)]).Expression;
+    assert(ast.is_Constant(c),"$(boxed(c)) should be constant");
+
+    assert_eq(read_ast(c),entityref_to(ast.node1).Id);
+}
+
+function test_macro_entity_static[test]
+{
+    var c1 = entityref_to(ast.node1);
+    assert(c1 is Object<"Prexonite.Modular.EntityRef+Function">,"c1=$c1 is expected to be a function reference.");
+    assert(c1.ModuleName is not null, "Expected module name of c1=$c1 to be set.");
+
+    var c2 = entityref_to(call\macro);
+    assert(c2 is Object<"Prexonite.Modular.EntityRef+MacroCommand">,"c2=$c2 is expected to be a macro command reference.");
+}
+
+//ast helper
+macro test_expand_macro[test]
+{
+    var invk = ast.expand_macro(entityref_to(ast.node1));
+    function assert_ast
+    {
+        assert(ast.is_Expand(invk),"$(boxed(invk)) is macro expansion");
+        assert_eq(invk.Entity,entityref_to(ast.node1), "Should be function (macro). Actual $(boxed(invk))");
+    }
+    assert_ast();
+
+    var invk = ast.expand_macro(entityref_to(call\macro));
+    function assert_call\macro
+    {
+        assert(ast.is_Expand(invk),"$(boxed(invk)) is macro expansion");
+        assert_eq(invk.Entity,entityref_to(call\macro), "Should be function (macro). Actual $(boxed(invk))");
+    }
+    assert_call\macro();
+
+    // infer interpretation from a prototype
+    var invk = ast.expand_macro(entityref_to(ast.node1));
+    assert_ast();
+
+    var invk = ast.expand_macro(entityref_to(call\macro));
+    assert_call\macro();
+}
+
+macro test_ast_symbol[test]
+{
+    var file = call\macro([__FILE__]).Expression >> read_ast;
+    var line = call\macro([__LINE__]).Expression >> read_ast;
+    var col  = call\macro([__COL__ ]).Expression >> read_ast;
+    var mn = new module_name("example.com");
+
+    var c = ast.cmd("println");
+    assert(ast.is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast.is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert_eq(c.Subject.Entity,SI.e.cmd("println"), "$(boxed(c)) is expected to be a command call");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+
+    var c = ast.func(SI.set, "someFunc", mn);
+    assert(ast.is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast.is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
+    assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
+    assert_eq(c.Subject.Entity,SI.e.func("someFunc",mn), "$(boxed(c)) is expected to be a function call");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+
+    var c = ast.lvar("x");
+    assert(ast.is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast.is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(c.Subject.Entity,SI.e.lvar("x"), "$(boxed(c)) is expected to be a local variable");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+
+    var c = ast.lref(SI.set, "y");
+    assert(ast.is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast.is_IndirectCall(c.Subject),"$(boxed(c)) is expected to wrap an IndirectCall node.");
+    assert(ast.is_Reference(c.Subject.Subject),"$(boxed(c)) is expected to wrap a wrapped Reference node.");
+    assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
+    assert(c.Subject.Subject.Entity,SI.e.lvar("y"), "$(boxed(c)) is expected to be a local variable");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+
+    var c = ast.gvar(SI.get, "gx", mn);
+    assert(ast.is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast.is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(c.Subject.Entity,SI.e.gvar("gx",mn), "$(boxed(c)) is expected to be a global variable");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+
+    var c = ast.gref("gy",mn);
+    assert(ast.is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast.is_IndirectCall(c.Subject),"$(boxed(c)) is expected to wrap an IndirectCall node.");
+    assert(ast.is_Reference(c.Subject.Subject),"$(boxed(c)) is expected to wrap a wrapped Reference node.");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(c.Subject.Subject.Entity,SI.e.gvar("gx",mn), "$(boxed(c)) is expected to be a global variable");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+}
+
+macro test_ast_member[test]
+{
+    var s = ast.lvar("x");
+    var c = ast.member(s);
+    assert(ast.is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast.is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
+    assert_eq(c.Id,"","$(boxed(c)) id defaults to empty string.");
+    assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call defaults to get");
+
+    var c = ast.member(s, SI.get, "nope");
+    assert(ast.is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast.is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
+    assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match.");
+    assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
+
+    var c = ast.member(s, SI.set, "nope");
+    assert(ast.is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast.is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
+    assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match.");
+    assert(SI.eq(c.Call,SI.set),"$(boxed(c)) call doesn't match.");
+
+    var c = ast.member(s, "nope");
+    assert(ast.is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast.is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
+    assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match");
+    assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
+}
+
+macro test_ast_const[test]
+{
+    //null, test with both null literal and null value
+    //  because ast.const is implemented as a macro that handles the null literal directly
+    var n = ast.const(null);
+    assert(ast.is_Null(n),"$(boxed(n)) is expected to be a Null node");
+
+    var _null = null;
+    var n = ast.const(_null);
+    assert(ast.is_Null(n),"$(boxed(n)) is expected to be a Null node");
+
+    //constant integer
+    var a = 3;
+    var n = ast.const(a);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    //again also test for constant literal
+    var n = ast.const(3);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    //constant string
+    var a = "a";
+    var n = ast.const(a);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    var n = ast.const("a");
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    //constant boolean
+    var a = true;
+    var n = ast.const(a);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    var n = ast.const(true);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    //constant real
+    var a = 1.4;
+    var n = ast.const(a);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    var n = ast.const(1.4);
+    assert(ast.is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+
+    //key value pair
+    var a = 3:5;
+    var n = ast.const(a);
+    assert(ast.is_KeyValuePair(n),"$(boxed(n)) is expected to be a KeyValuePair node");
+    assert(ast.is_Constant(n.Key),"Key of $(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Key.Constant,a.Key,"Key of $(boxed(n)) doesn't match.");
+    assert(ast.is_Constant(n.Value),"Value of $(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Value.Constant, a.Value, "Value of $(boxed(n)) doesn't match.");
+
+    var n = ast.const(a = 3:("a":true));
+    assert(ast.is_KeyValuePair(n),"$(boxed(n)) is expected to be a KeyValuePair node");
+    assert(ast.is_Constant(n.Key),"Key of $(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Key.Constant,a.Key,"Key of $(boxed(n)) doesn't match.");
+    assert(ast.is_KeyValuePair(var nv = n.Value),"Value of $(boxed(n)) is expected to be a KeyValuePair node");
+    assert(ast.is_KeyValuePair(nv),"$(boxed(nv)) is expected to be a KeyValuePair node");
+    assert(ast.is_Constant(nv.Key),"Key of $(boxed(nv)) is expected to be a Constant node");
+    assert_eq(nv.Key.Constant,a.Value.Key,"Key of $(boxed(nv)) doesn't match.");
+    assert(ast.is_Constant(nv.Value),"Value of $(boxed(nv)) is expected to be a Constant node");
+    assert_eq(nv.Value.Constant, a.Value.Value, "Value of $(boxed(nv)) doesn't match.");
+
+    //list
+    var a = [1,2:3,4];
+    var n = ast.const(a);
+    assert(ast.is_ListLiteral(n),"$(boxed(n)) is expected to be a ListLiteral node");
+    var ns = n.Elements;
+    assert_eq(ns.Count,3,"List element count mismatch");
+    assert(ast.is_Constant(ns[0]), "$(boxed(ns[0])) is expected to be a Constant node");
+    assert_eq(ns[0].Constant,1,"Value of element at index 0");
+    assert(ast.is_Constant(ns[2]), "$(boxed(ns[2])) is expected to be a Constant node");
+    assert_eq(ns[2].Constant,4,"Value of element at index 2");
+
+    assert(ast.is_KeyValuePair(var kvp = ns[1]),"$(boxed(ns[1])) is expected to be a KeyValuePair node");
+    assert(ast.is_Constant(kvp.Key),"Key of $(boxed(kvp)) is expected to be a Constant node");
+    assert_eq(kvp.Key.Constant,2,"Key of $(boxed(kvp)) constant mismatch");
+    assert(ast.is_Constant(kvp.Value),"Value of $(boxed(kvp)) is expected to be a Constant node");
+    assert_eq(kvp.Value.Constant,3,"Value of $(boxed(kvp)) constant mismatch");
+}
+
+macro test_ast_ret[test]
+{
+    assert_eq(macro_reference(ast.$return),macro_reference(ast.$return));
+    assert_eq(macro_reference(ast.$yield),macro_reference(ast.$yield));
+
+    var a = ast.const(3);
+    var n = ast.$return(a);
+    assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Exit),"ast\\ret should use ReturnVariant.Exit. Actual $(boxed(n))");
+    assert_eq(n.Expression,a,"Expression of ast\\ret doesn't match.");
+
+    var n = ast.$yield;
+    assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Continue),"ast\\ret\\continue should use ReturnVariant.Continue. Actual $(boxed(n))");
+    assert(n.Expression is null,"Expression of ast\\ret\\continue isn't null.");
+
+    var n = ast.$break;
+    assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Break),"ast\\ret\\break should use ReturnVariant.Break. Actual $(boxed(n))");
+    assert(n.Expression is null,"Expression of ast\\ret\\break isn't null.");
+
+    var n = ast.return_set(a);
+    assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant, Prexonite::Compiler::Ast::ReturnVariant.Set),"ast\\ret\\set should use ReturnVariant.Set. Actual $(boxed(n))");
+    assert_eq(n.Expression,a,"Expression of ast\\ret\\set doesn't match.");
+}
+
+macro test_ast_with_args[test]
+{
+    var funcId = "someFunc";
+    var mn = new module_name("example.com");
+    function mkNode
+    {
+        var n = ast.func(funcId,mn);
+        assert(n is not null,"ast\\func returned null.");
+        n.Arguments.Add(ast.const(3));
+        return n;
+    }
+
+   
+    var n = ast.with_args(var a = mkNode);
+    assert(n is not null,@"ast.with_args returned null #1");
+    assert_eq(n,a,"Reference remains the same. #1");
+    assert_eq(n.Arguments.Count,1,"No additional arguments added.");
+    assert(ast.is_Constant(n.Arguments[0]),"First argument should be constant. #1");
+    assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #1");
+
+    var n = ast.with_args(var a = mkNode, ast.const(5));
+    assert(n is not null,@"ast.with_args returned null #2");
+    assert_eq(n,a,"Reference remains the same. #2");
+    assert_eq(n.Arguments.Count,2,"One new argument added");
+    assert(ast.is_Constant(n.Arguments[0]),"First argument should be constant. #2");
+    assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #2");
+    assert(ast.is_Constant(n.Arguments[1]),"Second argument should be constant. #2");
+    assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #2");
+
+    var n = ast.with_args(var a = mkNode, ast.const(5), ast.with_args(ast.func(SI.set, funcId,mn),ast.const(7)));
+    assert(n is not null,@"ast.with_args returned null #3");
+    assert_eq(n,a,"Reference remains the same. #3");
+    assert_eq(n.Arguments.Count,3,"Two new argument added");
+    assert(ast.is_Constant(n.Arguments[0]),"First argument should be constant. #3");
+    assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #3");
+    assert(ast.is_Constant(n.Arguments[1]),"Second argument should be constant. #3");
+    assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #3");
+
+    var n' = n.Arguments[2];
+    assert(n is not null,@"n' is null");
+    assert(ast.is_IndirectCall(n'),"Third argument should be symbol access");
+    assert_eq(n'.Subject.Entity,SI.e.func(funcId,mn),"Interpretation should be get-function $funcId, is $(boxed(n'))");
+    assert_eq(n'.Arguments.Count,1,"Third argument should have one argument of its own.");
+    assert(ast.is_Constant(n'.Arguments[0]),"Argument of third argument should be a Constant node.");
+    assert_eq(n'.Arguments[0].Constant,7,"Constant in argument of third argument doesn't match.");
+}
+
+macro test_ast_new[test]
+{
+    var typeExpr = "Object(\"System.Object\")";
+
+    var n = ast.$new(typeExpr);
+
+    assert(ast.is_ObjectCreation(n),"$(boxed(n)) is expected to be an ObjectCreation node");
+    assert(ast.is_ConstantTypeExpression(n.TypeExpr),"$(boxed(n.TypeExpr)) is expected to be a ConstantTypeExpression node");
+    assert_eq(n.TypeExpr.TypeExpression,typeExpr,"The type expression doesn't match.");
+    assert_eq(n.Arguments.Count,0,"Argument count doesn't match.");
+}
+
+macro test_ast_null[test]
+{
+    var n = ast.$null;
+
+    assert(ast.is_Null(n),"$(boxed(n)) is expected t be a Null node.");
+}

@@ -47,7 +47,7 @@ declare dummy\ast\call as ast\call;
 
 function test_ast_withpos_null[test]
 {
-    var nt = ast.with_pos("Null");
+    var nt = ast.with_pos1("Null");
     assert(nt is Prexonite::Compiler::Ast::AstNull, "ast\\withPos(\"Null\") is not an AstNull node.");
     assert(nt.File is not null, "File should not be null");
     assert(nt.Line == -1, "Line should default to -1");
@@ -57,7 +57,7 @@ function test_ast_withpos_null[test]
 function test_ast_withpos_memcall[test]
 {
     var cv = 4;
-    var ct1 = ast.with_pos("Constant",null,null,null,cv);
+    var ct1 = ast.with_pos1("Constant",null,null,null,cv);
 
     assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
         "ast\\withPos(\"Constant\") is not an AstConstant node");
@@ -69,7 +69,7 @@ function test_ast_withpos_memcall[test]
     var bf = "bfile.pxs";
     var bl = 5;
     var bc = 7;
-    var bt = ast.with_pos("GetSetMemberAccess",bf,bl,bc,Prexonite::Types::PCall.set,ct1,"ToString");
+    var bt = ast.with_pos1("GetSetMemberAccess",bf,bl,bc,Prexonite::Types::PCall.set,ct1,"ToString");
     assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess,
         "ast\\withPos(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File == bf, "File should be $bf");
@@ -83,7 +83,7 @@ function test_ast_withpos_memcall[test]
 function test_ast_simple_memcall[test]
 {
     var cv = 4;
-    var ct1 = ast.simple("Constant",cv);
+    var ct1 = ast.simple1("Constant",cv);
 
     assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
         "ast\\simple(\"Constant\") is not an AstConstant node");
@@ -94,7 +94,7 @@ function test_ast_simple_memcall[test]
 
     var bl = -1;
     var bc = -1;
-    var bt = ast.simple("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
+    var bt = ast.simple1("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
     assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess,
         "ast\\simple(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File is not null, "File should not be null");
@@ -108,16 +108,16 @@ function test_ast_simple_memcall[test]
 function test_ast_memcall[test]
 {
     var cv = 4;
-    var ct1 = ast.simple("Constant",cv);
+    var ct1 = ast.simple1("Constant",cv);
 
     assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
-        "ast.simple(\"Constant\") is not an AstConstant node");
+        "ast.simple1(\"Constant\") is not an AstConstant node");
     assert(ct1.Constant == cv, "Constant value should be $cv");
     assert(ct1.File is not null, "File should not be null");
 
-    var bt = ast.simple("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
+    var bt = ast.simple1("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
     assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess,
-        "ast.simple(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
+        "ast.simple1(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File is not null, "File should not be null");
     assert(bt.Subject == ct1, "Subject should be $ct1");
     assert(bt.Id == "ToString", "Id should be ToString");
@@ -146,10 +146,10 @@ function test_is_member_access[
     Add Prexonite::Types to Imports;
 ]
 {
-    var nt = ast.simple("Null");
+    var nt = ast.simple1("Null");
     var mem = "member";
-    var memacc = ast.simple("GetSetMemberAccess", nt, mem);
-    var wrongmemacc = ast.simple("GetSetMemberAccess", nt, "otherMember");
+    var memacc = ast.simple1("GetSetMemberAccess", nt, mem);
+    var wrongmemacc = ast.simple1("GetSetMemberAccess", nt, "otherMember");
     var notMemacc = ast\call(sys.ct.entityref_to(test_is_member_access));
 
     assert(is_member_access(mem, memacc), "Should recognize $memacc");
@@ -348,11 +348,11 @@ function test_sub_blocks[test]
 {
     var ss = Prexonite::Compiler::Symbolic::SymbolStore.Create(null,null);
     var root = Prexonite::Compiler::Ast::AstBlock.CreateRootBlock(new Prexonite::Compiler::SourcePosition("-",-1,-1),ss,null,null);
-    var ifBlock = ast.simple2("Condition",root,ast.simple("Null"),false);
+    var ifBlock = ast.simple2("Condition",root,ast.simple1("Null"),false);
     var acs = sub_blocks(ifBlock);
     assert_eq(acs[0], ifBlock.IfBlock);
     assert_eq(acs[1], ifBlock.ElseBlock);
 
-    var notIfBlock = ast.simple("Constant", 2);
+    var notIfBlock = ast.simple1("Constant", 2);
     assert_eq(sub_blocks(notIfBlock).Count, 0);
 }
