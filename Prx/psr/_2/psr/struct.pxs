@@ -1,0 +1,17 @@
+name psr::struct;
+references {
+    prx/1.0,
+    psr::ast,
+    psr::$macro
+};
+
+namespace psr.struct.v1 
+import 
+    prx.v1.*,
+    psr.ast.v1.*,
+    psr.macro.v1.*
+{
+    build does add("../../impl/struct.pxs");
+}
+
+namespace psr {} export psr.struct.v1.struct;

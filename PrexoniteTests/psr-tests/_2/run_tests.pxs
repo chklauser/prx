@@ -30,7 +30,14 @@ namespace psr_tests.run_tests
         } else {
             // taskMap~Dictionary<ModuleName, Task<Tuple<Application, ITarget>>>
             var taskMap = host.self_assembling_build_plan.LoadAsync(names, no_cancellation);
-            System::Threading::Tasks::Task.WaitAll(taskMap.Values >> map(?~Object<"System.Threading.Tasks.Task`1[System.Tuple`2[Prexonite.Application,Prexonite.Compiler.Build.ITarget]]">) >> to_list);
+            var taskArray = (
+                taskMap.Values 
+                >> map(?~Object<"System.Threading.Tasks.Task`1[System.Tuple`2[Prexonite.Application,Prexonite.Compiler.Build.ITarget]]">) 
+                >> to_list
+                )~Object<"System.Threading.Tasks.Task[]">;
+            until(System::Threading::Tasks::Task.WaitAll(taskArray, 1000)) {
+                print(".");
+            }
             var resultMap =  new Object<"System.Collections.Generic.Dictionary`2[Prexonite.Modular.ModuleName,System.Tuple`2[Prexonite.Application,Prexonite.Compiler.Build.ITarget]]">;
             foreach(var entry in taskMap) {
                 resultMap[entry.Key] = entry.Value.Result;
@@ -48,10 +55,13 @@ namespace psr_tests.run_tests
             var src = new source_file(file_path);
             targetDescriptionTasks[] =  host.self_assembling_build_plan.AssembleAsync(src, no_cancellation);
         }
-        System::Threading::Tasks::Task.WaitAll(targetDescriptionTasks~Object<"System.Threading.Tasks.Task[]">);
+        var targetTaskArray = targetDescriptionTasks~Object<"System.Threading.Tasks.Task[]">;
+        until(System::Threading::Tasks::Task.WaitAll(targetTaskArray, 1000)) {
+            print(".");
+        }
         timer.stop;
         var totalCompTime = timer.elapsed;
-        println("done.");
+        println(" done.");
         timer.reset;
 
         print("Compiling $(targetDescriptionTasks.Count) test modules (and their dependencies)...");
@@ -59,7 +69,7 @@ namespace psr_tests.run_tests
         var testSuiteMap = load_from_descriptions(targetDescriptionTasks, var args >> exists(?.Contains("cil")));
         timer.stop;
         totalCompTime += timer.elapsed;
-        println("done.");
+        println(" done.");
         timer.reset;
 
         // Check for compile errors

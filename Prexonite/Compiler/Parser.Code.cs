@@ -432,6 +432,7 @@ namespace Prexonite.Compiler
         public void ViolentlyAbortParse()
         {
             scanner.Abort();
+            la = new Token {kind = _EOF, pos = la.pos, line = la.pos, col = la.col, val = ""};
         }
 
         #region Helper

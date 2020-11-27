@@ -5,8 +5,9 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AppConfig>config/app.$(Configuration).config</AppConfig>
     <LangVersion>8</LangVersion>
     <Version>1.91</Version>
     <Title>Prexonite CLI</Title>

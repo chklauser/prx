@@ -1,0 +1,28 @@
+name psr::pattern;
+references {
+    prx/1.0,
+    psr::ast,
+    psr::$macro,
+    psr::struct,
+    psr::prop
+};
+
+namespace psr.pattern.v1 
+import 
+    prx.v1.*,
+    psr.ast.v1.*,
+    psr.macro.v1.*,
+    psr.struct,
+    psr.prop.v1.*
+{
+    build does add("../../impl/pattern.pxs");
+}
+
+namespace psr.misc {} export psr.pattern.v1(zip,repeatable);
+
+namespace psr.pattern {} export psr.pattern.v1(kvp);
+
+namespace psr.pattern.impl {} export psr.pattern.v1(
+    create_pat_desc,
+    pattern\gen => generate
+);

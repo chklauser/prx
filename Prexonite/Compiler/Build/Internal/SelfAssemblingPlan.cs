@@ -284,7 +284,7 @@ namespace Prexonite.Compiler.Build.Internal
         // requires refSpec.ModuleName != null || refSpec.Source != null || refSpec.rawPath != null || refSpec.ResolvedPath != null
         // ensures result == refSpec && (TargetDescriptions.Contains(result) || refSpec.ErrorMessage != null)
         {
-            if (refSpec.ErrorMessage != null)
+            if (!refSpec.IsValid)
                 return refSpec;
 
             var pathCandidateCount = 0;
@@ -312,7 +312,7 @@ namespace Prexonite.Compiler.Build.Internal
                     refSpec.ResolvedPath = candidate;
                     var result = await _orderPreflight(refSpec, token);
 
-                    if (result.ErrorMessage != null)
+                    if (!result.IsValid)
                     {
                         _trace.TraceEvent(TraceEventType.Verbose, 0,
                             "Rejected {0} as a candidate for {1} because there were errors during preflight: {2}",
@@ -344,7 +344,7 @@ namespace Prexonite.Compiler.Build.Internal
                 candidateSequence?.Dispose();
             }
 
-            Debug.Assert(refSpec.ErrorMessage != null || TargetDescriptions.Contains(refSpec.ModuleName));
+            Debug.Assert(!refSpec.IsValid || TargetDescriptions.Contains(refSpec.ModuleName));
             return refSpec;
         }
 
@@ -360,11 +360,10 @@ namespace Prexonite.Compiler.Build.Internal
                     return await _performCreateTargetDescription(result, src, actualToken, mode);
                 }, token);
         }
-
+        
         private async Task<ITargetDescription> _performCreateTargetDescription(PreflightResult result, ISource source, CancellationToken token, SelfAssemblyMode mode)
         {
-            Debug.Assert(result.ErrorMessage == null, "TargetDescription ordered despite the preflight result containing errors.");
-            Debug.Assert(result.References.All(r => r.ErrorMessage == null), "TargetDescription ordered despite the preflight result containing errors.");
+            Debug.Assert(result.IsValid, "TargetDescription ordered despite the preflight result (or its dependencies) containing errors.", "PreflightResult {0} is not valid.", result.RenderDebugState());
 
             RefSpec[] refSpecs;
             switch (mode)
@@ -384,10 +383,10 @@ namespace Prexonite.Compiler.Build.Internal
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, Resources.SelfAssemblingPlan_performCreateTargetDescription_mode);
             }
             
-            var buildMessages = refSpecs.Where(t => t.ErrorMessage != null).Select(
+            var buildMessages = refSpecs.Where(t => !t.IsValid).Select(
                     s =>
                     {
-                        Debug.Assert(s.ErrorMessage != null);
+                        Debug.Assert(!s.IsValid);
                         // ReSharper disable PossibleNullReferenceException,AssignNullToNotNullAttribute
                         var refPosition = new SourcePosition(
                             s.ResolvedPath != null ? s.ResolvedPath.ToString() 
@@ -537,6 +536,44 @@ namespace Prexonite.Compiler.Build.Internal
         public volatile bool SuppressStandardLibrary;
 
         public bool IsValid => ErrorMessage == null && References.All(x => x.IsValid);
+
+        internal string RenderDebugState()
+        {
+            var sb = new StringBuilder();
+            _renderDebugState(sb);
+            return sb.ToString();
+        }
+
+        private void _renderDebugState(StringBuilder builder)
+        {
+            builder.Append(ModuleName);
+            builder.Append('(');
+            if (Path != null)
+            {
+                builder.AppendFormat("path: \"{0}\" ", Path);
+            }
+            if (ErrorMessage != null)
+            {
+                builder.AppendFormat("error: \"{0}\" ", ErrorMessage);
+            }
+
+            if (References.Count > 0)
+            {
+                builder.Append("references: ");
+                var commaRequired = false;
+                foreach (var reference in References)
+                {
+                    if (commaRequired)
+                    {
+                        builder.Append(',');
+                    }
+
+                    commaRequired = true;
+                    reference.Render(builder);
+                }
+            }
+            builder.Append(')');
+        }
     }
 
     internal class RefSpec
@@ -556,6 +593,12 @@ namespace Prexonite.Compiler.Build.Internal
         public override string ToString()
         {
             var sb = new StringBuilder();
+            Render(sb);
+            return sb.ToString();
+        }
+
+        internal void Render(StringBuilder sb)
+        {
             if (ModuleName != null)
                 sb.Append(ModuleName);
             if (ResolvedPath != null)
@@ -570,8 +613,6 @@ namespace Prexonite.Compiler.Build.Internal
 
             if (ErrorMessage != null)
                 sb.AppendFormat(" error: {0}", ErrorMessage);
-
-            return sb.ToString();
         }
     }
 }

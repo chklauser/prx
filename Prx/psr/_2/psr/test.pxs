@@ -2,7 +2,6 @@ name psr::test;
 references {
     prx/1.0
 };
-test\version "0.2";
 
 namespace psr.test.v1 
     import prx.v1(*) 
@@ -10,6 +9,7 @@ namespace psr.test.v1
     // NOTE: test is not split up into impl and dependencies because it must not
     // have any dependencies.
     build does add("../../test.pxs");
+    test\version "2.0";
 }
 
 namespace psr.test {} export psr.test.v1(
