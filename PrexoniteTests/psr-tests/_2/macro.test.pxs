@@ -1,4 +1,4 @@
-name psr::macro::test;
+name psr::macro::test/2.0;
 references {
     psr::test,
     psr::test::meta_macro,

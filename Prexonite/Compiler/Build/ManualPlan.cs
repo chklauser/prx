@@ -159,11 +159,15 @@ namespace Prexonite.Compiler.Build
                 return tcs.Task;
             }
             else
+            {
                 // Note how the lambda expression doesn't actually depend on the result (directly)
                 //  the continue all makes sure that we're not wasting a thread that blocks on Task.Result
                 // GetBuildEnvironment can access the results via the taskMap.
+                Plan.Trace.TraceEvent(TraceEventType.Verbose, 0,"{0} is waiting for its dependencies to be built: {1}", 
+                    description.Name, description.Dependencies.ToListString());
                 return Task.Factory.ContinueWhenAll(description.Dependencies.Select(d => taskMap[d].Value).ToArray(),
-                _ => GetBuildEnvironment(taskMap, description, token));
+                    _ => GetBuildEnvironment(taskMap, description, token));
+            }
         }
 
         protected virtual IBuildEnvironment GetBuildEnvironment(TaskMap<ModuleName, ITarget> taskMap, ITargetDescription description, CancellationToken token)
@@ -216,6 +220,7 @@ namespace Prexonite.Compiler.Build
                         _linkDependencies(taskMap, instance, targetDescription, token);
                         token.ThrowIfCancellationRequested();
                         var target = await BuildTargetAsync(bet, desc, depMap, token);
+                        Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Finished BuildTargetAsync({0})", desc.Name);
                         return target;
                     }
                     finally

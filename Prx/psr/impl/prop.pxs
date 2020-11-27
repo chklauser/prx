@@ -84,7 +84,7 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
 
     prop_set.Arguments.Add(prop_arg);
 
-    println("prop\\macro\\assemble($dummyArgs,$prop_get,$prop_set)");
+    //println("prop\\macro\\assemble($dummyArgs,$prop_get,$prop_set)");
     check.IfExpression = prop_get;
     check.ElseExpression = prop_set;
 
@@ -144,7 +144,7 @@ macro prop\macro\proxy(dummyArgs,prop_get)
         return;
     }
 
-    println("prop\\macro\\proxy($dummyArgs,$prop_get)");
+    //println("prop\\macro\\proxy($dummyArgs,$prop_get)");
     var prop_set = prop_get.GetCopy();
     prop_set.Call = SI.set;
 

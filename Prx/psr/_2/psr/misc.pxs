@@ -1,0 +1,34 @@
+name psr::ast;
+references { 
+    prx/1.0 
+    psr::struct,
+    psr::ast,
+    psr::$macro
+};
+
+namespace psr.misc.v1 
+import 
+    prx.v1.*, 
+    psr.struct, 
+    psr.ast.v1.*,
+    psr.macro.v1.*
+{
+    build does add("../../impl/misc.pxs");
+}
+
+namespace psr.misc {} export psr.misc.v1(
+    cmp,
+    cmp_values,
+    cmp_keys,
+    cmp_with,
+    cmp_then,
+    cmpr,
+    ieq,
+    ieq_any,
+    ieq_all,
+    refeq,
+    nrefeq,
+    on,
+    create_terminator,
+    swap
+);
