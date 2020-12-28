@@ -284,28 +284,15 @@ PrefixUnaryExpr<out AstExpr expr>
 Primary<out AstExpr expr>
                                         (.  expr = null;
                                         .)
-=
-	(.  _pushLexerState(Lexer.Asm); .)	  (.  var blockExpr = Create.Block(GetPosition());
-											                      _PushScope(blockExpr);
-										                    .)
-    asm lpar { AsmInstruction<blockExpr> } rpar
-    (.  _popLexerState(); .)			      (.	expr = blockExpr; 
-											                      _PopScope(blockExpr);
-										                    .)
-|   Constant<out expr>
-|   ThisExpression<out expr>
-|   CoroutineCreation<out expr>
-|   ListLiteral<out expr>
-|	HashLiteral<out expr>
-|	LoopExpr<out expr>
-|	(. AstThrow th; .)
-	ThrowExpression<out th>				(. expr = th; .)
-|   IF(isLambdaExpression())
+=   IF(isLambdaExpression())
     LambdaExpression<out expr>
-|   LazyExpression<out expr>
 |   lpar Expr<out expr> rpar
-|   IF(_isNotNewDecl()) ObjectCreation<out expr>
-|   GetInitiator<out expr>
+|	HashLiteral<out expr>
+|   CoroutineCreation<out expr>
+|	LoopExpr<out expr>
+|   ThrowExpression<out var th>			(. expr = th; .)
+|   LazyExpression<out expr>
+|   PrimaryForGetSetComplex<out expr>
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
                                             //returned by the lexer if the parser has to treat an expression in a special
@@ -313,6 +300,25 @@ Primary<out AstExpr expr>
                                             //well as injecting the necessary plus operator.
                                             _popLexerState(); _inject(_plus); .)
     rpar
+.
+
+// These are primary expressions that are suitable to use as the LHS of `LHS.method(call)` or `LHS[index]`.
+PrimaryForGetSetComplex<out AstExpr expr>
+                                        (. expr = null; .)
+=   Constant<out expr>
+|   ThisExpression<out expr>
+//  Note: the HashLiteral *cannot* appear here. A statement cannot start with an `{` because then it cannot be 
+//  distinguished from a block.
+|   ListLiteral<out expr>
+|   IF(_isNotNewDecl()) ObjectCreation<out expr>
+|   (.  _pushLexerState(Lexer.Asm); .)  (.  var blockExpr = Create.Block(GetPosition());
+											_PushScope(blockExpr);
+										.)
+    asm lpar { AsmInstruction<blockExpr> } rpar
+    (.  _popLexerState(); .)			(.  expr = blockExpr; 
+											_PopScope(blockExpr);
+										.)
+|   GetInitiator<out expr>
 .
 
 Constant<out AstExpr expr>

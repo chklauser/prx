@@ -29,7 +29,8 @@ StatementBlock<AstBlock block>
 Statement<AstBlock block>
 =
 (   IF( isLabel() )
-		ExplicitLabel<block>  
+		ExplicitLabel<block>
+	|   IF( isAsmBlock() ) StructureStatement<block>
 	|   [ SimpleStatement<block> ] semicolon
 	|   StructureStatement<block>
 )
@@ -73,7 +74,7 @@ GetSetComplex<AstBlock block>
                                         .)
 =
 //GetSet Initiator
-GetInitiator<out expr>                  (.  complex = expr as AstGetSet; .)
+PrimaryForGetSetComplex<out expr>       (.  complex = expr as AstGetSet; .)
 
 //GetSet Extensions
 {   GetSetExtension<expr, out complex>  (.  expr = complex; .)

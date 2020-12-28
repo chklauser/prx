@@ -834,6 +834,19 @@ namespace Prexonite.Compiler
             return c.kind == _dot && cla.kind == _lpar;
         }
 
+        // used to distinguish asm{...} and asm(...) 
+        private bool isAsmBlock() //LL(2)
+        {
+            var asm = la;
+            if (asm.kind != _asm)
+            {
+                return false;
+            }
+            
+            scanner.ResetPeek();
+            return scanner.Peek().kind == _lbrace;
+        }
+        
         [DebuggerStepThrough]
         private bool isOuterVariable(string id) //context
         {
