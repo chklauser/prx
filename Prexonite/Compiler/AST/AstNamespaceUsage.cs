@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Ast
             get => _referencePath;
             set
             {
-                if(!ReferenceEquals(_referencePath,null))
+                if(_referencePath != null)
                     throw new InvalidOperationException("Can only assign namespace usage reference path once.");
                 _referencePath = value;
             }

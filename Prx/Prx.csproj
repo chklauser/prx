@@ -6,13 +6,13 @@
 
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <AppConfig>config/app.$(Configuration).config</AppConfig>
-    <LangVersion>8</LangVersion>
-    <Version>1.91</Version>
+    <LangVersion>9</LangVersion>
+    <Version>1.95</Version>
     <Title>Prexonite CLI</Title>
     <Description>Prexonite command line interpreter and compiler.</Description>
-    <Copyright>Christian Klauser © 2019</Copyright>
+    <Copyright>Christian Klauser © 2020</Copyright>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
     <IncludeSymbols>true</IncludeSymbols>
     <IncludeSource>true</IncludeSource>

@@ -34,7 +34,7 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    public struct QualifiedId : IReadOnlyList<string>, IEquatable<QualifiedId>, IComparable<QualifiedId>
+    public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<QualifiedId>, IComparable<QualifiedId>
     {
         public void ToString([NotNull] TextWriter writer)
         {
@@ -56,7 +56,7 @@ namespace Prexonite.Compiler.Symbolic
             }
         }
 
-        public override String ToString()
+        public override string ToString()
         {
             var sb = new StringWriter();
             ToString(sb);
@@ -93,10 +93,7 @@ namespace Prexonite.Compiler.Symbolic
             return GetEnumerator();
         }
 
-        public int Count
-        {
-            get { return _elements == null ? 0 : _elements.Length; }
-        }
+        public int Count => _elements?.Length ?? 0;
 
         public string this[int index]
         {
@@ -116,7 +113,7 @@ namespace Prexonite.Compiler.Symbolic
             {
                 var next = new string[_elements.Length + 1];
                 Array.Copy(_elements,next, _elements.Length);
-                next[next.Length - 1] = suffix;
+                next[^1] = suffix;
                 return new QualifiedId(next);
             }
         }
@@ -162,7 +159,7 @@ namespace Prexonite.Compiler.Symbolic
             }
             else
             {
-                // Compare paths in revrese, becaus they are much more likely to
+                // Compare paths in reverse, because they are much more likely to
                 // differ at the end than at the beginning
                 for (var i = _elements.Length - 1; i >= 0; i++)
                 {
@@ -206,7 +203,7 @@ namespace Prexonite.Compiler.Symbolic
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
-            return obj is QualifiedId && Equals((QualifiedId)obj);
+            return obj is QualifiedId id && Equals(id);
         }
 
         public override int GetHashCode()
