@@ -102,7 +102,7 @@ namespace Prexonite.Compiler.Ast
 
         private class EntityIndirectCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
         {
-            public static readonly EntityIndirectCallMatcher Instance = new EntityIndirectCallMatcher();
+            public static readonly EntityIndirectCallMatcher Instance = new();
 
             protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnNotMatched(EntityRef entity, object argument)
             {
@@ -112,21 +112,21 @@ namespace Prexonite.Compiler.Ast
             protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object argument)
             {
                 return
-                    (target, node, call, justEffect) =>
+                    (target, node, _, justEffect) =>
                     target.Emit(node.Position,Instruction.CreateLocalIndirectCall(node.Arguments.Count, variable.Id, justEffect));
             }
 
             protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object argument)
             {
                 return
-                    (target, node, call, justEffect) =>
+                    (target, node, _, justEffect) =>
                     target.Emit(node.Position, Instruction.CreateGlobalIndirectCall(node.Arguments.Count, variable.Id, variable.ModuleName, justEffect));
             }
         }
 
         private class EntityCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
         {
-            public static readonly EntityCallMatcher Instance = new EntityCallMatcher();
+            public static readonly EntityCallMatcher Instance = new();
 
             protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnNotMatched(EntityRef entity, object argument)
             {
@@ -210,7 +210,7 @@ namespace Prexonite.Compiler.Ast
                 //  -> generates func, cmd, ldloc, stloc, ldglob, stglob
                 return refNode.Entity.Match(EntityCallMatcher.Instance,null);
             }
-            else if (Subject is AstIndirectCall indCall && indCall.Subject is AstReference indRefNode)
+            else if (Subject is AstIndirectCall {Subject: AstReference indRefNode})
             {
                 // Could be indirectly accessed local or global variable 
                 //  -> generates indloc, indglob
@@ -262,8 +262,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    if (currentBatch == null)
-                        currentBatch = new List<AstExpr>();
+                    currentBatch ??= new List<AstExpr>();
                     currentBatch.Add(argument);
                 }
             }

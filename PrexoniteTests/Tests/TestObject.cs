@@ -31,8 +31,8 @@ namespace Prx.Tests
 
         public int Count
         {
-            get { return Subject; }
-            set { Subject = value; }
+            get => Subject;
+            set => Subject = value;
         }
     }
 }

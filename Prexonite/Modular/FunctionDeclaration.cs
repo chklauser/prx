@@ -30,7 +30,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
@@ -40,19 +39,14 @@ namespace Prexonite.Modular
 {
     public class FunctionIdChangingEventArgs : EventArgs
     {
-        private readonly string _newId;
-
         public FunctionIdChangingEventArgs(string newId)
         {
             if(string.IsNullOrEmpty(newId))
                 throw new ArgumentException("new id cannot be null or empty.",nameof(newId));
-            _newId = newId;
+            NewId = newId;
         }
 
-        public string NewId
-        {
-            get { return _newId; }
-        }
+        public string NewId { get; }
     }
 
     public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDependent<EntityRef.Function>
@@ -164,13 +158,13 @@ namespace Prexonite.Modular
         public bool HasCilImplementation
         {
             [DebuggerStepThrough]
-            get { return CilImplementation != null; }
+            get => CilImplementation != null;
         }
 
         public bool IsMacro
         {
             [DebuggerStepThrough]
-            get { return Meta[CompilerTarget.MacroMetaKey].Switch; }
+            get => Meta[CompilerTarget.MacroMetaKey].Switch;
         }
 
         /// <summary>
@@ -182,8 +176,7 @@ namespace Prexonite.Modular
             [DebuggerStepThrough]
             get
             {
-                MetaEntry logicalIdEntry;
-                if (Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
+                if (Meta.TryGetValue(PFunction.LogicalIdKey, out var logicalIdEntry))
                     return logicalIdEntry.Text;
                 else
                     return Id;
@@ -259,13 +252,7 @@ namespace Prexonite.Modular
         protected abstract ModuleName ContainingModule { get; }
         protected abstract CentralCache Cache { get; }
 
-        EntityRef.Function INamed<EntityRef.Function>.Name
-        {
-            get
-            {
-                return (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(Id, ContainingModule));
-            }
-        }
+        EntityRef.Function INamed<EntityRef.Function>.Name => (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(Id, ContainingModule));
 
         public IEnumerable<EntityRef.Function> GetDependencies()
         {
@@ -306,71 +293,39 @@ namespace Prexonite.Modular
         {
             public Impl(string id, Module module)
             {
-                if(String.IsNullOrWhiteSpace(id))
+                if(string.IsNullOrWhiteSpace(id))
                     throw new ArgumentException("Function id cannot be null, empty or just whitespace.",nameof(id));
                 var meta = MetaTable.Create(this);
                 meta[PFunction.IdKey] = id;
                 meta[Application.ImportKey] = module.Meta[Application.ImportKey];
-                _meta = meta;
-                _containingModule = module.Name;
-                _centralCache = module.Cache;
+                Meta = meta;
+                ContainingModule = module.Name;
+                Cache = module.Cache;
 
                 LocalVariableMapping = new SymbolTable<int>();
             }
 
-            private readonly MetaTable _meta; //initialized in constructor
-
-            private readonly SymbolCollection _importedClrNamespaces = new SymbolCollection();
-
-            private readonly SymbolCollection _localVariables = new SymbolCollection();
-
-            private readonly List<Instruction> _code = new List<Instruction>();
-
             private List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
-            private readonly List<string> _parameters = new List<string>();
-            private readonly ModuleName _containingModule;
-            private readonly CentralCache _centralCache;
 
             public override event EventHandler<FunctionIdChangingEventArgs> IdChanging;
 
             private void _onIdChanging(string newId)
             {
                 var idChangingHandler = IdChanging;
-                if (idChangingHandler != null)
-                {
-                    idChangingHandler(this, new FunctionIdChangingEventArgs(newId));
-                }
+                idChangingHandler?.Invoke(this, new FunctionIdChangingEventArgs(newId));
             }
 
-            public override string Id
-            {
-                get { return Meta[PFunction.IdKey].Text; }
-            }
+            public override string Id => Meta[PFunction.IdKey].Text;
 
-            public override MetaTable Meta
-            {
-                get { return _meta; }
-            }
+            public override MetaTable Meta { get; }
 
-            public override SymbolCollection ImportedClrNamespaces
-            {
-                get { return _importedClrNamespaces; }
-            }
+            public override SymbolCollection ImportedClrNamespaces { get; } = new();
 
-            public override List<string> Parameters
-            {
-                get { return _parameters; }
-            }
+            public override List<string> Parameters { get; } = new();
 
-            public override SymbolCollection LocalVariables
-            {
-                get { return _localVariables; }
-            }
+            public override SymbolCollection LocalVariables { get; } = new();
 
-            public override List<Instruction> Code
-            {
-                get { return _code; }
-            }
+            public override List<Instruction> Code { get; } = new();
 
             public sealed override SymbolTable<int> LocalVariableMapping { get; protected set; }
 
@@ -389,29 +344,23 @@ namespace Prexonite.Modular
             private List<TryCatchFinallyBlock> _parseTryCatchFinallyBlocks()
             {
                 var tryCatchFinallyBlocks = new List<TryCatchFinallyBlock>();
-                MetaEntry tcfe;
-                if (Meta.TryGetValue(TryCatchFinallyBlock.MetaKey, out tcfe))
+                if (Meta.TryGetValue(TryCatchFinallyBlock.MetaKey, out var tcfe))
                 {
                     foreach (var blockEntry in tcfe.List)
                     {
-                        int beginTry,
-                            beginFinally,
-                            beginCatch,
-                            endTry;
-
                         var blockLst = blockEntry.List;
                         if (blockLst.Length != 5)
                             continue;
 
-                        if (!int.TryParse(blockLst[0], out beginTry)) //beginTry, required
+                        if (!int.TryParse(blockLst[0], out var beginTry)) //beginTry, required
                             continue;
-                        if (!int.TryParse(blockLst[1], out beginFinally))
+                        if (!int.TryParse(blockLst[1], out var beginFinally))
                             //beginFinally, default: -1
                             beginFinally = -1;
-                        if (!int.TryParse(blockLst[2], out beginCatch))
+                        if (!int.TryParse(blockLst[2], out var beginCatch))
                             //beginCatch, default: -1
                             beginCatch = -1;
-                        if (!int.TryParse(blockLst[3], out endTry)) //endTry, required
+                        if (!int.TryParse(blockLst[3], out var endTry)) //endTry, required
                             continue;
 
                         var block = new TryCatchFinallyBlock(beginTry, endTry)
@@ -432,15 +381,9 @@ namespace Prexonite.Modular
                 _tryCatchFinallyBlocks = null;
             }
 
-            protected override ModuleName ContainingModule
-            {
-                get { return _containingModule; }
-            }
+            protected override ModuleName ContainingModule { get; }
 
-            protected override CentralCache Cache
-            {
-                get { return _centralCache; }
-            }
+            protected override CentralCache Cache { get; }
 
             /// <summary>
             ///     Returns a string describing the function.
@@ -530,9 +473,7 @@ namespace Prexonite.Modular
                                     reverseLocalMapping[rawIns.Arguments]);
                                 break;
                             case OpCode.indloci:
-                                int index;
-                                int argc;
-                                rawIns.DecodeIndLocIndex(out index, out argc);
+                                rawIns.DecodeIndLocIndex(out var index, out var argc);
                                 ins = new Instruction(OpCode.indloc, argc, reverseLocalMapping[index],
                                     rawIns.JustEffect);
                                 break;

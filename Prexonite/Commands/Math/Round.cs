@@ -39,12 +39,7 @@ namespace Prexonite.Commands.Math
         {
         }
 
-        private static readonly Round _instance = new Round();
-
-        public static Round Instance
-        {
-            get { return _instance; }
-        }
+        public static Round Instance { get; } = new();
 
         #endregion
 
@@ -55,10 +50,7 @@ namespace Prexonite.Commands.Math
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
         /// <summary>
         ///     Executes the command.
@@ -87,9 +79,8 @@ namespace Prexonite.Commands.Math
             var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
 
             int d;
-            PValue pd;
 
-            if (arg1 != null && arg1.TryConvertTo(sctx, PType.Int, true, out pd))
+            if (arg1 != null && arg1.TryConvertTo(sctx, PType.Int, true, out var pd))
                 d = System.Math.Abs((int) pd.Value);
             else
                 d = 0;

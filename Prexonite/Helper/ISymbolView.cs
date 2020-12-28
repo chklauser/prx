@@ -46,8 +46,7 @@ namespace Prexonite
 
         public static bool Contains<T>(this ISymbolView<T> view, string key) where T: class
         {
-            T? dummy;
-            return view.TryGet(key, out dummy);
+            return view.TryGet(key, out var dummy);
         }
  
     }

@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Diagnostics;
 using JetBrains.Annotations;
-using Prexonite.Compiler.Symbolic.Internal;
 
 namespace Prexonite.Compiler.Symbolic
 {
@@ -34,15 +33,13 @@ namespace Prexonite.Compiler.Symbolic
     {
         public override string ToString()
         {
-            var rsym = InnerSymbol as ReferenceSymbol;
-
-            if (rsym != null)
+            if (InnerSymbol is ReferenceSymbol rsym)
             {
                 return rsym.Entity.ToString();
             }
             else
             {
-                return string.Format("ref {0}", InnerSymbol);
+                return $"ref {InnerSymbol}";
             }
         }
 
@@ -63,10 +60,7 @@ namespace Prexonite.Compiler.Symbolic
 
         #region Overrides of WrappingSymbol
 
-        protected override int HashCodeXorFactor
-        {
-            get { return 5557; }
-        }
+        protected override int HashCodeXorFactor => 5557;
 
         public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
         {
@@ -94,7 +88,7 @@ namespace Prexonite.Compiler.Symbolic
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return other is DereferenceSymbol && Equals((DereferenceSymbol)other);
+            return other is DereferenceSymbol otherDeref && Equals(otherDeref);
         }
 
         #endregion

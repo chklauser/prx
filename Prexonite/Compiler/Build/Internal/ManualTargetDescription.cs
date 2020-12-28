@@ -39,8 +39,6 @@ namespace Prexonite.Compiler.Build.Internal
     internal class ManualTargetDescription : ITargetDescription
     {
         [NotNull]
-        private readonly ModuleName _moduleName;
-        [NotNull]
         private readonly ISource _source;
         /// <summary>
         /// The file name for symbols derived from the supplied reader. Can be null.
@@ -57,12 +55,10 @@ namespace Prexonite.Compiler.Build.Internal
         {
             if (moduleName == null)
                 throw new ArgumentNullException(nameof(moduleName));
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
             if (dependencies == null)
                 throw new ArgumentNullException(nameof(dependencies));
-            _moduleName = moduleName;
-            _source = source;
+            Name = moduleName;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
             _fileName = fileName;
             _dependencies = new DependencySet(moduleName);
             _dependencies.AddRange(dependencies);
@@ -70,20 +66,12 @@ namespace Prexonite.Compiler.Build.Internal
                 _buildMessages = new List<Message>(buildMessages);
         }
 
-        public IReadOnlyCollection<ModuleName> Dependencies
-        {
-            get { return _dependencies; }
-        }
+        public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
 
-        public ModuleName Name
-        {
-            get { return _moduleName; }
-        }
+        [NotNull]
+        public ModuleName Name { get; }
 
-        public IReadOnlyList<Message> BuildMessages
-        {
-            get { return (IReadOnlyList<Message>)_buildMessages ?? DefaultModuleTarget.NoMessages; }
-        }
+        public IReadOnlyList<Message> BuildMessages => (IReadOnlyList<Message>)_buildMessages ?? DefaultModuleTarget.NoMessages;
 
         public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
         {
@@ -101,10 +89,9 @@ namespace Prexonite.Compiler.Build.Internal
                     {
                         try
                         {
-                            TextReader reader;
-                            if (!_source.TryOpen(out reader))
+                            if (!_source.TryOpen(out var reader))
                                 throw new BuildFailureException(this,
-                                    string.Format("The source for target {0} could not be opened.", Name),
+                                    $"The source for target {Name} could not be opened.",
                                     Enumerable.Empty<Message>());
                             using (reader)
                             {
@@ -131,21 +118,13 @@ namespace Prexonite.Compiler.Build.Internal
                                 }
                                 foreach (var msg in ldr.Infos.Append(ldr.Warnings).Append(ldr.Errors).OrderBy(m => m))
                                 {
-                                    TraceEventType evType;
-                                    switch (msg.Severity)
+                                    TraceEventType evType = msg.Severity switch
                                     {
-                                        case MessageSeverity.Error:
-                                            evType = TraceEventType.Error;
-                                            break;
-                                        case MessageSeverity.Warning:
-                                            evType = TraceEventType.Warning;
-                                            break;
-                                        case MessageSeverity.Info:
-                                            evType = TraceEventType.Information;
-                                            break;
-                                        default:
-                                            throw new ArgumentOutOfRangeException();
-                                    }
+                                        MessageSeverity.Error => TraceEventType.Error,
+                                        MessageSeverity.Warning => TraceEventType.Warning,
+                                        MessageSeverity.Info => TraceEventType.Information,
+                                        _ => throw new ArgumentOutOfRangeException()
+                                    };
                                     Plan.Trace.TraceEvent(evType, 0, "({0}) {1}", this, msg);
                                 }
 
@@ -181,7 +160,7 @@ namespace Prexonite.Compiler.Build.Internal
 
         public override string ToString()
         {
-            return string.Format("{{{0} located in {1}}}", _moduleName, _fileName);
+            return $"{{{Name} located in {_fileName}}}";
         }
     }
 }

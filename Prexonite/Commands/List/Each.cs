@@ -37,12 +37,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Each _instance = new Each();
-
-        public static Each Instance
-        {
-            get { return _instance; }
-        }
+        public static Each Instance { get; } = new();
 
         #endregion
 
@@ -86,10 +81,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #region ICilCompilerAware Members
 

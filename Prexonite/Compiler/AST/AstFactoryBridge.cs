@@ -69,8 +69,7 @@ namespace Prexonite.Compiler.Ast
 
         private static bool _require(StackContext sctx, PValue[] args, ref int index, out IEnumerable<AstExpr> argSeq)
         {
-            PValue raw;
-            if(_require(args, ref index, out raw))
+            if(_require(args, ref index, out var raw))
             {
                 argSeq = Commands.List.Map._ToEnumerable(sctx, raw)
                     .Select(x => x.ConvertTo<AstExpr>(sctx, true));
@@ -93,12 +92,12 @@ namespace Prexonite.Compiler.Ast
             else
             {
                 index++;
-                value = default(T);
+                value = default;
                 return false;
             }
         }
 
-        private static bool _takeOptional<T>(StackContext sctx, PValue[]  args, ref int index, out T value, T defaultValue = default(T))
+        private static bool _takeOptional<T>(StackContext sctx, PValue[]  args, ref int index, out T value, T defaultValue = default)
         {
             if(index < args.Length && args[index].TryConvertTo(sctx, false,out value))
             {
@@ -130,8 +129,7 @@ namespace Prexonite.Compiler.Ast
 
         private static bool _takeOptionalList(StackContext sctx, PValue[] args, ref int  index, out IEnumerable<AstExpr> expressions)
         {
-            PValue raw;
-            if(_takeOptional(args, ref index, out raw))
+            if(_takeOptional(args, ref index, out var raw))
             {
                 expressions = Commands.List.Map._ToEnumerable(sctx, raw)
                     .Select(x => x.ConvertTo<AstExpr>(sctx, true));
@@ -147,8 +145,7 @@ namespace Prexonite.Compiler.Ast
         [PublicAPI]
         protected bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result, out string detailedError)
         {
-            ISourcePosition position;
-            if (args.Length == 0 || !args[0].TryConvertTo(sctx, false, out position))
+            if (args.Length == 0 || !args[0].TryConvertTo(sctx, false, out ISourcePosition position))
             {
                 detailedError = "Not enough arguments for creating an AST node. Missing source position.";
                 result = null;
@@ -166,8 +163,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException("Cannot construct \"ConstantTypeExpression\", did you mean \"ConstantType\"?");
                 case "constanttype":
                     {
-                        string typeExpression;
-                        if (!_require(sctx, args, ref i, out typeExpression))
+                        if (!_require(sctx, args, ref i, out string typeExpression))
                         {
                             detailedError =
                                 "ConstantTypeExpression(position, typeExpression~String), typeExpression is missing.";
@@ -180,15 +176,13 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException("Cannot construct \"DynamicTypeExpression\", did you mean \"DynamicType\"?");
                 case "dynamictype":
                     {
-                        string typeId;
-                        IEnumerable<AstExpr> targs;
-                        if (!_require(sctx, args, ref i, out typeId))
+                        if (!_require(sctx, args, ref i, out string typeId))
                         {
                             detailedError =
                                 "DynamicTypeExpression(position, typeId~String, arguments~List), typeId is missing";
                             return false;
                         }
-                        if (!_require(sctx, args, ref i, out targs))
+                        if (!_require(sctx, args, ref i, out var targs))
                         {
                             detailedError =
                                  "DynamicTypeExpression(position, typeId~String, arguments~List), arguments is missing";
@@ -203,20 +197,18 @@ namespace Prexonite.Compiler.Ast
 
                 case "binaryoperation":
                     {
-                        AstExpr left, right;
-                        BinaryOperator op;
                         const string sig = "BinaryOperation(position, left~AstExpr, op~BinaryOperator, right~AstExpr)";
-                        if (!_require(sctx, args, ref i, out left))
+                        if (!_require(sctx, args, ref i, out AstExpr left))
                         {
                             detailedError = sig + ", missing left expr.";
                             return false;
                         }
-                        if (!_require(sctx, args, ref i, out op))
+                        if (!_require(sctx, args, ref i, out BinaryOperator op))
                         {
                             detailedError = sig + ", missing operator.";
                             return false;
                         }
-                        if (!_require(sctx, args, ref i, out right))
+                        if (!_require(sctx, args, ref i, out AstExpr right))
                         {
                             detailedError = sig + ", missing right expr.";
                             return false;
@@ -227,15 +219,13 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "unaryoperation":
                     {
-                        AstExpr  operand;
-                        UnaryOperator op;
                         const string sig = "UnaryOperation(position, op~UnaryOperator, operand~AstExpr)";
-                        if (!_require(sctx, args, ref i, out op))
+                        if (!_require(sctx, args, ref i, out UnaryOperator op))
                         {
                             detailedError = sig + ", missing operator.";
                             return false;
                         }
-                        if (!_require(sctx, args, ref i, out operand))
+                        if (!_require(sctx, args, ref i, out AstExpr operand))
                         {
                             detailedError = sig + ", missing operand expr.";
                             return false;
@@ -245,8 +235,7 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "coalescence":
                     {
-                        IEnumerable<AstExpr> targs;
-                        if (!_require(sctx, args, ref i, out targs))
+                        if (!_require(sctx, args, ref i, out var targs))
                         {
                             detailedError = "Coalescence(position, args~List), args is missing.";
                             return false;
@@ -257,34 +246,31 @@ namespace Prexonite.Compiler.Ast
 
                 case "conditionalexpression":
                     {
-                        AstExpr condition, thenExpr, elseExpr;
-                        bool isNegative;
                         const string sig =
                             "ConditionalExpression(position, condition~AstExpr, thenExpr~AstExpr, elseExpr~AstExpr, isNegative = false)";
-                        if(!_require(sctx, args, ref i,out condition))
+                        if(!_require(sctx, args, ref i,out AstExpr condition))
                         {
                             detailedError = sig + ", condition is missing.";
                             return false;
                         }
-                        if(!_require(sctx, args, ref i, out thenExpr))
+                        if(!_require(sctx, args, ref i, out AstExpr thenExpr))
                         {
                             detailedError = sig + ", thenExpr is missing.";
                             return false;
                         }
-                        if(!_require(sctx,args, ref i, out elseExpr))
+                        if(!_require(sctx,args, ref i, out AstExpr elseExpr))
                         {
                             detailedError = sig + ", elseExpr is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out isNegative);
+                        _takeOptional(sctx, args, ref i, out bool isNegative);
 
                         node = _base.ConditionalExpression(position, condition, thenExpr, elseExpr, isNegative);
                         break;
                     }
                 case "constant":
                     {
-                        PValue raw;
-                        if(!_require(args, ref i, out raw))
+                        if(!_require(args, ref i, out var raw))
                         {
                             detailedError = "Constant(position, const) const is missing.";
                             return false;
@@ -294,8 +280,7 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "createclosure":
                     {
-                        EntityRef.Function funcRef;
-                        if(!_require(sctx,args,ref i, out funcRef))
+                        if(!_require(sctx,args,ref i, out EntityRef.Function funcRef))
                         {
                             detailedError = "CreateClosure(position, funcRef~EntityRef.Function), funcRef is missing.";
                             return false;
@@ -306,8 +291,7 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "createcoroutine":
                     {
-                        AstExpr expr;
-                        if(!_require(sctx, args, ref i, out expr))
+                        if(!_require(sctx, args, ref i, out AstExpr expr))
                         {
                             detailedError =
                                 "CreateCoroutine(position, generatorExpr~AstExpr), generatorExpr is missing.";
@@ -320,14 +304,13 @@ namespace Prexonite.Compiler.Ast
 
                 case "keyvaluepair":
                     {
-                        AstExpr key, value;
                         const string sig = "KeyValuePair(position, key~AstExpr, value~AstExpr)";
-                        if(!_require(sctx, args, ref i, out key))
+                        if(!_require(sctx, args, ref i, out AstExpr key))
                         {
                             detailedError = sig + ", key is missing";
                             return false;
                         }
-                        if(!_require(sctx,args, ref i, out value))
+                        if(!_require(sctx,args, ref i, out AstExpr value))
                         {
                             detailedError = sig + ", value is missing";
                             return false;
@@ -338,9 +321,8 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "listliteral":
                     {
-                        IEnumerable<AstExpr> elems;
                         const string sig = "ListLiteral(position, elements~List<AstExpr>)";
-                        if(!_require(sctx, args, ref i, out elems))
+                        if(!_require(sctx, args, ref i, out var elems))
                         {
                             detailedError = sig + ", elements missing";
                             return false;
@@ -351,9 +333,8 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "hashliteral":
                     {
-                        IEnumerable<AstExpr> elems;
                         const string sig = "HashLiteral(position, elements~List<AstExpr>)";
-                        if (!_require(sctx, args, ref i, out elems))
+                        if (!_require(sctx, args, ref i, out var elems))
                         {
                             detailedError = sig + ", elements missing";
                             return false;
@@ -364,9 +345,8 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "logicaland":
                     {
-                        IEnumerable<AstExpr> elems;
                         const string sig = "LogicalAnd(position, clauses~List<AstExpr>)";
-                        if (!_require(sctx, args, ref i, out elems))
+                        if (!_require(sctx, args, ref i, out var elems))
                         {
                             detailedError = sig + ", clauses missing";
                             return false;
@@ -377,9 +357,8 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "logicalor":
                     {
-                        IEnumerable<AstExpr> elems;
                         const string sig = "LogicalOr(position, clauses~List<AstExpr>)";
-                        if (!_require(sctx, args, ref i, out elems))
+                        if (!_require(sctx, args, ref i, out var elems))
                         {
                             detailedError = sig + ", clauses missing";
                             return false;
@@ -399,31 +378,27 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException("Cannot construct \"ObjectCreation\". Did you mean \"CreateObject\"?");
                 case "createobject":
                     {
-                        AstTypeExpr typeExpr;
                         const string sig = "CreateObject(position, typeExpr~AstTypeExpr)";
-                        if(!_require(sctx, args, ref i, out typeExpr))
+                        if(!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
                         {
                             detailedError = sig + ", typeExpr is missing";
                             return false;
                         }
 
                         var obj = _base.CreateObject(position, typeExpr);
-                        IEnumerable<AstExpr> argumentList;
-                        if (_takeOptionalList(sctx, args, ref i, out argumentList))
+                        if (_takeOptionalList(sctx, args, ref i, out var argumentList))
                             obj.Arguments.AddRange(argumentList);
                         break;
                     }
                 case "typecheck":
                     {
-                        AstTypeExpr typeExpr;
-                        AstExpr operand;
                         const string sig = "Typecheck(position, operand~AstExpr, type~AstTypeExpr)";
-                        if(!_require(sctx, args, ref i, out operand))
+                        if(!_require(sctx, args, ref i, out AstExpr operand))
                         {
                             detailedError = sig + ", operand is missing.";
                             return false;
                         }
-                        if(!_require(sctx, args, ref i, out typeExpr))
+                        if(!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
                         {
                             detailedError = sig + ", typeExpr is missing.";
                             return false;
@@ -434,15 +409,13 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "typecast":
                     {
-                        AstTypeExpr typeExpr;
-                        AstExpr operand;
                         const string sig = "Typecast(position, operand~AstExpr, type~AstTypeExpr)";
-                        if (!_require(sctx, args, ref i, out operand))
+                        if (!_require(sctx, args, ref i, out AstExpr operand))
                         {
                             detailedError = sig + ", operand is missing.";
                             return false;
                         }
-                        if (!_require(sctx, args, ref i, out typeExpr))
+                        if (!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
                         {
                             detailedError = sig + ", typeExpr is missing.";
                             return false;
@@ -453,9 +426,8 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "reference":
                     {
-                        EntityRef entityRef;
                         const string sig = "Reference(position, entityRef~EntityRef)";
-                        if(!_require(sctx, args, ref i, out entityRef))
+                        if(!_require(sctx, args, ref i, out EntityRef entityRef))
                         {
                             detailedError = sig + ", entityRef is missing.";
                             return false;
@@ -465,72 +437,62 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "memberaccess":
                     {
-                        AstExpr receiver;
-                        string memberId;
-                        PCall nodeCall;
                         const string sig = "MemberAccess(position, receiver~AstExpr, memberId~String, call~PCall, args~List<AstExpr> = [])";
-                        if (!_require(sctx, args, ref i, out receiver))
+                        if (!_require(sctx, args, ref i, out AstExpr receiver))
                         {
                             detailedError = sig + ", receiver is missing.";
                             return false;
                         }
-                        if(!_require(sctx,args, ref i, out memberId))
+                        if(!_require(sctx,args, ref i, out string memberId))
                         {
                             detailedError = sig + ", memberId is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall);
+                        _takeOptional(sctx, args, ref i, out PCall nodeCall);
                         var complex = _base.MemberAccess(position, receiver, memberId, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
                     }
                 case "staticmemberaccess":
                     {
-                        AstTypeExpr typeExpr;
-                        string memberId;
-                        PCall nodeCall;
                         const string sig = "StaticMemberAccess(position, typeExpr~AstTypeExpr, memberId~String, call~PCall, args~List<AstExpr> = [])";
-                        if (!_require(sctx, args, ref i, out typeExpr))
+                        if (!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
                         {
                             detailedError = sig + ", typeExpr is missing.";
                             return false;
                         }
-                        if (!_require(sctx, args, ref i, out memberId))
+                        if (!_require(sctx, args, ref i, out string memberId))
                         {
                             detailedError = sig + ", memberId is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall);
+                        _takeOptional(sctx, args, ref i, out PCall nodeCall);
                         var complex = _base.StaticMemberAccess(position, typeExpr, memberId, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
                     }
                 case "indirectcall":
                     {
-                        AstExpr receiver;
-                        PCall nodeCall;
                         const string sig = "IndirectCall(position, receiver~AstExpr, call~PCall, args~List<AstExpr> = [])";
-                        if (!_require(sctx, args, ref i, out receiver))
+                        if (!_require(sctx, args, ref i, out AstExpr receiver))
                         {
                             detailedError = sig + ", receiver is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall);
+                        _takeOptional(sctx, args, ref i, out PCall nodeCall);
                         var complex = _base.IndirectCall(position, receiver, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
                     }
                 case "expand":
                     {
-                        PCall nodeCall;
-                        EntityRef entity;
                         const string sig = "Expand(position, entity~EntityRef, call~PCall)";
-                        if (!_require(sctx, args, ref i, out entity))
+                        if (!_require(sctx, args, ref i, out EntityRef entity))
                         {
                             detailedError = sig + ", entity is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall);
+                        _takeOptional(sctx, args, ref i, out PCall nodeCall);
                         var complex = _base.Expand(position, entity, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
@@ -538,14 +500,12 @@ namespace Prexonite.Compiler.Ast
                 case "placeholder":
                     {
                         int? index;
-                        PValue raw;
-                        _takeOptional(args, ref i, out raw, PType.Null);
+                        _takeOptional(args, ref i, out var raw, PType.Null);
                         if (raw.IsNull)
                             index = null;
                         else
                         {
-                            PValue intValue;
-                            if (raw.TryConvertTo(sctx, PType.Int, true, out intValue))
+                            if (raw.TryConvertTo(sctx, PType.Int, true, out var intValue))
                                 index = (int) intValue.Value;
                             else
                                 index = null;
@@ -557,17 +517,15 @@ namespace Prexonite.Compiler.Ast
 
                 case "exprfor":
                     {
-                        PValue symbolPV;
                         const string sig = "ExprFor(position, symbol~Symbol)";
-                        if (_require(args, ref i, out symbolPV))
+                        if (_require(args, ref i, out var symbolPV))
                         {
                             detailedError = sig + ", symbol is missing.";
                             return false;
                         }
 
                         // Parse symbol parameter
-                        Symbol symbol;
-                        if (symbolPV.TryConvertTo(sctx, out symbol))
+                        if (symbolPV.TryConvertTo(sctx, out Symbol symbol))
                         {
                             // nothing to do in this case
                         }
@@ -596,34 +554,29 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "condition":
                     {
-                        AstExpr condition;
-                        bool isNegative;
                         const string sig = "Condition(position, condition~AstExpr, isNegative = false)";
-                        if(!_require(sctx, args, ref i, out condition))
+                        if(!_require(sctx, args, ref i, out AstExpr condition))
                         {
                             detailedError = sig + ", condition is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out isNegative);
+                        _takeOptional(sctx, args, ref i, out bool isNegative);
 
                         node = _base.Condition(position, condition, isNegative);
                         break;
                     }
                 case "whileloop":
                     {
-                        AstExpr condition;
-                        bool isPostcondition, isNegative;
-
                         const string sig =
                             "WhileLoop(position, condition~AstExpr, isPostcondition = false, isNegative = false)";
 
-                        if(!_require(sctx, args, ref i, out condition))
+                        if(!_require(sctx, args, ref i, out AstExpr _))
                         {
                             detailedError = sig + ", condition is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out isPostcondition);
-                        _takeOptional(sctx, args, ref i, out isNegative);
+                        _takeOptional(sctx, args, ref i, out bool isPostcondition);
+                        _takeOptional(sctx, args, ref i, out bool isNegative);
 
                         node = _base.WhileLoop(position, isPostcondition, isNegative);
                         break;
@@ -635,15 +588,13 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "foreachloop":
                     {
-                        AstGetSet element;
-                        AstExpr sequence;
                         const string sig = "ForeachLoop(position, element~AstGetSet, sequence~AstExpr)";
-                        if(!_require(sctx, args, ref i, out element))
+                        if(!_require(sctx, args, ref i, out AstGetSet _))
                         {
                             detailedError = sig + ", element is missing.";
                             return false;
                         }
-                        if(!_require( sctx, args, ref i, out sequence))
+                        if(!_require( sctx, args, ref i, out AstExpr _))
                         {
                             detailedError = sig + ", sequence is missing.";
                             return false;
@@ -653,18 +604,15 @@ namespace Prexonite.Compiler.Ast
                     }
                 case "return":
                     {
-                        AstExpr expression;
-                        ReturnVariant returnVariant;
-                        _takeOptional(sctx, args, ref i, out expression);
-                        _takeOptional(sctx, args, ref i, out returnVariant);
+                        _takeOptional(sctx, args, ref i, out AstExpr expression);
+                        _takeOptional(sctx, args, ref i, out ReturnVariant returnVariant);
                         node = _base.Return(position, expression, returnVariant);
                         break;
                     }
                 case "throw":
                     {
-                        AstExpr exception;
                         const string sig = "Throw(position, exception~AstExpr)";
-                        if(!_require(sctx, args, ref i, out exception))
+                        if(!_require(sctx, args, ref i, out AstExpr exception))
                         {
                             detailedError = sig + ", exception is missing.";
                             return false;
@@ -693,8 +641,7 @@ namespace Prexonite.Compiler.Ast
 
         private static AstGetSet _takeOptionalArguments(StackContext sctx, PValue[] args, int i, AstGetSet complex)
         {
-            IEnumerable<AstExpr> nodeArgs;
-            if (_takeOptionalList(sctx, args, ref i, out nodeArgs))
+            if (_takeOptionalList(sctx, args, ref i, out var nodeArgs))
                 complex.Arguments.AddRange(nodeArgs);
             return complex;
         }
@@ -705,16 +652,13 @@ namespace Prexonite.Compiler.Ast
 
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            PValue result;
             if (args.Length == 0)
                 throw new PrexoniteException("AstFactory.() requires at least one argument, the name of the node type to create.");
-            string detailedError;
-            if (TryDynamicCall(sctx, args.Skip(1).ToArray(), PCall.Get, args[0].CallToString(sctx), out result, out detailedError))
+            if (TryDynamicCall(sctx, args.Skip(1).ToArray(), PCall.Get, args[0].CallToString(sctx), out var result, out var detailedError))
                 return result;
             else
             {
-                if (detailedError == null)
-                    detailedError = "illegal call";
+                detailedError ??= "illegal call";
                 _throwInvalidCall(args, "{0} Original call: AstFactory.({1})", detailedError);
                 return PType.Null;
             }

@@ -35,9 +35,7 @@ namespace Prexonite.Compiler.Ast
         public AstAsmInstruction(string file, int line, int column, Instruction instruction)
             : base(file, line, column)
         {
-            if (instruction == null)
-                throw new ArgumentNullException(nameof(instruction));
-            Instruction = instruction;
+            Instruction = instruction ?? throw new ArgumentNullException(nameof(instruction));
         }
 
         internal AstAsmInstruction(Parser p, Instruction instruction)

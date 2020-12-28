@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Diagnostics;
-using Prexonite.Compiler.Internal;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -54,7 +53,7 @@ namespace Prexonite.Compiler.Ast
         public bool IsInitialized
         {
             [DebuggerStepThrough]
-            get { return Condition != null; }
+            get => Condition != null;
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -67,8 +66,7 @@ namespace Prexonite.Compiler.Ast
             //Optimize unary not condition
             _OptimizeNode(target, ref Condition);
             // Invert condition when unary logical not
-            AstIndirectCall unaryCond;
-            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
             {
                 Condition = unaryCond.Arguments[0];
                 IsPositive = !IsPositive;
@@ -76,13 +74,11 @@ namespace Prexonite.Compiler.Ast
 
             //Constant conditions
             var conditionIsConstant = false;
-            if (Condition is AstConstant)
+            if (Condition is AstConstant constCond)
             {
-                var constCond = (AstConstant) Condition;
-                PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
-                        target.Loader, PType.Bool, out condValue))
+                        target.Loader, PType.Bool, out var condValue))
                     goto continueFull;
                 else if ((bool) condValue.Value == IsPositive)
                     conditionIsConstant = true;

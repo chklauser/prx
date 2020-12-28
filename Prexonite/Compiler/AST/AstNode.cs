@@ -35,8 +35,6 @@ namespace Prexonite.Compiler.Ast
 {
     public abstract class AstNode : IObject
     {
-        [NotNull] private readonly ISourcePosition _position;
-
         protected AstNode(string file, int line, int column)
             : this(new SourcePosition(file, line, column))
         {
@@ -44,9 +42,7 @@ namespace Prexonite.Compiler.Ast
 
         protected AstNode([NotNull] ISourcePosition position)
         {
-            if (position == null)
-                throw new ArgumentNullException(nameof(position));
-            _position = position;
+            Position = position ?? throw new ArgumentNullException(nameof(position));
         }
 
         internal AstNode(Parser p)
@@ -55,25 +51,13 @@ namespace Prexonite.Compiler.Ast
         }
 
         [NotNull]
-        public ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public ISourcePosition Position { get; }
 
-        public string File
-        {
-            get { return _position.File; }
-        }
+        public string File => Position.File;
 
-        public int Line
-        {
-            get { return _position.Line; }
-        }
+        public int Line => Position.Line;
 
-        public int Column
-        {
-            get { return _position.Column; }
-        }
+        public int Column => Position.Column;
 
         protected abstract void DoEmitCode([NotNull] CompilerTarget target, StackSemantics semantics);
 
@@ -138,8 +122,7 @@ namespace Prexonite.Compiler.Ast
             if (expr == null)
                 throw new ArgumentNullException(
                     nameof(expr), Resources.AstNode__GetOptimizedNode_Expression_null);
-            AstExpr opt;
-            return expr.TryOptimize(target, out opt) ? opt : expr;
+            return expr.TryOptimize(target, out var opt) ? opt : expr;
         }
 
         internal static void _OptimizeNode([NotNull] CompilerTarget target, [NotNull] ref AstExpr expr)
@@ -168,8 +151,7 @@ namespace Prexonite.Compiler.Ast
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                         throw new PrexoniteException(
                             "_GetOptimizedNode(CompilerTarget target) requires target.");
-                    var expr = this as AstExpr;
-                    if (expr == null)
+                    if (!(this is AstExpr expr))
                         throw new PrexoniteException("The node is not an AstExpr.");
 
                     result = target.Loader.CreateNativePValue(_GetOptimizedNode(target, expr));
@@ -199,8 +181,7 @@ namespace Prexonite.Compiler.Ast
         [NotNull]
         internal static Symbol _ResolveOperator(Parser parser, string symbolicId)
         {
-            Symbol symbolEntry;
-            if (!parser.target.Symbols.TryGet(symbolicId, out symbolEntry))
+            if (!parser.target.Symbols.TryGet(symbolicId, out var symbolEntry))
             {
                 parser.Loader.ReportMessage(
                     Message.Error(

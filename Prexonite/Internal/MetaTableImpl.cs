@@ -64,10 +64,7 @@ namespace Prexonite.Internal
         /// <summary>
         ///     Returns a reference to the object that filters requests to this meta table. Can be null.
         /// </summary>
-        protected override IMetaFilter Filter
-        {
-            get { return _filter; }
-        }
+        protected override IMetaFilter Filter => _filter;
 
         protected override bool RemoveTransformed(string key)
         {
@@ -84,15 +81,9 @@ namespace Prexonite.Internal
             _table.CopyTo(array, arrayIndex);
         }
 
-        public override int Count
-        {
-            get { return _table.Count; }
-        }
+        public override int Count => _table.Count;
 
-        public override bool IsReadOnly
-        {
-            get { return false; }
-        }
+        public override bool IsReadOnly => false;
 
         protected override void AddTransformed(string key, MetaEntry item)
         {
@@ -104,15 +95,9 @@ namespace Prexonite.Internal
             return _table.ContainsKey(key);
         }
 
-        public override ICollection<string> Keys
-        {
-            get { return _table.Keys; }
-        }
+        public override ICollection<string> Keys => _table.Keys;
 
-        public override ICollection<MetaEntry> Values
-        {
-            get { return _table.Values; }
-        }
+        public override ICollection<MetaEntry> Values => _table.Values;
 
         protected override void SetTransformed(string key, MetaEntry entry)
         {
@@ -155,7 +140,7 @@ namespace Prexonite.Internal
 
         private static SymbolTable<MetaEntry> _createInternalStorage(int capacity)
         {
-            return new SymbolTable<MetaEntry>(capacity);
+            return new(capacity);
         }
 
         private SymbolTable<MetaEntry> _table;

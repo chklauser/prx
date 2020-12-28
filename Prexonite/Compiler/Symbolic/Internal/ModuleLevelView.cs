@@ -13,9 +13,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// <summary>
         /// The scope that this filter wraps.
         /// </summary>
-        private SymbolStore _backingStore;
-
-        internal SymbolStore BackingStore => _backingStore;
+        internal SymbolStore BackingStore { get; }
 
         /// <summary>
         /// Maps namespaces to already constructed proxies.
@@ -27,13 +25,13 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         private ModuleLevelView(SymbolStore backingStore, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
-            _backingStore = backingStore ?? throw new ArgumentNullException(nameof(backingStore));
+            BackingStore = backingStore ?? throw new ArgumentNullException(nameof(backingStore));
             _localProxies = localProxies ?? throw new ArgumentNullException(nameof(localProxies));
         }
 
         public static ModuleLevelView Create(SymbolStore externalScope)
         {
-            return new ModuleLevelView(externalScope, new ConcurrentDictionary<Namespace, LocalNamespaceImpl>());
+            return new(externalScope, new ConcurrentDictionary<Namespace, LocalNamespaceImpl>());
         }
 
         internal class LocalNamespaceImpl : LocalNamespace
@@ -164,34 +162,34 @@ namespace Prexonite.Compiler.Symbolic.Internal
             return new LocalNamespaceImpl(externalScope, _localProxies);
         }
 
-        public override bool IsEmpty => _backingStore.IsEmpty;
+        public override bool IsEmpty => BackingStore.IsEmpty;
 
         public override void Declare(string id, Symbol symbol)
         {
-            _backingStore.Declare(id, symbol);
+            BackingStore.Declare(id, symbol);
         }
 
         public override bool IsDeclaredLocally(string id)
         {
-            return _backingStore.IsDeclaredLocally(id);
+            return BackingStore.IsDeclaredLocally(id);
         }
 
         public override void ClearLocalDeclarations()
         {
-            _backingStore.ClearLocalDeclarations();
+            BackingStore.ClearLocalDeclarations();
         }
 
         public override ISymbolView<Symbol>? ExternalScope
         {
-            get => _backingStore.ExternalScope;
-            set => _backingStore.ExternalScope = value;
+            get => BackingStore.ExternalScope;
+            set => BackingStore.ExternalScope = value;
         }
 
-        public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations => _backingStore.LocalDeclarations;
+        public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations => BackingStore.LocalDeclarations;
 
         public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
         {
-            foreach (var entry in _backingStore)
+            foreach (var entry in BackingStore)
             {
                 var localSym = _filterSymbol(entry.Value);
                 if (!ReferenceEquals(localSym, entry.Value))
@@ -203,7 +201,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         public override bool TryGet(string id, [NotNullWhen(true)] out Symbol? value)
         {
-            if (_backingStore.TryGet(id, out value))
+            if (BackingStore.TryGet(id, out value))
             {
                 value = _filterSymbol(value);
                 return true;

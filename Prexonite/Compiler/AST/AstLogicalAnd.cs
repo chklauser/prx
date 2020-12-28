@@ -83,8 +83,7 @@ namespace Prexonite.Compiler.Ast
             var nextLabel = @"Next\" + labelNs;
             foreach (var expr in Conditions)
             {
-                var or = expr as AstLogicalOr;
-                if (or != null)
+                if (expr is AstLogicalOr or)
                 {
                     or.EmitCode(target, nextLabel, falseLabel);
                     //ResolveOperator pending jumps to Next
@@ -113,10 +112,7 @@ namespace Prexonite.Compiler.Ast
             return CreateConjunction(position, clauses);
         }
 
-        protected override bool ShortcircuitValue
-        {
-            get { return false; }
-        }
+        protected override bool ShortcircuitValue => false;
 
         #endregion
     }

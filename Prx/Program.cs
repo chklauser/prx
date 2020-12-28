@@ -26,7 +26,6 @@
 #region Namespace Imports
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -42,7 +41,6 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
 using Prexonite.Types;
 using Prx.Benchmarking;
-using Prx.Properties;
 
 #endregion
 
@@ -169,10 +167,7 @@ namespace Prx
                     @"__replace_call",
                     delegate(StackContext sctx, PValue[] cargs)
                     {
-                        if (cargs == null)
-                            cargs = new PValue[]
-                            {
-                            };
+                        cargs ??= Array.Empty<PValue>();
                         if (sctx == null)
                             throw new ArgumentNullException(nameof(sctx));
 
@@ -229,9 +224,7 @@ namespace Prx
                         var node = e.Stack.Last;
                         do
                         {
-                            var ectx = node.Value as FunctionContext;
-
-                            if (ectx != null)
+                            if (node.Value is FunctionContext ectx)
                             {
                                 if (ReferenceEquals(ectx.Implementation, rctx.Implementation))
                                 {
@@ -261,9 +254,7 @@ namespace Prx
                         if (sctx == null)
                             throw new ArgumentNullException(nameof(sctx));
                         if (cargs == null)
-                            cargs = new PValue[]
-                            {
-                            };
+                            cargs = Array.Empty<PValue>();
 
                         Engine teng;
                         int tit;
@@ -393,12 +384,12 @@ namespace Prx
                         nameof(name));
                 }
 
-                using (stream)
+                await using (stream)
                 {
                     var filePath = Path.Combine(srcDirPath, name);
 
                     // We need the await here so that the state machine can close the streams afterwards
-                    using (var dest = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    await using (var dest = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                         await stream.CopyToAsync(dest, (CancellationToken) default);
                 }
             }

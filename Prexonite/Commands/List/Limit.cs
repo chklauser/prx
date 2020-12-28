@@ -39,12 +39,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Limit _instance = new Limit();
-
-        public static Limit Instance
-        {
-            get { return _instance; }
-        }
+        public static Limit Instance { get; } = new();
 
         #endregion
 
@@ -77,15 +72,13 @@ namespace Prexonite.Commands.List
                 var set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
                     throw new PrexoniteException(arg + " is neither a list nor a coroutine.");
-                using (var setEnumerator = set.GetEnumerator())
+                using var setEnumerator = set.GetEnumerator();
+                while (i++ < count && setEnumerator.MoveNext())
                 {
-                    while (i++ < count && setEnumerator.MoveNext())
-                    {
-                        yield return setEnumerator.Current;
-                    }
-                    if (i >= count)
-                        yield break;
+                    yield return setEnumerator.Current;
                 }
+                if (i >= count)
+                    yield break;
             }
         }
 
@@ -104,10 +97,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #region ICilCompilerAware Members
 

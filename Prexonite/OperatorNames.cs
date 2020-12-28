@@ -1,35 +1,11 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#nullable enable
 using System;
 using Prexonite.Compiler.Ast;
 
 namespace Prexonite
 {
     /// <summary>
-    ///     Provides constants for the names of operators (binar, unary).
+    ///     Provides constants for the names of operators (binary, unary).
     /// </summary>
     public static class OperatorNames
     {
@@ -69,77 +45,45 @@ namespace Prexonite
             public const string UnaryDeltaLeftPre = "unaryDeltaLeftPre__";
             public const string UnaryDeltaLeftPost = "unaryDeltaLeftPost__";
 
-            public static string GetName(BinaryOperator op)
-            {
-                switch (op)
+            public static string GetName(BinaryOperator op) =>
+                op switch
                 {
-                    case BinaryOperator.Addition:
-                        return Addition;
-                    case BinaryOperator.Subtraction:
-                        return Subtraction;
-                    case BinaryOperator.Multiply:
-                        return Multiplication;
-                    case BinaryOperator.Division:
-                        return Division;
-                    case BinaryOperator.Modulus:
-                        return Modulus;
-                    case BinaryOperator.Power:
-                        return Power;
-                    case BinaryOperator.BitwiseAnd:
-                        return BitwiseAnd;
-                    case BinaryOperator.BitwiseOr:
-                        return BitwiseOr;
-                    case BinaryOperator.ExclusiveOr:
-                        return ExclusiveOr;
-                    case BinaryOperator.Equality:
-                        return Equality;
-                    case BinaryOperator.Inequality:
-                        return Inequality;
-                    case BinaryOperator.GreaterThan:
-                        return GreaterThan;
-                    case BinaryOperator.GreaterThanOrEqual:
-                        return GreaterThanOrEqual;
-                    case BinaryOperator.LessThan:
-                        return LessThan;
-                    case BinaryOperator.LessThanOrEqual:
-                        return LessThanOrEqual;
-                    case BinaryOperator.DeltaRight:
-                        return BinaryDeltaRight;
-                    case BinaryOperator.DeltaLeft:
-                        return BinaryDeltaLeft;
-                    default:
-                        return null;
-                }
-            }
+                    BinaryOperator.Addition => Addition,
+                    BinaryOperator.Subtraction => Subtraction,
+                    BinaryOperator.Multiply => Multiplication,
+                    BinaryOperator.Division => Division,
+                    BinaryOperator.Modulus => Modulus,
+                    BinaryOperator.Power => Power,
+                    BinaryOperator.BitwiseAnd => BitwiseAnd,
+                    BinaryOperator.BitwiseOr => BitwiseOr,
+                    BinaryOperator.ExclusiveOr => ExclusiveOr,
+                    BinaryOperator.Equality => Equality,
+                    BinaryOperator.Inequality => Inequality,
+                    BinaryOperator.GreaterThan => GreaterThan,
+                    BinaryOperator.GreaterThanOrEqual => GreaterThanOrEqual,
+                    BinaryOperator.LessThan => LessThan,
+                    BinaryOperator.LessThanOrEqual => LessThanOrEqual,
+                    BinaryOperator.DeltaRight => BinaryDeltaRight,
+                    BinaryOperator.DeltaLeft => BinaryDeltaLeft,
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                };
 
-            public static string GetName(UnaryOperator op)
-            {
-                switch (op)
+            public static string GetName(UnaryOperator op) =>
+                op switch
                 {
-                    case UnaryOperator.UnaryNegation:
-                        return UnaryNegation;
-                    case UnaryOperator.OnesComplement:
-                        return OnesComplement;
-                    case UnaryOperator.PostIncrement:
-                    case UnaryOperator.PreIncrement:
-                        return Increment;
-                    case UnaryOperator.PreDecrement:
-                    case UnaryOperator.PostDecrement:
-                        return Decrement;
-                    case UnaryOperator.LogicalNot:
-                        return LogicalNot;
-                    case UnaryOperator.PreDeltaRight:
-                        return UnaryDeltaRightPre;
-                    case UnaryOperator.PostDeltaRight:
-                        return UnaryDeltaRightPost;
-                    case UnaryOperator.PreDeltaLeft:
-                        return UnaryDeltaLeftPre;
-                    case UnaryOperator.PostDeltaLeft:
-                        return UnaryDeltaLeftPost;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(op));
-                }
-            }
+                    UnaryOperator.UnaryNegation => UnaryNegation,
+                    UnaryOperator.OnesComplement => OnesComplement,
+                    UnaryOperator.PostIncrement => Increment,
+                    UnaryOperator.PreIncrement => Increment,
+                    UnaryOperator.PreDecrement => Decrement,
+                    UnaryOperator.PostDecrement => Decrement,
+                    UnaryOperator.LogicalNot => LogicalNot,
+                    UnaryOperator.PreDeltaRight => UnaryDeltaRightPre,
+                    UnaryOperator.PostDeltaRight => UnaryDeltaRightPost,
+                    UnaryOperator.PreDeltaLeft => UnaryDeltaLeftPre,
+                    UnaryOperator.PostDeltaLeft => UnaryDeltaLeftPost,
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                };
         }
     }
 }

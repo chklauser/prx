@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -35,9 +34,7 @@ using JetBrains.Annotations;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
-using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
-using Prexonite.Properties;
 
 namespace PrexoniteTests.Tests.Configurations
 {
@@ -51,7 +48,7 @@ namespace PrexoniteTests.Tests.Configurations
         [ThreadStatic] private static ITargetDescription _stdlibDescription;
 
         [NotNull] private static readonly TraceSource _trace =
-            new TraceSource("PrexoniteTests.Tests.Configurations.ModuleCache");
+            new("PrexoniteTests.Tests.Configurations.ModuleCache");
 
 // ReSharper disable InconsistentNaming
         private static ManualPlan Cache
@@ -198,7 +195,7 @@ namespace PrexoniteTests.Tests.Configurations
 
         private static ModuleName _toModuleName(string path)
         {
-            return new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
+            return new(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
         }
 
         public static Task<ITarget> BuildAsync(ModuleName name)

@@ -46,7 +46,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        private readonly List<AstExpr> _arguments = new List<AstExpr>();
+        private readonly List<AstExpr> _arguments = new();
 
         [DebuggerStepThrough]
         public AstObjectCreation(string file, int line, int col, AstTypeExpr type)
@@ -85,9 +85,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            var constType = TypeExpr as AstConstantTypeExpression;
-
-            if (constType != null)
+            if (TypeExpr is AstConstantTypeExpression constType)
             {
                 foreach (var arg in _arguments)
                     arg.EmitValueCode(target);
@@ -118,7 +116,7 @@ namespace Prexonite.Compiler.Ast
 
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(TypeExpr.IsPlaceholder() || Arguments.Any(x => x.IsPlaceholder()),
+            return new(TypeExpr.IsPlaceholder() || Arguments.Any(x => x.IsPlaceholder()),
                 TypeExpr.IsArgumentSplice() || Arguments.Any(x => x.IsArgumentSplice()));
         }
 
@@ -127,8 +125,7 @@ namespace Prexonite.Compiler.Ast
             var argv =
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments.ToList());
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            var constType = TypeExpr as AstConstantTypeExpression;
-            if (constType != null)
+            if (TypeExpr is AstConstantTypeExpression constType)
                 target.EmitConstant(Position, constType.TypeExpression);
             else
                 TypeExpr.EmitValueCode(target);

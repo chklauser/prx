@@ -33,12 +33,7 @@ namespace Prexonite.Commands.Core
     {
         #region Singleton pattern
 
-        private static readonly Const _instance = new Const();
-
-        public static Const Instance
-        {
-            get { return _instance; }
-        }
+        public static Const Instance { get; } = new();
 
         private Const()
         {
@@ -80,10 +75,8 @@ namespace Prexonite.Commands.Core
         {
             get
             {
-                return _createConstFunctionInfoCache ??
-                    (_createConstFunctionInfoCache =
-                        typeof (Const).GetMethod("CreateConstFunction",
-                            new[] {typeof (PValue), typeof (StackContext)}));
+                return _createConstFunctionInfoCache ??= typeof (Const).GetMethod("CreateConstFunction",
+                    new[] {typeof (PValue), typeof (StackContext)});
             }
         }
 

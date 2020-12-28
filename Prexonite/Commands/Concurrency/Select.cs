@@ -43,22 +43,14 @@ namespace Prexonite.Commands.Concurrency
         {
         }
 
-        private static readonly Select _instance = new Select();
-
-        public static Select Instance
-        {
-            get { return _instance; }
-        }
+        public static Select Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -101,8 +93,7 @@ namespace Prexonite.Commands.Concurrency
 
                 if (chan != null)
                 {
-                    PValue datum;
-                    if (chan.TryReceive(out datum))
+                    if (chan.TryReceive(out var datum))
                     {
                         return _invokeHandler(sctx, handler, datum, performSubCall);
                     }
@@ -114,16 +105,13 @@ namespace Prexonite.Commands.Concurrency
             }
 
             //We have to wait for one of the channels to become active (there are no default handlers)
-            Channel[] channels;
-            PValue[] handlers;
-            _split(appCases, out channels, out handlers);
+            _split(appCases, out var channels, out var handlers);
             var flags = channels.Select(c => c.DataAvailable).ToArray();
 
             while (true)
             {
                 var selected = WaitHandle.WaitAny(flags);
-                PValue datum;
-                if (channels[selected].TryReceive(out datum))
+                if (channels[selected].TryReceive(out var datum))
                 {
                     return _invokeHandler(sctx, handlers[selected], datum, performSubCall);
                 }
@@ -134,7 +122,7 @@ namespace Prexonite.Commands.Concurrency
         private static PValue _invokeHandler(StackContext sctx, PValue handler, PValue datum,
             bool performSubCall)
         {
-            var handlerArgv = datum != null ? new[] {datum} : Runtime.EmptyPValueArray;
+            var handlerArgv = datum != null ? new[] {datum} : Array.Empty<PValue>();
             return performSubCall
                 ? CallSubPerform.RunStatically(sctx, handler, handlerArgv,
                     useIndirectCallAsFallback: true)
@@ -160,7 +148,7 @@ namespace Prexonite.Commands.Concurrency
                             return null;
                     else if (key.Value == null)
                         return null;
-                    else if (Runtime.ExtractBool(key.IndirectCall(sctx, Runtime.EmptyPValueArray),
+                    else if (Runtime.ExtractBool(key.IndirectCall(sctx, Array.Empty<PValue>()),
                         sctx))
                         return kvp.Value;
                     else

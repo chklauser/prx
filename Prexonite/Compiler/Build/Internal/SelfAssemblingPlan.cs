@@ -46,10 +46,10 @@ namespace Prexonite.Compiler.Build.Internal
         private static readonly TraceSource _trace = Plan.Trace;
 
         [NotNull]
-        private readonly AdHocTaskCache<string, PreflightResult> _preflightCache = new AdHocTaskCache<string, PreflightResult>();
+        private readonly AdHocTaskCache<string, PreflightResult> _preflightCache = new();
 
         [NotNull]
-        private readonly AdHocTaskCache<string, ITargetDescription> _targetCreationCache = new AdHocTaskCache<string, ITargetDescription>();
+        private readonly AdHocTaskCache<string, ITargetDescription> _targetCreationCache = new();
 
         public IList<string> SearchPaths { get; } = new ThreadSafeList<string>();
 
@@ -150,7 +150,7 @@ namespace Prexonite.Compiler.Build.Internal
             RegisterOnly
         }
 
-        private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>();
+        private readonly HashSet<ModuleName> _standardLibrary = new();
         public ISet<ModuleName> StandardLibrary => _standardLibrary;
 
 
@@ -162,7 +162,7 @@ namespace Prexonite.Compiler.Build.Internal
                     nameof(refSpec));
 
             return _preflightCache.GetOrAdd(refSpec.ResolvedPath.FullName,
-                async (path, actualToken) =>
+                async (_, actualToken) =>
                 {
                     refSpec.Source = new FileSource(refSpec.ResolvedPath, Encoding);
                     await Task.Yield(); // Need to yield at this point to keep
@@ -256,7 +256,7 @@ namespace Prexonite.Compiler.Build.Internal
         }
 
         [NotNull]
-        private static readonly Regex _fileReferencePattern = new Regex(@"^(\.|/|:)");
+        private static readonly Regex _fileReferencePattern = new(@"^(\.|/|:)");
 
         private static RefSpec _parseRefSpec(MetaEntry entry)
         {
@@ -356,7 +356,7 @@ namespace Prexonite.Compiler.Build.Internal
             if (candidate == null)
                 throw new ArgumentNullException(nameof(candidate));
             return _targetCreationCache.GetOrAdd(candidate.FullName,
-                async (key, actualToken) =>
+                async (_, actualToken) =>
                 {
                     var src = Source.FromFile(candidate, Encoding);
                     await Task.Yield();
@@ -530,7 +530,7 @@ namespace Prexonite.Compiler.Build.Internal
         public volatile ModuleName? ModuleName;
 
         [NotNull]
-        public readonly List<RefSpec> References = new List<RefSpec>();
+        public readonly List<RefSpec> References = new();
 
         public volatile string? ErrorMessage;
 

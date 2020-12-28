@@ -35,12 +35,8 @@ namespace Prexonite.Compiler.Internal
     {
         #region Singleton
 
-        [NotNull] private static readonly SymbolMExprSerializer _instance = new SymbolMExprSerializer();
-
-        public static SymbolMExprSerializer Instance
-        {
-            get { return _instance; }
-        }
+        [NotNull]
+        public static SymbolMExprSerializer Instance { get; } = new();
 
         #endregion
 
@@ -66,8 +62,7 @@ namespace Prexonite.Compiler.Internal
         [CanBeNull]
         private MExpr _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
         {
-            QualifiedId symbolName;
-            if (existingSymbols.TryGetValue(symbol, out symbolName))
+            if (existingSymbols.TryGetValue(symbol, out var symbolName))
             {
                 return new MExpr.MList(position, SymbolMExprParser.AbsoluteModifierHead, new MExpr.MList(position, CrossReferenceHead, 
                     symbolName.Select(part => new MExpr.MAtom(position,part))));
@@ -109,21 +104,14 @@ namespace Prexonite.Compiler.Internal
             if (existing != null)
                 return existing;
 
-            string head;
-            switch (self.Message.Severity)
+            string head = self.Message.Severity switch
             {
-                case MessageSeverity.Error:
-                    head = ErrorHead;
-                    break;
-                case MessageSeverity.Warning:
-                    head = WarningHead;
-                    break;
-                case MessageSeverity.Info:
-                    head = InfoHead;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("Unknown message severity " + Enum.GetName(typeof(MessageSeverity),self.Message.Severity));
-            }
+                MessageSeverity.Error => ErrorHead,
+                MessageSeverity.Warning => WarningHead,
+                MessageSeverity.Info => InfoHead,
+                _ => throw new ArgumentOutOfRangeException("Unknown message severity " +
+                                                           Enum.GetName(typeof(MessageSeverity), self.Message.Severity))
+            };
 
             return new MExpr.MList(self.Position, head,
                                    new[]

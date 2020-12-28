@@ -38,12 +38,8 @@ namespace Prexonite.Compiler.Ast
         public AstTypecast(string file, int line, int column, AstExpr subject, AstTypeExpr type)
             : base(file, line, column)
         {
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            if (type == null)
-                throw new ArgumentNullException(nameof(type));
-            Subject = subject;
-            Type = type;
+            Subject = subject ?? throw new ArgumentNullException(nameof(subject));
+            Type = type ?? throw new ArgumentNullException(nameof(type));
         }
 
         internal AstTypecast(Parser p, AstExpr subject, AstTypeExpr type)
@@ -78,8 +74,7 @@ namespace Prexonite.Compiler.Ast
             }
 
             Subject.EmitValueCode(target);
-            var constType = Type as AstConstantTypeExpression;
-            if (constType != null)
+            if (Type is AstConstantTypeExpression constType)
                 target.Emit(Position,OpCode.cast_const, constType.TypeExpression);
             else
             {
@@ -95,13 +90,11 @@ namespace Prexonite.Compiler.Ast
 
             expr = null;
 
-            var constType = Type as AstConstantTypeExpression;
-            if (constType == null)
+            if (!(Type is AstConstantTypeExpression constType))
                 return false;
 
             //Constant cast
-            var constSubject = Subject as AstConstant;
-            if (constSubject != null)
+            if (Subject is AstConstant constSubject)
                 return _tryOptimizeConstCast(target, constSubject, constType, out expr);
 
             //Redundant cast
@@ -135,8 +128,8 @@ namespace Prexonite.Compiler.Ast
                 //ignore, cast failed. cannot be optimized
                 return false;
             }
-            PValue result;
-            if (constSubject.ToPValue(target).TryConvertTo(target.Loader, type, out result))
+
+            if (constSubject.ToPValue(target).TryConvertTo(target.Loader, type, out var result))
                 return AstConstant.TryCreateConstant(target, Position, result, out expr);
             else
                 return false;
@@ -144,7 +137,7 @@ namespace Prexonite.Compiler.Ast
         
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(Subject.IsPlaceholder() || Type.IsPlaceholder(), 
+            return new(Subject.IsPlaceholder() || Type.IsPlaceholder(), 
                 Subject.IsArgumentSplice() || Type.IsArgumentSplice());
         }
 
@@ -164,8 +157,7 @@ namespace Prexonite.Compiler.Ast
             var argv =
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton());
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            var constType = Type as AstConstantTypeExpression;
-            if (constType != null)
+            if (Type is AstConstantTypeExpression constType)
                 target.EmitConstant(Position, constType.TypeExpression);
             else
                 Type.EmitValueCode(target);

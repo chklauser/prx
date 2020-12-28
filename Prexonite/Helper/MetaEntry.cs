@@ -40,7 +40,7 @@ namespace Prexonite
         /// </summary>
         private readonly string? _text;
 
-        private static readonly MetaEntry[] EmptyList = new MetaEntry[0];
+        private static readonly MetaEntry[] EmptyList = Array.Empty<MetaEntry>();
 
         #endregion
 
@@ -96,17 +96,13 @@ namespace Prexonite
             [DebuggerNonUserCode]
             get
             {
-                switch (EntryType)
+                return EntryType switch
                 {
-                    case Type.Text:
-                        return bool.TryParse(_text, out var sw) && sw;
-                    case Type.Switch:
-                        return _switch;
-                    case Type.List:
-                        return List.Length > 0;
-                    default:
-                        throw new PrexoniteException("Unknown type in meta entry");
-                }
+                    Type.Text => bool.TryParse(_text, out var sw) && sw,
+                    Type.Switch => _switch,
+                    Type.List => List.Length > 0,
+                    _ => throw new PrexoniteException("Unknown type in meta entry")
+                };
             }
         }
 
@@ -199,7 +195,7 @@ namespace Prexonite
         [DebuggerNonUserCode]
         public static implicit operator MetaEntry(bool item)
         {
-            return new MetaEntry(item);
+            return new(item);
         }
 
         [DebuggerNonUserCode]
@@ -461,7 +457,7 @@ namespace Prexonite
         /// <returns>The default meta entry.</returns>
         public static MetaEntry CreateDefaultEntry()
         {
-            return new MetaEntry("");
+            return new("");
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Prexonite.Commands.List
     {
         #region Singleton pattern
 
-        public static FlatMap Instance { get; } = new FlatMap();
+        public static FlatMap Instance { get; } = new();
 
         private FlatMap()
         {

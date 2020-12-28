@@ -31,40 +31,21 @@ namespace Prexonite.Compiler.Build.Internal
 {
     public class FileSource : ISource
     {
-        private readonly FileInfo _file;
-        private readonly Encoding _encoding;
-
         public FileSource(FileInfo file, Encoding encoding)
         {
-            if (ReferenceEquals(file,null))
-                throw new ArgumentNullException(nameof(file));
-            if (ReferenceEquals(encoding,null))
-                throw new ArgumentNullException(nameof(encoding));
-            _file = file;
-            _encoding = encoding;
+            File = file ?? throw new ArgumentNullException(nameof(file));
+            Encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
         }
 
         #region Implementation of ISource
 
-        public bool CanOpen
-        {
-            get { return File.Exists; }
-        }
+        public bool CanOpen => File.Exists;
 
-        public bool IsSingleUse
-        {
-            get { return false; }
-        }
+        public bool IsSingleUse => false;
 
-        public FileInfo File
-        {
-            get { return _file; }
-        }
+        public FileInfo File { get; }
 
-        public Encoding Encoding
-        {
-            get { return _encoding; }
-        }
+        public Encoding Encoding { get; }
 
         public bool TryOpen(out TextReader reader)
         {

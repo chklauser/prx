@@ -49,24 +49,16 @@ namespace Prexonite.Compiler
         internal Parser(IScanner scanner, Loader loader)
             : this(scanner)
         {
-            if (loader == null)
-                throw new ArgumentNullException(nameof(loader));
-            _loader = loader;
+            Loader = loader ?? throw new ArgumentNullException(nameof(loader));
             _createTableOfInstructions();
             Ast = new AstProxy(this);
-            _astFactory = new ParserAstFactory(this);
+            Create = new ParserAstFactory(this);
             _referenceTransformer = new ReferenceTransformer(this);
         }
 
         #region Proxy interface
 
-        private readonly Loader _loader;
-
-        public Loader Loader
-        {
-            [DebuggerStepThrough]
-            get { return _loader; }
-        }
+        public Loader Loader { [DebuggerStepThrough] get; }
 
         /// <summary>
         /// Preflight mode causes the parser to abort at the 
@@ -74,39 +66,36 @@ namespace Prexonite.Compiler
         /// to inspect a file's "header" without fully compiling 
         /// that file.
         /// </summary>
-        public bool PreflightModeEnabled
-        {
-            get { return Loader.Options.PreflightModeEnabled; }
-        }
+        public bool PreflightModeEnabled => Loader.Options.PreflightModeEnabled;
 
         public Application TargetApplication
         {
             [DebuggerStepThrough]
-            get { return _loader.Options.TargetApplication; }
+            get => Loader.Options.TargetApplication;
         }
 
         public Module TargetModule
         {
             [DebuggerStepThrough]
-            get { return TargetApplication.Module; }
+            get => TargetApplication.Module;
         }
 
         public LoaderOptions Options
         {
             [DebuggerStepThrough]
-            get { return _loader.Options; }
+            get => Loader.Options;
         }
 
         public Engine ParentEngine
         {
             [DebuggerStepThrough]
-            get { return _loader.Options.ParentEngine; }
+            get => Loader.Options.ParentEngine;
         }
 
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return target?.CurrentBlock.Symbols ?? _loader.Symbols; }
+            get => target?.CurrentBlock.Symbols ?? Loader.Symbols;
         }
 
         private DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
@@ -164,55 +153,36 @@ namespace Prexonite.Compiler
 
         class DeclarationScopeBuilder
         {
-            [NotNull]
-            private readonly SymbolStoreBuilder _localScopeBuilder;
-
-            private readonly QualifiedId _prefix;
-            [NotNull]
-            // ReSharper disable once MemberHidesStaticFromOuterClass
-            private readonly LocalNamespace _namespace;
-
             public DeclarationScopeBuilder([NotNull]SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, [NotNull]LocalNamespace ns)
             {
-                _localScopeBuilder = localScopeBuilder ?? throw new ArgumentNullException(nameof(localScopeBuilder));
-                _prefix = prefix;
-                _namespace = ns ?? throw new ArgumentNullException(nameof(ns));
+                LocalScopeBuilder = localScopeBuilder ?? throw new ArgumentNullException(nameof(localScopeBuilder));
+                Prefix = prefix;
+                Namespace = ns ?? throw new ArgumentNullException(nameof(ns));
             }
 
             [NotNull]
-            public SymbolStoreBuilder LocalScopeBuilder
-            {
-                get { return _localScopeBuilder; }
-            }
+            public SymbolStoreBuilder LocalScopeBuilder { get; }
 
-            public QualifiedId Prefix
-            {
-                get { return _prefix; }
-            }
+            public QualifiedId Prefix { get; }
 
             [NotNull]
-            public LocalNamespace Namespace
-            {
-                get { return _namespace; }
-            }
+            public LocalNamespace Namespace { get; }
 
             [NotNull]
             public DeclarationScope ToDeclarationScope()
             {
-                return new DeclarationScope(Namespace, Prefix, LocalScopeBuilder.ToSymbolStore());
+                return new(Namespace, Prefix, LocalScopeBuilder.ToSymbolStore());
             }
         }
 
         [CanBeNull]
         private LocalNamespace _tryGetLocalNamespace([NotNull] ISymbolView<Symbol> currentSurrounding, [NotNull] string superNsId, [NotNull] ISourcePosition idPosition)
         {
-            Symbol sym;
             LocalNamespace localNs = null;
-            if (currentSurrounding.TryGet(superNsId, out sym))
+            if (currentSurrounding.TryGet(superNsId, out var sym))
             {
                 var fakeExpr = Create.ExprFor(idPosition, sym);
-                var nsUsage = fakeExpr as AstNamespaceUsage;
-                if (nsUsage == null)
+                if (!(fakeExpr is AstNamespaceUsage nsUsage))
                     Loader.ReportMessage(Message.Error(
                         string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
                         idPosition, MessageClasses.NamespaceExcepted));
@@ -285,11 +255,9 @@ namespace Prexonite.Compiler
         {
             while (qualifiedId.Count > 0)
             {
-                Symbol sym;
-                scope.TryGet(qualifiedId[0], out sym);
+                scope.TryGet(qualifiedId[0], out var sym);
                 var expr = Create.ExprFor(qualifiedIdPosition, sym);
-                var nsUsage = expr as AstNamespaceUsage;
-                if (nsUsage == null)
+                if (!(expr is AstNamespaceUsage nsUsage))
                 {
                     Create.ReportMessage(
                         Message.Error(string.Format(Resources.Parser_NamespaceExpected, qualifiedId[0], sym == null ? "not defined" : sym.ToString()),
@@ -336,7 +304,7 @@ namespace Prexonite.Compiler
             return index;
         }
 
-        private String _assignPhysicalFunctionSlot([CanBeNull] String primaryId)
+        private string _assignPhysicalFunctionSlot([CanBeNull] string primaryId)
         {
             return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("f"));
         }
@@ -347,7 +315,7 @@ namespace Prexonite.Compiler
             return scope == null ? id : scope._LocalNamespace.DerivePhysicalName(id);
         }
 
-        private String _assignPhysicalGlobalVariableSlot([CanBeNull] string primaryId)
+        private string _assignPhysicalGlobalVariableSlot([CanBeNull] string primaryId)
         {
             return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("v"));
         }
@@ -355,7 +323,7 @@ namespace Prexonite.Compiler
         public Loader.FunctionTargetsIterator FunctionTargets
         {
             [DebuggerStepThrough]
-            get { return _loader.FunctionTargets; }
+            get => Loader.FunctionTargets;
         }
 
         public AstProxy Ast { get; }
@@ -370,24 +338,17 @@ namespace Prexonite.Compiler
                 this.outer = outer;
             }
 
-            public AstBlock this[PFunction func] => outer._loader.FunctionTargets[func].Ast;
+            public AstBlock this[PFunction func] => outer.Loader.FunctionTargets[func].Ast;
         }
 
-        private CompilerTarget _target;
-
-        public CompilerTarget target
-        {
-            [DebuggerStepThrough]
-            get { return _target; }
-        }
+        public CompilerTarget target { [DebuggerStepThrough] get; private set; }
 
         protected int LocalState
         {
             get
             {
-                MetaEntry flagSwitch;
                 bool flagLiteralsEnabled;
-                if (target != null && target.Meta.TryGetValue(Shell.FlagLiteralsKey, out flagSwitch))
+                if (target != null && target.Meta.TryGetValue(Shell.FlagLiteralsKey, out var flagSwitch))
                 {
                     flagLiteralsEnabled = flagSwitch.Switch;
                 }
@@ -397,7 +358,7 @@ namespace Prexonite.Compiler
                 }
                 else
                 {
-                    flagLiteralsEnabled = _loader.Options.FlagLiteralsEnabled;
+                    flagLiteralsEnabled = Loader.Options.FlagLiteralsEnabled;
                 }
 
                 return flagLiteralsEnabled ? Lexer.LocalShell : Lexer.Local;
@@ -406,9 +367,7 @@ namespace Prexonite.Compiler
 
         public AstBlock CurrentBlock => target?.CurrentBlock;
 
-        private readonly IAstFactory _astFactory;
-
-        protected IAstFactory Create => _astFactory;
+        protected IAstFactory Create { get; }
 
         #endregion
 
@@ -417,7 +376,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         internal string cache(string toCache)
         {
-            return _loader.CacheString(toCache);
+            return Loader.CacheString(toCache);
         }
 
         #endregion
@@ -439,13 +398,13 @@ namespace Prexonite.Compiler
 
         public static bool TryParseInteger(string s, out int i)
         {
-            return Int32.TryParse(_removeSingleQuotes(s), IntegerStyle, CultureInfo.InvariantCulture,
+            return int.TryParse(_removeSingleQuotes(s), IntegerStyle, CultureInfo.InvariantCulture,
                 out i);
         }
 
         public static bool TryParseReal(string s, out double d)
         {
-            return Double.TryParse(_removeSingleQuotes(s), RealStyle, CultureInfo.InvariantCulture,
+            return double.TryParse(_removeSingleQuotes(s), RealStyle, CultureInfo.InvariantCulture,
                 out d);
         }
 
@@ -454,15 +413,9 @@ namespace Prexonite.Compiler
             return System.Version.TryParse(s, out version);
         }
 
-        public static NumberStyles RealStyle
-        {
-            get { return NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent; }
-        }
+        public static NumberStyles RealStyle => NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent;
 
-        public static NumberStyles IntegerStyle
-        {
-            get { return NumberStyles.None; }
-        }
+        public static NumberStyles IntegerStyle => NumberStyles.None;
 
         [DebuggerStepThrough, Obsolete("Use Loader.ReportMessage instead.")]
         public void SemErr(int line, int col, string message)
@@ -478,16 +431,14 @@ namespace Prexonite.Compiler
 
         private void _pushLexerState(int state)
         {
-            var lex = scanner as Lexer;
-            if (lex == null)
+            if (!(scanner is Lexer lex))
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
             lex.PushState(state);
         }
 
         private void _popLexerState()
         {
-            var lex = scanner as Lexer;
-            if (lex == null)
+            if (!(scanner is Lexer lex))
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
             lex.PopState();
             //Might be id or keyword
@@ -497,8 +448,7 @@ namespace Prexonite.Compiler
 
         private void _inject(Token c)
         {
-            var lex = scanner as Lexer;
-            if (lex == null)
+            if (!(scanner is Lexer lex))
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
 
             if (c == null)
@@ -521,7 +471,7 @@ namespace Prexonite.Compiler
 
         private void _inject(int kind)
         {
-            _inject(kind, System.String.Empty);
+            _inject(kind, string.Empty);
         }
 
         /// <summary>
@@ -560,8 +510,8 @@ namespace Prexonite.Compiler
                 buildBlockTarget.FinishTarget();
                 //Run the build block 
                 var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
-                    new PValue[] { },
-                    new PVariable[] { }, true);
+                    Array.Empty<PValue>(),
+                    Array.Empty<PVariable>(), true);
                 object token = null;
                 try
                 {
@@ -599,19 +549,19 @@ namespace Prexonite.Compiler
             return new AstIndirectCall(position, PCall.Get, n);
         }
 
-        private readonly Stack<object> _scopeStack = new Stack<object>();
+        private readonly Stack<object> _scopeStack = new();
 
         internal void _PushScope(AstScopedBlock block)
         {
             if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
                 throw new PrexoniteException("Cannot push scope of unrelated block.");
             _scopeStack.Push(block);
-            _target.BeginBlock(block);
+            target.BeginBlock(block);
         }
 
         internal void _PushScope(CompilerTarget ct)
         {
-            if (!ReferenceEquals(ct.ParentTarget, _target))
+            if (!ReferenceEquals(ct.ParentTarget, target))
                 throw new PrexoniteException("Cannot push scope of unrelated compiler target.");
 
             // SPECIAL CASE: Initialization code gets a separate environment every time 
@@ -623,22 +573,24 @@ namespace Prexonite.Compiler
 
             // Record scope
             _scopeStack.Push(ct);
-            _target = ct;
+            target = ct;
         }
 
         internal void _PopScope(AstScopedBlock block)
         {
             if (!ReferenceEquals(_scopeStack.Peek(), block))
-                throw new PrexoniteException(string.Format("Tried to pop scope of block {0} but {1} was on top.", block, _scopeStack.Peek()));
+                throw new PrexoniteException(
+                    $"Tried to pop scope of block {block} but {_scopeStack.Peek()} was on top.");
             _scopeStack.Pop();
-            _target.EndBlock();
+            target.EndBlock();
         }
 
         internal void _PopScope(CompilerTarget ct)
         {
             if (!ReferenceEquals(_scopeStack.Peek(), ct))
-                throw new PrexoniteException(string.Format("Tried to pop scope of compiler target {0} but {1} was on top.", ct, _scopeStack.Peek()));
-            _target = ct.ParentTarget;
+                throw new PrexoniteException(
+                    $"Tried to pop scope of compiler target {ct} but {_scopeStack.Peek()} was on top.");
+            target = ct.ParentTarget;
             _scopeStack.Pop();
         }
 
@@ -874,21 +826,18 @@ namespace Prexonite.Compiler
         }
 
         [NotNull]
-        private AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] String id, [NotNull] ISourcePosition position)
+        private AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] string id, [NotNull] ISourcePosition position)
         {
-            Symbol sym;
-            var expr = scope.TryGet(id, out sym)
+            var expr = scope.TryGet(id, out var sym)
                 ? Create.ExprFor(position, sym)
                 : new AstUnresolved(position, id);
-            var complex = expr as AstGetSet;
-            if (complex != null)
+            if (expr is AstGetSet complex)
             {
                 // If we have a namespace usage at hand, record the id used to access it
                 // (namespaces are otherwise anonymous, they have no physical name)
                 // Note: similar code is located in the GetSetExtension parser production
                 // for subnamespaces
-                var nsu = complex as AstNamespaceUsage;
-                if (nsu != null && nsu.ReferencePath == null)
+                if (complex is AstNamespaceUsage {ReferencePath: null} nsu)
                 {
                     nsu.ReferencePath = new QualifiedId(id);
                 }
@@ -1058,8 +1007,7 @@ namespace Prexonite.Compiler
                     {
                         // If the reference transformer indicates that an Expand prefix was eliminated
                         //  during the transformation, we need to convert the invocation into a partial application
-                        var invocationCall = invocation as AstGetSet;
-                        if (invocationCall == null)
+                        if (!(invocation is AstGetSet invocationCall))
                         {
                             Loader.ReportMessage(
                                 Message.Error(Resources.Parser__assembleReference_MacroDefinitionNotLValue, position,
@@ -1085,14 +1033,13 @@ namespace Prexonite.Compiler
         {
             public override Symbol HandleReference(ReferenceSymbol self, Parser argument)
             {
-                EntityRef.Variable.Local local;
-                if(self.Entity.TryGetLocalVariable(out local)
-                    && argument.isOuterVariable(local.Id))
+                if(self.Entity.TryGetLocalVariable(out var local)
+                   && argument.isOuterVariable(local.Id))
                     argument.target.RequireOuterVariable(local.Id);
                 return self;
             }
         }
-        private static readonly EnsureInScopeHandler _ensureInScope = new EnsureInScopeHandler();
+        private static readonly EnsureInScopeHandler _ensureInScope = new();
 
         public void EnsureInScope(Symbol symbol)
         {
@@ -1102,30 +1049,17 @@ namespace Prexonite.Compiler
         private void _fallbackObjectCreation(AstTypeExpr type, out AstExpr expr,
             out ArgumentsProxy args)
         {
-            var typeExpr = type as AstDynamicTypeExpression;
-            Symbol fallbackSymbol;
             if (
                 //is a type expression we understand (Parser currently only generates dynamic type expressions)
                 //  constant type expressions are recognized during optimization
-                typeExpr != null
-                //happens in case of parse failure
-                    && typeExpr.TypeId != null
-                //there is no such thing as a parametrized struct
-                        && typeExpr.Arguments.Count == 0
-                //built-in types take precedence
-                            && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId)
-                //in case neither the built-in type nor the struct constructor exists, 
-                //  stay with built-in types for predictibility
-                                &&
-                                target.Symbols.TryGet(
-                                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
-                                    out fallbackSymbol))
+                type is AstDynamicTypeExpression {TypeId: { }} typeExpr && typeExpr.Arguments.Count == 0 && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId) && target.Symbols.TryGet(
+                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
+                    out var fallbackSymbol))
             {
                 EnsureInScope(fallbackSymbol);
 
                 var e = Create.ExprFor(type.Position,fallbackSymbol);
-                var call = e as AstGetSet;
-                if (call == null)
+                if (!(e is AstGetSet call))
                 {
                     var pos = GetPosition();
                     call = Create.IndirectCall(pos, Create.Null(pos));
@@ -1172,10 +1106,9 @@ namespace Prexonite.Compiler
             rhs.Arguments.ReleaseRightAppend();
             AstIndirectCall indirectCallNode;
             AstReference refNode;
-            EntityRef.Variable dummyVariable;
             if ((indirectCallNode = rhs as AstIndirectCall) != null 
                 && (refNode = indirectCallNode.Subject as AstReference) != null 
-                && refNode.Entity.TryGetVariable(out dummyVariable))
+                && refNode.Entity.TryGetVariable(out _))
                 rhs.Call = PCall.Set;
         }
 
@@ -1194,8 +1127,7 @@ namespace Prexonite.Compiler
 
         public void addOpAlias(AstBlock block, string insBase, string detail)
         {
-            int argc;
-            var alias = getOpAlias(insBase, detail, out argc);
+            var alias = getOpAlias(insBase, detail, out var argc);
             if (alias == null)
             {
                 Loader.ReportMessage(
@@ -1297,10 +1229,10 @@ namespace Prexonite.Compiler
             return false;
         }
 
-        private readonly SymbolTable<OpCode> _instructionNameTable = new SymbolTable<OpCode>(60);
+        private readonly SymbolTable<OpCode> _instructionNameTable = new(60);
 
         private readonly SymbolTable<Tuple<string, int>> _opAliasTable =
-            new SymbolTable<Tuple<string, int>>(32);
+            new(32);
 
         [DebuggerStepThrough]
         private void _createTableOfInstructions()

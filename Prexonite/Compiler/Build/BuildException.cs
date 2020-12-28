@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Runtime.Serialization;
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Build
@@ -38,28 +37,22 @@ namespace Prexonite.Compiler.Build
         //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
         //
 
-        [CanBeNull]
-        private readonly ITargetDescription _relatedTarget;
-
         public BuildException(ITargetDescription relatedTarget)
         {
-            _relatedTarget = relatedTarget;
+            RelatedTarget = relatedTarget;
         }
 
         public BuildException(string message, [CanBeNull] ITargetDescription relatedTarget) : base(message)
         {
-            _relatedTarget = relatedTarget;
+            RelatedTarget = relatedTarget;
         }
 
         public BuildException(string message, [CanBeNull] ITargetDescription relatedTarget, Exception inner) : base(message, inner)
         {
-            _relatedTarget = relatedTarget;
+            RelatedTarget = relatedTarget;
         }
 
         [CanBeNull]
-        public ITargetDescription RelatedTarget
-        {
-            get { return _relatedTarget; }
-        }
+        public ITargetDescription RelatedTarget { get; }
     }
 }

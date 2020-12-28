@@ -33,12 +33,7 @@ namespace Prexonite.Commands.List
     {
         #region Singleton pattern
 
-        private static readonly Except _instance = new Except();
-
-        public static Except Instance
-        {
-            get { return _instance; }
-        }
+        public static Except Instance { get; } = new();
 
         private Except()
         {
@@ -91,10 +86,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #region ICilCompilerAware Members
 

@@ -80,9 +80,9 @@ function main() {
             //Add, many existing
             var cilExts = new List<CilExtensionHint>
                 {
-                    new CilExtensionHint(new List<int> {1, 6, 16, 66}),
-                    new CilExtensionHint(new List<int> {7, 77, 777}),
-                    new CilExtensionHint(new List<int> {9, 88, 777, 6666}),
+                    new(new List<int> {1, 6, 16, 66}),
+                    new(new List<int> {7, 77, 777}),
+                    new(new List<int> {9, 88, 777, 6666}),
                 };
             foreach (var cilExt in cilExts)
                 Compiler.AddCilHint(main, cilExt);
@@ -120,8 +120,7 @@ function main() {
 
         private static MetaEntry[] _getCilHints(IHasMetaTable table, bool keyMustExist)
         {
-            MetaEntry cilHintsEntry;
-            if (table.Meta.TryGetValue(Loader.CilHintsKey, out cilHintsEntry))
+            if (table.Meta.TryGetValue(Loader.CilHintsKey, out var cilHintsEntry))
             {
                 Assert.IsTrue(cilHintsEntry.IsList, "CIL hints entry must be a list.");
                 return cilHintsEntry.List;

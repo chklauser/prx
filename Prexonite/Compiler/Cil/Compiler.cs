@@ -42,7 +42,6 @@ using Prexonite.Compiler.Build;
 using Prexonite.Modular;
 using Prexonite.Types;
 using CilException = Prexonite.PrexoniteException;
-using Module = Prexonite.Modular.Module;
 
 #endregion
 
@@ -243,7 +242,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         private static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
-            new Lazy<AssemblyGenerator>(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
+            new(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static void StoreDebugImplementation(Application app, Engine targetEngine)
         {
@@ -307,8 +306,7 @@ namespace Prexonite.Compiler.Cil
                 throw new ArgumentNullException(nameof(source));
             lock (source)
             {
-                string reason;
-                var qualifies = _check(source, targetEngine, out reason);
+                var qualifies = _check(source, targetEngine, out var reason);
                 _registerCheckResults(source, qualifies, reason);
                 return qualifies;
             }
@@ -341,8 +339,7 @@ namespace Prexonite.Compiler.Cil
             //Check qualifications (whether a function can be compiled by the CIL compiler)
             foreach (var func in functions)
             {
-                string reason;
-                var qualifies = _check(func, targetEngine, out reason);
+                var qualifies = _check(func, targetEngine, out var reason);
                 _registerCheckResults(func, qualifies, reason);
             }
         }
@@ -399,19 +396,16 @@ namespace Prexonite.Compiler.Cil
                 {
                     case OpCode.cmd:
                         //Check for commands that are not compatible.
-                        ICommandInfo cmd;
-                        if (!targetEngine.Commands.TryGetInfo(ins.Id, out cmd))
+                        if (!targetEngine.Commands.TryGetInfo(ins.Id, out var cmd))
                         {
                             reason = "Cannot find information about command " + ins.Id;
                             return false;
                         }
 
-                        ICilExtension extension;
-                        ICilCompilerAware aware;
                         CompileTimeValue[] staticArgv;
 
                         //First allow CIL extensions to kick in, and only if they don't apply, check for CIL awareness.
-                        if (cmd.TryGetCilExtension(out extension)
+                        if (cmd.TryGetCilExtension(out var extension)
                             &&
                             !_rangeInSet(
                                 insOffset -
@@ -425,7 +419,7 @@ namespace Prexonite.Compiler.Cil
                         {
                             cilExtensions.Add(address - staticArgv.Length);
                         }
-                        else if (cmd.TryGetCilCompilerAware(out aware))
+                        else if (cmd.TryGetCilCompilerAware(out var aware))
                         {
                             var flags = aware.CheckQualification(ins);
                             if (flags == CompilationFlags.IsIncompatible)
@@ -438,8 +432,7 @@ namespace Prexonite.Compiler.Cil
                         break;
                     case OpCode.func:
                         //Check for functions that use dynamic features
-                        PFunction func;
-                        if (source.ParentApplication.Functions.TryGetValue(ins.Id, out func) &&
+                        if (source.ParentApplication.Functions.TryGetValue(ins.Id, out var func) &&
                             func.Meta[PFunction.DynamicKey].Switch)
                         {
                             reason = "Uses dynamic function " + ins.Id;
@@ -653,7 +646,7 @@ namespace Prexonite.Compiler.Cil
                             (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
                             entries = entry.List;
                         else
-                            entries = new MetaEntry[] {};
+                            entries = Array.Empty<MetaEntry>();
                         foreach (var t in entries)
                         {
                             var symbolName = t.Text;
@@ -689,7 +682,7 @@ namespace Prexonite.Compiler.Cil
             //Create argc local variable and initialize it, if needed
             if (state.Source.Parameters.Count > 0)
             {
-                state.ArgcLocal = state.Il.DeclareLocal(typeof (Int32));
+                state.ArgcLocal = state.Il.DeclareLocal(typeof (int));
                 state.EmitLoadArg(CompilerState.ParamArgsIndex);
                 state.Il.Emit(OpCodes.Ldlen);
                 state.Il.Emit(OpCodes.Conv_I4);
@@ -727,9 +720,7 @@ namespace Prexonite.Compiler.Cil
                 {
                     if (ins.OpCode == OpCode.ret_value && currentStackSize < 1)
                         throw new PrexoniteInvalidStackException(
-                            String.Format(
-                                "Function {0}: Stack underflow at return instruction {1}.",
-                                state.Source, i));
+                            $"Function {state.Source}: Stack underflow at return instruction {i}.");
                     newValue = currentStackSize + ins.StackSizeDelta;
                 }
                 else
@@ -740,14 +731,13 @@ namespace Prexonite.Compiler.Cil
                 var oldValue = stackSize[i];
                 if (newValue < 0)
                     throw new PrexoniteInvalidStackException(
-                        String.Format("Function {0}: Instruction {1}: {2} causes stack underflow.",
-                            state.Source, i, ins));
+                        $"Function {state.Source}: Instruction {i}: {ins} causes stack underflow.");
 
                 if (oldValue.HasValue)
                 {
                     //Debug.Assert(currentStackSize + delta == oldValue.Value);
                     if (newValue != oldValue)
-                        throw new PrexoniteInvalidStackException(String.Format(
+                        throw new PrexoniteInvalidStackException(string.Format(
                             "Function {3}: Instruction {0} reached with stack size {1} and {2}",
                             i, oldValue.Value, newValue, state.Source));
                 }
@@ -911,9 +901,6 @@ namespace Prexonite.Compiler.Cil
                                     case VariableInitialization.Null:
                                         state.EmitLoadNullAsPValue();
                                         break;
-
-                                    default:
-                                        break;
                                 }
                                 state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                             }
@@ -1050,8 +1037,7 @@ namespace Prexonite.Compiler.Cil
                     }
                     if (cilExtensionMode)
                     {
-                        CompileTimeValue compileTimeValue;
-                        if (CompileTimeValue.TryParse(ins, state.IndexMap, state.Cache, state.Source.ParentApplication.Module.Name, out compileTimeValue))
+                        if (CompileTimeValue.TryParse(ins, state.IndexMap, state.Cache, state.Source.ParentApplication.Module.Name, out var compileTimeValue))
                         {
                             staticArgv.Add(compileTimeValue);
                         }
@@ -1063,10 +1049,9 @@ namespace Prexonite.Compiler.Cil
                             switch (ins.OpCode)
                             {
                                 case OpCode.cmd:
-                                    PCommand command;
                                     ICilExtension extension;
                                     if (
-                                        !state.TargetEngine.Commands.TryGetValue(ins.Id, out command) ||
+                                        !state.TargetEngine.Commands.TryGetValue(ins.Id, out var command) ||
                                             (extension = command as ICilExtension) == null)
                                         goto default;
 
@@ -1084,8 +1069,7 @@ namespace Prexonite.Compiler.Cil
                 }
                 //  * Foreach *
                 {
-                    ForeachHint hint;
-                    if (foreachCasts.TryGetValue(instructionIndex, out hint))
+                    if (foreachCasts.TryGetValue(instructionIndex, out var hint))
                     {
                         //result of (expr).GetEnumerator on the stack
                         //cast IEnumerator
@@ -1283,10 +1267,9 @@ namespace Prexonite.Compiler.Cil
                         //Collect shared variables
                         MetaEntry[] entries;
                         var func = state.Source.ParentApplication.Functions[id];
-                        if (func.Meta.ContainsKey(PFunction.SharedNamesKey))
-                            entries = func.Meta[PFunction.SharedNamesKey].List;
-                        else
-                            entries = new MetaEntry[] {};
+                        entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
+                            ? sharedNamesEntry.List 
+                            : Array.Empty<MetaEntry>();
                         var hasSharedVariables = entries.Length > 0;
                         if (hasSharedVariables)
                         {
@@ -1491,7 +1474,7 @@ namespace Prexonite.Compiler.Cil
                         //   .
                         //   .
                         state.FillArgv(argc);
-                        idx = id.LastIndexOf("::");
+                        idx = id.LastIndexOf("::", StringComparison.Ordinal);
                         if (idx < 0)
                             throw new PrexoniteException
                                 (
@@ -1510,7 +1493,7 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.sset:
                         state.FillArgv(argc);
-                        idx = id.LastIndexOf("::");
+                        idx = id.LastIndexOf("::", StringComparison.Ordinal);
                         if (idx < 0)
                             throw new PrexoniteException
                                 (
@@ -1697,222 +1680,45 @@ namespace Prexonite.Compiler.Cil
         public static readonly MethodInfo CreateNativePValue =
             typeof (CilFunctionContext).GetMethod("CreateNativePValue", new[] {typeof (object)});
 
-        private static readonly MethodInfo _GetBoolPType =
-            typeof (PType).GetProperty("Bool").GetGetMethod();
-
-        private static readonly MethodInfo _GetIntPType =
-            typeof (PType).GetProperty("Int").GetGetMethod();
-
-        private static readonly MethodInfo _GetPTypeListMethod =
-            typeof (PType).GetProperty("List").GetGetMethod();
-
-        private static readonly MethodInfo _getPTypeNull =
-            typeof (PType).GetProperty("Null").GetGetMethod();
-
-        private static readonly MethodInfo _GetRealPType =
-            typeof (PType).GetProperty("Real").GetGetMethod();
-
-        private static readonly MethodInfo _GetStringPType =
-            typeof (PType).GetProperty("String").GetGetMethod();
-
-        private static readonly MethodInfo _GetCharPType =
-            typeof (PType).GetProperty("Char").GetGetMethod();
-
         internal static readonly MethodInfo GetNullPType =
-            typeof (PType).GetProperty("Null").GetGetMethod();
+            typeof(PType).GetProperty(nameof(PType.Null))!.GetGetMethod();
 
         internal static readonly MethodInfo GetObjectProxy =
-            typeof (PType).GetProperty("Object").GetGetMethod();
-
-        private static readonly MethodInfo _getValue =
-            typeof (PVariable).GetProperty("Value").GetGetMethod();
-
-        private static readonly ConstructorInfo _NewPValue =
-            typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
-
-        private static readonly ConstructorInfo _NewPValueListCtor =
-            typeof (List<PValue>).GetConstructor(new[] {typeof (IEnumerable<PValue>)});
-
-        private static readonly ConstructorInfo _newPVariableCtor =
-            typeof (PVariable).GetConstructor(new Type[] {});
-
-        private static readonly MethodInfo _nullCreatePValue =
-            typeof (NullPType).GetMethod("CreatePValue", new Type[] {});
-
-        private static readonly MethodInfo _PVAdditionMethod =
-            typeof (PValue).GetMethod("Addition", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVBitwiseAndMethod =
-            typeof (PValue).GetMethod
-                (
-                    "BitwiseAnd", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVBitwiseOrMethod =
-            typeof (PValue).GetMethod("BitwiseOr", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVDecrementMethod =
-            typeof (PValue).GetMethod("Decrement", new[] {typeof (StackContext)});
-
-        private static readonly MethodInfo _PVDivisionMethod =
-            typeof (PValue).GetMethod("Division", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVDynamicCallMethod =
-            typeof (PValue).GetMethod("DynamicCall");
-
-        private static readonly MethodInfo _PVEqualityMethod =
-            typeof (PValue).GetMethod("Equality", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVExclusiveOrMethod =
-            typeof (PValue).GetMethod
-                (
-                    "ExclusiveOr", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVGreaterThanMethod =
-            typeof (PValue).GetMethod
-                (
-                    "GreaterThan", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVGreaterThanOrEqualMethod =
-            typeof (PValue).GetMethod
-                (
-                    "GreaterThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
-
-        private static readonly MethodInfo _PVIncrementMethod =
-            typeof (PValue).GetMethod("Increment", new[] {typeof (StackContext)});
-
-        private static readonly MethodInfo _PVIndirectCallMethod =
-            typeof (PValue).GetMethod("IndirectCall");
-
-        private static readonly MethodInfo _PVOnesComplementMethod =
-            typeof (PValue).GetMethod("OnesComplement",
-                new[]
-                    {
-                        typeof (
-                            StackContext)
-                    });
-
-        private static readonly MethodInfo _PVInequalityMethod =
-            typeof (PValue).GetMethod
-                (
-                    "Inequality", new[] {typeof (StackContext), typeof (PValue)});
+            typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod();
 
 
-        private static readonly MethodInfo _PVIsNullMethod =
-            typeof (PValue).GetProperty("IsNull").GetGetMethod();
+        private static MethodInfo GetPTypeListMethod { get; } = typeof(PType).GetProperty(nameof(PType.List))!.GetGetMethod();
 
-        private static readonly MethodInfo _PVLessThanMethod =
-            typeof (PValue).GetMethod("LessThan", new[] {typeof (StackContext), typeof (PValue)});
+        private static ConstructorInfo NewPValueListCtor { get; } = typeof (List<PValue>).GetConstructor(new[] {typeof (IEnumerable<PValue>)});
 
-        private static readonly MethodInfo _PVLessThanOrEqualMethod =
-            typeof (PValue).GetMethod
-                (
-                    "LessThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
+        internal static MethodInfo getPTypeNull { get; } = typeof(PType).GetProperty(nameof(PType.Null))!.GetGetMethod();
 
-        private static readonly MethodInfo _PVLogicalNotMethod =
-            typeof (PValue).GetMethod("LogicalNot", new[] {typeof (StackContext)});
+        internal static MethodInfo nullCreatePValue { get; } = typeof(NullPType).GetMethod(nameof(NullPType.CreatePValue), Array.Empty<Type>());
 
-        private static readonly MethodInfo _PVModulusMethod =
-            typeof (PValue).GetMethod("Modulus", new[] {typeof (StackContext), typeof (PValue)});
+        public static ConstructorInfo NewPVariableCtor { get; } = typeof (PVariable).GetConstructor(Array.Empty<Type>());
 
-        private static readonly MethodInfo _PVMultiplyMethod =
-            typeof (PValue).GetMethod("Multiply", new[] {typeof (StackContext), typeof (PValue)});
+        public static MethodInfo GetValueMethod { get; } = typeof(PVariable).GetProperty(nameof(PVariable.Value))!.GetGetMethod();
 
-        private static readonly MethodInfo _PVSubtractionMethod =
-            typeof (PValue).GetMethod
-                (
-                    "Subtraction", new[] {typeof (StackContext), typeof (PValue)});
+        public static MethodInfo SetValueMethod { get; } = typeof(PVariable).GetProperty(nameof(PVariable.Value))!.GetSetMethod();
 
-        private static readonly MethodInfo _PVUnaryNegationMethod =
-            typeof (PValue).GetMethod("UnaryNegation", new[] {typeof (StackContext)});
+        internal static MethodInfo GetIntPType { get; } = typeof(PType).GetProperty(nameof(PType.Int))!.GetGetMethod();
 
-        private static readonly MethodInfo _setValue =
-            typeof (PVariable).GetProperty("Value").GetSetMethod();
+        internal static MethodInfo GetRealPType { get; } = typeof(PType).GetProperty(nameof(PType.Real))!.GetGetMethod();
 
-        private static MethodInfo GetPTypeListMethod
-        {
-            get { return _GetPTypeListMethod; }
-        }
+        internal static MethodInfo GetBoolPType { get; } = typeof(PType).GetProperty(nameof(PType.Bool))!.GetGetMethod();
 
-        private static ConstructorInfo NewPValueListCtor
-        {
-            get { return _NewPValueListCtor; }
-        }
+        internal static MethodInfo GetStringPType { get; } = typeof(PType).GetProperty(nameof(PType.String))!.GetGetMethod();
 
-        internal static MethodInfo getPTypeNull
-        {
-            get { return _getPTypeNull; }
-        }
+        internal static MethodInfo GetCharPType { get; } = typeof(PType).GetProperty(nameof(PType.Char))!.GetGetMethod();
 
-        internal static MethodInfo nullCreatePValue
-        {
-            get { return _nullCreatePValue; }
-        }
+        public static MethodInfo GetObjectPTypeSelector { get; } = typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod();
 
-        public static ConstructorInfo NewPVariableCtor
-        {
-            get { return _newPVariableCtor; }
-        }
-
-        public static MethodInfo GetValueMethod
-        {
-            get { return _getValue; }
-        }
-
-        public static MethodInfo SetValueMethod
-        {
-            get { return _setValue; }
-        }
-
-        internal static MethodInfo GetIntPType
-        {
-            get { return _GetIntPType; }
-        }
-
-        internal static MethodInfo GetRealPType
-        {
-            get { return _GetRealPType; }
-        }
-
-        internal static MethodInfo GetBoolPType
-        {
-            get { return _GetBoolPType; }
-        }
-
-        internal static MethodInfo GetStringPType
-        {
-            get { return _GetStringPType; }
-        }
-
-        internal static MethodInfo GetCharPType
-        {
-            get { return _GetCharPType; }
-        }
-
-        private static readonly MethodInfo _GetObjectPTypeSelector =
-            typeof (PType).GetProperty("Object").GetGetMethod();
-
-        public static MethodInfo GetObjectPTypeSelector
-        {
-            get { return _GetObjectPTypeSelector; }
-        }
-
-        private static readonly MethodInfo _CreatePValueAsObject = typeof (
+        public static MethodInfo CreatePValueAsObject { get; } = typeof (
             PType.PrexoniteObjectTypeProxy).GetMethod
             ("CreatePValue", new[] {typeof (object)});
 
-        public static MethodInfo CreatePValueAsObject
-        {
-            get { return _CreatePValueAsObject; }
-        }
 
-        private static readonly ConstructorInfo _NewPValueKeyValuePair =
-            typeof (PValueKeyValuePair).GetConstructor(new[] {typeof (PValue), typeof (PValue)});
-
-
-        public static ConstructorInfo NewPValueKeyValuePair
-        {
-            get { return _NewPValueKeyValuePair; }
-        }
+        public static ConstructorInfo NewPValueKeyValuePair { get; } = typeof (PValueKeyValuePair).GetConstructor(new[] {typeof (PValue), typeof (PValue)});
 
         //private readonly MethodInfo _CreateNativePValue = typeof(StackContext).GetMethod("CreateNativePValue");
         //private MethodInfo CreateNativePValue
@@ -1920,120 +1726,70 @@ namespace Prexonite.Compiler.Cil
         //    get { return _CreateNativePValue; }
         //}
 
-        internal static ConstructorInfo NewPValue
-        {
-            get { return _NewPValue; }
-        }
+        internal static ConstructorInfo NewPValue { get; } = typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
 
-        public static MethodInfo PVIncrementMethod
-        {
-            get { return _PVIncrementMethod; }
-        }
+        public static MethodInfo PVIncrementMethod { get; } = typeof (PValue).GetMethod("Increment", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVDecrementMethod
-        {
-            get { return _PVDecrementMethod; }
-        }
+        public static MethodInfo PVDecrementMethod { get; } = typeof (PValue).GetMethod("Decrement", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVUnaryNegationMethod
-        {
-            get { return _PVUnaryNegationMethod; }
-        }
+        public static MethodInfo PVUnaryNegationMethod { get; } = typeof (PValue).GetMethod("UnaryNegation", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVLogicalNotMethod
-        {
-            get { return _PVLogicalNotMethod; }
-        }
+        public static MethodInfo PVLogicalNotMethod { get; } = typeof (PValue).GetMethod("LogicalNot", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVAdditionMethod
-        {
-            get { return _PVAdditionMethod; }
-        }
+        public static MethodInfo PVAdditionMethod { get; } = typeof (PValue).GetMethod("Addition", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVSubtractionMethod
-        {
-            get { return _PVSubtractionMethod; }
-        }
+        public static MethodInfo PVSubtractionMethod { get; } = typeof (PValue).GetMethod
+        (
+            "Subtraction", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVMultiplyMethod
-        {
-            get { return _PVMultiplyMethod; }
-        }
+        public static MethodInfo PVMultiplyMethod { get; } = typeof (PValue).GetMethod("Multiply", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVDivisionMethod
-        {
-            get { return _PVDivisionMethod; }
-        }
+        public static MethodInfo PVDivisionMethod { get; } = typeof (PValue).GetMethod("Division", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVModulusMethod
-        {
-            get { return _PVModulusMethod; }
-        }
+        public static MethodInfo PVModulusMethod { get; } = typeof (PValue).GetMethod("Modulus", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVBitwiseAndMethod
-        {
-            get { return _PVBitwiseAndMethod; }
-        }
+        public static MethodInfo PVBitwiseAndMethod { get; } = typeof (PValue).GetMethod
+        (
+            "BitwiseAnd", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVBitwiseOrMethod
-        {
-            get { return _PVBitwiseOrMethod; }
-        }
+        public static MethodInfo PVBitwiseOrMethod { get; } = typeof (PValue).GetMethod("BitwiseOr", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVExclusiveOrMethod
-        {
-            get { return _PVExclusiveOrMethod; }
-        }
+        public static MethodInfo PVExclusiveOrMethod { get; } = typeof (PValue).GetMethod
+        (
+            "ExclusiveOr", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVEqualityMethod
-        {
-            get { return _PVEqualityMethod; }
-        }
+        public static MethodInfo PVEqualityMethod { get; } = typeof (PValue).GetMethod("Equality", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVInequalityMethod
-        {
-            get { return _PVInequalityMethod; }
-        }
+        public static MethodInfo PVInequalityMethod { get; } = typeof (PValue).GetMethod
+        (
+            "Inequality", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVGreaterThanMethod
-        {
-            get { return _PVGreaterThanMethod; }
-        }
+        public static MethodInfo PVGreaterThanMethod { get; } = typeof (PValue).GetMethod
+        (
+            "GreaterThan", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVLessThanMethod
-        {
-            get { return _PVLessThanMethod; }
-        }
+        public static MethodInfo PVLessThanMethod { get; } = typeof (PValue).GetMethod("LessThan", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVGreaterThanOrEqualMethod
-        {
-            get { return _PVGreaterThanOrEqualMethod; }
-        }
+        public static MethodInfo PVGreaterThanOrEqualMethod { get; } = typeof (PValue).GetMethod
+        (
+            "GreaterThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVLessThanOrEqualMethod
-        {
-            get { return _PVLessThanOrEqualMethod; }
-        }
+        public static MethodInfo PVLessThanOrEqualMethod { get; } = typeof (PValue).GetMethod
+        (
+            "LessThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVIsNullMethod
-        {
-            get { return _PVIsNullMethod; }
-        }
+        public static MethodInfo PVIsNullMethod { get; } = typeof(PValue).GetProperty(nameof(PValue.IsNull))!.GetGetMethod();
 
-        public static MethodInfo PVDynamicCallMethod
-        {
-            get { return _PVDynamicCallMethod; }
-        }
+        public static MethodInfo PVDynamicCallMethod { get; } = typeof (PValue).GetMethod("DynamicCall");
 
-        public static MethodInfo PVIndirectCallMethod
-        {
-            get { return _PVIndirectCallMethod; }
-        }
+        public static MethodInfo PVIndirectCallMethod { get; } = typeof (PValue).GetMethod("IndirectCall");
 
-        public static MethodInfo PVOnesComplementMethod
-        {
-            get { return _PVOnesComplementMethod; }
-        }
+        public static MethodInfo PVOnesComplementMethod { get; } = typeof (PValue).GetMethod("OnesComplement",
+            new[]
+            {
+                typeof (
+                    StackContext)
+            });
 
         // ReSharper restore InconsistentNaming
 
@@ -2082,8 +1838,7 @@ namespace Prexonite.Compiler.Cil
             MessageId = "Cil")]
         public static void SetCilHint(IHasMetaTable target, ICilHint newHint)
         {
-            MetaEntry cilHints;
-            if (target.Meta.TryGetValue(Loader.CilHintsKey, out cilHints))
+            if (target.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
             {
                 var hints = cilHints.List;
                 var replaced = false;

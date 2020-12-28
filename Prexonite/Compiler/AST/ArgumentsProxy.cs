@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -37,27 +38,19 @@ namespace Prexonite.Compiler.Ast
     public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         private List<AstExpr> _arguments;
-        private int _rightAppendPosition = -1;
-        private readonly List<AstExpr> _rightAppends = new List<AstExpr>();
+        private readonly List<AstExpr> _rightAppends = new();
 
         internal ArgumentsProxy(List<AstExpr> arguments)
         {
-            if (arguments == null)
-                throw new ArgumentNullException(nameof(arguments));
-            _arguments = arguments;
+            _arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
         }
 
         internal void ResetProxy(List<AstExpr> arguments)
         {
-            if (arguments == null)
-                throw new ArgumentNullException(nameof(arguments));
-            _arguments = arguments;
+            _arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
         }
 
-        public int RightAppendPosition
-        {
-            get { return _rightAppendPosition; }
-        }
+        public int RightAppendPosition { get; private set; } = -1;
 
         public void RightAppend(AstExpr item)
         {
@@ -77,7 +70,7 @@ namespace Prexonite.Compiler.Ast
 
         public void RememberRightAppendPosition()
         {
-            _rightAppendPosition = _arguments.Count;
+            RightAppendPosition = _arguments.Count;
         }
 
         public void ReleaseRightAppend()
@@ -88,7 +81,7 @@ namespace Prexonite.Compiler.Ast
 
         private int _getEffectiveRightAppendPosition()
         {
-            return (_rightAppendPosition < 0) ? _arguments.Count : _rightAppendPosition;
+            return (RightAppendPosition < 0) ? _arguments.Count : RightAppendPosition;
         }
 
         #region IList<AstExpr> Members
@@ -100,7 +93,7 @@ namespace Prexonite.Compiler.Ast
         ///    The index of item if found in the list; otherwise, -1.
         ///</returns>
         ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.IList`1"></see>.</param>
-        public int IndexOf(AstExpr item)
+        public int IndexOf([CanBeNull] AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
@@ -156,13 +149,7 @@ namespace Prexonite.Compiler.Ast
                     "Found null entry at index {0}", index);
                 return value;
             }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                
-                _arguments[index] = value;
-            }
+            set => _arguments[index] = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         #endregion
@@ -257,10 +244,7 @@ namespace Prexonite.Compiler.Ast
         ///<returns>
         ///    The number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</returns>
-        public int Count
-        {
-            get { return _arguments.Count; }
-        }
+        public int Count => _arguments.Count;
 
         ///<summary>
         ///    Gets a value indicating whether the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.
@@ -268,10 +252,7 @@ namespace Prexonite.Compiler.Ast
         ///<returns>
         ///    true if the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only; otherwise, false.
         ///</returns>
-        public bool IsReadOnly
-        {
-            get { return ((ICollection<AstExpr>) _arguments).IsReadOnly; }
-        }
+        public bool IsReadOnly => ((ICollection<AstExpr>) _arguments).IsReadOnly;
 
         #endregion
 
@@ -317,7 +298,7 @@ namespace Prexonite.Compiler.Ast
             _arguments.Clear();
             _arguments.AddRange(proxy._arguments);
 
-            _rightAppendPosition = proxy._rightAppendPosition;
+            RightAppendPosition = proxy.RightAppendPosition;
 
             _rightAppends.Clear();
             _rightAppends.AddRange(proxy._rightAppends);
@@ -334,9 +315,8 @@ namespace Prexonite.Compiler.Ast
                     if (args.Length > 0)
                     {
                         var arg0 = args[0];
-                        var exprs = arg0.Value as IEnumerable<AstExpr>;
                         IEnumerable<PValue> xs;
-                        if (exprs != null)
+                        if (arg0.Value is IEnumerable<AstExpr> exprs)
                         {
                             AddRange(exprs);
                             result = PType.Null;

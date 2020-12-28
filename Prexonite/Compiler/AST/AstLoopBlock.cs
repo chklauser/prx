@@ -33,9 +33,6 @@ namespace Prexonite.Compiler.Ast
         public const string ContinueWord = "continue";
         public const string BreakWord = "break";
         public const string BeginWord = "begin";
-        private readonly string _continueLabel;
-        private readonly string _breakLabel;
-        private readonly string _beginLabel;
 
         [DebuggerStepThrough]
         public AstLoopBlock(string file, int line, int column, AstBlock parentBlock, 
@@ -51,24 +48,15 @@ namespace Prexonite.Compiler.Ast
             : base(p, parentNode, uid: uid, prefix: prefix)
         {
             //See other ctor!
-            _continueLabel = CreateLabel(ContinueWord);
-            _breakLabel = CreateLabel(BreakWord);
-            _beginLabel = CreateLabel(BeginWord);
+            ContinueLabel = CreateLabel(ContinueWord);
+            BreakLabel = CreateLabel(BreakWord);
+            BeginLabel = CreateLabel(BeginWord);
         }
 
-        public string ContinueLabel
-        {
-            get { return _continueLabel; }
-        }
+        public string ContinueLabel { get; }
 
-        public string BreakLabel
-        {
-            get { return _breakLabel; }
-        }
+        public string BreakLabel { get; }
 
-        public string BeginLabel
-        {
-            get { return _beginLabel; }
-        }
+        public string BeginLabel { get; }
     }
 }

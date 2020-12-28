@@ -68,26 +68,26 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(parentEngine));
             if (implementation == null)
                 throw new ArgumentNullException(nameof(implementation));
-            sharedVariables ??= new PVariable[] { };
-            args ??= new PValue[] { };
+            sharedVariables ??= Array.Empty<PVariable>();
+            args ??= Array.Empty<PValue>();
 
             if (
                 !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
                 implementation.ParentApplication.EnsureInitialization(parentEngine);
 
             _parentEngine = parentEngine;
-            _implementation = implementation;
+            Implementation = implementation;
             _bindArguments(args);
             _createLocalVariables();
             ReturnMode = ReturnMode.Exit;
-            if (_implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
+            if (Implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
-                var sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
+                var sharedNames = Implementation.Meta[PFunction.SharedNamesKey].List;
                 //Ensure enough shared variables have been passed
                 if (sharedNames.Length > sharedVariables.Length)
                     throw new ArgumentException
                         (
-                        "The function " + _implementation.Id + " requires " +
+                        "The function " + Implementation.Id + " requires " +
                             sharedNames.Length + " variables to be shared.");
 
 
@@ -97,20 +97,18 @@ namespace Prexonite
                         throw new ArgumentNullException
                             (
                             nameof(sharedVariables),
-                            String.Format(
-                                "The element at index {0} passed in sharedVariables is null for function {1}.",
-                                i, implementation));
+                            $"The element at index {i} passed in sharedVariables is null for function {implementation}.");
 
-                    if (_localVariables.ContainsKey(sharedNames[i]))
+                    if (LocalVariables.ContainsKey(sharedNames[i]))
                         continue; //Arguments are redeclarations, that is not shared 
-                    _localVariables.Add(sharedNames[i], sharedVariables[i]);
+                    LocalVariables.Add(sharedNames[i], sharedVariables[i]);
                 }
             }
 
             //Populate fast variable access array (call by index)
-            _localVariableArray = new PVariable[_localVariables.Count];
-            foreach (var mapping in _implementation.LocalVariableMapping)
-                _localVariableArray[mapping.Value] = _localVariables[mapping.Key];
+            _localVariableArray = new PVariable[LocalVariables.Count];
+            foreach (var mapping in Implementation.LocalVariableMapping)
+                _localVariableArray[mapping.Value] = LocalVariables[mapping.Key];
         }
 
         public FunctionContext(StackContext sctx, PFunction implementation, PValue[] args)
@@ -133,18 +131,18 @@ namespace Prexonite
             //Create args variable
             const string argVId = PFunction.ArgumentListId;
 
-            if (_implementation.Variables.Contains(argVId))
+            if (Implementation.Variables.Contains(argVId))
             {
                 var argsV = new PVariable
                     {
                         Value = _parentEngine.CreateNativePValue(args)
                     };
-                _localVariables.Add(argVId, argsV);
+                LocalVariables.Add(argVId, argsV);
             }
 
             //Create actual parameter variables
             var i = 0;
-            foreach (var arg in _implementation.Parameters)
+            foreach (var arg in Implementation.Parameters)
             {
                 var pvar = new PVariable();
                 if (i < args.Length)
@@ -153,16 +151,16 @@ namespace Prexonite
                 if (pvar.Value == null)
                     pvar.Value = PType.Null.CreatePValue();
 
-                _localVariables.Add(arg, pvar);
+                LocalVariables.Add(arg, pvar);
             }
         }
 
         private void _createLocalVariables()
         {
             //Create local variables
-            foreach (var local in _implementation.Variables)
-                if (!_localVariables.ContainsKey(local)) //Don't override arguments
-                    _localVariables.Add(local, new PVariable());
+            foreach (var local in Implementation.Variables)
+                if (!LocalVariables.ContainsKey(local)) //Don't override arguments
+                    LocalVariables.Add(local, new PVariable());
         }
 
         #endregion
@@ -174,7 +172,7 @@ namespace Prexonite
         public override PValue ReturnValue
         {
             [DebuggerStepThrough]
-            get { return _returnValue ?? NullPType.CreateValue(); }
+            get => _returnValue ?? NullPType.CreateValue();
             //Returns PValue(null) instead of just null.
         }
 
@@ -183,78 +181,53 @@ namespace Prexonite
         public override Engine ParentEngine
         {
             [DebuggerStepThrough]
-            get { return _parentEngine; }
+            get => _parentEngine;
         }
 
-        private readonly PFunction _implementation;
+        public PFunction Implementation { [DebuggerStepThrough] get; }
 
-        public PFunction Implementation
-        {
-            [DebuggerStepThrough]
-            get { return _implementation; }
-        }
+        public override Application ParentApplication => Implementation.ParentApplication;
 
-        public override Application ParentApplication
-        {
-            get { return _implementation.ParentApplication; }
-        }
-
-        public override SymbolCollection ImportedNamespaces
-        {
-            get { return _implementation.ImportedNamespaces; }
-        }
+        public override SymbolCollection ImportedNamespaces => Implementation.ImportedNamespaces;
 
         public override string ToString()
         {
-            return "context of " + _implementation;
+            return "context of " + Implementation;
         }
 
         #endregion
 
         #region Local variables
 
-        private readonly SymbolTable<PVariable> _localVariables = new SymbolTable<PVariable>();
         private readonly PVariable[] _localVariableArray;
 
-        public SymbolTable<PVariable> LocalVariables
-        {
-            [DebuggerStepThrough]
-            get { return _localVariables; }
-        }
+        public SymbolTable<PVariable> LocalVariables { [DebuggerStepThrough] get; } = new();
 
         public void ReplaceLocalVariable(string name, PVariable newVariable)
         {
-            if (String.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
             if (newVariable == null)
                 throw new ArgumentNullException(nameof(newVariable));
 
-            if (_implementation.LocalVariableMapping.ContainsKey(name))
-                _localVariableArray[_implementation.LocalVariableMapping[name]] = newVariable;
-            _localVariables[name] = newVariable;
+            if (Implementation.LocalVariableMapping.ContainsKey(name))
+                _localVariableArray[Implementation.LocalVariableMapping[name]] = newVariable;
+            LocalVariables[name] = newVariable;
         }
 
         #endregion
 
         #region Virtual Machine
 
-        private int _pointer;
+        public int Pointer { [DebuggerStepThrough] get; [DebuggerStepThrough] set; }
 
-        public int Pointer
-        {
-            [DebuggerStepThrough]
-            get { return _pointer; }
-            [DebuggerStepThrough]
-            set { _pointer = value; }
-        }
-
-        private readonly Stack<PValue> _stack = new Stack<PValue>();
+        private readonly Stack<PValue> _stack = new();
 
         [DebuggerStepThrough]
         public void Push(PValue val)
         {
             if(_stack.Count > 2000)
-                throw new PrexoniteInvalidStackException(message: string.Format("Stack-overflow in Prexonite code: {0}", this));
+                throw new PrexoniteInvalidStackException(message: $"Stack-overflow in Prexonite code: {this}");
 
             if (_useVirtualStackInstead)
                 _useVirtualStackInstead = false;
@@ -277,7 +250,7 @@ namespace Prexonite
         public int StackSize
         {
             [DebuggerStepThrough]
-            get { return _stack.Count; }
+            get => _stack.Count;
         }
 
         private void _throwInvalidStackException(int argc)
@@ -341,11 +314,11 @@ namespace Prexonite
             //Indicates whether or not control needs to be returned to the VM.
             //  as long as no operation is performed on the stack, 
             //  
-            var codeBase = _implementation.Code;
+            var codeBase = Implementation.Code;
             var codeLength = codeBase.Count;
             do
             {
-                if (_pointer >= codeLength)
+                if (Pointer >= codeLength)
                 {
                     ReturnMode = ReturnMode.Exit;
                     return false;
@@ -360,7 +333,7 @@ namespace Prexonite
                     _fetchReturnValue = false;
                 }
 
-                var ins = codeBase[_pointer++];
+                var ins = codeBase[Pointer++];
 
 #if Verbose
             Console.Write("/* " + (_pointer-1).ToString(CultureInfo.InvariantCulture).PadLeft(4, '0') + " */ " + ins);
@@ -424,16 +397,12 @@ namespace Prexonite
 
                         //LOAD REFERENCE
                     case OpCode.ldr_loc:
-                        if (_localVariables.ContainsKey(id))
-                            Push(CreateNativePValue(_localVariables[id]));
+                        if (LocalVariables.ContainsKey(id))
+                            Push(CreateNativePValue(LocalVariables[id]));
                         else
                             throw new PrexoniteException
                                 (
-                                string.Format
-                                    (
-                                        "Cannot load reference to local variable {0} in function {1}.",
-                                        id,
-                                        _implementation.Id));
+                                $"Cannot load reference to local variable {id} in function {Implementation.Id}.");
                         break;
                     case OpCode.ldr_loci:
                         Push(CreateNativePValue(_localVariableArray[argc]));
@@ -445,11 +414,7 @@ namespace Prexonite
                         else
                             throw new PrexoniteException
                                 (
-                                string.Format
-                                    (
-                                        "Cannot load reference to global variable {0} in application {1}.",
-                                        id,
-                                        targetApplication.Module.Name));
+                                $"Cannot load reference to global variable {id} in application {targetApplication.Module.Name}.");
                         break;
                     case OpCode.ldr_func:
                         targetApplication = _getTargetApplication(moduleName);
@@ -458,11 +423,7 @@ namespace Prexonite
                         else
                             throw new PrexoniteException
                                 (
-                                string.Format
-                                    (
-                                        "Cannot load reference to function {0} in application {1}.",
-                                        id,
-                                        targetApplication.Module.Name));
+                                $"Cannot load reference to function {id} in application {targetApplication.Module.Name}.");
                         break;
                     case OpCode.ldr_cmd:
                         if (ParentEngine.Commands.Contains(id))
@@ -470,10 +431,7 @@ namespace Prexonite
                         else
                             throw new PrexoniteException
                                 (
-                                string.Format
-                                    (
-                                        "Cannot load reference to command {0}.",
-                                        id));
+                                $"Cannot load reference to command {id}.");
                         break;
                     case OpCode.ldr_app:
                         Push(CreateNativePValue(ParentApplication));
@@ -505,11 +463,11 @@ namespace Prexonite
 
                         //LOAD LOCAL VARIABLE
                     case OpCode.ldloc:
-                        pvar = _localVariables[id];
+                        pvar = LocalVariables[id];
                         if (pvar == null)
                             throw new PrexoniteException
                                 (
-                                "The local variable " + id + " in function " + _implementation.Id +
+                                "The local variable " + id + " in function " + Implementation.Id +
                                     " does not exist.");
 #if Verbose
                     val = pvar.Value;
@@ -520,11 +478,11 @@ namespace Prexonite
 #endif
                         break;
                     case OpCode.stloc:
-                        pvar = _localVariables[id];
+                        pvar = LocalVariables[id];
                         if (pvar == null)
                             throw new PrexoniteException
                                 (
-                                "The local variable " + id + " in function " + _implementation.Id +
+                                "The local variable " + id + " in function " + Implementation.Id +
                                     " does not exist.");
 
                         pvar.Value = Pop();
@@ -596,11 +554,9 @@ namespace Prexonite
                         }
                         if (vars == null)
                         {
-                            MetaEntry[] entries;
-                            if (func.Meta.ContainsKey(PFunction.SharedNamesKey))
-                                entries = func.Meta[PFunction.SharedNamesKey].List;
-                            else
-                                entries = new MetaEntry[] {};
+                            var entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
+                                ? sharedNamesEntry.List 
+                                : Array.Empty<MetaEntry>();
                             vars = new string[entries.Length];
                             for (var i = 0; i < entries.Length; i++)
                                 vars[i] = entries[i].Text;
@@ -608,7 +564,7 @@ namespace Prexonite
                         }
                         var pvars = new PVariable[vars.Length];
                         for (var i = 0; i < pvars.Length; i++)
-                            pvars[i] = _localVariables[vars[i]];
+                            pvars[i] = LocalVariables[vars[i]];
                         if (func.HasCilImplementation)
                         {
                             Push(CreateNativePValue(new CilClosure(func, pvars)));
@@ -624,7 +580,6 @@ namespace Prexonite
 
                         var routine = Pop();
                         var routineobj = routine.Value;
-                        var routinesa = routineobj as IStackAware;
                         if (routineobj == null)
                         {
                             Push(PType.Null.CreatePValue());
@@ -632,7 +587,7 @@ namespace Prexonite
                         else
                         {
                             StackContext corctx;
-                            if (routinesa != null)
+                            if (routineobj is IStackAware routinesa)
                                 corctx = routinesa.CreateStackContext(this, argv);
                             else
                                 corctx = (StackContext)
@@ -662,7 +617,7 @@ namespace Prexonite
 
                         //UNARY OPERATORS
                     case OpCode.incloc:
-                        pvar = _localVariables[id];
+                        pvar = LocalVariables[id];
                         doIncrement:
                         pvar.Value = pvar.Value.Increment(this);
 #if Verbose
@@ -683,7 +638,7 @@ namespace Prexonite
 #endif
                         break;
                     case OpCode.decloc:
-                        pvar = _localVariables[id];
+                        pvar = LocalVariables[id];
                         doDecrement:
                         pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
@@ -872,11 +827,11 @@ namespace Prexonite
 
                     case OpCode.indloc:
                         _fillArgs(argc, out argv);
-                        pvar = _localVariables[id];
+                        pvar = LocalVariables[id];
                         if (pvar == null)
                             throw new PrexoniteException("The local variable " + id +
                                 " resolved to null in function " + Implementation.Id);
-                        left = _localVariables[id].Value;
+                        left = LocalVariables[id].Value;
 
 #if Verbose
                     Console.Write("  " + _toDebug(left) + "(");
@@ -888,8 +843,7 @@ namespace Prexonite
                         //Perform indirect call
                         doIndloc:
                         {
-                            var stackAware = left.Value as IStackAware;
-                            if (stackAware != null && left.Type is ObjectPType)
+                            if (left.Value is IStackAware stackAware && left.Type is ObjectPType)
                             {
                                 _fetchReturnValue = !justEffect;
                                 ParentEngine.Stack.AddLast(stackAware.CreateStackContext(this, argv));
@@ -974,8 +928,7 @@ namespace Prexonite
 #else
                         if (func.HasCilImplementation)
                         {
-                            ReturnMode returnMode;
-                            func.CilImplementation(func, this, argv, null, out left, out returnMode);
+                            func.CilImplementation(func, this, argv, null, out left, out var returnMode);
                             ReturnMode = returnMode;
                             if (!justEffect)
                                 Push(left);
@@ -1015,8 +968,7 @@ namespace Prexonite
                         }
                         if (cmd == null)
                             throw new PrexoniteException("Cannot find command " + id + "!");
-                        var sa = cmd as IStackAware;
-                        if (sa != null)
+                        if (cmd is IStackAware sa)
                         {
                             var cctx = sa.CreateStackContext(this, argv);
                             _fetchReturnValue = !justEffect;
@@ -1048,7 +1000,7 @@ namespace Prexonite
                         #region JUMPS
 
                     case OpCode.jump:
-                        _pointer = argc;
+                        Pointer = argc;
                         break;
                     case OpCode.jump_t:
                         left = Pop();
@@ -1056,7 +1008,7 @@ namespace Prexonite
                             left = left.ConvertTo(this, PType.Bool);
                         if ((bool) left.Value)
                         {
-                            _pointer = argc;
+                            Pointer = argc;
 #if Verbose
                         Console.Write(" -> jump");
 #endif
@@ -1071,7 +1023,7 @@ namespace Prexonite
 #if Verbose
                         Console.Write(" -> jump");
 #endif
-                            _pointer = argc;
+                            Pointer = argc;
                         }
                         break;
 
@@ -1158,7 +1110,7 @@ namespace Prexonite
                         else if (!_isHandlingException.Pop())
                         {
                             //No exception to handle
-                            _pointer = argc;
+                            Pointer = argc;
 #if Verbose
                         Console.Write(" => Skip catch block.");
 #endif
@@ -1228,11 +1180,11 @@ namespace Prexonite
 #if Verbose
             Console.Write("\n");
 #endif
-                if (_pointer >= codeLength)
+                if (Pointer >= codeLength)
                     return false;
             } while (!needToReturn);
 
-            return _pointer < codeLength;
+            return Pointer < codeLength;
         }
 
         private PrexoniteRuntimeException PhysicalFunctionNotFoundException(string id, ModuleName moduleName)
@@ -1258,15 +1210,12 @@ namespace Prexonite
         {
             return
                 new PrexoniteException(
-                    string.Format(
-                        "Cannot find an instance of the module {0} in compound with module {1}.",
-                        moduleName, ParentApplication.Module.Name));
+                    $"Cannot find an instance of the module {moduleName} in compound with module {ParentApplication.Module.Name}.");
         }
 
         private PrexoniteException _globalVariableDoesNotExistException(string id)
         {
-            return new PrexoniteException
-                (
+            return new(
                 "The global variable " + id + " does not exist.");
         }
 
@@ -1274,27 +1223,24 @@ namespace Prexonite
 
         private Exception _currentException;
 
-        private readonly Stack<bool> _isHandlingException = new Stack<bool>();
+        private readonly Stack<bool> _isHandlingException = new();
 
         /// <summary>
         ///     Indicates whether the function context is currently handling an exception or not.
         /// </summary>
         /// <value>True, if the function is currently handling an exception.<br />
         ///     False, if the function runs normally.</value>
-        public bool IsHandlingException
-        {
-            get { return _isHandlingException.Peek(); }
-        }
+        public bool IsHandlingException => _isHandlingException.Peek();
 
         private TryCatchFinallyBlock _currentTry;
 
         public override bool TryHandleException(Exception exc)
         {
             //Pointer has already been incremented.
-            var address = _pointer - 1;
+            var address = Pointer - 1;
 
             var block =
-                TryCatchFinallyBlock.Closest(address, _implementation.TryCatchFinallyBlocks);
+                TryCatchFinallyBlock.Closest(address, Implementation.TryCatchFinallyBlocks);
 
             if (block == null) //No try-catch-finally block handles exceptions at the given address.
                 return false;
@@ -1308,7 +1254,7 @@ namespace Prexonite
 #endif
                 _isHandlingException.Pop();
                 _isHandlingException.Push(true);
-                _pointer = block.BeginFinally;
+                Pointer = block.BeginFinally;
                 _currentTry = block;
             }
             else if (block.HasCatch)
@@ -1316,7 +1262,7 @@ namespace Prexonite
 #if Verbose
                 Console.WriteLine("Exception handled by catch." + block);
 #endif
-                _pointer = block.BeginCatch;
+                Pointer = block.BeginCatch;
             }
             else
             {
@@ -1331,11 +1277,6 @@ namespace Prexonite
         #endregion
 
         #endregion Virtual Machine
-
-        private static string _toDebug(PValue value)
-        {
-            return PValue.ToDebugString(value);
-        }
     }
 
     [Serializable]

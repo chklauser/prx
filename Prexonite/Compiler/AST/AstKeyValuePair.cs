@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -112,7 +111,7 @@ namespace Prexonite.Compiler.Ast
 
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(
+            return new(
                 (Key?.IsPlaceholder() ?? false) || (Value?.IsPlaceholder() ?? false), 
                 (Key?.IsArgumentSplice() ?? false) || (Value?.IsArgumentSplice() ?? false));
         }

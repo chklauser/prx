@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         private ISymbolView<Symbol>? _parent;
         private readonly SymbolTable<Symbol>? _union;
         private SymbolTable<Symbol>? _local;
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim _lock = new();
 
         internal ConflictUnionFallbackStore(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
         {
@@ -114,9 +114,8 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
             }
 
-            var msg = string.Format("There are two incompatible declarations of the symbol {0} in this scope. " +
-                                    "One comes from {1}, the other one from {2}.", first.Name, first.Origin,
-                                    second.Origin);
+            var msg = $"There are two incompatible declarations of the symbol {first.Name} in this scope. " +
+                      $"One comes from {first.Origin}, the other one from {second.Origin}.";
 
             return new KeyValuePair<string, Symbol>(first.Name,
                                                     Symbol.CreateMessage(Message.Create(MessageSeverity.Error,
@@ -222,7 +221,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
             public MergeContext Invert()
             {
-                return new MergeContext(OtherInfo, ThisInfo);
+                return new(OtherInfo, ThisInfo);
             }
 
             public Symbol? Merge()

@@ -27,13 +27,9 @@
 //Prexonite Scanner file.
 
 using System;
-using System.Text;
 using System.IO;
 using Prexonite;
-using Prexonite.Types;
-using Prexonite.Commands;
 using Prexonite.Compiler;
-using Prexonite.Compiler.Ast;
 
 partial
 
@@ -211,16 +207,16 @@ class Lexer: Prexonite.Internal.IScanner {
     1, 0, 1, 108, 2, 0, 2, 107, 2, 108, 1, 123, 6, 0, 0 };
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[242];
-    int offset = 0;
+    var result = new int[242];
+    var offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
   }
 
   private static int zzUnpackAction(ushort[] packed, int offset, int [] result) {
-    int i = 0;       /* index in packed string  */
-    int j = offset;  /* index in unpacked array */
-    int l = packed.Length;
+    var i = 0;       /* index in packed string  */
+    var j = offset;  /* index in unpacked array */
+    var l = packed.Length;
     while (i + 1 < l) {
       int count = packed[i++];
       int value = packed[i++];
@@ -269,18 +265,18 @@ class Lexer: Prexonite.Internal.IScanner {
     0, 0x1894, 0, 0x18fc, 0 };
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[242];
-    int offset = 0;
+    var result = new int[242];
+    var offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
   }
 
   private static int zzUnpackRowMap(ushort[] packed, int offset, int [] result) {
-    int i = 0;  /* index in packed string  */
-    int j = offset;  /* index in unpacked array */
-    int l = packed.Length;
+    var i = 0;  /* index in packed string  */
+    var j = offset;  /* index in unpacked array */
+    var l = packed.Length;
     while (i + 1 < l) {
-      int high = packed[i++] << 16;
+      var high = packed[i++] << 16;
       result[j++] = high | packed[i++];
     }
     return j;
@@ -463,16 +459,16 @@ class Lexer: Prexonite.Internal.IScanner {
     1, 242, 1, 0, 0 };
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[6916];
-    int offset = 0;
+    var result = new int[6916];
+    var offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
   }
 
   private static int zzUnpackTrans(ushort[] packed, int offset, int [] result) {
-    int i = 0;       /* index in packed string  */
-    int j = offset;  /* index in unpacked array */
-    int l = packed.Length;
+    var i = 0;       /* index in packed string  */
+    var j = offset;  /* index in unpacked array */
+    var l = packed.Length;
     while (i + 1 < l) {
       int count = packed[i++];
       int value = packed[i++];
@@ -489,7 +485,7 @@ class Lexer: Prexonite.Internal.IScanner {
   private const int ZZ_PUSHBACK_2BIG = 2;
 
   /* error messages for the codes above */
-  private static readonly String[] ZZ_ERROR_MSG = new string[] {
+  private static readonly string[] ZZ_ERROR_MSG = new string[] {
     "Unkown internal scanner error",
     "Error: could not match input",
     "Error: pushback value was too large"
@@ -516,16 +512,16 @@ class Lexer: Prexonite.Internal.IScanner {
     1, 9, 1, 1, 1, 9, 2, 1, 6, 0, 0 };
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[242];
-    int offset = 0;
+    var result = new int[242];
+    var offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
   }
 
   private static int zzUnpackAttribute(ushort[] packed, int offset, int [] result) {
-    int i = 0;       /* index in packed string  */
-    int j = offset;  /* index in unpacked array */
-    int l = packed.Length;
+    var i = 0;       /* index in packed string  */
+    var j = offset;  /* index in unpacked array */
+    var l = packed.Length;
     while (i + 1 < l) {
       int count = packed[i++];
       int value = packed[i++];
@@ -585,7 +581,7 @@ class Lexer: Prexonite.Internal.IScanner {
 
 
   /** the stack of open (nested) input streams to read from */
-  private System.Collections.Stack zzStreams = new System.Collections.Stack();
+  private System.Collections.Stack zzStreams = new();
 
   /**
    * inner class used to store info for nested
@@ -648,12 +644,12 @@ class Lexer: Prexonite.Internal.IScanner {
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(ushort[] packed) {
-    char [] map = new char[0x10000];
-    int i = 0;  /* index in packed string  */
-    int j = 0;  /* index in unpacked array */
+    var map = new char[0x10000];
+    var i = 0;  /* index in packed string  */
+    var j = 0;  /* index in unpacked array */
     while (i < 1594) {
       int  count = packed[i++];
-      char value = (char)packed[i++];
+      var value = (char)packed[i++];
       do map[j++] = value; while (--count > 0);
     }
     return map;
@@ -686,13 +682,13 @@ class Lexer: Prexonite.Internal.IScanner {
     /* is the buffer big enough? */
     if (zzCurrentPos >= zzBuffer.Length) {
       /* if not: blow it up */
-      char[] newBuffer = new char[zzCurrentPos*2];
+      var newBuffer = new char[zzCurrentPos*2];
       Array.Copy(zzBuffer, 0, newBuffer, 0, zzBuffer.Length);
       zzBuffer = newBuffer;
     }
 
     /* finally: fill the buffer with new input */
-    int numRead = zzReader.Read(zzBuffer, zzEndRead,
+    var numRead = zzReader.Read(zzBuffer, zzEndRead,
                                             zzBuffer.Length-zzEndRead);
 
     if (numRead <= 0) {
@@ -712,8 +708,7 @@ class Lexer: Prexonite.Internal.IScanner {
     zzAtEOF = true;            /* indicate end of file */
     zzEndRead = zzStartRead;  /* invalidate buffer    */
 
-    if (zzReader != null)
-      zzReader.Close();
+    zzReader?.Close();
   }
 
 
@@ -758,7 +753,7 @@ class Lexer: Prexonite.Internal.IScanner {
    */
   public void yypopStream() {
     zzReader.Close();
-    ZzFlexStreamInfo s = (ZzFlexStreamInfo) zzStreams.Pop();
+    var s = (ZzFlexStreamInfo) zzStreams.Pop();
     zzBuffer      = s.zzBuffer;
     zzReader      = s.zzReader;
     zzEndRead     = s.zzEndRead;
@@ -826,8 +821,8 @@ class Lexer: Prexonite.Internal.IScanner {
   /**
    * Returns the text matched by the current regular expression.
    */
-  public String yytext() {
-    return new String( zzBuffer, zzStartRead, zzMarkedPos-zzStartRead );
+  public string yytext() {
+    return new( zzBuffer, zzStartRead, zzMarkedPos-zzStartRead );
   }
 
 
@@ -870,7 +865,7 @@ class Lexer: Prexonite.Internal.IScanner {
    * @param   errorCode  the code of the errormessage to display
    */
   private void zzScanError(int errorCode) {
-    String message;
+    string message;
     try {
       message = ZZ_ERROR_MSG[errorCode];
     }
@@ -906,24 +901,24 @@ class Lexer: Prexonite.Internal.IScanner {
    * @exception   System.IO.IOException  if any I/O-Error occurs
    */
   public Token Scan() {
-    int zzInput = 0;
+    var zzInput = 0;
     int zzAction;
 
-    int [] zzTransL = ZZ_TRANS;
-    int [] zzRowMapL = ZZ_ROWMAP;
-    int [] zzAttrL = ZZ_ATTRIBUTE;
+    var zzTransL = ZZ_TRANS;
+    var zzRowMapL = ZZ_ROWMAP;
+    var zzAttrL = ZZ_ATTRIBUTE;
 
     while (true) {
       // cached fields:
       int zzCurrentPosL;
-      int zzMarkedPosL = zzMarkedPos;
-      int zzEndReadL = zzEndRead;
-      char [] zzBufferL = zzBuffer;
-      char [] zzCMapL = ZZ_CMAP;
+      var zzMarkedPosL = zzMarkedPos;
+      var zzEndReadL = zzEndRead;
+      var zzBufferL = zzBuffer;
+      var zzCMapL = ZZ_CMAP;
 
       yychar+= zzMarkedPosL-zzStartRead;
 
-      bool zzR = false;
+      var zzR = false;
       for (zzCurrentPosL = zzStartRead; zzCurrentPosL < zzMarkedPosL;
                                                              zzCurrentPosL++) {
         switch (zzBufferL[zzCurrentPosL]) {
@@ -964,7 +959,7 @@ class Lexer: Prexonite.Internal.IScanner {
         else if (zzAtEOF)
           zzPeek = false;
         else {
-          bool eof = zzRefill();
+          var eof = zzRefill();
           zzMarkedPosL = zzMarkedPos;
           zzBufferL = zzBuffer;
           if (eof) 
@@ -997,7 +992,7 @@ class Lexer: Prexonite.Internal.IScanner {
             // store back cached positions
             zzCurrentPos  = zzCurrentPosL;
             zzMarkedPos   = zzMarkedPosL;
-            bool eof = zzRefill();
+            var eof = zzRefill();
             // get translated positions and possibly new buffer
             zzCurrentPosL  = zzCurrentPos;
             zzMarkedPosL   = zzMarkedPos;
@@ -1011,11 +1006,11 @@ class Lexer: Prexonite.Internal.IScanner {
               zzInput = zzBufferL[zzCurrentPosL++];
             }
           }
-          int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
+          var zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
           if (zzNext == -1) goto zzForAction;
           zzState = zzNext;
 
-          int zzAttributes = zzAttrL[zzState];
+          var zzAttributes = zzAttrL[zzState];
           if ( (zzAttributes & 1) == 1 ) {
             zzAction = zzState;
             zzMarkedPosL = zzCurrentPosL;
@@ -1032,7 +1027,7 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 338 "Prexonite.lex"
-                        string fragment = buffer.ToString();
+                        var fragment = buffer.ToString();
                         buffer.Length = 0;
                         PushState(_surroundingLocalState);
                         return multiple(
@@ -1082,7 +1077,7 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 292 "Prexonite.lex"
-                        string fragment = buffer.ToString();
+                        var fragment = buffer.ToString();
                         buffer.Length = 0;
                         PushState(_surroundingLocalState);
                         return multiple(
@@ -1159,7 +1154,7 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 353 "Prexonite.lex"
-                  throw new PrexoniteException(System.String.Format("Invalid character \"{0}\" detected on line {1} in {2}.", yytext(), yyline, File)); 
+                  throw new PrexoniteException($"Invalid character \"{yytext()}\" detected on line {yyline} in {File}."); 
 #line default
           }
           break;
@@ -1247,7 +1242,7 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 146 "Prexonite.lex"
-                             string ns = yytext();
+                             var ns = yytext();
 								return tok(Parser._ns, ns.Substring(1,ns.Length-3)); 
 #line default
           }
@@ -1409,7 +1404,7 @@ class Lexer: Prexonite.Internal.IScanner {
           {
 #line 115 "Prexonite.lex"
                                                             
-                                                                String flag = yytext();
+                                                                var flag = yytext();
                                                                 if(flag.EndsWith("=")) {
                                                                     return multiple(
                                                                         tok(Parser._string, flag),
@@ -1451,9 +1446,8 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 279 "Prexonite.lex"
-                        string clipped;
-                        string id = _pruneSmartStringIdentifier(yytext(), out clipped);
-                        string fragment = buffer.ToString();
+            var id = _pruneSmartStringIdentifier(yytext(), out var clipped);
+                        var fragment = buffer.ToString();
                         buffer.Length = 0;
                         return multiple(
                             tok(Parser._string, fragment),
@@ -1618,7 +1612,7 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 149 "Prexonite.lex"
-                      string ns = yytext();
+                      var ns = yytext();
                          return tok(Parser._ns, ns.Substring(0, ns.Length-2)); 
 #line default
           }
@@ -1667,8 +1661,8 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 220 "Prexonite.lex"
-                              Token dot = tok(Parser._dot);
-                              string memberId = yytext();
+                              var dot = tok(Parser._dot);
+                              var memberId = yytext();
                               if(memberId.Length > 1)
                                 return multiple(dot,tok(Parser._id,memberId.Substring(memberId.StartsWith(".$") ? 2 : 1)));
                               else
@@ -2054,9 +2048,8 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 325 "Prexonite.lex"
-                        string clipped;
-                        string id = _pruneSmartStringIdentifier(yytext(), out clipped);
-                        string fragment = buffer.ToString();
+            var id = _pruneSmartStringIdentifier(yytext(), out var clipped);
+                        var fragment = buffer.ToString();
                         buffer.Length = 0;
                         return multiple(
                             tok(Parser._string, fragment),

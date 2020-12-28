@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -36,7 +35,7 @@ namespace Prexonite.Compiler.Ast
                                   IAstHasExpressions,
                                   IAstPartiallyApplicable
     {
-        public List<AstExpr> Elements = new List<AstExpr>();
+        public List<AstExpr> Elements = new();
 
         internal AstListLiteral(Parser p)
             : base(p)
@@ -50,10 +49,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
-        {
-            get { return Elements.ToArray(); }
-        }
+        public AstExpr[] Expressions => Elements.ToArray();
 
         #endregion
 
@@ -98,7 +94,7 @@ namespace Prexonite.Compiler.Ast
 
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(
+            return new(
                 Elements.Any(x => x.IsPlaceholder()), 
                 Elements.Any(x => x.IsArgumentSplice()));
         }
@@ -121,7 +117,7 @@ namespace Prexonite.Compiler.Ast
             if (i < Elements.Count)
             {
                 sb.AppendFormat(", ... «{0}» ..., {1} ]", Elements.Count - limit,
-                    Elements[Elements.Count - 1]);
+                    Elements[^1]);
             }
             else
             {

@@ -32,17 +32,12 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstExpand : AstGetSetImplBase
     {
-        private readonly EntityRef _entity;
-
         public AstExpand(ISourcePosition position, EntityRef entity, PCall call) : base(position, call)
         {
-            _entity = entity;
+            Entity = entity;
         }
 
-        public EntityRef Entity
-        {
-            get { return _entity; }
-        }
+        public EntityRef Entity { get; }
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
@@ -95,9 +90,8 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            return string.Format("expand {0}: {1}({2})",
-                (Enum.GetName(typeof(PCall), Call) ?? "-").ToLowerInvariant(),
-                Entity, ArgumentsToString());
+            return
+                $"expand {(Enum.GetName(typeof(PCall), Call) ?? "-").ToLowerInvariant()}: {Entity}({ArgumentsToString()})";
         }
     }
 }

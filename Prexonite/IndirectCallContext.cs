@@ -56,65 +56,35 @@ namespace Prexonite
             IIndirectCall callable,
             PValue[] args)
         {
-            if (parentEngine == null)
-                throw new ArgumentNullException(nameof(parentEngine));
-            if (parentApplication == null)
-                throw new ArgumentNullException(nameof(parentApplication));
             if (importedNamespaces == null)
                 throw new ArgumentNullException(nameof(importedNamespaces));
-            if (callable == null)
-                throw new ArgumentNullException(nameof(callable));
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
 
-            _engine = parentEngine;
-            _application = parentApplication;
-            _importedNamespaces = (importedNamespaces as SymbolCollection) ??
+            ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
+            ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+            ImportedNamespaces = (importedNamespaces as SymbolCollection) ??
                 new SymbolCollection(importedNamespaces);
-            _callable = callable;
-            _arguments = args;
+            Callable = callable ?? throw new ArgumentNullException(nameof(callable));
+            Arguments = args ?? throw new ArgumentNullException(nameof(args));
             _originalStackContext = originalSctx;
         }
 
-        public IIndirectCall Callable
-        {
-            get { return _callable; }
-        }
+        public IIndirectCall Callable { get; }
 
-        private readonly IIndirectCall _callable;
+        public PValue[] Arguments { get; }
 
-        public PValue[] Arguments
-        {
-            get { return _arguments; }
-        }
-
-        private readonly PValue[] _arguments;
-
-        private readonly Engine _engine;
-        private readonly Application _application;
-        private readonly SymbolCollection _importedNamespaces;
         private PValue _returnValue = PType.Null;
 
         /// <summary>
         ///     Represents the engine this context is part of.
         /// </summary>
-        public override Engine ParentEngine
-        {
-            get { return _engine; }
-        }
+        public override Engine ParentEngine { get; }
 
         /// <summary>
         ///     The parent application.
         /// </summary>
-        public override Application ParentApplication
-        {
-            get { return _application; }
-        }
+        public override Application ParentApplication { get; }
 
-        public override SymbolCollection ImportedNamespaces
-        {
-            get { return _importedNamespaces; }
-        }
+        public override SymbolCollection ImportedNamespaces { get; }
 
         /// <summary>
         ///     Indicates whether the context still has code/work to do.
@@ -125,7 +95,7 @@ namespace Prexonite
             //Remove this context if possible (IndirectCallContext should be transparent)
             var sctx = _originalStackContext ?? this;
 
-            _returnValue = _callable.IndirectCall(sctx, _arguments);
+            _returnValue = Callable.IndirectCall(sctx, Arguments);
             return false;
         }
 
@@ -144,9 +114,6 @@ namespace Prexonite
         ///     Just providing a value here does not mean that it gets consumed by the caller.
         ///     If the context does not provide a return value, this property should return null (not NullPType).
         /// </summary>
-        public override PValue ReturnValue
-        {
-            get { return _returnValue ?? PType.Null; }
-        }
+        public override PValue ReturnValue => _returnValue ?? PType.Null;
     }
 }

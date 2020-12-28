@@ -33,23 +33,20 @@ namespace Prexonite.Compiler.Symbolic
     {
         public override string ToString()
         {
-            return string.Format("expand {0}", InnerSymbol);
+            return $"expand {InnerSymbol}";
         }
 
         [NotNull]
         internal static ExpandSymbol _Create([NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
         {
-            return new ExpandSymbol(position ?? inner.Position, inner);
+            return new(position ?? inner.Position, inner);
         }
 
         private ExpandSymbol([NotNull] ISourcePosition position, [NotNull] Symbol inner) : base(position, inner)
         {
         }
 
-        protected override int HashCodeXorFactor
-        {
-            get { return 588697; }
-        }
+        protected override int HashCodeXorFactor => 588697;
 
         public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
         {
@@ -71,7 +68,7 @@ namespace Prexonite.Compiler.Symbolic
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return other is ExpandSymbol && Equals((ExpandSymbol)other);
+            return other is ExpandSymbol otherExpand && Equals(otherExpand);
         }
     }
 }

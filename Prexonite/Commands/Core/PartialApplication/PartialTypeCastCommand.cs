@@ -31,16 +31,11 @@ namespace Prexonite.Commands.Core.PartialApplication
 {
     public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
     {
-        private static readonly PartialTypecastCommand _instance = new PartialTypecastCommand();
-
         private PartialTypecastCommand()
         {
         }
 
-        public static PartialTypecastCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static PartialTypecastCommand Instance { get; } = new();
 
         private ConstructorInfo _partialTypeCastCtor;
 
@@ -52,10 +47,8 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
         {
-            return _partialTypeCastCtor ??
-                (_partialTypeCastCtor =
-                    typeof (PartialTypecast).GetConstructor(new[]
-                        {typeof (int[]), typeof (PValue[]), typeof (PType)}));
+            return _partialTypeCastCtor ??= typeof (PartialTypecast).GetConstructor(new[]
+                {typeof (int[]), typeof (PValue[]), typeof (PType)});
         }
 
         protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
@@ -63,9 +56,6 @@ namespace Prexonite.Commands.Core.PartialApplication
             return typeof (PartialTypecast);
         }
 
-        protected override string PartialApplicationKind
-        {
-            get { return "Partial type cast"; }
-        }
+        protected override string PartialApplicationKind => "Partial type cast";
     }
 }

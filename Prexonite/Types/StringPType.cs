@@ -33,7 +33,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Prexonite.Commands;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -48,17 +47,11 @@ namespace Prexonite.Types
     {
         #region Singleton Pattern
 
-        private static readonly StringPType instance;
-
-        public static StringPType Instance
-        {
-            [DebuggerStepThrough]
-            get { return instance; }
-        }
+        public static StringPType Instance { [DebuggerStepThrough] get; }
 
         static StringPType()
         {
-            instance = new StringPType();
+            Instance = new StringPType();
         }
 
         [DebuggerStepThrough]
@@ -310,7 +303,7 @@ namespace Prexonite.Types
         #region IdOrLiteral
 
         private static readonly Regex idLetters =
-            new Regex(
+            new(
                 @"^[\w\\][\w\d\\']{0,}$", RegexOptions.Compiled);
 
         private const int anArbitraryIdLengthLimit = 255;
@@ -335,8 +328,7 @@ namespace Prexonite.Types
 
         public static string ToIdLiteral(string physicalId)
         {
-            string literal;
-            if (OperatorCommands.TryGetLiteral(physicalId, out literal))
+            if (OperatorCommands.TryGetLiteral(physicalId, out var literal))
                 return literal;
             else
                 return physicalId;
@@ -418,12 +410,11 @@ namespace Prexonite.Types
 
         public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
-            PValue arg;
             result = null;
             if (args.Length <= 0)
                 result = String.CreatePValue("");
-            else if (args[0].TryConvertTo(sctx, String, out arg))
-                result = String.CreatePValue(arg.Value as String);
+            else if (args[0].TryConvertTo(sctx, String, out var arg))
+                result = String.CreatePValue(arg.Value as string);
             else
                 return false;
             return true;
@@ -445,8 +436,7 @@ namespace Prexonite.Types
                     if (args.Length < 1)
                         return false;
                     var nArg = args[0];
-                    PValue rArg;
-                    if (!nArg.TryConvertTo(sctx, Int, out rArg))
+                    if (!nArg.TryConvertTo(sctx, Int, out var rArg))
                         return false;
                     result = str[(int) rArg.Value].ToString();
                     break;
@@ -530,8 +520,7 @@ namespace Prexonite.Types
                         return true;
                     }
 
-                    PValue list;
-                    if (!args[0].TryConvertTo(sctx, List, true, out list))
+                    if (!args[0].TryConvertTo(sctx, List, true, out var list))
                         throw new PrexoniteException(
                             "String.Split requires a list as its first argument.");
 
@@ -587,7 +576,6 @@ namespace Prexonite.Types
             foreach (var arg in args)
             {
                 PValue v;
-                char c;
                 if (sst != null)
                 {
                     if (! arg.TryConvertTo(sctx, String, useExplicit, out v))
@@ -597,7 +585,7 @@ namespace Prexonite.Types
                     }
                     sst.Add((string) v.Value);
                 }
-                else if (arg.TryConvertTo(sctx, out c))
+                else if (arg.TryConvertTo(sctx, out char c))
                 {
                     sch.Add(c);
                 }
@@ -651,7 +639,7 @@ namespace Prexonite.Types
                 var format = args[0].CallToString(sctx);
                 for (var i = 0; i < oargs.Length; i++)
                     oargs[i] = args[i + 1].CallToString(sctx);
-                result = System.String.Format(format, oargs);
+                result = string.Format(format, oargs);
                 return true;
             }
             return Object[typeof (string)].TryStaticCall(sctx, args, call, id, out result);
@@ -662,16 +650,14 @@ namespace Prexonite.Types
         {
             result = null;
             var str = (string) subject.Value;
-            PFunction func;
-            PCommand cmd;
             var app = sctx.ParentApplication;
             var eng = sctx.ParentEngine;
-            if (app.Functions.TryGetValue(str, out func))
+            if (app.Functions.TryGetValue(str, out var func))
             {
                 var fctx = func.CreateFunctionContext(sctx, args);
                 result = eng.Process(fctx);
             }
-            else if (eng.Commands.TryGetValue(str, out cmd))
+            else if (eng.Commands.TryGetValue(str, out var cmd))
             {
                 result = cmd.Run(sctx, args);
             }
@@ -681,19 +667,17 @@ namespace Prexonite.Types
 
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
-            var sop = operand.Value as String;
-            if (sop == null)
+            if (!(operand.Value is string sop))
                 throw new PrexoniteException(operand + " cannot be supplied to ~String.Increment");
             result = sop.Length == 0
                 ? String.CreatePValue("")
-                : String.CreatePValue(System.String.Concat(sop, sop));
+                : String.CreatePValue(string.Concat(sop, sop));
             return true;
         }
 
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
-            var sop = operand.Value as String;
-            if (sop == null)
+            if (!(operand.Value is string sop))
                 throw new PrexoniteException(operand + " cannot be supplied to ~String.Decrement");
             result = sop.Length == 0
                 ? String.CreatePValue("")
@@ -714,7 +698,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            String left;
+            string left;
             int right;
             if (leftOperand.Type is StringPType && rightOperand.Type is IntPType)
             {

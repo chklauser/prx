@@ -74,15 +74,9 @@ namespace Prexonite.Compiler.Build.Internal
 
         #region Implementation of ISource
 
-        public bool CanOpen
-        {
-            get { return _reader != null; }
-        }
+        public bool CanOpen => _reader != null;
 
-        public bool IsSingleUse
-        {
-            get { return true; }
-        }
+        public bool IsSingleUse => true;
 
         #endregion
     }

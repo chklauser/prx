@@ -40,13 +40,8 @@ namespace Prexonite
     public class SymbolTable<TValue> : ISymbolTable<TValue>
     {
         private readonly Dictionary<string, TValue> _table;
-        private TValue _defaultValue;
 
-        public TValue DefaultValue
-        {
-            get { return _defaultValue; }
-            set { _defaultValue = value; }
-        }
+        public TValue DefaultValue { get; set; }
 
         public SymbolTable()
         {
@@ -62,8 +57,7 @@ namespace Prexonite
 
         public virtual void Add(string key, TValue value)
         {
-            TValue existingValue;
-            if(_table.TryGetValue(key, out existingValue) && Equals(existingValue,value))
+            if(_table.TryGetValue(key, out var existingValue) && Equals(existingValue,value))
                 return;
 
             _table.Add(key, value);
@@ -74,10 +68,7 @@ namespace Prexonite
             return _table.ContainsKey(key);
         }
 
-        public ICollection<string> Keys
-        {
-            get { return _table.Keys; }
-        }
+        public ICollection<string> Keys => _table.Keys;
 
         public bool Remove(string key)
         {
@@ -105,14 +96,11 @@ namespace Prexonite
             _table.AddRange(entries);
         }
 
-        public ICollection<TValue> Values
-        {
-            get { return _table.Values; }
-        }
+        public ICollection<TValue> Values => _table.Values;
 
         public virtual TValue this[string key]
         {
-            get { return GetDefault(key, _defaultValue); }
+            get => GetDefault(key, DefaultValue);
             set
             {
                 if (!_table.ContainsKey(key))
@@ -146,15 +134,9 @@ namespace Prexonite
             ((ICollection<KeyValuePair<string, TValue>>) _table).CopyTo(array, arrayIndex);
         }
 
-        public int Count
-        {
-            get { return _table.Count; }
-        }
+        public int Count => _table.Count;
 
-        public bool IsReadOnly
-        {
-            get { return ((ICollection<KeyValuePair<string, TValue>>) _table).IsReadOnly; }
-        }
+        public bool IsReadOnly => ((ICollection<KeyValuePair<string, TValue>>) _table).IsReadOnly;
 
         public bool Remove(KeyValuePair<string, TValue> item)
         {

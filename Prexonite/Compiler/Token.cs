@@ -53,7 +53,7 @@ namespace Prexonite.Compiler
         public string ToString(bool includePosition)
         {
             return
-                String.Format(
+                string.Format(
                     "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
                     val,
                     Enum.GetName(typeof (Parser.Terminals), (Parser.Terminals) kind),

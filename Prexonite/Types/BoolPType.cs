@@ -42,15 +42,10 @@ namespace Prexonite.Types
 
         static BoolPType()
         {
-            instance = new BoolPType();
+            Instance = new BoolPType();
         }
 
-        private static readonly BoolPType instance;
-
-        public static BoolPType Instance
-        {
-            get { return instance; }
-        }
+        public static BoolPType Instance { get; }
 
         #endregion
 
@@ -58,7 +53,7 @@ namespace Prexonite.Types
 
         public static PValue CreateValue(bool value)
         {
-            return new PValue(value, Bool);
+            return new(value, Bool);
         }
 
         public static PValue CreateValue(object value)
@@ -151,8 +146,7 @@ namespace Prexonite.Types
                 result = (bool) subject.Value;
             else if (useExplicit && subject.Type is StringPType)
             {
-                bool parsed;
-                if (bool.TryParse(subject.Value as string, out parsed))
+                if (bool.TryParse(subject.Value as string, out var parsed))
                     result = parsed;
                 else
                     result = false;
@@ -189,8 +183,7 @@ namespace Prexonite.Types
                     }
                     break;
                 case BuiltIn.Object:
-                    PValue asBool;
-                    if (operand.TryConvertTo(sctx, Bool, out asBool))
+                    if (operand.TryConvertTo(sctx, Bool, out var asBool))
                     {
                         value = (bool) asBool.Value;
                         return true;
@@ -208,10 +201,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool left,
-                 right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) &&
-                _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out var left) &&
+                _tryConvertToBool(sctx, rightOperand, out var right))
                 result = left & right;
             return result != null;
         }
@@ -220,10 +211,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool left,
-                 right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) &&
-                _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out var left) &&
+                _tryConvertToBool(sctx, rightOperand, out var right))
                 result = left | right;
             return result != null;
         }
@@ -232,10 +221,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool left,
-                 right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) &&
-                _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out var left) &&
+                _tryConvertToBool(sctx, rightOperand, out var right))
                 result = left == right;
             return result != null;
         }
@@ -244,10 +231,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool left,
-                 right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) &&
-                _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out var left) &&
+                _tryConvertToBool(sctx, rightOperand, out var right))
                 result = left != right;
             return result != null;
         }
@@ -256,10 +241,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool left,
-                 right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) &&
-                _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out var left) &&
+                _tryConvertToBool(sctx, rightOperand, out var right))
                 result = left ^ right;
             return result != null;
         }

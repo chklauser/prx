@@ -42,10 +42,10 @@ namespace Prexonite
 
         public static CombinedSymbolProxy<T> CreateHierarchy(params ISymbolTable<T>[] tableHierarchy)
         {
-            return new CombinedSymbolProxy<T>(tableHierarchy);
+            return new(tableHierarchy);
         }
 
         private readonly ISymbolTable<T>[] _tables;
-        protected ISymbolTable<T> TargetTable { get { return _tables[_tables.Length - 1]; } }
+        protected ISymbolTable<T> TargetTable => _tables[^1];
     }
 }

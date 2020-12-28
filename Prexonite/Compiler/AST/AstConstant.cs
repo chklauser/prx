@@ -135,7 +135,7 @@ namespace Prexonite.Compiler.Ast
             string str;
             if (Constant != null)
                 if ((str = Constant as string) != null)
-                    return String.Concat("\"", StringPType.Escape(str), "\"");
+                    return string.Concat("\"", StringPType.Escape(str), "\"");
                 else
                     return Constant.ToString();
             else return "-null-";

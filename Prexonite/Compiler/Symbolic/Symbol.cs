@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Symbolic
 {
     public abstract class Symbol : IEquatable<Symbol>, IObject
     {
-        public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Symbolic");
+        public static readonly TraceSource Trace = new("Prexonite.Compiler.Symbolic");
 
         internal Symbol()
         {
@@ -215,30 +215,17 @@ namespace Prexonite.Compiler.Symbolic
 
     public abstract class WrappingSymbol : Symbol
     {
-        [NotNull]
-        private readonly Symbol _innerSymbol;
-
-        [NotNull]
-        private readonly ISourcePosition _position;
-
-        public override ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public override ISourcePosition Position { get; }
 
         [DebuggerStepThrough]
         internal WrappingSymbol([NotNull] ISourcePosition position, [NotNull] Symbol innerSymbol)
         {
-            _innerSymbol = innerSymbol;
-            _position = position;
+            InnerSymbol = innerSymbol;
+            Position = position;
         }
 
         [NotNull]
-        public Symbol InnerSymbol
-        {
-            [DebuggerStepThrough]
-            get { return _innerSymbol; }
-        }
+        public Symbol InnerSymbol { [DebuggerStepThrough] get; }
 
         #region Equality members
 
@@ -246,12 +233,12 @@ namespace Prexonite.Compiler.Symbolic
         {
             return other != null 
                 && other.GetType() == GetType() 
-                && _innerSymbol.Equals(other._innerSymbol);
+                && InnerSymbol.Equals(other.InnerSymbol);
         }
 
         public override int GetHashCode()
         {
-            return HashCodeXorFactor ^_innerSymbol.GetHashCode();
+            return HashCodeXorFactor ^InnerSymbol.GetHashCode();
         }
 
         protected abstract int HashCodeXorFactor { get; }

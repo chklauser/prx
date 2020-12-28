@@ -31,16 +31,11 @@ namespace Prexonite.Commands.Core.PartialApplication
 {
     public class PartialTypeCheckCommand : PartialWithPTypeCommandBase<PTypeInfo>
     {
-        private static readonly PartialTypeCheckCommand _instance = new PartialTypeCheckCommand();
-
         private PartialTypeCheckCommand()
         {
         }
 
-        public static PartialTypeCheckCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static PartialTypeCheckCommand Instance { get; } = new();
 
         private ConstructorInfo _partialTypeCheckCtor;
 
@@ -52,10 +47,8 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
         {
-            return _partialTypeCheckCtor ??
-                (_partialTypeCheckCtor =
-                    typeof (PartialTypeCheck).GetConstructor(new[]
-                        {typeof (int[]), typeof (PValue[]), typeof (PType)}));
+            return _partialTypeCheckCtor ??= typeof (PartialTypeCheck).GetConstructor(new[]
+                {typeof (int[]), typeof (PValue[]), typeof (PType)});
         }
 
         protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
@@ -63,9 +56,6 @@ namespace Prexonite.Commands.Core.PartialApplication
             return typeof (PartialTypeCheck);
         }
 
-        protected override string PartialApplicationKind
-        {
-            get { return "Partial type check"; }
-        }
+        protected override string PartialApplicationKind => "Partial type check";
     }
 }

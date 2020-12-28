@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Reflection;
-using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -35,13 +34,7 @@ namespace Prexonite.Commands.Core.PartialApplication
     {
         #region Singleton pattern
 
-        private static readonly FunctionalPartialCallCommand _instance =
-            new FunctionalPartialCallCommand();
-
-        public static FunctionalPartialCallCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static FunctionalPartialCallCommand Instance { get; } = new();
 
         private FunctionalPartialCallCommand()
         {
@@ -72,10 +65,8 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
             get
             {
-                return _functionPartialCallCtorCache ??
-                    (_functionPartialCallCtorCache =
-                        typeof (FunctionalPartialCall).GetConstructor(new[]
-                            {typeof (PValue), typeof (PValue[])}));
+                return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor(new[]
+                    {typeof (PValue), typeof (PValue[])});
             }
         }
 

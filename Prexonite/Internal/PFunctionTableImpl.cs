@@ -63,10 +63,7 @@ namespace Prexonite.Internal
             return _table.TryGetValue(id, out func);
         }
 
-        public override PFunction this[string id]
-        {
-            get { return _table.GetDefault(id, null); }
-        }
+        public override PFunction this[string id] => _table.GetDefault(id, null);
 
         #endregion
 
@@ -88,8 +85,7 @@ namespace Prexonite.Internal
         private void _onIdChanging(object o, FunctionIdChangingEventArgs args)
         {
             var sender = (FunctionDeclaration)o;
-            PFunction func;
-            if(TryGetValue(sender.Id,out func))
+            if(TryGetValue(sender.Id,out var func))
             {
                 _table.Remove(func.Id);
                 _table.Add(args.NewId,func);
@@ -97,9 +93,7 @@ namespace Prexonite.Internal
             else
             {
                 Debug.Assert(false,
-                    string.Format(
-                        "PFunction table is still registered to function declaration {0} even though it is no longer in the table.",
-                        sender));
+                    $"PFunction table is still registered to function declaration {sender} even though it is no longer in the table.");
             }
         }
 
@@ -115,8 +109,7 @@ namespace Prexonite.Internal
 
         public override void AddOverride(PFunction item)
         {
-            PFunction oldFunc;
-            if (_table.TryGetValue(item.Id,out oldFunc))
+            if (_table.TryGetValue(item.Id,out var oldFunc))
             {
                 oldFunc.Declaration.IdChanging -= _idChangingHandler;
                 _table.Remove(oldFunc.Id);
@@ -153,20 +146,13 @@ namespace Prexonite.Internal
             }
         }
 
-        public override int Count
-        {
-            get { return _table.Count; }
-        }
+        public override int Count => _table.Count;
 
-        public override bool IsReadOnly
-        {
-            get { return _table.IsReadOnly; }
-        }
+        public override bool IsReadOnly => _table.IsReadOnly;
 
         public override bool Remove(PFunction item)
         {
-            PFunction f;
-            if(_table.TryGetValue(item.Id,out f) && ReferenceEquals(f,item))
+            if(_table.TryGetValue(item.Id,out var f) && ReferenceEquals(f,item))
             {
                 f.Declaration.IdChanging -= _idChangingHandler;
                 _table.Remove(item.Id);
@@ -178,8 +164,7 @@ namespace Prexonite.Internal
 
         public override bool Remove(string id)
         {
-            PFunction oldFunc;
-            if (_table.TryGetValue(id,out oldFunc))
+            if (_table.TryGetValue(id,out var oldFunc))
             {
                 oldFunc.Declaration.IdChanging -= _idChangingHandler;
                 return _table.Remove(id);

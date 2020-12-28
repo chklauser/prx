@@ -29,16 +29,11 @@ namespace Prexonite.Compiler
 {
     public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
     {
-        private readonly string _file;
-        private readonly int _line;
-        private readonly int _column;
-
-
         public SourcePosition(string file, int line, int column)
         {
-            _file = file ?? "unknown~";
-            _line = line;
-            _column = column;
+            File = file ?? "unknown~";
+            Line = line;
+            Column = column;
         }
 
         #region Implementation of ISourcePosition
@@ -46,26 +41,17 @@ namespace Prexonite.Compiler
         /// <summary>
         ///     The source file that declared this object.
         /// </summary>
-        public string File
-        {
-            get { return _file; }
-        }
+        public string File { get; }
 
         /// <summary>
         ///     The line in the source file that declared this object.
         /// </summary>
-        public int Line
-        {
-            get { return _line; }
-        }
+        public int Line { get; }
 
         /// <summary>
         ///     The column in the source file that declared this object.
         /// </summary>
-        public int Column
-        {
-            get { return _column; }
-        }
+        public int Column { get; }
 
         #endregion
 
@@ -106,14 +92,14 @@ namespace Prexonite.Compiler
         /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
-            return (_file ?? String.Empty).GetHashCode() ^ _line ^ (_column + 256);
+            return (File ?? string.Empty).GetHashCode() ^ Line ^ (Column + 256);
         }
 
         public override string ToString()
         {
             return File != null
-                ? String.Format("{0} {1}.{2}", File, Line, Column)
-                : String.Format("{0}.{1}", Line, Column);
+                ? $"{File} {Line}.{Column}"
+                : $"{Line}.{Column}";
         }
     }
 }

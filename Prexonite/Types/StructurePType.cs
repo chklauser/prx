@@ -119,12 +119,7 @@ namespace Prexonite.Types
         {
         }
 
-        private static readonly StructurePType _instance = new StructurePType();
-
-        public static StructurePType Instance
-        {
-            get { return _instance; }
-        }
+        public static StructurePType Instance { get; } = new();
 
         #endregion
 
@@ -156,17 +151,15 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            var obj = subject.Value as SymbolTable<Member>;
-            if (obj == null)
+            if (!(subject.Value is SymbolTable<Member> obj))
                 return false;
 
             var argst = _AddThis(subject, args);
 
-            Member m;
             var isReference = false;
 
             //Try to call the member
-            if (obj.TryGetValue(id, out m) && m != null)
+            if (obj.TryGetValue(id, out var m) && m != null)
                 result = m.Invoke(sctx, argst, call);
             else
                 switch (id.ToLowerInvariant())
@@ -192,7 +185,7 @@ namespace Prexonite.Types
                             obj.Add(mid, m);
                         }
 
-                        m.Value = args[args.Length - 1];
+                        m.Value = args[^1];
                         m.IsReference = isReference;
 
                         result = m.Value;
@@ -334,28 +327,28 @@ namespace Prexonite.Types
         public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
         {
             return TryDynamicCall
-                (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.UnaryNegation,
+                (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.UnaryNegation,
                     out result);
         }
 
         public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
         {
             return TryDynamicCall
-                (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.OnesComplement,
+                (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.OnesComplement,
                     out result);
         }
 
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
             return TryDynamicCall
-                (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.Increment,
+                (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.Increment,
                     out result);
         }
 
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
             return TryDynamicCall
-                (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.Decrement,
+                (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.Decrement,
                     out result);
         }
 
@@ -382,8 +375,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            var obj = subject.Value as SymbolTable<Member>;
-            if (obj == null)
+            if (!(subject.Value is SymbolTable<Member> obj))
                 return false;
 
             switch (target.ToBuiltIn())
@@ -391,7 +383,7 @@ namespace Prexonite.Types
                 case BuiltIn.String:
                     normalString:
                     if (
-                        !TryDynamicCall(sctx, subject, new PValue[] {}, PCall.Get, "ToString",
+                        !TryDynamicCall(sctx, subject, Array.Empty<PValue>(), PCall.Get, "ToString",
                             out result))
                         result = null;
                     break;
@@ -423,12 +415,10 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
-            var obj = subject.Value as SymbolTable<Member>;
-            if (obj == null)
+            if (!(subject.Value is SymbolTable<Member> obj))
                 return false;
 
-            Member m;
-            if (obj.TryGetValue(IndirectCallId, out m) && m != null)
+            if (obj.TryGetValue(IndirectCallId, out var m) && m != null)
                 result = m.IndirectCall(sctx, _AddThis(subject, args));
 
             return result != null;

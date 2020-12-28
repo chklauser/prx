@@ -38,12 +38,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Singleton pattern
 
-        private static readonly Unpack _instance = new Unpack();
-
-        public static Unpack Instance
-        {
-            get { return _instance; }
-        }
+        public static Unpack Instance { get; } = new();
 
         private Unpack() : base(Alias)
         {
@@ -65,8 +60,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        string.Format(
-                            "{0} requires at least one argument, the id of the object to unpack.", Alias),
+                        $"{Alias} requires at least one argument, the id of the object to unpack.",
                         context.Invocation.Position, MessageClasses.UnpackUsage));
                 return;
             }
@@ -93,14 +87,9 @@ namespace Prexonite.Compiler.Macro.Commands
             #region Singleton pattern
 
 // ReSharper disable MemberHidesStaticFromOuterClass not an issue (singleton pattern)
-            [NotNull] private static readonly Impl _instance = new Impl();
 
-            [NotNull]
-            public static Impl Instance
-// ReSharper restore MemberHidesStaticFromOuterClass
-            {
-                get { return _instance; }
-            }
+[NotNull]
+            public static Impl Instance { get; } = new();
 
             private Impl()
             {
@@ -117,8 +106,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     (context = args[0].Value as MacroContext) == null)
                     throw new PrexoniteException(_getUsage());
 
-                int id;
-                if (args[1].TryConvertTo(sctx, true, out id))
+                if (args[1].TryConvertTo(sctx, true, out int id))
                     return context.RetrieveFromTransport(id);
 
                 AstConstant constant;
@@ -131,7 +119,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             private static string _getUsage()
             {
-                return string.Format("usage {0}(context, id)", Alias);
+                return $"usage {Alias}(context, id)";
             }
 
             #endregion

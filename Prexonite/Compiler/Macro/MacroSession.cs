@@ -45,19 +45,19 @@ namespace Prexonite.Compiler.Macro
         private LoaderOptions _options;
 
         [NotNull]
-        private readonly SymbolCollection _releaseList = new SymbolCollection();
+        private readonly SymbolCollection _releaseList = new();
         [NotNull]
-        private readonly SymbolCollection _allocationList = new SymbolCollection();
+        private readonly SymbolCollection _allocationList = new();
 
         [NotNull]
         private readonly HashSet<AstGetSet> _invocations =
-            new HashSet<AstGetSet>();
+            new();
 
         [NotNull]
         private readonly object _buildCommandToken;
 
         [NotNull]
-        private readonly List<PValue> _transportStore = new List<PValue>();
+        private readonly List<PValue> _transportStore = new();
 
         /// <summary>
         ///     Creates a new macro expansion session for the specified compiler target.
@@ -65,10 +65,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "target">The target to expand macros in.</param>
         public MacroSession([NotNull] CompilerTarget target)
         {
-            if(target == null)
-                throw new ArgumentNullException(nameof(target));
-
-            Target = target;
+            Target = target ?? throw new ArgumentNullException(nameof(target));
             Factory = Target.Factory;
             
             GlobalSymbols = SymbolStore.Create(Target.Loader.Symbols);
@@ -200,8 +197,7 @@ namespace Prexonite.Compiler.Macro
 
             public bool TryExpandPartially(CompilerTarget target, MacroContext context)
             {
-                var pac = MacroCommand as PartialMacroCommand;
-                return pac != null && pac.ExpandPartialApplication(context);
+                return MacroCommand is PartialMacroCommand pac && pac.ExpandPartialApplication(context);
             }
         }
 
@@ -213,12 +209,10 @@ namespace Prexonite.Compiler.Macro
 
                 MacroCommand = null;
 
-                EntityRef.MacroCommand mcmdRef;
-                if(!expansion.Entity.TryGetMacroCommand(out mcmdRef))
+                if(!expansion.Entity.TryGetMacroCommand(out var mcmdRef))
                     throw new InvalidOperationException(string.Format(Resources.MacroCommandExpander_MacroCommandExpected, expansion.Entity));
-                PValue value;
                 MacroCommand mcmd;
-                if (mcmdRef.TryGetEntity(target.Loader, out value) && (mcmd = value.Value as MacroCommand) != null)
+                if (mcmdRef.TryGetEntity(target.Loader, out var value) && (mcmd = value.Value as MacroCommand) != null)
                 {
                     HumanId = mcmdRef.Id;
                     MacroCommand = mcmd;
@@ -226,7 +220,7 @@ namespace Prexonite.Compiler.Macro
                 else
                 {
                     target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                               String.Format(
+                                                               string.Format(
                                                                    Resources.MacroCommandExpander_CannotFindMacro,
                                                                    mcmdRef.Id),
                                                                macroNode.Position, MessageClasses.NoSuchMacroCommand));
@@ -357,7 +351,7 @@ namespace Prexonite.Compiler.Macro
                         //Might at a later point become a warning
                         var invocationPosition = context.Invocation.Position;
                         context.ReportMessage(Message.Create(MessageSeverity.Info,
-                                                             String.Format(
+                                                             string.Format(
                                                                  Resources.MacroFunctionExpander__UsedTemporaryVariable,
                                                                  HumanId),
                                                              invocationPosition, MessageClasses.BlockMergingUsesVariable));
@@ -429,12 +423,10 @@ namespace Prexonite.Compiler.Macro
 
                 MacroFunction = null;
 
-                EntityRef.Function functionRef;
-                if (!expansion.Entity.TryGetFunction(out functionRef))
+                if (!expansion.Entity.TryGetFunction(out var functionRef))
                     throw new InvalidOperationException(string.Format(Resources.MacroFunctionExpander_ExpectedFunctionReference, expansion.Entity));
-                PValue value;
                 PFunction func;
-                if (functionRef.TryGetEntity(target.Loader, out value) && (func = value.Value as PFunction) != null)
+                if (functionRef.TryGetEntity(target.Loader, out var value) && (func = value.Value as PFunction) != null)
                 {
                     HumanId = functionRef.Id;
                     MacroFunction = func;
@@ -444,7 +436,7 @@ namespace Prexonite.Compiler.Macro
                     target.Loader.ReportMessage(
                         Message.Create(
                             MessageSeverity.Error,
-                            String.Format(
+                            string.Format(
                                 Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
                                 functionRef,
                                 target.Function.Id, target.Loader.ParentApplication.Module.Name),
@@ -473,7 +465,7 @@ namespace Prexonite.Compiler.Macro
                 {
                     target.Loader.ReportMessage(
                         Message.Create(MessageSeverity.Error,
-                               String.Format(
+                               string.Format(
                                    Resources.MacroSession_MacroNotReentrant,
                                    expander.HumanId),
                                invocation.Position, MessageClasses.MacroNotReentrant));
@@ -553,7 +545,7 @@ namespace Prexonite.Compiler.Macro
             Exception e)
         {
             context.ReportMessage(Message.Create(MessageSeverity.Error,
-                String.Format(
+                string.Format(
                     Resources.MacroSession_ExceptionDuringExpansionOfMacro,
                     expander.HumanId, context.Function.LogicalId,
                     e.Message), context.Invocation.Position, MessageClasses.ExceptionDuringCompilation));
@@ -603,7 +595,7 @@ namespace Prexonite.Compiler.Macro
         {
             target.Loader.ReportMessage(
                 Message.Create(MessageSeverity.Error,
-                               String.Format(
+                               string.Format(
                                    Resources.MacroSession_NotAMacro,
                                    implName),
                                invocation.Position, MessageClasses.NotAMacro));
@@ -656,8 +648,7 @@ namespace Prexonite.Compiler.Macro
                 return _transportStore[id];
             else
                 throw new PrexoniteException(
-                    string.Format("No object with id {0} in transport through this macro session.",
-                        id));
+                    $"No object with id {id} in transport through this macro session.");
         }
     }
 }

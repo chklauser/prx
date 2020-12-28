@@ -55,7 +55,7 @@ namespace Prexonite.Compiler.Symbolic
 
         internal static NamespaceSymbol _Create([NotNull] Namespace @namespace, [NotNull] ISourcePosition position)
         {
-            return new NamespaceSymbol(position, @namespace);
+            return new(position, @namespace);
         }
 
         public override bool TryGetNamespaceSymbol(out NamespaceSymbol namespaceSymbol)
@@ -64,7 +64,7 @@ namespace Prexonite.Compiler.Symbolic
             return true;
         }
 
-        private static readonly UnwrapHandler _unwrapHandler = new UnwrapHandler();
+        private static readonly UnwrapHandler _unwrapHandler = new();
         private class UnwrapHandler : SymbolHandler<(IMessageSink? sink,ISourcePosition position,IList<Message>? errors), NamespaceSymbol?>
         {
             public override NamespaceSymbol? HandleMessage(MessageSymbol self, (IMessageSink? sink,ISourcePosition position,IList<Message>? errors) argument)

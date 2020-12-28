@@ -23,6 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
@@ -42,12 +44,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Pair _instance = new Pair();
-
-        public static Pair Instance
-        {
-            get { return _instance; }
-        }
+        public static Pair Instance { get; } = new();
 
         /// <summary>
         ///     Turns to arguments into a key-value pair
@@ -60,8 +57,7 @@ namespace Prexonite.Commands.Core
         /// </remarks>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             if (args.Length < 2)
                 return PType.Null.CreatePValue();

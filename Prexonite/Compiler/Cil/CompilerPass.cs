@@ -42,7 +42,7 @@ namespace Prexonite.Compiler.Cil
         [DebuggerStepThrough]
         private static string _createNextTypeName(string applicationId)
         {
-            if (String.IsNullOrEmpty(applicationId))
+            if (string.IsNullOrEmpty(applicationId))
                 applicationId = "cilimpl";
 
             return applicationId + "_" + _numberOfPasses++ + "";
@@ -172,7 +172,7 @@ namespace Prexonite.Compiler.Cil
             return id + "<field>";
         }
 
-        private readonly SymbolTable<FieldInfo> _functionFieldTable = new SymbolTable<FieldInfo>();
+        private readonly SymbolTable<FieldInfo> _functionFieldTable = new();
 
         public SymbolTable<FieldInfo> FunctionFields
         {
@@ -185,21 +185,13 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private readonly SymbolTable<MethodInfo> _implementationTable =
-            new SymbolTable<MethodInfo>();
-
-        public SymbolTable<MethodInfo> Implementations
-        {
-            [DebuggerStepThrough]
-            get { return _implementationTable; }
-        }
+        public SymbolTable<MethodInfo> Implementations { [DebuggerStepThrough] get; } = new();
 
         public ILGenerator GetIlGenerator(string id)
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
-            MethodInfo m;
-            if (!_implementationTable.TryGetValue(id, out m))
+            if (!Implementations.TryGetValue(id, out var m))
                 throw new PrexoniteException("No implementation stub for a function named " + id +
                     " exists.");
 
@@ -242,7 +234,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         private readonly Dictionary<MethodInfo, CilFunction> _delegateCache =
-            new Dictionary<MethodInfo, CilFunction>();
+            new();
 
         private Type _cachedTypeReference;
 
@@ -250,8 +242,7 @@ namespace Prexonite.Compiler.Cil
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
-            MethodInfo m;
-            if (!_implementationTable.TryGetValue(id, out m))
+            if (!Implementations.TryGetValue(id, out var m))
                 throw new PrexoniteException("No implementation for a function named " + id +
                     " exists.");
 
@@ -278,7 +269,7 @@ namespace Prexonite.Compiler.Cil
 
         private Type _getRuntimeType()
         {
-            return _cachedTypeReference ?? (_cachedTypeReference = TargetType.CreateType());
+            return _cachedTypeReference ??= TargetType.CreateType();
         }
 
         public void LinkMetadata(PFunction func)

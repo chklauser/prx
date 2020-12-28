@@ -65,9 +65,8 @@ namespace Prx.Tests
 
         protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
         {
-            Symbol symbol;
-            Assert.IsTrue(store.TryGet(symbolicId, out symbol),
-                          string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
+            Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
+                $"Expected to find symbol {symbolicId} but there is no such entry.");
             return symbol.ToSymbolEntry();
         }
 
@@ -84,7 +83,7 @@ namespace Prx.Tests
                 TestContext.WriteLine(assemblerCode);
                 TestContext.WriteLine("---------------- End Asm Code ---------------------");
                 foreach (var error in ldr.Errors)
-                    Assert.Fail(string.Format("Error in the expected assembler code: {0}", error));
+                    Assert.Fail($"Error in the expected assembler code: {error}");
             }
             return app.Functions["MyAssemblerFunction"].Code;
         }
@@ -143,8 +142,7 @@ namespace Prx.Tests
         {
             var func = target.Functions[functionId];
             if (func == null)
-                throw new ArgumentException(string.Format("No function with the id {0} exists",
-                    functionId));
+                throw new ArgumentException($"No function with the id {functionId} exists");
             var actual = func.Code;
             Expect(actual, assemblerCode, functionId);
         }
@@ -169,7 +167,7 @@ namespace Prx.Tests
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
-                    String.Format(
+                    string.Format(
                         "Instructions at address {0} do not match in function {3}, (instruction count expected {1}, actual {2})",
                         i,
                         expected.Count,
@@ -196,8 +194,7 @@ namespace Prx.Tests
 
         protected internal static void _expectSharedVariables_(PFunction func, string[] shared)
         {
-            MetaEntry entry;
-            var hasShared = func.Meta.TryGetValue(PFunction.SharedNamesKey, out entry);
+            var hasShared = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var entry);
             if (shared.Length == 0 && hasShared)
                 Assert.Fail("The function {0} is not expected to share variables.", func.Id);
             else if ((!hasShared) && shared.Length != 0)

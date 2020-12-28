@@ -39,15 +39,13 @@ namespace Prexonite.Compiler.Build.Internal
 
         public StreamSource([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
         {
-            if ((object) stream == null)
+            if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
             if(!stream.CanRead)
                 throw new ArgumentException(Resources.Exception_StreamSource_CannotUseWriteOnlyStream, nameof(stream));
-            if ((object) encoding == null)
-                throw new ArgumentNullException(nameof(encoding));
 
             _stream = stream;
-            _encoding = encoding;
+            _encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
             _forceSingleUse = forceSingleUse;
         }
 
@@ -62,10 +60,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        public bool IsSingleUse
-        {
-            get { return _forceSingleUse || _stream == null || !_stream.CanSeek; }
-        }
+        public bool IsSingleUse => _forceSingleUse || _stream == null || !_stream.CanSeek;
 
         public bool TryOpen(out TextReader reader)
         {

@@ -42,22 +42,14 @@ namespace Prexonite.Commands.Concurrency
         {
         }
 
-        private static readonly AsyncSeq _instance = new AsyncSeq();
-
-        public static AsyncSeq Instance
-        {
-            get { return _instance; }
-        }
+        public static AsyncSeq Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #endregion
 
@@ -113,71 +105,68 @@ namespace Prexonite.Commands.Concurrency
                 Func<PValue> producer =
                     () =>
                         {
-                            using (
-                                var e =
-                                    Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator
-                                        ())
+                            using var e =
+                                Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator
+                                    ();
+                            var doCont = true;
+                            var doDisp = false;
+
+                            cont:
+                            if (e.MoveNext())
                             {
-                                var doCont = true;
-                                var doDisp = false;
+                                peek.Send(true);
+                                data.Send(e.Current);
+                            }
+                            else
+                            {
+                                peek.Send(false);
+                                //doCont = false;
+                                goto shutDown;
+                            }
 
-                                cont:
-                                if (e.MoveNext())
+                            wait:
+                            Select.RunStatically(
+                                _sctxCarrier.StackContext, new[]
                                 {
-                                    peek.Send(true);
-                                    data.Send(e.Current);
-                                }
-                                else
-                                {
-                                    peek.Send(false);
-                                    //doCont = false;
-                                    goto shutDown;
-                                }
+                                    new KeyValuePair<Channel, PValue>
+                                    (
+                                        rset, pfunc(
+                                            (s, a) =>
+                                            {
+                                                doCont = true;
+                                                try
+                                                {
+                                                    e.Reset();
+                                                }
+                                                catch (Exception exc)
+                                                {
+                                                    rset.Send(
+                                                        PType.Object.CreatePValue(exc));
+                                                }
+                                                rset.Send(PType.Null);
+                                                return PType.Null;
+                                            })),
+                                    new KeyValuePair<Channel, PValue>
+                                    (
+                                        disp, pfunc(
+                                            (s, a) =>
+                                            {
+                                                doCont = false;
+                                                doDisp = true;
+                                                return PType.Null;
+                                            })),
+                                    new KeyValuePair<Channel, PValue>
+                                        (null, PType.Null),
+                                }, false);
 
-                                wait:
-                                Select.RunStatically(
-                                    _sctxCarrier.StackContext, new[]
-                                        {
-                                            new KeyValuePair<Channel, PValue>
-                                                (
-                                                rset, pfunc(
-                                                    (s, a) =>
-                                                        {
-                                                            doCont = true;
-                                                            try
-                                                            {
-                                                                e.Reset();
-                                                            }
-                                                            catch (Exception exc)
-                                                            {
-                                                                rset.Send(
-                                                                    PType.Object.CreatePValue(exc));
-                                                            }
-                                                            rset.Send(PType.Null);
-                                                            return PType.Null;
-                                                        })),
-                                            new KeyValuePair<Channel, PValue>
-                                                (
-                                                disp, pfunc(
-                                                    (s, a) =>
-                                                        {
-                                                            doCont = false;
-                                                            doDisp = true;
-                                                            return PType.Null;
-                                                        })),
-                                            new KeyValuePair<Channel, PValue>
-                                                (null, PType.Null),
-                                        }, false);
-
-                                //We loop until the dispose command is explicitly given. 
-                                //  -> This way, a reset command can be issued after
-                                //  the complete enumeration has been computed
-                                //  without the enumerator being disposed of prematurely
-                                if (doCont)
-                                    goto cont;
-                                else if (! doDisp)
-                                    goto wait;
-                            } //end using (disposes enumerator)
+                            //We loop until the dispose command is explicitly given. 
+                            //  -> This way, a reset command can be issued after
+                            //  the complete enumeration has been computed
+                            //  without the enumerator being disposed of prematurely
+                            if (doCont)
+                                goto cont;
+                            else if (! doDisp)
+                                goto wait;
 
                             //Ignored (part of CallAsync interface)
                             shutDown:
@@ -225,7 +214,6 @@ namespace Prexonite.Commands.Concurrency
             private readonly Channel _disp;
             private readonly Func<PValue> _produce;
             private readonly ContextCarrier _sctxCarrier;
-            private PValue _current;
 
             #region Implementation of IDisposable
 
@@ -240,17 +228,17 @@ namespace Prexonite.Commands.Concurrency
 
             public bool MoveNext()
             {
-                if (_current == null)
+                if (Current == null)
                 {
                     //The producer runs on a separate thread and communicates
                     //  with this thread via 4 channels, one for each method
                     CallAsync.RunAsync(_sctxCarrier.StackContext, _produce);
-                    _current = PType.Null;
+                    Current = PType.Null;
                 }
 
                 if ((bool) _peek.Receive().Value)
                 {
-                    _current = _data.Receive();
+                    Current = _data.Receive();
                     return true;
                 }
                 else
@@ -265,23 +253,16 @@ namespace Prexonite.Commands.Concurrency
                 var p = _rset.Receive();
                 if (!p.IsNull)
                 {
-                    var exc = p.Value as Exception;
-                    if (exc != null)
+                    if (p.Value is Exception exc)
                         throw exc;
                     else
                         throw new PrexoniteException("Cannot reset async enumerator: " + p.Value);
                 }
             }
 
-            public PValue Current
-            {
-                get { return _current; }
-            }
+            public PValue Current { get; private set; }
 
-            object IEnumerator.Current
-            {
-                get { return Current; }
-            }
+            object IEnumerator.Current => Current;
 
             #endregion
         }

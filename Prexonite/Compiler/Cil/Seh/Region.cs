@@ -77,17 +77,13 @@ namespace Prexonite.Compiler.Cil.Seh
             [DebuggerStepThrough]
             get
             {
-                switch (Kind)
+                return Kind switch
                 {
-                    case RegionKind.Try:
-                        return Block.BeginTry;
-                    case RegionKind.Catch:
-                        return Block.BeginCatch;
-                    case RegionKind.Finally:
-                        return Block.BeginFinally;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                    RegionKind.Try => Block.BeginTry,
+                    RegionKind.Catch => Block.BeginCatch,
+                    RegionKind.Finally => Block.BeginFinally,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
             }
         }
 
@@ -116,17 +112,13 @@ namespace Prexonite.Compiler.Cil.Seh
         [DebuggerStepThrough]
         public bool Contains(int address)
         {
-            switch (Kind)
+            return Kind switch
             {
-                case RegionKind.Try:
-                    return Block.IsInTryBlock(address);
-                case RegionKind.Catch:
-                    return Block.IsInCatchBlock(address);
-                case RegionKind.Finally:
-                    return Block.IsInFinallyBlock(address);
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                RegionKind.Try => Block.IsInTryBlock(address),
+                RegionKind.Catch => Block.IsInCatchBlock(address),
+                RegionKind.Finally => Block.IsInFinallyBlock(address),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         [DebuggerStepThrough]

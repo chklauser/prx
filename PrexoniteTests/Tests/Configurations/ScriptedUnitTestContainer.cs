@@ -29,12 +29,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
-using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -92,10 +90,7 @@ namespace PrexoniteTests.Tests.Configurations
             }
         }
 
-        public string ApplicationName
-        {
-            get { return GetType().Name; }
-        }
+        public string ApplicationName => GetType().Name;
 
         protected void RunUnitTest(string testCaseId)
         {
@@ -113,13 +108,13 @@ namespace PrexoniteTests.Tests.Configurations
                         "Test case run function (part of testing framework) not found. Was looking for {0}.", RunTestId);
 
             var resP = rt.Run(Engine, new[] {PType.Null, Root.CreateNativePValue(tc)});
-            var success = (bool) resP.DynamicCall(Root, new PValue[0], PCall.Get, "Key").Value;
+            var success = (bool) resP.DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Key").Value;
             if (success)
                 return;
 
             var eObj = resP
-                .DynamicCall(Root, new PValue[0], PCall.Get, "Value")
-                .DynamicCall(Root, new PValue[0], PCall.Get, "e")
+                .DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Value")
+                .DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "e")
                 .Value;
             if (eObj is Exception e)
             {
@@ -170,8 +165,7 @@ namespace PrexoniteTests.Tests.Configurations
         {
             return Application.Compound.Select(app =>
                 {
-                    PFunction func;
-                    return app.Functions.TryGetValue(RunTestId, out func) ? func : null;
+                    return app.Functions.TryGetValue(RunTestId, out var func) ? func : null;
                 }).SingleOrDefault(f => f != null);
         }
     }

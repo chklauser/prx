@@ -39,12 +39,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly ConsolePrintLine _instance = new ConsolePrintLine();
-
-        public static ConsolePrintLine Instance
-        {
-            get { return _instance; }
-        }
+        public static ConsolePrintLine Instance { get; } = new();
 
         #endregion
 
@@ -55,10 +50,7 @@ namespace Prexonite.Commands.Core
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         /// <summary>
         ///     Executes the command.
@@ -107,13 +99,13 @@ namespace Prexonite.Commands.Core
 
         //Fix #10
         internal static readonly MethodInfo consoleWriteLineMethod_String =
-            typeof (Console).GetMethod("WriteLine", new[] {typeof (String)});
+            typeof (Console).GetMethod("WriteLine", new[] {typeof (string)});
 
         internal static readonly MethodInfo consoleWriteLineMethod_ =
             typeof (Console).GetMethod("WriteLine", Type.EmptyTypes);
 
         internal static readonly MethodInfo ConsoleWriteMethod =
-            typeof (Console).GetMethod("Write", new[] {typeof (String)});
+            typeof (Console).GetMethod("Write", new[] {typeof (string)});
 
         internal static readonly MethodInfo PValueCallToString =
             typeof (PValue).GetMethod("CallToString", new[] {typeof (StackContext)});
@@ -189,7 +181,7 @@ namespace Prexonite.Commands.Core
         public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
             int dynamicArgc)
         {
-            var text = String.Concat(staticArgv.Select(StaticPrint._ToString));
+            var text = string.Concat(staticArgv.Select(StaticPrint._ToString));
 
             state.Il.Emit(OpCodes.Ldstr, text);
             if (!ins.JustEffect)

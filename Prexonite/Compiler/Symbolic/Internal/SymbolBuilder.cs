@@ -41,16 +41,11 @@ namespace Prexonite.Compiler.Symbolic.Internal
     {
         public EntityRef Entity { get; set; }
 
-        public bool AutoDereferenceEnabled
-        {
-            get { return _autoDereferenceEnabled; }
-            set { _autoDereferenceEnabled = value; }
-        }
+        public bool AutoDereferenceEnabled { get; set; } = true;
 
         private Symbol _prefix = Symbol.CreateNil(NoSourcePosition.Instance);
-        private bool _autoDereferenceEnabled = true;
         private int _dereferenceCount;
-        private readonly Queue<Message> _messages = new Queue<Message>();
+        private readonly Queue<Message> _messages = new();
 
         public SymbolBuilder Dereference()
         {
@@ -61,7 +56,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         public SymbolBuilder ReferenceTo()
         {
             if (_dereferenceCount == 0 && AutoDereferenceEnabled)
-                _autoDereferenceEnabled = false;
+                AutoDereferenceEnabled = false;
             else
                 _dereferenceCount -= 1;
             return this;
@@ -110,15 +105,12 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 symbol = null;
             else
             {
-                Symbol entityRefSym = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
+                var entityRefSym = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
                 if(AutoDereferenceEnabled)
                 {
-               
-                    EntityRef.MacroCommand mcmd;
-                    if (Entity.TryGetMacroCommand(out mcmd))
-                        symbol = Symbol.CreateExpand(entityRefSym);
-                    else
-                        symbol = Symbol.CreateDereference(entityRefSym);
+                    symbol = Entity.TryGetMacroCommand(out var mcmd) 
+                        ? Symbol.CreateExpand(entityRefSym) 
+                        : Symbol.CreateDereference(entityRefSym);
                 }
                 else
                 {

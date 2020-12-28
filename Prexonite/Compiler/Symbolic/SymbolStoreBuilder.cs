@@ -58,27 +58,16 @@ namespace Prexonite.Compiler.Symbolic
 
         private sealed class ImportStatement : List<SymbolTransferDirective>
         {
-            [JetBrains.Annotations.NotNull] private readonly ISymbolView<Symbol> _source;
-            [JetBrains.Annotations.NotNull] private readonly SymbolOrigin _origin;
+            [JetBrains.Annotations.NotNull]
+            public ISymbolView<Symbol> Source { get; }
 
             [JetBrains.Annotations.NotNull]
-            public ISymbolView<Symbol> Source
-            {
-                get { return _source; }
-            }
-
-            [JetBrains.Annotations.NotNull]
-            public SymbolOrigin Origin
-            {
-                get { return _origin; }
-            }
+            public SymbolOrigin Origin { get; }
 
             public ImportStatement([JetBrains.Annotations.NotNull] ISymbolView<Symbol> source, [JetBrains.Annotations.NotNull] SymbolOrigin origin)
             {
-                if (source == null) throw new ArgumentNullException(nameof(source));
-                if (origin == null) throw new ArgumentNullException(nameof(origin));
-                _source = source;
-                _origin = origin;
+                Source = source ?? throw new ArgumentNullException(nameof(source));
+                Origin = origin ?? throw new ArgumentNullException(nameof(origin));
             }
         }
 
@@ -114,7 +103,7 @@ namespace Prexonite.Compiler.Symbolic
         {
             public override ISymbolView<Symbol>? ExistingNamespace { get; set; }
 
-            [JetBrains.Annotations.NotNull] private readonly ImportStatementSet _statements = new ImportStatementSet();
+            [JetBrains.Annotations.NotNull] private readonly ImportStatementSet _statements = new();
 
             public override void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source,
                 IEnumerable<SymbolTransferDirective> directives)
@@ -174,7 +163,7 @@ namespace Prexonite.Compiler.Symbolic
 
                         return _createSymbolInfo(import, rename.NewName, symbol);
                         // ReSharper disable ImplicitlyCapturedClosure
-                    }, drop => null
+                    }, _ => null
                     ));
                 // ReSharper restore ImplicitlyCapturedClosure
             }
@@ -233,7 +222,7 @@ namespace Prexonite.Compiler.Symbolic
 
             private static SymbolInfo _createSymbolInfo(ImportStatement import, string name, Symbol symbol)
             {
-                return new SymbolInfo(symbol, import.Origin, name);
+                return new(symbol, import.Origin, name);
             }
         }
 

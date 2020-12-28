@@ -40,9 +40,7 @@ namespace Prexonite
 
         public ReadOnlyDictionaryView(IDictionary<TKey, TValue> table)
         {
-            if (table == null)
-                throw new ArgumentNullException(nameof(table));
-            _table = table;
+            _table = table ?? throw new ArgumentNullException(nameof(table));
         }
 
         #region Throwing exceptions
@@ -59,7 +57,7 @@ namespace Prexonite
 
         private static NotSupportedException _notSupportedException()
         {
-            return new NotSupportedException("Cannot modify read-only symbol view.");
+            return new("Cannot modify read-only symbol view.");
         }
 
         public void Clear()
@@ -79,8 +77,8 @@ namespace Prexonite
 
         TValue IDictionary<TKey, TValue>.this[TKey key]
         {
-            get { return _table[key]; }
-            set { throw _notSupportedException(); }
+            get => _table[key];
+            set => throw _notSupportedException();
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
@@ -117,15 +115,9 @@ namespace Prexonite
             _table.CopyTo(array, arrayIndex);
         }
 
-        public int Count
-        {
-            get { return _table.Count; }
-        }
+        public int Count => _table.Count;
 
-        public bool IsReadOnly
-        {
-            get { return _table.IsReadOnly; }
-        }
+        public bool IsReadOnly => _table.IsReadOnly;
 
         public bool ContainsKey(TKey key)
         {
@@ -139,19 +131,13 @@ namespace Prexonite
 
         public TValue this[TKey key]
         {
-            get { return _table[key]; }
-            set { _table[key] = value; }
+            get => _table[key];
+            set => _table[key] = value;
         }
 
-        public ICollection<TKey> Keys
-        {
-            get { return _table.Keys; }
-        }
+        public ICollection<TKey> Keys => _table.Keys;
 
-        public ICollection<TValue> Values
-        {
-            get { return _table.Values; }
-        }
+        public ICollection<TValue> Values => _table.Values;
 
         #endregion
     }

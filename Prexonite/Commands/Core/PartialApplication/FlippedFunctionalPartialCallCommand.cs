@@ -35,13 +35,7 @@ namespace Prexonite.Commands.Core.PartialApplication
     {
         #region Singleton pattern
 
-        private static readonly FlippedFunctionalPartialCallCommand _instance =
-            new FlippedFunctionalPartialCallCommand();
-
-        public static FlippedFunctionalPartialCallCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static FlippedFunctionalPartialCallCommand Instance { get; } = new();
 
         private FlippedFunctionalPartialCallCommand()
         {
@@ -72,10 +66,8 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
             get
             {
-                return _functionPartialCallCtorCache ??
-                    (_functionPartialCallCtorCache =
-                        typeof (FlippedFunctionalPartialCall).GetConstructor(new[]
-                            {typeof (PValue), typeof (PValue[])}));
+                return _functionPartialCallCtorCache ??= typeof (FlippedFunctionalPartialCall).GetConstructor(new[]
+                    {typeof (PValue), typeof (PValue[])});
             }
         }
 

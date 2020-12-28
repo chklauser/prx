@@ -31,46 +31,26 @@ namespace Prx.Tests
 {
     public class TestStackContext : StackContext
     {
-        private Engine _engine;
-        private PFunction _implementation;
-
         public TestStackContext(Engine engine, Application app)
         {
-            if (engine == null)
-                throw new ArgumentNullException(nameof(engine));
             if (app == null)
                 throw new ArgumentNullException(nameof(app));
-            _engine = engine;
-            _implementation = app.CreateFunction();
+            ParentEngine = engine ?? throw new ArgumentNullException(nameof(engine));
+            Implementation = app.CreateFunction();
         }
 
-        public override Engine ParentEngine
-        {
-            get { return _engine; }
-        }
+        public override Engine ParentEngine { get; }
 
-        public PFunction Implementation
-        {
-            get { return _implementation; }
-        }
+        public PFunction Implementation { get; }
 
-        public override PValue ReturnValue
-        {
-            get { return PType.Null.CreatePValue(); }
-        }
+        public override PValue ReturnValue => PType.Null.CreatePValue();
 
         /// <summary>
         ///     The parent application.
         /// </summary>
-        public override Application ParentApplication
-        {
-            get { return _implementation.ParentApplication; }
-        }
+        public override Application ParentApplication => Implementation.ParentApplication;
 
-        public override SymbolCollection ImportedNamespaces
-        {
-            get { return _implementation.ImportedNamespaces; }
-        }
+        public override SymbolCollection ImportedNamespaces => Implementation.ImportedNamespaces;
 
         public override bool TryHandleException(Exception exc)
         {

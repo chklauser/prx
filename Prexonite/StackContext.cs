@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Diagnostics.CodeAnalysis;
-using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -79,7 +78,7 @@ namespace Prexonite
         /// </summary>
         public ReturnMode ReturnMode { get; set; }
 
-        public virtual CentralCache Cache { get { return ParentApplication.Module.Cache; } }
+        public virtual CentralCache Cache => ParentApplication.Module.Cache;
 
         #endregion
 

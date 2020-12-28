@@ -41,12 +41,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Caller _instance = new Caller();
-
-        public static Caller Instance
-        {
-            get { return _instance; }
-        }
+        public static Caller Instance { get; } = new();
 
         /// <summary>
         ///     Returns the caller of the supplied stack context.
@@ -74,7 +69,7 @@ namespace Prexonite.Commands.Core
             else
             {
                 var callee = stack.FindLast(sctx);
-                if (callee == null || callee.Previous == null)
+                if (callee?.Previous == null)
                     return null;
                 else
                     return callee.Previous.Value;

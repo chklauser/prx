@@ -38,16 +38,11 @@ namespace Prexonite.Types
     {
         #region Singleton pattern
 
-        private static readonly RealPType instance;
-
-        public static RealPType Instance
-        {
-            get { return instance; }
-        }
+        public static RealPType Instance { get; }
 
         static RealPType()
         {
-            instance = new RealPType();
+            Instance = new RealPType();
         }
 
         private RealPType()
@@ -60,12 +55,12 @@ namespace Prexonite.Types
 
         public PValue CreatePValue(double value)
         {
-            return new PValue(value, Instance);
+            return new(value, Instance);
         }
 
         public PValue CreatePValue(float value)
         {
-            return new PValue((double) value, Instance);
+            return new((double) value, Instance);
         }
 
         #endregion
@@ -120,36 +115,19 @@ namespace Prexonite.Types
             {
                 if (target is ObjectPType)
                 {
-                    switch (Type.GetTypeCode(((ObjectPType) target).ClrType))
+                    result = Type.GetTypeCode(((ObjectPType) target).ClrType) switch
                     {
-                        case TypeCode.Byte:
-                            result = CreateObject((Byte) (Double) subject.Value);
-                            break;
-                        case TypeCode.SByte:
-                            result = CreateObject((SByte) (Double) subject.Value);
-                            break;
-                        case TypeCode.Int32:
-                            result = CreateObject((Int32) (Double) subject.Value);
-                            break;
-                        case TypeCode.UInt32:
-                            result = CreateObject((UInt32) (Double) subject.Value);
-                            break;
-                        case TypeCode.Int16:
-                            result = CreateObject((Int16) (Double) subject.Value);
-                            break;
-                        case TypeCode.UInt16:
-                            result = CreateObject((UInt16) (Double) subject.Value);
-                            break;
-                        case TypeCode.Int64:
-                            result = CreateObject((Int64) (Double) subject.Value);
-                            break;
-                        case TypeCode.UInt64:
-                            result = CreateObject((UInt64) (Double) subject.Value);
-                            break;
-                        case TypeCode.Single:
-                            result = CreateObject((Single) (Double) subject.Value);
-                            break;
-                    }
+                        TypeCode.Byte => CreateObject((byte) (double) subject.Value),
+                        TypeCode.SByte => CreateObject((sbyte) (double) subject.Value),
+                        TypeCode.Int32 => CreateObject((int) (double) subject.Value),
+                        TypeCode.UInt32 => CreateObject((uint) (double) subject.Value),
+                        TypeCode.Int16 => CreateObject((short) (double) subject.Value),
+                        TypeCode.UInt16 => CreateObject((ushort) (double) subject.Value),
+                        TypeCode.Int64 => CreateObject((long) (double) subject.Value),
+                        TypeCode.UInt64 => CreateObject((ulong) (double) subject.Value),
+                        TypeCode.Single => CreateObject((float) (double) subject.Value),
+                        _ => result
+                    };
                 }
             }
 
@@ -164,18 +142,13 @@ namespace Prexonite.Types
                     result = Bool.CreatePValue(Math.Abs(((double) subject.Value)) < double.Epsilon);
                 else if (target is ObjectPType objectType)
                 {
-                    switch (Type.GetTypeCode(objectType.ClrType))
+                    result = Type.GetTypeCode(objectType.ClrType) switch
                     {
-                        case TypeCode.Double:
-                            result = CreateObject((double) subject.Value);
-                            break;
-                        case TypeCode.Decimal:
-                            result = CreateObject((decimal) subject.Value);
-                            break;
-                        case TypeCode.Object:
-                            result = new PValue(subject.Value, Object[typeof(object)]);
-                            break;
-                    }
+                        TypeCode.Double => CreateObject((double) subject.Value),
+                        TypeCode.Decimal => CreateObject((decimal) subject.Value),
+                        TypeCode.Object => new PValue(subject.Value, Object[typeof(object)]),
+                        _ => result
+                    };
                 }
             }
 
@@ -192,8 +165,7 @@ namespace Prexonite.Types
             var subjectType = subject.Type;
             if (subjectType is StringPType)
             {
-                double value;
-                if (double.TryParse(subject.Value as string, out value))
+                if (double.TryParse(subject.Value as string, out var value))
                     result = value; //Conversion succeeded
                 else if (useExplicit)
                     return false; //Conversion required, provoke error
@@ -261,8 +233,7 @@ namespace Prexonite.Types
                         value = 0.0;
                     return true; //*/
                 case BuiltIn.Object:
-                    PValue pvRight;
-                    if (operand.TryConvertTo(sctx, Real, out pvRight))
+                    if (operand.TryConvertTo(sctx, Real, out var pvRight))
                     {
                         value = (int) pvRight.Value;
                         return true;
@@ -282,11 +253,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left + right;
 
             return result != null;
@@ -296,11 +265,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left - right;
 
             return result != null;
@@ -310,11 +277,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left*right;
 
             return result != null;
@@ -324,11 +289,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left/right;
 
             return result != null;
@@ -338,11 +301,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left%right;
 
             return result != null;
@@ -352,11 +313,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left, false) &&
-                _tryConvertToReal(sctx, rightOperand, out right, false))
+            if (_tryConvertToReal(sctx, leftOperand, out var left, false) &&
+                _tryConvertToReal(sctx, rightOperand, out var right, false))
                 result = left == right;
 
             return result != null;
@@ -366,11 +325,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left, false) &&
-                _tryConvertToReal(sctx, rightOperand, out right, false))
+            if (_tryConvertToReal(sctx, leftOperand, out var left, false) &&
+                _tryConvertToReal(sctx, rightOperand, out var right, false))
                 result = left != right;
 
             return result != null;
@@ -380,11 +337,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left > right;
 
             return result != null;
@@ -397,11 +352,9 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left >= right;
 
             return result != null;
@@ -411,11 +364,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left < right;
 
             return result != null;
@@ -428,11 +379,9 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            double left;
-            double right;
 
-            if (_tryConvertToReal(sctx, leftOperand, out left) &&
-                _tryConvertToReal(sctx, rightOperand, out right))
+            if (_tryConvertToReal(sctx, leftOperand, out var left) &&
+                _tryConvertToReal(sctx, rightOperand, out var right))
                 result = left <= right;
 
             return result != null;
@@ -441,8 +390,7 @@ namespace Prexonite.Types
         public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            double op;
-            if (_tryConvertToReal(sctx, operand, out op))
+            if (_tryConvertToReal(sctx, operand, out var op))
                 result = -op;
 
             return result != null;
@@ -451,8 +399,7 @@ namespace Prexonite.Types
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            double op;
-            if (_tryConvertToReal(sctx, operand, out op))
+            if (_tryConvertToReal(sctx, operand, out var op))
                 result = op + 1.0;
 
             return result != null;
@@ -461,8 +408,7 @@ namespace Prexonite.Types
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            double op;
-            if (_tryConvertToReal(sctx, operand, out op))
+            if (_tryConvertToReal(sctx, operand, out var op))
                 result = op - 1.0;
 
             return result != null;

@@ -93,9 +93,7 @@ namespace Prexonite
 
             if (!parentApplication.Module.Functions.Contains(declaration))
                 throw new ArgumentException(
-                    string.Format(
-                        "The supplied application (instance of module {0}) does not define the function {1}.",
-                        parentApplication.Module.Name, declaration));
+                    $"The supplied application (instance of module {parentApplication.Module.Name}) does not define the function {declaration}.");
 
             ParentApplication = parentApplication;
             Declaration = declaration;
@@ -256,8 +254,7 @@ namespace Prexonite
             bool suppressInitialization)
         {
             return
-                new FunctionContext
-                    (
+                new(
                     engine, this, args, sharedVariables, suppressInitialization);
         }
 
@@ -273,7 +270,7 @@ namespace Prexonite
             (
             Engine engine, PValue[]? args, PVariable[]? sharedVariables)
         {
-            return new FunctionContext(engine, this, args, sharedVariables);
+            return new(engine, this, args, sharedVariables);
         }
 
         /// <summary>
@@ -297,7 +294,7 @@ namespace Prexonite
         /// <returns>A function context for the execution of this function.</returns>
         public FunctionContext CreateFunctionContext(Engine engine, PValue[]? args)
         {
-            return new FunctionContext(engine, this, args);
+            return new(engine, this, args);
         }
 
         /// <summary>
@@ -308,7 +305,7 @@ namespace Prexonite
         [PublicAPI]
         public FunctionContext CreateFunctionContext(Engine engine)
         {
-            return new FunctionContext(engine, this);
+            return new(engine, this);
         }
 
         /// <summary>

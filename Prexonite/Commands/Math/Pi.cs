@@ -37,12 +37,7 @@ namespace Prexonite.Commands.Math
         {
         }
 
-        private static readonly Pi _instance = new Pi();
-
-        public static Pi Instance
-        {
-            get { return _instance; }
-        }
+        public static Pi Instance { get; } = new();
 
         #endregion
 
@@ -53,10 +48,7 @@ namespace Prexonite.Commands.Math
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
         /// <summary>
         ///     Executes the command.

@@ -34,12 +34,7 @@ namespace Prexonite.Commands.List
     {
         #region Singleton pattern
 
-        private static readonly CreateEnumerator _instance = new CreateEnumerator();
-
-        public static CreateEnumerator Instance
-        {
-            get { return _instance; }
-        }
+        public static CreateEnumerator Instance { get; } = new();
 
         private CreateEnumerator()
         {
@@ -98,7 +93,7 @@ namespace Prexonite.Commands.List
                     throw new InvalidOperationException("The enumerator has already been disposed.");
                 try
                 {
-                    _dispose.IndirectCall(_sctx, Runtime.EmptyPValueArray);
+                    _dispose.IndirectCall(_sctx, Array.Empty<PValue>());
                 }
                 finally
                 {
@@ -120,7 +115,7 @@ namespace Prexonite.Commands.List
             /// <filterpriority>2</filterpriority>
             public override bool MoveNext()
             {
-                return Runtime.ExtractBool(_moveNext.IndirectCall(_sctx, Runtime.EmptyPValueArray),
+                return Runtime.ExtractBool(_moveNext.IndirectCall(_sctx, Array.Empty<PValue>()),
                     _sctx);
             }
 
@@ -134,10 +129,7 @@ namespace Prexonite.Commands.List
             /// <returns>
             ///     The element in the collection at the current position of the enumerator.
             /// </returns>
-            public override PValue Current
-            {
-                get { return _current.IndirectCall(_sctx, Runtime.EmptyPValueArray); }
-            }
+            public override PValue Current => _current.IndirectCall(_sctx, Array.Empty<PValue>());
 
             #endregion
         }

@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
@@ -33,12 +33,7 @@ namespace Prexonite.Compiler.Internal
     {
         #region Singleton
 
-        private static readonly EntityRefMExprSerializer _instance = new EntityRefMExprSerializer();
-
-        public static EntityRefMExprSerializer Instance
-        {
-            get { return _instance; }
-        }
+        public static EntityRefMExprSerializer Instance { get; } = new();
 
         #endregion
 
@@ -46,8 +41,7 @@ namespace Prexonite.Compiler.Internal
         {
             throw new ErrorMessageException(
                 Message.Error(
-                    String.Format("Unknown entity reference type {0} encountered in MExpr serialization.",
-                                  entity.GetType().Name), position, MessageClasses.UnknownEntityRefType));
+                    $"Unknown entity reference type {entity.GetType().Name} encountered in MExpr serialization.", position, MessageClasses.UnknownEntityRefType));
         }
 
         public const string FunctionHead = "function";

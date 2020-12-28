@@ -33,12 +33,7 @@ namespace Prexonite.Commands.List
     {
         #region Singleton pattern
 
-        private static readonly Reverse _instance = new Reverse();
-
-        public static Reverse Instance
-        {
-            get { return _instance; }
-        }
+        public static Reverse Instance { get; } = new();
 
         private Reverse()
         {
@@ -89,10 +84,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #region ICilCompilerAware Members
 

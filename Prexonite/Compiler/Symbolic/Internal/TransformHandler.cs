@@ -32,10 +32,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         protected override Symbol HandleWrappingSymbol(WrappingSymbol self, TArg argument)
         {
             var newInner = self.InnerSymbol.HandleWith(this, argument);
-            if (self.InnerSymbol == newInner)
-                return self;
-            else
-                return self.With(newInner);
+            return self.InnerSymbol.Equals(newInner) ? self : self.With(newInner);
         }
 
         protected override Symbol HandleLeafSymbol(Symbol self, TArg argument)

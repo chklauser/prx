@@ -85,7 +85,7 @@ namespace Prexonite.Compiler.Ast
         protected void EmitArguments(CompilerTarget target, bool duplicateLast,
             int additionalArguments)
         {
-            Object lastArg = null;
+            object lastArg = null;
             foreach (AstExpr expr in Arguments)
             {
                 Debug.Assert(expr != null,
@@ -164,7 +164,7 @@ namespace Prexonite.Compiler.Ast
         
         public virtual NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(
+            return new(
                 Arguments.Any(AstPartiallyApplicable.IsPlaceholder), 
                 Arguments.Any(AstPartiallyApplicable.IsArgumentSplice));
         }

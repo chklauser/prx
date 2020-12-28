@@ -35,15 +35,10 @@ namespace Prexonite.Commands
     /// <seealso cref = "ICommand" />
     public sealed class NestedPCommand : PCommand
     {
-        private readonly ICommand _action;
-
         /// <summary>
         ///     Provides access to the implementation of this specific instance of <see cref = "NestedPCommand" />.
         /// </summary>
-        public ICommand Action
-        {
-            get { return _action; }
-        }
+        public ICommand Action { get; }
 
         /// <summary>
         ///     Creates a new <see cref = "NestedPCommand" />.
@@ -52,9 +47,7 @@ namespace Prexonite.Commands
         /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
         public NestedPCommand(ICommand action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
-            _action = action;
+            Action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
         /// <summary>
@@ -65,7 +58,7 @@ namespace Prexonite.Commands
         /// <returns>The value returned by <c><see cref = "Action" />.Run</c>.</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            return _action.Run(sctx, args);
+            return Action.Run(sctx, args);
         }
 
         /// <summary>
@@ -74,7 +67,7 @@ namespace Prexonite.Commands
         /// <returns>A description of the nested command instance.</returns>
         public override string ToString()
         {
-            return "Nested(" + _action + ")";
+            return "Nested(" + Action + ")";
         }
     }
 

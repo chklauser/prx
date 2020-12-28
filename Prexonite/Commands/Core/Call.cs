@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Prexonite.Commands.List;
-using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
@@ -56,7 +55,7 @@ namespace Prexonite.Commands.Core
 
         public const string Alias = @"call\perform";
 
-        public static Call Instance { get; } = new Call();
+        public static Call Instance { get; } = new();
 
         /// <summary>
         ///     Implementation of (ref f, [arg1, arg2, arg3, ..., argn]) => f(arg1, arg2, arg3, ..., argn);
@@ -146,8 +145,7 @@ namespace Prexonite.Commands.Core
         /// <returns>A copy of the argument list with top-level lists expanded.</returns>
         public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args, int offset)
         {
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
             var iargs = new List<PValue>();
             for (var i = offset; i < args.Length; i++)
             {
@@ -177,8 +175,7 @@ namespace Prexonite.Commands.Core
         public static StackContext CreateStackContext(StackContext sctx, PValue callable,
             PValue[] args)
         {
-            var sa = callable.Value as IStackAware;
-            if (callable.Type is ObjectPType && sa != null)
+            if (callable.Type is ObjectPType && callable.Value is IStackAware sa)
                 return sa.CreateStackContext(sctx, args);
             else
                 return new IndirectCallContext(sctx, callable, args);
@@ -210,13 +207,10 @@ namespace Prexonite.Commands.Core
 
         #region Macro for partial application
 
-        private readonly PartialCallWrapper _partialCall = new PartialCallWrapper(Engine.CallAlias,
+        private readonly PartialCallWrapper _partialCall = new(Engine.CallAlias,
             EntityRef.Command.Create(Alias));
 
-        public PartialMacroCommand Partial
-        {
-            get { return _partialCall; }
-        }
+        public PartialMacroCommand Partial => _partialCall;
 
         #endregion
     }

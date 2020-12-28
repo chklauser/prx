@@ -32,21 +32,13 @@ namespace Prexonite.Internal
         internal Parser(IScanner scanner, StackContext sctx)
             : this(scanner)
         {
-            _sctx = sctx;
+            Sctx = sctx;
         }
 
-        private StackContext _sctx;
-
-        public StackContext Sctx
-        {
-            get { return _sctx; }
-        }
+        public StackContext Sctx { get; }
 
         private PType _lastType;
 
-        public PType LastType
-        {
-            get { return _lastType; }
-        }
+        public PType LastType => _lastType;
     }
 }

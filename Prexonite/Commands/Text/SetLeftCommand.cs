@@ -38,28 +38,19 @@ namespace Prexonite.Commands.Text
         {
         }
 
-        private static readonly SetLeftCommand _instance = new SetLeftCommand();
-
-        public static SetLeftCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static SetLeftCommand Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             // function setright(w,s,f)
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             string s;
             string f;

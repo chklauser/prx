@@ -41,7 +41,7 @@ namespace Prexonite
     public class DependencyAnalysis<TKey, TValue> where
                                                       TValue : class, IDependent<TKey>
     {
-        private readonly Dictionary<TKey, Node> _nodes = new Dictionary<TKey, Node>();
+        private readonly Dictionary<TKey, Node> _nodes = new();
 
         /// <summary>
         ///     Creates a new dependency analysis object from the supplied set of items.
@@ -75,8 +75,7 @@ namespace Prexonite
                     _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
                 foreach (var dependencyName in dependencies)
                 {
-                    Node dependency;
-                    if (_nodes.TryGetValue(dependencyName, out dependency))
+                    if (_nodes.TryGetValue(dependencyName, out var dependency))
                     {
                         node.Dependencies.Add(dependency);
                         dependency.Clients.Add(node);
@@ -108,13 +107,12 @@ namespace Prexonite
         [DebuggerStepThrough]
         internal class SearchEnv
         {
-            public readonly Stack<Node> Unassigned = new Stack<Node>();
+            public readonly Stack<Node> Unassigned = new();
             public int CurrentDfbi;
 
             public override string ToString()
             {
-                return String.Format("DFBI: {0}; {1}", CurrentDfbi,
-                    Unassigned.Select(n => n.Name).ToEnumerationString());
+                return $"DFBI: {CurrentDfbi}; {Unassigned.Select(n => n.Name).ToEnumerationString()}";
             }
         }
 
@@ -140,8 +138,7 @@ namespace Prexonite
 
             public Group(LinkedList<Node> list)
             {
-                if (list == null) throw new ArgumentNullException(nameof(list));
-                _list = list;
+                _list = list ?? throw new ArgumentNullException(nameof(list));
             }
 
             public Group(IEnumerable<Node> nodes) : this(nodes.ToLinkedList())
@@ -158,15 +155,9 @@ namespace Prexonite
                 throw new NotSupportedException("Dependency analysis groups cannot be modified.");
             }
 
-            public int Count
-            {
-                get { return _list.Count; }
-            }
+            public int Count => _list.Count;
 
-            public bool IsReadOnly
-            {
-                get { return ((ICollection<Node>) _list).IsReadOnly; }
-            }
+            public bool IsReadOnly => ((ICollection<Node>) _list).IsReadOnly;
 
             public IEnumerator<Node> GetEnumerator()
             {
@@ -236,47 +227,24 @@ namespace Prexonite
         [DebuggerStepThrough, DebuggerDisplay("{Subject}")]
         public class Node : ExtendableObject, IEquatable<Node>, INamed<TKey>
         {
-            private readonly TValue _subject;
-            private readonly HashSet<Node> _dependencies = new HashSet<Node>();
-            private readonly HashSet<Node> _clients = new HashSet<Node>();
-            private bool _hasBeenVisited, _assignmentPending;
+            private bool _assignmentPending;
             private int _dfbi, _q;
 
-            public bool HasBeenVisited
-            {
-                [DebuggerStepThrough]
-                get { return _hasBeenVisited; }
-            }
+            public bool HasBeenVisited { [DebuggerStepThrough] get; private set; }
 
             public Node(TValue subject)
             {
-                if (subject == null) throw new ArgumentNullException(nameof(subject));
-                _subject = subject;
+                Subject = subject ?? throw new ArgumentNullException(nameof(subject));
             }
 
-            public bool IsDirectlyRecursive
-            {
-                get { return _dependencies.Contains(this); }
-            }
+            public bool IsDirectlyRecursive => Dependencies.Contains(this);
 
-            public HashSet<Node> Dependencies
-            {
-                [DebuggerStepThrough]
-                get { return _dependencies; }
-            }
+            public HashSet<Node> Dependencies { [DebuggerStepThrough] get; } = new();
 
-            public HashSet<Node> Clients
-            {
-                [DebuggerStepThrough]
-                get { return _clients; }
-            }
+            public HashSet<Node> Clients { [DebuggerStepThrough] get; } = new();
 
 
-            public TValue Subject
-            {
-                [DebuggerStepThrough]
-                get { return _subject; }
-            }
+            public TValue Subject { [DebuggerStepThrough] get; }
 
             #region Class
 
@@ -291,7 +259,7 @@ namespace Prexonite
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return Equals(Name, other.Name) && Equals(other._subject, _subject);
+                return Equals(Name, other.Name) && Equals(other.Subject, Subject);
             }
 
             /// <summary>
@@ -320,27 +288,27 @@ namespace Prexonite
             /// <filterpriority>2</filterpriority>
             public override int GetHashCode()
             {
-                return _subject.GetHashCode();
+                return Subject.GetHashCode();
             }
 
             public static implicit operator TValue(Node node)
             {
-                return node._subject;
+                return node.Subject;
             }
 
             #endregion
 
             internal IEnumerable<Group> _Search(SearchEnv env)
             {
-                _hasBeenVisited = true;
+                HasBeenVisited = true;
                 env.CurrentDfbi++;
                 _dfbi = env.CurrentDfbi;
                 _q = env.CurrentDfbi;
                 env.Unassigned.Push(this);
                 _assignmentPending = true;
 
-                foreach (var dep in _dependencies)
-                    if (!dep._hasBeenVisited)
+                foreach (var dep in Dependencies)
+                    if (!dep.HasBeenVisited)
                     {
                         foreach (var group in dep._Search(env))
                             yield return group;
@@ -367,10 +335,7 @@ namespace Prexonite
 
             #region Implementation of INamed
 
-            public TKey Name
-            {
-                get { return _subject.Name; }
-            }
+            public TKey Name => Subject.Name;
 
             #endregion
         }

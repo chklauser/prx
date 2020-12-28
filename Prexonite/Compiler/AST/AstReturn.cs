@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Linq;
-using Prexonite.Modular;
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast
@@ -123,10 +122,9 @@ namespace Prexonite.Compiler.Ast
         {
             if (_optimizeConditionalReturnExpression(target))
                 return;
-            var indirectCall = Expression as AstIndirectCall;
 
-            if (indirectCall != null
-                     && _isStacklessRecursionPossible(target, indirectCall))
+            if (Expression is AstIndirectCall indirectCall
+                && _isStacklessRecursionPossible(target, indirectCall))
             {
                 // specialized approach
                 // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
@@ -170,11 +168,9 @@ namespace Prexonite.Compiler.Ast
         private static bool _isStacklessRecursionPossible(CompilerTarget target,
     AstIndirectCall symbol)
         {
-            var refNode = symbol.Subject as AstReference;
-            if (refNode == null)
+            if (!(symbol.Subject is AstReference refNode))
                 return false;
-            EntityRef.Function funcRef;
-            if (!refNode.Entity.TryGetFunction(out funcRef))
+            if (!refNode.Entity.TryGetFunction(out var funcRef))
                 return false;
             if (funcRef.Id != target.Function.Id)
                 return false;
@@ -191,8 +187,7 @@ namespace Prexonite.Compiler.Ast
 
         private bool _optimizeConditionalReturnExpression(CompilerTarget target)
         {
-            var cond = Expression as AstConditionalExpression;
-            if (cond == null)
+            if (!(Expression is AstConditionalExpression cond))
                 return false;
 
             //  return  if( cond )
@@ -223,23 +218,15 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            var format = "";
-            switch (ReturnVariant)
+            var format = ReturnVariant switch
             {
-                case ReturnVariant.Exit:
-                    format = Expression != null ? "return {0};" : "return;";
-                    break;
-                case ReturnVariant.Set:
-                    format = "return = {0};";
-                    break;
-                case ReturnVariant.Continue:
-                    format = Expression != null ? "yield {0};" : "continue;";
-                    break;
-                case ReturnVariant.Break:
-                    format = "break;";
-                    break;
-            }
-            return String.Format(format, Expression);
+                ReturnVariant.Exit => Expression != null ? "return {0};" : "return;",
+                ReturnVariant.Set => "return = {0};",
+                ReturnVariant.Continue => Expression != null ? "yield {0};" : "continue;",
+                ReturnVariant.Break => "break;",
+                _ => ""
+            };
+            return string.Format(format, Expression);
         }
     }
 

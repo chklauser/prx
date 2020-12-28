@@ -36,7 +36,7 @@ namespace Prexonite.Compiler.Build
 {
     public static class Plan
     {
-        public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Build");
+        public static readonly TraceSource Trace = new("Prexonite.Compiler.Build");
 
         /// <summary>List of modules included in the Prexonite assembly. Does not include 'sys' itself.</summary>
         private static readonly ISource[] _stdLibModules =

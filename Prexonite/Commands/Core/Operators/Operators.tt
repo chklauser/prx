@@ -112,9 +112,9 @@ namespace Prexonite.Commands.Core.Operators{
 	var className = op.PrxName;
 	var literal = op.Literal;
 	if(literal != null)
-		literal = String.Format("\"{0}\"", literal);
+		literal = $"\"{literal}\"";
 	else
-		literal = String.Format("\"$\" + OperatorNames.Prexonite.{0}", op.PrxName); 
+		literal = $"\"$\" + OperatorNames.Prexonite.{op.PrxName}"; 
 	#>
 					{OperatorNames.Prexonite.<#=op.PrxName#>, <#=literal#>},
 <#
@@ -169,14 +169,14 @@ namespace Prexonite.Commands.Core.Operators{
 		private string _customEnumName;
 		public string EnumName
 		{
-			get { return _customEnumName ?? PrxName; }
-			set { _customEnumName = value; }
+			get => _customEnumName ?? PrxName;
+		    set => _customEnumName = value;
 		}
 		private string _customMethodName;
 		public string MethodName
 		{
-			get { return _customMethodName ?? String.Format("Compiler.Cil.Compiler.PV{0}Method",EnumName); }
-			set { _customMethodName = value; }
+			get => _customMethodName ?? $"Compiler.Cil.Compiler.PV{EnumName}Method";
+		    set => _customMethodName = value;
 		}
 		public Arity Arity;
   	}

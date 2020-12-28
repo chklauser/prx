@@ -36,12 +36,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Count _instance = new Count();
-
-        public static Count Instance
-        {
-            get { return _instance; }
-        }
+        public static Count Instance { get; } = new();
 
         #endregion
 
@@ -52,10 +47,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         /// <summary>
         ///     Executes the command.

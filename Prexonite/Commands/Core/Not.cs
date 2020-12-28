@@ -1,28 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
     public class Not : PCommand
     {
-        private static readonly Not _instance = new Not();
-        public static Not Instance
-        {
-            get { return _instance; }
-        }
+        public static Not Instance { get; } = new();
 
         private Not()
         {
         }
 
         [Obsolete("IsPure mechanism was abandoned in v1.2. Use ICilExtension to perform constant folding instead.")]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {

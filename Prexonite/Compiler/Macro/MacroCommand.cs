@@ -33,27 +33,21 @@ namespace Prexonite.Compiler.Macro
     /// </summary>
     public abstract class MacroCommand
     {
-        private readonly string _id;
-
         /// <summary>
         ///     Creates a new instance of the macro command. It will identify itself with the supplied id.
         /// </summary>
         /// <param name = "id">The name of the physical slot, this command resides in.</param>
         protected MacroCommand(string id)
         {
-            if (String.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("MacroCommad.Id must not be null or empty.");
-            _id = id;
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentException("MacroCommand.Id must not be null or empty.");
+            Id = id;
         }
 
         /// <summary>
         ///     ID (slot name) of this macro command.
         /// </summary>
-        public string Id
-        {
-            [DebuggerStepThrough]
-            get { return _id; }
-        }
+        public string Id { [DebuggerStepThrough] get; }
 
         /// <summary>
         ///     Implementation of the application of this macro.

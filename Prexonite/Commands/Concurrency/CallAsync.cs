@@ -27,7 +27,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Prexonite.Commands.Core;
-using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Concurrency;
@@ -44,12 +43,7 @@ namespace Prexonite.Commands.Concurrency
         {
         }
 
-        private static readonly CallAsync _instance = new CallAsync();
-
-        public static CallAsync Instance
-        {
-            get { return _instance; }
-        }
+        public static CallAsync Instance { get; } = new();
 
         #endregion
 
@@ -58,10 +52,7 @@ namespace Prexonite.Commands.Concurrency
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -128,14 +119,8 @@ namespace Prexonite.Commands.Concurrency
 
         #region Partial application via call\star
 
-        private readonly PartialCallWrapper _partial = new PartialCallWrapper(
+        public PartialCallWrapper Partial { [DebuggerStepThrough] get; } = new(
             Engine.Call_AsyncAlias, EntityRef.Command.Create(Alias));
-
-        public PartialCallWrapper Partial
-        {
-            [DebuggerStepThrough]
-            get { return _partial; }
-        }
 
         #endregion
     }

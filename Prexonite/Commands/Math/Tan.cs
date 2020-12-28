@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Reflection;
-using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -39,12 +38,7 @@ namespace Prexonite.Commands.Math
         {
         }
 
-        private static readonly Tan _instance = new Tan();
-
-        public static Tan Instance
-        {
-            get { return _instance; }
-        }
+        public static Tan Instance { get; } = new();
 
         #endregion
 
@@ -55,10 +49,7 @@ namespace Prexonite.Commands.Math
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
         /// <summary>
         ///     Executes the command.

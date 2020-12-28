@@ -40,17 +40,11 @@ namespace Prexonite.Types
     {
         #region Singleton
 
-        private static readonly CharPType instance;
-
-        public static CharPType Instance
-        {
-            [NoDebug]
-            get { return instance; }
-        }
+        public static CharPType Instance { [NoDebug] get; }
 
         static CharPType()
         {
-            instance = new CharPType();
+            Instance = new CharPType();
         }
 
         [NoDebug]
@@ -64,12 +58,12 @@ namespace Prexonite.Types
 
         public static PValue CreatePValue(char c)
         {
-            return new PValue(c, instance);
+            return new(c, Instance);
         }
 
         public static PValue CreatePValue(int i)
         {
-            return new PValue((char) i, instance);
+            return new((char) i, Instance);
         }
 
         #endregion
@@ -86,13 +80,11 @@ namespace Prexonite.Types
             if (args == null)
                 throw new ArgumentNullException(nameof(args));
 
-            PValue v;
-
             if (args.Length < 1 || args[0].IsNull)
             {
                 c = '\0';
             }
-            else if (args[0].TryConvertTo(sctx, Char, out v))
+            else if (args[0].TryConvertTo(sctx, Char, out var v))
             {
                 c = (char) v.Value;
             }
@@ -130,67 +122,67 @@ namespace Prexonite.Types
             switch (id.ToLowerInvariant())
             {
                 case "getnumericvalue":
-                    result = System.Char.GetNumericValue(c);
+                    result = char.GetNumericValue(c);
                     break;
                 case "getunicodecategory":
-                    result = sctx.CreateNativePValue(System.Char.GetUnicodeCategory(c));
+                    result = sctx.CreateNativePValue(char.GetUnicodeCategory(c));
                     break;
                 case "iscontrol":
-                    result = System.Char.IsControl(c);
+                    result = char.IsControl(c);
                     break;
                 case "isdigit":
-                    result = System.Char.IsDigit(c);
+                    result = char.IsDigit(c);
                     break;
                 case "ishighsurrogate":
-                    result = System.Char.IsHighSurrogate(c);
+                    result = char.IsHighSurrogate(c);
                     break;
                 case "isletter":
-                    result = System.Char.IsLetter(c);
+                    result = char.IsLetter(c);
                     break;
                 case "isletterordigit":
-                    result = System.Char.IsLetterOrDigit(c);
+                    result = char.IsLetterOrDigit(c);
                     break;
                 case "islower":
-                    result = System.Char.IsLower(c);
+                    result = char.IsLower(c);
                     break;
                 case "islowsurrogate":
-                    result = System.Char.IsLowSurrogate(c);
+                    result = char.IsLowSurrogate(c);
                     break;
                 case "isnumber":
-                    result = System.Char.IsNumber(c);
+                    result = char.IsNumber(c);
                     break;
                 case "ispunctuation":
-                    result = System.Char.IsPunctuation(c);
+                    result = char.IsPunctuation(c);
                     break;
                 case "issurrogate":
-                    result = System.Char.IsSurrogate(c);
+                    result = char.IsSurrogate(c);
                     break;
                 case "issymbol":
-                    result = System.Char.IsSymbol(c);
+                    result = char.IsSymbol(c);
                     break;
                 case "isupper":
-                    result = System.Char.IsUpper(c);
+                    result = char.IsUpper(c);
                     break;
                 case "iswhitespace":
-                    result = System.Char.IsWhiteSpace(c);
+                    result = char.IsWhiteSpace(c);
                     break;
                 case "tolower":
                     if (args.Length > 0 && args[0].TryConvertTo(sctx, false, out ci))
-                        result = System.Char.ToLower(c, ci);
+                        result = char.ToLower(c, ci);
                     else
-                        result = System.Char.ToLower(c);
+                        result = char.ToLower(c);
                     break;
                 case "toupper":
                     if (args.Length > 0 && args[0].TryConvertTo(sctx, false, out ci))
-                        result = System.Char.ToUpper(c, ci);
+                        result = char.ToUpper(c, ci);
                     else
-                        result = System.Char.ToUpper(c);
+                        result = char.ToUpper(c);
                     break;
                 case "tolowerinvariant":
-                    result = System.Char.ToLowerInvariant(c);
+                    result = char.ToLowerInvariant(c);
                     break;
                 case "toupperinvariant":
-                    result = System.Char.ToUpperInvariant(c);
+                    result = char.ToUpperInvariant(c);
                     break;
                 case "length":
                     result = 1;
@@ -238,12 +230,11 @@ namespace Prexonite.Types
                 {
                     case BuiltIn.Object:
                         var clrType = ((ObjectPType) target).ClrType;
-                        switch (Type.GetTypeCode(clrType))
+                        result = Type.GetTypeCode(clrType) switch
                         {
-                            case TypeCode.Byte:
-                                result = new PValue(Convert.ToByte(c), target);
-                                break;
-                        }
+                            TypeCode.Byte => new PValue(Convert.ToByte(c), target),
+                            _ => result
+                        };
                         break;
                 }
             }
@@ -260,19 +251,15 @@ namespace Prexonite.Types
                         break;
                     case BuiltIn.Object:
                         var clrType = ((ObjectPType) target).ClrType;
-                        switch (Type.GetTypeCode(clrType))
+                        result = Type.GetTypeCode(clrType) switch
                         {
-                            case TypeCode.Char:
-                                result = new PValue(c, target);
-                                break;
-                            case TypeCode.Int32:
-                                result = new PValue((Int32) c, target);
-                                break;
-                            case TypeCode.Object:
+                            TypeCode.Char => new PValue(c, target),
+                            TypeCode.Int32 => new PValue((int) c, target),
+                            TypeCode.Object =>
                                 // explicit boxing
-                                result = new PValue(c, Object[typeof(object)]);
-                                break;
-                        }
+                                new PValue(c, Object[typeof(object)]),
+                            _ => result
+                        };
                         break;
                 }
             }
@@ -315,18 +302,13 @@ namespace Prexonite.Types
                     case BuiltIn.Object:
                         var clrType = ((ObjectPType) source).ClrType;
                         var tc = Type.GetTypeCode(clrType);
-                        switch (tc)
+                        result = tc switch
                         {
-                            case TypeCode.Byte:
-                                result = (char) subject.Value;
-                                break;
-                            case TypeCode.Int32:
-                                result = (char) (Int32) subject.Value;
-                                break;
-                            case TypeCode.Char:
-                                result = (char) subject.Value;
-                                break;
-                        }
+                            TypeCode.Byte => (char) subject.Value,
+                            TypeCode.Int32 => (char) (int) subject.Value,
+                            TypeCode.Char => (char) subject.Value,
+                            _ => result
+                        };
 
                         if (result == null &&
                             source.TryConvertTo(sctx, subject, Object[typeof (char)], useExplicit,
@@ -420,11 +402,8 @@ namespace Prexonite.Types
         {
             result = null;
 
-            char left;
-            char right;
-
-            if (_tryConvert(sctx, leftOperand, out left) &&
-                _tryConvert(sctx, rightOperand, out right))
+            if (_tryConvert(sctx, leftOperand, out var left) &&
+                _tryConvert(sctx, rightOperand, out var right))
                 result = left == right;
 
             return result != null;
@@ -433,11 +412,8 @@ namespace Prexonite.Types
         public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand,
             out PValue result)
         {
-            char left;
-            char right;
-
-            if (!(_tryConvert(sctx, leftOperand, out left)) ||
-                !(_tryConvert(sctx, rightOperand, out right)))
+            if (!(_tryConvert(sctx, leftOperand, out var left)) ||
+                !(_tryConvert(sctx, rightOperand, out var right)))
                 result = false;
             else
                 result = left != right;

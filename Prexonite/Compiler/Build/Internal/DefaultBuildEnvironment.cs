@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 

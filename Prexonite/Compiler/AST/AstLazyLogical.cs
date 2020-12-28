@@ -70,15 +70,14 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public LinkedList<AstExpr> Conditions { get; } = new LinkedList<AstExpr>();
+        public LinkedList<AstExpr> Conditions { get; } = new();
 
         #endregion
 
         public void AddExpression(AstExpr expr)
         {
             //Flatten hierarchy
-            var lazy = expr as AstLazyLogical;
-            if (lazy != null && lazy.GetType() == GetType())
+            if (expr is AstLazyLogical lazy && lazy.GetType() == GetType())
             {
                 foreach (var cond in lazy.Conditions)
                     AddExpression(cond);
@@ -129,11 +128,10 @@ namespace Prexonite.Compiler.Ast
                 throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
                 throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
-            if (String.IsNullOrEmpty(targetLabel))
+            if (string.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
                     Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
-            var logical = cond as AstLazyLogical;
-            if (logical != null)
+            if (cond is AstLazyLogical logical)
             {
                 var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, targetLabel, continueLabel);
@@ -169,10 +167,10 @@ namespace Prexonite.Compiler.Ast
                 throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
                 throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
-            if (String.IsNullOrEmpty(targetLabel))
+            if (string.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
                     Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
-            if (String.IsNullOrEmpty(alternativeLabel))
+            if (string.IsNullOrEmpty(alternativeLabel))
                 throw new ArgumentException(
                     Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty, nameof(alternativeLabel));
             var logical = cond as AstLazyLogical;
@@ -211,11 +209,10 @@ namespace Prexonite.Compiler.Ast
                 throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
                 throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
-            if (String.IsNullOrEmpty(targetLabel))
+            if (string.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
                     Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
-            var logical = cond as AstLazyLogical;
-            if (logical != null)
+            if (cond is AstLazyLogical logical)
             {
                 var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, continueLabel, targetLabel); //inverted
@@ -232,7 +229,7 @@ namespace Prexonite.Compiler.Ast
 
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(
+            return new(
                 Conditions.Any(x => x.IsPlaceholder()), Conditions.Any(x => x.IsArgumentSplice()));
         }
 
@@ -375,10 +372,9 @@ namespace Prexonite.Compiler.Ast
                 _OptimizeNode(target, ref condition);
                 node.Value = condition; //Update list of conditions with optimized condition
 
-                PValue resultP;
                 if (condition is AstConstant &&
                     ((AstConstant) condition).ToPValue(target).TryConvertTo(target.Loader,
-                        PType.Bool, false, out resultP))
+                        PType.Bool, false, out var resultP))
                 {
                     if ((bool) resultP.Value == ShortcircuitValue)
                     {

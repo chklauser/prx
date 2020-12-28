@@ -37,22 +37,14 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Boxed _instance = new Boxed();
-
-        public static Boxed Instance
-        {
-            get { return _instance; }
-        }
+        public static Boxed Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {

@@ -37,17 +37,8 @@ namespace Prexonite.Compiler.Cil.Seh
 
     internal static class RegionKindExtensions
     {
-        public static bool IsIn(this RegionKind subject, RegionKind mask)
-        {
-            return (subject & mask) == subject;
-        }
+        public static bool IsIn(this RegionKind subject, RegionKind mask) => (subject & mask) == subject;
 
-        public static bool IsOfKind(this Region subject, RegionKind mask)
-        {
-            if (subject == null)
-                return false;
-            else
-                return subject.Kind.IsIn(mask);
-        }
+        public static bool IsOfKind(this Region subject, RegionKind mask) => subject != null && subject.Kind.IsIn(mask);
     }
 }

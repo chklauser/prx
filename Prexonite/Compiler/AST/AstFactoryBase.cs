@@ -127,7 +127,7 @@ namespace Prexonite.Compiler.Ast
             symbol = symbol.HandleWith(_listMessages, msgs);
             if (msgs.Count > 0)
             {
-                var seen = new HashSet<String>();
+                var seen = new HashSet<string>();
                 foreach (var message in msgs)
                 {
                     var c = message.MessageClass;
@@ -158,15 +158,13 @@ namespace Prexonite.Compiler.Ast
             return t;
         }
 
-        private static readonly PValue _constZero = new PValue(0,PType.Int);
-        private static readonly PValue _constOne = new PValue(1, PType.Int);
+        private static readonly PValue _constZero = new(0,PType.Int);
+        private static readonly PValue _constOne = new(1, PType.Int);
 
         private bool _safeEquals(PValue value,PValue constant)
         {
-            PValue result;
-            PValue booleanResult;
-            return value != null && value.Equality(CompileTimeExecutionContext.Loader, constant, out result) &&
-                   result.TryConvertTo(CompileTimeExecutionContext.Loader, PType.Bool, out booleanResult) &&
+            return value != null && value.Equality(CompileTimeExecutionContext.Loader, constant, out var result) &&
+                   result.TryConvertTo(CompileTimeExecutionContext.Loader, PType.Bool, out var booleanResult) &&
                    (bool) booleanResult.Value;
         }
 
@@ -231,14 +229,12 @@ namespace Prexonite.Compiler.Ast
             switch (op)
             {
                 case BinaryOperator.Addition:
-                    var concatenation = left as AstStringConcatenation;
-                    if (concatenation != null)
+                    if (left is AstStringConcatenation concatenation)
                     {
                         // The LHS is a concatenation, check if RHS is a concatenation
                         //  as well and absorb it if that is the case.
-                        var rightConcatenation = right as AstStringConcatenation;
 
-                        if (rightConcatenation != null)
+                        if (right is AstStringConcatenation rightConcatenation)
                         {
                             concatenation.Arguments.AddRange(rightConcatenation.Arguments);
                         }
@@ -349,8 +345,7 @@ namespace Prexonite.Compiler.Ast
                 case BinaryOperator.Coalescence:
                     return Coalescence(position, new[] {left, right});
                 case BinaryOperator.Cast:
-                    var T = right as AstTypeExpr;
-                    if (T == null)
+                    if (!(right is AstTypeExpr T))
                     {
                         ReportMessage(Message.Error(Resources.AstFactoryBase_BinaryOperation_TypeExprExpected,
                                                     position, MessageClasses.TypeExpressionExpected));
@@ -405,18 +400,12 @@ namespace Prexonite.Compiler.Ast
         [NotNull]
         private AstExpr _foldConstants([NotNull] AstExpr callNode)
         {
-            AstIndirectCall indirectCallNode;
-            EntityRef entityRef;
-            EntityRef.Command command;
-            PValue commandImpl;
-            PValue result;
-            AstExpr constantNode;
-            if (callNode.TryMatchCall(out indirectCallNode, out entityRef) 
-                && entityRef.TryGetCommand(out command)
+            if (callNode.TryMatchCall(out AstIndirectCall indirectCallNode, out EntityRef entityRef) 
+                && entityRef.TryGetCommand(out var command)
                 && indirectCallNode.Arguments.All(x => x is AstConstant)
-                && command.TryGetEntity(CompileTimeExecutionContext.Loader, out commandImpl)
-                && commandImpl.TryIndirectCall(CompileTimeExecutionContext.Loader, _constArgsToValues(indirectCallNode).ToArray(),out result)
-                && AstConstant.TryCreateConstant(CompileTimeExecutionContext,callNode.Position,result,out constantNode))
+                && command.TryGetEntity(CompileTimeExecutionContext.Loader, out var commandImpl)
+                && commandImpl.TryIndirectCall(CompileTimeExecutionContext.Loader, _constArgsToValues(indirectCallNode).ToArray(),out var result)
+                && AstConstant.TryCreateConstant(CompileTimeExecutionContext,callNode.Position,result,out var constantNode))
             {
                 return constantNode;
             }
@@ -451,12 +440,10 @@ namespace Prexonite.Compiler.Ast
 
                             // Create "not ?"
                             var notId = OperatorNames.Prexonite.GetName(UnaryOperator.LogicalNot);
-                            Symbol notSymbol;
-                            var notOp = CurrentBlock.Symbols.TryGet(notId, out notSymbol)
+                            var notOp = CurrentBlock.Symbols.TryGet(notId, out var notSymbol)
                                 ? ExprFor(position, notSymbol)
                                 : new AstUnresolved(position, notId);
-                            var notCall = notOp as AstGetSet;
-                            if (notCall == null)
+                            if (!(notOp is AstGetSet notCall))
                             {
                                 ReportMessage(
                                     Message.Error(
@@ -489,13 +476,11 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.PreDeltaRight:
                     {
                         var id = OperatorNames.Prexonite.GetName(op);
-                        Symbol symbol;
-                        CurrentBlock.Symbols.TryGet(id, out symbol);
+                        CurrentBlock.Symbols.TryGet(id, out var symbol);
                         var callExpr = CurrentBlock.Symbols.TryGet(id, out symbol)
                             ? ExprFor(position, symbol)
                             : new AstUnresolved(position, id);
-                        var callLValue = callExpr as AstGetSet;
-                        if (callLValue == null)
+                        if (!(callExpr is AstGetSet callLValue))
                         {
                             ReportMessage(Message.Error(Resources.AstFactoryBase_UnaryOperation_Target_must_be_LValue,
                                                         position, MessageClasses.LValueExpected));
@@ -511,12 +496,10 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.PostIncrement:
                 case UnaryOperator.PostDecrement:
                     {
-                        var symbolCall = operand as AstIndirectCall;
-                        var symbol = symbolCall == null ? null : symbolCall.Subject as AstReference;
-                        EntityRef.Variable variableRef;
+                        var symbol = !(operand is AstIndirectCall symbolCall) ? null : symbolCall.Subject as AstReference;
                         var complex = operand as AstGetSet;
 
-                        var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
+                        var isVariable = symbol != null && symbol.Entity.TryGetVariable(out _);
                         
                         var isAssignable = complex != null;
                         var isPre = op == UnaryOperator.PreDecrement || op == UnaryOperator.PreIncrement;
@@ -611,14 +594,13 @@ namespace Prexonite.Compiler.Ast
                         getVariation.Call = PCall.Get;
                         getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
 
-                        var T = assignment.Arguments[assignment.Arguments.Count - 1] as AstTypeExpr;
-                        if (T == null)
+                        if (!(assignment.Arguments[^1] is AstTypeExpr T))
                         {
                             ReportMessage(Message.Error(Resources.AstFactoryBase_ModifyingAssignment_TypeExpressionExpected,position, MessageClasses.TypeExpressionExpected));
                             T = ConstantType(position, NullPType.Literal);
                         }
 
-                        assignment.Arguments[assignment.Arguments.Count - 1] = Typecast(position, getVariation, T);
+                        assignment.Arguments[^1] = Typecast(position, getVariation, T);
                         return assignment;
                     }
                 case BinaryOperator.Addition:
@@ -655,9 +637,9 @@ namespace Prexonite.Compiler.Ast
                         //  operator implementation
                         var modification = BinaryOperation(position, getVersion, binaryOperator,
                                                             assignPrototype.Arguments[
-                                                                assignPrototype.Arguments.Count - 1]);
+                                                                ^1]);
 
-                        assignment.Arguments[assignment.Arguments.Count - 1] = modification;
+                        assignment.Arguments[^1] = modification;
 
                         return assignment;
                     }
@@ -693,7 +675,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstCreateCoroutine CreateCoroutine(ISourcePosition position, AstExpr function)
         {
-            return new AstCreateCoroutine(position.File, position.Line, position.Column) {Expression = function};
+            return new(position.File, position.Line, position.Column) {Expression = function};
         }
 
         public AstExpr KeyValuePair(ISourcePosition position, AstExpr key, AstExpr value)
@@ -722,44 +704,40 @@ namespace Prexonite.Compiler.Ast
 
         public AstExpr LogicalAnd(ISourcePosition position, IEnumerable<AstExpr> clauses)
         {
-            using (var e = clauses.GetEnumerator())
-            {
-                if(!e.MoveNext())
-                    _throwLogicalNeedsTwoArgs(position);
-                var lhs = e.Current;
+            using var e = clauses.GetEnumerator();
+            if(!e.MoveNext())
+                _throwLogicalNeedsTwoArgs(position);
+            var lhs = e.Current;
 
-                if (!e.MoveNext())
-                    _throwLogicalNeedsTwoArgs(position);
-                var rhs = e.Current;
+            if (!e.MoveNext())
+                _throwLogicalNeedsTwoArgs(position);
+            var rhs = e.Current;
 
-                var a = new AstLogicalAnd(position.File, position.Line, position.Column, lhs, rhs);
+            var a = new AstLogicalAnd(position.File, position.Line, position.Column, lhs, rhs);
 
-                while (e.MoveNext())
-                    a.Conditions.AddLast(e.Current);
+            while (e.MoveNext())
+                a.Conditions.AddLast(e.Current);
 
-                return a;
-            }
+            return a;
         }
 
         public AstExpr LogicalOr(ISourcePosition position, IEnumerable<AstExpr> clauses)
         {
-            using (var e = clauses.GetEnumerator())
-            {
-                if (!e.MoveNext())
-                    _throwLogicalNeedsTwoArgs(position);
-                var lhs = e.Current;
+            using var e = clauses.GetEnumerator();
+            if (!e.MoveNext())
+                _throwLogicalNeedsTwoArgs(position);
+            var lhs = e.Current;
 
-                if (!e.MoveNext())
-                    _throwLogicalNeedsTwoArgs(position);
-                var rhs = e.Current;
+            if (!e.MoveNext())
+                _throwLogicalNeedsTwoArgs(position);
+            var rhs = e.Current;
 
-                var a = new AstLogicalOr(position.File, position.Line, position.Column, lhs, rhs);
+            var a = new AstLogicalOr(position.File, position.Line, position.Column, lhs, rhs);
 
-                while (e.MoveNext())
-                    a.Conditions.AddLast(e.Current);
+            while (e.MoveNext())
+                a.Conditions.AddLast(e.Current);
 
-                return a;
-            }
+            return a;
         }
 
         public AstExpr Null(ISourcePosition position)
@@ -769,7 +747,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstObjectCreation CreateObject(ISourcePosition position, AstTypeExpr type)
         {
-            return new AstObjectCreation(position.File, position.Line, position.Column, type);
+            return new(position.File, position.Line, position.Column, type);
         }
 
         public AstExpr Typecheck(ISourcePosition position, AstExpr operand, AstTypeExpr type)
@@ -807,35 +785,35 @@ namespace Prexonite.Compiler.Ast
             return new AstExpand(position, entity, call);
         }
 
-        public AstGetSet Placeholder(ISourcePosition position, int? index = new int?())
+        public AstGetSet Placeholder(ISourcePosition position, int? index = new())
         {
             return new AstPlaceholder(position.File, position.Line, position.Column, index);
         }
 
         public AstScopedBlock Block(ISourcePosition position)
         {
-            return new AstScopedBlock(position,CurrentBlock);
+            return new(position,CurrentBlock);
         }
 
         public AstCondition Condition(ISourcePosition position, AstExpr condition, bool isNegative = false)
         {
-            return new AstCondition(position, CurrentBlock, condition, isNegative);
+            return new(position, CurrentBlock, condition, isNegative);
         }
 
-        public AstWhileLoop WhileLoop(ISourcePosition position, bool isPostcondition = false, bool isNegative = false)
+        public AstWhileLoop WhileLoop(ISourcePosition position, bool isPostCondition = false, bool isNegative = false)
         {
-            var loop = new AstWhileLoop(position, CurrentBlock, isPostcondition, !isNegative);
+            var loop = new AstWhileLoop(position, CurrentBlock, isPostCondition, !isNegative);
             return loop;
         }
 
         public AstForLoop ForLoop(ISourcePosition position)
         {
-            return new AstForLoop(position,CurrentBlock);
+            return new(position,CurrentBlock);
         }
 
         public AstForeachLoop ForeachLoop(ISourcePosition position)
         {
-            return new AstForeachLoop(position, CurrentBlock);
+            return new(position, CurrentBlock);
         }
 
         public AstNode Return(ISourcePosition position, AstExpr expression = null, ReturnVariant returnVariant = ReturnVariant.Exit)
@@ -850,12 +828,12 @@ namespace Prexonite.Compiler.Ast
 
         public AstTryCatchFinally TryCatchFinally(ISourcePosition position)
         {
-            return new AstTryCatchFinally(position, CurrentBlock);
+            return new(position, CurrentBlock);
         }
 
         public AstUsing Using(ISourcePosition position)
         {
-            return new AstUsing(position,CurrentBlock);
+            return new(position,CurrentBlock);
         }
 
         public AstExpr ExprFor(ISourcePosition position, Symbol symbol)
@@ -880,7 +858,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        private static readonly AssembleAstHandler _assembleAst = new AssembleAstHandler();
+        private static readonly AssembleAstHandler _assembleAst = new();
 
         private class AssembleAstHandler : ISymbolHandler<Tuple<AstFactoryBase, PCall, ISourcePosition>, AstExpr>
         {
@@ -899,8 +877,7 @@ namespace Prexonite.Compiler.Ast
 
             public AstExpr HandleReference(ReferenceSymbol self, Tuple<AstFactoryBase, PCall, ISourcePosition> argument)
             {
-                EntityRef.Variable.Local local;
-                if (self.Entity.TryGetLocalVariable(out local))
+                if (self.Entity.TryGetLocalVariable(out var local))
                 {
                     if (argument.Item1.IsOuterVariable(local.Id))
                         argument.Item1.RequireOuterVariable(local.Id);
@@ -916,16 +893,12 @@ namespace Prexonite.Compiler.Ast
 
             public AstExpr HandleExpand(ExpandSymbol self, Tuple<AstFactoryBase, PCall, ISourcePosition> argument)
             {
-                ReferenceSymbol refSym;
-
                 var position = argument.Item3;
                 var inner = self.InnerSymbol;
 
-                if (self.InnerSymbol.TryGetReferenceSymbol(out refSym))
+                if (self.InnerSymbol.TryGetReferenceSymbol(out var refSym))
                 {
-                    EntityRef.MacroCommand mcmd;
-                    EntityRef.Function func;
-                    if (refSym.Entity.TryGetMacroCommand(out mcmd) || refSym.Entity.TryGetFunction(out func))
+                    if (refSym.Entity.TryGetMacroCommand(out _) || refSym.Entity.TryGetFunction(out _))
                     {
                         return argument.Item1.Expand(argument.Item3, refSym.Entity);
                     }
@@ -958,7 +931,7 @@ namespace Prexonite.Compiler.Ast
 
         private void _throwLogicalNeedsTwoArgs(ISourcePosition position)
         {
-            throw new PrexoniteException(string.Format("Lazy logical operators require at least two operands. {0}", position));
+            throw new PrexoniteException($"Lazy logical operators require at least two operands. {position}");
         }
 
         #region IIndirectCall, IObject

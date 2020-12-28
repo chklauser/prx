@@ -61,13 +61,9 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "isJustEffect">Whether the nodes return value will be discarded by the surrounding program.</param>
         internal MacroContext(MacroSession session, AstGetSet invocation, bool isJustEffect)
         {
-            if (session == null)
-                throw new ArgumentNullException(nameof(session));
-            if (invocation == null)
-                throw new ArgumentNullException(nameof(invocation));
             IsJustEffect = isJustEffect;
-            Invocation = invocation;
-            _session = session;
+            Invocation = invocation ?? throw new ArgumentNullException(nameof(invocation));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
             Block = new AstScopedBlock(invocation.Position, session.CurrentBlock);
             IsPartialApplication = Invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
             _sentinelBlock = session.Target.CurrentBlock;

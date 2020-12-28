@@ -24,10 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
@@ -38,9 +34,7 @@ namespace Prexonite.Commands.Core
     {
         #region Singleton
 
-        private static readonly CreateSourcePosition _instance = new CreateSourcePosition();
-
-        public static CreateSourcePosition Instance { get { return _instance; } }
+        public static CreateSourcePosition Instance { get; } = new();
 
         private CreateSourcePosition()
         {
@@ -63,11 +57,10 @@ namespace Prexonite.Commands.Core
                 return sctx.CreateNativePValue(NoSourcePosition.Instance);
             }
 
-            string file = args[0].CallToString(sctx);
+            var file = args[0].CallToString(sctx);
             int? line, column;
 
-            PValue box;
-            if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance,true,out box))
+            if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance,true,out var box))
             {
                 line = (int) box.Value;
             }

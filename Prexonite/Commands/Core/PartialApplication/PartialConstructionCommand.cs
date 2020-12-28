@@ -37,15 +37,9 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
         }
 
-        private static readonly PartialConstructionCommand _instance =
-            new PartialConstructionCommand();
-
         private ConstructorInfo _ptypeConstructCtor;
 
-        public static PartialConstructionCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static PartialConstructionCommand Instance { get; } = new();
 
         #endregion
 
@@ -59,11 +53,8 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
         {
-            return (_ptypeConstructCtor
-                ??
-                (_ptypeConstructCtor =
-                    GetPartialCallRepresentationType(parameter).GetConstructor(
-                        new[] {typeof (int[]), typeof (PValue[]), typeof (PType)})));
+            return (_ptypeConstructCtor ??= GetPartialCallRepresentationType(parameter).GetConstructor(
+                new[] {typeof (int[]), typeof (PValue[]), typeof (PType)}));
         }
 
         protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
@@ -71,10 +62,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             return typeof (PartialConstruction);
         }
 
-        protected override string PartialApplicationKind
-        {
-            get { return "Partial Construction"; }
-        }
+        protected override string PartialApplicationKind => "Partial Construction";
 
         #endregion
     }

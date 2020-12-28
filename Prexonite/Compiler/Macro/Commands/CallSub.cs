@@ -34,12 +34,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Singleton pattern
 
-        private static readonly CallSub _instance = new CallSub();
-
-        public static CallSub Instance
-        {
-            get { return _instance; }
-        }
+        public static CallSub Instance { get; } = new();
 
         private CallSub() : base(Alias)
         {

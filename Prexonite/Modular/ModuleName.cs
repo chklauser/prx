@@ -21,7 +21,7 @@ namespace Prexonite.Modular
         public string Id { get; }
 
         public static readonly PType PType = PType.Object[typeof(ModuleName)];
-        private static readonly Version ZeroVersion = new Version();
+        private static readonly Version ZeroVersion = new();
 
         /// <summary>
         /// The version of the named module. Consists of four 32bit integers (signed, but non-negative).
@@ -38,7 +38,7 @@ namespace Prexonite.Modular
 
 #if !DEBUG
 // ReSharper disable PossibleNullReferenceException
-            if (id.Contains(",") || id.Any(Char.IsWhiteSpace)) 
+            if (id.Contains(",") || id.Any(char.IsWhiteSpace)) 
                 throw new ArgumentException("A module id cannot contain commas (U+002C) or whitespaces (Unicode general category Zs)");
 // ReSharper restore PossibleNullReferenceException
 #endif
@@ -202,7 +202,7 @@ namespace Prexonite.Modular
             }
 
             if(id.Length == 0 
-                || id.Any(Char.IsWhiteSpace)
+                || id.Any(char.IsWhiteSpace)
                 || rawVersion != null && rawVersion.Length == 0)
                 return false;
 
@@ -232,7 +232,7 @@ namespace Prexonite.Modular
 
         public MetaEntry ToMetaEntry()
         {
-            return new MetaEntry(new MetaEntry[] {Id, Version.ToString()});
+            return new(new MetaEntry[] {Id, Version.ToString()});
         }
 
         public static implicit operator MetaEntry(ModuleName name)

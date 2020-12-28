@@ -123,7 +123,7 @@ namespace Prexonite.Compiler
 
         #region Global Symbol Table
 
-        private readonly Stack<DeclarationScope> _declarationScopes = new Stack<DeclarationScope>();
+        private readonly Stack<DeclarationScope> _declarationScopes = new();
         
         // For the top-level (outside of all namespaces and functions), we use a stack of symbol stores. 
         // From "outside" to "inside", the stack looks as follows:
@@ -258,9 +258,7 @@ namespace Prexonite.Compiler
             if (_functionTargets.ContainsKey(func.Id) &&
                 (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
                 throw new PrexoniteException(
-                    String.Format("The application {0} does not allow overriding of function {1}.",
-                        ParentApplication.Id,
-                        func.Id));
+                    $"The application {ParentApplication.Id} does not allow overriding of function {func.Id}.");
 
             _functionTargets[func.Id] = target;
 
@@ -273,7 +271,7 @@ namespace Prexonite.Compiler
 
         public CompilerHooksIterator CompilerHooks { [DebuggerStepThrough] get; }
 
-        private readonly List<CompilerHook> _compilerHooks = new List<CompilerHook>();
+        private readonly List<CompilerHook> _compilerHooks = new();
 
         [DebuggerStepThrough]
         public class CompilerHooksIterator : ICollection<CompilerHook>
@@ -315,8 +313,8 @@ namespace Prexonite.Compiler
             public void Add(PValue transformation)
             {
                 if (transformation.Type.ToBuiltIn() == PType.BuiltIn.Object &&
-                    transformation.Value is AstTransformation)
-                    _lst.Add(new CompilerHook((AstTransformation) transformation.Value));
+                    transformation.Value is AstTransformation transformationNode)
+                    _lst.Add(new CompilerHook(transformationNode));
                 else
                     _lst.Add(new CompilerHook(transformation));
             }
@@ -434,7 +432,7 @@ namespace Prexonite.Compiler
 
         #region Custom symbol resolving
 
-        private readonly List<CustomResolver> _customResolvers = new List<CustomResolver>();
+        private readonly List<CustomResolver> _customResolvers = new();
 
         public CustomResolversIterator CustomResolvers { get; }
 
@@ -568,7 +566,7 @@ namespace Prexonite.Compiler
         ///     Table of macro commands supported by this loader. Macro commands are referenced 
         ///     by <see cref = "SymbolInterpretations.MacroCommand" /> symbols and applied at compile time.
         /// </summary>
-        public MacroCommandTable MacroCommands { [DebuggerStepThrough] get; } = new MacroCommandTable();
+        public MacroCommandTable MacroCommands { [DebuggerStepThrough] get; } = new();
 
         private void _initializeMacroCommands()
         {
@@ -713,26 +711,23 @@ namespace Prexonite.Compiler
             LoadPaths.Push(file.DirectoryName);
             try
             {
-                using (Stream str = new FileStream(
+                using Stream str = new FileStream(
                     file.FullName,
                     FileMode.Open,
                     FileAccess.Read,
                     FileShare.Read,
                     4 * 1024,
-                    FileOptions.SequentialScan))
-                {
+                    FileOptions.SequentialScan);
 #if DEBUG
                     var indent = new StringBuilder(_loadIndent);
                     indent.Append(' ', 2 * (_loadIndent++));
                     Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
 #endif
-                    _loadFromStream(str, file.Name);
+                _loadFromStream(str, file.Name);
 #if DEBUG
                     Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
                     _loadIndent--;
 #endif
-                }
-
             }
             finally
             {
@@ -788,7 +783,7 @@ namespace Prexonite.Compiler
             _reportSemError(line, column, message);
         }
 
-        private void _messageHook(Object sender, MessageEventArgs e)
+        private void _messageHook(object sender, MessageEventArgs e)
         {
             ReportMessage(e.Message);
         }
@@ -858,19 +853,19 @@ namespace Prexonite.Compiler
         }
 
         [PublicAPI]
-        public List<Message> Errors { get; } = new List<Message>();
+        public List<Message> Errors { get; } = new();
 
         [PublicAPI]
-        public List<Message> Warnings { get; } = new List<Message>();
+        public List<Message> Warnings { get; } = new();
 
         [PublicAPI]
-        public List<Message> Infos { get; } = new List<Message>();
+        public List<Message> Infos { get; } = new();
 
         #endregion
 
         #region Load Path and file table
 
-        public Stack<string> LoadPaths { get; } = new Stack<string>();
+        public Stack<string> LoadPaths { get; } = new();
 
         /// <summary>
         /// The platform-independent directory separator used by this application. Can be controlled via the
@@ -925,15 +920,15 @@ namespace Prexonite.Compiler
             return null;
         }
 
-        public SymbolCollection LoadedFiles { get; } = new SymbolCollection();
+        public SymbolCollection LoadedFiles { get; } = new();
 
         #endregion
 
         #region Build Block Commands
 
-        private readonly Stack<object> _buildCommandsRequests = new Stack<object>();
+        private readonly Stack<object> _buildCommandsRequests = new();
 
-        public CommandTable BuildCommands { get; } = new CommandTable();
+        public CommandTable BuildCommands { get; } = new();
 
         /// <summary>
         ///     Request that build commands be added to the <see cref = "ParentEngine" />. Must be matched with a call to <see
@@ -1054,7 +1049,7 @@ namespace Prexonite.Compiler
 
             BuildCommands.AddCompilerCommand(
                 BuildHookCommand,
-                delegate(StackContext sctx, PValue[] args)
+                delegate(StackContext _, PValue[] args)
                     {
                         foreach (var arg in args)
                         {
@@ -1071,7 +1066,7 @@ namespace Prexonite.Compiler
 
             BuildCommands.AddCompilerCommand(
                 BuildResolveCommand,
-                delegate(StackContext sctx, PValue[] args)
+                delegate(StackContext _, PValue[] args)
                     {
                         foreach (var arg in args)
                         {
@@ -1084,7 +1079,7 @@ namespace Prexonite.Compiler
 
             BuildCommands.AddCompilerCommand(
                 BuildGetLoaderCommand,
-                (sctx, args) => sctx.CreateNativePValue(this));
+                (sctx, _) => sctx.CreateNativePValue(this));
         }
 
 
@@ -1119,8 +1114,8 @@ namespace Prexonite.Compiler
                     StoreCompressed(fstr);
             else
 #endif
-            using (var writer = new StreamWriter(path, false))
-                Store(writer);
+            using var writer = new StreamWriter(path, false);
+            Store(writer);
         }
 
         public string StoreInString()
@@ -1132,8 +1127,8 @@ namespace Prexonite.Compiler
 
         public void Store(StringBuilder builder)
         {
-            using (var writer = new StringWriter(builder))
-                Store(writer);
+            using var writer = new StringWriter(builder);
+            Store(writer);
         }
 
 #if Compress
@@ -1209,10 +1204,10 @@ namespace Prexonite.Compiler
                 StoreSymbols(writer);
         }
 
-        private class SymbolSerializationPartitioner : SymbolHandler<string, Object>
+        private class SymbolSerializationPartitioner : SymbolHandler<string, object>
         {
             [NN]
-            private readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new List<KeyValuePair<string, NamespaceSymbol>>();
+            private readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new();
 
             [NN]
             private readonly IDictionary<Symbol,QualifiedId> _previousSymbols;
@@ -1321,15 +1316,15 @@ namespace Prexonite.Compiler
 
         #region Stack Context
 
-        public override sealed Engine ParentEngine
+        public sealed override Engine ParentEngine
         {
             [DebuggerStepThrough]
             get => Options.ParentEngine;
         }
 
-        public override sealed Application ParentApplication => Options.TargetApplication;
+        public sealed override Application ParentApplication => Options.TargetApplication;
 
-        public override sealed SymbolCollection ImportedNamespaces =>
+        public sealed override SymbolCollection ImportedNamespaces =>
             // ReSharper disable PossibleNullReferenceException
             Options.TargetApplication._InitializationFunction.ImportedNamespaces;
 
@@ -1356,7 +1351,7 @@ namespace Prexonite.Compiler
 
         #region String Caching
 
-        private readonly Dictionary<string, string> _stringCache = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _stringCache = new();
 
         /// <summary>
         ///     Caches strings encountered while loading code.
@@ -1366,8 +1361,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public string CacheString(string toCache)
         {
-            string cached;
-            if (_stringCache.TryGetValue(toCache, out cached))
+            if (_stringCache.TryGetValue(toCache, out var cached))
             {
                 return cached;
             }

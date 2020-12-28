@@ -111,7 +111,7 @@ namespace Prexonite.Types
         public bool IsBuiltIn
         {
             [DebuggerStepThrough]
-            get { return ToBuiltIn() != BuiltIn.None; }
+            get => ToBuiltIn() != BuiltIn.None;
         }
 
         /// <summary>
@@ -152,121 +152,103 @@ namespace Prexonite.Types
         /// <returns>A reference to a built-in runtime type.</returns>
         public static PType GetBuiltIn(BuiltIn biType)
         {
-            switch (biType)
+            return biType switch
             {
-                case BuiltIn.Real:
-                    return Real;
-                case BuiltIn.Int:
-                    return Int;
-                case BuiltIn.String:
-                    return String;
-                case BuiltIn.Null:
-                    return Null;
-                case BuiltIn.Bool:
-                    return Bool;
-                case BuiltIn.Object:
-                    return Object[typeof (object)];
-                case BuiltIn.List:
-                    return List;
-                case BuiltIn.Hash:
-                    return Hash;
-                case BuiltIn.Char:
-                    return Char;
-                case BuiltIn.Structure:
-                    return Structure;
-                default:
-                    return null;
-            }
+                BuiltIn.Real => Real,
+                BuiltIn.Int => Int,
+                BuiltIn.String => String,
+                BuiltIn.Null => Null,
+                BuiltIn.Bool => Bool,
+                BuiltIn.Object => Object[typeof(object)],
+                BuiltIn.List => List,
+                BuiltIn.Hash => Hash,
+                BuiltIn.Char => Char,
+                BuiltIn.Structure => Structure,
+                _ => null
+            };
         }
 
         public static RealPType Real
         {
             [DebuggerStepThrough]
-            get { return RealPType.Instance; }
+            get => RealPType.Instance;
         }
 
         public static IntPType Int
         {
             [DebuggerStepThrough]
-            get { return IntPType.Instance; }
+            get => IntPType.Instance;
         }
 
         public static StringPType String
         {
             [DebuggerStepThrough]
-            get { return StringPType.Instance; }
+            get => StringPType.Instance;
         }
 
         public static NullPType Null
         {
             [DebuggerStepThrough]
-            get { return NullPType.Instance; }
+            get => NullPType.Instance;
         }
 
         public static BoolPType Bool
         {
             [DebuggerStepThrough]
-            get { return BoolPType.Instance; }
+            get => BoolPType.Instance;
         }
 
         public static ListPType List
         {
             [DebuggerStepThrough]
-            get { return ListPType.Instance; }
+            get => ListPType.Instance;
         }
 
         public static HashPType Hash
         {
             [DebuggerStepThrough]
-            get { return HashPType.Instance; }
+            get => HashPType.Instance;
         }
 
         public static CharPType Char
         {
             [DebuggerStepThrough]
-            get { return CharPType.Instance; }
+            get => CharPType.Instance;
         }
 
         public static StructurePType Structure
         {
             [DebuggerStepThrough]
-            get { return StructurePType.Instance; }
+            get => StructurePType.Instance;
         }
-
-        private static readonly PrexoniteObjectTypeProxy _pobjfacade =
-            new PrexoniteObjectTypeProxy();
 
         public const string StaticCallFromStackId = "StaticCall\\FromStack";
         public const string ConstructFromStackId = "Construct\\FromStack";
 
-        public static PrexoniteObjectTypeProxy Object
-        {
-            [DebuggerStepThrough]
-            get { return _pobjfacade; }
-        }
+        public static PrexoniteObjectTypeProxy Object { [DebuggerStepThrough] get; } = new();
 
         /// <summary>
         ///     A proxy that manages instances of the <see cref = "PType.Object" /> type.
         /// </summary>
         public class PrexoniteObjectTypeProxy
         {
-            private readonly ObjectPType _charObj = new ObjectPType(typeof (Char));
-            private readonly ObjectPType _byteObj = new ObjectPType(typeof (Byte));
-            private readonly ObjectPType _sByteObj = new ObjectPType(typeof (SByte));
-            private readonly ObjectPType _int16Obj = new ObjectPType(typeof (Int16));
-            private readonly ObjectPType _uInt16Obj = new ObjectPType(typeof (UInt16));
-            private readonly ObjectPType _int32Obj = new ObjectPType(typeof (Int32));
-            private readonly ObjectPType _uInt32Obj = new ObjectPType(typeof (UInt32));
-            private readonly ObjectPType _int64Obj = new ObjectPType(typeof (Int64));
-            private readonly ObjectPType _uInt64Obj = new ObjectPType(typeof (UInt64));
-            private readonly ObjectPType _booleanObj = new ObjectPType(typeof (Boolean));
-            private readonly ObjectPType _singleObj = new ObjectPType(typeof (Single));
-            private readonly ObjectPType _doubleObj = new ObjectPType(typeof (Double));
-            private readonly ObjectPType _stringObj = new ObjectPType(typeof (String));
-            private readonly ObjectPType _decimalObj = new ObjectPType(typeof (Decimal));
-            private readonly ObjectPType _dateTimeObj = new ObjectPType(typeof (DateTime));
-            private readonly ObjectPType _timeSpanObj = new ObjectPType(typeof (TimeSpan));
-            private readonly ObjectPType _listOfPTypeObj = new ObjectPType(typeof (List<PValue>));
+            private readonly ObjectPType _charObj = new(typeof (char));
+            private readonly ObjectPType _byteObj = new(typeof (byte));
+            private readonly ObjectPType _sByteObj = new(typeof (sbyte));
+            private readonly ObjectPType _int16Obj = new(typeof (short));
+            private readonly ObjectPType _uInt16Obj = new(typeof (ushort));
+            private readonly ObjectPType _int32Obj = new(typeof (int));
+            private readonly ObjectPType _uInt32Obj = new(typeof (uint));
+            private readonly ObjectPType _int64Obj = new(typeof (long));
+            private readonly ObjectPType _uInt64Obj = new(typeof (ulong));
+            private readonly ObjectPType _booleanObj = new(typeof (bool));
+            private readonly ObjectPType _singleObj = new(typeof (float));
+            private readonly ObjectPType _doubleObj = new(typeof (double));
+            private readonly ObjectPType _stringObj = new(typeof (string));
+            private readonly ObjectPType _decimalObj = new(typeof (decimal));
+            private readonly ObjectPType _dateTimeObj = new(typeof (DateTime));
+            private readonly ObjectPType _timeSpanObj = new(typeof (TimeSpan));
+            private readonly ObjectPType _listOfPTypeObj = new(typeof (List<PValue>));
 
             internal PrexoniteObjectTypeProxy()
             {
@@ -311,33 +293,33 @@ namespace Prexonite.Types
             {
                 get
                 {
-                    if (clrType == typeof (Char))
+                    if (clrType == typeof (char))
                         return _charObj;
-                    if (clrType == typeof (Byte))
+                    if (clrType == typeof (byte))
                         return _byteObj;
-                    if (clrType == typeof (SByte))
+                    if (clrType == typeof (sbyte))
                         return _sByteObj;
-                    if (clrType == typeof (Int16))
+                    if (clrType == typeof (short))
                         return _int16Obj;
-                    if (clrType == typeof (UInt16))
+                    if (clrType == typeof (ushort))
                         return _uInt16Obj;
-                    if (clrType == typeof (Int32))
+                    if (clrType == typeof (int))
                         return _int32Obj;
-                    if (clrType == typeof (UInt32))
+                    if (clrType == typeof (uint))
                         return _uInt32Obj;
-                    if (clrType == typeof (Int64))
+                    if (clrType == typeof (long))
                         return _int64Obj;
-                    if (clrType == typeof (UInt64))
+                    if (clrType == typeof (ulong))
                         return _uInt64Obj;
-                    if (clrType == typeof (Single))
+                    if (clrType == typeof (float))
                         return _singleObj;
-                    else if (clrType == typeof (Double))
+                    else if (clrType == typeof (double))
                         return _doubleObj;
-                    else if (clrType == typeof (Boolean))
+                    else if (clrType == typeof (bool))
                         return _booleanObj;
-                    else if (clrType == typeof (String))
+                    else if (clrType == typeof (string))
                         return _stringObj;
-                    else if (clrType == typeof (Decimal))
+                    else if (clrType == typeof (decimal))
                         return _decimalObj;
                     else if (clrType == typeof (DateTime))
                         return _dateTimeObj;
@@ -363,10 +345,7 @@ namespace Prexonite.Types
                 }
             }
 
-            public ObjectPType this[StackContext sctx, string clrTypeName]
-            {
-                get { return new ObjectPType(sctx, clrTypeName); }
-            }
+            public ObjectPType this[StackContext sctx, string clrTypeName] => new(sctx, clrTypeName);
         }
 
         #endregion
@@ -380,7 +359,7 @@ namespace Prexonite.Types
         [DebuggerStepThrough]
         public virtual PValue CreatePValue(object value)
         {
-            return new PValue(value, this);
+            return new(value, this);
         }
 
         #region Type interface
@@ -401,8 +380,7 @@ namespace Prexonite.Types
         [DebuggerStepThrough]
         public virtual PValue Construct(StackContext sctx, PValue[] args)
         {
-            PValue result;
-            if (TryConstruct(sctx, args, out result))
+            if (TryConstruct(sctx, args, out var result))
                 return result;
             else
             {
@@ -433,8 +411,7 @@ namespace Prexonite.Types
 
         public PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
         {
-            PValue ret;
-            if (IndirectCall(sctx, subject, args, out ret))
+            if (IndirectCall(sctx, subject, args, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -450,8 +427,7 @@ namespace Prexonite.Types
 
         public PValue UnaryNegation(StackContext sctx, PValue operand)
         {
-            PValue ret;
-            if (UnaryNegation(sctx, operand, out ret))
+            if (UnaryNegation(sctx, operand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -461,8 +437,7 @@ namespace Prexonite.Types
 
         public PValue LogicalNot(StackContext sctx, PValue operand)
         {
-            PValue ret;
-            if (LogicalNot(sctx, operand, out ret))
+            if (LogicalNot(sctx, operand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -471,8 +446,7 @@ namespace Prexonite.Types
 
         public PValue OnesComplement(StackContext sctx, PValue operand)
         {
-            PValue ret;
-            if (OnesComplement(sctx, operand, out ret))
+            if (OnesComplement(sctx, operand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -482,8 +456,7 @@ namespace Prexonite.Types
 
         public PValue Increment(StackContext sctx, PValue operand)
         {
-            PValue ret;
-            if (Increment(sctx, operand, out ret))
+            if (Increment(sctx, operand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -492,8 +465,7 @@ namespace Prexonite.Types
 
         public PValue Decrement(StackContext sctx, PValue operand)
         {
-            PValue ret;
-            if (Decrement(sctx, operand, out ret))
+            if (Decrement(sctx, operand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -503,8 +475,7 @@ namespace Prexonite.Types
         //Binary
         public PValue Addition(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Addition(sctx, leftOperand, rightOperand, out ret))
+            if (Addition(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -513,8 +484,7 @@ namespace Prexonite.Types
 
         public PValue Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Subtraction(sctx, leftOperand, rightOperand, out ret))
+            if (Subtraction(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -523,8 +493,7 @@ namespace Prexonite.Types
 
         public PValue Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Multiply(sctx, leftOperand, rightOperand, out ret))
+            if (Multiply(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -533,8 +502,7 @@ namespace Prexonite.Types
 
         public PValue Division(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Division(sctx, leftOperand, rightOperand, out ret))
+            if (Division(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -543,8 +511,7 @@ namespace Prexonite.Types
 
         public PValue Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Modulus(sctx, leftOperand, rightOperand, out ret))
+            if (Modulus(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -553,8 +520,7 @@ namespace Prexonite.Types
 
         public PValue BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (BitwiseAnd(sctx, leftOperand, rightOperand, out ret))
+            if (BitwiseAnd(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -563,8 +529,7 @@ namespace Prexonite.Types
 
         public PValue BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (BitwiseOr(sctx, leftOperand, rightOperand, out ret))
+            if (BitwiseOr(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -573,8 +538,7 @@ namespace Prexonite.Types
 
         public PValue ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (ExclusiveOr(sctx, leftOperand, rightOperand, out ret))
+            if (ExclusiveOr(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -583,8 +547,7 @@ namespace Prexonite.Types
 
         public PValue Equality(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Equality(sctx, leftOperand, rightOperand, out ret))
+            if (Equality(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -593,8 +556,7 @@ namespace Prexonite.Types
 
         public PValue Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (Inequality(sctx, leftOperand, rightOperand, out ret))
+            if (Inequality(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -603,8 +565,7 @@ namespace Prexonite.Types
 
         public PValue GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (GreaterThan(sctx, leftOperand, rightOperand, out ret))
+            if (GreaterThan(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -613,8 +574,7 @@ namespace Prexonite.Types
 
         public PValue GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (GreaterThanOrEqual(sctx, leftOperand, rightOperand, out ret))
+            if (GreaterThanOrEqual(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -624,8 +584,7 @@ namespace Prexonite.Types
 
         public PValue LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (LessThan(sctx, leftOperand, rightOperand, out ret))
+            if (LessThan(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -634,8 +593,7 @@ namespace Prexonite.Types
 
         public PValue LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand)
         {
-            PValue ret;
-            if (LessThanOrEqual(sctx, leftOperand, rightOperand, out ret))
+            if (LessThanOrEqual(sctx, leftOperand, rightOperand, out var ret))
                 return ret;
             else
                 throw new InvalidCallException(
@@ -819,8 +777,7 @@ namespace Prexonite.Types
         public virtual PValue DynamicCall(
             StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {
-            PValue result;
-            if (TryDynamicCall(sctx, subject, args, call, id, out result))
+            if (TryDynamicCall(sctx, subject, args, call, id, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -830,8 +787,7 @@ namespace Prexonite.Types
         [DebuggerStepThrough]
         public virtual PValue StaticCall(StackContext sctx, PValue[] args, PCall call, string id)
         {
-            PValue result;
-            if (TryStaticCall(sctx, args, call, id, out result))
+            if (TryStaticCall(sctx, args, call, id, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -858,8 +814,7 @@ namespace Prexonite.Types
         [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit)
         {
-            PValue result;
-            if (TryConvertTo(sctx, subject, target, useExplicit, out result))
+            if (TryConvertTo(sctx, subject, target, useExplicit, out var result))
                 return result;
             else
                 throw new InvalidConversionException(

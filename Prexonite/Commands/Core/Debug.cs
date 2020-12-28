@@ -37,10 +37,8 @@ namespace Prexonite.Commands.Core
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
-            var fctx = sctx as FunctionContext;
-            if (fctx == null)
+            args ??= Array.Empty<PValue>();
+            if (!(sctx is FunctionContext fctx))
                 return false;
             var debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);
             var println = sctx.ParentEngine.Commands[Engine.PrintLineAlias];
@@ -48,7 +46,7 @@ namespace Prexonite.Commands.Core
                 foreach (var arg in args)
                 {
                     println.Run(
-                        sctx, new PValue[] {String.Concat("DEBUG ??? = ", arg.CallToString(sctx))});
+                        sctx, new PValue[] {string.Concat("DEBUG ??? = ", arg.CallToString(sctx))});
                 }
             return debugging;
         }
@@ -60,9 +58,6 @@ namespace Prexonite.Commands.Core
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
     }
 }

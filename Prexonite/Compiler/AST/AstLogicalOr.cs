@@ -79,8 +79,7 @@ namespace Prexonite.Compiler.Ast
             var nextLabel = @"Next\" + labelNs;
             foreach (var expr in Conditions)
             {
-                var and = expr as AstLogicalAnd;
-                if (and != null)
+                if (expr is AstLogicalAnd and)
                 {
                     and.EmitCode(target, trueLabel, nextLabel);
                     //ResolveOperator pending jumps to Next
@@ -99,10 +98,7 @@ namespace Prexonite.Compiler.Ast
 
         #region Partial application
 
-        protected override bool ShortcircuitValue
-        {
-            get { return true; }
-        }
+        protected override bool ShortcircuitValue => true;
 
         protected override AstExpr CreatePrefix(ISourcePosition position,
             IEnumerable<AstExpr> clauses)

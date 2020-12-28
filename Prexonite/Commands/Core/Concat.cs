@@ -40,12 +40,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Concat _instance = new Concat();
-
-        public static Concat Instance
-        {
-            get { return _instance; }
-        }
+        public static Concat Instance { get; } = new();
 
         #endregion
 
@@ -68,7 +63,7 @@ namespace Prexonite.Commands.Core
                 elements[i] = element;
             }
 
-            return String.Concat(elements);
+            return string.Concat(elements);
         }
 
         /// <summary>

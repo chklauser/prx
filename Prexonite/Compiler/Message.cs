@@ -34,33 +34,29 @@ namespace Prexonite.Compiler
         [NotNull]
         public static Message Create(MessageSeverity severity, [NotNull, LocalizationRequired] string text, [NotNull] ISourcePosition position, string messageClass)
         {
-            return new Message(severity, text, position, messageClass);
+            return new(severity, text, position, messageClass);
         }
 
         private const string MessageFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
-        private readonly string _text;
 
-        private readonly ISourcePosition _position;
-        private readonly MessageSeverity _severity;
-        private readonly string _messageClass;
+        public string Text { get; }
 
-        public string Text { get { return _text; } }
-        public string MessageClass { get { return _messageClass; } }
-        public MessageSeverity Severity { get { return _severity; } }
-        public string File { get { return _position.File; } }
-        public int Line { get { return _position.Line; } }
-        public int Column { get { return _position.Column; } }
-        public ISourcePosition Position { get { return _position; } }
+        public string MessageClass { get; }
 
-        private Message(MessageSeverity severity, [NotNull] String text, [NotNull] ISourcePosition position,
+        public MessageSeverity Severity { get; }
+
+        public string File => Position.File;
+        public int Line => Position.Line;
+        public int Column => Position.Column;
+        public ISourcePosition Position { get; }
+
+        private Message(MessageSeverity severity, [NotNull] string text, [NotNull] ISourcePosition position,
                         [CanBeNull]string messageClass = null)
         {
-            if (text == null)
-                throw new ArgumentNullException();
-            _text = text;
-            _position = position;
-            _severity = severity;
-            _messageClass = messageClass;
+            Text = text ?? throw new ArgumentNullException();
+            Position = position;
+            Severity = severity;
+            MessageClass = messageClass;
         }
 
         [NotNull]
@@ -88,7 +84,7 @@ namespace Prexonite.Compiler
                 return -1;
             }
 
-            var r = String.Compare(File, other.File, StringComparison.Ordinal);
+            var r = string.Compare(File, other.File, StringComparison.Ordinal);
             if (r != 0)
                 return r;
             
@@ -104,7 +100,7 @@ namespace Prexonite.Compiler
             if (r != 0)
                 return r;
 
-            r = String.Compare(MessageClass, other.MessageClass, StringComparison.Ordinal);
+            r = string.Compare(MessageClass, other.MessageClass, StringComparison.Ordinal);
             if (r != 0)
                 return r;
 
@@ -113,7 +109,7 @@ namespace Prexonite.Compiler
 
         public override string ToString()
         {
-            return String.Format(MessageFormat, Line, Column, Text, File);
+            return string.Format(MessageFormat, Line, Column, Text, File);
         }
 
         [NotNull]
@@ -128,7 +124,7 @@ namespace Prexonite.Compiler
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return string.Equals(_text, other._text) && Equals(_position, other._position) && _severity == other._severity && string.Equals(_messageClass, other._messageClass);
+            return string.Equals(Text, other.Text) && Equals(Position, other.Position) && Severity == other.Severity && string.Equals(MessageClass, other.MessageClass);
         }
 
         public override bool Equals(object obj)
@@ -143,10 +139,10 @@ namespace Prexonite.Compiler
         {
             unchecked
             {
-                var hashCode = (_text != null ? _text.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (_position != null ? _position.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (int) _severity;
-                hashCode = (hashCode*397) ^ (_messageClass != null ? _messageClass.GetHashCode() : 0);
+                var hashCode = (Text != null ? Text.GetHashCode() : 0);
+                hashCode = (hashCode*397) ^ (Position != null ? Position.GetHashCode() : 0);
+                hashCode = (hashCode*397) ^ (int) Severity;
+                hashCode = (hashCode*397) ^ (MessageClass != null ? MessageClass.GetHashCode() : 0);
                 return hashCode;
             }
         }

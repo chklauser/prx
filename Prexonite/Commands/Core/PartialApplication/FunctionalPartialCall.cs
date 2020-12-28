@@ -56,15 +56,13 @@ namespace Prexonite.Commands.Core.PartialApplication
             if ((_subject.Type is ObjectPType))
             {
                 var raw = _subject.Value;
-                var stackAware = raw as IStackAware;
-                if (stackAware != null)
+                if (raw is IStackAware stackAware)
                 {
                     partialApplicationContext = stackAware.CreateStackContext(sctx, effectiveArgs);
                     return true;
                 }
 
-                var partialApplication = raw as IMaybeStackAware;
-                if (partialApplication != null)
+                if (raw is IMaybeStackAware partialApplication)
                     return partialApplication.TryDefer(sctx, effectiveArgs,
                         out partialApplicationContext,
                         out result);

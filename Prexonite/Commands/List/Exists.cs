@@ -52,8 +52,7 @@ namespace Prexonite.Commands.List
                 {
                     eargs[0] = value;
                     var result = f.IndirectCall(sctx, eargs);
-                    PValue existance;
-                    if (result.TryConvertTo(sctx, PType.Bool, true, out existance) &&
+                    if (result.TryConvertTo(sctx, PType.Bool, true, out var existance) &&
                         (bool) existance.Value)
                         return true;
                 }
@@ -69,9 +68,6 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
     }
 }

@@ -42,7 +42,7 @@ namespace Prexonite.Compiler.Cil
 
         public static CompiledTryCatchFinallyBlock Create(TryCatchFinallyBlock block)
         {
-            return new CompiledTryCatchFinallyBlock(block);
+            return new(block);
         }
 
         /// <summary>

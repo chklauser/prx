@@ -33,42 +33,28 @@ namespace Prexonite.Compiler.Ast
     public class AstCreateCoroutine : AstExpr,
                                       IAstHasExpressions
     {
-        private AstExpr _expression;
-
-        private ArgumentsProxy _proxy;
-
-        public ArgumentsProxy Arguments
-        {
-            get { return _proxy; }
-        }
+        public ArgumentsProxy Arguments { get; }
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
-        {
-            get { return Arguments.ToArray(); }
-        }
+        public AstExpr[] Expressions => Arguments.ToArray();
 
-        public AstExpr Expression
-        {
-            get { return _expression; }
-            set { _expression = value; }
-        }
+        public AstExpr Expression { get; set; }
 
         #endregion
 
-        private List<AstExpr> _arguments = new List<AstExpr>();
+        private List<AstExpr> _arguments = new();
 
         public AstCreateCoroutine(string file, int line, int col)
             : base(file, line, col)
         {
-            _proxy = new ArgumentsProxy(_arguments);
+            Arguments = new ArgumentsProxy(_arguments);
         }
 
         internal AstCreateCoroutine(Parser p)
             : base(p)
         {
-            _proxy = new ArgumentsProxy(_arguments);
+            Arguments = new ArgumentsProxy(_arguments);
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)

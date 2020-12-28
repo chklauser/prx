@@ -37,7 +37,7 @@ namespace PrexoniteTests.Tests
     {
         private static AstPlaceholder _createPlaceholder(int? index = null)
         {
-            return new AstPlaceholder("-file", -1, -2) {Index = index};
+            return new("-file", -1, -2) {Index = index};
         }
 
         [Test]

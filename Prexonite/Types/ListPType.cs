@@ -29,7 +29,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
@@ -45,15 +44,14 @@ namespace Prexonite.Types
         {
         }
 
-        public static ListPType Instance { get; } = new ListPType();
+        public static ListPType Instance { get; } = new();
 
         public override PValue CreatePValue(object value)
         {
-            var listOfPValue = value as List<PValue>;
             var enumerableOfPValue = value as IEnumerable<PValue>;
             var enumerable = value as IEnumerable;
 
-            if (listOfPValue != null)
+            if (value is List<PValue> listOfPValue)
                 return new PValue(listOfPValue, this);
             if (enumerableOfPValue != null)
                 return new PValue(new List<PValue>(enumerableOfPValue), this);
@@ -93,7 +91,7 @@ namespace Prexonite.Types
                     switch (args.Length)
                     {
                         case 0:
-                            result = lst.Count == 0 ? Null.CreatePValue() : lst[lst.Count - 1];
+                            result = lst.Count == 0 ? Null.CreatePValue() : lst[^1];
                             break;
                         case 1:
                             result = lst[(int)args[0].ConvertTo(sctx, Int).Value];
@@ -113,7 +111,7 @@ namespace Prexonite.Types
                         lst.Add(args[0] ?? Null.CreatePValue());
                     else //Multi index set
                     {
-                        var v = args[args.Length - 1] ?? Null.CreatePValue();
+                        var v = args[^1] ?? Null.CreatePValue();
                         for (var i = 0; i < args.Length - 1; i++)
                             lst[(int)args[i].ConvertTo(sctx, Int).Value] = v;
                     }
@@ -158,9 +156,8 @@ namespace Prexonite.Types
                             index = (int)args[1].ConvertTo(sctx, Int).Value;
                         else if (args.Length == 0)
                             throw new PrexoniteException("List.CopyTo requires a target array.");
-                        var targetAsArray = args[0].Value as PValue[];
 
-                        if (targetAsArray == null)
+                        if (!(args[0].Value is PValue[] targetAsArray))
                             throw new PrexoniteException(
                                 "List.CopyTo requires it's first argument to be of type Object(\"" +
                                     typeof(PValue[]) + "\")");
@@ -240,8 +237,8 @@ namespace Prexonite.Types
                                 result = Null.CreatePValue();
                                 break;
                             }
-                            var cmp = args[0].Value as Comparer<PValue>;
-                            if (cmp != null)
+
+                            if (args[0].Value is Comparer<PValue> cmp)
                             {
                                 lst.Sort(icmp);
                                 result = Null.CreatePValue();
@@ -354,11 +351,9 @@ namespace Prexonite.Types
 
                 foreach (var arg in args)
                 {
-                    var enumerableP = arg.Value as IEnumerable<PValue>;
-                    var enumerable = arg.Value as IEnumerable;
-                    if (enumerableP != null)
+                    if (arg.Value is IEnumerable<PValue> enumerableP)
                         lst.AddRange(enumerableP);
-                    else if (enumerable != null)
+                    else if (arg.Value is IEnumerable enumerable)
                     {
                         foreach (var e in enumerable)
                             lst.Add(e as PValue ?? sctx.CreateNativePValue(e));
@@ -419,8 +414,7 @@ namespace Prexonite.Types
                     var success = true;
                     for (var i = 0; i < lst.Count; i++)
                     {
-                        PValue converted;
-                        if (lst[i].TryConvertTo(sctx, et, useExplicit, out converted))
+                        if (lst[i].TryConvertTo(sctx, et, useExplicit, out var converted))
                         {
                             array.SetValue(converted.Value, i);
                         }
@@ -443,12 +437,11 @@ namespace Prexonite.Types
                     var elementT = clrType.GetGenericArguments()[0];
                     var listT = typeof (List<>).MakeGenericType(elementT);
                     // ReSharper disable once PossibleNullReferenceException
-                    var list = (IList) listT.GetConstructor(new Type[0]).Invoke(new object[0]);
+                    var list = (IList) listT.GetConstructor(Array.Empty<Type>()).Invoke(Array.Empty<object>());
                     var success = true;
                     foreach (var pv in (List<PValue>)subject.Value)
                     {
-                        PValue converted;
-                        if (pv.TryConvertTo(sctx, elementT, useExplicit, out converted))
+                        if (pv.TryConvertTo(sctx, elementT, useExplicit, out var converted))
                         {
                             list.Add(converted.Value);
                         }
@@ -502,9 +495,8 @@ namespace Prexonite.Types
         {
             var lst = new List<PValue>();
             result = List.CreatePValue(lst);
-            PValue r;
             foreach (var e in ((IEnumerable<PValue>)subject.Value))
-                if (e.TryIndirectCall(sctx, args, out r))
+                if (e.TryIndirectCall(sctx, args, out var r))
                     lst.Add(r);
                 else
                     lst.Add(Null.CreatePValue());

@@ -28,7 +28,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal
 {
@@ -64,8 +63,7 @@ namespace Prexonite.Compiler.Build.Internal
 
         public bool TryGetValue(TKey key, out Task<TValue> result)
         {
-            Lazy<Task<TValue>> lazyTask;
-            if(TryGetValue(key, out lazyTask))
+            if(TryGetValue(key, out Lazy<Task<TValue>> lazyTask))
             {
                 result = lazyTask.Value;
                 return true;

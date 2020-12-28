@@ -37,12 +37,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Meta _instance = new Meta();
-
-        public static Meta Instance
-        {
-            get { return _instance; }
-        }
+        public static Meta Instance { get; } = new();
 
         #endregion
 
@@ -74,10 +69,7 @@ namespace Prexonite.Commands.Core
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         /// <summary>
         ///     Executes the command.
@@ -92,9 +84,7 @@ namespace Prexonite.Commands.Core
             if (args != null && args.Length > 0)
                 throw new PrexoniteException("The meta command no longer accepts arguments.");
 
-            var fctx = sctx as FunctionContext;
-
-            if (fctx == null)
+            if (!(sctx is FunctionContext fctx))
                 throw new PrexoniteException(
                     "The meta command uses dynamic features and can therefor only be called from a Prexonite function.");
 

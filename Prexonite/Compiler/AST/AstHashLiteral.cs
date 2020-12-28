@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections.Generic;
 
 namespace Prexonite.Compiler.Ast
@@ -31,7 +31,7 @@ namespace Prexonite.Compiler.Ast
     public class AstHashLiteral : AstExpr,
                                   IAstHasExpressions
     {
-        public List<AstExpr> Elements = new List<AstExpr>();
+        public List<AstExpr> Elements = new();
 
         internal AstHashLiteral(Parser p)
             : base(p)
@@ -45,10 +45,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
-        {
-            get { return Elements.ToArray(); }
-        }
+        public AstExpr[] Expressions => Elements.ToArray();
 
         #endregion
 
@@ -89,7 +86,7 @@ namespace Prexonite.Compiler.Ast
                 {
                     if (element is AstConstant)
                         throw new PrexoniteException(
-                            String.Concat(
+                            string.Concat(
                                 "Hashes are built from key-value pairs, not constants like ",
                                 element,
                                 ". [File: ",

@@ -62,7 +62,7 @@ namespace Prexonite
     ///        //Multiply the result with 5 (using the implicit conversion operator for integers)
     ///        PValue pv2 = pv1.Multiply(fctx, 5);
     ///        //Finally turn the result into a string using a dynamic (instance) call
-    ///        PValue result = pv0.DynamicCall(fctx, new PValue[] {}, PCall.Get, "ToString");
+    ///        PValue result = pv0.DynamicCall(fctx, Array.Empty<PValue>(), PCall.Get, "ToString");
     ///
     ///        Console.WriteLine("The result of (55 + 5.36)*5 is {0}", result.Value);
     ///        }
@@ -87,9 +87,6 @@ namespace Prexonite
     {
         #region Internals
 
-        private readonly object _value;
-        private readonly PType _type;
-
         /// <summary>
         ///     Creates a new instance of PValue with the supplied <paramref name = "value" /> and <paramref name = "type" />.
         ///     Please note that the constructor does not do any type checking unlike the <see cref = "PType.CreatePValue" /> methods.
@@ -104,8 +101,8 @@ namespace Prexonite
             else if ((object) type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            _value = value;
-            _type = type;
+            Value = value;
+            Type = type;
         }
 
         /// <summary>
@@ -113,21 +110,13 @@ namespace Prexonite
         /// </summary>
         /// <value>An object reference. <see cref = "Value" /> is only null, if <see cref = "Type" /> returns a <see
         ///      cref = "NullPType" /> object.</value>
-        public object Value
-        {
-            [DebuggerStepThrough]
-            get { return _value; }
-        }
+        public object Value { [DebuggerStepThrough] get; }
 
         /// <summary>
         ///     Provides readonly access to the <see cref = "PType" /> associated with the PValue object.
         /// </summary>
         /// <value>An instance of <see cref = "PType" />.</value>
-        public PType Type
-        {
-            [DebuggerStepThrough]
-            get { return _type; }
-        }
+        public PType Type { [DebuggerStepThrough] get; }
 
         #endregion
 
@@ -148,7 +137,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PValue DynamicCall(StackContext sctx, PValue[] args, PCall call, string id)
         {
-            return _type.DynamicCall(sctx, this, args, call, id);
+            return Type.DynamicCall(sctx, this, args, call, id);
         }
 
         /// <summary>
@@ -170,7 +159,7 @@ namespace Prexonite
         public bool TryDynamicCall(
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
-            return _type.TryDynamicCall(sctx, this, args, call, id, out result);
+            return Type.TryDynamicCall(sctx, this, args, call, id, out result);
         }
 
         /// <summary>
@@ -186,7 +175,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, PType target, bool useExplicit)
         {
-            return _type.ConvertTo(sctx, this, target, useExplicit);
+            return Type.ConvertTo(sctx, this, target, useExplicit);
         }
 
         /// <summary>
@@ -218,7 +207,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, Type clrTarget, bool useExplicit)
         {
-            return _type.ConvertTo(sctx, this, clrTarget, useExplicit);
+            return Type.ConvertTo(sctx, this, clrTarget, useExplicit);
         }
 
         /// <summary>
@@ -249,7 +238,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public T ConvertTo<T>(StackContext sctx, bool useExplicit)
         {
-            return (T) _type.ConvertTo(sctx, this, typeof (T), useExplicit).Value;
+            return (T) Type.ConvertTo(sctx, this, typeof (T), useExplicit).Value;
         }
 
         /// <summary>
@@ -279,11 +268,10 @@ namespace Prexonite
         [DebuggerStepThrough]
         public bool TryConvertTo<T>(StackContext sctx, bool useExplicit, out T result)
         {
-            result = default(T);
-            PValue r;
+            result = default;
             if (
-                (!_type.TryConvertTo(sctx, this, sctx.ParentEngine.PTypeMap[typeof (T)], useExplicit,
-                    out r)) || !(r.Value is T))
+                (!Type.TryConvertTo(sctx, this, sctx.ParentEngine.PTypeMap[typeof (T)], useExplicit,
+                    out var r)) || !(r.Value is T))
                 return false;
 
             result = (T) r.Value;
@@ -322,7 +310,7 @@ namespace Prexonite
         public bool TryConvertTo(
             StackContext sctx, PType target, bool useExplicit, out PValue result)
         {
-            return _type.TryConvertTo(sctx, this, target, useExplicit, out result);
+            return Type.TryConvertTo(sctx, this, target, useExplicit, out result);
         }
 
         /// <summary>
@@ -360,7 +348,7 @@ namespace Prexonite
         public bool TryConvertTo(
             StackContext sctx, Type clrTarget, bool useExplicit, out PValue result)
         {
-            return _type.TryConvertTo(sctx, this, clrTarget, useExplicit, out result);
+            return Type.TryConvertTo(sctx, this, clrTarget, useExplicit, out result);
         }
 
         /// <summary>
@@ -395,7 +383,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public bool TryIndirectCall(StackContext sctx, PValue[] args, out PValue result)
         {
-            return _type.IndirectCall(sctx, this, args, out result);
+            return Type.IndirectCall(sctx, this, args, out result);
         }
 
         /// <summary>
@@ -409,7 +397,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            return _type.IndirectCall(sctx, this, args);
+            return Type.IndirectCall(sctx, this, args);
         }
 
         #region Operators
@@ -967,8 +955,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Addition(sctx, rightOperand, out result))
+            if (Addition(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -996,8 +983,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Subtraction(sctx, rightOperand, out result))
+            if (Subtraction(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1025,8 +1011,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Multiply(sctx, rightOperand, out result))
+            if (Multiply(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1054,8 +1039,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Division(sctx, rightOperand, out result))
+            if (Division(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1083,8 +1067,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Modulus(sctx, rightOperand, out result))
+            if (Modulus(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1112,8 +1095,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (BitwiseAnd(sctx, rightOperand, out result))
+            if (BitwiseAnd(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1141,8 +1123,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (BitwiseOr(sctx, rightOperand, out result))
+            if (BitwiseOr(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1170,8 +1151,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (ExclusiveOr(sctx, rightOperand, out result))
+            if (ExclusiveOr(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1199,8 +1179,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Equality(sctx, rightOperand, out result))
+            if (Equality(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1228,8 +1207,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (Inequality(sctx, rightOperand, out result))
+            if (Inequality(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1257,8 +1235,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (GreaterThan(sctx, rightOperand, out result))
+            if (GreaterThan(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1286,8 +1263,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (GreaterThanOrEqual(sctx, rightOperand, out result))
+            if (GreaterThanOrEqual(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1315,8 +1291,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (LessThan(sctx, rightOperand, out result))
+            if (LessThan(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1344,8 +1319,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
                 throw new ArgumentNullException(nameof(rightOperand));
-            PValue result;
-            if (LessThanOrEqual(sctx, rightOperand, out result))
+            if (LessThanOrEqual(sctx, rightOperand, out var result))
                 return result;
             else
                 throw new InvalidCallException(
@@ -1374,7 +1348,7 @@ namespace Prexonite
         public bool IsNull
         {
             [DebuggerStepThrough]
-            get { return _value == null; }
+            get => Value == null;
         }
 
         /// <summary>
@@ -1385,7 +1359,7 @@ namespace Prexonite
         public Type ClrType
         {
             [DebuggerStepThrough]
-            get { return _value != null ? _value.GetType() : null; }
+            get => Value?.GetType();
         }
 
         /// <summary>
@@ -1401,7 +1375,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PValue ReinterpretAs(PType type)
         {
-            return type.CreatePValue(_value);
+            return type.CreatePValue(Value);
         }
 
         /// <summary>
@@ -1415,7 +1389,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PValue ToObject()
         {
-            return PType.Object.CreatePValue(_value);
+            return PType.Object.CreatePValue(Value);
         }
 
         /// <summary>
@@ -1430,7 +1404,7 @@ namespace Prexonite
         {
             return
                 string.Concat(
-                    "{", (_value == null ? "-NULL-" : String.Concat(_value, "~", _type)), "}");
+                    "{", (Value == null ? "-NULL-" : string.Concat(Value, "~", Type)), "}");
         }
 
         /// <summary>
@@ -1445,10 +1419,9 @@ namespace Prexonite
         [DebuggerStepThrough]
         public string CallToString(StackContext sctx)
         {
-            PValue text;
             if (Type == PType.String)
                 return (string) Value;
-            else if (TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "ToString", out text))
+            else if (TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "ToString", out var text))
                 return text.Value.ToString();
             else
                 return ToString();
@@ -1456,22 +1429,21 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            if (_value == null)
+            if (Value == null)
                 return 0;
             else
-                return _type.GetHashCode() ^ _value.GetHashCode();
+                return Type.GetHashCode() ^ Value.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            var o = obj as PValue;
-            if (o == null)
+            if (!(obj is PValue o))
                 return false;
 
             if (o.IsNull && IsNull)
                 return true;
 
-            return _type.Equals(o._type) && _value.Equals(o._value);
+            return Type.Equals(o.Type) && Value.Equals(o.Value);
         }
 
         #endregion
@@ -1490,7 +1462,7 @@ namespace Prexonite
         ///     As System.Int32 is the <strong>natural representation</strong> of <see cref = "PType.Int" /> values, this conversion is implicit.
         /// </remarks>
         [DebuggerStepThrough]
-        public static implicit operator PValue(Int32 number)
+        public static implicit operator PValue(int number)
         {
             return PType.Int.CreatePValue(number);
         }
@@ -1505,7 +1477,7 @@ namespace Prexonite
         ///     If you have to do unsigned integer math inside the Prexonite VM, use <c><see cref = "ObjectPType">PType.Object</see>[typeof(System.UInt32)]</c> as the PType.
         /// </remarks>
         [DebuggerNonUserCode, CLSCompliant(false)]
-        public static explicit operator PValue(UInt32 number)
+        public static explicit operator PValue(uint number)
         {
             return PType.Int.CreatePValue((int) number);
         }
@@ -1519,7 +1491,7 @@ namespace Prexonite
         ///     <see cref = "PType.Int" /> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// </remarks>
         [DebuggerNonUserCode, CLSCompliant(false)]
-        public static explicit operator PValue(Byte number)
+        public static explicit operator PValue(byte number)
         {
             return PType.Int.CreatePValue((int) number);
         }
@@ -1533,7 +1505,7 @@ namespace Prexonite
         ///     <see cref = "PType.Int" /> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// </remarks>
         [DebuggerNonUserCode, CLSCompliant(false)]
-        public static explicit operator PValue(SByte number)
+        public static explicit operator PValue(sbyte number)
         {
             return PType.Int.CreatePValue((int) number);
         }
@@ -1548,7 +1520,7 @@ namespace Prexonite
         ///     If you have to do long integer math inside the Prexonite VM, use <c><see cref = "ObjectPType">PType.Object</see>[typeof(System.Int64)]</c> as the PType.
         /// </remarks>
         [DebuggerStepThrough]
-        public static explicit operator PValue(Int64 number)
+        public static explicit operator PValue(long number)
         {
             return PType.Int.CreatePValue((int) number);
         }
@@ -1562,7 +1534,7 @@ namespace Prexonite
         ///     <see cref = "PType.Int" /> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// </remarks>
         [DebuggerStepThrough]
-        public static explicit operator PValue(Int16 number)
+        public static explicit operator PValue(short number)
         {
             return PType.Int.CreatePValue((int) number);
         }
@@ -1577,7 +1549,7 @@ namespace Prexonite
         ///     As System.Double is the <strong>natural representation</strong> of <see cref = "PType.Real" /> values, this conversion is implicit.
         /// </remarks>
         [DebuggerStepThrough]
-        public static implicit operator PValue(Double number)
+        public static implicit operator PValue(double number)
         {
             return PType.Real.CreatePValue(number);
         }
@@ -1591,7 +1563,7 @@ namespace Prexonite
         ///     <see cref = "PType.Real" /> cannot represent floating point numbers other than System.Double, but you may wish to convert them to double precision floating point numbers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// </remarks>
         [DebuggerStepThrough]
-        public static explicit operator PValue(Single number)
+        public static explicit operator PValue(float number)
         {
             return PType.Real.CreatePValue((double) number);
         }
@@ -1606,7 +1578,7 @@ namespace Prexonite
         ///     <see cref = "PType.Real" /> cannot represent a decimal number, but you may wish to convert it to double precision floating point numbers and then create the appropriate PValue, which is exactly what this conversion operator does.
         /// </remarks>
         [DebuggerStepThrough]
-        public static explicit operator PValue(Decimal number)
+        public static explicit operator PValue(decimal number)
         {
             return PType.Object.CreatePValue((double) number);
         }
@@ -1636,7 +1608,7 @@ namespace Prexonite
         ///     As System.Boolean is the <strong>natural representation</strong> of <see cref = "PType.Bool" /> values, this conversion is implicit.
         /// </remarks>
         [DebuggerStepThrough]
-        public static implicit operator PValue(Boolean state)
+        public static implicit operator PValue(bool state)
         {
             return PType.Bool.CreatePValue(state);
         }
@@ -1651,7 +1623,7 @@ namespace Prexonite
         ///     As System.String is the <strong>natural representation</strong> of <see cref = "PType.String" /> values, this conversion is implicit.
         /// </remarks>
         [DebuggerStepThrough]
-        public static implicit operator PValue(String text)
+        public static implicit operator PValue(string text)
         {
             return PType.String.CreatePValue(text);
         }
@@ -1717,8 +1689,7 @@ namespace Prexonite
                 case PType.BuiltIn.Object:
                     return "{" + val.Value + "}";
                 case PType.BuiltIn.List:
-                    var lst = val.Value as List<PValue>;
-                    if (lst == null)
+                    if (!(val.Value is List<PValue> lst))
                         return "[]";
                     var buffer = new StringBuilder("[");
                     for (var i = 0; i < lst.Count - 1; i++)
@@ -1728,7 +1699,7 @@ namespace Prexonite
                     }
                     if (lst.Count > 0)
                     {
-                        buffer.Append(ToDebugString(lst[lst.Count - 1]));
+                        buffer.Append(ToDebugString(lst[^1]));
                     }
                     buffer.Append("]");
                     return buffer.ToString();
@@ -1761,9 +1732,7 @@ namespace Prexonite
         {
             result = null;
 
-            StackContext sctx;
-            PValue[] icargs;
-            if (_tryParseCall(args, out sctx, out icargs))
+            if (_tryParseCall(args, out var sctx, out var icargs))
                 result = IndirectCall(sctx, icargs);
 
             return result != null || base.TryInvoke(binder, args, out result);
@@ -1773,12 +1742,9 @@ namespace Prexonite
             out object result)
         {
             result = null;
-            StackContext sctx;
-            PValue[] icargs;
 
-            PValue pvresult;
-            if (_tryParseCall(args, out sctx, out icargs) &&
-                TryDynamicCall(sctx, icargs, PCall.Get, binder.Name, out pvresult))
+            if (_tryParseCall(args, out var sctx, out var icargs) &&
+                TryDynamicCall(sctx, icargs, PCall.Get, binder.Name, out var pvresult))
                 result = pvresult;
 
             return result != null || base.TryInvokeMember(binder, args, out result);
@@ -1787,12 +1753,9 @@ namespace Prexonite
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
             result = null;
-            StackContext sctx;
-            PValue[] icargs;
 
-            PValue pvresult;
-            if (_tryParseCall(indexes, out sctx, out icargs) &&
-                TryDynamicCall(sctx, icargs, PCall.Get, String.Empty, out pvresult))
+            if (_tryParseCall(indexes, out var sctx, out var icargs) &&
+                TryDynamicCall(sctx, icargs, PCall.Get, string.Empty, out var pvresult))
             {
                 result = pvresult;
             }
@@ -1802,16 +1765,13 @@ namespace Prexonite
 
         public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
         {
-            StackContext sctx;
-            PValue[] icargs;
             var args = new object[indexes.Length + 1];
             Array.Copy(indexes, args, indexes.Length);
-            args[args.Length - 1] = value;
+            args[^1] = value;
 
-            PValue pvresult;
-            return (_tryParseCall(args, out sctx, out icargs) &&
-                TryDynamicCall(sctx, icargs, PCall.Set, String.Empty, out pvresult))
-                    || base.TrySetIndex(binder, indexes, value);
+            return (_tryParseCall(args, out var sctx, out var icargs) &&
+                    TryDynamicCall(sctx, icargs, PCall.Set, string.Empty, out _))
+                   || base.TrySetIndex(binder, indexes, value);
         }
 
         #endregion

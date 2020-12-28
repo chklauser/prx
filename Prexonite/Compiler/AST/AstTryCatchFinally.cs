@@ -137,8 +137,7 @@ namespace Prexonite.Compiler.Ast
 
         private static int _getAddress(CompilerTarget target, string label)
         {
-            int address;
-            if (target.TryResolveLabel(label, out address))
+            if (target.TryResolveLabel(label, out var address))
                 return address;
             else
                 return -1;

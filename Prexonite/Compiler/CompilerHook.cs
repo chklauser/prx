@@ -50,9 +50,7 @@ namespace Prexonite.Compiler
         /// <param name = "transformation">A managed transformation.</param>
         public CompilerHook(AstTransformation transformation)
         {
-            if (transformation == null)
-                throw new ArgumentNullException(nameof(transformation));
-            _managed = transformation;
+            _managed = transformation ?? throw new ArgumentNullException(nameof(transformation));
         }
 
         /// <summary>
@@ -61,26 +59,18 @@ namespace Prexonite.Compiler
         /// <param name = "transformation">A value that supports indirect calls (such as a function reference).</param>
         public CompilerHook(PValue transformation)
         {
-            if (transformation == null)
-                throw new ArgumentNullException(nameof(transformation));
-            _interpreted = transformation;
+            _interpreted = transformation ?? throw new ArgumentNullException(nameof(transformation));
         }
 
         /// <summary>
         ///     Indicates whether the compiler hook is managed.
         /// </summary>
-        public bool IsManaged
-        {
-            get { return _managed != null; }
-        }
+        public bool IsManaged => _managed != null;
 
         /// <summary>
         ///     Indicates whether the compiler hook is interpreted.
         /// </summary>
-        public bool IsInterpreted
-        {
-            get { return _interpreted != null; }
-        }
+        public bool IsInterpreted => _interpreted != null;
 
         /// <summary>
         ///     Executes the compiler hook (either calls the managed 

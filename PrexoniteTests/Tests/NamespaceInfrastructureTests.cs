@@ -55,17 +55,14 @@ namespace PrexoniteTests.Tests
             // referencing module
             var external = SymbolStore.Create(conflictUnionSource: refd.Select(_exportFromModule(refdMod)));
             var mlv = ModuleLevelView.Create(external);
-            Symbol syma;
-            Assert.IsTrue(mlv.TryGet("a", out syma), "external symbol is accessible");
+            Assert.IsTrue(mlv.TryGet("a", out var syma), "external symbol is accessible");
 
             // retrive namespace
-            NamespaceSymbol nssyma;
             Assert.That(syma, Is.InstanceOf<NamespaceSymbol>(), "symbol a");
-            Assert.IsTrue(syma.TryGetNamespaceSymbol(out nssyma), "looking up a results in a namespace symbol");
+            Assert.IsTrue(syma.TryGetNamespaceSymbol(out var nssyma), "looking up a results in a namespace symbol");
 
             // retrieve referenced symbol
-            Symbol symb;
-            Assert.That(nssyma.Namespace.TryGet("b", out symb), Is.True, "external symbol a.b is accessible");
+            Assert.That(nssyma.Namespace.TryGet("b", out var symb), Is.True, "external symbol a.b is accessible");
             Assert.That(symb, Is.InstanceOf<ReferenceSymbol>(), "external symbol a.b");
             Assert.That(symb, Is.SameAs(b));
 
@@ -75,8 +72,7 @@ namespace PrexoniteTests.Tests
             var symd = Symbol.CreateReference(EntityRef.Command.Create("e"),NoSourcePosition.Instance);
             localns.DeclareExports(new KeyValuePair<string, Symbol>("d",symd).Singleton());
 
-            Symbol symd2;
-            Assert.That(nssyma.Namespace.TryGet("d",out symd2),Is.True,"Symbol a.d looked up locally");
+            Assert.That(nssyma.Namespace.TryGet("d",out var symd2),Is.True,"Symbol a.d looked up locally");
             Assert.That(symd2,Is.EqualTo(symd),"Symbol retrieved locally compared to the symbol declared");
             
             Assert.That(nsa.TryGet("d",out symd2),Is.False,"Existence of symbol a.d looked up from referenced module");
@@ -106,17 +102,14 @@ namespace PrexoniteTests.Tests
             // Referencing module
             var external = SymbolStore.Create(conflictUnionSource: refd1.Select(_exportFromModule(refd1Mod)).Append(refd2.Select(_exportFromModule(refd2Mod))));
             var mlv = ModuleLevelView.Create(external);
-            Symbol syma;
-            Assert.IsTrue(mlv.TryGet("a", out syma), "external symbol is accessible");
+            Assert.IsTrue(mlv.TryGet("a", out var syma), "external symbol is accessible");
 
             // retrive namespace
-            NamespaceSymbol nssyma;
             Assert.That(syma, Is.InstanceOf<NamespaceSymbol>(), "symbol a");
-            Assert.IsTrue(syma.TryGetNamespaceSymbol(out nssyma), "looking up `a` results in a namespace symbol");
+            Assert.IsTrue(syma.TryGetNamespaceSymbol(out var nssyma), "looking up `a` results in a namespace symbol");
 
             // retrieve referenced symbol b
-            Symbol symb;
-            Assert.That(nssyma.Namespace.TryGet("b", out symb), Is.True, "external symbol a.b is accessible");
+            Assert.That(nssyma.Namespace.TryGet("b", out var symb), Is.True, "external symbol a.b is accessible");
             Assert.That(symb, Is.InstanceOf<ReferenceSymbol>(), "external symbol a.b");
             Assert.That(symb, Is.SameAs(b));
 
@@ -130,10 +123,9 @@ namespace PrexoniteTests.Tests
             var localns = (LocalNamespace)nssyma.Namespace;
             var symd = Symbol.CreateReference(EntityRef.Command.Create("e"), NoSourcePosition.Instance);
             // shadows f, but doesn't modify the external namespace that defines f
-            localns.DeclareExports(new KeyValuePair<string, Symbol>("f", symd).Singleton()); 
+            localns.DeclareExports(new KeyValuePair<string, Symbol>("f", symd).Singleton());
 
-            Symbol symd2;
-            Assert.That(nssyma.Namespace.TryGet("f", out symd2), Is.True, "Symbol a.f looked up locally");
+            Assert.That(nssyma.Namespace.TryGet("f", out var symd2), Is.True, "Symbol a.f looked up locally");
             Assert.That(symd2, Is.EqualTo(symd), "Symbol retrieved locally compared to the symbol declared");
 
             // Check original namespaces (should be unmodified)
@@ -166,17 +158,14 @@ namespace PrexoniteTests.Tests
             // Referencing module
             var external = SymbolStore.Create(conflictUnionSource: refd1.Select(_exportFromModule(refd1Mod)).Append(refd2.Select(_exportFromModule(refd2Mod))));
             var mlv = ModuleLevelView.Create(external);
-            Symbol syma;
-            Assert.IsTrue(mlv.TryGet("a", out syma), "external symbol is accessible");
+            Assert.IsTrue(mlv.TryGet("a", out var syma), "external symbol is accessible");
 
             // retrive namespace
-            NamespaceSymbol nssyma;
             Assert.That(syma, Is.InstanceOf<NamespaceSymbol>(), "symbol a");
-            Assert.IsTrue(syma.TryGetNamespaceSymbol(out nssyma), "looking up `a` results in a namespace symbol");
+            Assert.IsTrue(syma.TryGetNamespaceSymbol(out var nssyma), "looking up `a` results in a namespace symbol");
 
             // retrieve reference symbol f
-            Symbol symb;
-            Assert.That(nssyma.Namespace.TryGet("f", out symb), Is.True, "external symbol a.f is accessible");
+            Assert.That(nssyma.Namespace.TryGet("f", out var symb), Is.True, "external symbol a.f is accessible");
             Assert.That(symb, Is.InstanceOf<MessageSymbol>(), "external symbol a.f"); // a conflict symbol
 
             // check that namespace is wrapped
@@ -186,8 +175,7 @@ namespace PrexoniteTests.Tests
             // shadows f, but doesn't modify the external namespace that defines f
             localns.DeclareExports(new KeyValuePair<string, Symbol>("f", symd).Singleton());
 
-            Symbol symd2;
-            Assert.That(nssyma.Namespace.TryGet("f", out symd2), Is.True, "Symbol a.f looked up locally");
+            Assert.That(nssyma.Namespace.TryGet("f", out var symd2), Is.True, "Symbol a.f looked up locally");
             Assert.That(symd2, Is.EqualTo(symd), "Symbol retrieved locally compared to the symbol declared");
 
             // Check original namespaces (should be unmodified)
@@ -233,17 +221,14 @@ namespace PrexoniteTests.Tests
                 refd2.Select(_exportFromModule(refd2Mod))).Append(
                 refd3.Select(_exportFromModule(refd3Mod))));
             var mlv = ModuleLevelView.Create(external);
-            Symbol syma;
-            Assert.IsTrue(mlv.TryGet("a", out syma), "external symbol is accessible");
+            Assert.IsTrue(mlv.TryGet("a", out var syma), "external symbol is accessible");
 
             // retrive namespace
-            NamespaceSymbol nssyma;
             Assert.That(syma, Is.InstanceOf<NamespaceSymbol>(), "symbol a");
-            Assert.IsTrue(syma.TryGetNamespaceSymbol(out nssyma), "looking up `a` results in a namespace symbol");
+            Assert.IsTrue(syma.TryGetNamespaceSymbol(out var nssyma), "looking up `a` results in a namespace symbol");
 
             // retrieve reference symbol f
-            Symbol symb;
-            Assert.That(nssyma.Namespace.TryGet("f", out symb), Is.True, "external symbol a.f is accessible");
+            Assert.That(nssyma.Namespace.TryGet("f", out var symb), Is.True, "external symbol a.f is accessible");
             Assert.That(symb, Is.InstanceOf<MessageSymbol>(), "external symbol a.f"); // a conflict symbol
 
             // check that namespace is wrapped
@@ -253,8 +238,7 @@ namespace PrexoniteTests.Tests
             // shadows f, but doesn't modify the external namespace that defines f
             localns.DeclareExports(new KeyValuePair<string, Symbol>("f", symd).Singleton());
 
-            Symbol symd2;
-            Assert.That(nssyma.Namespace.TryGet("f", out symd2), Is.True, "Symbol a.f looked up locally");
+            Assert.That(nssyma.Namespace.TryGet("f", out var symd2), Is.True, "Symbol a.f looked up locally");
             Assert.That(symd2, Is.EqualTo(symd), "Symbol retrieved locally compared to the symbol declared");
 
             // Check original namespaces (should be unmodified)
@@ -280,8 +264,7 @@ namespace PrexoniteTests.Tests
 
             globalScope.Declare("a",a);
 
-            Symbol syma;
-            Assert.That(mlv.TryGet("a", out syma),Is.True,"Existence of symbol a viewed through MLV");
+            Assert.That(mlv.TryGet("a", out var syma),Is.True,"Existence of symbol a viewed through MLV");
             Assert.That(syma,Is.Not.Null,"symbol a viewed through MLV");
             if(syma == null)
                 throw new AssertionException("symbol a viewed through MLV");
@@ -304,11 +287,9 @@ namespace PrexoniteTests.Tests
             // perform lookup of c through original alias
             if(!mlv.TryGet("a",out syma))
                 Assert.Fail("Cannot find symbol a");
-            NamespaceSymbol nsSymA;
-            if(!syma.TryGetNamespaceSymbol(out nsSymA))
+            if(!syma.TryGetNamespaceSymbol(out var nsSymA))
                 Assert.Fail("symbol a is not a namespace");
-            Symbol symc;
-            if(!nsSymA.Namespace.TryGet("c",out symc))
+            if(!nsSymA.Namespace.TryGet("c",out var symc))
                 Assert.Fail("Cannot find symbol c in namespace a");
             Assert.That(symc,Is.EqualTo(c),"symbol c when retrieved through MLV and other alias");
         }
@@ -330,13 +311,11 @@ namespace PrexoniteTests.Tests
             var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
             globalScope.Declare("a", a);
 
-            Symbol syma;
-            Assert.That(mlv.TryGet("a", out syma), Is.True, "Existence of symbol a viewed through MLV");
+            Assert.That(mlv.TryGet("a", out var syma), Is.True, "Existence of symbol a viewed through MLV");
             Assert.That(syma, Is.Not.Null, "symbol a viewed through MLV");
             if (syma == null)
                 throw new AssertionException("symbol a viewed through MLV");
-            NamespaceSymbol nssyma;
-            if(!syma.TryGetNamespaceSymbol(out nssyma))
+            if(!syma.TryGetNamespaceSymbol(out var nssyma))
                 Assert.Fail("symbol a must be a namespace");
             
             var ssb = SymbolStoreBuilder.Create(mlv);
@@ -372,13 +351,11 @@ namespace PrexoniteTests.Tests
             var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
             globalScope.Declare("a", a);
 
-            Symbol syma;
-            Assert.That(mlv.TryGet("a", out syma), Is.True, "Existence of symbol a viewed through MLV");
+            Assert.That(mlv.TryGet("a", out var syma), Is.True, "Existence of symbol a viewed through MLV");
             Assert.That(syma, Is.Not.Null, "symbol a viewed through MLV");
             if (syma == null)
                 throw new AssertionException("symbol a viewed through MLV");
-            NamespaceSymbol nssyma;
-            if (!syma.TryGetNamespaceSymbol(out nssyma))
+            if (!syma.TryGetNamespaceSymbol(out var nssyma))
                 Assert.Fail("symbol a must be a namespace");
 
             var ssb = SymbolStoreBuilder.Create(mlv);
@@ -416,13 +393,11 @@ namespace PrexoniteTests.Tests
             var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
             globalScope.Declare("a", a);
 
-            Symbol syma;
-            Assert.That(mlv.TryGet("a", out syma), Is.True, "Existence of symbol a viewed through MLV");
+            Assert.That(mlv.TryGet("a", out var syma), Is.True, "Existence of symbol a viewed through MLV");
             Assert.That(syma, Is.Not.Null, "symbol a viewed through MLV");
             if (syma == null)
                 throw new AssertionException("symbol a viewed through MLV");
-            NamespaceSymbol nssyma;
-            if (!syma.TryGetNamespaceSymbol(out nssyma))
+            if (!syma.TryGetNamespaceSymbol(out var nssyma))
                 Assert.Fail("symbol a must be a namespace");
 
             var ssb = SymbolStoreBuilder.Create(mlv);
@@ -444,31 +419,27 @@ namespace PrexoniteTests.Tests
         }
 
         // ReSharper disable once UnusedParameter.Local
-        private void _assertNotExists([NotNull] ISymbolView<Symbol> view, [NotNull] String id, String viewDesc = null)
+        private void _assertNotExists([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
         {
-            Symbol dummy;
-            if(view.TryGet(id, out dummy))
+            if(view.TryGet(id, out var dummy))
                 Assert.Fail("Unexpected presence of symbol {0} in {1}", id, (viewDesc ?? "scope"));
         }
 
         [NotNull]
         // ReSharper disable once UnusedParameter.Local
-        private Symbol _assertGetSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] String id, String viewDesc = null)
+        private Symbol _assertGetSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
         {
-            Symbol symbol;
-            if(!view.TryGet(id, out symbol))
+            if(!view.TryGet(id, out var symbol))
                 Assert.Fail("Expected {0} in {1}", id, (viewDesc ?? "scope"));
             return symbol;
         }
 
         // ReSharper disable once UnusedParameter.Local
-        private NamespaceSymbol _assertGetNamespaceSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] String id, String viewDesc = null)
+        private NamespaceSymbol _assertGetNamespaceSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
         {
-            Symbol symbol;
-            if (!view.TryGet(id, out symbol))
+            if (!view.TryGet(id, out var symbol))
                 Assert.Fail("Expected {0} in {1}", id, (viewDesc ?? "scope"));
-            NamespaceSymbol namespaceSymbol;
-            if(!symbol.TryGetNamespaceSymbol(out namespaceSymbol))
+            if(!symbol.TryGetNamespaceSymbol(out var namespaceSymbol))
                 Assert.Fail("Expected {0} in {1} to be a namespace symbol. Was {2} instead.", id, (viewDesc ?? "scope"), symbol);
             return namespaceSymbol;
         }

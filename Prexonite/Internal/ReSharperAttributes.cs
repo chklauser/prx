@@ -69,8 +69,7 @@ namespace JetBrains.Annotations
         /// </returns>
         public override bool Equals(object obj)
         {
-            var attribute = obj as LocalizationRequiredAttribute;
-            return attribute != null && attribute.Required == Required;
+            return obj is LocalizationRequiredAttribute attribute && attribute.Required == Required;
         }
 
         /// <summary>

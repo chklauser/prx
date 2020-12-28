@@ -49,8 +49,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             if (arguments.Count < 1)
             {
                 throw new PrexoniteException(
-                    string.Format("{0} requires a PType argument (or a PType expression).",
-                        PartialApplicationKind));
+                    $"{PartialApplicationKind} requires a PType argument (or a PType expression).");
             }
 
             var raw = arguments.Array[arguments.Offset + arguments.Count - 1];
@@ -70,13 +69,12 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected override bool FilterCompileTimeArguments(
             ref ArraySegment<CompileTimeValue> staticArgv, out T parameter)
         {
-            parameter = default(T);
+            parameter = default;
             if (staticArgv.Count < 1)
                 return false;
 
             var raw = staticArgv.Array[staticArgv.Offset + staticArgv.Count - 1];
-            string ptypeExpr;
-            if (!raw.TryGetString(out ptypeExpr))
+            if (!raw.TryGetString(out var ptypeExpr))
                 return false;
 
             parameter = new T {Expr = ptypeExpr};

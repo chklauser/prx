@@ -38,20 +38,12 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly HeadTail _instance = new HeadTail();
-
-        public static HeadTail Instance
-        {
-            get { return _instance; }
-        }
+        public static HeadTail Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {

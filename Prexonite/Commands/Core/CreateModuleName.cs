@@ -35,12 +35,7 @@ namespace Prexonite.Commands.Core
 
         #region Singleton pattern
 
-        private static readonly CreateModuleName _instance = new CreateModuleName();
-
-        public static CreateModuleName Instance
-        {
-            get { return _instance; }
-        }
+        public static CreateModuleName Instance { get; } = new();
 
         private CreateModuleName()
         {
@@ -67,8 +62,7 @@ namespace Prexonite.Commands.Core
                 if(args[0].Type == PType.Object[typeof(MetaEntry)])
                 {
                     var entry = (MetaEntry) args[0].Value;
-                    ModuleName moduleName;
-                    if (ModuleName.TryParse(entry, out moduleName))
+                    if (ModuleName.TryParse(entry, out var moduleName))
                         return sctx.CreateNativePValue(sctx.Cache[moduleName]);
                     else
                         return PType.Null;
@@ -77,8 +71,7 @@ namespace Prexonite.Commands.Core
                 {
                     var raw = args[0].CallToString(sctx);
 
-                    ModuleName moduleName;
-                    if (ModuleName.TryParse(raw, out moduleName))
+                    if (ModuleName.TryParse(raw, out var moduleName))
                         return sctx.CreateNativePValue(sctx.Cache[moduleName]);
                     else
                         return PType.Null;
@@ -96,8 +89,7 @@ namespace Prexonite.Commands.Core
             {
                 var raw = args[0].CallToString(sctx);
 
-                Version version;
-                if (Version.TryParse(rawVersion.CallToString(sctx), out version))
+                if (Version.TryParse(rawVersion.CallToString(sctx), out var version))
                     return sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw, version)]);
                 else
                     return PType.Null;

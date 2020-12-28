@@ -30,41 +30,28 @@ namespace Prexonite.Compiler.Ast
 {
     public abstract class AstScopedExpr : AstExpr
     {
-        [NotNull]
-        private readonly AstBlock _lexicalScope;
-
         protected AstScopedExpr([NotNull] ISourcePosition position, [NotNull] AstBlock lexicalScope)
             : base(position)
         {
-            if (lexicalScope == null)
-                throw new System.ArgumentNullException(nameof(lexicalScope));
-            _lexicalScope = lexicalScope;
+            LexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
         }
 
         internal AstScopedExpr([NotNull] Parser p, [NotNull]  AstBlock lexicalScope)
             : base(p)
         {
-            if (lexicalScope == null)
-                throw new System.ArgumentNullException(nameof(lexicalScope));
-            _lexicalScope = lexicalScope;
+            LexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
         }
 
         protected AstScopedExpr([NotNull] string file, int line, int column, [NotNull] AstBlock lexicalScope)
             : base(file, line, column)
         {
-            if (lexicalScope == null)
-                throw new System.ArgumentNullException(nameof(lexicalScope));
-            _lexicalScope = lexicalScope;
+            LexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
         }
 
         /// <summary>
         ///     The node this block is a part of.
         /// </summary>
         [NotNull]
-        public AstBlock LexicalScope
-        {
-            [DebuggerStepThrough]
-            get { return _lexicalScope; }
-        }
+        public AstBlock LexicalScope { [DebuggerStepThrough] get; }
     }
 }

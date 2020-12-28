@@ -365,11 +365,7 @@ ret.value
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
-                    String.Format(
-                        "Twice: Instructions at address {0} do not match ({1} != {2})",
-                        i,
-                        expected[i],
-                        actual[i]));
+                    $"Twice: Instructions at address {i} do not match ({expected[i]} != {actual[i]})");
 
             //check "megabyte"
             actual = target.Functions["megabyte"].Code;
@@ -387,11 +383,7 @@ ret.value
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
-                    String.Format(
-                        "Megabyte: Instructions at address {0} do not match ({1} != {2})",
-                        i,
-                        expected[i],
-                        actual[i]));
+                    $"Megabyte: Instructions at address {i} do not match ({expected[i]} != {actual[i]})");
         }
 
         #endregion

@@ -35,12 +35,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Char _instance = new Char();
-
-        public static Char Instance
-        {
-            get { return _instance; }
-        }
+        public static Char Instance { get; } = new();
 
         /// <summary>
         ///     Executes the command.
@@ -58,7 +53,6 @@ namespace Prexonite.Commands.Core
             if (args.Length < 1)
                 throw new PrexoniteException("Char requires at least one argument.");
 
-            PValue v;
             var arg = args[0];
             if (arg.Type == PType.String)
             {
@@ -68,7 +62,7 @@ namespace Prexonite.Commands.Core
                 else
                     return s[0];
             }
-            else if (arg.TryConvertTo(sctx, PType.Char, true, out v))
+            else if (arg.TryConvertTo(sctx, PType.Char, true, out var v))
             {
                 return v;
             }
@@ -111,11 +105,9 @@ namespace Prexonite.Commands.Core
 
         bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
         {
-            string literal;
-            int code;
             return dynamicArgc == 0 && staticArgv.Length == 1 &&
-                (staticArgv[0].TryGetString(out literal) && literal.Length > 0 ||
-                    staticArgv[0].TryGetInt(out code) && code >= 0);
+                   (staticArgv[0].TryGetString(out var literal) && literal.Length > 0 ||
+                    staticArgv[0].TryGetInt(out var code) && code >= 0);
         }
 
         void ICilExtension.Implement(CompilerState state, Instruction ins,
@@ -125,9 +117,8 @@ namespace Prexonite.Commands.Core
                 return; // Usually for commands without side-effects you have to at least
             //  pop dynamic arguments from the stack.
             // ValidateArguments proved that there are no arguments on the stack.
-            string literal;
             int code;
-            if (staticArgv[0].TryGetString(out literal))
+            if (staticArgv[0].TryGetString(out var literal))
                 code = literal[0];
             else if (!staticArgv[0].TryGetInt(out code))
                 throw new ArgumentException(

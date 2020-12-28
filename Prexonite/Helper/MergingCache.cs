@@ -63,20 +63,14 @@ namespace Prexonite
 
             private MergingCache<ModuleName> _moduleNameCache;
 
-            public override IObjectCache<EntityRef> EntityRefs
-            {
-                get { return _entityRefCache ?? (_entityRefCache = _createEntityRefCache()); }
-            }
+            public override IObjectCache<EntityRef> EntityRefs => _entityRefCache ??= _createEntityRefCache();
 
             private static MergingCache<EntityRef> _createEntityRefCache()
             {
                 return MergingCache<EntityRef>.Create(1000);
             }
 
-            public override IObjectCache<ModuleName> ModuleNames
-            {
-                get { return _moduleNameCache ??  (_moduleNameCache = _createModuleNameCache()); }
-            }
+            public override IObjectCache<ModuleName> ModuleNames => _moduleNameCache ??= _createModuleNameCache();
 
             private static MergingCache<ModuleName> _createModuleNameCache()
             {
@@ -85,28 +79,18 @@ namespace Prexonite
 
             protected override int EstimateSize()
             {
-                return (_entityRefCache == null ? 0 : _entityRefCache.EstimateSize()) + (_moduleNameCache == null ? 0 : _moduleNameCache.EstimateSize());
+                return (_entityRefCache?.EstimateSize() ?? 0) + (_moduleNameCache?.EstimateSize() ?? 0);
             }
 
-            public override ModuleName this[string internalId, Version version]
-            {
-                get { return ModuleNames.GetCached(new ModuleName(internalId, version)); }
-            }
+            public override ModuleName this[string internalId, Version version] => ModuleNames.GetCached(new ModuleName(internalId, version));
 
-            public override ModuleName this[ModuleName moduleName]
-            {
-                get { return ModuleNames.GetCached(moduleName); }
-            }
+            public override ModuleName this[ModuleName moduleName] => ModuleNames.GetCached(moduleName);
 
-            public override EntityRef this[EntityRef entityRef]
-            {
-                get { return EntityRefs.GetCached(entityRef); }
-            }
+            public override EntityRef this[EntityRef entityRef] => EntityRefs.GetCached(entityRef);
 
             protected internal override CentralCache LinkInto(CentralCache cache)
             {
-                var c = cache as Impl;
-                if(c == null)
+                if(!(cache is Impl c))
                 {
                     throw new ArgumentException(
                         "Can only link with proper implementations of CentralCache.", nameof(cache));
@@ -186,10 +170,7 @@ namespace Prexonite
                 return base.Contents();
             }
 
-            public new int Count
-            {
-                get { return base.Count; }
-            }
+            public new int Count => base.Count;
         }
 
         private class Impl : MergingCache<T>

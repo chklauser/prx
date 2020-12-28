@@ -41,12 +41,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
         }
 
-        private static readonly PartialMemberCallCommand _instance = new PartialMemberCallCommand();
-
-        public static PartialMemberCallCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static PartialMemberCallCommand Instance { get; } = new();
 
         #endregion
 
@@ -86,9 +81,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                     "Partial member call constructor expects the second but last argument to be the member id.");
             if (!rawCall.TryConvertTo(sctx, PType.Int, out rawCall))
                 throw new PrexoniteException(
-                    string.Format(
-                        "Partial member call constructor expects the last argument to be the call type. (either {0} or {1})",
-                        (int) PCall.Get, (int) PCall.Set));
+                    $"Partial member call constructor expects the last argument to be the call type. (either {(int) PCall.Get} or {(int) PCall.Set})");
 
             MemberCallInfo info;
             info.MemberId = (string) rawMemberId.Value;
@@ -101,7 +94,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected override bool FilterCompileTimeArguments(
             ref ArraySegment<CompileTimeValue> staticArgv, out MemberCallInfo parameter)
         {
-            parameter = default(MemberCallInfo);
+            parameter = default;
             if (staticArgv.Count < 2)
                 return false;
 
@@ -109,9 +102,8 @@ namespace Prexonite.Commands.Core.PartialApplication
             var rawMemberId = staticArgv.Array[lastIndex];
             var rawCall = staticArgv.Array[lastIndex - 1];
 
-            int rawCallInt32;
             if (!rawMemberId.TryGetString(out parameter.MemberId) ||
-                !rawCall.TryGetInt(out rawCallInt32))
+                !rawCall.TryGetInt(out var rawCallInt32))
                 return false;
             parameter.Call = (PCall) rawCallInt32;
 
@@ -131,17 +123,14 @@ namespace Prexonite.Commands.Core.PartialApplication
             state.EmitLdcI4((int) parameter.Call);
             state.Il.Emit(
                 OpCodes.Newobj,
-                _partialMemberCallCtor
-                    ??
-                    (_partialMemberCallCtor =
-                        typeof (PartialMemberCall).GetConstructor(
-                            new[]
-                                {
-                                    typeof (int[]),
-                                    typeof (PValue[]),
-                                    typeof (string),
-                                    typeof (PCall)
-                                })));
+                _partialMemberCallCtor ??= typeof (PartialMemberCall).GetConstructor(
+                    new[]
+                    {
+                        typeof (int[]),
+                        typeof (PValue[]),
+                        typeof (string),
+                        typeof (PCall)
+                    }));
         }
 
         #endregion
@@ -149,26 +138,15 @@ namespace Prexonite.Commands.Core.PartialApplication
 
     public class PartialMemberCall : PartialApplicationBase
     {
-        private readonly string _memberId;
-        private readonly PCall _call;
+        public string MemberId { [DebuggerStepThrough] get; }
 
-        public string MemberId
-        {
-            [DebuggerStepThrough]
-            get { return _memberId; }
-        }
-
-        public PCall Call
-        {
-            [DebuggerStepThrough]
-            get { return _call; }
-        }
+        public PCall Call { [DebuggerStepThrough] get; }
 
         public PartialMemberCall(int[] mappings, PValue[] closedArguments, string memberId,
             PCall call) : base(mappings, closedArguments, 1)
         {
-            _memberId = memberId;
-            _call = call;
+            MemberId = memberId;
+            Call = call;
         }
 
         #region Overrides of PartialApplicationBase
@@ -176,13 +154,13 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
             PValue[] arguments)
         {
-            var result = nonArguments[0].DynamicCall(sctx, arguments, _call, _memberId);
-            if (_call == PCall.Get)
+            var result = nonArguments[0].DynamicCall(sctx, arguments, Call, MemberId);
+            if (Call == PCall.Get)
                 return result;
             else if (arguments.Length == 0)
                 return PType.Null.CreatePValue();
             else
-                return arguments[arguments.Length - 1];
+                return arguments[^1];
         }
 
         #endregion

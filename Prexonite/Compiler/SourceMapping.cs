@@ -28,7 +28,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Prexonite.Internal;
 
 namespace Prexonite.Compiler
 {
@@ -36,8 +35,7 @@ namespace Prexonite.Compiler
     {
         #region Representation
 
-        private readonly List<ISourcePosition> _positionTable = new List<ISourcePosition>();
-        private int _validCount;
+        private readonly List<ISourcePosition> _positionTable = new();
 
         #endregion
 
@@ -96,7 +94,7 @@ namespace Prexonite.Compiler
         public void Clear()
         {
             _positionTable.Clear();
-            _validCount = 0;
+            Count = 0;
         }
 
         /// <summary>
@@ -109,8 +107,7 @@ namespace Prexonite.Compiler
         bool ICollection<KeyValuePair<int, ISourcePosition>>.Contains(
             KeyValuePair<int, ISourcePosition> item)
         {
-            ISourcePosition pos;
-            return TryGetValue(item.Key, out pos) && pos.SourcePositionEquals(item.Value);
+            return TryGetValue(item.Key, out var pos) && pos.SourcePositionEquals(item.Value);
         }
 
         /// <summary>
@@ -151,8 +148,7 @@ namespace Prexonite.Compiler
         bool ICollection<KeyValuePair<int, ISourcePosition>>.Remove(
             KeyValuePair<int, ISourcePosition> item)
         {
-            ISourcePosition pos;
-            if (TryGetValue(item.Key, out pos) && pos.SourcePositionEquals(item.Value))
+            if (TryGetValue(item.Key, out var pos) && pos.SourcePositionEquals(item.Value))
             {
                 return Remove(item.Key);
             }
@@ -168,10 +164,7 @@ namespace Prexonite.Compiler
         /// <returns>
         ///     The number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1" />.
         /// </returns>
-        public int Count
-        {
-            get { return _validCount; }
-        }
+        public int Count { get; private set; }
 
         /// <summary>
         ///     Gets a value indicating whether the <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.
@@ -179,10 +172,7 @@ namespace Prexonite.Compiler
         /// <returns>
         ///     true if the <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only; otherwise, false.
         /// </returns>
-        bool ICollection<KeyValuePair<int, ISourcePosition>>.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool ICollection<KeyValuePair<int, ISourcePosition>>.IsReadOnly => false;
 
         #endregion
 
@@ -220,7 +210,7 @@ namespace Prexonite.Compiler
 
                 _positionTable[instructionOffset] = value;
 
-                _validCount += insertDelta + removeDelta;
+                Count += insertDelta + removeDelta;
             }
             else
             {
@@ -250,7 +240,7 @@ namespace Prexonite.Compiler
                 if (_positionTable[instructionOffset] != null)
                 {
                     _positionTable[instructionOffset] = null;
-                    _validCount--;
+                    Count--;
                     return true;
                 }
                 else
@@ -283,10 +273,6 @@ namespace Prexonite.Compiler
                 Debug.Assert(instructionOffset + count <= _positionTable.Count,
                     "Removal range not clamped to backing storage index range.");
                 _positionTable.RemoveRange(instructionOffset, count);
-            }
-            else
-            {
-                return;
             }
         }
 
@@ -330,8 +316,7 @@ namespace Prexonite.Compiler
         {
             get
             {
-                ISourcePosition pos;
-                if (TryGetValue(instructionOffset, out pos))
+                if (TryGetValue(instructionOffset, out var pos))
                     return pos;
                 else
                     throw new KeyNotFoundException(
@@ -392,10 +377,8 @@ namespace Prexonite.Compiler
             if (table == null)
                 throw new ArgumentNullException(nameof(table));
 
-            MetaEntry rootEntry;
-
             //Check if there is source information available
-            if (!table.TryGetValue(SourceMappingKey, out rootEntry))
+            if (!table.TryGetValue(SourceMappingKey, out var rootEntry))
                 return new SourceMapping();
 
             var source = new SourceMapping();
@@ -415,17 +398,14 @@ namespace Prexonite.Compiler
                 var thisFile = entry.Length >= 4 ? entry[3].Text : file;
 
                 //Convert text to values
-                int instructionOffset;
                 if (instructionOffsetRaw == null ||
-                    !Int32.TryParse(instructionOffsetRaw, out instructionOffset))
+                    !int.TryParse(instructionOffsetRaw, out var instructionOffset))
                     continue;
 
-                int line;
-                if (lineRaw == null || !Int32.TryParse(lineRaw, out line))
+                if (lineRaw == null || !int.TryParse(lineRaw, out var line))
                     continue;
 
-                int col;
-                if (colRaw == null || !Int32.TryParse(colRaw, out col))
+                if (colRaw == null || !int.TryParse(colRaw, out var col))
                     col = 0;
 
                 //add entry
@@ -468,9 +448,8 @@ namespace Prexonite.Compiler
                 if (pos == null)
                     continue;
 
-                int count;
                 var file = pos.File;
-                if (!mcfTable.TryGetValue(file, out count))
+                if (!mcfTable.TryGetValue(file, out _))
                     mcfTable.Add(file, 1);
                 else
                     mcfTable[file]++;

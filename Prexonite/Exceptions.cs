@@ -89,10 +89,10 @@ namespace Prexonite
     }
 
     /// <summary>
-    ///     The generic base class of all exceptions rised by the Prexonite library.
+    ///     The generic base class of all exceptions raised by the Prexonite library.
     /// </summary>
     /// <remarks>
-    ///     Even exceptional errors during compilation are reported as <see cref = "PrexoniteException" /> if they are not considerer 'fatal'.
+    ///     Even exceptional errors during compilation are reported as <see cref = "PrexoniteException" /> if they are not considered 'fatal'.
     /// </remarks>
     [Serializable]
     public class PrexoniteException : Exception
@@ -167,20 +167,15 @@ namespace Prexonite
 
         /// <summary>
         ///     Provides access to the stack trace recorded when creating the exception.
-        ///     This field can be null if the instance has beeen created without a stack trace.
+        ///     This field can be null if the instance has been created without a stack trace.
         /// </summary>
-        public string PrexoniteStackTrace
-        {
-            get { return _prexoniteStackTrace; }
-        }
-
-        private readonly string _prexoniteStackTrace;
+        public string PrexoniteStackTrace { get; }
 
         private PrexoniteRuntimeException(
             string message, Exception innerException, string prexoniteStackTrace)
             : base(message, innerException)
         {
-            _prexoniteStackTrace = prexoniteStackTrace;
+            PrexoniteStackTrace = prexoniteStackTrace;
         }
 
         /// <summary>
@@ -196,8 +191,7 @@ namespace Prexonite
         {
             if (esctx == null)
                 throw new ArgumentNullException(nameof(esctx));
-            if (message == null)
-                message = "An error occured at runtime.";
+            message ??= "An error occured at runtime.";
 
             var builder = new StringBuilder();
             var stack = new List<StackContext>(esctx.ParentEngine.Stack);
@@ -208,7 +202,7 @@ namespace Prexonite
                 builder.Append("   at ");
                 if (fctx == null)
                 {
-                    builder.Append(sctx.ToString());
+                    builder.Append(sctx);
                 }
                 else
                 {
@@ -232,8 +226,7 @@ namespace Prexonite
                         builder.Append(code[pointer]);
 
                         var sm = SourceMapping.Load(fctx.Implementation);
-                        ISourcePosition pos;
-                        if (sm.TryGetValue(pointer, out pos))
+                        if (sm.TryGetValue(pointer, out var pos))
                         {
                             builder.AppendFormat(" (in {0}, on line {1}, col {2})", pos.File,
                                 pos.Line, pos.Column);
@@ -278,7 +271,7 @@ namespace Prexonite
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Concat(base.ToString(), "\n:: Prexonite Stack:\n", _prexoniteStackTrace);
+            return string.Concat(base.ToString(), "\n:: Prexonite Stack:\n", PrexoniteStackTrace);
         }
 
         /// <summary>
@@ -321,13 +314,10 @@ namespace Prexonite
             //    return
             //        new PrexoniteRuntimeException(exc.Message, exc, pExc._prexoniteStackTrace);
 
-            PrexoniteRuntimeException lowestRuntimeException;
-            Exception lowestException;
-
             if (pExc.InnerException == null)
                 return pExc;
 
-            _unpack(pExc, out lowestException, out lowestRuntimeException);
+            _unpack(pExc, out var lowestException, out var lowestRuntimeException);
 
             //Check if something changed
             if (ReferenceEquals(lowestException, pExc.InnerException) &&
@@ -335,7 +325,7 @@ namespace Prexonite
                 return pExc;
 
             return new PrexoniteRuntimeException(lowestException.Message, lowestException,
-                lowestRuntimeException._prexoniteStackTrace);
+                lowestRuntimeException.PrexoniteStackTrace);
         }
 
         private static void _unpack(PrexoniteRuntimeException originalException,

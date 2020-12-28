@@ -42,12 +42,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static Call_Tail _instance = new Call_Tail();
-
-        public static Call_Tail Instance
-        {
-            get { return _instance; }
-        }
+        public static Call_Tail Instance { get; } = new();
 
         #endregion
 
@@ -96,7 +91,7 @@ namespace Prexonite.Commands.Core
             if (node == null)
             {
                 throw new PrexoniteException(
-                    string.Format("{0} only works on the interpreted stack.", Engine.Call_TailAlias));
+                    $"{Engine.Call_TailAlias} only works on the interpreted stack.");
             }
             stack.Remove(node);
             return iargs;
@@ -104,13 +99,7 @@ namespace Prexonite.Commands.Core
 
         #region Partial application via call\star
 
-        private readonly PartialTailCall _partial = new PartialTailCall();
-
-        public PartialTailCall Partial
-        {
-            [DebuggerStepThrough]
-            get { return _partial; }
-        }
+        public PartialTailCall Partial { [DebuggerStepThrough] get; } = new();
 
         public class PartialTailCall : PartialCallWrapper
         {
@@ -135,11 +124,9 @@ namespace Prexonite.Commands.Core
             private static void _specifyDeficiency(MacroContext context)
             {
                 context.Function.Meta[PFunction.VolatileKey] = true;
-                MetaEntry deficiency;
-                if (!context.Function.Meta.TryGetValue(PFunction.DeficiencyKey, out deficiency) ||
+                if (!context.Function.Meta.TryGetValue(PFunction.DeficiencyKey, out var deficiency) ||
                     deficiency.Text == "")
-                    context.Function.Meta[PFunction.DeficiencyKey] = string.Format("Uses {0}.",
-                        Engine.Call_TailAlias);
+                    context.Function.Meta[PFunction.DeficiencyKey] = $"Uses {Engine.Call_TailAlias}.";
             }
         }
 

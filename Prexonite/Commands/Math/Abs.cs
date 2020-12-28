@@ -39,12 +39,7 @@ namespace Prexonite.Commands.Math
         {
         }
 
-        private static readonly Abs _instance = new Abs();
-
-        public static Abs Instance
-        {
-            get { return _instance; }
-        }
+        public static Abs Instance { get; } = new();
 
         #endregion
 
@@ -55,10 +50,7 @@ namespace Prexonite.Commands.Math
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
 
         /// <summary>

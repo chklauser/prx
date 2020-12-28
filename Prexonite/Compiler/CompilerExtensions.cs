@@ -36,31 +36,26 @@ namespace Prexonite.Compiler
         public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode,
                                         out AstReference referenceNode)
         {
-            EntityRef entityRef;
-            return TryMatchCall(node, out indirectCallNode, out referenceNode, out entityRef);
+            return TryMatchCall(node, out indirectCallNode, out referenceNode, out _);
         }
 
         [ContractAnnotation("=>true,indirectCallNode:notnull,entityRef:notnull;=>false,indirectCallNode:canbenull,entityRef:canbenull")]
         public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode, out EntityRef entityRef)
         {
-            AstReference referenceNode;
-            return TryMatchCall(node, out indirectCallNode, out referenceNode, out entityRef);
+            return TryMatchCall(node, out indirectCallNode, out _, out entityRef);
         }
 
         [ContractAnnotation("=>true,entityRef:notnull;=>false,entityRef:canbenull")]
         public static bool TryMatchCall(this AstNode node, out EntityRef entityRef)
         {
-            AstReference referenceNode;
-            AstIndirectCall indirectCallNode;
-            return TryMatchCall(node, out indirectCallNode, out referenceNode, out entityRef);
+            return TryMatchCall(node, out _, out _, out entityRef);
         }
 
         [ContractAnnotation("=>true,referenceNode:notnull,entityRef:notnull;=>false,referenceNode:canbenull,entityRef:canbenull")]
         public static bool TryMatchCall(this AstNode node,
                                         out AstReference referenceNode, out EntityRef entityRef)
         {
-            AstIndirectCall indirectCallNode;
-            return TryMatchCall(node, out indirectCallNode, out referenceNode, out entityRef);
+            return TryMatchCall(node, out _, out referenceNode, out entityRef);
         }
 
         [ContractAnnotation("=>true,indirectCallNode:notnull,referenceNode:notnull,entityRef:notnull;=>false,indirectCallNode:canbenull,referenceNode:canbenull,entityRef:canbenull")]
@@ -84,9 +79,7 @@ namespace Prexonite.Compiler
         [ContractAnnotation("=>true,indirectCallNode:notnull;=>false,indirectCallNode:canbenull")]
         public static bool IsCommandCall(this AstNode node, string commandAlias, out AstIndirectCall indirectCallNode)
         {
-            EntityRef entityRef;
-            EntityRef.Command cmd;
-            return node.TryMatchCall(out indirectCallNode, out entityRef) && entityRef.TryGetCommand(out cmd) &&
+            return node.TryMatchCall(out indirectCallNode, out EntityRef entityRef) && entityRef.TryGetCommand(out var cmd) &&
                    Engine.StringsAreEqual(cmd.Id, commandAlias);
         }
     }

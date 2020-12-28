@@ -46,8 +46,6 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         private readonly PValue[] _closedArguments;
 
-        private readonly int _nonArgumentPrefix;
-
         /// <summary>
         ///     <para>Copy of the mappings from effective argument position to closed and open arguments. </para>
         ///     <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
@@ -96,7 +94,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             _closedArguments = closedArguments;
 
             _mappings = mappings;
-            _nonArgumentPrefix = nonArgumentPrefix;
+            NonArgumentPrefix = nonArgumentPrefix;
             _assertMappingsNonZero();
         }
 
@@ -140,9 +138,7 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            PValue[] nonArguments;
-            PValue[] effectiveArguments;
-            _combineArguments(args, out nonArguments, out effectiveArguments);
+            _combineArguments(args, out var nonArguments, out var effectiveArguments);
 
             return Invoke(sctx, nonArguments, effectiveArguments);
         }
@@ -175,9 +171,8 @@ namespace Prexonite.Commands.Core.PartialApplication
                 var mapping = _mappings.Array[_mappings.Offset + absoluteIndex];
                 System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
 
-                int relativeIndex;
                 var argumentList = _determineArgumentList(
-                    out relativeIndex, nonArgumentPrefix, absoluteIndex, nonArguments,
+                    out var relativeIndex, nonArgumentPrefix, absoluteIndex, nonArguments,
                     effectiveArguments);
 
                 if (0 <= mapping)
@@ -208,8 +203,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                 if (openArgumentUsed[i])
                     continue;
 
-                int relativeIndex;
-                var argumentList = _determineArgumentList(out relativeIndex, nonArgumentPrefix,
+                var argumentList = _determineArgumentList(out var relativeIndex, nonArgumentPrefix,
                     absoluteIndex++, nonArguments,
                     effectiveArguments);
                 argumentList[relativeIndex] = args[i];
@@ -224,9 +218,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         public bool TryDefer(StackContext sctx, PValue[] args,
             out StackContext partialApplicationContext, out PValue result)
         {
-            PValue[] nonArguments;
-            PValue[] effectiveArguments;
-            _combineArguments(args, out nonArguments, out effectiveArguments);
+            _combineArguments(args, out var nonArguments, out var effectiveArguments);
 
             return DoTryDefer(sctx, nonArguments, effectiveArguments, out partialApplicationContext,
                 out result);
@@ -290,10 +282,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <remarks>
         ///     <para>In a lot of cases, not all of the effective arguments will actually get passed as a <see cref = "PValue" />[]. Most likely the first few will indicate the call target (the object to call members on, the indirect call subject and so on).</para>
         /// </remarks>
-        protected int NonArgumentPrefix
-        {
-            get { return _nonArgumentPrefix; }
-        }
+        protected int NonArgumentPrefix { get; }
 
         #endregion
     }

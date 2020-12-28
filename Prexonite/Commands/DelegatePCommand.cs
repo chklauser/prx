@@ -88,7 +88,7 @@ namespace Prexonite.Commands
         /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
         public static implicit operator DelegatePCommand(PCommandAction action)
         {
-            return new DelegatePCommand(action);
+            return new(action);
         }
     }
 

@@ -48,7 +48,7 @@ namespace Prexonite.Compiler.Internal
             {
                 if (internalIdExpr.TryMatchStringAtom(out internalId))
                 {
-                    var index = rawIndex == null ? null : rawIndex as int?;
+                    var index = rawIndex as int?;
 
                     var local = EntityRef.Variable.Local.Create(internalId);
                     if (index != null)

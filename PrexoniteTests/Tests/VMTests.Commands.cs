@@ -442,7 +442,7 @@ function main = pi;
         {
             Compile(@"function main = [1,2,3,4,5] >> reverse >> foldl((a,b) => a + b,"""");");
 
-            Expect("54321", new PValue[0]);
+            Expect("54321", Array.Empty<PValue>());
         }
 
         [Test]

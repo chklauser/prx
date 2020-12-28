@@ -36,64 +36,30 @@ namespace Prx.Benchmarking
         {
             if (parentEntry == null)
                 throw new ArgumentNullException(nameof(parentEntry));
-            _entry = parentEntry;
-            _rawMilliseconds = rawMilliseconds;
-            _overheadMilliseconds = overheadMilliseconds;
-            _entry.Measurements.Add(this);
+            Entry = parentEntry;
+            RawMilliseconds = rawMilliseconds;
+            OverheadMilliseconds = overheadMilliseconds;
+            Entry.Measurements.Add(this);
         }
 
-        public BenchmarkEntry Entry
-        {
-            get { return _entry; }
-        }
+        public BenchmarkEntry Entry { get; }
 
-        private readonly BenchmarkEntry _entry;
-        private readonly long _overheadMilliseconds;
-        private readonly long _rawMilliseconds;
+        public double RawSeconds => RawMilliseconds/1000.0;
 
-        public double RawSeconds
-        {
-            get { return _rawMilliseconds/1000.0; }
-        }
+        public double PassMilliseconds => RawMilliseconds/(double) Entry.Parent.Iterations;
 
-        public double PassMilliseconds
-        {
-            get { return _rawMilliseconds/(double) Entry.Parent.Iterations; }
-        }
+        public double PassMicroseconds => checked(PassMilliseconds*1000);
 
-        public double PassMicroseconds
-        {
-            get { return checked(PassMilliseconds*1000); }
-        }
+        public long ClearedMilliseconds => (RawMilliseconds - OverheadMilliseconds);
 
-        public long ClearedMilliseconds
-        {
-            get { return (_rawMilliseconds - _overheadMilliseconds); }
-        }
+        public long ClearedMicroseconds => checked(ClearedMilliseconds*1000);
 
-        public long ClearedMicroseconds
-        {
-            get { return checked(ClearedMilliseconds*1000); }
-        }
+        public double ClearedPassMilliseconds => ClearedMilliseconds/(double) Entry.Parent.Iterations;
 
-        public double ClearedPassMilliseconds
-        {
-            get { return ClearedMilliseconds/(double) Entry.Parent.Iterations; }
-        }
+        public double ClearedPassMicroseconds => checked(ClearedPassMilliseconds*1000);
 
-        public double ClearedPassMicroseconds
-        {
-            get { return checked(ClearedPassMilliseconds*1000); }
-        }
+        public long OverheadMilliseconds { get; }
 
-        public long OverheadMilliseconds
-        {
-            get { return _overheadMilliseconds; }
-        }
-
-        public long RawMilliseconds
-        {
-            get { return _rawMilliseconds; }
-        }
+        public long RawMilliseconds { get; }
     }
 }

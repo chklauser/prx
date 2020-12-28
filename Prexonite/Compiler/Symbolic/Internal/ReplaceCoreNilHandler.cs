@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
@@ -32,12 +30,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
     {
         #region Singleton Pattern
 
-        private static readonly ReplaceCoreNilHandler _instance = new ReplaceCoreNilHandler();
-
-        public static ReplaceCoreNilHandler Instance
-        {
-            get { return _instance; }
-        }
+        public static ReplaceCoreNilHandler Instance { get; } = new();
 
         private ReplaceCoreNilHandler()
         {

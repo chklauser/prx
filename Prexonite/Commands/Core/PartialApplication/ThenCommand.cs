@@ -37,22 +37,14 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
         }
 
-        private static readonly ThenCommand _instance = new ThenCommand();
-
-        public static ThenCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static ThenCommand Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -86,44 +78,29 @@ namespace Prexonite.Commands.Core.PartialApplication
 
     public class CallComposition : IIndirectCall
     {
-        private readonly PValue _innerExpression;
-        private readonly PValue _outerExpression;
+        public PValue InnerExpression { [DebuggerStepThrough] get; }
 
-        public PValue InnerExpression
-        {
-            [DebuggerStepThrough]
-            get { return _innerExpression; }
-        }
-
-        public PValue OuterExpression
-        {
-            [DebuggerStepThrough]
-            get { return _outerExpression; }
-        }
+        public PValue OuterExpression { [DebuggerStepThrough] get; }
 
         public CallComposition(PValue innerExpression, PValue outerExpression)
         {
-            if (innerExpression == null)
-                throw new ArgumentNullException(nameof(innerExpression));
-            if (outerExpression == null)
-                throw new ArgumentNullException(nameof(outerExpression));
-            _innerExpression = innerExpression;
-            _outerExpression = outerExpression;
+            InnerExpression = innerExpression ?? throw new ArgumentNullException(nameof(innerExpression));
+            OuterExpression = outerExpression ?? throw new ArgumentNullException(nameof(outerExpression));
         }
 
         #region Implementation of IIndirectCall
 
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            return _outerExpression.IndirectCall(sctx,
-                new[] {_innerExpression.IndirectCall(sctx, args)});
+            return OuterExpression.IndirectCall(sctx,
+                new[] {InnerExpression.IndirectCall(sctx, args)});
         }
 
         #endregion
 
         public override string ToString()
         {
-            return string.Format("{0} then ({1})", InnerExpression, OuterExpression);
+            return $"{InnerExpression} then ({OuterExpression})";
         }
     }
 }

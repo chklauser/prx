@@ -24,10 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast
@@ -39,41 +35,23 @@ namespace Prexonite.Compiler.Ast
     /// </summary>
     public class AstPostExpression : AstExpr
     {
-        [NotNull]
-        private readonly AstExpr _expression;
-
-        [NotNull]
-        private readonly AstNode _action;
-
         public AstPostExpression([NotNull] ISourcePosition position, [NotNull] AstExpr expression, [NotNull] AstNode action) : base(position)
         {
-            if (expression == null)
-                throw new ArgumentNullException(nameof(expression));
-
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
-            
-            _expression = expression;
-            _action = action;
+            Expression = expression ?? throw new ArgumentNullException(nameof(expression));
+            Action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
         [NotNull]
-        public AstExpr Expression
-        {
-            get { return _expression; }
-        }
+        public AstExpr Expression { get; }
 
         [NotNull]
-        public AstNode Action
-        {
-            get { return _action; }
-        }
+        public AstNode Action { get; }
 
         #region Class
 
         protected bool Equals(AstPostExpression other)
         {
-            return _expression.Equals(other._expression) && _action.Equals(other._action);
+            return Expression.Equals(other.Expression) && Action.Equals(other.Action);
         }
 
         public override bool Equals(object obj)
@@ -88,7 +66,7 @@ namespace Prexonite.Compiler.Ast
         {
             unchecked
             {
-                return (_expression.GetHashCode()*397) ^ _action.GetHashCode();
+                return (Expression.GetHashCode()*397) ^ Action.GetHashCode();
             }
         }
 
@@ -103,8 +81,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            var constant = Expression as AstConstant;
-            if (constant != null)
+            if (Expression is AstConstant)
             {
                 // Constants have no side-effects, convert this to a block with a return value
                 var block = target.Factory.Block(Position);

@@ -28,7 +28,6 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Reflection;
 
 #endregion
 
@@ -93,10 +92,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
             out PValue result)
         {
-            MemberInfo dummyInfo;
             var objT = subject.Type as ObjectPType;
             if ((object) objT != null)
-                return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out dummyInfo,
+                return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out _,
                     true);
             else
                 return subject.TryDynamicCall(sctx, args, call, id, out result);
@@ -155,7 +153,7 @@ namespace Prexonite.Types
         ///     Tries to call instance members of the object or members of the extended part.
         /// </summary>
         /// <param name = "sctx">The context in which to perform the call.</param>
-        /// <param name = "subject">The subject to substitue for <value>this</value>.</param>
+        /// <param name = "subject">The subject to substitute for <value>this</value>.</param>
         /// <param name = "args">The arguments for the call.</param>
         /// <param name = "call">The type of call.</param>
         /// <param name = "id">The id of the member. The empty string represents the default member.</param>
@@ -176,13 +174,10 @@ namespace Prexonite.Types
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
-            if (id == null)
-                id = "";
+            args ??= Array.Empty<PValue>();
+            id ??= "";
 
-            if (_et == null)
-                _et = new ExtensionTable();
+            _et ??= new ExtensionTable();
 
             if (TryDynamicClrCall(sctx, subject, args, call, id, out result) ||
                 //Try conventional call
@@ -232,10 +227,9 @@ namespace Prexonite.Types
             var argst = StructurePType._AddThis(subject, args);
 
             var reference = false;
-            ExtensionMember m;
 
             //Try to call the member
-            if (_et.TryGetValue(id, out m) && m != null)
+            if (_et.TryGetValue(id, out var m) && m != null)
                 result = m.DynamicCall(sctx, argst, call);
             else
                 switch (id.ToLowerInvariant())
@@ -261,7 +255,7 @@ namespace Prexonite.Types
                             _et.Add(m);
                         }
 
-                        m.Value = args[args.Length - 1];
+                        m.Value = args[^1];
                         m.Indirect = reference;
 
                         result = m.Value;
@@ -291,8 +285,7 @@ namespace Prexonite.Types
         private PValue _dynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call,
             string id)
         {
-            PValue result;
-            if (!_tryDynamicExtensionCall(sctx, subject, args, call, id, out result))
+            if (!_tryDynamicExtensionCall(sctx, subject, args, call, id, out var result))
                 throw new InvalidCallException(
                     "Cannot call " + id + " on extension of type " + GetType().Name);
             return result ?? PType.Null;
@@ -322,14 +315,11 @@ namespace Prexonite.Types
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
-            if (_et == null)
-                _et = new ExtensionTable();
+            _et ??= new ExtensionTable();
 
-            ExtensionMember m;
-            if (!_et.TryGetValue(StructurePType.IndirectCallId, out m))
+            if (!_et.TryGetValue(StructurePType.IndirectCallId, out var m))
                 throw new PrexoniteException(this + " does not support indirect calls.");
             return
                 m.DynamicCall(
@@ -361,21 +351,14 @@ namespace Prexonite.Types
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
-            if (value == null)
-                value = PType.Null.CreatePValue();
+            value ??= PType.Null.CreatePValue();
 
             Id = id;
-            _indirect = indirect;
+            Indirect = indirect;
             Value = value;
         }
 
-        public bool Indirect
-        {
-            get { return _indirect; }
-            set { _indirect = value; }
-        }
-
-        private bool _indirect;
+        public bool Indirect { get; set; }
 
         public string Id { get; set; }
 
@@ -385,7 +368,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, out PValue result)
         {
             result = null;
-            if (_indirect)
+            if (Indirect)
             {
                 result = Value.IndirectCall(sctx, args);
             }
@@ -399,7 +382,7 @@ namespace Prexonite.Types
                 result = Value;
 
                 if (call == PCall.Set && args.Length > 0)
-                    Value = args[args.Length - 1];
+                    Value = args[^1];
             }
 
             return result != null;
@@ -407,8 +390,7 @@ namespace Prexonite.Types
 
         public PValue DynamicCall(StackContext sctx, PValue[] args, PCall call)
         {
-            PValue result;
-            if (!TryDynamicCall(sctx, args, call, out result))
+            if (!TryDynamicCall(sctx, args, call, out var result))
                 throw new InvalidCallException(
                     "Cannot call extension member " + Id + " with " + args.Length + " arguments.");
             return result;

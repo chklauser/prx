@@ -553,17 +553,15 @@ function main()
 
             var func = target.Functions["main"];
 
-            var emptyArgV = new PValue[0];
-            var emptyEnvironment = new PVariable[0];
+            var emptyArgV = Array.Empty<PValue>();
+            var emptyEnvironment = Array.Empty<PVariable>();
 
             if (CompileToCil)
             {
                 var nullContext = new NullContext(engine, target, new List<string>());
                 Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
-                ReturnMode returnMode;
-                PValue value;
                 func.CilImplementation(
-                    func, nullContext, emptyArgV, emptyEnvironment, out value, out returnMode);
+                    func, nullContext, emptyArgV, emptyEnvironment, out var value, out var returnMode);
                 Assert.AreEqual(value.Type, PType.Null);
                 Assert.AreEqual(returnMode, ReturnMode.Continue);
             }
@@ -602,7 +600,7 @@ after:
                 Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
             }
 
-            ExpectNull(new PValue[0]);
+            ExpectNull(Array.Empty<PValue>());
         }
 
         [Test]

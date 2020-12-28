@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using JetBrains.Annotations;
-using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
 
@@ -120,7 +119,7 @@ namespace Prexonite.Modular
         /// <summary>
         /// Creates a <see cref="SymbolEntry"/> that refers to the same entity as the <see cref="EntityRef"/>. This is a narrowing (lossy) conversion.
         /// </summary>
-        /// <returns>A <see cref="SymbolEntry"/> that referes to the same entity as the <see cref="EntityRef"/>.</returns>
+        /// <returns>A <see cref="SymbolEntry"/> that refers to the same entity as the <see cref="EntityRef"/>.</returns>
         public abstract SymbolEntry ToSymbolEntry();
 
         public static explicit operator SymbolEntry(EntityRef entityRef)
@@ -185,12 +184,6 @@ namespace Prexonite.Modular
         [DebuggerDisplay("function {Id}/{ModuleName}")]
         public class Function : EntityRef, IEquatable<Function>, IRunTime
         {
-            [NotNull]
-            private readonly string _id;
-
-            [NotNull]
-            private readonly ModuleName _moduleName;
-
             bool IEquatable<Function>.Equals(Function other)
             {
                 return EqualsFunction(other);
@@ -206,7 +199,7 @@ namespace Prexonite.Modular
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return Equals(other._id, _id) && Equals(other._moduleName, _moduleName);
+                return Equals(other.Id, Id) && Equals(other.ModuleName, ModuleName);
             }
 
             public override bool Equals(object obj)
@@ -221,14 +214,13 @@ namespace Prexonite.Modular
             {
                 unchecked
                 {
-                    return (_id.GetHashCode()*397) ^ _moduleName.GetHashCode();
+                    return (Id.GetHashCode()*397) ^ ModuleName.GetHashCode();
                 }
             }
 
             public bool TryGetEntity(StackContext sctx, out PValue entity)
             {
-                PFunction func;
-                if(sctx.ParentApplication.TryGetFunction(Id,ModuleName, out func))
+                if(sctx.ParentApplication.TryGetFunction(Id,ModuleName, out var func))
                 {
                     entity = sctx.CreateNativePValue(func);
                     return true;
@@ -252,29 +244,23 @@ namespace Prexonite.Modular
 
             private Function([NotNull] string id, [NotNull] ModuleName moduleName)
             {
-                if(id == null)
-                    throw new ArgumentNullException(nameof(id));
                 if(moduleName == null)
                     throw new ArgumentNullException(nameof(moduleName));
 
-                _id = id;
-                _moduleName = moduleName;
+                Id = id ?? throw new ArgumentNullException(nameof(id));
+                ModuleName = moduleName;
             }
 
-            public string Id
-            {
-                get { return _id; }
-            }
+            [NotNull]
+            public string Id { get; }
 
-            public ModuleName ModuleName
-            {
-                get { return _moduleName; }
-            }
+            [NotNull]
+            public ModuleName ModuleName { get; }
 
             public bool TryGetFunction(Application application, out PFunction func)
             {
-                if (!application.Compound.TryGetApplication(_moduleName, out application)
-                    || !application.Functions.TryGetValue(_id, out func))
+                if (!application.Compound.TryGetApplication(ModuleName, out application)
+                    || !application.Functions.TryGetValue(Id, out func))
                 {
                     func = null;
                     return false;
@@ -292,15 +278,15 @@ namespace Prexonite.Modular
 
             public override SymbolEntry ToSymbolEntry()
             {
-                return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
+                return new(SymbolInterpretations.Function, Id, ModuleName);
             }
 
             public override void ToString(TextWriter writer)
             {
                 writer.Write("func ");
-                writer.Write(_id);
+                writer.Write(Id);
                 writer.Write("/");
-                writer.Write(_moduleName);
+                writer.Write(ModuleName);
             }
 
             internal override bool _TryLookup(StackContext sctx, out PValue entity)
@@ -312,8 +298,7 @@ namespace Prexonite.Modular
                     return false;
                 }
 
-                PFunction func;
-                if(!app.Functions.TryGetValue(Id,out func))
+                if(!app.Functions.TryGetValue(Id,out var func))
                 {
                     entity = null;
                     return false;
@@ -325,7 +310,7 @@ namespace Prexonite.Modular
 
             public static Function Create([NotNull] string internalId, [NotNull] ModuleName moduleName)
             {
-                Debug.Assert(moduleName != null, string.Format("Module name is null for entity ref to function {0}.", internalId));
+                Debug.Assert(moduleName != null, $"Module name is null for entity ref to function {internalId}.");
                 return new Function(internalId, moduleName);
             }
         }
@@ -341,7 +326,7 @@ namespace Prexonite.Modular
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return Equals(other._id, _id);
+                return Equals(other.Id, Id);
             }
 
             public override bool Equals(object obj)
@@ -354,7 +339,7 @@ namespace Prexonite.Modular
 
             public override int GetHashCode()
             {
-                return (_id != null ? _id.GetHashCode() : 0);
+                return (Id != null ? Id.GetHashCode() : 0);
             }
 
             public static bool operator ==(Command left, Command right)
@@ -367,24 +352,18 @@ namespace Prexonite.Modular
                 return !Equals(left, right);
             }
 
-            private readonly string _id;
-
             private Command(string id)
             {
-                _id = id;
+                Id = id;
             }
 
-            public string Id
-            {
-                get { return _id; }
-            }
+            public string Id { get; }
 
             #region IRunTime Members
 
             public bool TryGetEntity(StackContext sctx, out PValue entity)
             {
-                PCommand cmd;
-                if (sctx.ParentEngine.Commands.TryGetValue(Id, out cmd))
+                if (sctx.ParentEngine.Commands.TryGetValue(Id, out var cmd))
                 {
                     entity = sctx.CreateNativePValue(cmd);
                     return true;
@@ -400,7 +379,7 @@ namespace Prexonite.Modular
 
             public static Command Create(string id)
             {
-                return new Command(id);
+                return new(id);
             }
 
             public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
@@ -416,19 +395,18 @@ namespace Prexonite.Modular
 
             public override SymbolEntry ToSymbolEntry()
             {
-                return new SymbolEntry(SymbolInterpretations.Command, Id, null);
+                return new(SymbolInterpretations.Command, Id, null);
             }
 
             public override void ToString(TextWriter writer)
             {
                 writer.Write("cmd ");
-                writer.Write(_id);
+                writer.Write(Id);
             }
 
             internal override bool _TryLookup(StackContext sctx, out PValue entity)
             {
-                PCommand command;
-                if(sctx.ParentEngine.Commands.TryGetValue(Id,out command))
+                if(sctx.ParentEngine.Commands.TryGetValue(Id,out var command))
                 {
                     entity = sctx.CreateNativePValue(command);
                     return true;
@@ -475,34 +453,20 @@ namespace Prexonite.Modular
             [DebuggerDisplay("global var {Id}/{ModuleName}")]
             public sealed class Global : Variable, IEquatable<Global>
             {
-                [NotNull]
-                private readonly string _id;
-
-                [NotNull]
-                private readonly ModuleName _moduleName;
-
                 private Global([NotNull] string id, [NotNull] ModuleName moduleName)
                 {
-                    if(id == null)
-                        throw new ArgumentNullException(nameof(id));
                     if (moduleName == null)
                         throw new ArgumentNullException(nameof(moduleName));
 
-                    _id = id;
-                    _moduleName = moduleName;
+                    Id = id ?? throw new ArgumentNullException(nameof(id));
+                    ModuleName = moduleName;
                 }
 
                 [NotNull]
-                public string Id
-                {
-                    get { return _id; }
-                }
+                public string Id { get; }
 
                 [NotNull]
-                public ModuleName ModuleName
-                {
-                    get { return _moduleName; }
-                }
+                public ModuleName ModuleName { get; }
 
                 public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
                 {
@@ -517,17 +481,15 @@ namespace Prexonite.Modular
 
                 public static Global Create([NotNull] string id, [NotNull] ModuleName moduleName)
                 {
-                    Debug.Assert(moduleName != null,string.Format("Module name is null for entity ref to global variable {0}.", id));
+                    Debug.Assert(moduleName != null, $"Module name is null for entity ref to global variable {id}.");
                     return new Global(id, moduleName);
                 }
 
                 public override bool TryGetEntity(StackContext sctx, out PValue entity)
                 {
-                    Application application;
-                    PVariable v;
-                    if (sctx.ParentApplication.Compound.TryGetApplication(_moduleName,
-                        out application)
-                            && application.Variables.TryGetValue(_id, out v))
+                    if (sctx.ParentApplication.Compound.TryGetApplication(ModuleName,
+                            out var application)
+                        && application.Variables.TryGetValue(Id, out var v))
                     {
                         entity = sctx.CreateNativePValue(v);
                         return true;
@@ -541,15 +503,15 @@ namespace Prexonite.Modular
 
                 public override SymbolEntry ToSymbolEntry()
                 {
-                    return new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, Id,ModuleName);
+                    return new(SymbolInterpretations.GlobalObjectVariable, Id,ModuleName);
                 }
 
                 public override void ToString(TextWriter writer)
                 {
                     writer.Write("gvar ");
-                    writer.Write(_id);
+                    writer.Write(Id);
                     writer.Write("/");
-                    writer.Write(_moduleName);
+                    writer.Write(ModuleName);
                 }
 
                 internal override bool _TryLookup(StackContext sctx, out PValue entity)
@@ -561,8 +523,7 @@ namespace Prexonite.Modular
                         return false;
                     }
 
-                    PVariable pvar;
-                    if (!app.Variables.TryGetValue(Id, out pvar))
+                    if (!app.Variables.TryGetValue(Id, out var pvar))
                     {
                         entity = null;
                         return false;
@@ -583,7 +544,7 @@ namespace Prexonite.Modular
                     if (ReferenceEquals(null, other)) return false;
                     if (ReferenceEquals(this, other)) return true;
                     
-                    return Equals(other._id, _id) && Equals(other._moduleName, _moduleName);
+                    return Equals(other.Id, Id) && Equals(other.ModuleName, ModuleName);
                 }
 
                 public override bool Equals(object obj)
@@ -598,7 +559,7 @@ namespace Prexonite.Modular
                 {
                     unchecked
                     {
-                        return ((_id.GetHashCode())*397) ^ (_moduleName.GetHashCode());
+                        return ((Id.GetHashCode())*397) ^ (ModuleName.GetHashCode());
                     }
                 }
 
@@ -620,30 +581,21 @@ namespace Prexonite.Modular
             [DebuggerDisplay("local var {Id}")]
             public sealed class Local : Variable, IEquatable<Local>
             {
-                private readonly string _id;
-                private readonly int? _index;
-
                 private Local(string id, int? index = null)
                 {
-                    _id = id;
-                    _index = index;
+                    Id = id;
+                    Index = index;
                 }
 
-                public string Id
-                {
-                    get { return _id; }
-                }
+                public string Id { get; }
 
-                public int? Index
-                {
-                    get { return _index; }
-                }
+                public int? Index { get; }
 
                 public bool Equals(Local other)
                 {
                     if (ReferenceEquals(null, other)) return false;
                     if (ReferenceEquals(this, other)) return true;
-                    return Equals(other._id, _id);
+                    return Equals(other.Id, Id);
                 }
 
                 protected override bool EqualsVariable(Variable other)
@@ -662,7 +614,7 @@ namespace Prexonite.Modular
 
                 public override int GetHashCode()
                 {
-                    return (_id != null ? _id.GetHashCode() : 0);
+                    return (Id != null ? Id.GetHashCode() : 0);
                 }
 
                 public static bool operator ==(Local left, Local right)
@@ -677,19 +629,17 @@ namespace Prexonite.Modular
 
                 public static Local Create(string id)
                 {
-                    return new Local(id);
+                    return new(id);
                 }
 
                 public Local WithIndex(int index)
                 {
-                    return new Local(Id, index);
+                    return new(Id, index);
                 }
 
                 public override bool TryGetEntity(StackContext sctx, out PValue entity)
                 {
-                    var fctx = sctx as FunctionContext;
-                    PVariable v;
-                    if (fctx != null && fctx.LocalVariables.TryGetValue(_id, out v))
+                    if (sctx is FunctionContext fctx && fctx.LocalVariables.TryGetValue(Id, out var v))
                     {
                         entity = sctx.CreateNativePValue(v);
                         return true;
@@ -714,26 +664,24 @@ namespace Prexonite.Modular
 
                 public override SymbolEntry ToSymbolEntry()
                 {
-                    return new SymbolEntry(SymbolInterpretations.LocalObjectVariable, Id, null);
+                    return new(SymbolInterpretations.LocalObjectVariable, Id, null);
                 }
 
                 public override void ToString(TextWriter writer)
                 {
                     writer.Write("var ");
-                    writer.Write(_id);
+                    writer.Write(Id);
                 }
 
                 internal override bool _TryLookup(StackContext sctx, out PValue entity)
                 {
-                    var fctx = sctx as FunctionContext;
-                    if(fctx == null)
+                    if(!(sctx is FunctionContext fctx))
                     {
                         entity = null;
                         return false;
                     }
 
-                    PVariable pvar;
-                    if(fctx.LocalVariables.TryGetValue(Id, out pvar))
+                    if(fctx.LocalVariables.TryGetValue(Id, out var pvar))
                     {
                         entity = sctx.CreateNativePValue(pvar);
                         return true;
@@ -757,24 +705,18 @@ namespace Prexonite.Modular
         [DebuggerDisplay("macro command {Id}")]
         public class MacroCommand : EntityRef, IMacro, IEquatable<MacroCommand>
         {
-            private readonly string _id;
-
             private MacroCommand(string id)
             {
-                _id = id;
+                Id = id;
             }
 
-            public string Id
-            {
-                get { return _id; }
-            }
+            public string Id { get; }
 
             #region ICompileTime Members
 
             public bool TryGetEntity(Loader ldr, out PValue entity)
             {
-                Compiler.Macro.MacroCommand mcmd;
-                if (ldr.MacroCommands.TryGetValue(_id, out mcmd))
+                if (ldr.MacroCommands.TryGetValue(Id, out var mcmd))
                 {
                     entity = ldr.CreateNativePValue(mcmd);
                     return true;
@@ -790,7 +732,7 @@ namespace Prexonite.Modular
 
             public static MacroCommand Create(string id)
             {
-                return new MacroCommand(id);
+                return new(id);
             }
 
             public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
@@ -806,25 +748,23 @@ namespace Prexonite.Modular
 
             public override SymbolEntry ToSymbolEntry()
             {
-                return new SymbolEntry(SymbolInterpretations.MacroCommand, Id, null);
+                return new(SymbolInterpretations.MacroCommand, Id, null);
             }
 
             public override void ToString(TextWriter writer)
             {
                 writer.Write("mcmd ");
-                writer.Write(_id);
+                writer.Write(Id);
             }
 
             internal override bool _TryLookup(StackContext sctx, out PValue entity)
             {
                 //first: lookup in sctx (if it is a loader)
-                var ldr = sctx as Loader;
-                if (ldr != null)
+                if (sctx is Loader ldr)
                     return _tryMcmdFromLoader(sctx, ldr, out entity);
 
                 //else: search stack beginning at sctx
-                bool foundEntity;
-                if (_tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.FindLast(sctx), out foundEntity, out entity)) 
+                if (_tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.FindLast(sctx), out var foundEntity, out entity)) 
                     return foundEntity;
 
                 //finally: search stack from bottom
@@ -852,8 +792,7 @@ namespace Prexonite.Modular
 
             private bool _tryMcmdFromLoader(StackContext sctx, Loader ldr, out PValue entity)
             {
-                Compiler.Macro.MacroCommand mcmd;
-                if (ldr.MacroCommands.TryGetValue(Id, out mcmd))
+                if (ldr.MacroCommands.TryGetValue(Id, out var mcmd))
                 {
                     entity = sctx.CreateNativePValue(mcmd);
                     return true;
@@ -869,7 +808,7 @@ namespace Prexonite.Modular
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return Equals(other._id, _id);
+                return Equals(other.Id, Id);
             }
 
             public override bool Equals(object obj)
@@ -882,7 +821,7 @@ namespace Prexonite.Modular
 
             public override int GetHashCode()
             {
-                return (_id != null ? _id.GetHashCode() : 0);
+                return (Id != null ? Id.GetHashCode() : 0);
             }
 
             public static bool operator ==(MacroCommand left, MacroCommand right)

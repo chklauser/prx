@@ -36,11 +36,9 @@ namespace Prexonite.Commands.Core.PartialApplication
 {
     public abstract class PartialApplicationCommandBase : PCommand
     {
-        private static readonly int[] _noMapping = new int[0];
-
         protected static readonly MethodInfo ExtractMappings32Method =
             typeof (PartialApplicationCommandBase).GetMethod("ExtractMappings32",
-                new[] {typeof (Int32[])});
+                new[] {typeof (int[])});
 
         /// <summary>
         ///     Calculates how many Int32 arguments are needed to encode <paramref name = "countMapppings" /> mappings, including the number that indicates how many mappings there are
@@ -58,17 +56,17 @@ namespace Prexonite.Commands.Core.PartialApplication
         [StructLayout(LayoutKind.Explicit)]
         private struct ExplicitInt32
         {
-            [FieldOffset(0)] public Int32 Int;
+            [FieldOffset(0)] public int Int;
 
             // overlapped bytes (little-endian)
             // ReSharper disable FieldCanBeMadeReadOnly.Local
-            [FieldOffset(0)] public SByte Byte0;
+            [FieldOffset(0)] public sbyte Byte0;
 
-            [FieldOffset(1)] public SByte Byte1;
+            [FieldOffset(1)] public sbyte Byte1;
 
-            [FieldOffset(2)] public SByte Byte2;
+            [FieldOffset(2)] public sbyte Byte2;
 
-            [FieldOffset(3)] public SByte Byte3;
+            [FieldOffset(3)] public sbyte Byte3;
             // ReSharper restore FieldCanBeMadeReadOnly.Local
         }
 
@@ -80,7 +78,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         public static int[] ExtractMappings32(LinkedList<int> rawInput)
         {
             if (rawInput.Count == 0)
-                return _noMapping;
+                return Array.Empty<int>();
 
             //Extract count
             var int32 = default(ExplicitInt32);
@@ -128,11 +126,11 @@ namespace Prexonite.Commands.Core.PartialApplication
             // ReSharper restore UnusedMember.Global
         {
             if (rawInput.Length == 0)
-                return _noMapping;
+                return Array.Empty<int>();
 
             //Extract count
             var int32 = default(ExplicitInt32);
-            int32.Int = rawInput[rawInput.Length - 1];
+            int32.Int = rawInput[^1];
             int count = int32.Byte3;
             var numArgs = CountInt32Required(count);
             if (numArgs > rawInput.Length)
@@ -207,7 +205,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                 "Not all mappings were encoded");
 
             //pack total number of mappings as the last byte
-            packed[packed.Length - 1] |= (mappings.Length << 3*8) & (0xFF << 3*8);
+            packed[^1] |= (mappings.Length << 3*8) & (0xFF << 3*8);
 
             return packed;
         }
@@ -224,8 +222,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             var mappingCandidates = new LinkedList<int>();
             for (var i = (arguments.Offset + arguments.Count) - 1; arguments.Offset <= i; i--)
             {
-                PValue value;
-                if (!arguments.Array[i].TryConvertTo(sctx, PType.Int, out value))
+                if (!arguments.Array[i].TryConvertTo(sctx, PType.Int, out var value))
                     break; //stop at the first non-integer
                 mappingCandidates.AddFirst((int) value.Value);
             }
@@ -268,7 +265,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected virtual TParam FilterRuntimeArguments(StackContext sctx,
             ref ArraySegment<PValue> arguments)
         {
-            return default(TParam);
+            return default;
         }
 
         /// <summary>
@@ -292,8 +289,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         public virtual bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             var staticArguments = new ArraySegment<CompileTimeValue>(staticArgv);
-            TParam dummyParameter;
-            if (!FilterCompileTimeArguments(ref staticArguments, out dummyParameter))
+            if (!FilterCompileTimeArguments(ref staticArguments, out var dummyParameter))
                 return false;
 
             var mappingCandidates = new LinkedList<int>();
@@ -301,8 +297,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                  staticArguments.Offset <= i;
                  i--)
             {
-                int value;
-                if (!staticArguments.Array[i].TryGetInt(out value))
+                if (!staticArguments.Array[i].TryGetInt(out var value))
                     break; //stop at the first non-integer
                 mappingCandidates.AddFirst(value);
             }
@@ -315,8 +310,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             var staticArguments = new ArraySegment<CompileTimeValue>(staticArgv);
-            TParam parameter;
-            if (!FilterCompileTimeArguments(ref staticArguments, out parameter))
+            if (!FilterCompileTimeArguments(ref staticArguments, out var parameter))
                 throw new PrexoniteException(
                     "Internal CIL compiler error. Tried to implement invalid CIL extension call.");
 
@@ -325,8 +319,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                  staticArguments.Offset <= i;
                  i--)
             {
-                int value;
-                if (!staticArguments.Array[i].TryGetInt(out value))
+                if (!staticArguments.Array[i].TryGetInt(out var value))
                     break; //stop at the first non-integer
                 mappingCandidates.AddFirst(value);
             }
@@ -398,7 +391,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected virtual bool FilterCompileTimeArguments(
             ref ArraySegment<CompileTimeValue> staticArgv, out TParam parameter)
         {
-            parameter = default(TParam);
+            parameter = default;
             return true;
         }
 

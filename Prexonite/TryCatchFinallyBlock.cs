@@ -72,7 +72,7 @@ namespace Prexonite
         /// </summary>
         public int BeginTry
         {
-            get { return _beginTry; }
+            get => _beginTry;
             set
             {
                 if ((_endTry > 0 ? value >= _endTry : false) ||
@@ -97,7 +97,7 @@ namespace Prexonite
         /// </remarks>
         public int BeginFinally
         {
-            get { return _beginFinally; }
+            get => _beginFinally;
             set
             {
                 if (value > 0 &&
@@ -123,7 +123,7 @@ namespace Prexonite
         /// </remarks>
         public int BeginCatch
         {
-            get { return _beginCatch; }
+            get => _beginCatch;
             set
             {
                 if (value > 0 &&
@@ -149,7 +149,7 @@ namespace Prexonite
         /// </remarks>
         public int EndTry
         {
-            get { return _endTry; }
+            get => _endTry;
             set
             {
                 if ((_beginTry > 0 ? value <= _beginTry : false) ||
@@ -174,26 +174,17 @@ namespace Prexonite
         /// <remarks>
         ///     Requires <see cref = "BeginTry" /> and <see cref = "EndTry" /> to be set.
         /// </remarks>
-        public bool IsValid
-        {
-            get { return _beginTry >= 0 && _endTry >= 0 && _beginTry < _endTry; }
-        }
+        public bool IsValid => _beginTry >= 0 && _endTry >= 0 && _beginTry < _endTry;
 
         /// <summary>
         ///     Indicates whether the try-catch-finally block has a finally-clause.
         /// </summary>
-        public bool HasFinally
-        {
-            get { return _beginFinally > 0; }
-        }
+        public bool HasFinally => _beginFinally > 0;
 
         /// <summary>
         ///     Indicates whether the try-catch-finally block has a catch-clause.
         /// </summary>
-        public bool HasCatch
-        {
-            get { return _beginCatch > 0; }
-        }
+        public bool HasCatch => _beginCatch > 0;
 
         /// <summary>
         ///     Returns the number of instructions covered by the block.
@@ -368,7 +359,7 @@ namespace Prexonite
         public static implicit operator MetaEntry(TryCatchFinallyBlock block)
         {
             if (block == null)
-                return (MetaEntry) new MetaEntry[] {};
+                return (MetaEntry)Array.Empty<MetaEntry>();
             else
                 return block.ToMetaEntry();
         }

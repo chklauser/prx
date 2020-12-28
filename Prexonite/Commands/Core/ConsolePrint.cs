@@ -38,12 +38,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly ConsolePrint _instance = new ConsolePrint();
-
-        public static ConsolePrint Instance
-        {
-            get { return _instance; }
-        }
+        public static ConsolePrint Instance { get; } = new();
 
         #endregion
 
@@ -54,10 +49,7 @@ namespace Prexonite.Commands.Core
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         /// <summary>
         ///     Executes the command.
@@ -172,7 +164,7 @@ namespace Prexonite.Commands.Core
         public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
             int dynamicArgc)
         {
-            var text = String.Concat(staticArgv.Select(StaticPrint._ToString));
+            var text = string.Concat(staticArgv.Select(StaticPrint._ToString));
             if (text.Length == 0)
             {
                 if (!ins.JustEffect)

@@ -60,11 +60,8 @@ namespace Prexonite.Commands.Core.Operators
             }
             else
             {
-                PValue left;
-                PValue right;
-
-                if (staticArgv[0].TryGetConstant(out left)
-                    && staticArgv[1].TryGetConstant(out right))
+                if (staticArgv[0].TryGetConstant(out var left)
+                    && staticArgv[1].TryGetConstant(out var right))
                 {
                     //Both operands are constants (remember: static args can also be references)
                     //=> Apply the operator at compile time.
@@ -88,9 +85,7 @@ namespace Prexonite.Commands.Core.Operators
                             break;
                         default:
                             throw new PrexoniteException(
-                                string.Format(
-                                    "The operation {0} is no implemented correctly. Given {1} and {2} it results in the non-constant {3}",
-                                    GetType().FullName, left, right, result));
+                                $"The operation {GetType().FullName} is no implemented correctly. Given {left} and {right} it results in the non-constant {result}");
                     }
                     return; //We've already emitted the result. 
                 }

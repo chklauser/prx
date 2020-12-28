@@ -39,20 +39,11 @@ namespace Prexonite
 
         public override CentralCache Cache
         {
-            get { return _cache; }
-            internal set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                _cache = value;
-            }
+            get => _cache;
+            internal set => _cache = value ?? throw new ArgumentNullException(nameof(value));
         }
 
-        public override int Count
-        {
-            get { return _table.Count; }
-        }
+        public override int Count => _table.Count;
 
         public override IEnumerator<Application> GetEnumerator()
         {
@@ -62,7 +53,7 @@ namespace Prexonite
         internal override void _Unlink(Application application)
         {
             // ReSharper disable RedundantAssignment
-            bool r = _table.Remove(application);
+            var r = _table.Remove(application);
             Debug.Assert(r,
                 "Tried to _Unlink an application that wasn't part of the compound. Probable cause of bugs");
             // ReSharper restore RedundantAssignment
@@ -70,8 +61,7 @@ namespace Prexonite
 
         internal override void _Link(Application application)
         {
-            Application current;
-            if (TryGetApplication(application.Module.Name, out current))
+            if (TryGetApplication(application.Module.Name, out var current))
             {
                 if (Equals(current, application))
                 {

@@ -44,8 +44,7 @@ namespace Prexonite.Compiler
 
         public static string GetSourcePositionString(this ISourcePosition position)
         {
-            return string.Format("{0}: line {1}, col {2}", position.Line, position.Line,
-                position.Column);
+            return $"{position.Line}: line {position.Line}, col {position.Column}";
         }
     }
 }

@@ -38,31 +38,19 @@ namespace Prexonite.Compiler.Build.Internal
     {
         [NotNull]
         private static readonly IReadOnlyCollection<IResourceDescriptor> _emptyResourceCollection =
-            new IResourceDescriptor[0];
+            Array.Empty<IResourceDescriptor>();
 
-        [NotNull]
-        private readonly Module _module;
-        [NotNull]
-        private readonly SymbolStore _symbols;
         [CanBeNull]
         private readonly List<Message> _messages;
-        [CanBeNull]
-        private readonly Exception _exception;
-
-        private readonly bool _isSuccessful;
 
         public DefaultModuleTarget(Module module, SymbolStore symbols, IEnumerable<Message> messages = null, Exception exception = null)
         {
-            if (module == null)
-                throw new ArgumentNullException(nameof(module));
-            if (symbols == null)
-                throw new ArgumentNullException(nameof(symbols));
-            _module = module;
-            _symbols = symbols;
-            _exception = exception;
+            Module = module ?? throw new ArgumentNullException(nameof(module));
+            Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
+            Exception = exception;
             if(messages != null)
                 _messages = new List<Message>(messages);
-            _isSuccessful = exception == null && (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
+            IsSuccessful = exception == null && (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
         }
 
         [CanBeNull]
@@ -99,42 +87,24 @@ namespace Prexonite.Compiler.Build.Internal
             return new DefaultModuleTarget(loader.ParentApplication.Module,exported,messages, exception);
         }
 
-        public Module Module
-        {
-            get { return _module; }
-        }
+        [NotNull]
+        public Module Module { get; }
 
-        public IReadOnlyCollection<IResourceDescriptor> Resources
-        {
-            get { return _emptyResourceCollection; }
-        }
-
-        public SymbolStore Symbols
-        {
-            get { return _symbols; }
-        }
-
-        public ModuleName Name
-        {
-            get { return _module.Name; }
-        }
-
-        internal static readonly Message[] NoMessages = new Message[0];
+        public IReadOnlyCollection<IResourceDescriptor> Resources => _emptyResourceCollection;
 
         [NotNull]
-        public IReadOnlyCollection<Message> Messages
-        {
-            get { return (IReadOnlyCollection<Message>)_messages ?? NoMessages; }
-        }
+        public SymbolStore Symbols { get; }
 
-        public Exception Exception
-        {
-            get { return _exception; }
-        }
+        public ModuleName Name => Module.Name;
 
-        public bool IsSuccessful
-        {
-            get { return _isSuccessful; }
-        }
+        internal static readonly Message[] NoMessages = Array.Empty<Message>();
+
+        [NotNull]
+        public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>)_messages ?? NoMessages;
+
+        [CanBeNull]
+        public Exception Exception { get; }
+
+        public bool IsSuccessful { get; }
     }
 }
