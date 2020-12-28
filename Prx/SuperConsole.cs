@@ -84,18 +84,11 @@ namespace Prx
         /// </summary>
         private class History
         {
-            private ArrayList list = new ArrayList();
+            private ArrayList list = new();
             private int current;
             private bool increment; // increment on Next()
 
-            private string Current
-            {
-                get
-                {
-                    return
-                        current >= 0 && current < list.Count ? (string) list[current] : String.Empty;
-                }
-            }
+            private string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
 
             public void Add(string line, bool setCurrentAsLast)
             {
@@ -143,23 +136,12 @@ namespace Prx
         /// </summary>
         private class SuperConsoleOptions
         {
-            private ArrayList list = new ArrayList();
+            private ArrayList list = new();
             private int current;
-            private string root;
 
-            public int Count
-            {
-                get { return list.Count; }
-            }
+            public int Count => list.Count;
 
-            private string Current
-            {
-                get
-                {
-                    return
-                        current >= 0 && current < list.Count ? (string) list[current] : String.Empty;
-                }
-            }
+            private string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
 
             public void Clear()
             {
@@ -193,11 +175,7 @@ namespace Prx
                 return Current;
             }
 
-            public string Root
-            {
-                get { return root; }
-                set { root = value; }
-            }
+            public string Root { get; set; }
         }
 
         /// <summary>
@@ -208,42 +186,32 @@ namespace Prx
             /// <summary>
             ///     Beginning position of the cursor - top coordinate.
             /// </summary>
-            private int anchorTop;
+            public int Top { get; private set; }
 
             /// <summary>
             ///     Beginning position of the cursor - left coordinate.
             /// </summary>
-            private int anchorLeft;
-
-            public int Top
-            {
-                get { return anchorTop; }
-            }
-
-            public int Left
-            {
-                get { return anchorLeft; }
-            }
+            public int Left { get; private set; }
 
             public void Anchor()
             {
-                anchorTop = Console.CursorTop;
-                anchorLeft = Console.CursorLeft;
+                Top = Console.CursorTop;
+                Left = Console.CursorLeft;
             }
 
             public void Reset()
             {
-                Console.CursorTop = anchorTop;
-                Console.CursorLeft = anchorLeft;
+                Console.CursorTop = Top;
+                Console.CursorLeft = Left;
             }
 
             public void Place(int index)
             {
-                Console.CursorLeft = (anchorLeft + index)%Console.BufferWidth;
-                var cursorTop = anchorTop + (anchorLeft + index)/Console.BufferWidth;
+                Console.CursorLeft = (Left + index)%Console.BufferWidth;
+                var cursorTop = Top + (Left + index)/Console.BufferWidth;
                 if (cursorTop >= Console.BufferHeight)
                 {
-                    anchorTop -= cursorTop - Console.BufferHeight + 1;
+                    Top -= cursorTop - Console.BufferHeight + 1;
                     cursorTop = Console.BufferHeight - 1;
                 }
                 Console.CursorTop = cursorTop;
@@ -261,7 +229,7 @@ namespace Prx
         /// <summary>
         ///     The console input buffer.
         /// </summary>
-        private StringBuilder input = new StringBuilder();
+        private StringBuilder input = new();
 
         /// <summary>
         ///     Current position - index into the input buffer
@@ -282,12 +250,12 @@ namespace Prx
         /// <summary>
         ///     Command history
         /// </summary>
-        private History history = new History();
+        private History history = new();
 
         /// <summary>
         ///     Tab options available in current context
         /// </summary>
-        private SuperConsoleOptions options = new SuperConsoleOptions();
+        private SuperConsoleOptions options = new();
 
         /// <summary>
         ///     Cursort anchor - position of cursor when the routine was called
@@ -346,7 +314,7 @@ namespace Prx
                        root;
                 if (lastDot < 0)
                 {
-                    attr = String.Empty;
+                    attr = string.Empty;
                     pref = name;
                     root = input.ToString(0, len);
                 }
@@ -453,7 +421,7 @@ namespace Prx
         {
             if (current == input.Length)
             {
-                if (Char.IsControl(c))
+                if (char.IsControl(c))
                 {
                     var s = MapCharacter(c);
                     current++;
@@ -492,7 +460,7 @@ namespace Prx
 
         private static int GetCharacterSize(char c)
         {
-            if (Char.IsControl(c))
+            if (char.IsControl(c))
             {
                 return MapCharacter(c).Length;
             }
@@ -514,7 +482,7 @@ namespace Prx
                     position = output.Length;
                 }
                 var c = input[i];
-                if (Char.IsControl(c))
+                if (char.IsControl(c))
                 {
                     output.Append(MapCharacter(c));
                 }
@@ -534,7 +502,7 @@ namespace Prx
 
             if (text.Length < rendered)
             {
-                Console.Write(new String(' ', rendered - text.Length));
+                Console.Write(new string(' ', rendered - text.Length));
             }
             rendered = text.Length;
             cursor.Place(position);
@@ -575,7 +543,7 @@ namespace Prx
 
         private static bool IsSeperator(char ch)
         {
-            return !Char.IsLetter(ch);
+            return !char.IsLetter(ch);
         }
 
         private void MoveRight(ConsoleModifiers keyModifiers)
@@ -650,13 +618,7 @@ namespace Prx
             cursor.Place(rendered);
         }
 
-        public bool DoBeep
-        {
-            get { return _doBeep; }
-            set { _doBeep = value; }
-        }
-
-        private bool _doBeep;
+        public bool DoBeep { get; set; }
 
         //Removed autoIndentSizeInput parameter and usages (-P)
 
@@ -711,7 +673,7 @@ namespace Prx
                             {
                                 if (prefix)
                                 {
-                                    if (_doBeep)
+                                    if (DoBeep)
                                         Console.Beep();
                                 }
                                 else
@@ -741,7 +703,7 @@ namespace Prx
                         optionsObsolete = true;
                         break;
                     case ConsoleKey.Escape:
-                        SetInput(String.Empty);
+                        SetInput(string.Empty);
                         inputChanged = optionsObsolete = true;
                         break;
                     case ConsoleKey.Home:
@@ -821,7 +783,7 @@ namespace Prx
                             {
                                 if (prefix)
                                 {
-                                    if (_doBeep)
+                                    if (DoBeep)
                                         Console.Beep();
                                 }
                                 else
@@ -851,7 +813,7 @@ namespace Prx
                         optionsObsolete = true;
                         break;
                     case ConsoleKey.Escape:
-                        SetInput(String.Empty);
+                        SetInput(string.Empty);
                         inputChanged = optionsObsolete = true;
                         break;
                     case ConsoleKey.Home:
@@ -881,10 +843,7 @@ namespace Prx
 
         //Made FinalLineText static  (-P)
 
-        private static string FinalLineText
-        {
-            get { return Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04"; }
-        }
+        private static string FinalLineText => Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
 
         public void Write(string text, Style style)
         {

@@ -36,22 +36,16 @@ namespace Prexonite.Compiler.Cil
 {
     public class ForeachHint : ICilHint
     {
-        private readonly int _castAddress;
-        private readonly int _disposeAddress;
-        private readonly string _enumVar;
-        private readonly int _getCurrentAddress;
-        private readonly int _moveNextAddress;
-
         public ForeachHint
             (
             string enumVar, int castAddress, int getCurrentAddress, int moveNextAddress,
             int disposeAddress)
         {
-            _enumVar = enumVar;
-            _disposeAddress = disposeAddress;
-            _moveNextAddress = moveNextAddress;
-            _getCurrentAddress = getCurrentAddress;
-            _castAddress = castAddress;
+            EnumVar = enumVar;
+            DisposeAddress = disposeAddress;
+            MoveNextAddress = moveNextAddress;
+            GetCurrentAddress = getCurrentAddress;
+            CastAddress = castAddress;
         }
 
         #region Meta format
@@ -69,18 +63,17 @@ namespace Prexonite.Compiler.Cil
             if (hint == null)
                 throw new ArgumentNullException(nameof(hint));
             if (hint.Length < EntryLength)
-                throw new ArgumentException(string.Format("Hint must have at least {0} entries.",
-                    EntryLength));
-            _enumVar = hint[EnumVarIndex + 1].Text;
-            _castAddress = int.Parse(hint[CastAddressIndex + 1].Text);
-            _getCurrentAddress = int.Parse(hint[GetCurrentAddressIndex + 1].Text);
-            _moveNextAddress = int.Parse(hint[MoveNextAddressIndex + 1].Text);
-            _disposeAddress = int.Parse(hint[DisposeAddressIndex + 1].Text);
+                throw new ArgumentException($"Hint must have at least {EntryLength} entries.");
+            EnumVar = hint[EnumVarIndex + 1].Text;
+            CastAddress = int.Parse(hint[CastAddressIndex + 1].Text);
+            GetCurrentAddress = int.Parse(hint[GetCurrentAddressIndex + 1].Text);
+            MoveNextAddress = int.Parse(hint[MoveNextAddressIndex + 1].Text);
+            DisposeAddress = int.Parse(hint[DisposeAddressIndex + 1].Text);
         }
 
         public static ForeachHint FromMetaEntry(MetaEntry[] entry)
         {
-            return new ForeachHint(entry);
+            return new(entry);
         }
 
         public MetaEntry[] GetFields()
@@ -94,37 +87,19 @@ namespace Prexonite.Compiler.Cil
             return fields;
         }
 
-        public String CilKey
-        {
-            get { return Key; }
-        }
+        public string CilKey => Key;
 
         #endregion
 
-        public string EnumVar
-        {
-            get { return _enumVar; }
-        }
+        public string EnumVar { get; }
 
-        public int CastAddress
-        {
-            get { return _castAddress; }
-        }
+        public int CastAddress { get; }
 
-        public int GetCurrentAddress
-        {
-            get { return _getCurrentAddress; }
-        }
+        public int GetCurrentAddress { get; }
 
-        public int MoveNextAddress
-        {
-            get { return _moveNextAddress; }
-        }
+        public int MoveNextAddress { get; }
 
-        public int DisposeAddress
-        {
-            get { return _disposeAddress; }
-        }
+        public int DisposeAddress { get; }
 
         #region Methodinfos
 
@@ -132,9 +107,9 @@ namespace Prexonite.Compiler.Cil
             typeof (IEnumerator).GetMethod("MoveNext");
 
         internal static readonly MethodInfo GetCurrentMethod =
-            typeof (IEnumerator<PValue>).GetProperty("Current").GetGetMethod();
+            typeof(IEnumerator<PValue>).GetProperty(nameof(IEnumerator<PValue>.Current))!.GetGetMethod();
 
-        internal static readonly MethodInfo DisposeMethod = typeof (IDisposable).GetMethod("Dispose");
+        internal static readonly MethodInfo DisposeMethod = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose));
 
         #endregion
     }

@@ -41,12 +41,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly LoadAssembly _instance = new LoadAssembly();
-
-        public static LoadAssembly Instance
-        {
-            get { return _instance; }
-        }
+        public static LoadAssembly Instance { get; } = new();
 
         /// <summary>
         ///     Implementation of the LoadAssembly command which dynamically loads an assembly from a file.
@@ -63,15 +58,16 @@ namespace Prexonite.Commands.Core
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             var eng = sctx.ParentEngine;
             foreach (var arg in args)
             {
                 var path = arg.CallToString(sctx);
-                var ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication);
-                ldrOptions.ReconstructSymbols = false;
+                var ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication)
+                {
+                    ReconstructSymbols = false
+                };
                 var ldr = sctx as Loader ?? new Loader(ldrOptions);
                 var asmFile = ldr.ApplyLoadPaths(path);
                 if (asmFile == null)

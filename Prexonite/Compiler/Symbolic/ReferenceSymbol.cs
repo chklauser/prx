@@ -35,36 +35,25 @@ namespace Prexonite.Compiler.Symbolic
     {
         public override string ToString()
         {
-            return string.Format("->{0}", Entity);
+            return $"->{Entity}";
         }
-
-        private readonly EntityRef _entity;
 
         [DebuggerStepThrough]
         private ReferenceSymbol([NotNull] ISourcePosition position, [NotNull] EntityRef entity)
         {
-            _entity = entity;
-            _position = position;
+            Entity = entity;
+            Position = position;
         }
 
         [NotNull]
         internal static ReferenceSymbol _Create([NotNull] EntityRef entity, [NotNull] ISourcePosition position)
         {
-            return new ReferenceSymbol(position, entity);
+            return new(position, entity);
         }
 
-        public EntityRef Entity
-        {
-            get { return _entity; }
-        }
+        public EntityRef Entity { get; }
 
-        [NotNull]
-        private readonly ISourcePosition _position;
-
-        public override ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public override ISourcePosition Position { get; }
 
         #region Overrides of Symbol
 
@@ -85,7 +74,7 @@ namespace Prexonite.Compiler.Symbolic
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Equals(_entity, other._entity);
+            return Equals(Entity, other.Entity);
         }
 
         public override bool Equals(Symbol obj)
@@ -97,7 +86,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public override int GetHashCode()
         {
-            return (_entity != null ? _entity.GetHashCode() : 0);
+            return (Entity != null ? Entity.GetHashCode() : 0);
         }
     }
 }

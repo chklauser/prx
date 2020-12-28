@@ -52,12 +52,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly FoldR _instance = new FoldR();
-
-        public static FoldR Instance
-        {
-            get { return _instance; }
-        }
+        public static FoldR Instance { get; } = new();
 
         #endregion
 
@@ -68,10 +63,8 @@ namespace Prexonite.Commands.List
                 throw new ArgumentNullException(nameof(sctx));
             if (f == null)
                 throw new ArgumentNullException(nameof(f));
-            if (right == null)
-                right = PType.Null.CreatePValue();
-            if (source == null)
-                source = new PValue[] {};
+            right ??= PType.Null.CreatePValue();
+            source ??= Array.Empty<PValue>();
 
             var lst = new List<PValue>(source);
 
@@ -102,11 +95,7 @@ namespace Prexonite.Commands.List
                 f = args[0];
 
             //Get left
-            PValue left;
-            if (args.Length < 2)
-                left = null;
-            else
-                left = args[1];
+            var left = args.Length < 2 ? null : args[1];
 
             //Get the source
             IEnumerable<PValue> source;
@@ -139,10 +128,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; } //use of indirect call
-        }
+        public override bool IsPure => false; //use of indirect call
 
         #region ICilCompilerAware Members
 

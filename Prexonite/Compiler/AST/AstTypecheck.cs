@@ -33,7 +33,6 @@ namespace Prexonite.Compiler.Ast
                                 IAstPartiallyApplicable
     {
         private AstExpr _subject;
-        private AstTypeExpr _type;
 
         /// <summary>
         /// Indicates whether this typecheck is inverted (X is not Y).
@@ -52,12 +51,8 @@ namespace Prexonite.Compiler.Ast
             string file, int line, int column, AstExpr subject, AstTypeExpr type)
             : base(file, line, column)
         {
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            if (type == null)
-                throw new ArgumentNullException(nameof(type));
-            _subject = subject;
-            _type = type;
+            _subject = subject ?? throw new ArgumentNullException(nameof(subject));
+            Type = type ?? throw new ArgumentNullException(nameof(type));
         }
 
         internal AstTypecheck(Parser p, AstExpr subject, AstTypeExpr type)
@@ -74,15 +69,11 @@ namespace Prexonite.Compiler.Ast
 
         public AstExpr Subject
         {
-            get { return _subject; }
-            set { _subject = value; }
+            get => _subject;
+            set => _subject = value;
         }
 
-        public AstTypeExpr Type
-        {
-            get { return _type; }
-            set { _type = value; }
-        }
+        public AstTypeExpr Type { get; set; }
 
         #endregion
 
@@ -103,8 +94,7 @@ namespace Prexonite.Compiler.Ast
             }
 
             _subject.EmitValueCode(target);
-            var constType = _type as AstConstantTypeExpression;
-            if (constType != null)
+            if (Type is AstConstantTypeExpression constType)
             {
                 PType T = null;
                 try
@@ -122,7 +112,7 @@ namespace Prexonite.Compiler.Ast
             }
             else
             {
-                _type.EmitValueCode(target);
+                Type.EmitValueCode(target);
                 target.Emit(Position,OpCode.check_arg);
             }
         }
@@ -130,13 +120,11 @@ namespace Prexonite.Compiler.Ast
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             _OptimizeNode(target, ref _subject);
-            _type = (AstTypeExpr) _GetOptimizedNode(target, _type);
+            Type = (AstTypeExpr) _GetOptimizedNode(target, Type);
 
             expr = null;
 
-            var constSubject = _subject as AstConstant;
-            var constType = _type as AstConstantTypeExpression;
-            if (constSubject == null || constType == null)
+            if (!(_subject is AstConstant constSubject) || !(Type is AstConstantTypeExpression constType))
                 return false;
             PType type;
             try
@@ -155,7 +143,7 @@ namespace Prexonite.Compiler.Ast
         
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(Subject.IsPlaceholder() || Type.IsPlaceholder(), 
+            return new(Subject.IsPlaceholder() || Type.IsPlaceholder(), 
                 Subject.IsArgumentSplice() || Type.IsArgumentSplice());
         }
 
@@ -175,11 +163,10 @@ namespace Prexonite.Compiler.Ast
             var argv =
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(_subject.Singleton());
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            var constType = _type as AstConstantTypeExpression;
-            if (constType != null)
+            if (Type is AstConstantTypeExpression constType)
                 target.EmitConstant(Position, constType.TypeExpression);
             else
-                _type.EmitValueCode(target);
+                Type.EmitValueCode(target);
 
             target.EmitCommandCall(Position, ctorArgc + 1, Engine.PartialTypeCheckAlias);
         }

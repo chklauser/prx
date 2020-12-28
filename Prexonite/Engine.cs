@@ -550,7 +550,7 @@ namespace Prexonite
         /// <summary>
         ///     Provides access to the search paths used by this particular engine.
         /// </summary>
-        public List<string> Paths { get; } = new List<string>();
+        public List<string> Paths { get; } = new();
 
         #endregion
 

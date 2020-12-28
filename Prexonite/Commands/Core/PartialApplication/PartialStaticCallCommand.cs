@@ -33,28 +33,21 @@ namespace Prexonite.Commands.Core.PartialApplication
 {
     public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallInfo>
     {
-        private static readonly PartialStaticCallCommand _instance = new PartialStaticCallCommand();
-
         private PartialStaticCallCommand()
         {
         }
 
-        public static PartialStaticCallCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static PartialStaticCallCommand Instance { get; } = new();
 
         private ConstructorInfo _partialStaticCallCtor;
 
         protected override ConstructorInfo GetConstructorCtor(StaticCallInfo parameter)
         {
-            return _partialStaticCallCtor ??
-                (_partialStaticCallCtor =
-                    typeof (PartialStaticCall).GetConstructor(new[]
-                        {
-                            typeof (int[]), typeof (PValue[]), typeof (PCall), typeof (string),
-                            typeof (PType)
-                        }));
+            return _partialStaticCallCtor ??= typeof (PartialStaticCall).GetConstructor(new[]
+            {
+                typeof (int[]), typeof (PValue[]), typeof (PCall), typeof (string),
+                typeof (PType)
+            });
         }
 
         protected override void EmitConstructorCall(CompilerState state, StaticCallInfo parameter)
@@ -67,7 +60,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected override bool FilterCompileTimeArguments(
             ref ArraySegment<CompileTimeValue> staticArgv, out StaticCallInfo parameter)
         {
-            parameter = default(StaticCallInfo);
+            parameter = default;
             if (staticArgv.Count < 3)
                 return false;
 
@@ -75,11 +68,9 @@ namespace Prexonite.Commands.Core.PartialApplication
             var lastIdx = staticArgv.Offset + staticArgv.Count;
             var rawMemberId = staticArgv.Array[lastIdx - 1];
             var rawCall = staticArgv.Array[lastIdx - 2];
-            string memberId;
-            if (!rawMemberId.TryGetString(out memberId))
+            if (!rawMemberId.TryGetString(out var memberId))
                 return false;
-            int callValue;
-            if (!rawCall.TryGetInt(out callValue) || !Enum.IsDefined(typeof (PCall), callValue))
+            if (!rawCall.TryGetInt(out var callValue) || !Enum.IsDefined(typeof (PCall), callValue))
                 return false;
             var call = (PCall) callValue;
 
@@ -100,8 +91,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
             if (arguments.Count < 3)
                 throw new PrexoniteException(
-                    string.Format("{0} requires a PType, a call-kind and a member id.",
-                        PartialApplicationKind));
+                    $"{PartialApplicationKind} requires a PType, a call-kind and a member id.");
 
             //read call and memberId
             var lastIdx = arguments.Offset + arguments.Count;
@@ -118,7 +108,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                 var callValue = (int) rawCall.ConvertTo(sctx, PType.Int).Value;
                 if (!Enum.IsDefined(typeof (PCall), callValue))
                     throw new PrexoniteException(
-                        string.Format("The value {0} is not a valid PCall value.", callValue));
+                        $"The value {callValue} is not a valid PCall value.");
                 call = (PCall) callValue;
             }
 
@@ -133,10 +123,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             return p;
         }
 
-        protected override string PartialApplicationKind
-        {
-            get { return "Partial static call"; }
-        }
+        protected override string PartialApplicationKind => "Partial static call";
 
         protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
             PValue[] closedArguments, StaticCallInfo parameter)

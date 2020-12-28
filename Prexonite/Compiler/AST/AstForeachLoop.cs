@@ -47,7 +47,7 @@ namespace Prexonite.Compiler.Ast
         public bool IsInitialized
         {
             [DebuggerStepThrough]
-            get { return List != null && Element != null; }
+            get => List != null && Element != null;
         }
 
         #region IAstHasExpressions Members
@@ -76,8 +76,7 @@ namespace Prexonite.Compiler.Ast
 
             //Create the element assignment statement
             var element = Element.GetCopy();
-            AstExpr optElem;
-            if (element.TryOptimize(target, out optElem))
+            if (element.TryOptimize(target, out var optElem))
             {
                 element = optElem as AstGetSet;
                 if (element == null)
@@ -107,12 +106,7 @@ namespace Prexonite.Compiler.Ast
             target.EmitStoreLocal(List.Position, enumVar);
 
             //check whether an enhanced CIL implementation is possible
-            bool emitHint;
-            if (element.DefaultAdditionalArguments + element.Arguments.Count > 1)
-                //has additional arguments
-                emitHint = false;
-            else
-                emitHint = true;
+            var emitHint = element.DefaultAdditionalArguments + element.Arguments.Count <= 1;
 
             var @try = new AstTryCatchFinally(Position, Block);
 

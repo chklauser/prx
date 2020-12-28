@@ -42,11 +42,10 @@ namespace PrexoniteTests.Tests.Internal
 
         public DependingOnConstraint(string name) : base(name)
         {
-            ModuleName moduleName;
-            if (ModuleName.TryParse(name, out moduleName))
+            if (ModuleName.TryParse(name, out var moduleName))
                 _dependency = moduleName;
             else
-                throw new ArgumentException(string.Format("The string {0} is not a valid module name.", name));
+                throw new ArgumentException($"The string {name} is not a valid module name.");
         }
 
         public override ConstraintResult ApplyTo<TActual>(TActual actual)

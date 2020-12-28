@@ -38,28 +38,19 @@ namespace Prexonite.Commands.Text
         {
         }
 
-        private static readonly SetCenterCommand _instance = new SetCenterCommand();
-
-        public static SetCenterCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static SetCenterCommand Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return true; }
-        }
+        public override bool IsPure => true;
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             // function setright(w,s,f)
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             string s;
             int w;
@@ -85,23 +76,17 @@ namespace Prexonite.Commands.Text
             if (l >= w)
                 return s;
 
-            lock (sb)
-            {
-                sb.Capacity = w;
-                sb.Length = 0;
+            var sb = new StringBuilder(w);
 
-                var lw = (int) System.Math.Round(w/2.0, 0, MidpointRounding.AwayFromZero);
-                var rw = w - lw;
+            var lw = (int) System.Math.Round(w / 2.0, 0, MidpointRounding.AwayFromZero);
+            var rw = w - lw;
 
-                var ll = (int) System.Math.Round(l/2.0, 0, MidpointRounding.AwayFromZero);
+            var ll = (int) System.Math.Round(l / 2.0, 0, MidpointRounding.AwayFromZero);
 
-                sb.Append(SetRightCommand.SetRight(lw, s.Substring(0, ll), f));
-                sb.Append(SetLeftCommand.SetLeft(rw, s.Substring(ll), f));
-                return sb.ToString();
-            }
+            sb.Append(SetRightCommand.SetRight(lw, s.Substring(0, ll), f));
+            sb.Append(SetLeftCommand.SetLeft(rw, s.Substring(ll), f));
+            return sb.ToString();
         }
-
-        private static readonly StringBuilder sb = new StringBuilder();
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {

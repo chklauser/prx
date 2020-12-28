@@ -74,7 +74,7 @@ namespace PrexoniteTests.Tests
             //Get res = obj.Subject
             var res = obj.DynamicCall(
                 sctx,
-                new PValue[] {},
+                Array.Empty<PValue>(),
                 PCall.Get,
                 "Subject");
             Assert.AreEqual(test.Subject, res.Value);
@@ -90,7 +90,7 @@ namespace PrexoniteTests.Tests
             //Get res = obj.Count
             res = obj.DynamicCall(
                 sctx,
-                new PValue[] {},
+                Array.Empty<PValue>(),
                 PCall.Get,
                 "Count");
             Assert.AreEqual(55, test.Count);
@@ -120,8 +120,8 @@ namespace PrexoniteTests.Tests
         {
             var res =
                 sctx.ConstructPType(
-                    "Object", new[] {PType.Object.CreatePValue(typeof (Int32))});
-            Assert.AreEqual(PType.Object[typeof (Int32)], res);
+                    "Object", new[] {PType.Object.CreatePValue(typeof (int))});
+            Assert.AreEqual(PType.Object[typeof (int)], res);
         }
 
         [Test(Description = "PType creation from type")]
@@ -175,12 +175,11 @@ namespace PrexoniteTests.Tests
             var sUnescaped = "This is a \n followed by a \ttab and an umlaut: ä escape sequence.";
 
             var escaped = PType.String.CreatePValue(sEscaped);
-            PValue unescaped;
             Assert.IsTrue(
-                escaped.TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "unescape", out unescaped));
+                escaped.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "unescape", out var unescaped));
             Assert.AreEqual(sUnescaped, unescaped.Value as string);
             Assert.IsTrue(
-                unescaped.TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "escape", out escaped));
+                unescaped.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "escape", out escaped));
             Assert.AreEqual(sEscaped, escaped.Value as string);
         }
     }

@@ -41,29 +41,20 @@ namespace Prx.Benchmarking
         public readonly string Overhead;
         public readonly Benchmark Parent;
 
-        public List<Measurement> Measurements
-        {
-            get { return _measurements; }
-        }
-
-        private readonly List<Measurement> _measurements = new List<Measurement>();
+        public List<Measurement> Measurements { get; } = new();
 
         public long GetAverageRawMilliseconds()
         {
-            var sum = _measurements.Aggregate<Measurement, ulong>(0,
+            var sum = Measurements.Aggregate<Measurement, ulong>(0,
                 (current, m) => current + (ulong) m.RawMilliseconds);
             return
-                (long) Math.Round((sum/(double) _measurements.Count), MidpointRounding.AwayFromZero);
+                (long) Math.Round((sum/(double) Measurements.Count), MidpointRounding.AwayFromZero);
         }
 
         internal BenchmarkEntry(Benchmark parent, PFunction function)
         {
-            if (function == null)
-                throw new ArgumentNullException(nameof(function));
-            if (parent == null)
-                throw new ArgumentNullException(nameof(parent));
-            Parent = parent;
-            Function = function;
+            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            Function = function ?? throw new ArgumentNullException(nameof(function));
             var m = function.Meta;
             if (m.ContainsKey(Benchmark.TitleKey))
                 Title = m[Benchmark.TitleKey];
@@ -73,7 +64,7 @@ namespace Prx.Benchmarking
             if (m.ContainsKey(Benchmark.DescriptionKey))
                 Description = m[Benchmark.DescriptionKey];
             else
-                Description = String.Format("The benchmarked function {0}", Title);
+                Description = $"The benchmarked function {Title}";
 
             UsesIteration = m[Benchmark.UsesIterationKey];
 

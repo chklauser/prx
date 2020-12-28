@@ -36,7 +36,6 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
-using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
@@ -837,8 +836,8 @@ function interpreted [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a
 function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
 ");
 
-            ExpectNamed("interpreted", true, new PValue[0]);
-            ExpectNamed("compiled", true, new PValue[0]);
+            ExpectNamed("interpreted", true, Array.Empty<PValue>());
+            ExpectNamed("compiled", true, Array.Empty<PValue>());
         }
 
         [Test]
@@ -851,7 +850,7 @@ function main()
 }
 ");
 
-            Expect(2, new PValue[0]);
+            Expect(2, Array.Empty<PValue>());
         }
 
         [Test]
@@ -1021,9 +1020,7 @@ function main(x,y,z) = (x : y : z).Key;
 
             public Callable(Func<StackContext, PValue[], PValue> impl)
             {
-                if (impl == null)
-                    throw new ArgumentNullException("impl");
-                _impl = impl;
+                _impl = impl ?? throw new ArgumentNullException("impl");
             }
 
             #region Implementation of IIndirectCall
@@ -1647,7 +1644,7 @@ function main()[is volatile;]
             block.Statements.Add(incStmt);
             block.Expression = incExpr;
 
-            Assert.That(block,Is.InstanceOf<AstExpr>(),string.Format("{0} is expected to handle emission of effect code.", block));
+            Assert.That(block,Is.InstanceOf<AstExpr>(), $"{block} is expected to handle emission of effect code.");
             block.EmitEffectCode(ct);
 
             var sourcePosition = new SourcePosition("file", -1, -2);
@@ -1686,7 +1683,7 @@ namespace Prx.Tests
 
         public override string ToString()
         {
-            return string.Format("{0}-{1}", Index, X);
+            return $"{Index}-{X}";
         }
     }
 }

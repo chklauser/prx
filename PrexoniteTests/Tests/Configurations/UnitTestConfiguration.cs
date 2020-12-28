@@ -24,13 +24,11 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
-using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Cil;
 
 namespace PrexoniteTests.Tests.Configurations
@@ -56,9 +54,9 @@ namespace PrexoniteTests.Tests.Configurations
                     td =>
                     {
                         var ext = Path.GetExtension(td.ScriptName);
-                        var extLen = ext == null ? 0 : ext.Length;
+                        var extLen = ext?.Length ?? 0;
                         var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
-                        return string.Format("{0}~-stored{1}", baseName, ext);
+                        return $"{baseName}~-stored{ext}";
                     });
 
                 model.UnitsUnderTest = model.UnitsUnderTest.Select(td => new TestDependency

@@ -36,19 +36,16 @@ namespace Prexonite.Compiler.Internal
     {
         private MExpr([NotNull] ISourcePosition position)
         {
-            _position = position;
+            Position = position;
         }
 
         [NotNull]
-        public ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public ISourcePosition Position { get; }
 
         [PublicAPI]
         public abstract void ToString([NotNull] TextWriter writer);
 
-        public override sealed string ToString()
+        public sealed override string ToString()
         {
             var writer = new StringWriter();
             ToString(writer);
@@ -66,8 +63,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=> true, arg: notnull; =>false,arg: canbenull")]
         public bool TryMatchHead(string head, out MExpr arg)
         {
-            List<MExpr> args;
-            if (TryMatchHead(head, out args) && args.Count == 1)
+            if (TryMatchHead(head, out List<MExpr> args) && args.Count == 1)
             {
                 arg = args[0];
                 return true;
@@ -82,8 +78,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=> true, arg: notnull; =>false,arg: null")]
         public bool TryMatchHeadPrefix(string head, out MExpr arg)
         {
-            List<MExpr> args;
-            if (TryMatchHead(head, out args) && args.Count >= 1)
+            if (TryMatchHead(head, out List<MExpr> args) && args.Count >= 1)
             {
                 arg = args[0];
                 return true;
@@ -98,8 +93,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
         public bool TryMatchHeadPrefix(string head, out MExpr arg1, out MExpr arg2)
         {
-            List<MExpr> args;
-            if (TryMatchHead(head, out args) && args.Count >= 2)
+            if (TryMatchHead(head, out List<MExpr> args) && args.Count >= 2)
             {
                 arg1 = args[0];
                 arg2 = args[1];
@@ -115,8 +109,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
         public bool TryMatchHead(string head, out MExpr arg1, out MExpr arg2)
         {
-            List<MExpr> args;
-            if (TryMatchHead(head, out args) && args.Count == 2)
+            if (TryMatchHead(head, out List<MExpr> args) && args.Count == 2)
             {
                 arg1 = args[0];
                 arg2 = args[1];
@@ -132,8 +125,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
         public bool TryMatchHeadPrefix(string head, out MExpr arg1, out MExpr arg2, out MExpr arg3)
         {
-            List<MExpr> args;
-            if (TryMatchHead(head, out args) && args.Count >= 3)
+            if (TryMatchHead(head, out List<MExpr> args) && args.Count >= 3)
             {
                 arg1 = args[0];
                 arg2 = args[1];
@@ -150,8 +142,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=> true, arg1: notnull, arg2: notnull, arg3: notnull; =>false,arg1: null,arg2: null, arg3: notnull")]
         public bool TryMatchHead(string head, out MExpr arg1, out MExpr arg2, out MExpr arg3)
         {
-            List<MExpr> args;
-            if (TryMatchHead(head, out args) && args.Count == 3)
+            if (TryMatchHead(head, out List<MExpr> args) && args.Count == 3)
             {
                 arg1 = args[0];
                 arg2 = args[1];
@@ -168,8 +159,7 @@ namespace Prexonite.Compiler.Internal
         [ContractAnnotation("=>true,value: notnull;=>false,value:null")]
         public bool TryMatchStringAtom(out string value)
         {
-            object raw;
-            if (TryMatchAtom(out raw) && (value = raw as string) != null)
+            if (TryMatchAtom(out var raw) && (value = raw as string) != null)
             {
                 return true;
             }
@@ -182,23 +172,21 @@ namespace Prexonite.Compiler.Internal
 
         public bool TryMatchIntAtom(out int value)
         {
-            object raw;
-            if (TryMatchAtom(out raw) && raw is int)
+            if (TryMatchAtom(out var raw) && raw is int intValue)
             {
-                value = (int) raw;
+                value = intValue;
                 return true;
             }
             else
             {
-                value = default(int);
+                value = default;
                 return false;
             }
         }
 
         public bool TryMatchVersionAtom(out Version version)
         {
-            object raw;
-            if (TryMatchAtom(out raw) && (version = raw as Version) != null)
+            if (TryMatchAtom(out var raw) && (version = raw as Version) != null)
             {
                 return true;
             }
@@ -211,29 +199,20 @@ namespace Prexonite.Compiler.Internal
 
 
         #endregion
-        
-        [NotNull]
-        private readonly ISourcePosition _position;
 
         public sealed class MAtom : MExpr, IEquatable<MAtom>
         {
-            [CanBeNull]
-            private readonly Object _value;
-
-            public MAtom([NotNull] ISourcePosition position, Object value) : base(position)
+            public MAtom([NotNull] ISourcePosition position, object value) : base(position)
             {
-                _value = value;
+                Value = value;
             }
 
             [CanBeNull]
-            public object Value
-            {
-                get { return _value; }
-            }
+            public object Value { get; }
 
             public override void ToString(TextWriter writer)
             {
-                String str;
+                string str;
                 if (Value == null)
                     writer.Write("null");
                 else if ((str = Value as string) != null)
@@ -254,7 +233,7 @@ namespace Prexonite.Compiler.Internal
 
             public override bool TryMatchAtom(out object value)
             {
-                value = _value;
+                value = Value;
                 return true;
             }
 
@@ -269,7 +248,7 @@ namespace Prexonite.Compiler.Internal
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                return obj is MAtom && Equals((MAtom) obj);
+                return obj is MAtom atom && Equals(atom);
             }
 
             public override int GetHashCode()
@@ -287,33 +266,29 @@ namespace Prexonite.Compiler.Internal
 
             public MList([NotNull] ISourcePosition position, [NotNull] string head, [NotNull] IEnumerable<MExpr> args) : base(position)
             {
-                if (head == null) throw new ArgumentNullException(nameof(head));
                 if (args == null) throw new ArgumentNullException(nameof(args));
-                _head = head;
+                _head = head ?? throw new ArgumentNullException(nameof(head));
                 _args = new List<MExpr>(args);
             }
 
-            public MList([NotNull] ISourcePosition position, [NotNull] String head, MExpr arg) : base(position)
+            public MList([NotNull] ISourcePosition position, [NotNull] string head, MExpr arg) : base(position)
             {
-                if (head == null) throw new ArgumentNullException(nameof(head));
                 if (arg == null) throw new ArgumentNullException(nameof(arg));
-                _head = head;
+                _head = head ?? throw new ArgumentNullException(nameof(head));
                 _args = new List<MExpr>(1) {arg};
             }
 
-            public MList([NotNull] ISourcePosition position, [NotNull] String head)
+            public MList([NotNull] ISourcePosition position, [NotNull] string head)
                 : base(position)
             {
-                if (head == null) throw new ArgumentNullException(nameof(head));
-                _head = head;
+                _head = head ?? throw new ArgumentNullException(nameof(head));
                 _args = new List<MExpr>();
             }
 
-            public MList([NotNull] ISourcePosition position, [NotNull] String head, Object arg) : base(position)
+            public MList([NotNull] ISourcePosition position, [NotNull] string head, object arg) : base(position)
             {
-                if (head == null) throw new ArgumentNullException(nameof(head));
                 if (arg == null) throw new ArgumentNullException(nameof(arg));
-                _head = head;
+                _head = head ?? throw new ArgumentNullException(nameof(head));
                 _args = new List<MExpr>(1) { new MAtom(position, arg) };
             }
 
@@ -371,14 +346,14 @@ namespace Prexonite.Compiler.Internal
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return String.Equals(_head, other._head) && _args.Equals(other._args);
+                return string.Equals(_head, other._head) && _args.Equals(other._args);
             }
 
             public override bool Equals(object obj)
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                return obj is MList && Equals((MList) obj);
+                return obj is MList list && Equals(list);
             }
 
             public override int GetHashCode()

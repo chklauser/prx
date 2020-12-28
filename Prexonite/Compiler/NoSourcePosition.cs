@@ -33,10 +33,7 @@ namespace Prexonite.Compiler
         #region Singleton
 
         private static NoSourcePosition _instance;
-        public static ISourcePosition Instance
-        {
-            get { return _instance ?? (_instance = new NoSourcePosition()); }
-        }
+        public static ISourcePosition Instance => _instance ??= new NoSourcePosition();
 
         #endregion
 
@@ -44,20 +41,11 @@ namespace Prexonite.Compiler
 
         #region Implementation of ISourcePosition
 
-        public string File
-        {
-            get { return MissingFileName; }
-        }
+        public string File => MissingFileName;
 
-        public int Line
-        {
-            get { return -1; }
-        }
+        public int Line => -1;
 
-        public int Column
-        {
-            get { return -1; }
-        }
+        public int Column => -1;
 
         #endregion
     }

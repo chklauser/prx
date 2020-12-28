@@ -50,7 +50,7 @@ namespace Prexonite.Compiler.Ast
 
         AstExpr[] IAstHasExpressions.Expressions => Expressions.ToArray();
 
-        public List<AstExpr> Expressions { get; } = new List<AstExpr>(2);
+        public List<AstExpr> Expressions { get; } = new(2);
 
         #endregion
 
@@ -80,8 +80,7 @@ namespace Prexonite.Compiler.Ast
             if (Expressions.Count == 1)
             {
                 var pExpr = Expressions[0];
-                var placeholder = pExpr as AstPlaceholder;
-                expr = placeholder != null ? placeholder.IdFunc() : pExpr;
+                expr = pExpr is AstPlaceholder placeholder ? placeholder.IdFunc() : pExpr;
                 return true;
             }
             else if (Expressions.Count == 0)
@@ -104,7 +103,7 @@ namespace Prexonite.Compiler.Ast
         #endregion
 
         private static int _count = -1;
-        private static readonly object _labelCountLock = new object();
+        private static readonly object _labelCountLock = new();
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {

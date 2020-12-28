@@ -24,63 +24,46 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Linq;
 using Prexonite.Types;
 
 namespace Prexonite
 {
     public class Continuation : Closure
     {
-        public int EntryOffset
-        {
-            get { return _entryOffset; }
-        }
+        public int EntryOffset { get; }
 
-        private readonly int _entryOffset;
+        public SymbolTable<PValue> State { get; }
 
-        public SymbolTable<PValue> State
-        {
-            get { return _state; }
-        }
-
-        public PValue[] Stack
-        {
-            get { return _stack; }
-        }
-
-        private readonly PValue[] _stack;
-
-        private readonly SymbolTable<PValue> _state;
+        public PValue[] Stack { get; }
 
         public Continuation(FunctionContext fctx)
             : base(fctx.Implementation, _getSharedVariables(fctx))
         {
-            _entryOffset = fctx.Pointer; //Pointer must already be incremented
-            _state = new SymbolTable<PValue>(fctx.LocalVariables.Count);
+            EntryOffset = fctx.Pointer; //Pointer must already be incremented
+            State = new SymbolTable<PValue>(fctx.LocalVariables.Count);
             foreach (var variable in fctx.LocalVariables)
-                _state[variable.Key] = variable.Value.Value;
+                State[variable.Key] = variable.Value.Value;
             var stack = new PValue[fctx.StackSize];
             for (var i = 0; i < stack.Length; i++)
                 stack[i] = fctx.Pop();
-            _stack = stack;
+            Stack = stack;
             _populateStack(fctx);
         }
 
         private void _populateStack(FunctionContext fctx)
         {
-            for (var i = _stack.Length - 1; i >= 0; i--)
+            for (var i = Stack.Length - 1; i >= 0; i--)
             {
-                fctx.Push(_stack[i]);
+                fctx.Push(Stack[i]);
             }
         }
 
         private static PVariable[] _getSharedVariables(FunctionContext fctx)
         {
             var metaTable = fctx.Implementation.Meta;
-            MetaEntry entry;
-            if (!(metaTable.TryGetValue(PFunction.SharedNamesKey, out entry) && entry.IsList))
+            if (!(metaTable.TryGetValue(PFunction.SharedNamesKey, out var entry) && entry.IsList))
             {
-                return new PVariable[] {};
+                return Array.Empty<PVariable>();
             }
             var sharedNames = entry.List;
             var sharedVariables = new PVariable[sharedNames.Length];
@@ -116,11 +99,11 @@ namespace Prexonite
             var fctx = base.CreateFunctionContext(sctx, args);
 
             //restore state
-            fctx.Pointer = _entryOffset;
+            fctx.Pointer = EntryOffset;
 
             _populateStack(fctx);
 
-            foreach (var variable in _state)
+            foreach (var variable in State)
                 fctx.LocalVariables[variable.Key].Value = variable.Value;
 
             //insert the value returned by the called function

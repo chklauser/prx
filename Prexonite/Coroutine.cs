@@ -53,9 +53,7 @@ namespace Prexonite
         /// <exception cref = "ArgumentNullException"><paramref name = "corctx" /> is null.</exception>
         public Coroutine(StackContext corctx)
         {
-            if (corctx == null)
-                throw new ArgumentNullException(nameof(corctx));
-            _corctx = corctx;
+            _corctx = corctx ?? throw new ArgumentNullException(nameof(corctx));
         }
 
         /// <summary>
@@ -120,7 +118,7 @@ namespace Prexonite
         /// <param name = "sctx">The stack context in which to perform the call.</param>
         /// <param name = "args">The arguments to be passed to the call.</param>
         /// <param name = "call">Indicates whether the call is a get or a set call.</param>
-        /// <param name = "id">The id of the memeber to be called.</param>
+        /// <param name = "id">The id of the member to be called.</param>
         /// <param name = "result">The result returned by the member call.</param>
         /// <returns>True if a member has been called; false otherwise.</returns>
         public bool TryDynamicCall(
@@ -180,10 +178,7 @@ namespace Prexonite
         ///     A coroutine becomes invalid once the end of the 
         ///     underlying routine or a <strong>break</strong> or <strong>return</strong> statement has been reached.
         /// </remarks>
-        public bool IsValid
-        {
-            get { return _corctx != null; }
-        }
+        public bool IsValid => _corctx != null;
 
         /// <summary>
         ///     Hands the control over to the coroutine.
@@ -236,7 +231,7 @@ namespace Prexonite
         /// <returns>Do not use with infinite lists!</returns>
         public List<PValue> All()
         {
-            return new List<PValue>(this);
+            return new(this);
         }
     }
 }

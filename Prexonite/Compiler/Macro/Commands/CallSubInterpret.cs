@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using JetBrains.Annotations;
-using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -39,12 +38,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Singleton pattern
 
-        private static readonly CallSubInterpret _instance = new CallSubInterpret();
-
-        public static CallSubInterpret Instance
-        {
-            get { return _instance; }
-        }
+        public static CallSubInterpret Instance { get; } = new();
 
         private CallSubInterpret() : base(Alias)
         {
@@ -94,8 +88,7 @@ namespace Prexonite.Compiler.Macro.Commands
 // ReSharper restore ImplicitlyCapturedClosure
 
             //Break and Continue behave differently outside loop blocks
-            AstNode contStmt, breakStmt;
-            _determineActions(context, retValue, out contStmt, out breakStmt);
+            _determineActions(context, retValue, out var contStmt, out var breakStmt);
 
             //Generate check for continue
             _genChecks(context, retVar, contStmt, breakStmt);

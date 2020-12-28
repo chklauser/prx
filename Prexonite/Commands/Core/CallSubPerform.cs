@@ -33,12 +33,7 @@ namespace Prexonite.Commands.Core
     {
         #region singleton pattern
 
-        private static readonly CallSubPerform _instance = new CallSubPerform();
-
-        public static CallSubPerform Instance
-        {
-            get { return _instance; }
-        }
+        public static CallSubPerform Instance { get; } = new();
 
         private CallSubPerform()
         {
@@ -94,10 +89,10 @@ namespace Prexonite.Commands.Core
                 sharedVars = cilClosure.SharedVariables;
             }
 
-            if ((func = func ?? fpv.Value as PFunction) != null && func.HasCilImplementation)
+            if ((func ??= fpv.Value as PFunction) != null && func.HasCilImplementation)
             {
                 func.CilImplementation.Invoke(
-                    func, CilFunctionContext.New(sctx, func), iargs, sharedVars ?? new PVariable[0],
+                    func, CilFunctionContext.New(sctx, func), iargs, sharedVars ?? Array.Empty<PVariable>(),
                     out result, out returnMode);
             }
             else if ((f = fpv.Value as IStackAware) != null)
@@ -110,8 +105,7 @@ namespace Prexonite.Commands.Core
             }
             else if ((m = fpv.Value as IMaybeStackAware) != null)
             {
-                StackContext subCtx;
-                if (m.TryDefer(sctx, iargs, out subCtx, out result))
+                if (m.TryDefer(sctx, iargs, out var subCtx, out result))
                 {
                     sctx.ParentEngine.Process(subCtx);
                     result = subCtx.ReturnValue;

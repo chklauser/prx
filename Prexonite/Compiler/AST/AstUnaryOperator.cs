@@ -59,8 +59,7 @@ namespace Prexonite.Compiler.Ast
             expr = null;
             var operand = Operand;
             _OptimizeNode(target, ref operand);
-            var constOperand = operand as AstConstant;
-            if (constOperand != null) 
+            if (operand is AstConstant constOperand) 
             {
                 var valueOperand = constOperand.ToPValue(target);
                 PValue result;
@@ -112,8 +111,7 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
-                    var doubleNegation = operand as AstUnaryOperator;
-                    if (doubleNegation != null && doubleNegation.Operator == Operator)
+                    if (operand is AstUnaryOperator doubleNegation && doubleNegation.Operator == Operator)
                     {
                         expr = doubleNegation.Operand;
                         return true;
@@ -163,19 +161,17 @@ namespace Prexonite.Compiler.Ast
                     if (isVariable)
                     {
                         Debug.Assert(variableRef != null);
-                        EntityRef.Variable.Local localRef;
                         Action loadVar;
                         Action perform;
-                        EntityRef.Variable.Global globalRef;
 
                         // First setup the two actions
-                        if (variableRef.TryGetLocalVariable(out localRef))
+                        if (variableRef.TryGetLocalVariable(out var localRef))
                         {
                             loadVar = () => target.EmitLoadLocal(Position, localRef.Id);
                             perform = () => 
                                 target.Emit(Position, isIncrement ? OpCode.incloc : OpCode.decloc, localRef.Id);
                         }
-                        else if(variableRef.TryGetGlobalVariable(out globalRef))
+                        else if(variableRef.TryGetGlobalVariable(out var globalRef))
                         {
                             loadVar = () => target.EmitLoadGlobal(Position, globalRef.Id, globalRef.ModuleName);
 
@@ -261,7 +257,7 @@ namespace Prexonite.Compiler.Ast
 
         public NodeApplicationState CheckNodeApplicationState()
         {
-            return new NodeApplicationState(
+            return new(
                 Operand.IsPlaceholder()
                 || (Operator == UnaryOperator.LogicalNot
                     && (Operand is AstTypecheck typecheck)

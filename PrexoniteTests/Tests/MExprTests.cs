@@ -46,15 +46,7 @@ namespace PrexoniteTests.Tests
         {
             #region Singleton
 
-            private static readonly ConsoleSink _instance = new ConsoleSink();
-
-            public static ConsoleSink Instance
-            {
-                get
-                {
-                    return _instance;
-                }
-            }
+            public static ConsoleSink Instance { get; } = new();
 
             #endregion 
             public void ReportMessage(Message message)
@@ -271,7 +263,7 @@ namespace PrexoniteTests.Tests
 
         private MExpr.MList _createCrossReference(string alias)
         {
-            return new MExpr.MList(_position, SymbolMExprSerializer.CrossReferenceHead,
+            return new(_position, SymbolMExprSerializer.CrossReferenceHead,
                                    new[] {new MExpr.MAtom(_position, alias)});
         }
     }

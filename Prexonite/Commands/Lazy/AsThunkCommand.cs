@@ -40,22 +40,14 @@ namespace Prexonite.Commands.Lazy
         {
         }
 
-        private static readonly AsThunkCommand _instance = new AsThunkCommand();
-
-        public static AsThunkCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static AsThunkCommand Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {

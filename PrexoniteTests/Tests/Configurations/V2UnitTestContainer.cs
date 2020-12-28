@@ -18,7 +18,7 @@ namespace PrexoniteTests.Tests.Configurations
         private const string RunTestMetaEntryId = "psr.test.run_test";
 
         private static readonly ModuleName TestFrameworkModuleName =
-            new ModuleName("psr.test", new Version(0, 0));
+            new("psr.test", new Version(0, 0));
 
         private (Application app, ITarget target, PFunction runTestsFunction, Engine engine)? _testSuite;
 

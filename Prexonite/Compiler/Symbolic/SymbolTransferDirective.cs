@@ -5,23 +5,13 @@ namespace Prexonite.Compiler.Symbolic
 {
     public abstract class SymbolTransferDirective : IEquatable<SymbolTransferDirective>
     {
-
-        [NotNull]
-        private readonly ISourcePosition _position;
-
         private SymbolTransferDirective([NotNull] ISourcePosition position)
         {
-            if (position == null)
-                throw new ArgumentNullException(nameof(position));
-            
-            _position = position;
+            Position = position ?? throw new ArgumentNullException(nameof(position));
         }
 
         [NotNull]
-        public ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public ISourcePosition Position { get; }
 
         public abstract T Match<T>(Func<T> onWildcard, Func<Rename, T> onRename, Func<Drop, T> onDrop);
         public abstract bool Equals(SymbolTransferDirective other);
@@ -70,17 +60,17 @@ namespace Prexonite.Compiler.Symbolic
 
         public static Wildcard CreateWildcard([NotNull] ISourcePosition position)
         {
-            return new Wildcard(position);
+            return new(position);
         }
 
         public static Rename CreateRename([NotNull] ISourcePosition position, [NotNull] string originalName, [NotNull] string newName)
         {
-            return new Rename(position,originalName,newName);
+            return new(position,originalName,newName);
         }
 
         public static Drop CreateDrop([NotNull] ISourcePosition position, [NotNull] string name)
         {
-            return new Drop(position, name);
+            return new(position, name);
         }
 
         public sealed class Wildcard : SymbolTransferDirective
@@ -96,8 +86,7 @@ namespace Prexonite.Compiler.Symbolic
 
             public override bool Equals(SymbolTransferDirective other)
             {
-                var otherWildcard = other as Wildcard;
-                return otherWildcard != null;
+                return other is Wildcard;
             }
 
             public override string ToString()
@@ -113,34 +102,17 @@ namespace Prexonite.Compiler.Symbolic
 
         public sealed class Rename : SymbolTransferDirective
         {
-            [NotNull]
-            private readonly string _originalName;
-
-            [NotNull]
-            private readonly string _newName;
-
             public Rename([NotNull] ISourcePosition position, [NotNull] string originalName, [NotNull] string newName) : base(position)
             {
-                if (newName == null)
-                    throw new ArgumentNullException(nameof(newName));
-                if (originalName == null)
-                    throw new ArgumentNullException(nameof(originalName));
-                
-                _originalName = originalName;
-                _newName = newName;
+                OriginalName = originalName ?? throw new ArgumentNullException(nameof(originalName));
+                NewName = newName ?? throw new ArgumentNullException(nameof(newName));
             }
 
             [NotNull]
-            public string OriginalName
-            {
-                get { return _originalName; }
-            }
+            public string OriginalName { get; }
 
             [NotNull]
-            public string NewName
-            {
-                get { return _newName; }
-            }
+            public string NewName { get; }
 
             public override T Match<T>(Func<T> onWildcard, Func<Rename, T> onRename, Func<Drop, T> onDrop)
             {
@@ -149,14 +121,13 @@ namespace Prexonite.Compiler.Symbolic
 
             public override bool Equals(SymbolTransferDirective other)
             {
-                var otherRename = other as Rename;
-                return otherRename != null &&
-                    (OriginalName.Equals(otherRename.OriginalName) && NewName.Equals(otherRename.NewName));
+                return other is Rename otherRename &&
+                       (OriginalName.Equals(otherRename.OriginalName) && NewName.Equals(otherRename.NewName));
             }
 
             public override string ToString()
             {
-                return string.Format("{0} as {1}", OriginalName, NewName);
+                return $"{OriginalName} as {NewName}";
             }
 
             public override int GetHashCode()
@@ -167,21 +138,13 @@ namespace Prexonite.Compiler.Symbolic
 
         public sealed class Drop : SymbolTransferDirective
         {
-            [NotNull]
-            private readonly string _name;
-
             public Drop([NotNull] ISourcePosition position, [NotNull] string name) : base(position)
             {
-                if (name == null)
-                    throw new ArgumentNullException(nameof(name));
-                
-                _name = name;
+                Name = name ?? throw new ArgumentNullException(nameof(name));
             }
 
-            public string Name
-            {
-                get { return _name; }
-            }
+            [NotNull]
+            public string Name { get; }
 
             public override T Match<T>(Func<T> onWildcard, Func<Rename, T> onRename, Func<Drop, T> onDrop)
             {
@@ -190,18 +153,17 @@ namespace Prexonite.Compiler.Symbolic
 
             public override bool Equals(SymbolTransferDirective other)
             {
-                var otherDrop = other as Drop;
-                return otherDrop != null && _name.Equals(otherDrop.Name);
+                return other is Drop otherDrop && Name.Equals(otherDrop.Name);
             }
 
             public override string ToString()
             {
-                return string.Format("not {0}", Name);
+                return $"not {Name}";
             }
 
             public override int GetHashCode()
             {
-                return _name.GetHashCode() ^ 331;
+                return Name.GetHashCode() ^ 331;
             }
         }
     }

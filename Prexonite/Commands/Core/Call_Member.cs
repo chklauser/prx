@@ -48,12 +48,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static Call_Member _instance = new Call_Member();
-
-        public static Call_Member Instance
-        {
-            get { return _instance; }
-        }
+        public static Call_Member Instance { get; } = new();
 
         #endregion
 
@@ -141,13 +136,11 @@ namespace Prexonite.Commands.Core
                 return PType.Null.CreatePValue();
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             var iargs = new List<PValue>();
-            for (var i = 0; i < args.Length; i++)
+            foreach (var arg in args)
             {
-                var arg = args[i];
                 var folded = Map._ToEnumerable(sctx, arg);
                 if (folded == null)
                     iargs.Add(arg);
@@ -160,13 +153,7 @@ namespace Prexonite.Commands.Core
 
         #region Partial application via call\star
 
-        private readonly PartialMemberCall _partial = new PartialMemberCall();
-
-        public PartialMemberCall Partial
-        {
-            [DebuggerStepThrough]
-            get { return _partial; }
-        }
+        public PartialMemberCall Partial { [DebuggerStepThrough] get; } = new();
 
         public class PartialMemberCall : PartialCallWrapper
         {

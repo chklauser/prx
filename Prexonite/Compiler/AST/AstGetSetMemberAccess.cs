@@ -50,11 +50,8 @@ namespace Prexonite.Compiler.Ast
             string file, int line, int column, PCall call, AstExpr subject, string id)
             : base(file, line, column, call)
         {
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            if (id == null)
-                id = "";
-            Subject = subject;
+            id ??= "";
+            Subject = subject ?? throw new ArgumentNullException(nameof(subject));
             Id = id;
         }
 

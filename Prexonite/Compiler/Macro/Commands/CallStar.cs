@@ -36,12 +36,7 @@ namespace Prexonite.Compiler.Macro.Commands
     {
         #region Singleton pattern
 
-        private static readonly CallStar _instance = new CallStar();
-
-        public static CallStar Instance
-        {
-            get { return _instance; }
-        }
+        public static CallStar Instance { get; } = new();
 
         private CallStar()
             : base(@"call\star")
@@ -61,9 +56,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 return true;
             }
 
-            int passThrough;
-            List<AstExpr> arguments;
-            _determinePassThrough(context, out passThrough, out arguments);
+            _determinePassThrough(context, out var passThrough, out var arguments);
 
             _expandPartialApplication(context, passThrough, arguments);
 
@@ -84,8 +77,7 @@ namespace Prexonite.Compiler.Macro.Commands
             for (var i = 1; i < arguments.Count; i++)
             {
                 var arg = arguments[i];
-                AstListLiteral lit;
-                if (i < passThrough || !_isPartialList(arg, out lit))
+                if (i < passThrough || !_isPartialList(arg, out var lit))
                 {
                     flatArgs.Add(arg);
                     opaqueSpan++;
@@ -130,7 +122,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 mappings8[mi++] = directive;
             }
 
-            mappings8[mappings8.Length - 1] = directives.Count;
+            mappings8[^1] = directives.Count;
         }
 
         #endregion
@@ -139,8 +131,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static bool _isPartialList(AstExpr expr)
         {
-            AstListLiteral lit;
-            return _isPartialList(expr, out lit);
+            return _isPartialList(expr, out _);
         }
 
         private static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
@@ -160,9 +151,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 return;
             }
 
-            int passThrough;
-            List<AstExpr> arguments;
-            _determinePassThrough(context, out passThrough, out arguments);
+            _determinePassThrough(context, out var passThrough, out var arguments);
 
             if (arguments.Skip(passThrough).Any(_isPartialList))
             {
@@ -182,10 +171,10 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var arg0 = context.Invocation.Arguments[0];
             var passThroughNode = arg0 as AstConstant;
-            if (passThroughNode?.Constant is int)
+            if (passThroughNode?.Constant is int constant)
             {
                 arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
-                passThrough = (int) passThroughNode.Constant;
+                passThrough = constant;
             }
             else
             {

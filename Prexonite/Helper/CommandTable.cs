@@ -32,7 +32,7 @@ namespace Prexonite
     public class CommandTable : SymbolTable<PCommand>
     {
         private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos =
-            new SymbolTable<ICommandInfo>();
+            new();
 
         /// <summary>
         ///     Returns information about the specified command's capabilities. The command might not be installed
@@ -43,8 +43,7 @@ namespace Prexonite
         /// <returns>True on success; false on failure.</returns>
         public bool TryGetInfo(string id, out ICommandInfo commandInfo)
         {
-            PCommand command;
-            if (TryGetValue(id, out command))
+            if (TryGetValue(id, out var command))
             {
                 commandInfo = command.ToCommandInfo();
                 return true;
@@ -67,10 +66,8 @@ namespace Prexonite
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
-            if (commandInfo == null)
-                throw new ArgumentNullException(nameof(commandInfo));
 
-            _fallbackCommandInfos[id] = commandInfo;
+            _fallbackCommandInfos[id] = commandInfo ?? throw new ArgumentNullException(nameof(commandInfo));
         }
 
         /// <summary>

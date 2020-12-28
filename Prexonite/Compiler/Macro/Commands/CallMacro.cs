@@ -41,12 +41,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Singleton pattern
 
-        private static readonly CallMacro _instance = new CallMacro();
-
-        public static CallMacro Instance
-        {
-            get { return _instance; }
-        }
+        public static CallMacro Instance { get; } = new();
 
         private CallMacro() : base(Alias)
         {
@@ -57,7 +52,7 @@ namespace Prexonite.Compiler.Macro.Commands
         public static KeyValuePair<string, CallMacroPerform> GetHelperCommands(Loader ldr)
         {
             return
-                new KeyValuePair<string, CallMacroPerform>(CallMacroPerform.Alias,
+                new(CallMacroPerform.Alias,
                     new CallMacroPerform(ldr));
         }
 
@@ -132,7 +127,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 if (rawEffectFlag.Type != PType.Bool)
                     throw new PrexoniteException(
-                        string.Format("Effect flag is missing in call to {0}.", Alias));
+                        $"Effect flag is missing in call to {Alias}.");
                 return (bool) rawEffectFlag.Value;
             }
 
@@ -140,26 +135,23 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 if (!(rawCallType.Type is ObjectPType && rawCallType.Value is PCall))
                     throw new PrexoniteException(
-                        string.Format("Call type is missing in call to {0}.", Alias));
+                        $"Call type is missing in call to {Alias}.");
                 return (PCall) rawCallType.Value;
             }
 
             private static MacroContext _getContext(PValue rawContext)
             {
-                var context = rawContext.Value as MacroContext;
-                if (!(rawContext.Type is ObjectPType) || context == null)
+                if (!(rawContext.Type is ObjectPType) || !(rawContext.Value is MacroContext context))
                     throw new PrexoniteException(
-                        string.Format("Macro context is missing in call to {0}.", Alias));
+                        $"Macro context is missing in call to {Alias}.");
                 return context;
             }
 
             private static EntityRef _getMacroRef(StackContext sctx, PValue rawMacro)
             {
-                PFunction func;
-                MacroCommand mcmd;
-                if (rawMacro.TryConvertTo(sctx, out func))
+                if (rawMacro.TryConvertTo(sctx, out PFunction func))
                     return EntityRef.Function.Create(func.Id, func.ParentApplication.Module.Name);
-                else if (rawMacro.TryConvertTo(sctx, out mcmd))
+                else if (rawMacro.TryConvertTo(sctx, out MacroCommand mcmd))
                     return EntityRef.MacroCommand.Create(mcmd.Id);
                 else
                     return rawMacro.ConvertTo<EntityRef>(sctx);
@@ -167,13 +159,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             #endregion
 
-            private readonly PartialCallMacroPerform _partial = new PartialCallMacroPerform();
-
-            public PartialCallMacroPerform Partial
-            {
-                [DebuggerStepThrough]
-                get { return _partial; }
-            }
+            public PartialCallMacroPerform Partial { [DebuggerStepThrough] get; } = new();
 
             public class PartialCallMacroPerform : PartialCallWrapper
             {
@@ -240,12 +226,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             context.EstablishMacroContext();
 
-            AstExpr call;
-            AstExpr justEffect;
-            AstExpr[] args;
-            AstExpr macroSpec;
-
-            if (!_parseArguments(context, out call, out justEffect, out args, out macroSpec))
+            if (!_parseArguments(context, out var call, out var justEffect, out var args, out var macroSpec))
                 return null;
 
             // [| call\macro\prepare_macro($macroEntityRef, context, $call, $justEffect, $args...) |]
@@ -294,8 +275,7 @@ namespace Prexonite.Compiler.Macro.Commands
             call = PCall.Get.ToExpr(context.Invocation.Position);
 
             var invokeSpec = inv.Arguments[0];
-            var listSpec = invokeSpec as AstListLiteral;
-            if (listSpec == null)
+            if (!(invokeSpec is AstListLiteral listSpec))
             {
                 // - Macro reference specified as expression that evaluates to an actual macro reference
 
@@ -339,11 +319,9 @@ namespace Prexonite.Compiler.Macro.Commands
                 // - includes list of options
 
                 var specProto = listSpec.Elements[0];
-                PCall protoCall;
-                IList<AstExpr> protoArguments;
                 if (
-                    !_parsePrototype(context, specProto, out protoCall,
-                        out protoArguments, out macroSpec))
+                    !_parsePrototype(context, specProto, out var protoCall,
+                        out var protoArguments, out macroSpec))
                 {
                     args = null;
                     return false;
@@ -372,7 +350,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 if (getArgs.Any(a => !_ensureExplicitPlaceholder(context, a)))
 
                 {
-                    args = new AstExpr[] {};
+                    args = System.Array.Empty<AstExpr>();
                     return false;
                 }
 
@@ -395,7 +373,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 {
                     if (!_ensureExplicitPlaceholder(context, setArgs))
                     {
-                        args = new AstExpr[] {};
+                        args = System.Array.Empty<AstExpr>();
                         return false;
                     }
                     var lit = new AstListLiteral(setArgs.File, setArgs.Line, setArgs.Column);
@@ -417,8 +395,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static bool _ensureExplicitPlaceholder(MacroContext context, AstExpr arg)
         {
-            var setPlaceholder = arg as AstPlaceholder;
-            if (setPlaceholder != null && !setPlaceholder.Index.HasValue)
+            if (arg is AstPlaceholder {Index: null} setPlaceholder)
             {
                 context.ReportMessage(
                     Message.Error(

@@ -53,12 +53,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Map _instance = new Map();
-
-        public static Map Instance
-        {
-            get { return _instance; }
-        }
+        public static Map Instance { get; } = new();
 
         #endregion
 
@@ -84,11 +79,10 @@ namespace Prexonite.Commands.List
 
                     break;
             }
-            IEnumerable<PValue> set;
-            IEnumerable nset;
-            if (psource.TryConvertTo(sctx, true, out set))
+
+            if (psource.TryConvertTo(sctx, true, out IEnumerable<PValue> set))
                 return set;
-            else if (psource.TryConvertTo(sctx, true, out nset))
+            else if (psource.TryConvertTo(sctx, true, out IEnumerable nset))
                 return _wrapNonGenericIEnumerable(sctx, nset);
             else
                 return _wrapDynamicIEnumerable(sctx, psource);
@@ -97,7 +91,7 @@ namespace Prexonite.Commands.List
         private static IEnumerable<PValue> _wrapDynamicIEnumerable(StackContext sctx, PValue psource)
         {
             var pvEnumerator =
-                psource.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get, "GetEnumerator").
+                psource.DynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "GetEnumerator").
                     ConvertTo(sctx, typeof (IEnumerator));
             var enumerator = (IEnumerator) pvEnumerator.Value;
             PValueEnumerator pvEnum;
@@ -117,8 +111,7 @@ namespace Prexonite.Commands.List
             finally
             {
                 var disposable = enumerator as IDisposable;
-                if (disposable != null)
-                    disposable.Dispose();
+                disposable?.Dispose();
             }
         }
 
@@ -208,10 +201,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #region ICilCompilerAware Members
 

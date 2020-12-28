@@ -84,7 +84,7 @@ namespace Prx.Win32
                 if (result > 0 && result <= outputBuilder.Length)
                     return outputBuilder.ToString(0, result);
                 else if (relaxed)
-                    return String.Empty;
+                    return string.Empty;
                 else //Fail early (-P)
                     throw new Exception("Invalid key (" + key.KeyChar + "/" + result + "/" +
                         outputBuilder + ")");

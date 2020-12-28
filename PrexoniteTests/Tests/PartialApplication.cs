@@ -51,15 +51,7 @@ namespace PrexoniteTests.Tests
                 PValue[] arguments)
             {
                 var temp = InvokeImpl;
-                if (temp != null)
-                {
-                    return temp(sctx, nonArguments, arguments);
-                }
-                else
-                {
-                    //ignore in that case
-                    return null;
-                }
+                return temp?.Invoke(sctx, nonArguments, arguments);
             }
 
             public Func<StackContext, PValue[], PValue[], PValue> InvokeImpl { get; set; }
@@ -68,7 +60,7 @@ namespace PrexoniteTests.Tests
         }
 
 
-        public class RoundtripPartialApplicationCommandMock : PartialApplicationCommandBase<Object>
+        public class RoundtripPartialApplicationCommandMock : PartialApplicationCommandBase<object>
         {
             #region Overrides of PartialApplicationCommandBase
 
@@ -128,7 +120,7 @@ namespace PrexoniteTests.Tests
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
-            var callArgs = new PValue[] {};
+            var callArgs = Array.Empty<PValue>();
 
             pa.InvokeImpl = (ctx, nonArgs, args) =>
                 {
@@ -142,8 +134,7 @@ namespace PrexoniteTests.Tests
                             Assert.AreEqual(closedArguments[1], args[i], "Closed argument expected.");
                         else
                             Assert.IsNull(args[i].Value,
-                                string.Format("Effective argument at position {0} is not {{Null}}",
-                                    i));
+                                $"Effective argument at position {i} is not {{Null}}");
 
                     Assert.AreSame(PType.Null.CreatePValue(), nonArgs[0],
                         "Open argument #1 expected at non-arg position 0.");
@@ -241,7 +232,7 @@ namespace PrexoniteTests.Tests
                     for (var i = 3; i < args.Length; i++)
                         Assert.AreSame(
                             callArgs[i - (3 - 2)], args[i],
-                            string.Format("Excess arguments don't match at position {0}", i));
+                            $"Excess arguments don't match at position {i}");
 
                     return 77;
                 };
@@ -288,7 +279,7 @@ namespace PrexoniteTests.Tests
                     for (var i = 5; i < args.Length; i++)
                         Assert.AreSame(
                             callArgs[i - (5 - 2)], args[i],
-                            string.Format("Excess arguments don't match at position {0}", i));
+                            $"Excess arguments don't match at position {i}");
 
                     return 77;
                 };
@@ -301,7 +292,7 @@ namespace PrexoniteTests.Tests
         public void NoMappingExcessArgs()
         {
             const int nonArgc = 2;
-            var closedArguments = new PValue[] {};
+            var closedArguments = Array.Empty<PValue>();
             var mappings = new int[] {};
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreEqual(mappings, pa.Mappings.ToArray());
@@ -328,8 +319,7 @@ namespace PrexoniteTests.Tests
                     //check args
                     for (var i = 0; i < 5; i++)
                         Assert.AreSame(callArgs[i + 2], args[i],
-                            string.Format("Open argument #{0} expected at arg position {1}.", i + 3,
-                                i));
+                            $"Open argument #{i + 3} expected at arg position {i}.");
 
                     return 77;
                 };
@@ -373,7 +363,7 @@ namespace PrexoniteTests.Tests
                 var mappingA = mock.Mappings[i];
 
                 Assert.AreEqual(mappingE, mappingA,
-                    string.Format("The mappings at index {0} are not equal.", i));
+                    $"The mappings at index {i} are not equal.");
             }
 
             Assert.IsNotNull(mock.ClosedArguments, "Closed arguments must not be null");
@@ -387,7 +377,7 @@ namespace PrexoniteTests.Tests
                 var caA = mock.ClosedArguments[i];
 
                 Assert.AreSame(caE, caA,
-                    string.Format("The closed arguments at index {0} are not the same.", i));
+                    $"The closed arguments at index {i} are not the same.");
             }
         }
 
@@ -805,7 +795,7 @@ function main(x,y,z)
 }
 ");
 
-            Expect(Int32.MaxValue - 255, "255");
+            Expect(int.MaxValue - 255, "255");
         }
 
         [Test]
@@ -821,7 +811,7 @@ function main(x,y,z)
 }
 ");
 
-            Expect(Int32.MaxValue - 255, "255", "System.Int32");
+            Expect(int.MaxValue - 255, "255", "System.Int32");
         }
 
         [Test]

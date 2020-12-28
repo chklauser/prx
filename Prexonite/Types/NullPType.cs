@@ -44,22 +44,17 @@ namespace Prexonite.Types
         {
         }
 
-        private static readonly NullPType instance = new NullPType();
-
         /// <summary>
         ///     The one and only instance of <see cref = "NullPType" />.
         /// </summary>
-        public static NullPType Instance
-        {
-            get { return instance; }
-        }
+        public static NullPType Instance { get; } = new();
 
         #endregion
 
         #region Static
 
 #if SINGLE_NULL
-        private static readonly PValue _single_null = new PValue(null, instance);
+        private static readonly PValue _single_null = new(null, Instance);
 #endif
 
         /// <summary>
@@ -136,22 +131,14 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result)
         {
-            result = null;
-            switch (target.ToBuiltIn())
+            result = target.ToBuiltIn() switch
             {
-                case BuiltIn.Real:
-                    result = Real.CreatePValue(0.0);
-                    break;
-                case BuiltIn.Int:
-                    result = Int.CreatePValue(0);
-                    break;
-                case BuiltIn.String:
-                    result = String.CreatePValue("");
-                    break;
-                case BuiltIn.Bool:
-                    result = Bool.CreatePValue(false);
-                    break;
-            }
+                BuiltIn.Real => Real.CreatePValue(0.0),
+                BuiltIn.Int => Int.CreatePValue(0),
+                BuiltIn.String => String.CreatePValue(""),
+                BuiltIn.Bool => Bool.CreatePValue(false),
+                _ => null
+            };
 
             return result != null;
         }

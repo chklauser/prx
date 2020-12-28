@@ -71,8 +71,7 @@ namespace PrexoniteTests
 
             private bool _matches(object actual)
             {
-                var ihmt = actual as IHasMetaTable;
-                if (ihmt == null)
+                if (!(actual is IHasMetaTable ihmt))
                 {
                     return false;
                 }
@@ -91,9 +90,7 @@ namespace PrexoniteTests
 
             public ContainsKeyConstraint(string key) : base(key)
             {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key));
-                _key = key;
+                _key = key ?? throw new ArgumentNullException(nameof(key));
             }
 
             #region Overrides of Constraint

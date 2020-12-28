@@ -1,7 +1,5 @@
 ﻿<#@ assembly name="System.Core" #>
 <#@ template debug="true" hostSpecific="true" #>
-<#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="System.IO" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Linq" #>
 <#+ 
@@ -57,31 +55,29 @@
     {
 
         var path = Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
-        using(var sr = new StreamReader(
-                new FileStream(path, FileMode.Open, FileAccess.Read), 
-                System.Text.Encoding.UTF8))
-        {
-            string line = sr.ReadLine();
-            while(line != null && line.Length > 2)
-            {   
-                var fs = line.Split(new [] {configSectionSep},4);
-                if(fs.Length < 4)
-                    continue;
+        using var sr = new StreamReader(
+            new FileStream(path, FileMode.Open, FileAccess.Read), 
+            System.Text.Encoding.UTF8);
+        var line = sr.ReadLine();
+        while(line != null && line.Length > 2)
+        {   
+            var fs = line.Split(new [] {configSectionSep},4);
+            if(fs.Length < 4)
+                continue;
 
-                var tfn = _normalizePath(fs[0]);
-                var entrySep = new []{configEntrySep};
-                var underTest = fs[1].Split(entrySep).Skip(1).Select(_getDependencies);
-                var deps      = fs[2].Split(entrySep).Skip(1).Select(_getDependencies);
-                var testCases = fs[3].Split(entrySep).Skip(1);
-                yield return new Configuration {
-					TestFileName = tfn,
-					TestCases = testCases,
-					UnitsUnderTest = underTest,
-					TestDependencies = deps
-				};
+            var tfn = _normalizePath(fs[0]);
+            var entrySep = new []{configEntrySep};
+            var underTest = fs[1].Split(entrySep).Skip(1).Select(_getDependencies);
+            var deps      = fs[2].Split(entrySep).Skip(1).Select(_getDependencies);
+            var testCases = fs[3].Split(entrySep).Skip(1);
+            yield return new Configuration {
+                TestFileName = tfn,
+                TestCases = testCases,
+                UnitsUnderTest = underTest,
+                TestDependencies = deps
+            };
 
-                line = sr.ReadLine();
-            }
+            line = sr.ReadLine();
         }
     }
 

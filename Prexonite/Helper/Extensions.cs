@@ -307,8 +307,7 @@ namespace Prexonite
 
             foreach (var item in source)
             {
-                T newValue;
-                yield return mapping.TryGetValue(item, out newValue)
+                yield return mapping.TryGetValue(item, out var newValue)
                     ? newValue
                     : item;
             }
@@ -318,8 +317,7 @@ namespace Prexonite
         {
             Contract.Requires(mapping != null);
 
-            T newValue;
-            return mapping.TryGetValue(value, out newValue) ? newValue : value;
+            return mapping.TryGetValue(value, out var newValue) ? newValue : value;
         }
 
         [DebuggerNonUserCode]
@@ -343,10 +341,10 @@ namespace Prexonite
             Contract.Requires(leftHandSide != null);
             Contract.EndContractBlock();
 
-            using (var le = leftHandSide.GetEnumerator())
-            using (var re = rightHandSide.GetEnumerator())
-                while (le.MoveNext() && re.MoveNext())
-                    yield return func(le.Current, re.Current);
+            using var le = leftHandSide.GetEnumerator();
+            using var re = rightHandSide.GetEnumerator();
+            while (le.MoveNext() && re.MoveNext())
+                yield return func(le.Current, re.Current);
         }
 
         [DebuggerNonUserCode]
@@ -361,10 +359,10 @@ namespace Prexonite
             Contract.Requires(leftHandSide != null);
             Contract.EndContractBlock();
 
-            using (var le = leftHandSide.GetEnumerator())
-            using (var re = rightHandSide.GetEnumerator())
-                while (le.MoveNext() && re.MoveNext())
-                    f(le.Current, re.Current);
+            using var le = leftHandSide.GetEnumerator();
+            using var re = rightHandSide.GetEnumerator();
+            while (le.MoveNext() && re.MoveNext())
+                f(le.Current, re.Current);
         }
 
         public static IEnumerable<T> Singleton<T>(this T element)
@@ -517,12 +515,11 @@ namespace Prexonite
 
             private class SingletonEnumerator : IEnumerator<T>
             {
-                private readonly T _element;
                 private bool _hasNext = true;
 
                 public SingletonEnumerator(T element)
                 {
-                    _element = element;
+                    Current = element;
                 }
 
                 #region IEnumerator<T> Members
@@ -544,15 +541,9 @@ namespace Prexonite
                     _hasNext = true;
                 }
 
-                public T Current
-                {
-                    get { return _element; }
-                }
+                public T Current { get; }
 
-                object IEnumerator.Current
-                {
-                    get { return Current; }
-                }
+                object IEnumerator.Current => Current;
 
                 #endregion
             }

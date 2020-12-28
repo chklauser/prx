@@ -38,8 +38,6 @@ namespace Prexonite.Types
     [DebuggerNonUserCode]
     public class PValueHashtable : Dictionary<PValue, PValue>
     {
-        private static readonly ObjectPType _objectType = new ObjectPType(typeof (PValueHashtable));
-
         /// <summary>
         ///     Adds a new key-value pair to the hashtable.
         /// </summary>
@@ -74,10 +72,7 @@ namespace Prexonite.Types
         /// <summary>
         ///     Provides access to the object type of this class.
         /// </summary>
-        public static ObjectPType ObjectType
-        {
-            get { return _objectType; }
-        }
+        public static ObjectPType ObjectType { get; } = new(typeof (PValueHashtable));
 
         /// <summary>
         ///     Creates a new instance of PValueHashTable.
@@ -149,7 +144,7 @@ namespace Prexonite.Types
 
         public static explicit operator PValue(PValueHashtable pvht)
         {
-            return new PValue(pvht, PType.Hash);
+            return new(pvht, PType.Hash);
         }
     }
 }

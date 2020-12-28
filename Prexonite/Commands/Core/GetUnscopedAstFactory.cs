@@ -38,19 +38,14 @@ namespace Prexonite.Commands.Core
     {
         private class UnscopedFactory : AstFactoryBase
         {
-            private readonly AstBlock _root;
-
             public UnscopedFactory(ModuleName compartment)
             {
-                _root =
+                CurrentBlock =
                     AstBlock.CreateRootBlock(NoSourcePosition.Instance, SymbolStore.Create(), compartment.ToString(),
                                              Guid.NewGuid().ToString("N"));
             }
 
-            protected override AstBlock CurrentBlock
-            {
-                get { return _root; }
-            }
+            protected override AstBlock CurrentBlock { get; }
 
             protected override AstGetSet CreateNullNode(ISourcePosition position)
             {
@@ -73,20 +68,12 @@ namespace Prexonite.Commands.Core
                 throw new ErrorMessageException(message);
             }
 
-            protected override CompilerTarget CompileTimeExecutionContext
-            {
-                get { throw new InvalidOperationException("Unscoped AST factory does not have access to a compiler instance."); }
-            }
+            protected override CompilerTarget CompileTimeExecutionContext => throw new InvalidOperationException("Unscoped AST factory does not have access to a compiler instance.");
         }
 
         #region Singleton
 
-        private static readonly GetUnscopedAstFactory _instance = new GetUnscopedAstFactory();
-
-        public static GetUnscopedAstFactory Instance
-        {
-            get { return _instance; }
-        }
+        public static GetUnscopedAstFactory Instance { get; } = new();
 
         private GetUnscopedAstFactory()
         {
@@ -101,7 +88,7 @@ namespace Prexonite.Commands.Core
             return RunStatically(sctx, args);
         }
 
-        private static readonly ConcurrentDictionary<ModuleName,UnscopedFactory> _unscopedFactories = new ConcurrentDictionary<ModuleName, UnscopedFactory>();
+        private static readonly ConcurrentDictionary<ModuleName,UnscopedFactory> _unscopedFactories = new();
 
         [PublicAPI]
         public static PValue RunStatically(StackContext sctx, PValue[] args)

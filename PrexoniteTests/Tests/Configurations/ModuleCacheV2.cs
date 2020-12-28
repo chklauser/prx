@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Prexonite.Compiler.Ast;
-
 using System.Threading.Tasks;
 using Prexonite;
 using Prexonite.Compiler.Build;
@@ -25,7 +23,7 @@ namespace PrexoniteTests.Tests.Configurations
 
         private static readonly TraceSource _trace = new("PrexoniteTests.Tests.Configurations.ModuleCacheV2");
         
-        private static readonly Lazy<string> _slnPath = new Lazy<string>(() =>
+        private static readonly Lazy<string> _slnPath = new(() =>
         {
             _trace.TraceEvent(TraceEventType.Information, 0, "Infer sln path");
             var slnCandidate = AppContext.BaseDirectory;
@@ -66,7 +64,7 @@ namespace PrexoniteTests.Tests.Configurations
             }
         }
 
-        public static Engine CreateEngine() => new Engine(sharedEnginePrototype);
+        public static Engine CreateEngine() => new(sharedEnginePrototype);
 
         private static Engine sharedEnginePrototype => _sharedEnginePrototype ??= new Engine();
 

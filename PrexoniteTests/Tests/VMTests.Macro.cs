@@ -232,7 +232,7 @@ function main(xs,y)
             Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
                 MacroAliases.ContextAlias);
 
-            Expect(15, new PValue[0]);
+            Expect(15, Array.Empty<PValue>());
         }
 
         [Test]
@@ -339,8 +339,7 @@ function main(x,y)
                 Assert.That(surround, Is.Not.Null, "Function __surround does not exist.");
                 Assert.That(surround.Meta[PFunction.VolatileKey].Switch,
                     Is.False,
-                    string.Format("Function {0} is volatile. Reason: {1}", surround.Id,
-                        surround.Meta[PFunction.DeficiencyKey].Text));
+                    $"Function {surround.Id} is volatile. Reason: {surround.Meta[PFunction.DeficiencyKey].Text}");
             }
         }
 

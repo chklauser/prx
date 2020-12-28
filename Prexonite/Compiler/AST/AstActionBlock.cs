@@ -36,9 +36,7 @@ namespace Prexonite.Compiler.Ast
         public AstActionBlock(ISourcePosition position, AstBlock parent, AstAction action)
             : base(position,parent)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
-            Action = action;
+            Action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -47,14 +45,8 @@ namespace Prexonite.Compiler.Ast
             Action(target);
         }
 
-        public override bool IsEmpty
-        {
-            get { return false; }
-        }
+        public override bool IsEmpty => false;
 
-        public override bool IsSingleStatement
-        {
-            get { return false; }
-        }
+        public override bool IsSingleStatement => false;
     }
 }

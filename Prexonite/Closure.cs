@@ -38,25 +38,15 @@ namespace Prexonite
     {
         #region Properties
 
-        private readonly PFunction _function;
-
         /// <summary>
         ///     Provides readonly access to the function that makes up this closure.
         /// </summary>
-        public PFunction Function
-        {
-            get { return _function; }
-        }
-
-        private readonly PVariable[] _sharedVariables;
+        public PFunction Function { get; }
 
         /// <summary>
         ///     Provides readonly access to the list of variables the closure binds to the function.
         /// </summary>
-        public PVariable[] SharedVariables
-        {
-            get { return _sharedVariables; }
-        }
+        public PVariable[] SharedVariables { get; }
 
         #endregion
 
@@ -70,13 +60,8 @@ namespace Prexonite
         /// <exception cref = "ArgumentNullException">Either <paramref name = "func" /> or <paramref name = "sharedVariables" /> is null.</exception>
         public Closure(PFunction func, PVariable[] sharedVariables)
         {
-            if (func == null)
-                throw new ArgumentNullException(nameof(func));
-            if (sharedVariables == null)
-                throw new ArgumentNullException(nameof(sharedVariables));
-
-            _function = func;
-            _sharedVariables = sharedVariables;
+            Function = func ?? throw new ArgumentNullException(nameof(func));
+            SharedVariables = sharedVariables ?? throw new ArgumentNullException(nameof(sharedVariables));
         }
 
         #endregion
@@ -118,7 +103,7 @@ namespace Prexonite
         /// <exception cref = "NotSupportedException">May be thrown by implementations</exception>
         public virtual FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
         {
-            return _function.CreateFunctionContext(sctx.ParentEngine, args, _sharedVariables);
+            return Function.CreateFunctionContext(sctx.ParentEngine, args, SharedVariables);
         }
 
         #endregion
@@ -141,12 +126,12 @@ namespace Prexonite
                 return true;
             else
             {
-                if (!ReferenceEquals(a._function, b._function))
+                if (!ReferenceEquals(a.Function, b.Function))
                     return false;
-                if (a._sharedVariables.Length != b._sharedVariables.Length)
+                if (a.SharedVariables.Length != b.SharedVariables.Length)
                     return false;
-                for (var i = 0; i < a._sharedVariables.Length; i++)
-                    if (!ReferenceEquals(a._sharedVariables[i], b._sharedVariables[i]))
+                for (var i = 0; i < a.SharedVariables.Length; i++)
+                    if (!ReferenceEquals(a.SharedVariables[i], b.SharedVariables[i]))
                         return false;
                 return true;
             }
@@ -183,7 +168,7 @@ namespace Prexonite
         ///<returns>The function's hashcode.</returns>
         public override int GetHashCode()
         {
-            return _function.GetHashCode();
+            return Function.GetHashCode();
         }
 
         /// <summary>
@@ -192,7 +177,7 @@ namespace Prexonite
         /// <returns>A string that represents the closure.</returns>
         public override string ToString()
         {
-            return "Closure(" + _function + ")";
+            return "Closure(" + Function + ")";
         }
 
         #endregion

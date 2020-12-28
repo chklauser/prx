@@ -32,20 +32,13 @@ namespace Prexonite.Compiler.Ast
 {
     public sealed class AstReference : AstExpr
     {
-        private readonly EntityRef _entity;
-
         public AstReference(ISourcePosition position, [NotNull] EntityRef entity) : base(position)
         {
-            if (entity == null)
-                throw new ArgumentNullException(nameof(entity));
-            _entity = entity;
+            Entity = entity ?? throw new ArgumentNullException(nameof(entity));
         }
 
         [NotNull]
-        public EntityRef Entity
-        {
-            get { return _entity; }
-        }
+        public EntityRef Entity { get; }
 
         #region Overrides of AstNode
 
@@ -97,7 +90,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         private static readonly EmitLoadReferenceHandler _emitLoadReference =
-            new EmitLoadReferenceHandler();
+            new();
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
         {
@@ -109,8 +102,7 @@ namespace Prexonite.Compiler.Ast
                 case StackSemantics.Effect:
                     // Even though no code would be generated, we still want to catch
                     // references to macro commands.
-                    EntityRef.MacroCommand mcmd;
-                    if(Entity.TryGetMacroCommand(out mcmd))
+                    if(Entity.TryGetMacroCommand(out var mcmd))
                     {
                         target.Loader.ReportMessage(_macroCommandErrorMessage(Position));
                     }
@@ -132,7 +124,7 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            return String.Format("->{0}", Entity);
+            return $"->{Entity}";
         }
 
         #endregion

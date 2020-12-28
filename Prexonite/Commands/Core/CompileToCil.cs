@@ -36,24 +36,16 @@ namespace Prexonite.Commands.Core
     {
         #region Singleton
 
-        private static readonly CompileToCil _instance = new CompileToCil();
-
         private CompileToCil()
         {
         }
 
-        public static CompileToCil Instance
-        {
-            get { return _instance; }
-        }
+        public static CompileToCil Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public static bool AlreadyCompiledStatically { get; private set; }
 
@@ -74,7 +66,7 @@ namespace Prexonite.Commands.Core
         /// <summary>
         ///     Executes the command.
         /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
+        /// <param name = "sctx">The stack context in which to execute the command.</param>
         /// <param name = "args">The arguments to be passed to the command.</param>
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
@@ -85,20 +77,19 @@ namespace Prexonite.Commands.Core
         /// <summary>
         ///     Executes the command.
         /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
+        /// <param name = "sctx">The stack context in which to execute the command.</param>
         /// <param name = "args">The arguments to be passed to the command.</param>
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         /// <remarks>
         ///     <para>
-        ///         This variation is independant of the executing engine and can take advantage from static binding in CIL compilation.
+        ///         This variation is independent of the executing engine and can take advantage from static binding in CIL compilation.
         ///     </para>
         /// </remarks>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             var linking = FunctionLinking.FullyStatic;
             switch (args.Length)
@@ -112,13 +103,9 @@ namespace Prexonite.Commands.Core
                             if (AlreadyCompiledStatically)
                                 throw new PrexoniteException
                                     (
-                                    string.Format
-                                        (
-                                            "You should only use static compilation once per process. Use {0}(true)" +
-                                                " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " +
-                                                    "use {1}(false) for disposable implementations.",
-                                            Engine.CompileToCilAlias,
-                                            Engine.CompileToCilAlias));
+                                    $"You should only use static compilation once per process. Use {Engine.CompileToCilAlias}(true)" +
+                                    " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " +
+                                    $"use {Engine.CompileToCilAlias}(false) for disposable implementations.");
                             else
                                 AlreadyCompiledStatically = true;
                         }

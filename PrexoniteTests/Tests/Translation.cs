@@ -198,8 +198,7 @@ function main(x)
                 Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
                 var refSym = (ReferenceSymbol) deref.InnerSymbol;
                 Assert.That(refSym.Entity,Is.InstanceOf<EntityRef.Variable.Global>());
-                EntityRef.Variable.Global globVar;
-                refSym.Entity.TryGetGlobalVariable(out globVar);
+                refSym.Entity.TryGetGlobalVariable(out var globVar);
                 Assert.That(globVar,Is.EqualTo(EntityRef.Variable.Global.Create("f",mn)));
             }
 
@@ -525,8 +524,7 @@ function main()
             Compile(ldr, @"
 function f = 17;
 ");
-            Symbol f;
-            if(!ldr.Symbols.TryGet("f",out f))
+            if(!ldr.Symbols.TryGet("f",out var f))
                 Assert.Fail("Expected module level symbol f to exist.");
 
             var scopea = SymbolStore.Create();
@@ -553,8 +551,7 @@ function main()
             Compile(ldr, @"
 function f = 17;
 ");
-            Symbol f;
-            if (!ldr.Symbols.TryGet("f", out f))
+            if (!ldr.Symbols.TryGet("f", out var f))
                 Assert.Fail("Expected module level symbol f to exist.");
 
             var scopea = SymbolStore.Create();
@@ -587,8 +584,7 @@ function main()
             Compile(ldr, @"
 function f = 17;
 ");
-            Symbol f;
-            if (!ldr.Symbols.TryGet("f", out f))
+            if (!ldr.Symbols.TryGet("f", out var f))
                 Assert.Fail("Expected module level symbol f to exist.");
 
             var scopea = SymbolStore.Create();
@@ -626,8 +622,7 @@ namespace a
 function main = a.f;
 ");
             Expect(17);
-            Symbol dummy;
-            Assert.That(ldr.TopLevelSymbols.TryGet("f",out dummy),Is.False,"Existence of symbol f in the global scope");
+            Assert.That(ldr.TopLevelSymbols.TryGet("f",out var dummy),Is.False,"Existence of symbol f in the global scope");
         }
 
         [Test]
@@ -1368,8 +1363,6 @@ build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(e
         private class InternalLoadCommand : PCommand
         {
             [NotNull]
-            private readonly Dictionary<string, string> _virtualFiles = new Dictionary<string, string>();
-            [NotNull]
             private readonly Loader _loaderReference;
 
             public InternalLoadCommand([NotNull] Loader loaderReference)
@@ -1377,14 +1370,15 @@ build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(e
                 _loaderReference = loaderReference;
             }
 
-            public Dictionary<string, string> VirtualFiles => _virtualFiles;
+            [NotNull]
+            public Dictionary<string, string> VirtualFiles { get; } = new();
 
             public override PValue Run(StackContext sctx, PValue[] args)
             {
                 var n = args[0].CallToString(sctx);
-                var virtualFile = _virtualFiles[n];
-                using(var cr = new StringReader(virtualFile))
-                    _loaderReference.LoadFromReader(cr,n);
+                var virtualFile = VirtualFiles[n];
+                using var cr = new StringReader(virtualFile);
+                _loaderReference.LoadFromReader(cr,n);
                 return PType.Null;
             }
         }

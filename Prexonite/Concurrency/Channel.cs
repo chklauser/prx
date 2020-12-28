@@ -51,9 +51,8 @@ namespace Prexonite.Concurrency
                     result = ToString();
                     break;
                 case "TRYRECEIVE":
-                    PValue datum;
                     var refVar = (args.Length > 0 ? args[0] : null) ?? PType.Null;
-                    if (TryReceive(out datum))
+                    if (TryReceive(out var datum))
                     {
                         refVar.IndirectCall(sctx, new[] {datum});
                         result = true;
@@ -81,14 +80,14 @@ namespace Prexonite.Concurrency
 
         #region Synchornization
 
-        private readonly object _syncRoot = new object();
-        private readonly ManualResetEvent _dataAvailable = new ManualResetEvent(false);
-        private readonly ManualResetEvent _channelEmpty = new ManualResetEvent(true);
+        private readonly object _syncRoot = new();
+        private readonly ManualResetEvent _dataAvailable = new(false);
+        private readonly ManualResetEvent _channelEmpty = new(true);
 
         public WaitHandle DataAvailable
         {
             [DebuggerStepThrough]
-            get { return _dataAvailable; }
+            get => _dataAvailable;
         }
 
         #endregion
@@ -174,10 +173,8 @@ namespace Prexonite.Concurrency
         {
             if (_disposed)
                 return;
-            if (_channelEmpty != null)
-                _channelEmpty.Dispose();
-            if (_dataAvailable != null)
-                _dataAvailable.Dispose();
+            _channelEmpty?.Dispose();
+            _dataAvailable?.Dispose();
             _disposed = true;
         }
 

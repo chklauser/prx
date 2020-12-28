@@ -105,7 +105,7 @@ namespace Prexonite.Compiler.Symbolic
             }
         }
 
-        public QualifiedId ExtendedWith(String suffix)
+        public QualifiedId ExtendedWith(string suffix)
         {
             if(_elements == null || _elements.Length == 0)
                 return new QualifiedId(new []{suffix});
@@ -122,7 +122,8 @@ namespace Prexonite.Compiler.Symbolic
         {
             var thisCount = Count;
             if(count > thisCount || count < 0)
-                throw new IndexOutOfRangeException(string.Format("Cannot drop {0} parts from a qualified id consisting of {1} parts.", count, thisCount));
+                throw new IndexOutOfRangeException(
+                    $"Cannot drop {count} parts from a qualified id consisting of {thisCount} parts.");
             if (count == 0 || _elements == null)
                 return this;
 
@@ -135,7 +136,8 @@ namespace Prexonite.Compiler.Symbolic
         {
             var thisCount = Count;
             if (count > thisCount || count < 0)
-                throw new IndexOutOfRangeException(string.Format("Cannot drop {0} parts from a qualified id consisting of {1} parts.", count, thisCount));
+                throw new IndexOutOfRangeException(
+                    $"Cannot drop {count} parts from a qualified id consisting of {thisCount} parts.");
             if (count == 0 || _elements == null)
                 return this;
 
@@ -243,7 +245,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public static QualifiedId operator +(QualifiedId left, QualifiedId right)
         {
-            return new QualifiedId(left.Append(right).ToArray());
+            return new(left.Append(right).ToArray());
         }
     }
 }

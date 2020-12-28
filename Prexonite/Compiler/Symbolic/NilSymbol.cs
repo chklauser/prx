@@ -49,28 +49,22 @@ namespace Prexonite.Compiler.Symbolic
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return other is NilSymbol && Equals((NilSymbol)other);
+            return other is NilSymbol otherRef && Equals(otherRef);
         }
 
-        [NotNull]
-        private readonly ISourcePosition _position;
-
-        public override ISourcePosition Position
-        {
-            get { return _position; }
-        }
+        public override ISourcePosition Position { get; }
 
         #endregion
 
         private NilSymbol([NotNull] ISourcePosition position)
         {
-            _position = position;
+            Position = position;
         }
 
         [NotNull]
         internal static NilSymbol _Create([NotNull] ISourcePosition position)
         {
-            return new NilSymbol(position);
+            return new(position);
         }
 
         public override string ToString()

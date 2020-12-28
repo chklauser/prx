@@ -69,12 +69,12 @@ namespace Prexonite.Compiler.Ast
     {
         public bool HasPlaceholders { get; }
         public bool HasArgumentSplices { get; }
-        public static NodeApplicationState Closed = new NodeApplicationState(false, false);
+        public static NodeApplicationState Closed = new(false, false);
 
         public NodeApplicationState WithPlaceholders(bool newHasPlaceholders) => 
-            new NodeApplicationState(newHasPlaceholders, HasArgumentSplices);
+            new(newHasPlaceholders, HasArgumentSplices);
         public NodeApplicationState WithArgumentSpliced(bool newHasArgumentSplices) => 
-            new NodeApplicationState(HasPlaceholders, newHasArgumentSplices);
+            new(HasPlaceholders, newHasArgumentSplices);
 
         public NodeApplicationState(bool hasPlaceholders, bool hasArgumentSplices)
         {
@@ -246,7 +246,7 @@ namespace Prexonite.Compiler.Ast
 
             //Redundant placeholders only occur in a placeholder-only postfix with strictly 
             //  ascending indices, that have not been mapped before. Find that postfix
-            var lastIndex = Int32.MaxValue;
+            var lastIndex = int.MaxValue;
             int postfixIndex;
             for (postfixIndex = argv.Count - 1; postfixIndex >= 0; postfixIndex--)
             {
@@ -336,7 +336,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         public static bool IsPlaceholder(this AstExpr expression) => 
-            expression is AstPlaceholder || expression is AstArgumentSplice splice && splice.IsPlaceholderSplice;
+            expression is AstPlaceholder || expression is AstArgumentSplice {IsPlaceholderSplice: true};
 
         public static bool IsArgumentSplice(this AstExpr expression) => expression is AstArgumentSplice;
     }

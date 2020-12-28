@@ -64,7 +64,7 @@ function test1
             var fctx = new FunctionContext(engine, test1);
             var x = fctx.LocalVariables["x"];
             Assert.IsTrue(
-                x.Value == null || x.Value.Value == null, "variable x must be null in some way.");
+                x.Value?.Value == null, "variable x must be null in some way.");
             engine.Stack.AddLast(fctx);
             engine.Process();
             Assert.AreEqual(
@@ -687,7 +687,7 @@ function main(a,b,c) = work(a,b,c).ToString;
 
             internal int _CountList()
             {
-                var e = GetEnumerator();
+                using var e = GetEnumerator();
                 while (e.MoveNext())
                     if (e.Current == ">>")
                         break;
@@ -1361,8 +1361,8 @@ function main(xlst, ylst)
 ");
             var rnd = new Random();
             var sum = 0.0;
-            List<PValue> xlst = new List<PValue>(),
-                         ylst = new List<PValue>();
+            List<PValue> xlst = new(),
+                         ylst = new();
             for (var i = 0; i < 10; i++)
             {
                 var x = rnd.Next(3, 50);

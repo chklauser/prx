@@ -2,7 +2,7 @@
 <#@ output extension=".cs" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="System.Text.RegularExpressions" #> 
+ 
 // ReSharper disable RedundantUsingDirective
 using System;
 using System.Reflection;
@@ -94,4 +94,4 @@ namespace PrexoniteTests.Tests.Configurations
 // ReSharper restore RedundantExplicitArrayCreation
 // ReSharper restore InconsistentNaming
 
-<#@ include file="LoadConfiguration.t4" #><#@ import namespace="System.Text" #>
+<#@ include file="LoadConfiguration.t4" #>

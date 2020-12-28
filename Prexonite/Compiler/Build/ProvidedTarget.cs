@@ -42,12 +42,6 @@ namespace Prexonite.Compiler.Build
         [NotNull]
         private readonly DependencySet _dependencies;
 
-        [NotNull]
-        private readonly Module _module;
-
-        [CanBeNull]
-        private readonly SymbolStore _symbols;
-
         [CanBeNull]
         private readonly List<IResourceDescriptor> _resources;
 
@@ -57,15 +51,8 @@ namespace Prexonite.Compiler.Build
         [CanBeNull]
         private readonly IReadOnlyList<Message> _buildMessages;
 
-        [CanBeNull]
-        private readonly Exception _exception;
-
-        private readonly bool _isSuccessful;
-
-        private string _debuggerDisplay
-        {
-            get { return String.Format("ProvidedTarget({0}) {1}", Name, IsSuccessful ? "successful" : "errors detected"); }
-        }
+        private string _debuggerDisplay =>
+            $"ProvidedTarget({Name}) {(IsSuccessful ? "successful" : "errors detected")}";
 
         public ProvidedTarget(Module module,
             IEnumerable<ModuleName> dependencies = null,
@@ -75,19 +62,19 @@ namespace Prexonite.Compiler.Build
             IEnumerable<Message> buildMessages = null,
             Exception exception = null)
         {
-            _module = module;
+            Module = module;
             _dependencies = new DependencySet(module.Name);
             if (dependencies != null)
                 _dependencies.AddRange(dependencies);
-            _symbols = SymbolStore.Create();
+            Symbols = SymbolStore.Create();
             if (symbols != null)
                 foreach (var entry in symbols)
-                    _symbols.Declare(entry.Key, entry.Value);
+                    Symbols.Declare(entry.Key, entry.Value);
             _resources = new List<IResourceDescriptor>();
             if (resources != null)
                 _resources.AddRange(resources);
 
-            _exception = exception;
+            Exception = exception;
 
             if (messages != null)
                 _messages = new List<Message>(messages);
@@ -103,7 +90,7 @@ namespace Prexonite.Compiler.Build
                 
             }
 
-            _isSuccessful = exception == null &&
+            IsSuccessful = exception == null &&
                             (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
         }
 
@@ -114,38 +101,20 @@ namespace Prexonite.Compiler.Build
 
         #region Implementation of ITargetDescription
 
-        public IReadOnlyCollection<ModuleName> Dependencies
-        {
-            get { return _dependencies; }
-        }
+        public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
 
         [NotNull]
-        public Module Module
-        {
-            get { return _module; }
-        }
+        public Module Module { get; }
 
         [CanBeNull]
-        public IReadOnlyCollection<IResourceDescriptor> Resources
-        {
-            get { return _resources; }
-        }
+        public IReadOnlyCollection<IResourceDescriptor> Resources => _resources;
 
         [CanBeNull]
-        public SymbolStore Symbols
-        {
-            get { return _symbols; }
-        }
+        public SymbolStore Symbols { get; }
 
-        public ModuleName Name
-        {
-            get { return _module.Name; }
-        }
+        public ModuleName Name => Module.Name;
 
-        public IReadOnlyList<Message> BuildMessages
-        {
-            get { return _buildMessages ?? DefaultModuleTarget.NoMessages; }
-        }
+        public IReadOnlyList<Message> BuildMessages => _buildMessages ?? DefaultModuleTarget.NoMessages;
 
         [NotNull]
         public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
@@ -159,21 +128,12 @@ namespace Prexonite.Compiler.Build
         #region Implementation of ITarget
 
         [NotNull]
-        public IReadOnlyCollection<Message> Messages
-        {
-            get { return (IReadOnlyCollection<Message>)_messages ?? DefaultModuleTarget.NoMessages; }
-        }
+        public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>)_messages ?? DefaultModuleTarget.NoMessages;
 
         [CanBeNull]
-        public Exception Exception
-        {
-            get { return _exception; }
-        }
+        public Exception Exception { get; }
 
-        public bool IsSuccessful
-        {
-            get { return _isSuccessful; }
-        }
+        public bool IsSuccessful { get; }
 
         #endregion
 

@@ -33,19 +33,14 @@ namespace Prexonite.Compiler.Ast
     public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
     {
         public AstTypeExpr TypeExpr { get; private set; }
-        private readonly string _memberId;
 
         [DebuggerStepThrough]
         public AstGetSetStatic(
             string file, int line, int col, PCall call, AstTypeExpr typeExpr, string memberId)
             : base(file, line, col, call)
         {
-            if (typeExpr == null)
-                throw new ArgumentNullException(nameof(typeExpr));
-            if (memberId == null)
-                throw new ArgumentNullException(nameof(memberId));
-            TypeExpr = typeExpr;
-            _memberId = memberId;
+            TypeExpr = typeExpr ?? throw new ArgumentNullException(nameof(typeExpr));
+            MemberId = memberId ?? throw new ArgumentNullException(nameof(memberId));
         }
 
         [DebuggerStepThrough]
@@ -54,10 +49,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public string MemberId
-        {
-            get { return _memberId; }
-        }
+        public string MemberId { get; }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
@@ -73,12 +65,12 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
             {
                 EmitArguments(target);
-                target.EmitStaticGetCall(Position, Arguments.Count, constType.TypeExpression, _memberId, justEffect);
+                target.EmitStaticGetCall(Position, Arguments.Count, constType.TypeExpression, MemberId, justEffect);
             }
             else
             {
                 TypeExpr.EmitValueCode(target);
-                target.EmitConstant(Position, _memberId);
+                target.EmitConstant(Position, MemberId);
                 EmitArguments(target);
                 target.EmitGetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
             }
@@ -101,12 +93,12 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
             {
                 EmitArguments(target, !justEffect, 0);
-                target.EmitStaticSetCall(Position, Arguments.Count, constType.TypeExpression + "::" + _memberId);
+                target.EmitStaticSetCall(Position, Arguments.Count, constType.TypeExpression + "::" + MemberId);
             }
             else
             {
                 TypeExpr.EmitValueCode(target);
-                target.EmitConstant(Position, _memberId);
+                target.EmitConstant(Position, MemberId);
                 EmitArguments(target, !justEffect, 2);
                 //type.StaticCall\FromStack(memberId, args...)
                 target.EmitSetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId);
@@ -124,7 +116,7 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            var copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, _memberId);
+            var copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, MemberId);
             CopyBaseMembers(copy);
             return copy;
         }
@@ -133,21 +125,19 @@ namespace Prexonite.Compiler.Ast
         {
             var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments);
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            var constTypeExpr = TypeExpr as AstConstantTypeExpression;
-            if (constTypeExpr != null)
+            if (TypeExpr is AstConstantTypeExpression constTypeExpr)
                 target.EmitConstant(constTypeExpr.Position, constTypeExpr.TypeExpression);
             else
                 TypeExpr.EmitValueCode(target);
             target.EmitConstant(Position, (int) Call);
-            target.EmitConstant(Position, _memberId);
+            target.EmitConstant(Position, MemberId);
             target.EmitCommandCall(Position, ctorArgc + 3, Engine.PartialStaticCallAlias);
         }
 
         public override string ToString()
         {
-            string name = Enum.GetName(typeof (PCall), Call);
-            return string.Format("{0} {1}::{2}({3})",
-                name == null ? "-" : name.ToLowerInvariant(), TypeExpr, MemberId, Arguments);
+            var name = Enum.GetName(typeof (PCall), Call);
+            return $"{name?.ToLowerInvariant() ?? "-"} {TypeExpr}::{MemberId}({Arguments})";
         }
     }
 }

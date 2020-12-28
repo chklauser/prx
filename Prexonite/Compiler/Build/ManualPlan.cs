@@ -63,8 +63,7 @@ namespace Prexonite.Compiler.Build
                 Plan.Trace.TraceEvent(TraceEventType.Error, 0,
                     "Failed to resolve the following dependencies of target {0}: {1}", description, missing);
                 throw new BuildException(
-                    string.Format("Not all dependencies of target named {0} have been resolved. The following modules are missing: {1}",
-                                  description.Name, missing), description);
+                    $"Not all dependencies of target named {description.Name} have been resolved. The following modules are missing: {missing}", description);
             }
         }
 
@@ -99,7 +98,7 @@ namespace Prexonite.Compiler.Build
 
         protected virtual TaskMap<ModuleName, ITarget> CreateTaskMap()
         {
-            return new TaskMap<ModuleName, ITarget>(5, TargetDescriptions.Count);
+            return new(5, TargetDescriptions.Count);
         }
 
         public IDictionary<ModuleName, Task<Tuple<Application, ITarget>>> LoadAsync(IEnumerable<ModuleName> names, CancellationToken token)

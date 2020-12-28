@@ -43,12 +43,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Dispose _instance = new Dispose();
-
-        public static Dispose Instance
-        {
-            get { return _instance; }
-        }
+        public static Dispose Instance { get; } = new();
 
         public const string DisposeMemberId = "Dispose";
 
@@ -97,22 +92,20 @@ namespace Prexonite.Commands.Core
             PValue dummy;
             if (arg.Type is ObjectPType)
             {
-                var toDispose = arg.Value as IDisposable;
-                if (toDispose != null)
+                if (arg.Value is IDisposable toDispose)
                     toDispose.Dispose();
                 else
                 {
-                    var isObj = arg.Value as IObject;
-                    if (isObj != null)
+                    if (arg.Value is IObject isObj)
                     {
                         isObj.TryDynamicCall(
-                            sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
+                            sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out dummy);
                     }
                 }
             }
             else
             {
-                arg.TryDynamicCall(sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
+                arg.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out dummy);
             }
         }
 

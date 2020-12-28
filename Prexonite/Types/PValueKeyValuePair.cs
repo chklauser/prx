@@ -38,36 +38,20 @@ namespace Prexonite.Types
     //[System.Diagnostics.DebuggerNonUserCode()]
     public class PValueKeyValuePair : IObject
     {
-        private static readonly ObjectPType _objectType =
-            new ObjectPType(typeof (PValueKeyValuePair));
-
         /// <summary>
         ///     A static reference to the object type of this class.
         /// </summary>
-        public static ObjectPType ObjectType
-        {
-            get { return _objectType; }
-        }
-
-        private readonly PValue _key;
+        public static ObjectPType ObjectType { get; } = new(typeof (PValueKeyValuePair));
 
         /// <summary>
         ///     Provides access to the value stored as the "Key".
         /// </summary>
-        public PValue Key
-        {
-            get { return _key; }
-        }
-
-        private readonly PValue _value;
+        public PValue Key { get; }
 
         /// <summary>
         ///     Provides access to the value stored as the "Value".
         /// </summary>
-        public PValue Value
-        {
-            get { return _value; }
-        }
+        public PValue Value { get; }
 
         /// <summary>
         ///     Creates a new PValueKeyValuePair.
@@ -76,8 +60,8 @@ namespace Prexonite.Types
         /// <param name = "value">The value.</param>
         public PValueKeyValuePair(PValue key, PValue value)
         {
-            _key = key ?? PType.Null.CreatePValue();
-            _value = value ?? PType.Null.CreatePValue();
+            Key = key ?? PType.Null.CreatePValue();
+            Value = value ?? PType.Null.CreatePValue();
         }
 
         /// <summary>
@@ -110,7 +94,7 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                args = new PValue[] {};
+                args = Array.Empty<PValue>();
             if (id == null)
                 id = "";
 
@@ -127,30 +111,30 @@ namespace Prexonite.Types
                         {
                             var i = (int) arg0.Value;
                             if (i == 0)
-                                result = _key;
+                                result = Key;
                             else
-                                result = i == 1 ? _value : PType.Null.CreatePValue();
+                                result = i == 1 ? Value : PType.Null.CreatePValue();
                         }
                     }
                     break;
                 case "key":
-                    result = _key;
+                    result = Key;
                     break;
                 case "value":
-                    result = _value;
+                    result = Value;
                     break;
                 case "equals":
                     if (args.Length == 1)
                     {
-                        if (args[0].TryConvertTo(sctx, _objectType, out arg0))
+                        if (args[0].TryConvertTo(sctx, ObjectType, out arg0))
                         {
                             var pair = (PValueKeyValuePair) arg0.Value;
-                            result = _key.Equals(pair._key) && _value.Equals(pair._value);
+                            result = Key.Equals(pair.Key) && Value.Equals(pair.Value);
                         }
                     }
                     break;
                 case "tostring":
-                    result = String.Concat(_key.CallToString(sctx), ": ", _value.CallToString(sctx));
+                    result = string.Concat(Key.CallToString(sctx), ": ", Value.CallToString(sctx));
                     break;
             }
 
@@ -187,17 +171,17 @@ namespace Prexonite.Types
             else
                 return false;
 
-            return _key.Equals(okey) && _value.Equals(ovalue);
+            return Key.Equals(okey) && Value.Equals(ovalue);
         }
 
         public override int GetHashCode()
         {
-            return _key.GetHashCode() ^ _value.GetHashCode();
+            return Key.GetHashCode() ^ Value.GetHashCode();
         }
 
         public override string ToString()
         {
-            return String.Concat(_key.ToString(), ": ", _value.ToString());
+            return string.Concat(Key.ToString(), ": ", Value.ToString());
         }
 
         /// <summary>
@@ -207,7 +191,7 @@ namespace Prexonite.Types
         /// <returns>An ordinary key-value pair</returns>
         public static implicit operator KeyValuePair<PValue, PValue>(PValueKeyValuePair pvkvp)
         {
-            return new KeyValuePair<PValue, PValue>(pvkvp._key, pvkvp._value);
+            return new(pvkvp.Key, pvkvp.Value);
         }
 
         /// <summary>
@@ -217,7 +201,7 @@ namespace Prexonite.Types
         /// <returns>A PValueKeyValuePair.</returns>
         public static implicit operator PValueKeyValuePair(KeyValuePair<PValue, PValue> kvp)
         {
-            return new PValueKeyValuePair(kvp);
+            return new(kvp);
         }
     }
 }

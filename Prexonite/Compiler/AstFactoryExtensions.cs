@@ -24,10 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
@@ -53,8 +49,7 @@ namespace Prexonite.Compiler
             for (var i = 0; i < qualifiedId.Count; i++)
             {
                 // Lookup name part
-                Symbol sym;
-                if (!currentScope.TryGet(qualifiedId[i], out sym))
+                if (!currentScope.TryGet(qualifiedId[i], out var sym))
                 {
                     return new AstUnresolved(position, qualifiedId[i]);
                 }
@@ -65,8 +60,7 @@ namespace Prexonite.Compiler
                 if (i == qualifiedId.Count - 1)
                     return expr;
 
-                var nsUsage = expr as AstNamespaceUsage;
-                if (nsUsage == null)
+                if (!(expr is AstNamespaceUsage nsUsage))
                 {
                     factory.ReportMessage(Message.Error(
                         string.Format(Resources.Parser_NamespaceExpected, qualifiedId[i], sym),

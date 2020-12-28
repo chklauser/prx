@@ -25,12 +25,10 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
 {
@@ -57,12 +55,7 @@ namespace Prexonite.Compiler.Macro.Commands
     /// </remarks>
     public class PartialCallWrapper : PartialMacroCommand
     {
-        private readonly EntityRef _callImplementation;
-
-        public EntityRef CallImplementation
-        {
-            get { return _callImplementation; }
-        }
+        public EntityRef CallImplementation { get; }
 
         /// <summary>
         /// Creates a new instance of <see cref="PartialCallWrapper"/> around the specified call implementation.
@@ -71,18 +64,14 @@ namespace Prexonite.Compiler.Macro.Commands
         public PartialCallWrapper(string alias, EntityRef callImplementation)
             : base(alias)
         {
-            if (callImplementation == null)
-                throw new ArgumentNullException(nameof(callImplementation));
-
-            _callImplementation = callImplementation;
+            CallImplementation = callImplementation ?? throw new ArgumentNullException(nameof(callImplementation));
         }
 
         #region Overrides of MacroCommand
 
         private static bool _hasPlaceholder(AstExpr expr)
         {
-            var lit = expr as AstListLiteral;
-            return expr.IsPlaceholder() || (lit != null && lit.CheckForPlaceholders());
+            return expr.IsPlaceholder() || (expr is AstListLiteral lit && lit.CheckForPlaceholders());
         }
 
         protected override void DoExpand(MacroContext context)
@@ -94,10 +83,9 @@ namespace Prexonite.Compiler.Macro.Commands
                 return;
             }
 
-            var p = context.Invocation.Arguments[0] as AstPlaceholder;
             if (context.Invocation.Arguments.Count == 1
-                && p != null
-                    && (p.Index.GetValueOrDefault(0) == 0))
+                && context.Invocation.Arguments[0] is AstPlaceholder p
+                && (p.Index.GetValueOrDefault(0) == 0))
             {
                 // call(?0) ⇒ call\perform(?0)
 
@@ -111,7 +99,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
                 var call = context.Factory.IndirectCall(context.Invocation.Position,
                                                         context.Factory.Reference(context.Invocation.Position,
-                                                                                  _callImplementation),
+                                                                                  CallImplementation),
                                                         context.Call);
                 call.Arguments.AddRange(GetCallArguments(context));
                 context.Block.Expression = call;
@@ -128,7 +116,7 @@ namespace Prexonite.Compiler.Macro.Commands
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
 
             // Indicate the kind of call by passing `call\perform(?)`, a partial application of call
-            var paCall = context.Factory.Call(context.Invocation.Position, _callImplementation, context.Call,
+            var paCall = context.Factory.Call(context.Invocation.Position, CallImplementation, context.Call,
                                               new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
                                                                  context.Invocation.Column, 0));
                 
@@ -147,7 +135,7 @@ namespace Prexonite.Compiler.Macro.Commands
         /// <returns>A trivial partial application of the call implementation.</returns>
         protected virtual AstGetSet GetTrivialPartialApplication(MacroContext context)
         {
-            var cp = context.Factory.Call(context.Invocation.Position, _callImplementation, context.Call,
+            var cp = context.Factory.Call(context.Invocation.Position, CallImplementation, context.Call,
                                           new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
                                                              context.Invocation.Column, 0));
             return cp;

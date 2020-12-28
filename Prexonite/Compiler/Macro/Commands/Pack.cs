@@ -35,12 +35,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Singleton pattern
 
-        private static readonly Pack _instance = new Pack();
-
-        public static Pack Instance
-        {
-            get { return _instance; }
-        }
+        public static Pack Instance { get; } = new();
 
         private Pack() : base(Alias)
         {

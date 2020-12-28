@@ -40,22 +40,14 @@ namespace Prexonite.Commands.Concurrency
         {
         }
 
-        private static readonly Chan _instance = new Chan();
-
-        public static Chan Instance
-        {
-            get { return _instance; }
-        }
+        public static Chan Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -72,7 +64,7 @@ namespace Prexonite.Commands.Concurrency
         }
 
         private static readonly ConstructorInfo _channelCtor =
-            typeof (Channel).GetConstructor(new Type[] {});
+            typeof (Channel).GetConstructor(Array.Empty<Type>());
 
         private static readonly ConstructorInfo _newPValue =
             typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});

@@ -40,50 +40,37 @@ namespace PrexoniteTests.Tests
     [TestFixture]
     public class SelfAssemblingPlanTests
     {
-        protected static readonly TraceSource Trace = new TraceSource("PrexoniteTests.Tests.SelfAssemblingPlan");
+        protected static readonly TraceSource Trace = new("PrexoniteTests.Tests.SelfAssemblingPlan");
 
-        private String _basePath;
+        private string _basePath;
 
         protected ISelfAssemblingPlan Sam;
 
-        protected IDisposable MockFile(String path, String content)
+        protected IDisposable MockFile(string path, string content)
         {
             var handle = new MockFileHandle(new FileInfo(Path.Combine(_basePath, path)), this);
-            DirectoryInfo fileDir = handle.File.Directory;
+            var fileDir = handle.File.Directory;
             Debug.Assert(fileDir != null, "handle.File.Directory != null");
             fileDir.Create();
-            using (var sw = new StreamWriter(handle.File.ToString(),false,Encoding.UTF8))
-            {
-                sw.Write(content);
-                sw.Flush();
-                sw.Close();
-            }
+            using var sw = new StreamWriter(handle.File.ToString(),false,Encoding.UTF8);
+            sw.Write(content);
+            sw.Flush();
+            sw.Close();
             return handle;
         }
 
         private class MockFileHandle : IDisposable
         {
             [NotNull]
-            private readonly FileInfo _file;
-            [NotNull]
-            private readonly SelfAssemblingPlanTests _instance;
+            public FileInfo File { get; }
 
             [NotNull]
-            public FileInfo File
-            {
-                get { return _file; }
-            }
-
-            [NotNull]
-            public SelfAssemblingPlanTests Instance
-            {
-                get { return _instance; }
-            }
+            public SelfAssemblingPlanTests Instance { get; }
 
             public MockFileHandle([NotNull]FileInfo file, [NotNull]SelfAssemblingPlanTests instance)
             {
-                _file = file;
-                _instance = instance;
+                File = file;
+                Instance = instance;
             }
 
             public void Dispose()
@@ -105,11 +92,11 @@ namespace PrexoniteTests.Tests
             {
                 try
                 {
-                    _file.Delete();
+                    File.Delete();
                 }
                 catch (IOException e)
                 {
-                    Trace.TraceEvent(TraceEventType.Error, 0, string.Format("Cannot delete file {0} because of {1}", _file, e));
+                    Trace.TraceEvent(TraceEventType.Error, 0, $"Cannot delete file {File} because of {e}");
                 }
             }
 
@@ -119,7 +106,7 @@ namespace PrexoniteTests.Tests
             }
         }
 
-        private String _prototypePath;
+        private string _prototypePath;
 
         [OneTimeSetUp]
         public void Init()
@@ -232,9 +219,10 @@ references {
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0,0))));
                 var theModuleName = new ModuleName("the_module", new Version(5, 4, 3, 2));
                 Assert.That(desc.Dependencies.Count,Is.GreaterThanOrEqualTo(1),"Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies,Contains.Item(theModuleName),string.Format("Primary is expected to depend on {0}.", theModuleName));
+                Assert.That(desc.Dependencies,Contains.Item(theModuleName),
+                    $"Primary is expected to depend on {theModuleName}.");
                 var firstOrDefault = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(theModuleName));
-                Assert.That(firstOrDefault,Is.Not.Null,string.Format("Expected a target description of {0} in SAM.", theModuleName));
+                Assert.That(firstOrDefault,Is.Not.Null, $"Expected a target description of {theModuleName} in SAM.");
             }
         }
 
@@ -255,9 +243,10 @@ references {
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
                 var theModuleName = new ModuleName("found", new Version(0,0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(theModuleName), string.Format("Primary is expected to depend on {0}.", theModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(theModuleName),
+                    $"Primary is expected to depend on {theModuleName}.");
                 var firstOrDefault = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(theModuleName));
-                Assert.That(firstOrDefault, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", theModuleName));
+                Assert.That(firstOrDefault, Is.Not.Null, $"Expected a target description of {theModuleName} in SAM.");
             }
         }
 
@@ -278,9 +267,10 @@ references {
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
                 var theModuleName = new ModuleName("hay.stack", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(theModuleName), string.Format("Primary is expected to depend on {0}.", theModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(theModuleName),
+                    $"Primary is expected to depend on {theModuleName}.");
                 var firstOrDefault = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(theModuleName));
-                Assert.That(firstOrDefault, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", theModuleName));
+                Assert.That(firstOrDefault, Is.Not.Null, $"Expected a target description of {theModuleName} in SAM.");
             }
         }
 
@@ -301,9 +291,10 @@ references {
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
                 var theModuleName = new ModuleName("hay.stack.lazy.impl", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(theModuleName), string.Format("Primary is expected to depend on {0}.", theModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(theModuleName),
+                    $"Primary is expected to depend on {theModuleName}.");
                 var firstOrDefault = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(theModuleName));
-                Assert.That(firstOrDefault, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", theModuleName));
+                Assert.That(firstOrDefault, Is.Not.Null, $"Expected a target description of {theModuleName} in SAM.");
             }
         }
 
@@ -325,9 +316,10 @@ references {
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
                 var theModuleName = new ModuleName("hay.stack.lazy.impl", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(theModuleName), string.Format("Primary is expected to depend on {0}.", theModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(theModuleName),
+                    $"Primary is expected to depend on {theModuleName}.");
                 var firstOrDefault = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(theModuleName));
-                Assert.That(firstOrDefault, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", theModuleName));
+                Assert.That(firstOrDefault, Is.Not.Null, $"Expected a target description of {theModuleName} in SAM.");
             }
         }
 
@@ -348,9 +340,10 @@ references {
                 Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new Version(0, 0))));
                 var theModuleName = new ModuleName("hay.stack.lazy.impl", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(theModuleName), string.Format("Primary is expected to depend on {0}.", theModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(theModuleName),
+                    $"Primary is expected to depend on {theModuleName}.");
                 var firstOrDefault = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(theModuleName));
-                Assert.That(firstOrDefault, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", theModuleName));
+                Assert.That(firstOrDefault, Is.Not.Null, $"Expected a target description of {theModuleName} in SAM.");
             }
         }
 
@@ -373,21 +366,25 @@ references {
                 var foundModuleName = new ModuleName("found", new Version(0, 0));
                 var lostModuleName = new ModuleName("lost", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(2), "Primary should have at least two dependencies.");
-                Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
-                Assert.That(desc.Dependencies, Contains.Item(lostModuleName), string.Format("Primary is expected to depend on {0}.", lostModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(foundModuleName),
+                    $"Primary is expected to depend on {foundModuleName}.");
+                Assert.That(desc.Dependencies, Contains.Item(lostModuleName),
+                    $"Primary is expected to depend on {lostModuleName}.");
 
                 // Does SAM contain the found module
                 var foundTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(foundModuleName));
-                Assert.That(foundTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", foundModuleName));
+                Assert.That(foundTarget, Is.Not.Null, $"Expected a target description of {foundModuleName} in SAM.");
 // ReSharper disable PossibleNullReferenceException
-                Assert.That(foundTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", foundModuleName));
+                Assert.That(foundTarget.BuildMessages, Is.Empty,
+                    $"{foundModuleName} should not have build (error) messages");
 // ReSharper restore PossibleNullReferenceException
 
                 // does SAM contain the lost module?
                 var lostTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(lostModuleName));
-                Assert.That(lostTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", lostModuleName));
+                Assert.That(lostTarget, Is.Not.Null, $"Expected a target description of {lostModuleName} in SAM.");
 // ReSharper disable PossibleNullReferenceException
-                Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostModuleName));
+                Assert.That(lostTarget.BuildMessages, Is.Empty,
+                    $"{lostModuleName} should not have build (error) messages");
 // ReSharper restore PossibleNullReferenceException
             }
         }
@@ -411,22 +408,25 @@ references {
                 var foundModuleName = new ModuleName("found", new Version(0, 0));
                 var lostModuleName = new ModuleName("lost", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(foundModuleName),
+                    $"Primary is expected to depend on {foundModuleName}.");
 
                 // Does SAM contain the found module?
                 var foundTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(foundModuleName));
-                Assert.That(foundTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", foundModuleName));
+                Assert.That(foundTarget, Is.Not.Null, $"Expected a target description of {foundModuleName} in SAM.");
                 Debug.Assert(foundTarget != null);
 
                 // Does found depend on lost?
                 // ReSharper disable PossibleNullReferenceException
                 Assert.That(foundTarget.Dependencies, Contains.Item(lostModuleName), string.Format("{1} is expected to depend on {0}.", lostModuleName, foundModuleName));
-                Assert.That(foundTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", foundModuleName));
+                Assert.That(foundTarget.BuildMessages, Is.Empty,
+                    $"{foundModuleName} should not have build (error) messages");
 
                 // does SAM contain the lost module?
                 var lostTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(lostModuleName));
-                Assert.That(lostTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", lostModuleName));
-                Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostModuleName));
+                Assert.That(lostTarget, Is.Not.Null, $"Expected a target description of {lostModuleName} in SAM.");
+                Assert.That(lostTarget.BuildMessages, Is.Empty,
+                    $"{lostModuleName} should not have build (error) messages");
                 // ReSharper restore PossibleNullReferenceException
             }
         }
@@ -451,21 +451,25 @@ references {
                 var foundModuleName = new ModuleName("stack.found", new Version(0, 0));
                 var lostModuleName = new ModuleName("stack.lost", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(foundModuleName),
+                    $"Primary is expected to depend on {foundModuleName}.");
 
                 // Does SAM contain the found module
                 var foundTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(foundModuleName));
-                Assert.That(foundTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", foundModuleName));
+                Assert.That(foundTarget, Is.Not.Null, $"Expected a target description of {foundModuleName} in SAM.");
                 // ReSharper disable PossibleNullReferenceException
-                Assert.That(foundTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", foundModuleName));
+                Assert.That(foundTarget.BuildMessages, Is.Empty,
+                    $"{foundModuleName} should not have build (error) messages");
                 // ReSharper restore PossibleNullReferenceException
-                Assert.That(foundTarget.Dependencies, Contains.Item(lostModuleName), string.Format("found module expected to depend on {0}.", lostModuleName));
+                Assert.That(foundTarget.Dependencies, Contains.Item(lostModuleName),
+                    $"found module expected to depend on {lostModuleName}.");
 
                 // does SAM contain the lost module?
                 var lostTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(lostModuleName));
-                Assert.That(lostTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", lostModuleName));
+                Assert.That(lostTarget, Is.Not.Null, $"Expected a target description of {lostModuleName} in SAM.");
                 // ReSharper disable PossibleNullReferenceException
-                Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostModuleName));
+                Assert.That(lostTarget.BuildMessages, Is.Empty,
+                    $"{lostModuleName} should not have build (error) messages");
                 // ReSharper restore PossibleNullReferenceException
 
                 Assert.That(Sam.TargetDescriptions.Count,Is.EqualTo(emptyCount+3), "There should be exactly three new modules: finder, lost and found.");
@@ -497,22 +501,25 @@ references {
                 var foundModuleName = new ModuleName("found", new Version(0, 0));
                 
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(foundModuleName),
+                    $"Primary is expected to depend on {foundModuleName}.");
 
                 // Does SAM contain the found module?
                 var foundTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(foundModuleName));
-                Assert.That(foundTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", foundModuleName));
+                Assert.That(foundTarget, Is.Not.Null, $"Expected a target description of {foundModuleName} in SAM.");
                 Debug.Assert(foundTarget != null);
 
                 // Does found depend on lost?
                 // ReSharper disable PossibleNullReferenceException
                 Assert.That(foundTarget.Dependencies, Contains.Item(lostModuleName), string.Format("{1} is expected to depend on {0}.", lostModuleName, foundModuleName));
-                Assert.That(foundTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", foundModuleName));
+                Assert.That(foundTarget.BuildMessages, Is.Empty,
+                    $"{foundModuleName} should not have build (error) messages");
 
                 // does SAM contain the lost module?
                 var lostTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(lostModuleName));
-                Assert.That(lostTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", lostModuleName));
-                Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostModuleName));
+                Assert.That(lostTarget, Is.Not.Null, $"Expected a target description of {lostModuleName} in SAM.");
+                Assert.That(lostTarget.BuildMessages, Is.Empty,
+                    $"{lostModuleName} should not have build (error) messages");
                 // ReSharper restore PossibleNullReferenceException
             }
         }
@@ -539,27 +546,31 @@ references {
                 var lostModuleName = new ModuleName("lost", new Version(0, 0));
                 var baseModuleName = new ModuleName("base", new Version(0, 0));
                 Assert.That(desc.Dependencies.Count, Is.GreaterThanOrEqualTo(1), "Primary should have at least one dependency.");
-                Assert.That(desc.Dependencies, Contains.Item(foundModuleName), string.Format("Primary is expected to depend on {0}.", foundModuleName));
-                Assert.That(desc.Dependencies, Contains.Item(lostModuleName), string.Format("Primary is expected to depend on {0}.", lostModuleName));
+                Assert.That(desc.Dependencies, Contains.Item(foundModuleName),
+                    $"Primary is expected to depend on {foundModuleName}.");
+                Assert.That(desc.Dependencies, Contains.Item(lostModuleName),
+                    $"Primary is expected to depend on {lostModuleName}.");
 
                 // Does SAM contain the found module?
                 var foundTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(foundModuleName));
-                Assert.That(foundTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", foundModuleName));
+                Assert.That(foundTarget, Is.Not.Null, $"Expected a target description of {foundModuleName} in SAM.");
                 Debug.Assert(foundTarget != null);
 
                 // Does found depend on base?
                 // ReSharper disable PossibleNullReferenceException
                 Assert.That(foundTarget.Dependencies, Contains.Item(baseModuleName), string.Format("{1} is expected to depend on {0}.", baseModuleName, foundModuleName));
-                Assert.That(foundTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", foundModuleName));
+                Assert.That(foundTarget.BuildMessages, Is.Empty,
+                    $"{foundModuleName} should not have build (error) messages");
 
                 // does SAM contain the lost module?
                 var lostTarget = Sam.TargetDescriptions.FirstOrDefault(td => td.Name.Equals(lostModuleName));
-                Assert.That(lostTarget, Is.Not.Null, string.Format("Expected a target description of {0} in SAM.", lostModuleName));
-                Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostModuleName));
+                Assert.That(lostTarget, Is.Not.Null, $"Expected a target description of {lostModuleName} in SAM.");
+                Assert.That(lostTarget.BuildMessages, Is.Empty,
+                    $"{lostModuleName} should not have build (error) messages");
                 // ReSharper restore PossibleNullReferenceException
 
                 Assert.That(lostTarget.Dependencies, Contains.Item(baseModuleName), string.Format("{1} is expected to depend on {0}.", baseModuleName, lostTarget));
-                Assert.That(lostTarget.BuildMessages, Is.Empty, string.Format("{0} should not have build (error) messages", lostTarget));
+                Assert.That(lostTarget.BuildMessages, Is.Empty, $"{lostTarget} should not have build (error) messages");
             }
         }
     }

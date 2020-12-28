@@ -34,12 +34,7 @@ namespace Prexonite.Commands.List
     {
         #region Singleton pattern
 
-        private static readonly SeqConcat _instance = new SeqConcat();
-
-        public static SeqConcat Instance
-        {
-            get { return _instance; }
-        }
+        public static SeqConcat Instance { get; } = new();
 
         private SeqConcat()
         {

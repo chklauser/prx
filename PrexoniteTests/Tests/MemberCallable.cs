@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 using NUnit.Framework;
 using Prexonite;
@@ -43,30 +43,22 @@ namespace PrexoniteTests.Tests
 
         public string Name { get; set; }
 
-        private readonly SymbolTable<CallExpectation> _expectations =
-            new SymbolTable<CallExpectation>(8);
-
-        public SymbolTable<CallExpectation> Expectations
-        {
-            [DebuggerStepThrough]
-            get { return _expectations; }
-        }
+        public SymbolTable<CallExpectation> Expectations { [DebuggerStepThrough] get; } = new(8);
 
         #region Implementation of IObject
 
         public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
             out PValue result)
         {
-            CallExpectation expectation;
-            Assert.IsTrue(_expectations.TryGetValue(id, out expectation),
-                String.Format("A call to member {0} on object {1} is not expected.", id, Name));
+            Assert.IsTrue(Expectations.TryGetValue(id, out var expectation),
+                $"A call to member {id} on object {Name} is not expected.");
 
             Assert.AreEqual(expectation.ExpectedCall, call, "Call type (get/set)");
             Assert.AreEqual(expectation.ExpectedArguments.Length, args.Length,
                 "Number of arguments do not match. Called with " + args.ToEnumerationString());
             for (var i = 0; i < expectation.ExpectedArguments.Length; i++)
                 Assert.AreEqual(expectation.ExpectedArguments[i], args[i],
-                    String.Format("Arguments at position {0} don't match", i));
+                    $"Arguments at position {i} don't match");
 
             result = expectation.ReturnValue ?? PType.Null;
             expectation.WasCalled = true;
@@ -78,7 +70,7 @@ namespace PrexoniteTests.Tests
         public void Expect(string memberId, PValue[] args, PCall call = PCall.Get,
             PValue returns = null)
         {
-            _expectations.Add(
+            Expectations.Add(
                 memberId,
                 new CallExpectation
                     {
@@ -90,10 +82,10 @@ namespace PrexoniteTests.Tests
 
         public void AssertCalledAll()
         {
-            foreach (var expectation in _expectations)
+            foreach (var expectation in Expectations)
                 Assert.IsTrue(
                     expectation.Value.WasCalled,
-                    String.Format("The member {0} was not called.", expectation.Key));
+                    $"The member {expectation.Key} was not called.");
         }
     }
 }

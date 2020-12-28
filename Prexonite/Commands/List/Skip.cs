@@ -39,12 +39,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Skip _instance = new Skip();
-
-        public static Skip Instance
-        {
-            get { return _instance; }
-        }
+        public static Skip Instance { get; } = new();
 
         #endregion
 
@@ -101,10 +96,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #region ICilCompilerAware Members
 

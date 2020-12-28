@@ -28,9 +28,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using Prexonite.Internal;
 
 namespace Prexonite.Modular
 {
@@ -102,9 +99,7 @@ namespace Prexonite.Modular
         {
             if (Functions.Contains(id))
                 throw new PrexoniteException(
-                    string.Format(
-                        "Cannot declare function with physical ID '{0}'. A function with that ID already exists in {1}.",
-                        id, Name));
+                    $"Cannot declare function with physical ID '{id}'. A function with that ID already exists in {Name}.");
             var decl = FunctionDeclaration._Create(id,this);
             Functions.Add(decl);
             return decl;
@@ -136,9 +131,7 @@ namespace Prexonite.Modular
             else
             {
                 Debug.Assert(false,
-                    string.Format(
-                        "Function table is still registered to function declaration {0} even though it is no longer in the table.",
-                        sender));
+                    $"Function table is still registered to function declaration {sender} even though it is no longer in the table.");
             }
         }
 
@@ -204,7 +197,7 @@ namespace Prexonite.Modular
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
             
-            _name = name;
+            Name = name;
             var m = MetaTable.Create(this);
             m[Application.IdKey] = name.ToMetaEntry();
             _meta = m;
@@ -216,40 +209,20 @@ namespace Prexonite.Modular
 
         public override CentralCache Cache
         {
-            get { return _cache; }
-            internal set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                
-                _cache = value;
-            }
+            get => _cache;
+            internal set => _cache = value ?? throw new ArgumentNullException(nameof(value));
         }
 
-        private readonly ModuleName _name;
-        private readonly FunctionTable _functions = new FunctionTable();
-        private readonly VariableTable _variables = new VariableTable();
+        private readonly FunctionTable _functions = new();
         private readonly MetaTable _meta; // must be assigned in the constructor
 
-        public override ModuleName Name
-        {
-            get { return _name; }
-        }
+        public override ModuleName Name { get; }
 
-        public override MetaTable Meta
-        {
-            get { return _meta; }
-        }
+        public override MetaTable Meta => _meta;
 
-        public override FunctionTable Functions
-        {
-            get { return _functions; }
-        }
+        public override FunctionTable Functions => _functions;
 
-        public override VariableTable Variables
-        {
-            get { return _variables; }
-        }
+        public override VariableTable Variables { get; } = new();
 
         #region IMetaFilter
 

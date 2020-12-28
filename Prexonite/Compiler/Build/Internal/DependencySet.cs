@@ -32,7 +32,7 @@ namespace Prexonite.Compiler.Build.Internal
 {
     internal class DependencySet : System.Collections.ObjectModel.KeyedCollection<string,ModuleName>, ISet<ModuleName>
     {
-        private readonly HashSet<ModuleName> _nameSet = new HashSet<ModuleName>();
+        private readonly HashSet<ModuleName> _nameSet = new();
         private readonly ModuleName _correspondingModule;
 
         protected override void InsertItem(int index, ModuleName item)
@@ -105,8 +105,7 @@ namespace Prexonite.Compiler.Build.Internal
 
         bool ISet<ModuleName>.Add(ModuleName item)
         {
-            ModuleName existing;
-            if(TryGetValue(GetKeyForItem(item),out existing))
+            if(TryGetValue(GetKeyForItem(item),out var existing))
             {
                 if(existing == item)
                 {

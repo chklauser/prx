@@ -42,17 +42,11 @@ namespace Prexonite.Types
     {
         #region Singleton Pattern
 
-        private static readonly IntPType instance;
-
-        public static IntPType Instance
-        {
-            [DebuggerStepThrough]
-            get { return instance; }
-        }
+        public static IntPType Instance { [DebuggerStepThrough] get; }
 
         static IntPType()
         {
-            instance = new IntPType();
+            Instance = new IntPType();
         }
 
         [DebuggerStepThrough]
@@ -67,25 +61,25 @@ namespace Prexonite.Types
         [DebuggerStepThrough]
         public PValue CreatePValue(byte value)
         {
-            return new PValue(value, Instance);
+            return new(value, Instance);
         }
 
         [DebuggerStepThrough]
         public PValue CreatePValue(short value)
         {
-            return new PValue(value, Instance);
+            return new(value, Instance);
         }
 
         [DebuggerStepThrough]
         public PValue CreatePValue(int value)
         {
-            return new PValue(value, Instance);
+            return new(value, Instance);
         }
 
         [DebuggerStepThrough]
         public PValue CreatePValue(long value)
         {
-            return new PValue(value, Instance);
+            return new(value, Instance);
         }
 
         #endregion
@@ -301,8 +295,7 @@ namespace Prexonite.Types
                         value = 0;
                     return true; //*/
                 case BuiltIn.Object:
-                    PValue pvRight;
-                    if (operand.TryConvertTo(sctx, Int, out pvRight))
+                    if (operand.TryConvertTo(sctx, Int, out var pvRight))
                     {
                         value = (int) pvRight.Value;
                         return true;
@@ -322,11 +315,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left + right;
 
             return result != null;
@@ -336,11 +327,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left - right;
 
             return result != null;
@@ -350,11 +339,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left*right;
 
             return result != null;
@@ -364,11 +351,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left/right;
 
             return result != null;
@@ -378,11 +363,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left%right;
 
             return result != null;
@@ -392,11 +375,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left & right;
 
             return result != null;
@@ -406,11 +387,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left | right;
 
             return result != null;
@@ -420,11 +399,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left ^ right;
 
             return result != null;
@@ -434,11 +411,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left, false) &&
-                _tryConvertToInt(sctx, rightOperand, out right, false))
+            if (_tryConvertToInt(sctx, leftOperand, out var left, false) &&
+                _tryConvertToInt(sctx, rightOperand, out var right, false))
                 result = left == right;
 
             return result != null;
@@ -448,11 +423,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left, false) &&
-                _tryConvertToInt(sctx, rightOperand, out right, false))
+            if (_tryConvertToInt(sctx, leftOperand, out var left, false) &&
+                _tryConvertToInt(sctx, rightOperand, out var right, false))
                 result = left != right;
 
             return result != null;
@@ -462,11 +435,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left > right;
 
             return result != null;
@@ -479,11 +450,9 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left >= right;
 
             return result != null;
@@ -493,11 +462,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left < right;
 
             return result != null;
@@ -510,11 +477,9 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            int left;
-            int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) &&
-                _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out var left) &&
+                _tryConvertToInt(sctx, rightOperand, out var right))
                 result = left <= right;
 
             return result != null;
@@ -523,8 +488,7 @@ namespace Prexonite.Types
         public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            int op;
-            if (_tryConvertToInt(sctx, operand, out op))
+            if (_tryConvertToInt(sctx, operand, out var op))
                 result = ~op;
 
             return result != null;
@@ -533,8 +497,7 @@ namespace Prexonite.Types
         public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            int op;
-            if (_tryConvertToInt(sctx, operand, out op))
+            if (_tryConvertToInt(sctx, operand, out var op))
                 result = -op;
 
             return result != null;
@@ -543,8 +506,7 @@ namespace Prexonite.Types
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            int op;
-            if (_tryConvertToInt(sctx, operand, out op))
+            if (_tryConvertToInt(sctx, operand, out var op))
                 result = op + 1;
 
             return result != null;
@@ -553,8 +515,7 @@ namespace Prexonite.Types
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
             result = null;
-            int op;
-            if (_tryConvertToInt(sctx, operand, out op))
+            if (_tryConvertToInt(sctx, operand, out var op))
                 result = op - 1;
 
             return result != null;

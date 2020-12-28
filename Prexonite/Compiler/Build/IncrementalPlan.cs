@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Build
 {
     public class IncrementalPlan : ManualPlan
     {
-        private readonly TaskMap<ModuleName,ITarget> _taskMap = new TaskMap<ModuleName, ITarget>();
+        private readonly TaskMap<ModuleName,ITarget> _taskMap = new();
 
         protected override TaskMap<ModuleName, ITarget> CreateTaskMap()
         {

@@ -27,8 +27,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
@@ -38,7 +36,7 @@ namespace Prexonite.Compiler.Build
         : ICollection<ITargetDescription>
     {
         [NotNull]
-        private readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new ConcurrentDictionary<ModuleName, ITargetDescription>();
+        private readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new();
 
         private TargetDescriptionSet()
         {
@@ -46,7 +44,7 @@ namespace Prexonite.Compiler.Build
 
         public static TargetDescriptionSet Create()
         {
-            return new TargetDescriptionSet();
+            return new();
         }
 
         public bool TryGetValue(ModuleName name, out ITargetDescription description)
@@ -64,13 +62,11 @@ namespace Prexonite.Compiler.Build
                 throw new ArgumentNullException(nameof(newDescription));
             if(oldDescription.Name != newDescription.Name)
                 throw new ArgumentException(
-                    string.Format(
-                        "Cannot replace description for {0} with a description for a different module ({1}).",
-                        oldDescription.Name, newDescription.Name));
+                    $"Cannot replace description for {oldDescription.Name} with a description for a different module ({newDescription.Name}).");
             if (!_table.TryUpdate(oldDescription.Name, newDescription, oldDescription))
             {
                 throw new PrexoniteException(
-                    "Failed to update target description set. Propably due to concurrent modification.");
+                    "Failed to update target description set. Probably due to concurrent modification.");
             }
         }
 
@@ -115,7 +111,7 @@ namespace Prexonite.Compiler.Build
             if(item == null)
                 throw new ArgumentNullException(nameof(item));
             if(!_table.TryAdd(item.Name,item))
-                throw new ArgumentException(string.Format("A target description for this module name already exists: {0}", item.Name));
+                throw new ArgumentException($"A target description for this module name already exists: {item.Name}");
         }
 
         public void Clear()
@@ -126,9 +122,8 @@ namespace Prexonite.Compiler.Build
         public bool Contains(ITargetDescription item)
         {
             if (item == null)
-                throw new System.ArgumentNullException(nameof(item));
-            ITargetDescription value;
-            return _table.TryGetValue(item.Name, out value) && item.Equals(value);
+                throw new ArgumentNullException(nameof(item));
+            return _table.TryGetValue(item.Name, out var value) && item.Equals(value);
         }
 
         public void CopyTo(ITargetDescription[] array, int arrayIndex)
@@ -139,20 +134,13 @@ namespace Prexonite.Compiler.Build
         public bool Remove(ITargetDescription item)
         {
             if (item == null)
-                throw new System.ArgumentNullException(nameof(item));
-            ITargetDescription value;
-            return _table.TryRemove(item.Name, out value);
+                throw new ArgumentNullException(nameof(item));
+            return _table.TryRemove(item.Name, out _);
         }
 
-        public int Count
-        {
-            get { return _table.Count; }
-        }
+        public int Count => _table.Count;
 
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
+        public bool IsReadOnly => false;
 
         #endregion
     }

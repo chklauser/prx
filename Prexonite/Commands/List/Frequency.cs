@@ -66,9 +66,6 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
     }
 }

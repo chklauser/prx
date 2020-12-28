@@ -79,15 +79,9 @@ namespace Prexonite
             _list.CopyTo(array, arrayIndex);
         }
 
-        public int Count
-        {
-            get { return _list.Count; }
-        }
+        public int Count => _list.Count;
 
-        public bool IsReadOnly
-        {
-            get { return true; }
-        }
+        public bool IsReadOnly => true;
 
         #endregion
     }

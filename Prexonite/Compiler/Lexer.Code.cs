@@ -37,7 +37,7 @@ using Parser = Prexonite.Compiler.Parser;
 internal partial class Lexer
 // ReSharper restore CheckNamespace
 {
-    private readonly StringBuilder buffer = new StringBuilder();
+    private readonly StringBuilder buffer = new();
 
     private Token tok(int kind)
     {
@@ -58,7 +58,7 @@ internal partial class Lexer
         return t;
     }
 
-    private readonly Stack<int> yystates = new Stack<int>();
+    private readonly Stack<int> yystates = new();
 
     public void PushState(int state)
     {
@@ -88,20 +88,14 @@ internal partial class Lexer
         yybegin(state);
     }
 
-    private string _file = "--unknown--";
-
-    public string File
-    {
-        get { return _file; }
-        set { _file = value; }
-    }
+    public string File { get; set; } = "--unknown--";
 
     public void Abort()
     {
         yyclose();
     }
 
-    string IScanner.File => _file;
+    string IScanner.File => File;
 
     #region fake reference to Lexer.zzAtBOL (too lazy to hack into scanner generator)
 
@@ -119,7 +113,7 @@ internal partial class Lexer
 
     #endregion
 
-    private readonly RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
+    private readonly RandomAccessQueue<Token> _tokenBuffer = new();
     private int _peekIndex = NO_PEEK;
 
     private const int NO_PEEK = -1;
@@ -253,7 +247,7 @@ internal partial class Lexer
                     return Parser._export;
             }
 
-            //Local only
+        //Local only
         else if (isLocal)
             switch (word)
             {
@@ -325,11 +319,10 @@ internal partial class Lexer
     {
         var kind = sequence.Substring(1, 1);
         sequence = sequence.Substring(2);
-        int utf32;
         if (
-            !int.TryParse(sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out utf32))
+            !int.TryParse(sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var utf32))
             throw new PrexoniteException(
-                System.String.Format(
+                string.Format(
                     "Invalid escape sequence \\{3}{0} on line {1} in {2}.",
                     sequence,
                     yyline,
@@ -343,7 +336,7 @@ internal partial class Lexer
         {
             throw new PrexoniteException(
                 "Failed to convert string escape sequence " + sequence +
-                    string.Format(" to string on line {0} in {1}", yyline, File), ex);
+                $" to string on line {yyline} in {File}", ex);
         }
     }
 

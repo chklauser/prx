@@ -38,20 +38,12 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Append _instance = new Append();
-
-        public static Append Instance
-        {
-            get { return _instance; }
-        }
+        public static Append Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
             PValue[] args)

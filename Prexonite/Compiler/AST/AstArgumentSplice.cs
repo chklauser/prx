@@ -56,8 +56,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            AstExpr next;
-            if (ArgumentList.TryOptimize(target, out next))
+            if (ArgumentList.TryOptimize(target, out var next))
             {
                 ArgumentList = next;
             }

@@ -44,21 +44,12 @@ namespace Prexonite.Compiler.Ast
         [CanBeNull]
         private readonly ArgumentsProxy _arguments;
 
-        [CanBeNull]
-        private readonly AstGetSet _expression;
-
-        [NotNull]
-        private string _id;
-
         public AstGetSetNewDecl([NotNull] ISourcePosition position, [NotNull] string id, [CanBeNull] AstGetSet expression)
             : base(position)
         {
-            if (id == null)
-                throw new ArgumentNullException(nameof(id));
-            
-            _expression = expression;
-            _id = id;
-            _arguments = _expression == null ? new ArgumentsProxy(new List<AstExpr>()) : null;
+            Expression = expression;
+            Id = id ?? throw new ArgumentNullException(nameof(id));
+            _arguments = Expression == null ? new ArgumentsProxy(new List<AstExpr>()) : null;
         }
 
         #region Overrides of AstGetSet
@@ -133,10 +124,9 @@ namespace Prexonite.Compiler.Ast
             if (wrappedExpr != null)
             {
                 _OptimizeNode(target, ref wrappedExpr);
-                var optExpr = wrappedExpr as AstGetSet;
-                if (optExpr != null)
+                if (wrappedExpr is AstGetSet optExpr)
                 {
-                    expr = new AstGetSetNewDecl(Position, _id, optExpr);
+                    expr = new AstGetSetNewDecl(Position, Id, optExpr);
                     return true;
                 }
             }
@@ -147,8 +137,8 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            var expr2 = Expression == null ? null : Expression.GetCopy();
-            var newDecl2 = new AstGetSetNewDecl(Position, _id, expr2);
+            var expr2 = Expression?.GetCopy();
+            var newDecl2 = new AstGetSetNewDecl(Position, Id, expr2);
             CopyBaseMembers(newDecl2);
             return newDecl2;
         }
@@ -160,21 +150,18 @@ namespace Prexonite.Compiler.Ast
         ///     <para>Other expressions are possible as well, though they make little sense wrapped by a new-declaration.</para>
         /// </summary>
         [CanBeNull]
-        public AstGetSet Expression
-        {
-            get { return _expression; }
-        }
+        public AstGetSet Expression { get; }
 
         public override ArgumentsProxy Arguments
         {
             get
             {
-                if (_expression != null) 
-                    return _expression.Arguments;
+                if (Expression != null) 
+                    return Expression.Arguments;
                 else if (_arguments != null)
                     return _arguments;
                 else
-                    throw new InvalidOperationException(string.Format("The new-decl expression for {0} is invalid.", Id));
+                    throw new InvalidOperationException($"The new-decl expression for {Id} is invalid.");
             }
         }
 
@@ -202,10 +189,7 @@ namespace Prexonite.Compiler.Ast
         ///     The physical id of the local variable to be new-declared.
         /// </summary>
         [NotNull]
-        public string Id
-        {
-            get { return _id; }
-        }
+        public string Id { get; }
 
         private void _ensureValid()
         {

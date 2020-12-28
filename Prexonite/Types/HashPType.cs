@@ -45,12 +45,7 @@ namespace Prexonite.Types
         {
         }
 
-        private static readonly HashPType _instance = new HashPType();
-
-        public static HashPType Instance
-        {
-            get { return _instance; }
-        }
+        public static HashPType Instance { get; } = new();
 
         #endregion
 
@@ -59,9 +54,8 @@ namespace Prexonite.Types
         private static bool _tryConvertToPair(
             StackContext sctx, PValue inpv, out PValueKeyValuePair result)
         {
-            PValue res;
             result = null;
-            if (!inpv.TryConvertTo(sctx, typeof (PValueKeyValuePair), out res))
+            if (!inpv.TryConvertTo(sctx, typeof (PValueKeyValuePair), out var res))
                 return false;
             else
                 result = (PValueKeyValuePair) res.Value;
@@ -75,8 +69,7 @@ namespace Prexonite.Types
                 throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
                 throw new ArgumentNullException(nameof(subject));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             result = null;
 
@@ -114,14 +107,10 @@ namespace Prexonite.Types
                 throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
                 throw new ArgumentNullException(nameof(subject));
-            if (args == null)
-                args = new PValue[] {};
-            if (id == null)
-                id = "";
+            args ??= Array.Empty<PValue>();
+            id ??= "";
 
-            var pvht = subject.Value as PValueHashtable;
-
-            if (pvht == null)
+            if (!(subject.Value is PValueHashtable pvht))
                 throw new ArgumentException("Subject must be a Hash.");
 
             result = null;
@@ -162,14 +151,12 @@ namespace Prexonite.Types
                 case "add":
                     if (argc == 1)
                     {
-                        PValueKeyValuePair pair;
-
                         result = Null.CreatePValue();
 
                         if (args[0].IsNull)
                         {
                         } //Ignore this one
-                        else if (_tryConvertToPair(sctx, args[0], out pair))
+                        else if (_tryConvertToPair(sctx, args[0], out var pair))
                             pvht.AddOverride(pair);
                     }
                     else if (argc > 1)
@@ -279,8 +266,7 @@ namespace Prexonite.Types
                 case "trygetvalue":
                     if (argc >= 2)
                     {
-                        PValue value;
-                        if (pvht.TryGetValue(args[0], out value))
+                        if (pvht.TryGetValue(args[0], out var value))
                         {
                             args[1].IndirectCall(sctx, new[] {value});
                             result = true;
@@ -310,7 +296,7 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                args = new PValue[] {};
+                args = Array.Empty<PValue>();
             if (id == null)
                 id = "";
 
@@ -331,8 +317,7 @@ namespace Prexonite.Types
                     pvht = new PValueHashtable(args.Length);
                     foreach (var arg in args)
                     {
-                        PValueKeyValuePair pairArg;
-                        if (_tryConvertToPair(sctx, arg, out pairArg))
+                        if (_tryConvertToPair(sctx, arg, out var pairArg))
                             pvht.AddOverride(pairArg);
                     }
                     result = new PValue(pvht, this);
@@ -359,15 +344,13 @@ namespace Prexonite.Types
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
 
             result = null;
 
             for (var i = 0; i < args.Length; i++)
             {
-                if (args[i] == null)
-                    args[i] = Null.CreatePValue();
+                args[i] ??= Null.CreatePValue();
             }
 
             var argc = args.Length;
@@ -411,9 +394,7 @@ namespace Prexonite.Types
             if ((object) target == null)
                 throw new ArgumentNullException(nameof(target));
 
-            var pvht = subject.Value as PValueHashtable;
-
-            if (pvht == null)
+            if (!(subject.Value is PValueHashtable pvht))
                 throw new ArgumentException("Subject must be a Hash.");
 
             result = null;
@@ -467,18 +448,15 @@ namespace Prexonite.Types
             if (sT is ObjectPType)
             {
                 var os = subject.Value;
-                var o_pvht = os as PValueHashtable;
-                if (o_pvht != null)
+                if (os is PValueHashtable o_pvht)
                     pvht = o_pvht;
                 else
                 {
-                    var id = os as IDictionary<PValue, PValue>;
-                    if (id != null)
+                    if (os is IDictionary<PValue, PValue> id)
                         pvht = new PValueHashtable(id);
                     else
                     {
-                        var pvkvp = os as PValueKeyValuePair;
-                        if (pvkvp != null)
+                        if (os is PValueKeyValuePair pvkvp)
                         {
                             pvht = new PValueHashtable(1);
                             pvht.Add(pvkvp);

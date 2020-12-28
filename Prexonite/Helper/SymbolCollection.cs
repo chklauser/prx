@@ -76,15 +76,9 @@ namespace Prexonite
             _set.Keys.CopyTo(array, arrayIndex);
         }
 
-        public int Count
-        {
-            get { return _set.Count; }
-        }
+        public int Count => _set.Count;
 
-        public bool IsReadOnly
-        {
-            get { return _set.IsReadOnly; }
-        }
+        public bool IsReadOnly => _set.IsReadOnly;
 
         public bool Remove(string item)
         {

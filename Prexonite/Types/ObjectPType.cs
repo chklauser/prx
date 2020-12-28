@@ -53,7 +53,7 @@ namespace Prexonite.Types
         {
             if (clrType == null)
                 throw new ArgumentNullException(nameof(clrType));
-            _clrType = clrType;
+            ClrType = clrType;
         }
 
         public ObjectPType(StackContext sctx, PValue[] args)
@@ -65,14 +65,13 @@ namespace Prexonite.Types
                     "The Object type requires exactly one parameter: the type or name of the type to represent.");
 
             var arg = args[0];
-            PValue sarg;
             var oT = arg.Type as ObjectPType;
             if (arg.IsNull)
-                _clrType = typeof (object);
+                ClrType = typeof (object);
             else if ((object) oT != null && typeof (Type).IsAssignableFrom(oT.ClrType))
-                _clrType = (Type) arg.Value;
-            else if (arg.TryConvertTo(sctx, String, false, out sarg))
-                _clrType = GetType(sctx, (string) sarg.Value);
+                ClrType = (Type) arg.Value;
+            else if (arg.TryConvertTo(sctx, String, false, out var sarg))
+                ClrType = GetType(sctx, (string) sarg.Value);
             else
                 throw new PrexoniteException(
                     "The supplied argument (" + arg +
@@ -81,13 +80,12 @@ namespace Prexonite.Types
 
         public ObjectPType(StackContext sctx, string clrTypeName)
         {
-            _clrType = GetType(sctx, clrTypeName);
+            ClrType = GetType(sctx, clrTypeName);
         }
 
         public static Type GetType(StackContext sctx, string clrTypeName)
         {
-            Type result;
-            if (TryGetType(sctx, clrTypeName, out result))
+            if (TryGetType(sctx, clrTypeName, out var result))
                 return result;
             else
                 throw new PrexoniteException("Cannot resolve ClrType name \"" + clrTypeName + "\".");
@@ -149,13 +147,7 @@ namespace Prexonite.Types
 
         #region ClrType
 
-        private readonly Type _clrType;
-
-        public Type ClrType
-        {
-            [DebuggerStepThrough]
-            get { return _clrType; }
-        }
+        public Type ClrType { [DebuggerStepThrough] get; }
 
         #endregion
 
@@ -171,8 +163,7 @@ namespace Prexonite.Types
             string id,
             out PValue result)
         {
-            MemberInfo dummy;
-            return TryDynamicCall(sctx, subject, args, call, id, out result, out dummy);
+            return TryDynamicCall(sctx, subject, args, call, id, out result, out var dummy);
         }
 
         public bool TryDynamicCall(
@@ -204,8 +195,7 @@ namespace Prexonite.Types
             if (id == null)
                 id = "";
 
-            var iobj = subject.Value as IObject;
-            if ((!suppressIObject) && iobj != null &&
+            if ((!suppressIObject) && subject.Value is IObject iobj &&
                 iobj.TryDynamicCall(sctx, args, call, id, out result))
                 return true;
 
@@ -251,18 +241,18 @@ namespace Prexonite.Types
             {
                 filter = _default_member_filter;
                 mtypes = MemberTypes.Property | MemberTypes.Method;
-                cond.memberRestriction = new List<MemberInfo>(_clrType.GetDefaultMembers());
+                cond.memberRestriction = new List<MemberInfo>(ClrType.GetDefaultMembers());
                 cond.IgnoreId = true;
                 if (subject.Value is Array)
                 {
                     cond.memberRestriction.AddRange(
-                        _clrType.FindMembers(
+                        ClrType.FindMembers(
                             MemberTypes.Method,
                             BindingFlags.Public | BindingFlags.Instance,
                             Type.FilterName,
                             cond.Call == PCall.Get ? "GetValue" : "SetValue"));
                     cond.memberRestriction.AddRange(
-                        _clrType.FindMembers(
+                        ClrType.FindMembers(
                             MemberTypes.Method,
                             BindingFlags.Public | BindingFlags.Instance,
                             Type.FilterName,
@@ -272,7 +262,7 @@ namespace Prexonite.Types
 
             //Get public member candidates
             var candidates = 
-                _overloadResolution(_clrType.FindMembers(
+                _overloadResolution(ClrType.FindMembers(
                     mtypes,
                     //Member types
                     BindingFlags.Instance | BindingFlags.Public,
@@ -297,8 +287,7 @@ namespace Prexonite.Types
             string id,
             out PValue result)
         {
-            MemberInfo dummy;
-            return TryStaticCall(sctx, args, call, id, out result, out dummy);
+            return TryStaticCall(sctx, args, call, id, out result, out var dummy);
         }
 
         public bool TryStaticCall(
@@ -330,13 +319,13 @@ namespace Prexonite.Types
             {
                 filter = _default_member_filter;
                 mtypes = MemberTypes.Property | MemberTypes.Method;
-                cond.memberRestriction = new List<MemberInfo>(_clrType.GetDefaultMembers());
+                cond.memberRestriction = new List<MemberInfo>(ClrType.GetDefaultMembers());
                 cond.IgnoreId = true;
             }
 
             //Get member candidates            
             var candidates = _overloadResolution(
-                _clrType.FindMembers(
+                ClrType.FindMembers(
                     mtypes,
                     //Member types
                     BindingFlags.Static | BindingFlags.Public,
@@ -374,7 +363,7 @@ namespace Prexonite.Types
 
             //Get member candidates            
             var candidates = _overloadResolution(
-                _clrType.FindMembers(
+                ClrType.FindMembers(
                     MemberTypes.Method,
                     //Member types
                     BindingFlags.Static | BindingFlags.Public,
@@ -611,8 +600,7 @@ namespace Prexonite.Types
                         }
                         catch (TargetInvocationException exc)
                         {
-                            if (exc.InnerException is PrexoniteRuntimeException innerRt 
-                                && innerRt.InnerException is {} inner)
+                            if (exc.InnerException is PrexoniteRuntimeException {InnerException: {} inner} innerRt)
                                 throw inner;
                             throw;
                         }
@@ -737,10 +725,8 @@ namespace Prexonite.Types
 
             public call_conditions(StackContext sctx, PValue[] args, PCall call, string id)
             {
-                if (sctx == null)
-                    throw new ArgumentNullException(nameof(sctx));
-                Sctx = sctx;
-                Args = args ?? new PValue[] {};
+                Sctx = sctx ?? throw new ArgumentNullException(nameof(sctx));
+                Args = args ?? Array.Empty<PValue>();
                 Call = call;
                 Id = id;
                 Directive = null;
@@ -929,7 +915,7 @@ namespace Prexonite.Types
                 {
                     var P = parameters[i].ParameterType;
                     var A = cond.Args[i].ClrType;
-                    if (!(P.Equals(A) || P.IsAssignableFrom(A))) //Neiter Equal nor assignable
+                    if (!(P == A || P.IsAssignableFrom(A))) //Neither Equal nor assignable
                         return false;
                 }
             }
@@ -937,9 +923,9 @@ namespace Prexonite.Types
             //optional Criteria No.3: Return types must match
             if (cond.returnType != null && method is MethodInfo)
             {
-                var methodEx = method as MethodInfo;
-                if (!(methodEx.ReturnType.Equals(cond.returnType) ||
-                    cond.returnType.IsAssignableFrom(methodEx.ReturnType)))
+                var methodEx = (MethodInfo) method;
+                if (!(methodEx.ReturnType == cond.returnType ||
+                      cond.returnType.IsAssignableFrom(methodEx.ReturnType)))
                 {
                     return false;
                 }
@@ -953,9 +939,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
-            var icall = subject.Value as IIndirectCall;
-            if (icall != null)
-                result = icall.IndirectCall(sctx, args) ?? Null.CreatePValue();
+            if (subject.Value is IIndirectCall icall)
+                result = icall.IndirectCall(sctx, args);
 
             return result != null;
         }
@@ -972,8 +957,7 @@ namespace Prexonite.Types
             string id,
             out MemberInfo resolvedMember)
         {
-            PValue result;
-            if (!TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember))
+            if (!TryDynamicCall(sctx, subject, args, call, id, out var result, out resolvedMember))
             {
                 var sb = new StringBuilder();
                 sb.Append("Cannot resolve call '");
@@ -997,21 +981,19 @@ namespace Prexonite.Types
         public override PValue DynamicCall(
             StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {
-            MemberInfo dummy;
-            return DynamicCall(sctx, subject, args, call, id, out dummy);
+            return DynamicCall(sctx, subject, args, call, id, out var dummy);
         }
 
         public PValue StaticCall(
             StackContext sctx, PValue[] args, PCall call, string id, out MemberInfo resolvedMember)
         {
-            PValue result;
-            if (!TryStaticCall(sctx, args, call, id, out result, out resolvedMember))
+            if (!TryStaticCall(sctx, args, call, id, out var result, out resolvedMember))
             {
                 var sb = new StringBuilder();
                 sb.Append("Cannot resolve static call '");
                 sb.Append(id);
                 sb.Append("' on type ");
-                sb.Append(_clrType.FullName);
+                sb.Append(ClrType.FullName);
                 sb.Append(" with (");
                 foreach (var arg in args)
                 {
@@ -1028,14 +1010,12 @@ namespace Prexonite.Types
 
         public override PValue StaticCall(StackContext sctx, PValue[] args, PCall call, string id)
         {
-            MemberInfo dummy;
-            return StaticCall(sctx, args, call, id, out dummy);
+            return StaticCall(sctx, args, call, id, out var dummy);
         }
 
         public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
-            MemberInfo dummy;
-            return TryContruct(sctx, args, out result, out dummy);
+            return TryContruct(sctx, args, out result, out var dummy);
         }
 
         public bool TryContruct(
@@ -1048,7 +1028,7 @@ namespace Prexonite.Types
 
             //Get member candidates            
             var candidates = _overloadResolution(
-                _clrType.GetConstructors()
+                ClrType.GetConstructors()
                     .Where(c => _method_filter(c, cond)), cond)
                 .ToImmutableArray();
 
@@ -1475,7 +1455,7 @@ namespace Prexonite.Types
                     (
                         sctx, new[] {operand}, PCall.Get, "op_UnaryNegation", out result) ||
                             TryDynamicCall
-                                (sctx, operand, new PValue[] {}, PCall.Get,
+                                (sctx, operand, Array.Empty<PValue>(), PCall.Get,
                                     OperatorNames.Prexonite.UnaryNegation, out result);
         }
 
@@ -1491,7 +1471,7 @@ namespace Prexonite.Types
                 TryStaticCall(
                     sctx, new[] {operand}, PCall.Get, "op_OnesComplement", out result) ||
                         TryDynamicCall
-                            (sctx, operand, new PValue[] {}, PCall.Get,
+                            (sctx, operand, Array.Empty<PValue>(), PCall.Get,
                                 OperatorNames.Prexonite.OnesComplement, out result);
         }
 
@@ -1500,7 +1480,7 @@ namespace Prexonite.Types
             return
                 TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Increment", out result) ||
                     TryDynamicCall
-                        (sctx, operand, new PValue[] {}, PCall.Get,
+                        (sctx, operand, Array.Empty<PValue>(), PCall.Get,
                             OperatorNames.Prexonite.Increment, out result);
         }
 
@@ -1509,7 +1489,7 @@ namespace Prexonite.Types
             return
                 TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Decrement", out result) ||
                     TryDynamicCall
-                        (sctx, operand, new PValue[] {}, PCall.Get,
+                        (sctx, operand, Array.Empty<PValue>(), PCall.Get,
                             OperatorNames.Prexonite.Decrement, out result);
         }
 
@@ -1573,13 +1553,12 @@ namespace Prexonite.Types
             else if (target is BoolPType)
             {
                 // ::op_True > ::op_Implicit > ::op_Explicit
-                PValue res;
-                if (!TryStaticCall(sctx, arg, PCall.Get, "op_True", out res))
+                if (!TryStaticCall(sctx, arg, PCall.Get, "op_True", out var res))
                     if (!_try_clr_convert_to(sctx, subject, typeof (bool), useExplicit, out res))
                         //An object is true by default
                         result = new PValue(true, Bool);
-                    else if (res.Value is bool)
-                        result = new PValue((bool) res.Value, Bool);
+                    else if (res?.Value is bool value)
+                        result = new PValue(value, Bool);
                     else
                         result = new PValue(res != null, Bool);
 
@@ -1636,12 +1615,12 @@ namespace Prexonite.Types
 
         protected override bool InternalIsEqual(PType otherType)
         {
-            return (otherType is ObjectPType && ((ObjectPType) otherType)._clrType == _clrType);
+            return (otherType is ObjectPType type && type.ClrType == ClrType);
         }
 
         public override int GetHashCode()
         {
-            return _code ^ _clrType.GetHashCode();
+            return _code ^ ClrType.GetHashCode();
         }
 
         public const string Literal = "Object";
@@ -1650,7 +1629,7 @@ namespace Prexonite.Types
 
         public override string ToString()
         {
-            return Literal + "(\"" + StringPType.Escape(_clrType.FullName) + "\")";
+            return Literal + "(\"" + StringPType.Escape(ClrType.FullName) + "\")";
         }
 
         #endregion

@@ -210,7 +210,7 @@ namespace Prexonite
         public T Dequeue()
         {
             var item = _store[_front];
-            _store[_front] = default(T); //Make sure, item get's garbage collected
+            _store[_front] = default; //Make sure, item get's garbage collected
             if (_front == _rear) //just removed last element -> reset
             {
                 _front = 0;
@@ -274,9 +274,9 @@ namespace Prexonite
         public T this[int index]
         {
             [DebuggerStepThrough]
-            get { return _store[toIndex(index)]; }
+            get => _store[toIndex(index)];
             [DebuggerStepThrough]
-            set { _store[toIndex(index)] = value; }
+            set => _store[toIndex(index)] = value;
         }
 
         #endregion
@@ -336,10 +336,7 @@ namespace Prexonite
         /// <summary>
         ///     Retuns the number of elements in the queue
         /// </summary>
-        public int Count
-        {
-            get { return normalCount() + wrappedCount(); }
-        }
+        public int Count => normalCount() + wrappedCount();
 
         /// <summary>
         ///     Queues are never readonly. Always returns false.
@@ -347,7 +344,7 @@ namespace Prexonite
         public bool IsReadOnly
         {
             [DebuggerStepThrough]
-            get { return false; }
+            get => false;
         }
 
         /// <summary>

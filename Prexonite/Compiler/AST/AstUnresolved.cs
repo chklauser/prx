@@ -34,20 +34,17 @@ namespace Prexonite.Compiler.Ast
         public AstUnresolved(string file, int line, int column, string id)
             : base(file, line, column, PCall.Get)
         {
-            _id = id;
+            Id = id;
         }
 
         internal AstUnresolved(Parser p, string id) : base(p, PCall.Get)
         {
-            _id = id;
+            Id = id;
         }
 
         public AstUnresolved(ISourcePosition position, string id) : base(position,PCall.Get)
         {
-            if (id == null)
-                throw new ArgumentNullException(nameof(id));
-            
-            _id = id;
+            Id = id ?? throw new ArgumentNullException(nameof(id));
         }
 
         #region Overrides of AstGetSet
@@ -66,12 +63,7 @@ namespace Prexonite.Compiler.Ast
                     MessageClasses.SymbolNotResolved));
         }
 
-        private readonly string _id;
-
-        public string Id
-        {
-            get { return _id; }
-        }
+        public string Id { get; }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
@@ -80,7 +72,7 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            var copy = new AstUnresolved(File, Line, Column, _id);
+            var copy = new AstUnresolved(File, Line, Column, Id);
             CopyBaseMembers(copy);
             return copy;
         }

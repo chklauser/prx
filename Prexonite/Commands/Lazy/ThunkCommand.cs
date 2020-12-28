@@ -41,20 +41,12 @@ namespace Prexonite.Commands.Lazy
         {
         }
 
-        private static readonly ThunkCommand _instance = new ThunkCommand();
-
-        public static ThunkCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static ThunkCommand Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -117,19 +109,18 @@ namespace Prexonite.Commands.Lazy
 
             public static BlackHole Active(int threadId)
             {
-                return new BlackHole(threadId);
+                return new(threadId);
             }
 
             public BlackHole Inactivate()
             {
-                if (_evaluationDone != null)
-                    _evaluationDone.Set();
+                _evaluationDone?.Set();
                 return _inactive();
             }
 
             private static BlackHole _inactive()
             {
-                return new BlackHole();
+                return new();
             }
 
             public bool Trap()
@@ -161,29 +152,23 @@ namespace Prexonite.Commands.Lazy
 
         private Thunk(PValue expr, PValue[] parameters)
         {
-            if (expr == null)
-                throw new ArgumentNullException(nameof(expr));
-            if (parameters == null)
-                throw new ArgumentNullException(nameof(parameters));
-            _expr = expr;
-            _parameters = parameters;
+            _expr = expr ?? throw new ArgumentNullException(nameof(expr));
+            _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
         }
 
         private Thunk(PValue value)
         {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            _value = value;
+            _value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         public static Thunk NewValue(PValue value)
         {
-            return new Thunk(value);
+            return new(value);
         }
 
         public static Thunk NewExpression(PValue expr, PValue[] parameters)
         {
-            return new Thunk(expr, parameters);
+            return new(expr, parameters);
         }
 
         #endregion
@@ -192,13 +177,10 @@ namespace Prexonite.Commands.Lazy
 
         public PValue Force(StackContext sctx)
         {
-            return ((IIndirectCall) this).IndirectCall(sctx, Runtime.EmptyPValueArray);
+            return ((IIndirectCall) this).IndirectCall(sctx, Array.Empty<PValue>());
         }
 
-        public bool IsEvaluated
-        {
-            get { return _value != null; }
-        }
+        public bool IsEvaluated => _value != null;
 
         public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
             out PValue result)
@@ -245,8 +227,7 @@ namespace Prexonite.Commands.Lazy
                 Debug.Indent();
                 //We need to save stack space here, so try to invoke via IStackAware
                 //  Since most expressions are closures, this has a high success rate
-                var stackAware = _expr.Value as IStackAware;
-                if (stackAware != null)
+                if (_expr.Value is IStackAware stackAware)
                 {
                     //Exception handler defined in creation of cooperative context
                     var exprCtx = stackAware.CreateStackContext(sctx, _parameters);
@@ -271,8 +252,7 @@ namespace Prexonite.Commands.Lazy
                 Debug.Unindent();
 
 
-                var t = _value.Value as Thunk;
-                if (t != null)
+                if (_value.Value is Thunk t)
                 {
                     //Assimilate nested thunk
                     _blackHole = t._blackHole;
@@ -310,8 +290,7 @@ namespace Prexonite.Commands.Lazy
                         }
                 };
 
-            var fctx = sctx as FunctionContext;
-            if (fctx != null)
+            if (sctx is FunctionContext fctx)
             {
                 //Turn CLR call into Prexonite stack call
                 fctx._UseVirtualMachineStackInstead();

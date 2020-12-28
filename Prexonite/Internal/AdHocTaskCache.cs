@@ -54,7 +54,7 @@ namespace Prexonite.Internal
             [NotNull]
             public readonly Task<TResult> Task;
 
-            [NotNull] private readonly CancellationTokenSource _cancelSource = new CancellationTokenSource();
+            [NotNull] private readonly CancellationTokenSource _cancelSource = new();
 
             [NotNull] private readonly TKey _key;
 
@@ -86,9 +86,9 @@ namespace Prexonite.Internal
                         // The task has been cancelled or is in the process of being cancelled
                         return false;
                     else if(oldLiveCount < 0)
-                        // Observed integer overflow, this is illegal as we can no longer guarantee that takss
+                        // Observed integer overflow, this is illegal as we can no longer guarantee that tasks
                         // stay alive for long enough.
-                        throw new OverflowException("Number of taks cancellation constraints exceeded Int32.MaxValue.");
+                        throw new OverflowException("Number of tasks cancellation constraints exceeded Int32.MaxValue.");
 
                 } while (Interlocked.CompareExchange(ref _liveTokens, oldLiveCount + 1, oldLiveCount) != oldLiveCount);
 
@@ -115,7 +115,7 @@ namespace Prexonite.Internal
                     newLiveCount = oldLiveCount - 1;
                     if (newLiveCount == 0)
                     {
-                        // To distinguish a cancelled task from an unitialized task, we
+                        // To distinguish a cancelled task from an uninitialized task, we
                         //  set the live count to the sentinel value "Cancelled".
                         // The method TryAddCancellationConstraint checks for this value 
                         //  before incrementing the live token count.
@@ -128,9 +128,8 @@ namespace Prexonite.Internal
                 //  will arrive at live token count 0. See assertion in loop above.
                 if (newLiveCount == Cancelled)
                 {
-                    TaskInfo info;
-// ReSharper disable RedundantAssignment
-                    var removed = _cache.TryRemove(_key, out info);
+                    // ReSharper disable RedundantAssignment
+                    var removed = _cache.TryRemove(_key, out var info);
 // ReSharper restore RedundantAssignment
                     Debug.Assert(removed, "Removal from task cache by cancellation handler failed.");
                     Debug.Assert(ReferenceEquals(info,this),"Elements in task cache should never be replaced without cancellation.");
@@ -142,7 +141,7 @@ namespace Prexonite.Internal
         }
 #pragma warning restore 420
 
-        private readonly ConcurrentDictionary<TKey, TaskInfo> _cache = new ConcurrentDictionary<TKey, TaskInfo>();
+        private readonly ConcurrentDictionary<TKey, TaskInfo> _cache = new();
 
         /// <summary>
         /// 
@@ -153,8 +152,7 @@ namespace Prexonite.Internal
         [ContractAnnotation("=>true,resultTask:notnull; =>false,resultTask:null")]
         public bool TryGet([NotNull] TKey key, out Task<TResult> resultTask)
         {
-            TaskInfo info;
-            if (_cache.TryGetValue(key, out info))
+            if (_cache.TryGetValue(key, out var info))
             {
                 resultTask = info.Task;
                 return true;
@@ -198,7 +196,7 @@ namespace Prexonite.Internal
         {
             // This only starts a new task if the cache doesn't already contain a running version of the task
             TaskInfo info;
-            Func<TKey, TaskInfo> taskFactory = actualKey => new TaskInfo(_cache, actualKey, ct => taskImplementation(actualKey, ct));
+            TaskInfo taskFactory(TKey actualKey) => new(_cache, actualKey, ct => taskImplementation(actualKey, ct));
 
             do
             {

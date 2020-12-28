@@ -37,10 +37,7 @@ namespace Prexonite.Compiler.Symbolic
 
         internal MergedNamespace([NotNull] SymbolStore scope)
         {
-            if (scope == null)
-                throw new ArgumentNullException(nameof(scope));
-            
-            _exportScope = scope;
+            _exportScope = scope ?? throw new ArgumentNullException(nameof(scope));
         }
 
         public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
@@ -48,10 +45,7 @@ namespace Prexonite.Compiler.Symbolic
             return _exportScope.GetEnumerator();
         }
 
-        public override bool IsEmpty
-        {
-            get { return _exportScope.IsEmpty; }
-        }
+        public override bool IsEmpty => _exportScope.IsEmpty;
 
         public override bool TryGet(string id, out Symbol value)
         {

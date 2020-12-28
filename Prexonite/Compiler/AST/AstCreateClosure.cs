@@ -32,33 +32,27 @@ namespace Prexonite.Compiler.Ast
     [DebuggerNonUserCode]
     public class AstCreateClosure : AstExpr
     {
-        [NotNull] private readonly EntityRef.Function _implementation;
-
         public AstCreateClosure(ISourcePosition position, EntityRef.Function implementation)
             : base(position)
         {
-            _implementation = implementation;
+            Implementation = implementation;
         }
 
-        public EntityRef.Function Implementation
-        {
-            get { return _implementation; }
-        }
+        [NotNull]
+        public EntityRef.Function Implementation { get; }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (stackSemantics == StackSemantics.Effect)
                 return;
 
-            PFunction targetFunction;
-            MetaEntry sharedNamesEntry;
-            if (target.Loader.ParentApplication.TryGetFunction(_implementation.Id, _implementation.ModuleName, out targetFunction)
-                && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out sharedNamesEntry)
+            if (target.Loader.ParentApplication.TryGetFunction(Implementation.Id, Implementation.ModuleName, out var targetFunction)
+                && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry)
                     || !sharedNamesEntry.IsList
-                        || sharedNamesEntry.List.Length == 0))
-                target.Emit(Position,OpCode.ldr_func, _implementation.Id, target.ToInternalModule(_implementation.ModuleName));
+                    || sharedNamesEntry.List.Length == 0))
+                target.Emit(Position,OpCode.ldr_func, Implementation.Id, target.ToInternalModule(Implementation.ModuleName));
             else
-                target.Emit(Position,OpCode.newclo, _implementation.Id, target.ToInternalModule(_implementation.ModuleName));
+                target.Emit(Position,OpCode.newclo, Implementation.Id, target.ToInternalModule(Implementation.ModuleName));
         }
 
         #region AstExpr Members

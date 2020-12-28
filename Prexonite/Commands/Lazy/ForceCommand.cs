@@ -38,22 +38,14 @@ namespace Prexonite.Commands.Lazy
         {
         }
 
-        private static readonly ForceCommand _instance = new ForceCommand();
-
-        public static ForceCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static ForceCommand Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -78,9 +70,7 @@ namespace Prexonite.Commands.Lazy
 
         public static PValue Force(StackContext sctx, PValue arg)
         {
-            var t = arg.Value as Thunk;
-
-            var result = t != null ? t.Force(sctx) : arg;
+            var result = arg.Value is Thunk t ? t.Force(sctx) : arg;
 
             Debug.Assert(!(result.Value is Thunk), "Force wanted to return an unevaluated thunk.");
 

@@ -39,22 +39,14 @@ namespace Prexonite.Commands.Lazy
         {
         }
 
-        private static readonly ToSeqCommand _instance = new ToSeqCommand();
-
-        public static ToSeqCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static ToSeqCommand Instance { get; } = new();
 
         #endregion
 
         #region Overrides of PCommand
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         #endregion
 
@@ -87,8 +79,7 @@ namespace Prexonite.Commands.Lazy
             while (!(xs = ForceCommand.Force(sctx, xsT)).IsNull)
             {
                 //Accept key value pairs directly
-                var kvp = xs.Value as PValueKeyValuePair;
-                if (kvp != null)
+                if (xs.Value is PValueKeyValuePair kvp)
                 {
                     yield return kvp.Key;
                     xsT = kvp.Value;

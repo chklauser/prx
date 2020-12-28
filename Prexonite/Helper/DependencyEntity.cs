@@ -35,7 +35,7 @@ namespace Prexonite
         public static DependencyEntity<T, PValue> CreateDynamic(StackContext sctx, T name,
             PValue value, PValue getDependencies)
         {
-            return new DependencyEntity<T, PValue>(name, value,
+            return new(name, value,
                 _dynamicallyCallGetDependencies(sctx, getDependencies));
         }
 
@@ -63,39 +63,29 @@ namespace Prexonite
 
     public class DependencyEntity<TKey, TValue> : IDependent<TKey>
     {
-        private readonly TKey _name;
-        private readonly TValue _value;
         private readonly Func<TValue, IEnumerable<TKey>> _getDependencies;
 
         public DependencyEntity(TKey name, TValue value,
             Func<TValue, IEnumerable<TKey>> getDependencies)
         {
-            if (getDependencies == null)
-                throw new NullReferenceException("getDependencies");
-            _name = name;
-            _getDependencies = getDependencies;
-            _value = value;
+            Name = name;
+            _getDependencies = getDependencies ?? throw new NullReferenceException("getDependencies");
+            Value = value;
         }
 
         #region Implementation of INamed<TKey>
 
-        public TKey Name
-        {
-            get { return _name; }
-        }
+        public TKey Name { get; }
 
         #endregion
 
-        public TValue Value
-        {
-            get { return _value; }
-        }
+        public TValue Value { get; }
 
         #region Implementation of IDependent<TKey>
 
         public IEnumerable<TKey> GetDependencies()
         {
-            return _getDependencies(_value);
+            return _getDependencies(Value);
         }
 
         #endregion

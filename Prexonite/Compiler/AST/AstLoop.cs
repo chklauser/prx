@@ -32,16 +32,14 @@ namespace Prexonite.Compiler.Ast
         internal AstLoop(ISourcePosition p, AstBlock parentBlock)
             : base(p)
         {
-            _block = new AstLoopBlock(p, parentBlock, prefix:"body");
+            Block = new AstLoopBlock(p, parentBlock, prefix:"body");
         }
-
-        private readonly AstLoopBlock _block;
 
         #region IAstHasBlocks Members
 
         public virtual AstBlock[] Blocks
         {
-            get { return new[] {Block}; }
+            get { return new AstBlock[] {Block}; }
         }
 
         #endregion
@@ -50,10 +48,7 @@ namespace Prexonite.Compiler.Ast
 
         public abstract AstExpr[] Expressions { get; }
 
-        public AstLoopBlock Block
-        {
-            get { return _block; }
-        }
+        public AstLoopBlock Block { get; }
 
         #endregion
     }

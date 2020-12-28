@@ -48,8 +48,7 @@ namespace Prexonite
             if (caller == null)
                 throw new ArgumentNullException(nameof(caller));
 
-            if (importedNamespaces == null)
-                importedNamespaces = new SymbolCollection();
+            importedNamespaces ??= new SymbolCollection();
 
             return new CilFunctionContext(caller.ParentEngine, caller.ParentApplication,
                 importedNamespaces);
@@ -60,53 +59,28 @@ namespace Prexonite
             return New(caller, (SymbolCollection) null);
         }
 
-        private static readonly MethodInfo _NewMethod =
-            typeof (CilFunctionContext).GetMethod(
-                "New", new[] {typeof (StackContext), typeof (PFunction)});
-
-        internal static MethodInfo NewMethod
-        {
-            get { return _NewMethod; }
-        }
+        internal static MethodInfo NewMethod { get; } = typeof (CilFunctionContext).GetMethod(
+            "New", new[] {typeof (StackContext), typeof (PFunction)});
 
         private CilFunctionContext(Engine parentEngine, Application parentApplication,
             SymbolCollection importedNamespaces)
         {
-            if (parentEngine == null)
-                throw new ArgumentNullException(nameof(parentEngine));
-            this.parentEngine = parentEngine;
-            if (parentApplication == null)
-                throw new ArgumentNullException(nameof(parentApplication));
-            this.parentApplication = parentApplication;
-            if (importedNamespaces == null)
-                throw new ArgumentNullException(nameof(importedNamespaces));
-            this.importedNamespaces = importedNamespaces;
+            this.ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
+            this.ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+            this.ImportedNamespaces = importedNamespaces ?? throw new ArgumentNullException(nameof(importedNamespaces));
         }
-
-        private readonly Engine parentEngine;
-        private readonly Application parentApplication;
-        private readonly SymbolCollection importedNamespaces;
 
         /// <summary>
         ///     Represents the engine this context is part of.
         /// </summary>
-        public override Engine ParentEngine
-        {
-            get { return parentEngine; }
-        }
+        public override Engine ParentEngine { get; }
 
         /// <summary>
         ///     The parent application.
         /// </summary>
-        public override Application ParentApplication
-        {
-            get { return parentApplication; }
-        }
+        public override Application ParentApplication { get; }
 
-        public override SymbolCollection ImportedNamespaces
-        {
-            get { return importedNamespaces; }
-        }
+        public override SymbolCollection ImportedNamespaces { get; }
 
         /// <summary>
         ///     Indicates whether the context still has code/work to do.
@@ -132,9 +106,6 @@ namespace Prexonite
         ///     Just providing a value here does not mean that it gets consumed by the caller.
         ///     If the context does not provide a return value, this property should return null (not NullPType).
         /// </summary>
-        public override PValue ReturnValue
-        {
-            get { return PType.Null; }
-        }
+        public override PValue ReturnValue => PType.Null;
     }
 }

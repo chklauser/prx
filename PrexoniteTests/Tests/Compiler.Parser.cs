@@ -23,15 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using Prx.Tests;
-using System.Linq;
 
 namespace PrexoniteTests.Tests
 {
@@ -73,7 +71,7 @@ function func0
             //  relaxed treatment of variable declarations in Prexonite 2
             Assert.That(ldr.FunctionTargets["func0"].Code.Count, Is.LessThanOrEqualTo(2));
 
-            CompilerTarget tar = ldr.FunctionTargets["func0"];
+            var tar = ldr.FunctionTargets["func0"];
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0", null),
@@ -151,17 +149,17 @@ sixth:  goto    begin;      //6
 
 function instruction {}
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
             //Check AST
-            AstBlock block = ldr.FunctionTargets["func0"].Ast;
+            var block = ldr.FunctionTargets["func0"].Ast;
 
             //label begin
-            int i = 0;
+            var i = 0;
             Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
             Assert.AreEqual("begin", ((AstExplicitLabel) block[i]).Label);
 
@@ -354,8 +352,8 @@ function func0
 }");
 
 
-            List<Instruction> actual = target.Functions["func0"].Code;
-            List<Instruction> expected =
+            var actual = target.Functions["func0"].Code;
+            var expected =
                 GetInstructions(
                     @"
 ret.exit
@@ -369,15 +367,11 @@ ret.continue
             Assert.AreEqual(
                 expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
 
-            for (int i = 0; i < actual.Count; i++)
+            for (var i = 0; i < actual.Count; i++)
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
-                    String.Format(
-                        "Instructions at address {0} do not match ({1} != {2})",
-                        i,
-                        expected[i],
-                        actual[i]));
+                    $"Instructions at address {i} do not match ({expected[i]} != {actual[i]})");
         }
 
         [Test]
@@ -1070,7 +1064,7 @@ function main_extended does
     for(var i = 0; while i < 5; i++)
         action;
 ");
-            string asmInput =
+            var asmInput =
                 @"
                 var i
                 ldc.int 0
@@ -1211,10 +1205,10 @@ function main
     foreach(buffer.Append in lst.ToArray);
 }
 ");
-            List<Instruction> code = target.Functions["main"].Code;
+            var code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
-            string enum1 = code[3].Id ?? "No_ID_at_3";
-            string enum2 = code[24].Id ?? "No_ID_at_23";
+            var enum1 = code[3].Id ?? "No_ID_at_3";
+            var enum2 = code[24].Id ?? "No_ID_at_23";
 
             Expect(
                 string.Format(
@@ -1443,7 +1437,7 @@ ldloc   a
 add
 ret.value
 ");
-            PFunction func = target.Functions[@"main\0"];
+            var func = target.Functions[@"main\0"];
             Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
             Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
 
@@ -2368,11 +2362,11 @@ function main
 }
 ");
 
-            List<Instruction> code = target.Functions["main"].Code;
+            var code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 6, "Resulting must be longer than 6 instructions");
-            string using1 = code[6].Id ?? "No_ID_at_6";
+            var using1 = code[6].Id ?? "No_ID_at_6";
 
-            Expect(String.Format(
+            Expect(string.Format(
                 @"
 var h,{0}
 label beginTry  try
@@ -3359,7 +3353,7 @@ function main does foreach(var arg in var args)
 }
 ");
 
-            Expect(String.Format(@"
+            Expect(string.Format(@"
 var args,arg,t,{0}
                         ldloc   args
                         get.0   GetEnumerator

@@ -48,30 +48,20 @@ namespace Prexonite.Commands
             // ReSharper disable VirtualMemberNeverOverriden.Global
             public virtual bool IsPure
             // ReSharper restore VirtualMemberNeverOverriden.Global
-            // ReSharper restore UnusedMember.Global
-        {
-            get { return false; }
-        }
+            =>
+                false; // ReSharper restore UnusedMember.Global
 
         #region Command groups
-
-        private PCommandGroups _groups = PCommandGroups.None;
 
         /// <summary>
         ///     A bit fields that represents memberships in the <see cref = "PCommandGroups" />.
         /// </summary>
-        public PCommandGroups Groups
-        {
-            get { return _groups; }
-        }
+        public PCommandGroups Groups { get; private set; } = PCommandGroups.None;
 
         /// <summary>
         ///     Indicates whether the command belongs to a group.
         /// </summary>
-        public bool BelongsToAGroup
-        {
-            get { return _groups != PCommandGroups.None; }
-        }
+        public bool BelongsToAGroup => Groups != PCommandGroups.None;
 
         /// <summary>
         ///     Determines whether the command is a member of a particular group.
@@ -80,7 +70,7 @@ namespace Prexonite.Commands
         /// <returns>True, if the command is a member of the supplied group (or all groups); false otherwise.</returns>
         public bool IsInGroup(PCommandGroups groups)
         {
-            return (_groups & groups) == _groups;
+            return (Groups & groups) == Groups;
             //If _groups contains groups, an AND operation won't alter it
         }
 
@@ -90,7 +80,7 @@ namespace Prexonite.Commands
         /// <param name = "additionalGroups">The group (or groups) to which to add the command.</param>
         public void AddToGroup(PCommandGroups additionalGroups)
         {
-            _groups = _groups | additionalGroups;
+            Groups = Groups | additionalGroups;
         }
 
         /// <summary>
@@ -99,7 +89,7 @@ namespace Prexonite.Commands
         /// <param name = "groups">The group (or groups) from which to remove the command.</param>
         public void RemoveFromGroup(PCommandGroups groups)
         {
-            _groups = _groups ^ (_groups & groups);
+            Groups = Groups ^ (Groups & groups);
         }
 
         #endregion

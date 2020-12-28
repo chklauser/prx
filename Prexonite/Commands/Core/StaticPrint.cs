@@ -40,24 +40,14 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly StaticPrint _instance = new StaticPrint();
-
-        public static StaticPrint Instance
-        {
-            get { return _instance; }
-        }
+        public static StaticPrint Instance { get; } = new();
 
         private static TextWriter _writer = Console.Out;
 
         public static TextWriter Writer
         {
-            get { return _writer; }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                _writer = value;
-            }
+            get => _writer;
+            set => _writer = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         #endregion
@@ -69,10 +59,7 @@ namespace Prexonite.Commands.Core
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         /// <summary>
         ///     Executes the command.
@@ -154,7 +141,7 @@ namespace Prexonite.Commands.Core
         public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
             int dynamicArgc)
         {
-            var text = String.Concat(staticArgv.Select(_ToString));
+            var text = string.Concat(staticArgv.Select(_ToString));
             if (text.Length == 0)
             {
                 if (!ins.JustEffect)
@@ -186,25 +173,22 @@ namespace Prexonite.Commands.Core
         private static readonly MethodInfo _textWriterWriteMethod = typeof (TextWriter).GetMethod(
             "Write", new[] {typeof (string)});
 
-        internal static String _ToString(CompileTimeValue value)
+        internal static string _ToString(CompileTimeValue value)
         {
             switch (value.Interpretation)
             {
                 case CompileTimeInterpretation.Null:
                     return "";
                 case CompileTimeInterpretation.String:
-                    string str;
-                    if (!value.TryGetString(out str))
+                    if (!value.TryGetString(out var str))
                         goto default;
                     return str;
                 case CompileTimeInterpretation.Int:
-                    int integer;
-                    if (!value.TryGetInt(out integer))
+                    if (!value.TryGetInt(out var integer))
                         goto default;
                     return integer.ToString();
                 case CompileTimeInterpretation.Bool:
-                    bool boolean;
-                    if (!value.TryGetBool(out boolean))
+                    if (!value.TryGetBool(out var boolean))
                         goto default;
                     return boolean.ToString();
                 default:

@@ -39,10 +39,7 @@ namespace Prexonite.Types
         /// <summary>
         ///     Returns the current PValue (as an object)
         /// </summary>
-        object IEnumerator.Current
-        {
-            get { return Current; }
-        }
+        object IEnumerator.Current => Current;
 
         /// <summary>
         ///     Releases all managed and unmanaged resources held by this instance.

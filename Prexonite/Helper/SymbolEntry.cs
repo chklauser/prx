@@ -34,10 +34,6 @@ namespace Prexonite.Compiler
     {
         #region Representation
 
-        private readonly SymbolInterpretations _interpretation;
-        private readonly string _id;
-        private readonly ModuleName _module;
-
         /// <summary>
         ///     Optional integer parameter for this symbol.
         /// 
@@ -63,35 +59,24 @@ namespace Prexonite.Compiler
         {
             if (id != null && id.Length <= 0)
                 id = null;
-            _interpretation = interpretation;
-            _module = module;
-            _id = id;
+            Interpretation = interpretation;
+            Module = module;
+            InternalId = id;
             _argument = argument;
 
-            Debug.Assert(!_interpretation.AssociatedWithModule() || _module != null,
-                string.Format(
-                    "Attempted to create a {0} symbol pointing to {1} without supplying a module name.",
-                    Enum.GetName(typeof (SymbolInterpretations), interpretation), id));
+            Debug.Assert(!Interpretation.AssociatedWithModule() || Module != null,
+                $"Attempted to create a {Enum.GetName(typeof(SymbolInterpretations), interpretation)} symbol pointing to {id} without supplying a module name.");
         }
 
         #endregion
 
         #region Public accessors
 
-        public SymbolInterpretations Interpretation
-        {
-            get { return _interpretation; }
-        }
+        public SymbolInterpretations Interpretation { get; }
 
-        public string InternalId
-        {
-            get { return _id; }
-        }
+        public string InternalId { get; }
 
-        public ModuleName Module
-        {
-            get { return _module; }
-        }
+        public ModuleName Module { get; }
 
         /// <summary>
         ///     An optional intger parameter for this symbol. Use determined by symbol interpretation.
@@ -102,35 +87,32 @@ namespace Prexonite.Compiler
         ///         <item><description>Store resolved byte code addresses for labels.</description></item>
         ///     </list>
         /// </remarks>
-        public int? Argument
-        {
-            get { return _argument; }
-        }
+        public int? Argument => _argument;
 
         #endregion
 
         public SymbolEntry WithModule(ModuleName module, SymbolInterpretations? interpretation = null,
             string translatedId = null, int? argument = null)
         {
-            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? InternalId,
+            return new(interpretation ?? Interpretation, translatedId ?? InternalId,
                 argument ?? Argument, module);
         }
 
         public SymbolEntry With(SymbolInterpretations? interpretation = null, 
             string translatedId = null, int? argument = null)
         {
-            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? InternalId,
+            return new(interpretation ?? Interpretation, translatedId ?? InternalId,
                 argument ?? Argument, Module);
         }
 
         public SymbolEntry With(SymbolInterpretations interpretation, string translatedId)
         {
-            return new SymbolEntry(interpretation, translatedId, Argument, Module);
+            return new(interpretation, translatedId, Argument, Module);
         }
 
         public SymbolEntry With(SymbolInterpretations interpretation)
         {
-            return new SymbolEntry(interpretation, InternalId, Argument, Module);
+            return new(interpretation, InternalId, Argument, Module);
         }
 
         public override string ToString()
@@ -155,7 +137,7 @@ namespace Prexonite.Compiler
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Equals(other._interpretation, _interpretation) && Equals(other._id, _id) && Equals(other._module, _module) && other._argument.Equals(_argument);
+            return Equals(other.Interpretation, Interpretation) && Equals(other.InternalId, InternalId) && Equals(other.Module, Module) && other._argument.Equals(_argument);
         }
 
         /// <summary>
@@ -184,9 +166,9 @@ namespace Prexonite.Compiler
         {
             unchecked
             {
-                int result = _interpretation.GetHashCode();
-                result = (result*397) ^ (_id != null ? _id.GetHashCode() : 0);
-                result = (result*397) ^ (_module != null ? _module.GetHashCode() : 0);
+                var result = Interpretation.GetHashCode();
+                result = (result*397) ^ (InternalId != null ? InternalId.GetHashCode() : 0);
+                result = (result*397) ^ (Module != null ? Module.GetHashCode() : 0);
                 return result;
             }
         }
@@ -207,27 +189,27 @@ namespace Prexonite.Compiler
 
         public static SymbolEntry LocalObjectVariable(string id)
         {
-            return new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id,null);
+            return new(SymbolInterpretations.LocalObjectVariable, id,null);
         }
 
         public static SymbolEntry LocalReferenceVariable(string id)
         {
-            return new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, id, null);
+            return new(SymbolInterpretations.LocalReferenceVariable, id, null);
         }
 
         public static SymbolEntry Command(string id)
         {
-            return new SymbolEntry(SymbolInterpretations.Command,id,null);
+            return new(SymbolInterpretations.Command,id,null);
         }
 
         public static SymbolEntry MacroCommand(string id)
         {
-            return new SymbolEntry(SymbolInterpretations.MacroCommand, id, null);
+            return new(SymbolInterpretations.MacroCommand, id, null);
         }
 
         public static SymbolEntry JumpLabel(int address)
         {
-            return new SymbolEntry(SymbolInterpretations.JumpLabel, null, address, null);
+            return new(SymbolInterpretations.JumpLabel, null, address, null);
         }
 
 #endregion

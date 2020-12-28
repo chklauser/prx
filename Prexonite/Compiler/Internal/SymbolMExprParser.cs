@@ -40,13 +40,8 @@ namespace Prexonite.Compiler.Internal
 
         public SymbolMExprParser([NotNull] ISymbolView<Symbol> symbols,[NotNull] IMessageSink messageSink, [NotNull]ISymbolView<Symbol> topLevelSymbols = null)
         {
-            if (symbols == null)
-                throw new ArgumentNullException(nameof(symbols));
-            if (messageSink == null)
-                throw new ArgumentNullException(nameof(messageSink));
-            
-            _symbols = symbols;
-            _messageSink = messageSink;
+            _symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
+            _messageSink = messageSink ?? throw new ArgumentNullException(nameof(messageSink));
             _topLevelSymbols = topLevelSymbols ?? symbols;
         }
 
@@ -161,13 +156,13 @@ namespace Prexonite.Compiler.Internal
             if (elements[1].TryMatchAtom(out var rawMessageClass) && elements[2].TryMatchStringAtom(out var messageText))
             {
                 var message = Message.Create(severity, messageText, position,
-                    (rawMessageClass == null ? null : rawMessageClass.ToString()));
+                    rawMessageClass?.ToString());
                 return Symbol.CreateMessage(message, Parse(elements[3]), expr.Position);
             }
             else
             {
                 throw new ErrorMessageException(
-                    Message.Error(String.Format(Resources.Parser_Cannot_parse_message_symbol, expr),
+                    Message.Error(string.Format(Resources.Parser_Cannot_parse_message_symbol, expr),
                                   expr.Position, MessageClasses.CannotParseMExpr));
             }
         }
@@ -183,14 +178,14 @@ namespace Prexonite.Compiler.Internal
             {
                 return new SourcePosition(file, line, column);
             }
-            else if(expr.TryMatchHead(HerePositionHead, out List<MExpr> hereArgs))
+            else if(expr.TryMatchHead(HerePositionHead, out List<MExpr> _))
             {
                 return expr.Position;
             }
             else
             {
                 throw new ErrorMessageException(
-                    Message.Error(String.Format(Resources.Parser_Cannot_parse_source_position, expr), expr.Position,
+                    Message.Error(string.Format(Resources.Parser_Cannot_parse_source_position, expr), expr.Position,
                                   MessageClasses.CannotParseMExpr));
             }
         }

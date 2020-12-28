@@ -43,7 +43,6 @@ namespace Prexonite.Compiler.Cil
     [DebuggerDisplay("SEH for {State}")]
     public sealed class StructuredExceptionHandling
     {
-        private readonly CompilerState _state;
         private readonly InstructionInfo[] _loci;
 
         /// <summary>
@@ -52,7 +51,7 @@ namespace Prexonite.Compiler.Cil
         /// <param name = "state">The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.</param>
         internal StructuredExceptionHandling(CompilerState state) : this(state.Source)
         {
-            _state = state;
+            State = state;
         }
 
         internal StructuredExceptionHandling(PFunction source)
@@ -72,17 +71,13 @@ namespace Prexonite.Compiler.Cil
                 locus.Regions.Sort(Region.CompareRegions);
                 _loci[address] = locus;
             }
-            _state = null;
+            State = null;
         }
 
         /// <summary>
         ///     The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.
         /// </summary>
-        public CompilerState State
-        {
-            [DebuggerStepThrough]
-            get { return _state; }
-        }
+        public CompilerState State { [DebuggerStepThrough] get; }
 
         /// <summary>
         ///     Determines the handling for a branching instruction, depending on source and target address.
@@ -169,10 +164,7 @@ namespace Prexonite.Compiler.Cil
             else
             {
                 throw new PrexoniteException(
-                    string.Format(
-                        "Invalid decision by SEH checking algorithm: {0} and {1}.",
-                        Enum.GetName(typeof (BranchHandling), h1),
-                        Enum.GetName(typeof (BranchHandling), h1)));
+                    $"Invalid decision by SEH checking algorithm: {Enum.GetName(typeof(BranchHandling), h1)} and {Enum.GetName(typeof(BranchHandling), h1)}.");
             }
         }
 
@@ -291,7 +283,7 @@ namespace Prexonite.Compiler.Cil
         /// <exception cref = "ArgumentException">when the instruction supplied is not a jump/leave instruction.</exception>
         public void EmitJump(int sourceAddr, Instruction ins)
         {
-            if (_state == null)
+            if (State == null)
                 throw new InvalidOperationException(
                     "Cannot emit code on a SEH instance that is not tied to a compiler state.");
             int targetAddr;
@@ -308,7 +300,7 @@ namespace Prexonite.Compiler.Cil
                 case OpCode.ret_exit:
                 case OpCode.ret_continue:
                 case OpCode.ret_break:
-                    targetAddr = _state.Source.Code.Count;
+                    targetAddr = State.Source.Code.Count;
                     returning = true;
                     break;
                 default:
@@ -343,7 +335,7 @@ namespace Prexonite.Compiler.Cil
 
         private void _emitEndFinally(int sourceAddr, Instruction ins)
         {
-            Action endfinally = () => _state.Il.Emit(OpCodes.Endfinally);
+            Action endfinally = () => State.Il.Emit(OpCodes.Endfinally);
             switch (ins.OpCode)
             {
                 case OpCode.jump:
@@ -363,7 +355,7 @@ namespace Prexonite.Compiler.Cil
 
         private void _emitLeave(int sourceAddr, int targetAddr, Instruction ins)
         {
-            Action leave = () => _state.Il.Emit(OpCodes.Leave, _state.InstructionLabels[targetAddr]);
+            Action leave = () => State.Il.Emit(OpCodes.Leave, State.InstructionLabels[targetAddr]);
             switch (ins.OpCode)
             {
                 case OpCode.jump:
@@ -377,17 +369,17 @@ namespace Prexonite.Compiler.Cil
                     _emitSkipTrue(leave);
                     break;
                 case OpCode.ret_value:
-                    _state.EmitSetReturnValue();
+                    State.EmitSetReturnValue();
                     goto case OpCode.ret_exit;
                 case OpCode.ret_exit:
                     _clearStack(sourceAddr);
                     leave();
                     break;
                 case OpCode.ret_break:
-                    _state._EmitAssignReturnMode(ReturnMode.Break);
+                    State._EmitAssignReturnMode(ReturnMode.Break);
                     goto case OpCode.ret_exit;
                 case OpCode.ret_continue:
-                    _state._EmitAssignReturnMode(ReturnMode.Continue);
+                    State._EmitAssignReturnMode(ReturnMode.Continue);
                     goto case OpCode.ret_exit;
             }
         }
@@ -398,61 +390,61 @@ namespace Prexonite.Compiler.Cil
             {
                 case OpCode.jump:
                 case OpCode.leave:
-                    _state.Il.Emit(OpCodes.Br, _state.InstructionLabels[targetAddr]);
+                    State.Il.Emit(OpCodes.Br, State.InstructionLabels[targetAddr]);
                     break;
                 case OpCode.jump_f:
                     _emitUnboxBool();
-                    _state.Il.Emit(OpCodes.Brfalse, _state.InstructionLabels[targetAddr]);
+                    State.Il.Emit(OpCodes.Brfalse, State.InstructionLabels[targetAddr]);
                     break;
                 case OpCode.jump_t:
                     _emitUnboxBool();
-                    _state.Il.Emit(OpCodes.Brtrue, _state.InstructionLabels[targetAddr]);
+                    State.Il.Emit(OpCodes.Brtrue, State.InstructionLabels[targetAddr]);
                     break;
                 case OpCode.ret_value:
-                    _state.EmitSetReturnValue();
+                    State.EmitSetReturnValue();
                     goto case OpCode.ret_exit;
                 case OpCode.ret_exit:
                     //return mode is set implicitly by function header
                     _clearStack(sourceAddr);
-                    _state.Il.Emit(OpCodes.Br, _state.InstructionLabels[_state.Source.Code.Count]);
+                    State.Il.Emit(OpCodes.Br, State.InstructionLabels[State.Source.Code.Count]);
                     break;
                 case OpCode.ret_continue:
-                    _state._EmitAssignReturnMode(ReturnMode.Continue);
+                    State._EmitAssignReturnMode(ReturnMode.Continue);
                     goto case OpCode.ret_exit;
                 case OpCode.ret_break:
-                    _state._EmitAssignReturnMode(ReturnMode.Break);
+                    State._EmitAssignReturnMode(ReturnMode.Break);
                     goto case OpCode.ret_exit;
             }
         }
 
         private void _clearStack(int sourceAddress)
         {
-            Debug.Assert(0 <= sourceAddress && sourceAddress <= _state.StackSize.Length);
-            _state.EmitIgnoreArguments(_state.StackSize[sourceAddress]);
+            Debug.Assert(0 <= sourceAddress && sourceAddress <= State.StackSize.Length);
+            State.EmitIgnoreArguments(State.StackSize[sourceAddress]);
         }
 
         private void _emitSkipFalse(Action skippable)
         {
             _emitUnboxBool();
-            var cont = _state.Il.DefineLabel();
-            _state.Il.Emit(OpCodes.Brfalse_S, cont);
+            var cont = State.Il.DefineLabel();
+            State.Il.Emit(OpCodes.Brfalse_S, cont);
             skippable();
-            _state.Il.MarkLabel(cont);
+            State.Il.MarkLabel(cont);
         }
 
         private void _emitSkipTrue(Action skippable)
         {
             _emitUnboxBool();
-            var cont = _state.Il.DefineLabel();
-            _state.Il.Emit(OpCodes.Brtrue_S, cont);
+            var cont = State.Il.DefineLabel();
+            State.Il.Emit(OpCodes.Brtrue_S, cont);
             skippable();
-            _state.Il.MarkLabel(cont);
+            State.Il.MarkLabel(cont);
         }
 
         private void _emitUnboxBool()
         {
-            _state.EmitLoadLocal(_state.SctxLocal);
-            _state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
+            State.EmitLoadLocal(State.SctxLocal);
+            State.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
         }
 
         /// <summary>
@@ -473,12 +465,12 @@ namespace Prexonite.Compiler.Cil
         {
             private readonly int _address;
             private readonly StructuredExceptionHandling _seh;
-            public readonly List<Region> Regions = new List<Region>(8);
+            public readonly List<Region> Regions = new(8);
 
             private bool _isInRegion
             {
                 [DebuggerStepThrough]
-                get { return Regions.Count > 0; }
+                get => Regions.Count > 0;
             }
 
             public Region InnerMostRegion
@@ -489,7 +481,7 @@ namespace Prexonite.Compiler.Cil
                     if (_isInRegion)
                         return Regions[0];
                     else
-                        return default(Region);
+                        return default;
                 }
             }
 
@@ -515,13 +507,13 @@ namespace Prexonite.Compiler.Cil
                 [DebuggerStepThrough]
                 get
                 {
-                    if (_seh._state == null)
+                    if (_seh.State == null)
                         return new Instruction(OpCode.nop);
 
-                    if (_address >= _seh._state.Source.Code.Count)
+                    if (_address >= _seh.State.Source.Code.Count)
                         return new Instruction(OpCode.nop);
                     else
-                        return _seh._state.Source.Code[_address];
+                        return _seh.State.Source.Code[_address];
                 }
             }
         }

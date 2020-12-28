@@ -24,14 +24,10 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using Prexonite;
 using Prexonite.Compiler.Cil;
-using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
 {
@@ -49,10 +45,10 @@ namespace PrexoniteTests.Tests
 
             foreach (var t in cs)
                 Assert.That(t.Item2, Is.Not.Null,
-                    string.Format("The field/property Runtime.{0} is null.", t.Item1.Name));
+                    $"The field/property Runtime.{t.Item1.Name} is null.");
         }
 
-        private Object _invokeStatic(MemberInfo m)
+        private object _invokeStatic(MemberInfo m)
         {
             if(m is PropertyInfo)
             {

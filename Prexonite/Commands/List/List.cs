@@ -39,12 +39,7 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly List _instance = new List();
-
-        public static List Instance
-        {
-            get { return _instance; }
-        }
+        public static List Instance { get; } = new();
 
         #endregion
 
@@ -55,10 +50,7 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         /// <summary>
         ///     Executes the command.

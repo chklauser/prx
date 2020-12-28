@@ -42,11 +42,9 @@ namespace Prexonite.Compiler.Ast
         protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string uid = null, string prefix = null)
             : base(position)
         {
-            if (symbols == null)
-                throw new ArgumentNullException(nameof(symbols));
             _prefix = (prefix ?? DefaultPrefix) + "\\";
-            _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
-            _symbols = symbols;
+            BlockUid = string.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
+            Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
         }
 
         protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
@@ -61,17 +59,11 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        [NotNull]
-        private SymbolStore _symbols;
-
         /// <summary>
         /// Symbol table for the scope of this block.
         /// </summary>
         [NotNull]
-        public SymbolStore Symbols
-        {
-            get { return _symbols; }
-        }
+        public SymbolStore Symbols { get; private set; }
 
         /// <summary>
         /// Replaces symbol store backing this scope. Does not affect existing nested scopes!
@@ -79,22 +71,17 @@ namespace Prexonite.Compiler.Ast
         /// <param name="newStore">The new symbol store.</param>
         internal void _ReplaceSymbols([NotNull] SymbolStore newStore)
         {
-            _symbols = newStore;
+            Symbols = newStore;
         }
 
         [NotNull]
-        private List<AstNode> _statements = new List<AstNode>();
+        private List<AstNode> _statements = new();
 
         [NotNull]
         public List<AstNode> Statements
         {
-            get { return _statements; }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                _statements = value;
-            }
+            get => _statements;
+            set => _statements = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -113,15 +100,13 @@ namespace Prexonite.Compiler.Ast
             foreach (var node in _statements)
             {
                 var stmt = node;
-                var expr = stmt as AstExpr;
-                if (expr != null)
+                if (stmt is AstExpr expr)
                     stmt = _GetOptimizedNode(target, expr);
 
                 stmt.EmitEffectCode(target);
             }
 
-            if(Expression != null)
-                Expression.EmitCode(target, stackSemantics);
+            Expression?.EmitCode(target, stackSemantics);
         }
 
         #region Tail call optimization
@@ -131,15 +116,11 @@ namespace Prexonite.Compiler.Ast
         {
             foreach (var expression in hasExpressions.Expressions)
             {
-                var blockItself = expression as AstBlock;
-                var hasExpressionsItself = expression as IAstHasExpressions;
-                var hasBlocksItself = expression as IAstHasBlocks;
-
-                if (blockItself != null)
+                if (expression is AstBlock blockItself)
                     blockItself._tailCallOptimizeNestedBlock();
-                else if (hasExpressionsItself != null)
+                else if (expression is IAstHasExpressions hasExpressionsItself)
                     tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
-                else if (hasBlocksItself != null)
+                else if (expression is IAstHasBlocks hasBlocksItself)
                     _tailCallOptimizeAllNestedBlocksOf(hasBlocksItself);
             }
         }
@@ -150,32 +131,25 @@ namespace Prexonite.Compiler.Ast
             for (i = 1; i < _statements.Count; i++)
             {
                 var stmt = _statements[i];
-                var ret = stmt as AstReturn;
-                var getset = _statements[i - 1] as AstGetSet;
-                var hasBlocks = stmt as IAstHasBlocks;
-                var hasExpressions = stmt as IAstHasExpressions;
-                var blockItself = stmt as AstBlock;
 
-                if (ret != null && ret.Expression == null &&
-                    (ret.ReturnVariant == ReturnVariant.Exit ||
-                        ret.ReturnVariant == ReturnVariant.Continue) && getset != null)
+                switch (stmt)
                 {
-                    //NOTE: Aggressive TCO disabled
+                    case AstReturn {Expression: null} ret when (ret.ReturnVariant == ReturnVariant.Exit ||
+                                                                ret.ReturnVariant == ReturnVariant.Continue) && _statements[i - 1] is AstGetSet:
+                        //NOTE: Aggressive TCO disabled
 
-                    //ret.Expression = getset;
-                    //Statements.RemoveAt(i--);
-                }
-                else if (blockItself != null)
-                {
-                    blockItself._tailCallOptimizeNestedBlock();
-                }
-                else if (hasBlocks != null)
-                {
-                    _tailCallOptimizeAllNestedBlocksOf(hasBlocks);
-                }
-                else if (hasExpressions != null)
-                {
-                    tail_call_optimize_expressions_of_nested_block(hasExpressions);
+                        //ret.Expression = getset;
+                        //Statements.RemoveAt(i--);
+                        break;
+                    case AstBlock blockItself:
+                        blockItself._tailCallOptimizeNestedBlock();
+                        break;
+                    case IAstHasBlocks hasBlocks:
+                        _tailCallOptimizeAllNestedBlocksOf(hasBlocks);
+                        break;
+                    case IAstHasExpressions hasExpressions:
+                        tail_call_optimize_expressions_of_nested_block(hasExpressions);
+                        break;
                 }
             }
         }
@@ -195,7 +169,7 @@ namespace Prexonite.Compiler.Ast
 
             if (_statements.Count == 0)
                 return;
-            var lastStmt = _statements[_statements.Count - 1];
+            var lastStmt = _statements[^1];
             AstCondition cond;
 
             // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
@@ -211,21 +185,15 @@ namespace Prexonite.Compiler.Ast
                     {
                         Expression = getset
                     };
-                _statements[_statements.Count - 1] = ret;
+                _statements[^1] = ret;
             }
         }
 
         #endregion
 
-        public virtual bool IsEmpty
-        {
-            get { return Count == 0; }
-        }
+        public virtual bool IsEmpty => Count == 0;
 
-        public virtual bool IsSingleStatement
-        {
-            get { return Count == 1; }
-        }
+        public virtual bool IsSingleStatement => Count == 1;
 
         #region IList<AstNode> Members
 
@@ -259,14 +227,9 @@ namespace Prexonite.Compiler.Ast
         public AstNode this[int index]
         {
             [DebuggerStepThrough]
-            get { return _statements[index]; }
+            get => _statements[index];
             [DebuggerStepThrough]
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                _statements[index] = value;
-            }
+            set => _statements[index] = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         #endregion
@@ -318,13 +281,13 @@ namespace Prexonite.Compiler.Ast
         public int Count
         {
             [DebuggerStepThrough]
-            get { return _statements.Count; }
+            get => _statements.Count;
         }
 
         public bool IsReadOnly
         {
             [DebuggerStepThrough]
-            get { return ((IList<AstNode>) _statements).IsReadOnly; }
+            get => ((IList<AstNode>) _statements).IsReadOnly;
         }
 
         [DebuggerStepThrough]
@@ -370,18 +333,11 @@ namespace Prexonite.Compiler.Ast
         #region Block labels
 
         private readonly string _prefix;
-        private readonly string _uid;
         public AstExpr Expression;
 
-        public string Prefix
-        {
-            get { return _prefix.Substring(0, _prefix.Length - 1); }
-        }
+        public string Prefix => _prefix.Substring(0, _prefix.Length - 1);
 
-        public string BlockUid
-        {
-            get { return _uid; }
-        }
+        public string BlockUid { get; }
 
         public virtual AstExpr[] Expressions
         {
@@ -399,7 +355,7 @@ namespace Prexonite.Compiler.Ast
 
         public string CreateLabel(string verb)
         {
-            return String.Concat(_prefix, verb, _uid);
+            return string.Concat(_prefix, verb, BlockUid);
         }
 
         #endregion
@@ -416,7 +372,7 @@ namespace Prexonite.Compiler.Ast
 
         public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
         {
-            return new AstBlock(position,symbols,uid, prefix);
+            return new(position,symbols,uid, prefix);
         }
     }
 }

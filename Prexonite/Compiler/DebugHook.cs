@@ -29,7 +29,6 @@ using JetBrains.Annotations;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
-using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler
 {
@@ -55,7 +54,7 @@ namespace Prexonite.Compiler
             _replaceDebug(t, t.Ast, debugging);
         }
 
-        private static readonly CompilerHook _hook = new CompilerHook(Hook);
+        private static readonly CompilerHook _hook = new(Hook);
 
         /// <summary>
         ///     Installs the hook in the supplied <see cref = "Loader" />.
@@ -109,9 +108,8 @@ namespace Prexonite.Compiler
                     {
                         for (var j = 0; j < stmt.Arguments.Count; j++)
                         {
-                            var arg = stmt.Arguments[j] as AstIndirectCall;
                             AstReference refNode;
-                            if (arg != null && (refNode = arg.Subject as AstReference) != null)
+                            if (stmt.Arguments[j] is AstIndirectCall arg && (refNode = arg.Subject as AstReference) != null)
                             {
                                 var printlnCall = t.Factory.Call(stmt.Position,
                                                                  EntityRef.Command.Create(Engine.PrintLineAlias));
@@ -122,7 +120,7 @@ namespace Prexonite.Compiler
                                         stmt.File,
                                         stmt.Line,
                                         stmt.Column,
-                                        String.Concat("DEBUG ", refNode.Entity, " = "));
+                                        string.Concat("DEBUG ", refNode.Entity, " = "));
                                 concatCall.Arguments.Add(consts);
                                 concatCall.Arguments.Add(arg);
                                 printlnCall.Arguments.Add(concatCall);
@@ -136,25 +134,20 @@ namespace Prexonite.Compiler
                     continue;
                 } //end if debug call
 
-                var cond = block[i] as AstCondition;
-
                 //look for conditions
-                if (cond != null)
+                if (block[i] is AstCondition cond)
                 {
-                    var expr = cond.Condition as AstIndirectCall;
                     AstReference refNode;
-                    EntityRef.Command cmd;
-                    if (expr != null 
+                    if (cond.Condition is AstIndirectCall expr 
                         && (refNode = expr.Subject as AstReference) != null 
-                        && refNode.Entity.TryGetCommand(out cmd) 
+                        && refNode.Entity.TryGetCommand(out var cmd) 
                         && Engine.StringsAreEqual(cmd.Id,Engine.DebugAlias) )
                         cond.Condition =
                             new AstConstant(expr.File, expr.Line, expr.Column, debugging);
                 }
 
                 //Recursively replace 'debug' in nested blocks.
-                var complex = block[i] as IAstHasBlocks;
-                if (complex != null)
+                if (block[i] is IAstHasBlocks complex)
                     foreach (var subBlock in complex.Blocks)
                         _replaceDebug(t, subBlock, debugging);
             } //end for statements
@@ -163,9 +156,7 @@ namespace Prexonite.Compiler
         [ContractAnnotation("=>true,stmt:notnull;=>false,stmt:canbenull")]
         private static bool _isDebugCall([CanBeNull] AstGetSet stmt)
         {
-            EntityRef entityRef;
-            EntityRef.Command cmdRef;
-            return stmt.TryMatchCall(out entityRef) && entityRef.TryGetCommand(out cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
+            return stmt.TryMatchCall(out var entityRef) && entityRef.TryGetCommand(out var cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
         }
     }
 }

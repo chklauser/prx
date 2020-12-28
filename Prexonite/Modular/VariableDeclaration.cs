@@ -86,26 +86,18 @@ namespace Prexonite.Modular
                 if (id.Length == 0)
                     throw new ArgumentException(Resources.VariableDeclaration_Variable_id_must_not_be_empty, nameof(id));
 
-                _metaTable[Application.IdKey] = id;
+                Meta[Application.IdKey] = id;
             }
-
-            private readonly MetaTable _metaTable = MetaTable.Create();
 
             /// <summary>
             /// The id of the global variable. Not null and not empty.
             /// </summary>
-            public override string Id
-            {
-                get { return Meta[Application.IdKey].Text; }
-            }
+            public override string Id => Meta[Application.IdKey].Text;
 
             /// <summary>
             /// The meta table for this global variable.
             /// </summary>
-            public override MetaTable Meta
-            {
-                get { return _metaTable; }
-            }
+            public override MetaTable Meta { get; } = MetaTable.Create();
         }
     }
 

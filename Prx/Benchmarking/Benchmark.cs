@@ -40,12 +40,7 @@ namespace Prx.Benchmarking
         public Engine Machine { get; set; }
 
 
-        private readonly int _iterations;
-
-        public int Iterations
-        {
-            get { return _iterations; }
-        }
+        public int Iterations { get; }
 
         public Benchmark(StackContext sctx, int iterations)
             : this(sctx.ParentEngine, iterations)
@@ -54,13 +49,11 @@ namespace Prx.Benchmarking
 
         public Benchmark(Engine eng, int iterations)
         {
-            if (eng == null)
-                throw new ArgumentNullException(nameof(eng));
             if (iterations < 0)
                 throw new ArgumentOutOfRangeException(
                     nameof(iterations), iterations, "iterations must be a positive integer.");
-            _iterations = iterations;
-            Machine = eng;
+            Iterations = iterations;
+            Machine = eng ?? throw new ArgumentNullException(nameof(eng));
         }
 
         public Benchmark(Engine eng)
@@ -85,19 +78,9 @@ namespace Prx.Benchmarking
         public const int DefaultIterations = 1000;
         public const int DefaultWarmUpIterations = 2;
 
-        private readonly BenchmarkEntryCollection _entries = new BenchmarkEntryCollection();
+        public BenchmarkEntryCollection Entries { get; } = new();
 
-        public BenchmarkEntryCollection Entries
-        {
-            get { return _entries; }
-        }
-
-        internal Stopwatch _Stopwatch
-        {
-            get { return _stopwatch; }
-        }
-
-        private readonly Stopwatch _stopwatch = new Stopwatch();
+        internal Stopwatch _Stopwatch { get; } = new();
 
         public void IncludeAll(Application application)
         {
@@ -120,20 +103,20 @@ namespace Prx.Benchmarking
         {
             if (function == null)
                 throw new ArgumentNullException(nameof(function));
-            _entries.Add(new BenchmarkEntry(this, function));
+            Entries.Add(new BenchmarkEntry(this, function));
         }
 
         public List<Measurement> MeasureAll(bool verbose)
         {
             var lst = new List<Measurement>(Entries.Count);
-            foreach (var entry in _entries)
+            foreach (var entry in Entries)
                 lst.Add(entry.Measure(verbose));
             return lst;
         }
 
         public void WarmUp()
         {
-            foreach (var entry in _entries)
+            foreach (var entry in Entries)
                 entry.WarmUp();
         }
 
@@ -146,10 +129,8 @@ namespace Prx.Benchmarking
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[0];
-            if (id == null)
-                id = "";
+            args ??= Array.Empty<PValue>();
+            id ??= "";
 
             result = null;
             switch (id.ToLower(CultureInfo.InvariantCulture))
@@ -170,15 +151,13 @@ namespace Prx.Benchmarking
                     result = PType.Null.CreatePValue();
                     break;
                 case "includeall":
-                    Application tapp;
-                    if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out tapp)))
+                    if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out Application tapp)))
                         tapp = sctx.ParentApplication;
                     IncludeAll(tapp);
                     result = PType.Null.CreatePValue();
                     break;
                 case "measureall":
-                    bool verbose;
-                    if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out verbose)))
+                    if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out bool verbose)))
                         verbose = true;
                     var plst = MeasureAll(verbose).Select(sctx.CreateNativePValue).ToList();
                     result = (PValue) plst;

@@ -84,7 +84,7 @@ namespace PrexoniteTests.Tests
 
             foreach (var a in ps)
                 Assert.That(a.IsLinked, Is.False,
-                    string.Format("Application {0} should not be linked initially.", a));
+                    $"Application {a} should not be linked initially.");
 
             //Link a's and b's, respectively
             foreach (var a in aps.Skip(1))
@@ -99,16 +99,13 @@ namespace PrexoniteTests.Tests
 
             foreach (var a in ps)
                 Assert.That(a.IsLinked, Is.True,
-                    string.Format("Application {0} should be linked afterwards.", a));
+                    $"Application {a} should be linked afterwards.");
 
             var c = aps[0].Compound;
             foreach (var a in ps)
             {
                 Assert.That(a.Compound, Is.SameAs(c),
-                    string.Format(
-                        "Compound object of application {0} should be " +
-                            "identical with that of application {1}.",
-                        a, aps[0]));
+                    $"Compound object of application {a} should be " + $"identical with that of application {aps[0]}.");
             }
 
             Assert.That(aps[0].Compound.Count,Is.EqualTo(aps.Count + bps.Count));
@@ -123,15 +120,12 @@ namespace PrexoniteTests.Tests
 
             foreach (var a in ps.Where(x => x != p))
                 Assert.That(a.IsLinked, Is.True,
-                    string.Format("Application {0} should still be linked afterwards.", a));
+                    $"Application {a} should still be linked afterwards.");
             c = aps[1].Compound;
             foreach (var a in ps.Where(x => x != p))
             {
                 Assert.That(a.Compound, Is.SameAs(c),
-                    string.Format(
-                        "Compound object of application {0} should be " +
-                            "identical with that of application {1}.",
-                        a, aps[1]));
+                    $"Compound object of application {a} should be " + $"identical with that of application {aps[1]}.");
             }
         }
 
@@ -159,7 +153,7 @@ namespace PrexoniteTests.Tests
 
             foreach (var a in ps)
                 Assert.That(a.IsLinked, Is.False,
-                    string.Format("Application {0} should not be linked initially.", a));
+                    $"Application {a} should not be linked initially.");
 
             //Link a's and b's, respectively
             foreach (var a in aps.Skip(1))
@@ -174,16 +168,13 @@ namespace PrexoniteTests.Tests
 
             foreach (var a in ps)
                 Assert.That(a.IsLinked, Is.True,
-                    string.Format("Application {0} should be linked afterwards.", a.Module.Name));
+                    $"Application {a.Module.Name} should be linked afterwards.");
 
             var c = aps[0].Compound;
             foreach (var a in ps)
             {
                 Assert.That(a.Compound, Is.SameAs(c),
-                    string.Format(
-                        "Compound object of application {0} should be " +
-                            "identical with that of application {1}.",
-                        a, aps[0]));
+                    $"Compound object of application {a} should be " + $"identical with that of application {aps[0]}.");
             }
 
             Assert.That(aps[0].Compound.Count,Is.EqualTo(ps.Count));
@@ -197,15 +188,12 @@ namespace PrexoniteTests.Tests
 
             foreach (var a in ps.Where(x => x != p))
                 Assert.That(a.IsLinked, Is.True,
-                    string.Format("Application {0} should still be linked afterwards.", a));
+                    $"Application {a} should still be linked afterwards.");
             c = aps[1].Compound;
             foreach (var a in ps.Where(x => x != p))
             {
                 Assert.That(a.Compound, Is.SameAs(c),
-                    string.Format(
-                        "Compound object of application {0} should be " +
-                            "identical with that of application {1}.",
-                        a, aps[1]));
+                    $"Compound object of application {a} should be " + $"identical with that of application {aps[1]}.");
             }
         }
 

@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using Prexonite.Compiler.Internal;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -36,9 +35,7 @@ namespace Prexonite.Compiler.Ast
             string file, int line, int column, AstExpr condition, bool isNegative)
             : base(file, line, column)
         {
-            if (condition == null)
-                throw new ArgumentNullException(nameof(condition));
-            Condition = condition;
+            Condition = condition ?? throw new ArgumentNullException(nameof(condition));
             IsNegative = isNegative;
         }
 
@@ -79,21 +76,16 @@ namespace Prexonite.Compiler.Ast
             //Optimize condition
             _OptimizeNode(target, ref Condition);
             // Invert condition when unary logical not
-            AstIndirectCall unaryCond;
-            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
             {
                 Condition = unaryCond.Arguments[0];
                 IsNegative = !IsNegative;
             }
 
             //Constant conditions
-            if (Condition is AstConstant)
+            if (Condition is AstConstant constCond)
             {
-                var constCond = (AstConstant) Condition;
-                PValue condValue;
-                if (
-                    !constCond.ToPValue(target).TryConvertTo(
-                        target.Loader, PType.Bool, out condValue))
+                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
                     expr = null;
                 else if (((bool) condValue.Value) ^ IsNegative)
                     expr = IfExpression;

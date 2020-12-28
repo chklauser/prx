@@ -33,22 +33,14 @@ namespace Prexonite.Compiler.Build.Internal
 
         public StringSource(string source)
         {
-            if ((object) source == null)
-                throw new System.ArgumentNullException(nameof(source));
-            _source = source;
+            _source = source ?? throw new System.ArgumentNullException(nameof(source));
         }
 
         #region Implementation of ISource
 
-        public bool CanOpen
-        {
-            get { return true; }
-        }
+        public bool CanOpen => true;
 
-        public bool IsSingleUse
-        {
-            get { return false; }
-        }
+        public bool IsSingleUse => false;
 
         public bool TryOpen(out TextReader reader)
         {

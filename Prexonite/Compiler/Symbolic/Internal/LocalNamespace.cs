@@ -33,13 +33,13 @@ namespace Prexonite.Compiler.Symbolic.Internal
         /// <returns>A physical name, related to the logical name provided.</returns>
         /// <exception cref="InvalidOperationException"><see cref="Prefix"/> has not been assigned yet.</exception>
         [NotNull]
-        public string DerivePhysicalName([NotNull] String logicalName)
+        public string DerivePhysicalName([NotNull] string logicalName)
         {
             if (logicalName == null)
                 throw new ArgumentNullException(nameof(logicalName));
             if (Prefix == null)
                 throw new InvalidOperationException(
-                    "Cannot derive physical name before a perfix has been assigned to the namespace.");
+                    "Cannot derive physical name before a prefix has been assigned to the namespace.");
 
             return Prefix + "\\" + logicalName;
         }

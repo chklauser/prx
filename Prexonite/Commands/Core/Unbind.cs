@@ -27,7 +27,6 @@ using System;
 using System.Linq;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -74,12 +73,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static readonly Unbind _instance = new Unbind();
-
-        public static Unbind Instance
-        {
-            get { return _instance; }
-        }
+        public static Unbind Instance { get; } = new();
 
         /// <summary>
         ///     Executes the unbind command on each of the arguments supplied.
@@ -123,8 +117,7 @@ namespace Prexonite.Commands.Core
             if (arg.IsNull)
                 throw new PrexoniteException("The unbind command cannot process Null.");
 
-            var fctx = sctx as FunctionContext;
-            if (fctx == null)
+            if (!(sctx is FunctionContext fctx))
                 throw new PrexoniteException(
                     "The unbind command can only work on function contexts.");
 
@@ -143,8 +136,7 @@ namespace Prexonite.Commands.Core
                 throw new PrexoniteException("Unbind requires variable references as arguments.");
             }
 
-            PVariable existing;
-            if (id != null && fctx.LocalVariables.TryGetValue(id, out existing))
+            if (id != null && fctx.LocalVariables.TryGetValue(id, out var existing))
             {
                 var unbound = new PVariable {Value = existing.Value};
                 fctx.ReplaceLocalVariable(id, unbound);
@@ -182,14 +174,12 @@ namespace Prexonite.Commands.Core
         {
             foreach (var compileTimeValue in staticArgv)
             {
-                EntityRef.Variable.Local local;
-                if (!compileTimeValue.TryGetLocalVariableReference(out local))
+                if (!compileTimeValue.TryGetLocalVariableReference(out var local))
                     throw new ArgumentException(
                         "CIL implementation of Core.Unbind command only accepts local variable references.",
                         nameof(staticArgv));
 
-                CilSymbol cilSymbol;
-                if (!state.Symbols.TryGetValue(local.Id, out cilSymbol) ||
+                if (!state.Symbols.TryGetValue(local.Id, out var cilSymbol) ||
                     cilSymbol.Kind != SymbolKind.LocalRef)
                     throw new PrexoniteException(
                         string.Format("CIL implementation of {1} cannot find local explicit variable {0}", local.Id, GetType().FullName));

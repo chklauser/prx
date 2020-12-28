@@ -50,7 +50,7 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         ///     The list of arguments for the string concatenation.
         /// </summary>
-        [NotNull] private readonly List<AstExpr> _arguments = new List<AstExpr>();
+        [NotNull] private readonly List<AstExpr> _arguments = new();
 
         /// <summary>
         ///     Creates a new AstStringConcatenation AST node.
@@ -68,8 +68,7 @@ namespace Prexonite.Compiler.Ast
             if (multiConcatPrototype == null)
                 throw new ArgumentNullException(nameof(multiConcatPrototype));
             
-            if (arguments == null)
-                arguments = new AstExpr[] {};
+            arguments ??= Array.Empty<AstExpr>();
 
             _arguments.AddRange(arguments);
             _simpleConcatPrototype = simpleConcatPrototype;
@@ -78,18 +77,12 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
-        {
-            get { return _arguments.ToArray(); }
-        }
+        public AstExpr[] Expressions => _arguments.ToArray();
 
         /// <summary>
         ///     The list of arguments for the string concatenation.
         /// </summary>
-        public List<AstExpr> Arguments
-        {
-            get { return _arguments; }
-        }
+        public List<AstExpr> Arguments => _arguments;
 
         #endregion
 
@@ -221,14 +214,13 @@ namespace Prexonite.Compiler.Ast
                 }
             }
 
-            //Expand embedded concats argument list
+            //Expand embedded concatenates argument list
             var argumentArray = _arguments.ToArray();
             for (var i = 0; i < argumentArray.Length; i++)
             {
                 var argument = argumentArray[i];
-                var concat = argument as AstStringConcatenation;
 
-                if (concat != null)
+                if (argument is AstStringConcatenation concat)
                 {
                     _arguments.RemoveAt(i); //Remove embedded concat
                     _arguments.InsertRange(i, concat._arguments); //insert it's arguments instead
@@ -242,8 +234,7 @@ namespace Prexonite.Compiler.Ast
             foreach (var e in _arguments)
             {
                 string current;
-                var currConst = e as AstConstant;
-                if (currConst != null)
+                if (e is AstConstant currConst)
                     current = currConst.ToPValue(target).CallToString(target.Loader);
                 else
                     current = null;

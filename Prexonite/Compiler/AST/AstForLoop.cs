@@ -26,7 +26,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Prexonite.Compiler.Internal;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -56,51 +55,28 @@ namespace Prexonite.Compiler.Ast
         private AstForLoop(ISourcePosition position, AstScopedBlock nextBlock)
             : base(position, nextBlock)
         {
-            _initialize = (AstScopedBlock)nextBlock.LexicalScope;
-            _nextIteration = nextBlock;
+            Initialize = (AstScopedBlock)nextBlock.LexicalScope;
+            NextIteration = nextBlock;
         }
 
         public AstExpr Condition { get; set; }
-        private readonly AstScopedBlock _initialize;
-        public AstScopedBlock Initialize
-        {
-            get { return _initialize; }
-        }
+        public AstScopedBlock Initialize { get; }
 
-        private readonly AstScopedBlock _nextIteration;
-        public AstScopedBlock NextIteration
-        {
-            get { return _nextIteration; }
-        }
+        public AstScopedBlock NextIteration { get; }
 
-        private bool _isPositive = true;
-        private bool _isPrecondition = true;
+        public bool IsPositive { [DebuggerStepThrough] get; [DebuggerStepThrough] set; } = true;
 
-        public bool IsPositive
-        {
-            [DebuggerStepThrough]
-            get { return _isPositive; }
-            [DebuggerStepThrough]
-            set { _isPositive = value; }
-        }
-
-        public bool IsPrecondition
-        {
-            [DebuggerStepThrough]
-            get { return _isPrecondition; }
-            [DebuggerStepThrough]
-            set { _isPrecondition = value; }
-        }
+        public bool IsPrecondition { [DebuggerStepThrough] get; [DebuggerStepThrough] set; } = true;
 
         public bool IsInitialized
         {
             [DebuggerStepThrough]
-            get { return Condition != null; }
+            get => Condition != null;
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-             if(stackSemantics == StackSemantics.Value)
+            if(stackSemantics == StackSemantics.Value)
                 throw new NotSupportedException("For loops don't produce values and can thus not be emitted with value semantics.");
 
             if (!IsInitialized)
@@ -111,8 +87,7 @@ namespace Prexonite.Compiler.Ast
 
             _OptimizeNode(target, ref condition);
             // Invert condition when unary logical not
-            AstIndirectCall unaryCond;
-            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
             {
                 Condition = unaryCond.Arguments[0];
                 IsPositive = !IsPositive;
@@ -120,13 +95,11 @@ namespace Prexonite.Compiler.Ast
 
             //Constant conditions
             var conditionIsConstant = false;
-            var constCond = condition as AstConstant;
-            if (constCond != null)
+            if (condition is AstConstant constCond)
             {
-                PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
-                        target.Loader, PType.Bool, out condValue))
+                        target.Loader, PType.Bool, out var condValue))
                     goto continueFull;
                 else if ((bool) condValue.Value == IsPositive)
                     conditionIsConstant = true;

@@ -33,14 +33,12 @@ namespace Prexonite.Compiler
     {
         public AddressChangeHook(int instructionIndex, Action<int> reaction)
         {
-            if (reaction == null)
-                throw new ArgumentNullException(nameof(reaction));
             if (instructionIndex < 0)
                 throw new ArgumentOutOfRangeException
                     (nameof(instructionIndex), instructionIndex,
                         "The instruction index must be valid (i.e. not negative).");
 
-            React = reaction;
+            React = reaction ?? throw new ArgumentNullException(nameof(reaction));
             InstructionIndex = instructionIndex;
         }
 

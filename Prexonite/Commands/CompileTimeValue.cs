@@ -47,7 +47,7 @@ namespace Prexonite.Commands
         /// <summary>
         ///     The compile-time value. Interpret according to <see cref = "Interpretation" />.
         /// </summary>
-        public Object Value;
+        public object Value;
 
         /// <summary>
         ///     Indicates whether the compile time value is a reference (to a variable, function, command etc.)
@@ -78,8 +78,7 @@ namespace Prexonite.Commands
         /// <returns>true if the conversion was successful; false otherwise.</returns>
         public bool TryGetSymbolEntry(out SymbolEntry entry)
         {
-            var er = Value as EntityRef;
-            if (er != null)
+            if (Value is EntityRef er)
             {
                 entry = (SymbolEntry) er;
                 return true;
@@ -112,13 +111,11 @@ namespace Prexonite.Commands
                     result = (string) Value;
                     break;
                 case CompileTimeInterpretation.Int:
-                    int value;
-                    TryGetInt(out value);
+                    TryGetInt(out var value);
                     result = value;
                     break;
                 case CompileTimeInterpretation.Bool:
-                    bool flag;
-                    TryGetBool(out flag);
+                    TryGetBool(out var flag);
                     result = flag;
                     break;
             }
@@ -156,7 +153,7 @@ namespace Prexonite.Commands
         /// </summary>
         /// <param name = "value">If the conversion succeeds, <paramref name = "value" /> is set to the converted boolean. Otherwise its value is undefined.</param>
         /// <returns>True if the conversion succeeded; false otherwise</returns>
-        public bool TryGetBool(out Boolean value)
+        public bool TryGetBool(out bool value)
         {
             var b = Value as bool?;
             value = b.GetValueOrDefault();
@@ -234,7 +231,7 @@ namespace Prexonite.Commands
                     compileTimeValue.Value = (int?) argc;
                     return true;
                 case OpCode.ldc_real:
-                    compileTimeValue = default(CompileTimeValue);
+                    compileTimeValue = default;
                     return false;
                 case OpCode.ldc_bool:
                     compileTimeValue.Interpretation = CompileTimeInterpretation.Bool;
@@ -254,8 +251,7 @@ namespace Prexonite.Commands
                     compileTimeValue.Value = cache[EntityRef.Variable.Local.Create(instruction.Id)];
                     return true;
                 case OpCode.ldr_loci:
-                    string id;
-                    if (!localVariableMapping.TryGetValue(argc, out id) || id == null)
+                    if (!localVariableMapping.TryGetValue(argc, out var id) || id == null)
                         goto default;
                     compileTimeValue.Interpretation =
                         CompileTimeInterpretation.LocalVariableReference;
@@ -275,16 +271,16 @@ namespace Prexonite.Commands
                     compileTimeValue.Value = cache[EntityRef.Command.Create(instruction.Id)];
                     return true;
                 case OpCode.ldr_app:
-                    compileTimeValue = default(CompileTimeValue);
+                    compileTimeValue = default;
                     return false;
                 case OpCode.ldr_eng:
-                    compileTimeValue = default(CompileTimeValue);
+                    compileTimeValue = default;
                     return false;
                 case OpCode.ldr_type:
-                    compileTimeValue = default(CompileTimeValue);
+                    compileTimeValue = default;
                     return false;
                 default:
-                    compileTimeValue = default(CompileTimeValue);
+                    compileTimeValue = default;
                     return false;
             }
         }
@@ -302,9 +298,8 @@ namespace Prexonite.Commands
             IDictionary<int, string> localVariableMapping, int offset, CentralCache cache, ModuleName internalModule)
         {
             var compileTimeValues = new LinkedList<CompileTimeValue>();
-            CompileTimeValue compileTimeValue;
             while (0 <= offset &&
-                TryParse(instructions[offset--], localVariableMapping, cache, internalModule, out compileTimeValue))
+                   TryParse(instructions[offset--], localVariableMapping, cache, internalModule, out var compileTimeValue))
                 compileTimeValues.AddFirst(compileTimeValue);
             return compileTimeValues.ToArray();
         }
@@ -319,44 +314,37 @@ namespace Prexonite.Commands
                     state.EmitLoadNullAsPValue();
                     break;
                 case CompileTimeInterpretation.String:
-                    string stringValue;
-                    if (!TryGetString(out stringValue))
+                    if (!TryGetString(out var stringValue))
                         goto default;
                     state.EmitLoadStringAsPValue(stringValue);
                     break;
                 case CompileTimeInterpretation.Int:
-                    int intValue;
-                    if (!TryGetInt(out intValue))
+                    if (!TryGetInt(out var intValue))
                         goto default;
                     state.EmitLoadIntAsPValue(intValue);
                     break;
                 case CompileTimeInterpretation.Bool:
-                    bool boolValue;
-                    if (!TryGetBool(out boolValue))
+                    if (!TryGetBool(out var boolValue))
                         goto default;
                     state.EmitLoadBoolAsPValue(boolValue);
                     break;
                 case CompileTimeInterpretation.LocalVariableReference:
-                    EntityRef.Variable.Local localVariable;
-                    if (!TryGetLocalVariableReference(out localVariable))
+                    if (!TryGetLocalVariableReference(out var localVariable))
                         goto default;
                     state.EmitLoadLocalRefAsPValue(localVariable);
                     break;
                 case CompileTimeInterpretation.GlobalVariableReference:
-                    EntityRef.Variable.Global globalVariable;
-                    if (!TryGetGlobalVariableReference(out globalVariable))
+                    if (!TryGetGlobalVariableReference(out var globalVariable))
                         goto default;
                     state.EmitLoadGlobalRefAsPValue(globalVariable);
                     break;
                 case CompileTimeInterpretation.FunctionReference:
-                    EntityRef.Function func;
-                    if (!TryGetFunctionReference(out func))
+                    if (!TryGetFunctionReference(out var func))
                         goto default;
                     state.EmitLoadFuncRefAsPValue(func);
                     break;
                 case CompileTimeInterpretation.CommandReference:
-                    EntityRef.Command command;
-                    if (!TryGetCommandReference(out command))
+                    if (!TryGetCommandReference(out var command))
                         goto default;
                     state.EmitLoadCmdRefAsPValue(command);
                     break;

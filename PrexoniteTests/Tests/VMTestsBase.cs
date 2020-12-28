@@ -35,7 +35,6 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 using Prx.Tests;
 using Compiler = Prexonite.Compiler.Cil.Compiler;
@@ -257,18 +256,13 @@ namespace PrexoniteTests.Tests
             Assert.AreEqual(
                 expected.Type,
                 rv.Type,
-                string.Format(
-                    "Return value is expected to be of type {0} and not {1}. Returned {2}.",
-                    expected.Type,
-                    rv.Type,
-                    rv));
+                $"Return value is expected to be of type {expected.Type} and not {rv.Type}. Returned {rv}.");
             if (expected.Type == PType.List)
             {
                 var expectedL = (List<PValue>) expected.Value;
                 var rvL = (List<PValue>) rv.Value;
                 Assert.AreEqual(expectedL.Count, rvL.Count,
-                    string.Format("Returned list differs in length. Elements returned {0}",
-                        rvL.ToEnumerationString()));
+                    $"Returned list differs in length. Elements returned {rvL.ToEnumerationString()}");
 
                 for (var i = 0; i < expectedL.Count; i++)
                 {
@@ -302,8 +296,7 @@ namespace PrexoniteTests.Tests
         {
             return v =>
                 Assert.That(v.IsNull, Is.True,
-                    string.Format("Value returned from {0} is expected to be a null reference, was {1} instead.",
-                        functionId, v));
+                    $"Value returned from {functionId} is expected to be a null reference, was {v} instead.");
         }
 
         protected PValue GetReturnValueNamed(string functionId, params PValue[] args)
@@ -328,9 +321,8 @@ namespace PrexoniteTests.Tests
         [NotNull]
         protected Symbol LookupSymbolEntry([NotNull] ISymbolView<Symbol> store,[NotNull] string symbolicId)
         {
-            Symbol symbol;
-            Assert.IsTrue(store.TryGet(symbolicId, out symbol),
-                          string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
+            Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
+                $"Expected to find symbol {symbolicId} but there is no such entry.");
             return symbol;
         }
 

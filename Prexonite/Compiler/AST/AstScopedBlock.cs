@@ -36,9 +36,7 @@ namespace Prexonite.Compiler.Ast
         public AstScopedBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
             : base(p,lexicalScope, uid:uid, prefix:prefix)
         {
-            if (lexicalScope == null)
-                throw new System.ArgumentNullException(nameof(lexicalScope));
-            _lexicalScope = lexicalScope;
+            _lexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
         }
 
         /// <summary>
@@ -48,7 +46,7 @@ namespace Prexonite.Compiler.Ast
         public AstNode LexicalScope
         {
             [DebuggerStepThrough]
-            get { return _lexicalScope; }
+            get => _lexicalScope;
         }
     }
 }

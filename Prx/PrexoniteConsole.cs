@@ -41,13 +41,7 @@ namespace Prx
         {
         }
 
-        public PValue Tab
-        {
-            get { return _onTab; }
-            set { _onTab = value; }
-        }
-
-        private PValue _onTab;
+        public PValue Tab { get; set; }
 
         public override bool IsPartOfIdentifier(char c)
         {
@@ -65,9 +59,9 @@ namespace Prx
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx),
                     "OnTab must either be called from via the ReadLine method or with a valid stack context.");
-            if (_onTab != null && !_onTab.IsNull)
+            if (Tab != null && !Tab.IsNull)
             {
-                var plst = _onTab.IndirectCall(_sctx, new PValue[] {pref, root});
+                var plst = Tab.IndirectCall(_sctx, new PValue[] {pref, root});
                 plst.ConvertTo(_sctx, PType.Object[typeof (IEnumerable)], true);
                 foreach (var o in (IEnumerable) plst.Value)
                 {
@@ -92,10 +86,7 @@ namespace Prx
         /// <summary>
         ///     Indicates whether the command behaves like a pure function.
         /// </summary>
-        public bool IsPure
-        {
-            get { return false; }
-        }
+        public bool IsPure => false;
 
         #endregion
 

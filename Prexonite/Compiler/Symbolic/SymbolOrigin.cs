@@ -32,7 +32,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("SymbolOrigin({Description},{File},{Line},{Column})")]
+    [DebuggerDisplay("SymbolOrigin({Description},{Position.File},{Position.Line},{Position.Column})")]
     public abstract class SymbolOrigin
     {
         public abstract string Description { get; }
@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Symbolic
         public abstract ISourcePosition Position { get; }
         public override string ToString()
         {
-            return String.Format("{0} in {1}", Description, Position);
+            return $"{Description} in {Position}";
         }
 
         public sealed class MergedScope : SymbolOrigin
@@ -55,11 +55,8 @@ namespace Prexonite.Compiler.Symbolic
                 }
 
                 // Flatten merged scopes
-                return new MergedScope(origins.SelectMany(x =>
-                {
-                    var mergedScope = x as MergedScope;
-                    return mergedScope != null ? mergedScope._origins : x.Singleton();
-                }).ToArray());
+                return new MergedScope(origins.SelectMany(x => 
+                    x is MergedScope mergedScope ? mergedScope._origins : x.Singleton()).ToArray());
             }
 
             [NotNull]
@@ -79,45 +76,29 @@ namespace Prexonite.Compiler.Symbolic
             {
                 get
                 {
-                    return String.Format("merged scope of {0}", _origins.Select(x => x.Description).ToEnumerationString());
+                    return $"merged scope of {_origins.Select(x => x.Description).ToEnumerationString()}";
                 }
             }
 
-            public override ISourcePosition Position
-            {
-                get { return _origins[0].Position; }
-            }
+            public override ISourcePosition Position => _origins[0].Position;
         }
 
         public sealed class NamespaceImport : SymbolOrigin
         {
             private readonly QualifiedId _namespaceId;
 
-            [NotNull]
-            private readonly ISourcePosition _position;
-
             public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
             {
-                if (position == null) 
-                    throw new ArgumentNullException(nameof(position));
                 _namespaceId = namespaceId;
-                _position = position;
+                Position = position ?? throw new ArgumentNullException(nameof(position));
             }
 
-            public override string Description
-            {
-                get { return String.Format("import from namespace {0}",NamespaceId); }
-            }
+            public override string Description => $"import from namespace {NamespaceId}";
 
-            public override ISourcePosition Position
-            {
-                get { return _position; }
-            }
+            [NotNull]
+            public override ISourcePosition Position { get; }
 
-            public QualifiedId NamespaceId
-            {
-                get { return _namespaceId; }
-            }
+            public QualifiedId NamespaceId => _namespaceId;
 
             private bool _equals(NamespaceImport other)
             {
@@ -128,7 +109,7 @@ namespace Prexonite.Compiler.Symbolic
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                return obj is NamespaceImport && _equals((NamespaceImport)obj);
+                return obj is NamespaceImport otherImport && _equals(otherImport);
             }
 
             public override int GetHashCode()
@@ -139,44 +120,25 @@ namespace Prexonite.Compiler.Symbolic
 
         public sealed class ModuleTopLevel : SymbolOrigin
         {
-            [NotNull]
-            private readonly ModuleName _moduleName;
-
-            [NotNull]
-            private readonly ISourcePosition _position;
-
-            [NotNull]
-            private readonly string _description;
-
             [DebuggerStepThrough]
             public ModuleTopLevel([NotNull] ModuleName moduleName, [NotNull] ISourcePosition position)
             {
                 if (moduleName == null)
                     throw new ArgumentNullException(nameof(moduleName));
-                if (position == null)
-                    throw new ArgumentNullException(nameof(position));
-                
-                _moduleName = moduleName;
-                _position = position;
-                _description = string.Format("top-level declaration in module {0}", moduleName);
+
+                ModuleName = moduleName;
+                Position = position ?? throw new ArgumentNullException(nameof(position));
+                Description = $"top-level declaration in module {moduleName}";
             }
 
-            public ModuleName ModuleName
-            {
-                [DebuggerStepThrough]
-                get { return _moduleName; }
-            }
+            [NotNull]
+            public ModuleName ModuleName { [DebuggerStepThrough] get; }
 
-            public override ISourcePosition Position
-            {
-                get { return _position; }
-            }
+            [NotNull]
+            public override ISourcePosition Position { get; }
 
-            public override string Description
-            {
-                [DebuggerStepThrough]
-                get { return _description; }
-            }
+            [NotNull]
+            public override string Description { [DebuggerStepThrough] get; }
 
             public override string ToString()
             {
@@ -185,51 +147,38 @@ namespace Prexonite.Compiler.Symbolic
 
             private bool _equals(ModuleTopLevel other)
             {
-                return Equals(_moduleName, other._moduleName);
+                return Equals(ModuleName, other.ModuleName);
             }
 
             public override bool Equals(object obj)
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                return obj is ModuleTopLevel && _equals((ModuleTopLevel) obj);
+                return obj is ModuleTopLevel otherTopLevel && _equals(otherTopLevel);
             }
 
             public override int GetHashCode()
             {
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                return (_moduleName != null ? _moduleName.GetHashCode() : 0);
+                return (ModuleName != null ? ModuleName.GetHashCode() : 0);
 // ReSharper restore ConditionIsAlwaysTrueOrFalse
             }
         }
 
         public sealed class NamespaceDeclarationScope : SymbolOrigin
         {
-            [NotNull]
-            private readonly ISourcePosition _position;
-            private readonly QualifiedId _namespacePath;
-
-            public QualifiedId NamespacePath
-            {
-                get { return _namespacePath; }
-            }
+            public QualifiedId NamespacePath { get; }
 
             public NamespaceDeclarationScope([NotNull] ISourcePosition position, QualifiedId namespacePath)
             {
-                if (position == null) throw new ArgumentNullException(nameof(position));
-                _position = position;
-                _namespacePath = namespacePath;
+                Position = position ?? throw new ArgumentNullException(nameof(position));
+                NamespacePath = namespacePath;
             }
 
-            public override string Description
-            {
-                get { return string.Format("private declaration in namespace {0}.",_namespacePath); }
-            }
+            public override string Description => $"private declaration in namespace {NamespacePath}.";
 
-            public override ISourcePosition Position
-            {
-                get { return _position; }
-            }
+            [NotNull]
+            public override ISourcePosition Position { get; }
         }
     }
 }

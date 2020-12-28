@@ -38,13 +38,13 @@ namespace Prexonite
 
     public class LastAccessCache<T> : IObjectCache<T>
     {
-        private readonly LinkedList<T> _accessOrder = new LinkedList<T>();
+        private readonly LinkedList<T> _accessOrder = new();
 
         /// <summary>
         /// Also acts as a synch root.
         /// </summary>
         private readonly Dictionary<T, LinkedListNode<T>> _pointerTable =
-            new Dictionary<T, LinkedListNode<T>>();
+            new();
 
         public LastAccessCache(int capacity)
         {
@@ -60,8 +60,7 @@ namespace Prexonite
         {
             lock (_pointerTable)
             {
-                LinkedListNode<T> node;
-                if (_pointerTable.TryGetValue(name, out node))
+                if (_pointerTable.TryGetValue(name, out var node))
                 {
                     _accessOrder.Remove(node);
                     _accessOrder.AddFirst(node);
@@ -110,7 +109,6 @@ namespace Prexonite
                     yield return item;
         }
 
-        protected int Count { get { return _accessOrder.Count; } }
-
+        protected int Count => _accessOrder.Count;
     }
 }

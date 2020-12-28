@@ -50,12 +50,9 @@ namespace Prexonite.Compiler
     public class CompilerTarget : IHasMetaTable
     {
         private readonly LinkedList<AddressChangeHook> _addressChangeHooks =
-            new LinkedList<AddressChangeHook>();
+            new();
 
-        public ICollection<AddressChangeHook> AddressChangeHooks
-        {
-            get { return _addressChangeHooks; }
-        }
+        public ICollection<AddressChangeHook> AddressChangeHooks => _addressChangeHooks;
 
         #region IHasMetaTable Members
 
@@ -65,7 +62,7 @@ namespace Prexonite.Compiler
         public MetaTable Meta
         {
             [DebuggerStepThrough]
-            get { return _function.Meta; }
+            get => Function.Meta;
         }
 
         #endregion
@@ -77,17 +74,10 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public override string ToString()
         {
-            return String.Format("ITarget({0})", Function);
+            return $"ITarget({Function})";
         }
 
         #region Fields
-
-        private readonly PFunction _function;
-        private readonly Loader _loader;
-        private readonly CompilerTarget _parentTarget;
-
-        [JetBrains.Annotations.NotNull]
-        private readonly SymbolStore _importScope;
 
         private MacroSession _macroSession;
         private int _macroSessionReferenceCounter;
@@ -101,7 +91,7 @@ namespace Prexonite.Compiler
         {
             _macroSessionReferenceCounter++;
             Debug.Assert(_macroSessionReferenceCounter > 0);
-            return _macroSession ?? (_macroSession = new MacroSession(this));
+            return _macroSession ??= new MacroSession(this);
         }
 
         /// <summary>
@@ -126,23 +116,11 @@ namespace Prexonite.Compiler
             Debug.Assert(_macroSessionReferenceCounter == 0 || _macroSession != null);
         }
 
-        public Loader Loader
-        {
-            [DebuggerStepThrough]
-            get { return _loader; }
-        }
+        public Loader Loader { [DebuggerStepThrough] get; }
 
-        public PFunction Function
-        {
-            [DebuggerStepThrough]
-            get { return _function; }
-        }
+        public PFunction Function { [DebuggerStepThrough] get; }
 
-        public CompilerTarget ParentTarget
-        {
-            [DebuggerStepThrough]
-            get { return _parentTarget; }
-        }
+        public CompilerTarget ParentTarget { [DebuggerStepThrough] get; }
 
         private int _nestedIdCounter;
 
@@ -156,18 +134,17 @@ namespace Prexonite.Compiler
         {
             if (loader == null)
                 throw new ArgumentNullException(nameof(loader));
-            if (function == null)
-                function = loader.ParentApplication.CreateFunction();
+            function ??= loader.ParentApplication.CreateFunction();
             if (!ReferenceEquals(function.ParentApplication, loader.ParentApplication))
                 throw new ArgumentException(
                     Resources.CompilerTarget_Cannot_create_for_foreign_function,
                     nameof(function));
 
-            _loader = loader;
-            _function = function;
-            _parentTarget = parentTarget;
-            _importScope = SymbolStore.Create(parentTarget == null ? loader.Symbols : parentTarget.Symbols);
-            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  
+            Loader = loader;
+            Function = function;
+            ParentTarget = parentTarget;
+            ImportScope = SymbolStore.Create(parentTarget?.Symbols ?? loader.Symbols);
+            Ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  
                 SymbolStore.Create(ImportScope),
                                             AstBlock.RootBlockName, Guid.NewGuid().ToString("N"));
         }
@@ -181,11 +158,11 @@ namespace Prexonite.Compiler
         /// </summary>
         public void SetupAsMacro()
         {
-            if (!_function.Meta.ContainsKey(MacroMetaKey))
-                _function.Meta[MacroMetaKey] = true;
+            if (!Function.Meta.ContainsKey(MacroMetaKey))
+                Function.Meta[MacroMetaKey] = true;
 
-            if (!_function.Meta.ContainsKey(CompilerMetakey))
-                _function.Meta[CompilerMetakey] = true;
+            if (!Function.Meta.ContainsKey(CompilerMetakey))
+                Function.Meta[CompilerMetakey] = true;
 
             //If you change something in this list, it must also be changed in
             // AstMacroInvocation.cs (method EmitCode).
@@ -195,7 +172,7 @@ namespace Prexonite.Compiler
                 Ast.Symbols.Declare(localRefId,
                                     Symbol.CreateDereference(
                                         Symbol.CreateCall(EntityRef.Variable.Local.Create(localRefId), NoSourcePosition.Instance)));
-                _outerVariables.Add(localRefId);
+                OuterVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
         }
@@ -208,8 +185,8 @@ namespace Prexonite.Compiler
         [PublicAPI]
         public bool IsMacro
         {
-            get { return Meta.GetDefault(MacroMetaKey, false).Switch; }
-            set { Meta[MacroMetaKey] = value; }
+            get => Meta.GetDefault(MacroMetaKey, false).Switch;
+            set => Meta[MacroMetaKey] = value;
         }
 
         /// <summary>
@@ -259,19 +236,19 @@ namespace Prexonite.Compiler
         /// <returns>A PVariable object that contains a reference to the supplied value (needs to be de-referenced)</returns>
         public static PVariable CreateReadonlyVariable(PValue value)
         {
-            return new PVariable {Value = PType.Object.CreatePValue(new ProvidedValue(value))};
+            return new() {Value = PType.Object.CreatePValue(new ProvidedValue(value))};
         }
 
         public static PValue CreateFunctionValue(Func<StackContext, PValue[], PValue> implementation)
         {
-            return new PValue(new ProvidedFunction(implementation),
+            return new(new ProvidedFunction(implementation),
                 PType.Object[typeof (IIndirectCall)]);
         }
 
         #region Temporary variables
 
-        private readonly Stack<string> _freeTemporaryVariables = new Stack<string>(5);
-        private readonly SymbolCollection _usedTemporaryVariables = new SymbolCollection(5);
+        private readonly Stack<string> _freeTemporaryVariables = new(5);
+        private readonly SymbolCollection _usedTemporaryVariables = new(5);
 
         public string RequestTemporaryVariable()
         {
@@ -279,9 +256,9 @@ namespace Prexonite.Compiler
             {
                 //Allocate temporary variable
                 var tempName = "tmpπ" + _usedTemporaryVariables.Count;
-                while (_function.Variables.Contains(tempName))
-                    tempName = tempName + "'";
-                _function.Variables.Add(tempName);
+                while (Function.Variables.Contains(tempName))
+                    tempName += "'";
+                Function.Variables.Add(tempName);
                 _freeTemporaryVariables.Push(tempName);
             }
 
@@ -320,7 +297,7 @@ namespace Prexonite.Compiler
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return CurrentBlock.Symbols; }
+            get => CurrentBlock.Symbols;
         }
 
         #endregion
@@ -330,22 +307,16 @@ namespace Prexonite.Compiler
         public List<Instruction> Code
         {
             [DebuggerStepThrough]
-            get { return _function.Code; }
+            get => Function.Code;
         }
 
         #endregion
 
         #region AST
 
-        private readonly AstBlock _ast;
+        public AstBlock Ast { [DebuggerStepThrough] get; }
 
-        public AstBlock Ast
-        {
-            [DebuggerStepThrough]
-            get { return _ast; }
-        }
-
-        private volatile CompilerTargetAstFactory _factory;
+        private CompilerTargetAstFactory _factory;
 
         [NN]
         public IAstFactory Factory
@@ -356,10 +327,7 @@ namespace Prexonite.Compiler
                 {
                     lock (this)
                     {
-                        if (_factory == null)
-                        {
-                            _factory = new CompilerTargetAstFactory(this);
-                        }
+                        _factory ??= new CompilerTargetAstFactory(this);
                     }
                 }
                 return _factory;
@@ -375,10 +343,7 @@ namespace Prexonite.Compiler
                 _target = target;
             }
 
-            protected override AstBlock CurrentBlock
-            {
-                get { return _target.CurrentBlock; }
-            }
+            protected override AstBlock CurrentBlock => _target.CurrentBlock;
 
             protected override AstGetSet CreateNullNode(ISourcePosition position)
             {
@@ -400,10 +365,7 @@ namespace Prexonite.Compiler
                 _target.Loader.ReportMessage(message);
             }
 
-            protected override CompilerTarget CompileTimeExecutionContext
-            {
-                get { return _target; }
-            }
+            protected override CompilerTarget CompileTimeExecutionContext => _target;
         }
 
         #endregion
@@ -412,7 +374,7 @@ namespace Prexonite.Compiler
 
         public void ExecuteCompilerHooks()
         {
-            foreach (CompilerHook hook in _loader.CompilerHooks)
+            foreach (CompilerHook hook in Loader.CompilerHooks)
                 hook.Execute(this);
         }
 
@@ -422,12 +384,9 @@ namespace Prexonite.Compiler
 
         #region Scope Block Stack
 
-        private readonly Stack<AstScopedBlock> _scopeBlocks = new Stack<AstScopedBlock>();
+        private readonly Stack<AstScopedBlock> _scopeBlocks = new();
 
-        public IEnumerable<AstBlock> ScopeBlocks
-        {
-            get { return _scopeBlocks; }
-        }
+        public IEnumerable<AstBlock> ScopeBlocks => _scopeBlocks;
 
         public AstBlock CurrentBlock
         {
@@ -435,7 +394,7 @@ namespace Prexonite.Compiler
             get
             {
                 if (_scopeBlocks.Count == 0)
-                    return _ast;
+                    return Ast;
                 else
                     return _scopeBlocks.Peek();
             }
@@ -447,11 +406,10 @@ namespace Prexonite.Compiler
             {
                 foreach (var block in _scopeBlocks)
                 {
-                    var loop = block as AstLoopBlock;
-                    if (loop != null)
+                    if (block is AstLoopBlock loop)
                         return loop;
                 }
-                return _ast as AstLoopBlock;
+                return Ast as AstLoopBlock;
             }
         }
 
@@ -506,7 +464,7 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        ///     Safely remoes a range of instructions without invalidating jumps or try-blocks. Notifies <see
+        ///     Safely removes a range of instructions without invalidating jumps or try-blocks. Notifies <see
         ///      cref = "AddressChangeHooks" />.
         /// </summary>
         /// <param name = "index">The address of the first instruction to remove.</param>
@@ -539,9 +497,9 @@ namespace Prexonite.Compiler
             }
 
             //Correct try-catch-finally blocks
-            var modifiedBlocks = new MetaEntry[_function.TryCatchFinallyBlocks.Count];
+            var modifiedBlocks = new MetaEntry[Function.TryCatchFinallyBlocks.Count];
             i = 0;
-            foreach (var block in _function.TryCatchFinallyBlocks)
+            foreach (var block in Function.TryCatchFinallyBlocks)
             {
                 if (block.BeginTry > index)
                     block.BeginTry -= count;
@@ -560,7 +518,7 @@ namespace Prexonite.Compiler
 
                 modifiedBlocks[i++] = block;
             }
-            _function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry) modifiedBlocks;
+            Function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry) modifiedBlocks;
 
             //Change custom addresses into this code (e.g., cil compiler hints)
             foreach (var hook in _addressChangeHooks)
@@ -572,13 +530,7 @@ namespace Prexonite.Compiler
 
         #region Nested function transparency
 
-        private readonly SymbolCollection _outerVariables = new SymbolCollection();
-
-        public SymbolCollection OuterVariables
-        {
-            [DebuggerStepThrough]
-            get { return _outerVariables; }
-        }
+        public SymbolCollection OuterVariables { [DebuggerStepThrough] get; } = new();
 
         /// <summary>
         ///     Requests an outer function to share a variable with this inner function.
@@ -589,15 +541,15 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void RequireOuterVariable(string id)
         {
-            if (_parentTarget == null)
+            if (ParentTarget == null)
                 throw new PrexoniteException(
                     "Cannot require outer variable from top-level function.");
 
-            _outerVariables.Add(id);
+            OuterVariables.Add(id);
             //Make parent functions hand down the variable, even if they don't use them themselves.
 
             //for (var T = _parentTarget; T != null; T = T._parentTarget)
-            var T = _parentTarget;
+            var T = ParentTarget;
 
             {
                 var func = T.Function;
@@ -605,17 +557,12 @@ namespace Prexonite.Compiler
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
                     T.OuterVariables.Contains(id))
                     return; //Parent can supply the variable/parameter. Stop search here.
-                else if (T._parentTarget != null)
+                else if (T.ParentTarget != null)
                     T.RequireOuterVariable(id); //Order parent function to request outer variable
                 else
                     throw new PrexoniteException
                         (
-                        String.Format
-                            (
-                                "{0} references outer variable {1} which cannot be supplied by top-level function {2}",
-                                Function,
-                                id,
-                                func));
+                        $"{Function} references outer variable {id} which cannot be supplied by top-level function {func}");
                 // ReSharper restore RedundantJumpStatement
             }
         }
@@ -653,16 +600,15 @@ namespace Prexonite.Compiler
         {
             keepByRef = new HashSet<string>(keepByRef);
             var toPromote =
-                _outerVariables.Except(keepByRef).ToList();
+                OuterVariables.Except(keepByRef).ToList();
 
             //Declare locally, remove from outer variables and add as parameter to the end
             var exprs = new List<Func<Parser, AstExpr>>();
             foreach (var outer in toPromote)
             {
-                Symbol sym;
-                if(Symbols.TryGet(outer, out sym))
+                if(Symbols.TryGet(outer, out var sym))
                     Symbols.Declare(outer, sym);
-                _outerVariables.Remove(outer);
+                OuterVariables.Remove(outer);
                 Function.Parameters.Add(outer);
                 {
                     //Copy the value for capture by value in closure
@@ -690,13 +636,7 @@ namespace Prexonite.Compiler
 
         #region Source Mapping
 
-        private readonly SourceMapping _sourceMapping = new SourceMapping();
-
-        public SourceMapping SourceMapping
-        {
-            [DebuggerStepThrough]
-            get { return _sourceMapping; }
-        }
+        public SourceMapping SourceMapping { [DebuggerStepThrough] get; } = new();
 
         #endregion
 
@@ -739,15 +679,15 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void Emit(ISourcePosition position, OpCode code, string id, ModuleName modueName)
+        public void Emit(ISourcePosition position, OpCode code, string id, ModuleName moduleName)
         {
-            Emit(position, code, 0, id, modueName);
+            Emit(position, code, 0, id, moduleName);
         }
 
         [DebuggerStepThrough]
-        public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName modueName)
+        public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName moduleName)
         {
-            Emit(position, new Instruction(code,arguments,id,modueName));
+            Emit(position, new Instruction(code,arguments,id,moduleName));
         }
 
         #endregion //Low Level
@@ -966,7 +906,7 @@ namespace Prexonite.Compiler
 
         #region Jumps and Labels
 
-        private readonly HashSet<int> _unresolvedInstructions = new HashSet<int>();
+        private readonly HashSet<int> _unresolvedInstructions = new();
 
         public void EmitLeave(ISourcePosition position, int address)
         {
@@ -1014,8 +954,7 @@ namespace Prexonite.Compiler
 
         public void EmitLeave(ISourcePosition position, string label)
         {
-            int address;
-            if (TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out var address))
             {
                 EmitLeave(position, address, label);
             }
@@ -1027,10 +966,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        protected int NextAddress
-        {
-            get { return Function.Code.Count; }
-        }
+        protected int NextAddress => Function.Code.Count;
 
         /// <summary>
         /// The scope that import directives transfer their symbols into. Lies between the function's local scope and the surrounding scope.
@@ -1039,15 +975,12 @@ namespace Prexonite.Compiler
         /// This means that imported symbols shadow the surrounding context but 
         /// any local definitions (even when provided by the compiler) precede imported symbols.
         /// </remarks>
-        public SymbolStore ImportScope
-        {
-            get { return _importScope; }
-        }
+        [JetBrains.Annotations.NotNull]
+        public SymbolStore ImportScope { get; }
 
         public void EmitJump(ISourcePosition position, string label)
         {
-            int address;
-            if (TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out var address))
             {
                 EmitJump(position, address, label);
             }
@@ -1061,8 +994,7 @@ namespace Prexonite.Compiler
 
         public void EmitJumpIfTrue(ISourcePosition position, string label)
         {
-            int address;
-            if (TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out var address))
             {
                 EmitJumpIfTrue(position, address, label);
             }
@@ -1076,8 +1008,7 @@ namespace Prexonite.Compiler
 
         public void EmitJumpIfFalse(ISourcePosition position, string label)
         {
-            int address;
-            if (TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out var address))
             {
                 EmitJumpIfFalse(position, address, label);
             }
@@ -1089,7 +1020,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        private readonly SymbolTable<int> _labels = new SymbolTable<int>(); 
+        private readonly SymbolTable<int> _labels = new(); 
 
         public bool TryResolveLabel(string label, out int address)
         {
@@ -1119,8 +1050,7 @@ namespace Prexonite.Compiler
         {
             //Safety check
             Debug.Assert(!_labels.ContainsKey(label),
-                String.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
-                    position.File));
+                $"Error, label {label} defined multiple times in {Function}, {position.File}");
 
             //resolve any unresolved jumps);
             var resolved = new List<int>();
@@ -1191,18 +1121,18 @@ namespace Prexonite.Compiler
         /// </remarks>
         public void FinishTarget()
         {
-            if (_function.Parameters.Contains(PFunction.ArgumentListId))
+            if (Function.Parameters.Contains(PFunction.ArgumentListId))
             {
                 ISourcePosition pos;
                 if (Ast.Count == 0)
                     pos = new SourcePosition("-unknown-", -1, -1);
                 else
                     pos = Ast[0].Position;
-                _loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                             String.Format(
+                Loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                             string.Format(
                                                  Resources.CompilerTarget_ParameterNameReserved,
-                                                 _function.LogicalId, PFunction.ArgumentListId,
-                                                 _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos,MessageClasses.ParameterNameReserved));
+                                                 Function.LogicalId, PFunction.ArgumentListId,
+                                                 Function.Parameters.IndexOf(PFunction.ArgumentListId)), pos,MessageClasses.ParameterNameReserved));
             }
 
             _DetermineSharedNames();
@@ -1263,9 +1193,9 @@ namespace Prexonite.Compiler
 
         internal void _DetermineSharedNames()
         {
-            var outerVars = new MetaEntry[_outerVariables.Count];
+            var outerVars = new MetaEntry[OuterVariables.Count];
             var i = 0;
-            foreach (var outerVar in _outerVariables)
+            foreach (var outerVar in OuterVariables)
                 outerVars[i++] = outerVar;
             if (i > 0)
                 Function.Meta[PFunction.SharedNamesKey] = (MetaEntry) outerVars;
@@ -1586,8 +1516,7 @@ namespace Prexonite.Compiler
 
         public string GenerateLocalId(string prefix)
         {
-            if (prefix == null)
-                prefix = "";
+            prefix ??= "";
             return
                 Function.Id + "\\" + prefix +
                     (_nestedIdCounter++);
@@ -1595,10 +1524,7 @@ namespace Prexonite.Compiler
 
         public ModuleName ToInternalModule(ModuleName moduleName)
         {
-            if (moduleName == Function.ParentApplication.Module.Name)
-                return null;
-            else
-                return moduleName;
+            return moduleName == Function.ParentApplication.Module.Name ? null : moduleName;
         }
 
     }

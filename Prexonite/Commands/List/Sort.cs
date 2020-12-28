@@ -36,15 +36,10 @@ namespace Prexonite.Commands.List
     {
         #region Singleton pattern
 
-        private static readonly Sort _instance = new Sort();
-
         /// <summary>
         ///     As <see cref = "Sort" /> cannot be parametrized, Instance returns the one and only instance of the <see cref = "Sort" /> command.
         /// </summary>
-        public static Sort Instance
-        {
-            get { return _instance; }
-        }
+        public static Sort Instance { get; } = new();
 
         private Sort()
         {
@@ -64,16 +59,14 @@ namespace Prexonite.Commands.List
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = new PValue[] {};
+            args ??= Array.Empty<PValue>();
             var lst = new List<PValue>();
             if (args.Length == 0)
                 return PType.Null.CreatePValue();
             else if (args.Length == 1)
             {
                 var set = Map._ToEnumerable(sctx, args[0]);
-                foreach (var x in set)
-                    lst.Add(x);
+                lst.AddRange(set);
                 return (PValue) lst;
             }
             else
@@ -81,8 +74,7 @@ namespace Prexonite.Commands.List
                 var clauses = new List<PValue>();
                 for (var i = 0; i + 1 < args.Length; i++)
                     clauses.Add(args[i]);
-                foreach (var x in Map._ToEnumerable(sctx, args[args.Length - 1]))
-                    lst.Add(x);
+                lst.AddRange(Map._ToEnumerable(sctx, args[^1]));
                 lst.Sort(
                     delegate(PValue a, PValue b)
                         {
@@ -108,10 +100,8 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; } //The function makes heavy use indirect call, 
-            //which might lead to initialization of the application.
-        }
+        public override bool IsPure => false; //The function makes heavy use indirect call, 
+
+        //which might lead to initialization of the application.
     }
 }

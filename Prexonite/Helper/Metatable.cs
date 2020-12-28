@@ -82,8 +82,7 @@ namespace Prexonite
         public virtual bool Contains(KeyValuePair<string, MetaEntry> item)
         {
             var key = GetTransform(item.Key);
-            MetaEntry currentEntry;
-            return TryGetValueTransformed(key, out currentEntry) && Equals(currentEntry, item.Value);
+            return TryGetValueTransformed(key, out var currentEntry) && Equals(currentEntry, item.Value);
         }
 
         public abstract void CopyTo(KeyValuePair<string, MetaEntry>[] array, int arrayIndex);
@@ -91,8 +90,7 @@ namespace Prexonite
         public virtual bool Remove(KeyValuePair<string, MetaEntry> item)
         {
             var key = GetTransform(item.Key);
-            MetaEntry currentEntry;
-            if (TryGetValueTransformed(key, out currentEntry) && Equals(currentEntry, item.Value))
+            if (TryGetValueTransformed(key, out var currentEntry) && Equals(currentEntry, item.Value))
             {
                 Remove(key);
                 return true;
@@ -360,8 +358,7 @@ namespace Prexonite
         public MetaEntry GetDefault(string key, MetaEntry defaultValue)
         {
             key = GetTransform(key);
-            MetaEntry entry;
-            if (TryGetValueTransformed(key, out entry))
+            if (TryGetValueTransformed(key, out var entry))
                 return entry;
             else
                 return defaultValue;

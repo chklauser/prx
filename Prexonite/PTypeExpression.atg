@@ -151,7 +151,7 @@ Type<out PType value>           (.  string id;
     id                          (.  id = t.val; 
 									if(id.Length > 0 && id[0] == '$')
 										id = id.Substring(1);
-                                    if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
+                                    if(!Sctx.ParentEngine.PTypeRegistry.Contains(id))
                                     {
                                         SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
                                     }                                    
@@ -170,7 +170,7 @@ Type<out PType value>           (.  string id;
                                         value = PType.Object[typeof(object)];
                                     }
                                     else //Normal case
-                                        value = _sctx.ConstructPType(id, args.ToArray());
+                                        value = Sctx.ConstructPType(id, args.ToArray());
                                 .)                        
     
 .

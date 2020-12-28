@@ -27,17 +27,11 @@ using System;
 
 namespace Prexonite.Commands.Core.PartialApplication
 {
-    public class PartialCallStarImplCommand : PartialApplicationCommandBase<Object>
+    public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
     {
         #region Singleton pattern
 
-        private static readonly PartialCallStarImplCommand _instance =
-            new PartialCallStarImplCommand();
-
-        public static PartialCallStarImplCommand Instance
-        {
-            get { return _instance; }
-        }
+        public static PartialCallStarImplCommand Instance { get; } = new();
 
         private PartialCallStarImplCommand()
         {

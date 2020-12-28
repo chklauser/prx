@@ -43,16 +43,10 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         public const string Key = "ext";
 
-        private readonly IList<int> _offsets;
-
         /// <summary>
         ///     The offsets at which CIL extension code begins.
         /// </summary>
-        public IList<int> Offsets
-        {
-            [DebuggerStepThrough]
-            get { return _offsets; }
-        }
+        public IList<int> Offsets { [DebuggerStepThrough] get; }
 
         /// <summary>
         ///     Creates a new CIL extension hint.
@@ -60,9 +54,7 @@ namespace Prexonite.Compiler.Cil
         /// <param name = "offsets">The offsets at which CIL extension code begins</param>
         public CilExtensionHint(IList<int> offsets)
         {
-            if (offsets == null)
-                throw new ArgumentNullException(nameof(offsets));
-            _offsets = offsets;
+            Offsets = offsets ?? throw new ArgumentNullException(nameof(offsets));
         }
 
         #region Implementation of ICilHint
@@ -70,10 +62,7 @@ namespace Prexonite.Compiler.Cil
         /// <summary>
         ///     The key under which this CIL hint is stored. This key is used to deserialize the hint into the correct format.
         /// </summary>
-        public string CilKey
-        {
-            get { return Key; }
-        }
+        public string CilKey => Key;
 
         /// <summary>
         ///     Get the list of fields to be serialized. Does not include the key.
@@ -81,7 +70,7 @@ namespace Prexonite.Compiler.Cil
         /// <returns>The list of fields to be serialized.</returns>
         public MetaEntry[] GetFields()
         {
-            return (from address in _offsets
+            return (from address in Offsets
                     select (MetaEntry) address.ToString()).ToArray();
         }
 
@@ -99,8 +88,7 @@ namespace Prexonite.Compiler.Cil
             {
                 if (metaEntry == null)
                     continue;
-                int offset;
-                if (Int32.TryParse(metaEntry.Text, out offset))
+                if (int.TryParse(metaEntry.Text, out var offset))
                     offsets.Add(offset);
             }
 

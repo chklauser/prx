@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using Prexonite.Compiler.Ast;
-using Prexonite.Compiler.Symbolic;
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler
@@ -34,10 +33,7 @@ namespace Prexonite.Compiler
     {
         private readonly Parser _parser;
 
-        protected override AstBlock CurrentBlock
-        {
-            get { return _parser.CurrentBlock; }
-        }
+        protected override AstBlock CurrentBlock => _parser.CurrentBlock;
 
         protected override AstGetSet CreateNullNode(ISourcePosition position)
         {
@@ -84,9 +80,7 @@ namespace Prexonite.Compiler
 
         public ParserAstFactory(Parser parser)
         {
-            if (parser == null)
-                throw new ArgumentNullException(nameof(parser));
-            _parser = parser;
+            _parser = parser ?? throw new ArgumentNullException(nameof(parser));
         }
     }
 }

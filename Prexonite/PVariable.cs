@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -55,22 +54,14 @@ namespace Prexonite
         /// Returns the id of this variable. For local variables, this id might be different from the
         /// physical name of that variable.
         /// </summary>
-        public string Id
-        {
-            get { return Meta[Application.IdKey]; }
-        }
+        public string Id => Meta[Application.IdKey];
 
         /// <summary>
         /// The variable declaration this variable instance is based on.
         /// </summary>
         public VariableDeclaration Declaration
         {
-            get
-            {
-                if (_declaration == null)
-                    _declaration = VariableDeclaration.Create(Engine.GenerateName());
-                return _declaration;
-            }
+            get { return _declaration ??= VariableDeclaration.Create(Engine.GenerateName()); }
         }
 
         //Meta and IHasMetaTable are on PVariable for historic reasons.
@@ -80,13 +71,7 @@ namespace Prexonite
         /// <remarks>
         ///     The default constructor does not create a <see cref = "MetaTable" /> but as soon as this property is accessed for the first time, one will be instantiated.
         /// </remarks>
-        public MetaTable Meta
-        {
-            get
-            {
-                return Declaration.Meta;
-            }
-        }
+        public MetaTable Meta => Declaration.Meta;
 
         /// <summary>
         ///     Provides access to the value stored in the variable.
@@ -94,7 +79,7 @@ namespace Prexonite
         /// <value>The PValue object stored in this variables or a PValue(null) object if the reference is null.</value>
         public PValue Value
         {
-            get { return _value; }
+            get => _value;
             set
             {
                 Debug.Assert(value != null);
@@ -138,9 +123,7 @@ namespace Prexonite
         /// <param name="variableDeclaration">The variable declaration this variable is based on.</param>
         public PVariable(VariableDeclaration variableDeclaration)
         {
-            if (variableDeclaration == null)
-                throw new ArgumentNullException(nameof(variableDeclaration));
-            _declaration = variableDeclaration;
+            _declaration = variableDeclaration ?? throw new ArgumentNullException(nameof(variableDeclaration));
         }
 
         #endregion
@@ -162,7 +145,7 @@ namespace Prexonite
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             if (args.Length != 0)
-                _value = args[args.Length - 1];
+                _value = args[^1];
             return _value;
         }
 

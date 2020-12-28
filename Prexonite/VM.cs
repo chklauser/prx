@@ -54,8 +54,7 @@ namespace Prexonite
             [DebuggerStepThrough]
             get
             {
-                var stack = Thread.GetData(_stackSlot) as LinkedList<StackContext>;
-                if (stack == null)
+                if (!(Thread.GetData(_stackSlot) is LinkedList<StackContext> stack))
                     Thread.SetData(_stackSlot, stack = new LinkedList<StackContext>());
                 return stack;
             }

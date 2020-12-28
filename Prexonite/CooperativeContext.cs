@@ -37,7 +37,7 @@ namespace Prexonite
     {
         public override string ToString()
         {
-            return String.Format("Cooperative managed method({0})", _existingMethod);
+            return $"Cooperative managed method({_existingMethod})";
         }
 
         public CooperativeContext(StackContext sctx,
@@ -45,13 +45,11 @@ namespace Prexonite
         {
             if (sctx == null)
                 throw new ArgumentNullException(nameof(sctx));
-            if (methodCtor == null)
-                throw new ArgumentNullException(nameof(methodCtor));
 
-            _methodCtor = methodCtor;
-            _parentEngine = sctx.ParentEngine;
-            _parentApplication = sctx.ParentApplication;
-            _importedNamespaces = sctx.ImportedNamespaces;
+            _methodCtor = methodCtor ?? throw new ArgumentNullException(nameof(methodCtor));
+            ParentEngine = sctx.ParentEngine;
+            ParentApplication = sctx.ParentApplication;
+            ImportedNamespaces = sctx.ImportedNamespaces;
         }
 
         private IEnumerator<bool> _method
@@ -75,31 +73,19 @@ namespace Prexonite
         private Func<Action<PValue>, IEnumerable<bool>> _methodCtor;
         private IEnumerator<bool> _existingMethod;
 
-        private readonly Engine _parentEngine;
-        private readonly Application _parentApplication;
-        private readonly SymbolCollection _importedNamespaces;
         private PValue _returnValue;
 
         /// <summary>
         ///     Represents the engine this context is part of.
         /// </summary>
-        public override Engine ParentEngine
-        {
-            get { return _parentEngine; }
-        }
+        public override Engine ParentEngine { get; }
 
         /// <summary>
         ///     The parent application.
         /// </summary>
-        public override Application ParentApplication
-        {
-            get { return _parentApplication; }
-        }
+        public override Application ParentApplication { get; }
 
-        public override SymbolCollection ImportedNamespaces
-        {
-            get { return _importedNamespaces; }
-        }
+        public override SymbolCollection ImportedNamespaces { get; }
 
         /// <summary>
         ///     Indicates whether the context still has code/work to do.
@@ -130,10 +116,7 @@ namespace Prexonite
         ///     Just providing a value here does not mean that it gets consumed by the caller.
         ///     If the context does not provide a return value, this property should return null (not NullPType).
         /// </summary>
-        public override PValue ReturnValue
-        {
-            get { return _returnValue ?? PType.Null.CreatePValue(); }
-        }
+        public override PValue ReturnValue => _returnValue ?? PType.Null.CreatePValue();
 
         #region IDisposable
 
@@ -151,8 +134,7 @@ namespace Prexonite
             {
                 if (disposing)
                 {
-                    if (_existingMethod != null)
-                        _existingMethod.Dispose();
+                    _existingMethod?.Dispose();
                 }
             }
             _disposed = true;

@@ -36,8 +36,6 @@ namespace Prexonite.Commands.List
     /// </summary>
     public class Range : CoroutineCommand, ICilCompilerAware
     {
-        private static readonly Range _instance = new Range();
-
         private Range()
         {
         }
@@ -108,15 +106,9 @@ namespace Prexonite.Commands.List
         ///     Pure commands can be applied at compile time.
         /// </remarks>
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
-        public static Range Instance
-        {
-            get { return _instance; }
-        }
+        public static Range Instance { get; } = new();
 
         #region ICilCompilerAware Members
 

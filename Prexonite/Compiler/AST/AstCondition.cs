@@ -24,9 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using Prexonite.Modular;
 using Prexonite.Types;
-using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -39,9 +37,7 @@ namespace Prexonite.Compiler.Ast
         {
             IfBlock = new AstScopedBlock(p,parentBlock,prefix: "if");
             ElseBlock = new AstScopedBlock(p,parentBlock,prefix:"else");
-            if (condition == null)
-                throw new ArgumentNullException(nameof(condition));
-            Condition = condition;
+            Condition = condition ?? throw new ArgumentNullException(nameof(condition));
             IsNegative = isNegative;
         }
 
@@ -55,7 +51,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstBlock[] Blocks
         {
-            get { return new[] {IfBlock, ElseBlock}; }
+            get { return new AstBlock[] {IfBlock, ElseBlock}; }
         }
 
         #region IAstHasExpressions Members
@@ -75,21 +71,16 @@ namespace Prexonite.Compiler.Ast
             _OptimizeNode(target, ref Condition);
 
             // Invert condition when unary logical not
-            AstIndirectCall unaryCond;
-            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
             {
                 Condition = unaryCond.Arguments[0];
                 IsNegative = !IsNegative;
             }
 
             //Constant conditions
-            if (Condition is AstConstant)
+            if (Condition is AstConstant constCond)
             {
-                var constCond = (AstConstant) Condition;
-                PValue condValue;
-                if (
-                    !constCond.ToPValue(target).TryConvertTo(
-                        target.Loader, PType.Bool, out condValue))
+                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
                     goto continueFull;
                 else if (((bool) condValue.Value) ^ IsNegative)
                     IfBlock.EmitEffectCode(target);

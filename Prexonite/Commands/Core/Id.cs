@@ -32,12 +32,7 @@ namespace Prexonite.Commands.Core
     {
         #region Singleton pattern
 
-        private static readonly Id _instance = new Id();
-
-        public static Id Instance
-        {
-            get { return _instance; }
-        }
+        public static Id Instance { get; } = new();
 
         private Id()
         {

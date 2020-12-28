@@ -57,9 +57,7 @@ namespace Prexonite.Types
         /// <param name = "baseEnumerator">An IEnumerator</param>
         public PValueEnumeratorWrapper(IEnumerator<PValue> baseEnumerator)
         {
-            if (baseEnumerator == null)
-                throw new ArgumentNullException(nameof(baseEnumerator));
-            _baseEnumerator = baseEnumerator;
+            _baseEnumerator = baseEnumerator ?? throw new ArgumentNullException(nameof(baseEnumerator));
         }
 
         #endregion
@@ -69,10 +67,7 @@ namespace Prexonite.Types
         /// <summary>
         ///     Returns the current element
         /// </summary>
-        public override PValue Current
-        {
-            get { return _baseEnumerator.Current; }
-        }
+        public override PValue Current => _baseEnumerator.Current;
 
         #endregion
 
@@ -86,8 +81,7 @@ namespace Prexonite.Types
             if (!disposing)
                 return;
             // free managed resources 
-            if (_baseEnumerator != null)
-                _baseEnumerator.Dispose();
+            _baseEnumerator?.Dispose();
         }
 
         #endregion

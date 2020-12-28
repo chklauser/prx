@@ -52,9 +52,8 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
 
             public SymbolEntry HandleExpand(ExpandSymbol self, object argument)
             {
-                ReferenceSymbol refSym;
                 SymbolEntry symEn;
-                if (self.InnerSymbol.TryGetReferenceSymbol(out refSym) && (symEn = refSym.Entity.ToSymbolEntry()).Interpretation == SymbolInterpretations.MacroCommand)
+                if (self.InnerSymbol.TryGetReferenceSymbol(out var refSym) && (symEn = refSym.Entity.ToSymbolEntry()).Interpretation == SymbolInterpretations.MacroCommand)
                 {
                     return symEn;
                 }
@@ -71,8 +70,7 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
 
             public SymbolEntry HandleDereference(DereferenceSymbol self, object argument)
             {
-                ReferenceSymbol refSym;
-                if(self.InnerSymbol.TryGetReferenceSymbol(out refSym))
+                if(self.InnerSymbol.TryGetReferenceSymbol(out var refSym))
                 {
                     var sym = refSym.Entity.ToSymbolEntry();
                     if (sym.Interpretation != SymbolInterpretations.MacroCommand)
@@ -80,9 +78,8 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                 }
                 else
                 {
-                    DereferenceSymbol innerDerefSym;
                     // double deref is for ref locals and ref globals
-                    if(self.InnerSymbol.TryGetDereferenceSymbol(out innerDerefSym))
+                    if(self.InnerSymbol.TryGetDereferenceSymbol(out var innerDerefSym))
                     {
                         var baseEntry = innerDerefSym.ToSymbolEntry();
                         switch (baseEntry.Interpretation)
@@ -100,7 +97,7 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                             self);
             }
         }
-        private static readonly SymbolEntryConversion _convertSymbol = new SymbolEntryConversion();
+        private static readonly SymbolEntryConversion _convertSymbol = new();
 
 
         public static SymbolEntry ToSymbolEntry(this Symbol symbol)
@@ -140,8 +137,7 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                 default:
                     var interpretation = Enum.GetName(typeof (SymbolInterpretations), entry.Interpretation);
                     throw new ArgumentOutOfRangeException(nameof(entry), interpretation,
-                                                          string.Format("Cannot convert symbol entry {0} to a symbol.",
-                                                                        entry));
+                        $"Cannot convert symbol entry {entry} to a symbol.");
             }
 
             if (isDereferenced)
@@ -153,29 +149,23 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
 
     public class SymbolConversionException : Exception
     {
-        private readonly Symbol _symbol;
-
         public SymbolConversionException(Symbol symbol)
         {
-            _symbol = symbol;
+            Symbol1 = symbol;
         }
 
         public SymbolConversionException(string message, Symbol symbol)
             : base(message)
         {
-            _symbol = symbol;
+            Symbol1 = symbol;
         }
 
         public SymbolConversionException(string message, Symbol symbol, Exception inner)
             : base(message, inner)
         {
-            _symbol = symbol;
+            Symbol1 = symbol;
         }
 
-        public Symbol Symbol1
-        {
-            [DebuggerStepThrough]
-            get { return _symbol; }
-        }
+        public Symbol Symbol1 { [DebuggerStepThrough] get; }
     }
 }

@@ -39,20 +39,12 @@ namespace Prexonite.Commands.List
         {
         }
 
-        private static readonly Sum _instance = new Sum();
-
-        public static Sum Instance
-        {
-            get { return _instance; }
-        }
+        public static Sum Instance { get; } = new();
 
         #endregion
 
         [Obsolete]
-        public override bool IsPure
-        {
-            get { return false; }
-        }
+        public override bool IsPure => false;
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -81,7 +73,7 @@ namespace Prexonite.Commands.List
             }
             else
             {
-                acc = args[args.Length - 1];
+                acc = args[^1];
                 xsArgs = args.Take(args.Length - 1);
             }
 

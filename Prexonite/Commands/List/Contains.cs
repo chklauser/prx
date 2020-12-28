@@ -35,12 +35,7 @@ namespace Prexonite.Commands.List
 
         #region Singleton pattern
 
-        private static readonly Contains _instance = new Contains();
-
-        public static Contains Instance
-        {
-            get { return _instance; }
-        }
+        public static Contains Instance { get; } = new();
 
         private Contains()
         {
@@ -72,10 +67,8 @@ namespace Prexonite.Commands.List
                 if (set != null)
                     foreach (var value in set)
                     {
-                        PValue result;
-                        bool boolResult;
-                        if (value.Equality(sctx, needle, out result) &&
-                            result.TryConvertTo(sctx, true, out boolResult) && boolResult)
+                        if (value.Equality(sctx, needle, out var result) &&
+                            result.TryConvertTo(sctx, true, out bool boolResult) && boolResult)
                             return result;
                     }
             }

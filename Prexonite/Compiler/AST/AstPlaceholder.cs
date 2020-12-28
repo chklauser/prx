@@ -46,10 +46,10 @@ namespace Prexonite.Compiler.Ast
         /// </summary>
         public int? Index
         {
-            get { return _index; }
+            get => _index;
             set
             {
-                if (value.HasValue && value.Value < 0)
+                if (value < 0)
                     throw new ArgumentOutOfRangeException(nameof(value),
                         Resources.AstPlaceholder_PlaceholdeIndexNegative);
                 _index = value;
@@ -81,10 +81,7 @@ namespace Prexonite.Compiler.Ast
         private void _throwSyntaxNotSupported()
         {
             throw new PartialApplicationSyntaxNotSupportedException(
-                string.Format(
-                    "This syntax does not support placeholders. (Position {0}:{1} col {2})", File,
-                    Line,
-                    Column));
+                $"This syntax does not support placeholders. (Position {File}:{Line} col {Column})");
         }
 
         protected override void EmitSetCode(CompilerTarget target)
@@ -115,9 +112,7 @@ namespace Prexonite.Compiler.Ast
                     if (placeholder.Index.Value > 127)
                     {
                         throw new PrexoniteException(
-                            string.Format(
-                                "The placeholder (at {0}) has a custom index value that exceeds the maxmimum mappable index.",
-                                placeholder.Position.GetSourcePositionString()));
+                            $"The placeholder (at {placeholder.Position.GetSourcePositionString()}) has a custom index value that exceeds the maximum mappable index.");
                     }
 
                     if (assigned.Count <= placeholder.Index)
@@ -153,9 +148,7 @@ namespace Prexonite.Compiler.Ast
 
                 if (index > MaxPlaceholderIndex)
                     throw new PrexoniteException(
-                        string.Format(
-                            "The placeholder (at {0}) would be assigned an index that exceeds the maxmimum mappable index.",
-                            placeholder.Position.GetSourcePositionString()));
+                        $"The placeholder (at {placeholder.Position.GetSourcePositionString()}) would be assigned an index that exceeds the maximum mappable index.");
             }
         }
 
