@@ -22,6 +22,8 @@ namespace PrexoniteTests.Tests.Configurations
 
         [ThreadStatic]
         private static Engine? _sharedEnginePrototype;
+
+        private static readonly TraceSource _trace = new("PrexoniteTests.Tests.Configurations.ModuleCacheV2");
         
         private static readonly Lazy<string> _slnPath = new Lazy<string>(() =>
         {
@@ -41,9 +43,6 @@ namespace PrexoniteTests.Tests.Configurations
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static string SolutionPath => _slnPath.Value;
-
-        private static readonly TraceSource _trace =
-            new TraceSource("PrexoniteTests.Tests.Configurations.ModuleCacheV2");
 
         private static ISelfAssemblingPlan sharedPlan
         {

@@ -174,16 +174,9 @@ namespace Prexonite.Compiler
 
             public DeclarationScopeBuilder([NotNull]SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, [NotNull]LocalNamespace ns)
             {
-                if (localScopeBuilder == null)
-                    throw new ArgumentNullException(nameof(localScopeBuilder));
-                if (ns == null)
-                    throw new ArgumentNullException(nameof(ns));
-                if (prefix == null)
-                    throw new ArgumentNullException(nameof(prefix));
-                
-                _localScopeBuilder = localScopeBuilder;
+                _localScopeBuilder = localScopeBuilder ?? throw new ArgumentNullException(nameof(localScopeBuilder));
                 _prefix = prefix;
-                _namespace = ns;
+                _namespace = ns ?? throw new ArgumentNullException(nameof(ns));
             }
 
             [NotNull]

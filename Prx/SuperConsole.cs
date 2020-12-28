@@ -313,7 +313,7 @@ namespace Prx
             {
                 e.Cancel = true;
                 ctrlCEvent.Set();
-                MainEngineThread.Abort();
+                Environment.Exit(2);
             }
         }
 
