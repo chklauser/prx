@@ -80,17 +80,10 @@ namespace Prexonite.Compiler.Build
             return _table.GetOrAdd(name, factory);
         }
 
-        public ITargetDescription this[ModuleName name]
-        {
-            get
-            {
-                ITargetDescription description;
-                if (_table.TryGetValue(name, out description))
-                    return description;
-                else
-                    throw new KeyNotFoundException(string.Format("Cannot find target description for module {0}.", name));
-            }
-        }
+        public ITargetDescription this[ModuleName name] =>
+            _table.TryGetValue(name, out var description)
+                ? description
+                : throw new KeyNotFoundException($"Cannot find target description for module {name}.");
 
         public bool Contains(ModuleName name)
         {

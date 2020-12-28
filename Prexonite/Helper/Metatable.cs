@@ -293,7 +293,7 @@ namespace Prexonite
         ///     Applies the set transformation of the associated filter to the supplied meta entry.
         /// </summary>
         /// <param name = "item">The new entry to transform.</param>
-        /// <returns>A transformed entry or null if the filter completly blocks the entry.</returns>
+        /// <returns>A transformed entry or null if the filter completely blocks the entry.</returns>
         public virtual KeyValuePair<string, MetaEntry>? SetTransform(KeyValuePair<string, MetaEntry> item)
         {
             if (Filter == null)

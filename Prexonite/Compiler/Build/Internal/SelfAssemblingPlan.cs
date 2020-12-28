@@ -106,8 +106,11 @@ namespace Prexonite.Compiler.Build.Internal
         {
             token.ThrowIfCancellationRequested();
 
-            // Technically _orderPreflight would be better, but that only works with a resolved path as the key
-            var primaryPreflight = await _performPreflight(new RefSpec {Source = source, ResolvedPath = _getPath(source)}, token);
+            // If we have a path, we can try to hit the cache. Otherwise we have to force the preflight.
+            var primaryRefSpec = new RefSpec {Source = source, ResolvedPath = _getPath(source)};
+            var primaryPreflight = primaryRefSpec.ResolvedPath != null 
+                ? await _orderPreflight(primaryRefSpec, token) 
+                : await _performPreflight(primaryRefSpec, token);
 
             if (primaryPreflight.ErrorMessage != null)
             {

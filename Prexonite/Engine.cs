@@ -1,28 +1,4 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -76,9 +52,9 @@ namespace Prexonite
         /// </remarks>
         /// <returns>True if the two strings <paramref name = "x" /> and <paramref name = "y" /> are equal; false otherwise.</returns>
         [DebuggerStepThrough]
-        public static bool StringsAreEqual(string x, string y)
+        public static bool StringsAreEqual(string? x, string? y)
         {
-            return String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
         }
 
         #endregion
@@ -102,15 +78,10 @@ namespace Prexonite
 
         #region Meta
 
-        private readonly MetaTable _meta;
-
         /// <summary>
         ///     The metatable provided to store settings and information about the virtual machine. This table also provides default values, should both applications and functions lack specific entries.
         /// </summary>
-        public MetaTable Meta
-        {
-            get { return _meta; }
-        }
+        public MetaTable Meta { get; }
 
         #endregion
 
@@ -147,10 +118,7 @@ namespace Prexonite
             ///     Provides readonly access to the number of mappings in the current engine.
             /// </summary>
             /// <value>The number of mappings in the current engine.</value>
-            public int Count
-            {
-                get { return _outer._pTypeMap.Count; }
-            }
+            public int Count => _outer._pTypeMap.Count;
 
             /// <summary>
             ///     Provides index based access to the mappings using their CLR <see cref = "Type">Type</see> as the index.
@@ -171,15 +139,12 @@ namespace Prexonite
                 {
                     if (_outer._pTypeMap.ContainsKey(clrType))
                     {
-                        if ((object) value == null)
-                            _outer._pTypeMap.Remove(clrType);
-                        else
-                            _outer._pTypeMap[clrType] = value;
+                         _outer._pTypeMap[clrType] = value;
                     }
-                    else if ((object) value == null)
-                        throw new ArgumentNullException(nameof(value));
                     else
+                    {
                         _outer._pTypeMap.Add(clrType, value);
+                    }
                 }
             }
 
@@ -255,10 +220,7 @@ namespace Prexonite
             ///     The number of registered <see cref = "PType">PTypes</see>.
             /// </summary>
             /// <value>The number of registered <see cref = "PType">PTypes</see>.</value>
-            public int Count
-            {
-                get { return _outer._pTypeRegistry.Count; }
-            }
+            public int Count => _outer._pTypeRegistry.Count;
 
             /// <summary>
             ///     Determines whether a particular type name has been registered.
@@ -270,6 +232,11 @@ namespace Prexonite
                 return _outer._pTypeRegistry.ContainsKey(name);
             }
 
+            public bool TryGet(string name, [NotNullWhen(true)] out Type? result)
+            {
+                return _outer._pTypeRegistry.TryGetValue(name, out result);
+            }
+
             /// <summary>
             ///     Provides index based access to the <see cref = "Prexonite.Engine.PTypeRegistry" />.
             /// </summary>
@@ -277,7 +244,7 @@ namespace Prexonite
             /// <returns>A <see cref = "Type" /> that inherits from <see cref = "PType" /> or null, if no such mapping exists.</returns>
             /// <exception cref = "ArgumentException"><paramref name = "value" /> does not inherit from <see cref = "PType" />.</exception>
             /// <exception cref = "ArgumentNullException"><paramref name = "value" /> is null.</exception>
-            public Type this[string name]
+            public Type? this[string name]
             {
                 get
                 {
@@ -383,7 +350,7 @@ namespace Prexonite
         /// <param name = "value">The object to be encapsulated.</param>
         /// <returns>A PValue that contains the supplied <paramref name = "value" /> together with it's natural <see cref = "PType" /> or <see
         ///      cref = "PType.Null">PValue(null)</see> if <paramref name = "value" /> is null.</returns>
-        public PValue CreateNativePValue(object value)
+        public PValue CreateNativePValue(object? value)
         {
             if (value == null)
                 return PType.Null.CreatePValue();
@@ -458,7 +425,7 @@ namespace Prexonite
                 throw new PrexoniteException(
                     "Could not construct PType (" + result.ClrType +
                         " is not a PType).");
-            return result.Value as PType;
+            return (PType)result.Value;
         }
 
         /// <summary>
@@ -472,10 +439,10 @@ namespace Prexonite
         ///     <see cref = "PTypeRegistry" />.</exception>
         public PType CreatePType(StackContext sctx, string typeName, PValue[] args)
         {
-            if (!PTypeRegistry.Contains(typeName))
+            if (!PTypeRegistry.TryGet(typeName, out var type))
                 throw new SymbolNotFoundException(
                     "PTypeRegistry does not hold a record for \"" + typeName + "\".");
-            return CreatePType(sctx, PTypeRegistry[typeName], args);
+            return CreatePType(sctx, type, args);
         }
 
         /// <summary>
@@ -497,17 +464,15 @@ namespace Prexonite
         /// </remarks>
         public PType CreatePType(StackContext sctx, string expression)
         {
-            using (var lexer = TypeExpressionScanner.CreateFromString(expression))
-            {
-                var parser = new TypeExpressionParser(lexer, sctx);
-                parser.Parse();
-                if (parser.errors.count > 0)
-                    throw new PrexoniteException(
-                        "Could not construct PType. (Errors in PType expression: " + expression +
-                            ")");
-                else
-                    return parser.LastType;
-            }
+            using var lexer = TypeExpressionScanner.CreateFromString(expression);
+            var parser = new TypeExpressionParser(lexer, sctx);
+            parser.Parse();
+            if (parser.errors.count > 0)
+                throw new PrexoniteException(
+                    "Could not construct PType. (Errors in PType expression: " + expression +
+                    ")");
+            else
+                return parser.LastType;
         }
 
         #endregion
@@ -524,7 +489,7 @@ namespace Prexonite
         /// <param name = "ass">An assembly reference.</param>
         /// <returns>True if the supplied assembly is registered; false otherwise.</returns>
         [DebuggerStepThrough]
-        public bool IsAssemblyRegistered(Assembly ass)
+        public bool IsAssemblyRegistered(Assembly? ass)
         {
             if (ass == null)
                 return false;
@@ -547,7 +512,7 @@ namespace Prexonite
         /// <param name = "ass">An assembly reference.</param>
         /// <exception cref = "ArgumentNullException"><paramref name = "ass" /> is null.</exception>
         [DebuggerStepThrough]
-        public void RegisterAssembly(Assembly ass)
+        public void RegisterAssembly(Assembly? ass)
         {
             if (ass == null)
                 throw new ArgumentNullException(nameof(ass));
@@ -561,7 +526,7 @@ namespace Prexonite
         /// <param name = "ass">The assembly to remove.</param>
         /// <exception cref = "ArgumentNullException"><paramref name = "ass" /> is null.</exception>
         [DebuggerStepThrough]
-        public void RemoveAssembly(Assembly ass)
+        public void RemoveAssembly(Assembly? ass)
         {
             if (ass == null)
                 throw new ArgumentNullException(nameof(ass));
@@ -576,7 +541,7 @@ namespace Prexonite
         /// <summary>
         ///     A proxy to list commands provided by the engine.
         /// </summary>
-        public CommandTable Commands { [DebuggerStepThrough] get; }
+        public CommandTable Commands { get; }
 
         #endregion
 
@@ -602,7 +567,7 @@ namespace Prexonite
             _stackSlot = Thread.AllocateDataSlot();
 
             //Metatable
-            _meta = MetaTable.Create();
+            Meta = MetaTable.Create();
 
             //PTypes
             _pTypeMap = new Dictionary<Type, PType>();
@@ -850,7 +815,7 @@ namespace Prexonite
         internal Engine(Engine prototype)
         {
             _stackSlot = Thread.AllocateDataSlot();
-            _meta = prototype.Meta.Clone();
+            Meta = prototype.Meta.Clone();
             _pTypeMap = new Dictionary<Type, PType>(prototype._pTypeMap);
             PTypeMap = new PTypeMapIterator(this);
             _pTypeRegistry = new SymbolTable<Type>(prototype._pTypeRegistry.Count);
@@ -1228,7 +1193,8 @@ namespace Prexonite
 
         #region Version
 
-        public static Version PrexoniteVersion => typeof (Engine).Assembly.GetName().Version;
+        public static Version PrexoniteVersion => typeof (Engine).Assembly.GetName().Version 
+                                                  ?? new Version(0,0);
 
         #endregion
     }

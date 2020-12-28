@@ -73,24 +73,16 @@ namespace PrexoniteTests.Tests.Configurations
 
         private static ITargetDescription _loadLegacySymbols()
         {
-            Trace.CorrelationManager.StartLogicalOperation("Load legacy symbols (_loadLegacySymbols)");
-            try
-            {
-                var moduleName = new ModuleName("prx.v1", new Version(0, 0));
-                var desc = Cache.CreateDescription(moduleName,
-                                                   Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs"),
-                                                   "prxlib/prx.v1.prelude.pxs",
-                                                   Enumerable.Empty<ModuleName>());
-                Cache.TargetDescriptions.Add(desc);
-                Cache.Build(moduleName);
-                // Important: lookup the target description in order to get the cached description
-                return Cache.TargetDescriptions[moduleName];
-            }
-            finally
-            {
-                Trace.CorrelationManager.StopLogicalOperation();
-            }
-            
+            var moduleName = new ModuleName("prx.v1", new Version(0, 0));
+            var desc = Cache.CreateDescription(moduleName,
+                Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs"),
+                "prxlib/prx.v1.prelude.pxs",
+                Enumerable.Empty<ModuleName>());
+            Cache.TargetDescriptions.Add(desc);
+            Cache.Build(moduleName);
+            // Important: lookup the target description in order to get the cached description
+            return Cache.TargetDescriptions[moduleName];
+
         }
 
         /// <summary>
@@ -104,7 +96,6 @@ namespace PrexoniteTests.Tests.Configurations
 
         private static ITargetDescription _loadStdlib()
         {
-            Trace.CorrelationManager.StartLogicalOperation("Load stdlib");
             try
             {
                 var v1Name = new ModuleName("prx", new Version(1, 0));
@@ -132,7 +123,6 @@ namespace PrexoniteTests.Tests.Configurations
             }
             finally
             {
-                Trace.CorrelationManager.StopLogicalOperation();
                 _trace.Flush();
             }
         }
@@ -193,7 +183,6 @@ namespace PrexoniteTests.Tests.Configurations
             EnsureFresh();
 
             var targetModuleName = _toModuleName(path);
-            Trace.CorrelationManager.StartLogicalOperation("ModuleCache.Load(" + targetModuleName + ")");
             Tuple<Application, ITarget> result;
             try
             {
@@ -201,7 +190,6 @@ namespace PrexoniteTests.Tests.Configurations
             }
             finally
             {
-                Trace.CorrelationManager.StopLogicalOperation();
                 _trace.Flush();
             }
             

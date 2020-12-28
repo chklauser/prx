@@ -20,6 +20,12 @@ namespace psr.test {} export psr.test.v1(
     test\diagnostics => diagnostics
 );
 
+
+// Export the run_test function slot name so that it can easily be called from
+// PrexoniteTest C# code.
+build does asm(ldr.app).Meta["psr.test.run_test"] = 
+    new Prexonite::MetaEntry(sys.ct.entityref_to(psr.test.run_test).Id);
+
 namespace psr.test 
     import sys(*)
 {
@@ -31,7 +37,7 @@ namespace psr.test
         if(not app.Compound.TryGetApplication(self_name, test_subsystem = ?)){
             throw "The $(app.Module.Name) application is not linked to the $self_name module. Cannot run tests.";
         }
-        return test_subsystem.Functions[psr.test.run_tests(?).Id].();
+        return test_subsystem.Functions[sys.ct.entityref_to(psr.test.run_tests).Id].();
     }
 }
 

@@ -1,42 +1,15 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#nullable enable
 #region Namespace Imports
 
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Text;
-using Prexonite.Compiler;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
-using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
@@ -124,18 +97,15 @@ namespace Prexonite
                         "The supplied application (instance of module {0}) does not define the function {1}.",
                         parentApplication.Module.Name, declaration));
 
-            _parentApplication = parentApplication;
-            _declaration = declaration;
+            ParentApplication = parentApplication;
+            Declaration = declaration;
         }
 
         #endregion
 
         #region Properties
 
-        public FunctionDeclaration Declaration
-        {
-            get { return _declaration; }
-        }
+        public FunctionDeclaration Declaration { get; }
 
         /// <summary>
         ///     The functions id
@@ -143,26 +113,19 @@ namespace Prexonite
         public string Id
         {
             [DebuggerStepThrough]
-            get { return _declaration.Id; }
+            get => Declaration.Id;
         }
 
         public string LogicalId
         {
             [DebuggerStepThrough]
-            get { return _declaration.Id; }
+            get => Declaration.Id;
         }
-
-        private readonly Application _parentApplication;
-        private readonly FunctionDeclaration _declaration;
 
         /// <summary>
         ///     The application the function belongs to.
         /// </summary>
-        public Application ParentApplication
-        {
-            [DebuggerStepThrough]
-            get { return _parentApplication; }
-        }
+        public Application ParentApplication { get; }
 
         /// <summary>
         ///     The set of namespaces imported by this particular function.
@@ -170,7 +133,7 @@ namespace Prexonite
         public SymbolCollection ImportedNamespaces
         {
             [DebuggerStepThrough]
-            get { return _declaration.ImportedClrNamespaces; }
+            get => Declaration.ImportedClrNamespaces;
         }
 
         /// <summary>
@@ -179,7 +142,7 @@ namespace Prexonite
         public List<Instruction> Code
         {
             [DebuggerStepThrough]
-            get { return _declaration.Code; }
+            get => Declaration.Code;
         }
 
         /// <summary>
@@ -188,7 +151,7 @@ namespace Prexonite
         public List<string> Parameters
         {
             [DebuggerStepThrough]
-            get { return _declaration.Parameters; }
+            get => Declaration.Parameters;
         }
 
         /// <summary>
@@ -197,7 +160,7 @@ namespace Prexonite
         public SymbolCollection Variables
         {
             [DebuggerStepThrough]
-            get { return _declaration.LocalVariables; }
+            get => Declaration.LocalVariables;
         }
 
         /// <summary>
@@ -205,7 +168,7 @@ namespace Prexonite
         /// </summary>
         internal void CreateLocalVariableMapping()
         {
-            _declaration.CreateLocalVariableMapping();
+            Declaration.CreateLocalVariableMapping();
         }
 
         /// <summary>
@@ -214,23 +177,14 @@ namespace Prexonite
         public SymbolTable<int> LocalVariableMapping
         {
             [DebuggerNonUserCode]
-            get { return _declaration.LocalVariableMapping; }
+            get => Declaration.LocalVariableMapping;
         }
 
-        public CilFunction CilImplementation
-        {
-            get { return _declaration.CilImplementation; }
-        }
+        public CilFunction CilImplementation => Declaration.CilImplementation;
 
-        public bool HasCilImplementation
-        {
-            get { return _declaration.HasCilImplementation; }
-        }
+        public bool HasCilImplementation => Declaration.HasCilImplementation;
 
-        public bool IsMacro
-        {
-            get { return _declaration.IsMacro; }
-        }
+        public bool IsMacro => Declaration.IsMacro;
 
         #endregion
 
@@ -238,7 +192,7 @@ namespace Prexonite
 
         public IEnumerable<EntityRef.Function> GetDependencies()
         {
-            return _declaration.GetDependencies();
+            return Declaration.GetDependencies();
         }
 
         /// <summary>
@@ -250,22 +204,22 @@ namespace Prexonite
         /// </remarks>
         public override string ToString()
         {
-            return _declaration.ToString();
+            return Declaration.ToString() ?? Declaration.Id;
         }
 
         public void Store(StringBuilder buffer)
         {
-            _declaration.Store(buffer);
+            Declaration.Store(buffer);
         }
 
         public string Store()
         {
-            return _declaration.Store();
+            return Declaration.Store();
         }
 
         public void Store(TextWriter writer)
         {
-            _declaration.Store(writer);
+            Declaration.Store(writer);
         }
 
         #endregion
@@ -278,14 +232,8 @@ namespace Prexonite
         public MetaTable Meta
         {
             [DebuggerNonUserCode]
-            get { return _declaration.Meta; }
+            get => Declaration.Meta;
         }
-
-        #endregion
-
-        #region IMetaFilter Members
-
-        
 
         #endregion
 
@@ -299,11 +247,12 @@ namespace Prexonite
         /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
         /// <param name = "suppressInitialization">A boolean indicating whether to suppress initialization of the parent application.</param>
         /// <returns>A function context for the execution of this function.</returns>
+        [PublicAPI]
         internal FunctionContext CreateFunctionContext
             (
             Engine engine,
-            PValue[] args,
-            PVariable[] sharedVariables,
+            PValue[]? args,
+            PVariable[]? sharedVariables,
             bool suppressInitialization)
         {
             return
@@ -319,9 +268,10 @@ namespace Prexonite
         /// <param name = "args">The arguments to pass to the function.</param>
         /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
         /// <returns>A function context for the execution of this function.</returns>
+        [PublicAPI]
         public FunctionContext CreateFunctionContext
             (
-            Engine engine, PValue[] args, PVariable[] sharedVariables)
+            Engine engine, PValue[]? args, PVariable[]? sharedVariables)
         {
             return new FunctionContext(engine, this, args, sharedVariables);
         }
@@ -332,7 +282,8 @@ namespace Prexonite
         /// <param name = "sctx">The stack context in which to create the new context.</param>
         /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
-        public FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
+        [PublicAPI]
+        public FunctionContext CreateFunctionContext(StackContext sctx, PValue[]? args)
         {
             return CreateFunctionContext(sctx.ParentEngine, args);
         }
@@ -344,7 +295,7 @@ namespace Prexonite
         /// <param name = "engine">The engine for which to create the new context.</param>
         /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
-        public FunctionContext CreateFunctionContext(Engine engine, PValue[] args)
+        public FunctionContext CreateFunctionContext(Engine engine, PValue[]? args)
         {
             return new FunctionContext(engine, this, args);
         }
@@ -354,6 +305,7 @@ namespace Prexonite
         /// </summary>
         /// <param name = "engine">The engine in which to execute the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
+        [PublicAPI]
         public FunctionContext CreateFunctionContext(Engine engine)
         {
             return new FunctionContext(engine, this);
@@ -366,21 +318,20 @@ namespace Prexonite
         /// <param name = "args">The arguments to pass to the function.</param>
         /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
         /// <returns>The value returned by the function or {null~Null}</returns>
-        public PValue Run(Engine engine, PValue[] args, PVariable[] sharedVariables)
+        [PublicAPI]
+        public PValue Run(Engine engine, PValue[]? args, PVariable[]? sharedVariables)
         {
             if (HasCilImplementation)
             {
                 //Fix #8
                 ParentApplication.EnsureInitialization(engine);
-                PValue result;
-                ReturnMode returnMode;
                 CilImplementation
                     (
                         this,
                         new NullContext(engine, ParentApplication, ImportedNamespaces),
                         args,
                         sharedVariables,
-                        out result, out returnMode);
+                        out PValue result, out _);
                 return result;
             }
             else
@@ -398,7 +349,8 @@ namespace Prexonite
         /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         /// <returns>The value returned by the function or {null~Null}</returns>
-        public PValue Run(Engine engine, PValue[] args)
+        [PublicAPI]
+        public PValue Run(Engine engine, PValue[]? args)
         {
             return Run(engine, args, null);
         }
@@ -409,6 +361,7 @@ namespace Prexonite
         /// <param name = "engine">The engine in which to execute the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         /// <returns>The value returned by the function or {null~Null}</returns>
+        [PublicAPI]
         public PValue Run(Engine engine)
         {
             return Run(engine, null);
@@ -424,7 +377,7 @@ namespace Prexonite
         /// <param name = "sctx">The stack context from which the function is called.</param>
         /// <param name = "args">The list of arguments to be passed to the function.</param>
         /// <returns>The value returned by the function or {null~Null}</returns>
-        PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
+        PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[]? args)
         {
             return Run(sctx.ParentEngine, args);
         }
@@ -440,7 +393,7 @@ namespace Prexonite
         /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         [DebuggerNonUserCode]
-        StackContext IStackAware.CreateStackContext(StackContext sctx, PValue[] args)
+        StackContext IStackAware.CreateStackContext(StackContext sctx, PValue[]? args)
         {
             return CreateFunctionContext(sctx, args);
         }
@@ -450,29 +403,20 @@ namespace Prexonite
         #region Exception Handling
 
         /// <summary>
-        ///     Causes the set of try-catch-finally blocks to be re-read on the next occurance of an exception.
+        ///     Causes the set of try-catch-finally blocks to be re-read on the next occurence of an exception.
         /// </summary>
         public void InvalidateTryCatchFinallyBlocks()
         {
-            _declaration.InvalidateTryCatchFinallyBlocks();
+            Declaration.InvalidateTryCatchFinallyBlocks();
         }
 
         /// <summary>
         ///     The cached set of try-catch-finally blocks.
         /// </summary>
-        public ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks
-        {
-            get
-            {
-                return _declaration.TryCatchFinallyBlocks;
-            }
-        }
+        public ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks => Declaration.TryCatchFinallyBlocks;
 
         #endregion
 
-        EntityRef.Function INamed<EntityRef.Function>.Name
-        {
-            get { return ((INamed<EntityRef.Function>) _declaration).Name; }
-        }
+        EntityRef.Function INamed<EntityRef.Function>.Name => ((INamed<EntityRef.Function>) Declaration).Name;
     }
 }

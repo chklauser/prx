@@ -110,56 +110,48 @@ namespace Prexonite.Compiler.Build.Internal
                             {
                                 token.ThrowIfCancellationRequested();
                                 Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Building {0}.", this);
-                                Trace.CorrelationManager.StartLogicalOperation("Build");
-                                try
+                                // Hand compilation off to loader. 
+                                // If the description is backed by a file, allow inclusion of 
+                                // other files via relative paths.
+                                FileInfo fsContext;
+                                if (_fileName != null)
                                 {
-                                    // Hand compilation off to loader. 
-                                    // If the description is backed by a file, allow inclusion of 
-                                    // other files via realtive paths.
-                                    FileInfo fsContext;
-                                    if (_fileName != null)
-                                    {
-                                        fsContext = new FileInfo(_fileName);
-                                        ldr.LoadPaths.Push(fsContext.DirectoryName);
-                                    }
-                                    else
-                                    {
-                                        fsContext = null;
-                                    }
-                                    ldr.LoadFromReader(reader, _fileName);
-                                    if (ldr.ErrorCount > 0 || ldr.Warnings.Count > 0)
-                                    {
-                                        Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Build of {0} completed with {1} error(s) and {2} warning(s).", 
-                                            this, ldr.ErrorCount, ldr.Warnings.Count);
-                                    }
-                                    foreach (var msg in ldr.Infos.Append(ldr.Warnings).Append(ldr.Errors).OrderBy(m => m))
-                                    {
-                                        TraceEventType evType;
-                                        switch (msg.Severity)
-                                        {
-                                            case MessageSeverity.Error:
-                                                evType = TraceEventType.Error;
-                                                break;
-                                            case MessageSeverity.Warning:
-                                                evType = TraceEventType.Warning;
-                                                break;
-                                            case MessageSeverity.Info:
-                                                evType = TraceEventType.Information;
-                                                break;
-                                            default:
-                                                throw new ArgumentOutOfRangeException();
-                                        }
-                                        Plan.Trace.TraceEvent(evType, 0, "({0}) {1}", this, msg);
-                                    }
-
-                                    if (fsContext != null)
-                                    {
-                                        ldr.LoadPaths.Pop();
-                                    }
+                                    fsContext = new FileInfo(_fileName);
+                                    ldr.LoadPaths.Push(fsContext.DirectoryName);
                                 }
-                                finally
+                                else
                                 {
-                                    Trace.CorrelationManager.StopLogicalOperation();
+                                    fsContext = null;
+                                }
+                                ldr.LoadFromReader(reader, _fileName);
+                                if (ldr.ErrorCount > 0 || ldr.Warnings.Count > 0)
+                                {
+                                    Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Build of {0} completed with {1} error(s) and {2} warning(s).", 
+                                        this, ldr.ErrorCount, ldr.Warnings.Count);
+                                }
+                                foreach (var msg in ldr.Infos.Append(ldr.Warnings).Append(ldr.Errors).OrderBy(m => m))
+                                {
+                                    TraceEventType evType;
+                                    switch (msg.Severity)
+                                    {
+                                        case MessageSeverity.Error:
+                                            evType = TraceEventType.Error;
+                                            break;
+                                        case MessageSeverity.Warning:
+                                            evType = TraceEventType.Warning;
+                                            break;
+                                        case MessageSeverity.Info:
+                                            evType = TraceEventType.Information;
+                                            break;
+                                        default:
+                                            throw new ArgumentOutOfRangeException();
+                                    }
+                                    Plan.Trace.TraceEvent(evType, 0, "({0}) {1}", this, msg);
+                                }
+
+                                if (fsContext != null)
+                                {
+                                    ldr.LoadPaths.Pop();
                                 }
 
                                 Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Done with building {0}, wrapping result in target.", this);
