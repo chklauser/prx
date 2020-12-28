@@ -7,6 +7,7 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
+using System.CodeDom.Compiler;
 using Prexonite.Types;
 using Prexonite.Compiler.Cil;
 using NUnit.Framework;
@@ -19,10 +20,12 @@ using NUnit.Framework;
 namespace PrexoniteTests.Tests.Configurations
 {
 <# 
+    // Prexonite Script V1.0 Test Suites
     // [testFile :: (test_file_name, [under_test], [test_deps], [test_case])] 
     foreach(var testFile in _getTestConfiguration()) 
     { 
 #>
+        [GeneratedCode("PsrUnitTests.tt","0.0")]
         internal abstract class <#=_toPsrClassName(testFile.TestFileName)#> : ScriptedUnitTestContainer
         {
             [OneTimeSetUp]
@@ -63,10 +66,32 @@ namespace PrexoniteTests.Tests.Configurations
             } 
 <#      } #>
         }
-<# } #>
+<#  } 
+    
+    // Prexonite Script V2 Test Suites
+    foreach (var configuration in _getTestConfigurationV2())
+    {
+        var className = _toPsrClassName(configuration.TestFileName) + "V2";
+        #>
+        [GeneratedCode("PsrUnitTests.tt","0.0")]
+        internal abstract class <#=className#> : V2UnitTestContainer {
+            protected <#=className#>(bool compileToCil) : base(@"<#=configuration.TestFileName#>", compileToCil)
+            {
+            }
+
+<#        foreach (var testCase in configuration.TestCases) { #>
+            [Test]
+            public void <#=_validTestName(testCase)#>()
+            {
+                RunTestCase(@"<#=testCase#>");
+            }
+
+<#        } #>
+        }
+<#  } #>
 }
 
 // ReSharper restore RedundantExplicitArrayCreation
 // ReSharper restore InconsistentNaming
 
-<#@ include file="LoadConfiguration.t4" #>
+<#@ include file="LoadConfiguration.t4" #><#@ import namespace="System.Text" #>

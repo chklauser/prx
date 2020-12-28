@@ -72,10 +72,10 @@ namespace PrexoniteTests.Tests.Configurations
             Root = new NullContext(Engine, Application, new string[0]);
 
             var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            while (Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "prx.sln")))
+            while (slnPath != null && Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "prx.sln")))
                 slnPath = Path.Combine(slnPath, @".." + Path.DirectorySeparatorChar);
 
-            if (Directory.Exists(slnPath))
+            if (slnPath != null && Directory.Exists(slnPath))
             {
                 var psrTestsPath =
                     Path.GetFullPath(Path.Combine(slnPath, "PrexoniteTests", "psr-tests"));

@@ -36,7 +36,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
-    [DebuggerDisplay("{_debuggerDisplay}")]
+    [DebuggerDisplay("{" + nameof(_debuggerDisplay) + "}")]
     public class ProvidedTarget : ITargetDescription, ITarget
     {
         [NotNull]

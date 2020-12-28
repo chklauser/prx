@@ -2,6 +2,7 @@
 <#@ template debug="true" hostSpecific="true" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text" #>
 <#@ import namespace="System.Linq" #>
 <#+ 
     static readonly string ttEscape = Path.Combine("..", "..");
@@ -26,6 +27,14 @@
 		public IEnumerable<Dependency> UnitsUnderTest;
 		public IEnumerable<Dependency> TestDependencies;
 	}
+
+    ///<summary>A Prexonite Script 2.0 test suite that relies on self-assembling build plans
+    /// to load its dependencies.</summary>
+    class ConfigurationV2
+    {
+        public string TestFileName;
+        public IEnumerable<string> TestCases;
+    }
 
 	Dependency _getDependencies(string spec)
 	{
@@ -73,6 +82,32 @@
 
                 line = sr.ReadLine();
             }
+        }
+    }
+
+    IEnumerable<ConfigurationV2> _getTestConfigurationV2()
+    {
+        var path = Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, "_2", testConfigurationName)));
+        using var sr = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read), Encoding.UTF8);
+        var line = sr.ReadLine();
+        while (line != null)
+        {
+            if (line.Length < 3)
+            {
+                continue;
+            }
+
+            var fs = line.Split(new[]{configSectionSep}, 2);
+            var tfn = _normalizePath(fs[0]);
+            var entrySep = new[] {configEntrySep};
+            var testCases = fs[1].Split(entrySep).Skip(1);
+            yield return new ConfigurationV2()
+            {
+                TestFileName = tfn,
+                TestCases = testCases
+            };
+
+            line = sr.ReadLine();
         }
     }
 

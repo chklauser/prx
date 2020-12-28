@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -1338,6 +1338,22 @@ function main() {
             Expect(15+16);
         }
 
+        [Test]
+        public void AssignMetaInBuildBlock()
+        {
+            var ldr = Compile(@"
+namespace ns {
+  function fox(){}
+}
+build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(entityref_to(ns.fox).Id);");
+
+            var actualFuncId = ldr.ParentApplication.Meta["psr.test.run_test"].Text;
+            Assert.That(actualFuncId, Is.Not.Empty);
+            var pointedToFunction = ldr.ParentApplication.Functions[actualFuncId];
+            Assert.That(pointedToFunction, Is.Not.Null);
+            Assert.That(pointedToFunction.LogicalId, Does.EndWith("fox"));
+        }
+        
         [ContractAnnotation("value:null=>halt")]
         private static void _assumeNotNull(object value)
         {

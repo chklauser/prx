@@ -559,7 +559,7 @@ function main
     else
         action3;
 
-    asm nop+end;
+    asm { nop+end };
 }
 ");
             Expect(
@@ -607,7 +607,7 @@ declare function action1, action2;
 function main
 {
     var u; var v; var w; var x; var y; var z; 
-Beginning:; asm nop+Beginning;
+Beginning:; asm {nop+Beginning};
     if (u And ( v Or ( ( w Or x ) And ( y And z) ) ))
         action1;
     else if( ( u Or v Or w ) And ( x Or y Or z ))
@@ -615,7 +615,7 @@ Beginning:; asm nop+Beginning;
     else
         goto Beginning;
 
-    asm nop+Loop;
+    asm { nop+Loop }
 
     do action1; while ( ( u And v ) Or x);
 }
@@ -684,14 +684,14 @@ function main
     var z;
 
     AndAA:;
-    asm nop+AndAA;
+    asm { nop+AndAA };
 
     if (x And y)
         action1;
     else
         action2;
 
-    asm nop+OrAJ;
+    asm { nop+OrAJ };
 
     if (x Or y)
         action1;
@@ -699,21 +699,21 @@ function main
         goto AndAA;
 
     NotAndOrJA:;
-    asm nop+NotAndOrJA;
+    asm { nop+NotAndOrJA };
 
     unless (x And ( y Or z ))
         goto AndAA;
     else
         action2;
 
-    asm nop+OrAndJJ;
+    asm { nop+OrAndJJ };
     
     if (x Or ( y And z ))
         goto NotAndOrJA;
     else
         goto AndAA;
 
-    asm nop+END;
+    asm { nop+END };
 }
 ");
             Expect(
@@ -906,7 +906,7 @@ function main
         stloc   x
     }
 
-    if(3 == x) asm inc x;
+    if(3 == x) asm { inc x }
 }
 ");
             Expect(

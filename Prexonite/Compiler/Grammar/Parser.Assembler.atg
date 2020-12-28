@@ -29,8 +29,7 @@ AsmStatementBlock<AstBlock block>
 	{
 	    AsmInstruction<block>        
 	}
-	rbrace
-|   AsmInstruction<block> semicolon     
+	rbrace   
 .
 
 AsmInstruction<AstBlock block>          (.  int arguments = 0;

@@ -28,9 +28,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
+using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Modular;
@@ -50,8 +50,8 @@ namespace Prexonite
             (
             Engine parentEngine,
             PFunction implementation,
-            PValue[] args,
-            PVariable[] sharedVariables)
+            [CanBeNull] PValue[] args,
+            [CanBeNull] PVariable[] sharedVariables)
             : this(parentEngine, implementation, args, sharedVariables, false)
         {
         }
@@ -60,18 +60,16 @@ namespace Prexonite
             (
             Engine parentEngine,
             PFunction implementation,
-            PValue[] args,
-            PVariable[] sharedVariables,
+            [CanBeNull] PValue[] args,
+            [CanBeNull] PVariable[] sharedVariables,
             bool suppressInitialization)
         {
             if (parentEngine == null)
                 throw new ArgumentNullException(nameof(parentEngine));
             if (implementation == null)
                 throw new ArgumentNullException(nameof(implementation));
-            if (sharedVariables == null)
-                sharedVariables = new PVariable[] {};
-            if (args == null)
-                args = new PValue[] {};
+            sharedVariables ??= new PVariable[] { };
+            args ??= new PValue[] { };
 
             if (
                 !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))

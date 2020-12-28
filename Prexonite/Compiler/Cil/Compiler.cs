@@ -197,6 +197,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         [PublicAPI]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(StackContext sctx, IPlan plan, IEnumerable<ModuleName> moduleNames,
             FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
         {
