@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "dotnet-t4": {
-      "version": "2.2.0-preview-0012-ga253e82592",
+      "version": "2.2.0",
       "commands": [
         "t4"
       ]
