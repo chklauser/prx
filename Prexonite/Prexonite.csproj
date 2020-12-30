@@ -85,7 +85,7 @@
 
   <!-- These defitions are not used in a normal build. They can be useful for debugging PxCoco in the context of Prexonite. -->
   <!-- <PropertyGroup>
-    <PxCocoDebugTaskExt Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netcoreapp2.2\PxCoco.dll</PxCocoDebugTaskExt>
+    <PxCocoDebugTaskExt Condition=" '$(MSBuildRuntimeType)' == 'Core' ">net5.0\PxCoco.dll</PxCocoDebugTaskExt>
     <PxCocoDebugTaskExt Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net48\PxCoco.exe</PxCocoDebugTaskExt>
     <PxCocoTaskAssembly>$(MSBuildThisFileDirectory)..\PxCoco\bin\Debug\$(PxCocoDebugTaskExt)</PxCocoTaskAssembly>
   </PropertyGroup>
@@ -150,7 +150,7 @@
   <!-- NUGET References -->
   <ItemGroup>
     <PackageReference Include="Lokad.ILPack" Version="0.1.3" />
-    <PackageReference Include="PxCoco" Version="1.91.2" />
+    <PackageReference Include="PxCoco" Version="1.95.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="3.1.10" />
   </ItemGroup>
