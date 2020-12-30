@@ -1,0 +1,92 @@
+
+trigger:
+  paths:
+    exclude:
+    - PxCoco/*
+  tags:
+    include:
+      - 'v.*'
+pr: none
+
+stages:
+  - stage: build_test_release
+    displayName: Build/Test/Release
+    variables:
+      solution: 'prx.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+    jobs:
+      - job: build_test_release
+        timeoutInMinutes: 5
+        cancelTimeoutInMinutes: 1
+        displayName: Build/Test/Release
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: UseDotNet@2
+          inputs:
+            version: '5.0.x'
+
+        - powershell: |
+            # Remove /refs/tags (10 chars) and v. (2 chars) from checkout string
+            $ver = $env:BUILD_SOURCEBRANCH.remove(0, 12)
+            Write-Host "##vso[task.setvariable variable=Version]$ver"
+          displayName: 'Update version to Tag'
+          condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+
+        - task: NuGetAuthenticate@0
+        
+        - task: DotNetCoreCLI@2
+          displayName: Restore
+          inputs:
+            command: restore
+            projects: '$(solution)'
+            selectOrConfig: 'config'
+            nugetConfigPath: NuGet.Config
+
+        - task: DotNetCoreCLI@2
+          displayName: Restore Tools
+          inputs:
+            command: custom
+            custom: tool
+            arguments: 'restore'
+            selectOrConfig: 'config'
+            nugetConfigPath: NuGet.Config
+        
+        - task: DotNetCoreCLI@2
+          displayName: Build
+          inputs:
+            command: build
+            projects: '$(solution)'
+            arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration);Version=$(Version)" --no-restore'
+        
+        - task: DotNetCoreCLI@2
+          displayName: Unit Test
+          inputs:
+            command: test    
+            projects: '**/*Tests.csproj'
+            nobuild: true
+            arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration);Version=$(Version)" --no-restore'
+        
+        - task: DotNetCoreCLI@2
+          displayName: Pack
+          inputs:
+            command: pack
+            searchPatternPack: 'Prexonite/Prexonite.csproj'
+            nobuild: true
+            configurationToPack: $(BuildConfiguration)
+            buildProperties: Platform=$(BuildPlatform);Version=$(Version)
+        
+        - task: PublishPipelineArtifact@0
+          displayName: Publish to pipeline
+          condition: succeeded()
+          inputs:
+            artifactName: 'binaries'
+            targetPath: '$(Build.ArtifactStagingDirectory)'
+
+        - task: DotNetCoreCLI@2
+          displayName: Publish (NuGet)
+          condition: succeeded()
+          inputs:
+            command: push
+            publishVstsFeed: 'edge'
