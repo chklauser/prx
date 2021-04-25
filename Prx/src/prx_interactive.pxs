@@ -27,7 +27,7 @@
 
 build
 {
-    require("prx_lib.pxs");
+    require("resource:Prx/Prx.src.prx_lib.pxs");
 }
 
 Import { System, System::Text, Prexonite, Prexonite::Compiler };

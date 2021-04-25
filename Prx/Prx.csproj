@@ -46,5 +46,25 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\PrexoniteTests\Prexonite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- see https://docs.microsoft.com/en-us/dotnet/core/deploying/single-file -->
+    <!-- enable single-file publishing -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- embed framework (as oppposed to framework dependent) -->
+    <SelfContained>true</SelfContained>
+    <!-- Can't use trimming because Prexonite heavily relies on reflection -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Also embed machine code for faster startup (in addition to CIL) -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Ship with debug symbols -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And $([MSBuild]::IsOSPlatform('Windows'))">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And $([MSBuild]::IsOSPlatform('Linux'))">
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+  </PropertyGroup>
 
 </Project>

@@ -41,11 +41,11 @@ namespace Prexonite.Compiler.Build
         /// <summary>List of modules included in the Prexonite assembly. Does not include 'sys' itself.</summary>
         private static readonly ISource[] _stdLibModules =
         {
-            Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
-            Source.FromEmbeddedResource("prxlib.sys.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.v1.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs")
+            Source.FromEmbeddedPrexoniteResource("prxlib.prx.prim.pxs"),
+            Source.FromEmbeddedPrexoniteResource("prxlib.prx.core.pxs"),
+            Source.FromEmbeddedPrexoniteResource("prxlib.sys.pxs"),
+            Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.pxs"),
+            Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs")
         };
 
         public static IPlan CreateDefault()

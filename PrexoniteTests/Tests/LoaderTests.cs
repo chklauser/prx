@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -101,6 +102,36 @@ namespace PrexoniteTests.Tests
         public void Sub2ForwardSlashRelative()
         {
             _assertFindsFile("./sub1/sub2/sub2.pxs", "sub1", "sub2", "sub2.pxs");
+        }
+
+        [Test]
+        public void EmbeddedResourceByName()
+        {
+            var spec = _ldr.ApplyLoadPaths("resource:Prexonite/prxlib.sys.pxs");
+
+            Assert.That(spec, Is.Not.Null);
+            Assert.That(spec, Is.InstanceOf<ResourceSpec>());
+            Assert.That(((ResourceSpec) spec).Name, Is.EqualTo("prxlib.sys.pxs"));
+            Assert.That(((ResourceSpec) spec).ResourceAssembly, Is.SameAs(Assembly.GetAssembly(typeof(Engine))));
+        }
+
+        [Test]
+        public void EmbeddedResourceByFullName()
+        {
+            var spec = _ldr.ApplyLoadPaths($"resource:{Assembly.GetAssembly(typeof(Engine))!.FullName}/prxlib.sys.pxs");
+
+            Assert.That(spec, Is.Not.Null);
+            Assert.That(spec, Is.InstanceOf<ResourceSpec>());
+            Assert.That(((ResourceSpec) spec).Name, Is.EqualTo("prxlib.sys.pxs"));
+            Assert.That(((ResourceSpec) spec).ResourceAssembly, Is.SameAs(Assembly.GetAssembly(typeof(Engine))));
+        }
+
+        [Test]
+        public void EmbeddedResourceNotFound()
+        {
+            var spec = _ldr.ApplyLoadPaths($"resource:DoesNotExist/prxlib.sys.pxs");
+
+            Assert.That(spec, Is.Null);
         }
 
         private void _assertFindsFile(string logicalPath, params string[] physicalPathComponents)

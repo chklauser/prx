@@ -31,9 +31,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Prexonite;
 using Prexonite.Commands;
@@ -165,74 +162,81 @@ namespace Prx
             engine.Commands.AddHostCommand
                 (
                     @"__replace_call",
-                    delegate(StackContext sctx, PValue[] cargs)
+                    delegate(StackContext sctx, PValue[] cmdArgs)
                     {
-                        cargs ??= Array.Empty<PValue>();
+                        cmdArgs ??= Array.Empty<PValue>();
                         if (sctx == null)
                             throw new ArgumentNullException(nameof(sctx));
 
                         var e = sctx.ParentEngine;
 
-                        if (cargs.Length < 1)
+                        if (cmdArgs.Length < 1)
                             throw new PrexoniteException
                                 (
                                 "__replace_call requires the context or function to be replaced.");
 
-                        var carg = cargs[0];
-                        var rargs = new PValue[cargs.Length - 1];
-                        Array.Copy(cargs, 1, rargs, 0, rargs.Length);
+                        var callArg = cmdArgs[0];
+                        var replaceArgs = new PValue[cmdArgs.Length - 1];
+                        Array.Copy(cmdArgs, 1, replaceArgs, 0, replaceArgs.Length);
 
-                        FunctionContext rctx = null;
+                        FunctionContext replaceCtx;
                         PFunction f;
-                        switch (carg.Type.ToBuiltIn())
+                        switch (callArg.Type.ToBuiltIn())
                         {
                             case PType.BuiltIn.String:
                                 if (
                                     !sctx.ParentApplication.Functions.TryGetValue
                                         (
-                                            (string)carg.Value, out f))
+                                            (string)callArg.Value, out f))
                                     throw new PrexoniteException
                                         (
-                                        "Cannot replace call to " + carg +
+                                        "Cannot replace call to " + callArg +
                                         " because no such function exists.");
 
-                                rctx = f.CreateFunctionContext(e, rargs);
+                                replaceCtx = f.CreateFunctionContext(e, replaceArgs);
                                 break;
                             case PType.BuiltIn.Object:
-                                var clrType = ((ObjectPType)carg.Type).ClrType;
+                                var clrType = ((ObjectPType)callArg.Type).ClrType;
                                 if (clrType == typeof(PFunction))
                                 {
-                                    f = (PFunction)carg.Value;
-                                    rctx = f.CreateFunctionContext(e, rargs);
+                                    f = (PFunction)callArg.Value;
+                                    replaceCtx = f.CreateFunctionContext(e, replaceArgs);
                                 }
                                 else if (clrType == typeof(Closure) &&
                                          clrType != typeof(Continuation))
                                 {
-                                    var c = (Closure)carg.Value;
-                                    rctx = c.CreateFunctionContext(sctx, rargs);
+                                    var c = (Closure)callArg.Value;
+                                    replaceCtx = c.CreateFunctionContext(sctx, replaceArgs);
                                 }
                                 else if (clrType == typeof(FunctionContext))
                                 {
-                                    rctx = (FunctionContext)carg.Value;
+                                    replaceCtx = (FunctionContext)callArg.Value;
+                                }
+                                else
+                                {
+                                    replaceCtx = null;
                                 }
                                 break;
+                            default:
+                                replaceCtx = null;
+                                break;
                         }
-                        if (rctx == null)
+                        if (replaceCtx == null)
                             throw new PrexoniteException("Cannot replace a context based on " +
-                                                         carg);
+                                                         callArg);
 
                         var node = e.Stack.Last;
                         do
                         {
-                            if (node.Value is FunctionContext ectx)
+                            if (node?.Value is FunctionContext ectx)
                             {
-                                if (ReferenceEquals(ectx.Implementation, rctx.Implementation))
+                                if (ReferenceEquals(ectx.Implementation, replaceCtx.Implementation))
                                 {
-                                    node.Value = rctx;
+                                    node.Value = replaceCtx;
                                     break;
                                 }
                             }
-                        } while ((node = node.Previous) != null);
+                        } while ((node = node?.Previous) != null);
 
                         return PType.Null.CreatePValue();
                     });
@@ -249,32 +253,30 @@ namespace Prx
 
             engine.Commands.AddHostCommand
                 ("createBenchmark",
-                    delegate(StackContext sctx, PValue[] cargs)
+                    delegate(StackContext sctx, PValue[] cmdArgs)
                     {
                         if (sctx == null)
                             throw new ArgumentNullException(nameof(sctx));
-                        if (cargs == null)
-                            cargs = Array.Empty<PValue>();
+                        cmdArgs ??= Array.Empty<PValue>();
 
-                        Engine teng;
-                        int tit;
+                        Engine targetEngine;
+                        int numIterations;
 
-                        if (cargs.Length >= 2)
+                        switch (cmdArgs.Length)
                         {
-                            teng = cargs[0].ConvertTo<Engine>(sctx);
-                            tit = cargs[1].ConvertTo<int>(sctx);
-                        }
-                        else if (cargs.Length >= 1)
-                        {
-                            teng = sctx.ParentEngine;
-                            tit = cargs[0].ConvertTo<int>(sctx);
-                        }
-                        else
-                        {
-                            return sctx.CreateNativePValue(new Benchmark(sctx.ParentEngine));
+                            case >= 2:
+                                targetEngine = cmdArgs[0].ConvertTo<Engine>(sctx);
+                                numIterations = cmdArgs[1].ConvertTo<int>(sctx);
+                                break;
+                            case >= 1:
+                                targetEngine = sctx.ParentEngine;
+                                numIterations = cmdArgs[0].ConvertTo<int>(sctx);
+                                break;
+                            default:
+                                return sctx.CreateNativePValue(new Benchmark(sctx.ParentEngine));
                         }
 
-                        return sctx.CreateNativePValue(new Benchmark(teng, tit));
+                        return sctx.CreateNativePValue(new Benchmark(targetEngine, numIterations));
                     });
 
             #endregion
@@ -283,18 +285,15 @@ namespace Prx
             
             #region Self-assembling build plan reference
 
-            engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, args) => sctx.CreateNativePValue(plan));
-            engine.Commands.AddHostCommand(@"host\prx_path", (sctx, args) => sctx.CreateNativePValue(prxPath));
+            engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, _) => sctx.CreateNativePValue(plan));
+            engine.Commands.AddHostCommand(@"host\prx_path", (sctx, _) => sctx.CreateNativePValue(prxPath));
 
             #endregion
-
-            var bootstrapPath = Path.Combine(prxPath, PrxScriptFileName);
-            var (entryPath, deleteSrc) = _ensureSourceAvailable(bootstrapPath, prxPath);
 
             Tuple<Application, ITarget> result;
             try
             {
-                var entryDesc = plan.AssembleAsync(Source.FromFile(entryPath, Encoding.UTF8)).Result;
+                var entryDesc = plan.AssembleAsync(Source.FromEmbeddedResource(Assembly.GetExecutingAssembly(), "Prx.src.prx_main.pxs")).Result;
                 result = plan.Load(entryDesc.Name);
             }
             catch (BuildFailureException e)
@@ -329,9 +328,6 @@ namespace Prx
 #endif
             }
 
-            if (deleteSrc)
-                Directory.Delete(Path.Combine(prxPath ,"src"), true);
-
             if (result == null)
             {
                 return null;
@@ -341,67 +337,9 @@ namespace Prx
                 return null;
             
             var app = result.Item1;
-            app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName()!.Version!.ToString();
+            app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
             return app;
 
-        }
-
-        private static (string entryPath, bool deleteSrc) _ensureSourceAvailable(string entryPath, string prxPath)
-        {
-            if (File.Exists(entryPath)) 
-                return (entryPath, false);
-
-            var srcDirPath = Path.Combine(prxPath, "src");
-            //Load default CLI app
-            entryPath = Path.Combine(srcDirPath, "prx_main.pxs");
-
-            if (File.Exists(entryPath)) 
-                return (entryPath, false);
-
-            bool deleteSrc;
-            if (!Directory.Exists(srcDirPath))
-            {
-                var di =
-                    Directory.CreateDirectory(srcDirPath);
-                di.Attributes |= FileAttributes.Hidden;
-                deleteSrc = true;
-            }
-            else
-            {
-                deleteSrc = false;
-            }
-
-            //Unpack source
-            var prx = Assembly.GetExecutingAssembly();
-
-            async Task extractFile(string name)
-            {
-                var resourceName = $"Prx.src.{name}";
-                var stream = prx.GetManifestResourceStream(resourceName);
-                if (stream == null)
-                {
-                    throw new ArgumentException($"Embedded resource '{resourceName}' is missing.",
-                        nameof(name));
-                }
-
-                await using (stream)
-                {
-                    var filePath = Path.Combine(srcDirPath, name);
-
-                    // We need the await here so that the state machine can close the streams afterwards
-                    await using (var dest = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                        await stream.CopyToAsync(dest, (CancellationToken) default);
-                }
-            }
-
-
-            Task.WaitAll(
-                extractFile("prx_main.pxs"),
-                extractFile("prx_lib.pxs"),
-                extractFile("prx_interactive.pxs")
-            );
-
-            return (entryPath, deleteSrc);
         }
 
         private static bool _reportErrors(IEnumerable<Message> messages)

@@ -28,7 +28,10 @@ Name prx::cli;
 Description "prx command line interface (compiler and REPL)";
 Author "Christian Klauser";
 
-build does require("prx_interactive.pxs", "prx_lib.pxs");
+build does require(
+    "resource:Prx/Prx.src.prx_interactive.pxs", 
+    "resource:Prx/Prx.src.prx_lib.pxs"
+);
 
 namespace prx.cli
     import sys.*,

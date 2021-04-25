@@ -23,17 +23,17 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#if Compress
+#if Compression
 using System.IO.Compression;
 #endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
 using NN = JetBrains.Annotations.NotNullAttribute;
@@ -256,7 +256,7 @@ namespace Prexonite.Compiler
 
             var target = new CompilerTarget(this, func,parentTarget,sourcePosition);
             if (_functionTargets.ContainsKey(func.Id) &&
-                (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
+                !ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch)
                 throw new PrexoniteException(
                     $"The application {ParentApplication.Id} does not allow overriding of function {func.Id}.");
 
@@ -703,35 +703,36 @@ namespace Prexonite.Compiler
             _loadFromFile(file);
         }
 
-        private void _loadFromFile(FileInfo file)
+        private void _loadFromFile(ISourceSpec file)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
             LoadedFiles.Add(file.FullName);
-            LoadPaths.Push(file.DirectoryName);
+            if (file.LoadPath is { } path)
+            {
+                LoadPaths.Push(path);
+            }
+
             try
             {
-                using Stream str = new FileStream(
-                    file.FullName,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.Read,
-                    4 * 1024,
-                    FileOptions.SequentialScan);
+                using var str = file.OpenStream();
 #if DEBUG
                     var indent = new StringBuilder(_loadIndent);
-                    indent.Append(' ', 2 * (_loadIndent++));
-                    Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
+                    indent.Append(' ', 2 * _loadIndent++);
+                    Console.WriteLine(Resources.Loader__begin_compiling, file.FullName, indent, file.FullName);
 #endif
-                _loadFromStream(str, file.Name);
+                _loadFromStream(str, file.FullName);
 #if DEBUG
-                    Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
+                    Console.WriteLine(Resources.Loader__end_compiling, file.FullName, indent);
                     _loadIndent--;
 #endif
             }
             finally
             {
-                LoadPaths.Pop();
+                if (file.LoadPath != null)
+                {
+                    LoadPaths.Pop();
+                }
             }
         }
 
@@ -885,39 +886,78 @@ namespace Prexonite.Compiler
             }
         }
         
-        private static readonly string _imageLocation =
-            (new FileInfo(Assembly.GetExecutingAssembly().Location)).DirectoryName;
+        private static readonly string _imageLocation = AppContext.BaseDirectory;
 
-        public FileInfo ApplyLoadPaths(string pathSuffix)
+        [CanBeNull]
+        public ISourceSpec ApplyLoadPaths([System.Diagnostics.CodeAnalysis.NotNull] string pathSuffix)
         {
             if (pathSuffix == null)
                 throw new ArgumentNullException(nameof(pathSuffix));
-            var path = pathSuffix.Replace(DirectorySeparator, Path.DirectorySeparatorChar);
 
-            //Try to find in process environment
-            if (File.Exists(path))
-                return new FileInfo(path);
+            FileInfo applyFilePaths(string path)
+            {
+                path = path.Replace(DirectorySeparator, Path.DirectorySeparatorChar);
 
-            //Try to find in load paths
-            foreach (var pathPrefix in LoadPaths)
-                if (File.Exists((path = Path.Combine(pathPrefix, pathSuffix))))
+                //Try to find in process environment
+                if (File.Exists(path))
                     return new FileInfo(path);
 
-            //Try to find in engine paths
-            foreach (var pathPrefix in ParentEngine.Paths)
-                if (File.Exists((path = Path.Combine(pathPrefix, pathSuffix))))
+                //Try to find in load paths
+                foreach (var pathPrefix in LoadPaths)
+                    if (File.Exists(path = Path.Combine(pathPrefix, pathSuffix)))
+                        return new FileInfo(path);
+
+                //Try to find in engine paths
+                foreach (var pathPrefix in ParentEngine.Paths)
+                    if (File.Exists(path = Path.Combine(pathPrefix, pathSuffix)))
+                        return new FileInfo(path);
+
+                //Try to find in current directory
+                if (File.Exists(path = Path.Combine(Environment.CurrentDirectory, pathSuffix)))
                     return new FileInfo(path);
 
-            //Try to find in current directory
-            if (File.Exists((path = Path.Combine(Environment.CurrentDirectory, pathSuffix))))
-                return new FileInfo(path);
+                //Try to find next to image
+                if (File.Exists(path = Path.Combine(_imageLocation, pathSuffix)))
+                    return new FileInfo(path);
 
-            //Try to find next to image
-            if (File.Exists((path = Path.Combine(_imageLocation, pathSuffix))))
-                return new FileInfo(path);
+                //Not found
+                return null;
+            }
 
-            //Not found
-            return null;
+            [CanBeNull]
+            static ISourceSpec resolveResourcePath(string path)
+            {
+                var parts = path.Split('/', 2);
+                if (parts.Length < 2)
+                {
+                    throw new ArgumentException($"Embedded resource path needs to have the format: "
+                        + $"'resource:$AssemblyName/$ResourceName'. Got '{path}' instead.", nameof(path));
+                }
+
+                var rawAssemblyName = parts[0][9..];
+                var resourceName = parts[1];
+                var assemblyCandidates = AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(x =>
+                    {
+                        var candidateName = x.GetName();
+                        return rawAssemblyName == candidateName.Name || rawAssemblyName == candidateName.ToString();
+                    })
+                    .Take(2)
+                    .ToImmutableArray();
+                return assemblyCandidates.Length switch
+                {
+                    <= 0 => null,
+                    > 1 => throw new ArgumentException(
+                        $"The assembly name '{rawAssemblyName}' matched multiple assemblies. " +
+                        $"Examples: '{assemblyCandidates[0].GetName()}' and '{assemblyCandidates[1].GetName()}'",
+                        nameof(path)),
+                    1 => new ResourceSpec(assemblyCandidates[0], resourceName)
+                };
+            }
+
+            return pathSuffix.StartsWith("resource:") 
+                ? resolveResourcePath(pathSuffix) 
+                : new FileSpec(applyFilePaths(pathSuffix));
         }
 
         public SymbolCollection LoadedFiles { get; } = new();
@@ -1038,31 +1078,25 @@ namespace Prexonite.Compiler
 
             BuildCommands.AddCompilerCommand(
                 BuildDefaultCommand,
-                delegate
-                    {
-                        var defaultFile = ApplyLoadPaths(DefaultScriptName);
-                        if (defaultFile == null)
-                            return DefaultScriptName;
-                        else
-                            return defaultFile.FullName;
-                    });
+                (_, _) => ApplyLoadPaths(DefaultScriptName)?.FullName ?? DefaultScriptName);
 
             BuildCommands.AddCompilerCommand(
                 BuildHookCommand,
-                delegate(StackContext _, PValue[] args)
+                (_, args) =>
+                {
+                    foreach (var arg in args)
                     {
-                        foreach (var arg in args)
+                        if (arg is {IsNull: false})
                         {
-                            if (arg != null && !arg.IsNull)
-                            {
-                                if (arg.Type == PType.Object[typeof (AstTransformation)])
-                                    CompilerHooks.Add((AstTransformation) arg.Value);
-                                else
-                                    CompilerHooks.Add(arg);
-                            }
+                            if (arg.Type == PType.Object[typeof(AstTransformation)])
+                                CompilerHooks.Add((AstTransformation) arg.Value);
+                            else
+                                CompilerHooks.Add(arg);
                         }
-                        return PType.Null.CreatePValue();
-                    });
+                    }
+
+                    return PType.Null.CreatePValue();
+                });
 
             BuildCommands.AddCompilerCommand(
                 BuildResolveCommand,

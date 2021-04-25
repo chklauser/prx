@@ -72,7 +72,7 @@ namespace PrexoniteTests.Tests.Configurations
         {
             var moduleName = new ModuleName("prx.v1", new Version(0, 0));
             var desc = Cache.CreateDescription(moduleName,
-                Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs"),
+                Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs"),
                 "prxlib/prx.v1.prelude.pxs",
                 Enumerable.Empty<ModuleName>());
             Cache.TargetDescriptions.Add(desc);
@@ -96,22 +96,22 @@ namespace PrexoniteTests.Tests.Configurations
             try
             {
                 var v1Name = new ModuleName("prx", new Version(1, 0));
-                var v1Desc = Cache.CreateDescription(v1Name, Source.FromEmbeddedResource("prxlib.prx.v1.pxs"),
+                var v1Desc = Cache.CreateDescription(v1Name, Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.pxs"),
                     "prxlib/prx.v1.pxs", Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(v1Desc);
                 
                 var primName = new ModuleName("prx.prim", new Version(0, 0));
-                var primDesc = Cache.CreateDescription(primName, Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
+                var primDesc = Cache.CreateDescription(primName, Source.FromEmbeddedPrexoniteResource("prxlib.prx.prim.pxs"),
                     "prxlib/prx.prim.pxs", Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(primDesc);
 
                 var coreName = new ModuleName("prx.core", new Version(0, 0));
-                var coreDesc = Cache.CreateDescription(coreName, Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
+                var coreDesc = Cache.CreateDescription(coreName, Source.FromEmbeddedPrexoniteResource("prxlib.prx.core.pxs"),
                     "prxlib/prx.core.pxs", primName.Singleton());
                 Cache.TargetDescriptions.Add(coreDesc);
 
                 var sysName = new ModuleName("sys", new Version(0, 0));
-                var desc = Cache.CreateDescription(sysName, Source.FromEmbeddedResource("prxlib.sys.pxs"), "prxlib/sys.pxs",
+                var desc = Cache.CreateDescription(sysName, Source.FromEmbeddedPrexoniteResource("prxlib.sys.pxs"), "prxlib/sys.pxs",
                     new[]{ primName, coreName });
                 Cache.TargetDescriptions.Add(desc);
 
@@ -148,8 +148,8 @@ namespace PrexoniteTests.Tests.Configurations
             var path = script.ScriptName;
             var dependencies = script.Dependencies ?? Enumerable.Empty<string>();
 
-            var file = environment.ApplyLoadPaths(path);
-            if (file == null || !file.Exists)
+            var spec = environment.ApplyLoadPaths(path);
+            if (spec == null)
                 throw new PrexoniteException($"Cannot find script {path}.");
 
             var moduleName = new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
@@ -168,7 +168,7 @@ namespace PrexoniteTests.Tests.Configurations
 
             // Manually add legacy symbol and stdlib dependencies
             var effectiveDependencies = dependencyNames.Append(LegacySymbolsDescription.Name).Append(StdlibDescription.Name);
-            var desc = Cache.CreateDescription(moduleName, Source.FromFile(file,Encoding.UTF8), path, effectiveDependencies);
+            var desc = Cache.CreateDescription(moduleName, spec.ToSource(), path, effectiveDependencies);
             _trace.TraceEvent(TraceEventType.Information, 0,
                 "Adding new target description for cache on thread {0}: {1}.", Thread.CurrentThread.ManagedThreadId,
                 desc);
