@@ -186,7 +186,7 @@ namespace Prexonite.Types
                 else if (target is RealPType)
                     result = Real.CreatePValue((int) subject.Value);
                 else if (target is BoolPType)
-                    result = Bool.CreatePValue(((int) subject.Value) != 0);
+                    result = Bool.CreatePValue((int) subject.Value != 0);
                 else if (target is ObjectPType objectType)
                 {
                     var clrType = objectType.ClrType;

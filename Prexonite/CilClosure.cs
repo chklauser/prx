@@ -141,7 +141,7 @@ namespace Prexonite
         public override bool Equals(object obj)
         {
             var clo = obj as CilClosure;
-            if (((object) clo) == null)
+            if ((object) clo == null)
                 return false;
             return this == clo;
         }

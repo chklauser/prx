@@ -259,9 +259,9 @@ namespace Prexonite.Compiler.Ast
         {
             return new(
                 Operand.IsPlaceholder()
-                || (Operator == UnaryOperator.LogicalNot
-                    && (Operand is AstTypecheck typecheck)
-                    && typecheck.CheckForPlaceholders()),
+                || Operator == UnaryOperator.LogicalNot
+                && Operand is AstTypecheck typecheck
+                && typecheck.CheckForPlaceholders(),
                 Operand.IsArgumentSplice());
         }
 

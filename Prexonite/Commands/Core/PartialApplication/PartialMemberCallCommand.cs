@@ -85,7 +85,7 @@ namespace Prexonite.Commands.Core.PartialApplication
 
             MemberCallInfo info;
             info.MemberId = (string) rawMemberId.Value;
-            info.Call = (PCall) ((int) rawCall.Value);
+            info.Call = (PCall) (int) rawCall.Value;
 
             arguments = new ArraySegment<PValue>(arguments.Array, 0, arguments.Count - 2);
             return info;

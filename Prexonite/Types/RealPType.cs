@@ -139,7 +139,7 @@ namespace Prexonite.Types
                 else if (target is RealPType)
                     result = Real.CreatePValue((double) subject.Value);
                 else if (target is BoolPType)
-                    result = Bool.CreatePValue(Math.Abs(((double) subject.Value)) < double.Epsilon);
+                    result = Bool.CreatePValue(Math.Abs((double) subject.Value) < double.Epsilon);
                 else if (target is ObjectPType objectType)
                 {
                     result = Type.GetTypeCode(objectType.ClrType) switch
@@ -182,7 +182,7 @@ namespace Prexonite.Types
                             result = (double) subject.Value;
                             break;
                         case TypeCode.Boolean:
-                            result = ((bool) subject.Value) ? 1.0 : 0.0;
+                            result = (bool) subject.Value ? 1.0 : 0.0;
                             break;
                     }
 

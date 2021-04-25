@@ -345,7 +345,7 @@ namespace Prexonite
                 exc = exc.InnerException;
             }
 
-            lowestRuntimeException = (exc as PrexoniteRuntimeException) ?? lowestRuntimeException;
+            lowestRuntimeException = exc as PrexoniteRuntimeException ?? lowestRuntimeException;
             lowestException = exc;
         }
 

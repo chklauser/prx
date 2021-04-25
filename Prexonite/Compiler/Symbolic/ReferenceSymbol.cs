@@ -86,7 +86,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public override int GetHashCode()
         {
-            return (Entity != null ? Entity.GetHashCode() : 0);
+            return Entity != null ? Entity.GetHashCode() : 0;
         }
     }
 }

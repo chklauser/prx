@@ -47,7 +47,7 @@ namespace Prexonite.Compiler.Build
                     t =>
                         {
                             var actualTarget = t.Result;
-                            if ((actualTarget is ProvidedTarget))
+                            if (actualTarget is ProvidedTarget)
                                 return actualTarget;
                             
                             var providedTarget = new ProvidedTarget(description, actualTarget);

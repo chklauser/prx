@@ -115,7 +115,7 @@ namespace Prexonite
             }
             set
             {
-                if (value != null && (!value.BelongsToAGroup))
+                if (value != null && !value.BelongsToAGroup)
                     value.AddToGroup(PCommandGroups.User);
 
                 if (ContainsKey(key))

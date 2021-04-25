@@ -48,7 +48,7 @@ namespace Prx.Benchmarking
             var sum = Measurements.Aggregate<Measurement, ulong>(0,
                 (current, m) => current + (ulong) m.RawMilliseconds);
             return
-                (long) Math.Round((sum/(double) Measurements.Count), MidpointRounding.AwayFromZero);
+                (long) Math.Round(sum/(double) Measurements.Count, MidpointRounding.AwayFromZero);
         }
 
         internal BenchmarkEntry(Benchmark parent, PFunction function)
@@ -106,7 +106,7 @@ namespace Prx.Benchmarking
             else if ((object) be1 == null || (object) be2 == null)
                 return true;
             else
-                return !(be1.Equals(be2));
+                return !be1.Equals(be2);
         }
 
         #endregion

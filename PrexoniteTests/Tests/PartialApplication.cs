@@ -426,7 +426,7 @@ function main(x)
 }
 ");
 
-            Expect("a=1, b=, c=" + (sctx.CreateNativePValue(true).CallToString(sctx)), 1);
+            Expect("a=1, b=, c=" + sctx.CreateNativePValue(true).CallToString(sctx), 1);
         }
 
         [Test]
@@ -903,7 +903,7 @@ function main(a,c,d)
             Func<bool, bool, bool, bool, string> main =
                 (x, y, z, k) =>
                     {
-                        var ps = new[] {(x && y) || k, x || y || z || k, true, k};
+                        var ps = new[] {x && y || k, x || y || z || k, true, k};
                         var ps2 = from p in ps
                                   select p ? "1" : "0";
                         return ps2.Aggregate((a, b) => a + b);

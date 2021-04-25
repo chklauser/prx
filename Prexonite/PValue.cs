@@ -270,8 +270,8 @@ namespace Prexonite
         {
             result = default;
             if (
-                (!Type.TryConvertTo(sctx, this, sctx.ParentEngine.PTypeMap[typeof (T)], useExplicit,
-                    out var r)) || !(r.Value is T))
+                !Type.TryConvertTo(sctx, this, sctx.ParentEngine.PTypeMap[typeof (T)], useExplicit,
+                    out var r) || !(r.Value is T))
                 return false;
 
             result = (T) r.Value;
@@ -1404,7 +1404,7 @@ namespace Prexonite
         {
             return
                 string.Concat(
-                    "{", (Value == null ? "-NULL-" : string.Concat(Value, "~", Type)), "}");
+                    "{", Value == null ? "-NULL-" : string.Concat(Value, "~", Type), "}");
         }
 
         /// <summary>
@@ -1769,8 +1769,8 @@ namespace Prexonite
             Array.Copy(indexes, args, indexes.Length);
             args[^1] = value;
 
-            return (_tryParseCall(args, out var sctx, out var icargs) &&
-                    TryDynamicCall(sctx, icargs, PCall.Set, string.Empty, out _))
+            return _tryParseCall(args, out var sctx, out var icargs) &&
+                   TryDynamicCall(sctx, icargs, PCall.Set, string.Empty, out _)
                    || base.TrySetIndex(binder, indexes, value);
         }
 

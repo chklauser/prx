@@ -97,7 +97,7 @@ namespace Prexonite.Compiler.Ast
         private static bool _exprIsNotNull(AstExpr iexpr)
         {
             return !(iexpr is AstNull ||
-                (iexpr is AstConstant && ((AstConstant) iexpr).Constant == null));
+                iexpr is AstConstant && ((AstConstant) iexpr).Constant == null);
         }
 
         #endregion

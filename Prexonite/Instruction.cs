@@ -205,8 +205,8 @@ namespace Prexonite
         {
             if (OpCode != OpCode.indloci)
                 throw new ArgumentException("Can only decode indloci instructions.");
-            index = (Arguments & ushort.MaxValue);
-            argc = ((Arguments & (ushort.MaxValue << 16)) >> 16);
+            index = Arguments & ushort.MaxValue;
+            argc = (Arguments & (ushort.MaxValue << 16)) >> 16;
         }
 
         public PValueKeyValuePair DecodeIndLocIndex()

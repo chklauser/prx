@@ -251,7 +251,7 @@ function main(x) {
 }
 ");
             const int x = 15;
-            Expect(x + (-x) - (-x), x);
+            Expect(x + -x - -x, x);
         }
 
         [Test]
@@ -263,7 +263,7 @@ function main(x){
     return -x + --x;
 }
 ");
-            Expect((-15) + 14, 15);
+            Expect(-15 + 14, 15);
         }
 
         [Test]
@@ -274,7 +274,7 @@ function main(x)[FlagLiterals Disabled]{
     return -x + --x;
 }
 ");
-            Expect((-15) + 14, 15);
+            Expect(-15 + 14, 15);
         }
 
 
@@ -314,7 +314,7 @@ function main(){
     return z;
 }
 ");
-            Expect((-15) + 14);
+            Expect(-15 + 14);
         }
 
 

@@ -61,7 +61,7 @@ namespace Prexonite
 
             ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
             ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-            ImportedNamespaces = (importedNamespaces as SymbolCollection) ??
+            ImportedNamespaces = importedNamespaces as SymbolCollection ??
                 new SymbolCollection(importedNamespaces);
             Callable = callable ?? throw new ArgumentNullException(nameof(callable));
             Arguments = args ?? throw new ArgumentNullException(nameof(args));

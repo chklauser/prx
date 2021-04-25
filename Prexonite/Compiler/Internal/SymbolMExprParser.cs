@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Internal
                 var element = elements[i];
                 if (!element.TryMatchStringAtom(out var symbolName))
                     throw new ErrorMessageException(Message.Error(
-                        $"Symbolic reference must be consist only of symbol names. Found {(element.GetType())} {element} instead.",
+                        $"Symbolic reference must be consist only of symbol names. Found {element.GetType()} {element} instead.",
                         element.Position, MessageClasses.SymbolNotResolved));
                 if (!currentScope.TryGet(symbolName, out symbol))
                     throw new ErrorMessageException(

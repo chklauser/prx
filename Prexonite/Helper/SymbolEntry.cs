@@ -121,7 +121,7 @@ namespace Prexonite.Compiler
                 typeof (SymbolInterpretations), Interpretation) +
                     (InternalId == null ? "" : ":" + InternalId) + 
                     (_argument.HasValue ? "#" + _argument.Value : "") +
-                    (Module != null ? ("/" + Module) : "");
+                    (Module != null ? "/" + Module : "");
         }
 
         #region Equality

@@ -93,7 +93,7 @@ namespace Prexonite.Compiler.Ast
                             break;
                     }
                     expr = sol;
-                } while ((sol != this) && (expr is AstUnresolved));
+                } while (sol != this && expr is AstUnresolved);
                 if (sol == this)
                     return false;
                 else

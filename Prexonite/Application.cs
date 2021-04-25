@@ -565,11 +565,11 @@ namespace Prexonite
                 else
                     application1._linkInto(application2.Compound);
             }
-            else if(application1.IsLinked || (application1._compound != null && !(application1._compound is SingletonCompound)))
+            else if(application1.IsLinked || application1._compound != null && !(application1._compound is SingletonCompound))
             {
                 application2._linkInto(application1.Compound);
             }
-            else if(application2.IsLinked || (application2._compound != null && !(application2._compound is SingletonCompound)))
+            else if(application2.IsLinked || application2._compound != null && !(application2._compound is SingletonCompound))
             {
                 application1._linkInto(application2.Compound);
             }

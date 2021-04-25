@@ -160,7 +160,7 @@ namespace Prexonite.Compiler.Symbolic
             public override int GetHashCode()
             {
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                return (ModuleName != null ? ModuleName.GetHashCode() : 0);
+                return ModuleName != null ? ModuleName.GetHashCode() : 0;
 // ReSharper restore ConditionIsAlwaysTrueOrFalse
             }
         }

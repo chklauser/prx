@@ -412,8 +412,8 @@ namespace Prexonite.Types
         public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand,
             out PValue result)
         {
-            if (!(_tryConvert(sctx, leftOperand, out var left)) ||
-                !(_tryConvert(sctx, rightOperand, out var right)))
+            if (!_tryConvert(sctx, leftOperand, out var left) ||
+                !_tryConvert(sctx, rightOperand, out var right))
                 result = false;
             else
                 result = left != right;

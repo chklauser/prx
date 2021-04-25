@@ -319,7 +319,7 @@ namespace Prexonite.Compiler.Cil
             {
                 source.Meta[PFunction.DeficiencyKey] = reason;
             } //else nothing
-            if ((!qualifies) || source.Meta.ContainsKey(PFunction.VolatileKey))
+            if (!qualifies || source.Meta.ContainsKey(PFunction.VolatileKey))
             {
                 source.Meta[PFunction.VolatileKey] = !qualifies;
             }
@@ -359,7 +359,7 @@ namespace Prexonite.Compiler.Cil
             if (targetEngine == null)
                 throw new ArgumentNullException(nameof(targetEngine));
             //Application does not allow cil compilation
-            if ((!source.Meta.ContainsKey(PFunction.VolatileKey)) &&
+            if (!source.Meta.ContainsKey(PFunction.VolatileKey) &&
                 source.ParentApplication.Meta[PFunction.VolatileKey].Switch)
             {
                 reason = "Application does not allow cil compilation";
@@ -749,7 +749,7 @@ namespace Prexonite.Compiler.Cil
                         && 0 <= ins.Arguments && ins.Arguments < stackSize.Length)
                         interpretationStack.Push(Tuple.Create(ins.Arguments, newValue));
 
-                    if (i + 1 < stackSize.Length && (!ins.IsUnconditionalJump) &&
+                    if (i + 1 < stackSize.Length && !ins.IsUnconditionalJump &&
                         ins.OpCode != OpCode.leave)
                         interpretationStack.Push(Tuple.Create(i + 1, newValue));
                 }

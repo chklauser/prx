@@ -1674,7 +1674,7 @@ class Lexer: Prexonite.Internal.IScanner {
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
 #line 303 "Prexonite.lex"
-                  throw new PrexoniteException("Invalid smart string character '" + yytext() + "' (ASCII " + ((int)yytext()[0]) + ") in input on line " + yyline + "."); 
+                  throw new PrexoniteException("Invalid smart string character '" + yytext() + "' (ASCII " + (int)yytext()[0] + ") in input on line " + yyline + "."); 
 #line default
           }
           break;

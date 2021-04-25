@@ -908,7 +908,7 @@ namespace Prexonite
                         _fillArgs(argc, out argv);
                         if (ParentEngine.CacheFunctions)
                         {
-                            func = (ins.GenericArgument as PFunction) ??
+                            func = ins.GenericArgument as PFunction ??
                                 _getTargetApplication(moduleName).Functions[id];
                             ins.GenericArgument = func;
                         }
@@ -959,7 +959,7 @@ namespace Prexonite
                         PCommand cmd;
                         if (ParentEngine.CacheCommands)
                         {
-                            cmd = (ins.GenericArgument as PCommand) ?? ParentEngine.Commands[id];
+                            cmd = ins.GenericArgument as PCommand ?? ParentEngine.Commands[id];
                             ins.GenericArgument = cmd;
                         }
                         else
