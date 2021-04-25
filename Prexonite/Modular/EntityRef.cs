@@ -339,7 +339,7 @@ namespace Prexonite.Modular
 
             public override int GetHashCode()
             {
-                return (Id != null ? Id.GetHashCode() : 0);
+                return Id != null ? Id.GetHashCode() : 0;
             }
 
             public static bool operator ==(Command left, Command right)
@@ -559,7 +559,7 @@ namespace Prexonite.Modular
                 {
                     unchecked
                     {
-                        return ((Id.GetHashCode())*397) ^ (ModuleName.GetHashCode());
+                        return (Id.GetHashCode()*397) ^ ModuleName.GetHashCode();
                     }
                 }
 
@@ -614,7 +614,7 @@ namespace Prexonite.Modular
 
                 public override int GetHashCode()
                 {
-                    return (Id != null ? Id.GetHashCode() : 0);
+                    return Id != null ? Id.GetHashCode() : 0;
                 }
 
                 public static bool operator ==(Local left, Local right)
@@ -821,7 +821,7 @@ namespace Prexonite.Modular
 
             public override int GetHashCode()
             {
-                return (Id != null ? Id.GetHashCode() : 0);
+                return Id != null ? Id.GetHashCode() : 0;
             }
 
             public static bool operator ==(MacroCommand left, MacroCommand right)

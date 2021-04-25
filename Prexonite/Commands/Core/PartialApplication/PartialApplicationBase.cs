@@ -183,7 +183,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                 }
                 else
                 {
-                    var index = (-mapping) - 1;
+                    var index = -mapping - 1;
                     //maps open argument
                     if (index < argc)
                     {

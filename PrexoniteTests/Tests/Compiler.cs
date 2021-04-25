@@ -197,9 +197,9 @@ namespace Prx.Tests
             var hasShared = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var entry);
             if (shared.Length == 0 && hasShared)
                 Assert.Fail("The function {0} is not expected to share variables.", func.Id);
-            else if ((!hasShared) && shared.Length != 0)
+            else if (!hasShared && shared.Length != 0)
                 Assert.Fail("The function {0} is expected to share variables.", func.Id);
-            else if ((!hasShared) && shared.Length == 0)
+            else if (!hasShared && shared.Length == 0)
                 return;
 
             var entries = entry.List;

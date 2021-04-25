@@ -210,7 +210,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public override int GetHashCode()
         {
-            return (_elements != null ? _elements.GetHashCode() : 0);
+            return _elements != null ? _elements.GetHashCode() : 0;
         }
 
         public static bool operator ==(QualifiedId left, QualifiedId right)

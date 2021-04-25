@@ -52,8 +52,8 @@ namespace Prexonite.Commands.List
                 {
                     eargs[0] = value;
                     var result = f.IndirectCall(sctx, eargs);
-                    if ((!result.TryConvertTo(sctx, PType.Bool, true, out var existance)) ||
-                        (!(bool) existance.Value))
+                    if (!result.TryConvertTo(sctx, PType.Bool, true, out var existence) ||
+                        !(bool) existence.Value)
                         return false;
                 }
             }

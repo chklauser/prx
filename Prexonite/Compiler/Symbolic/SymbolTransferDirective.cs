@@ -121,8 +121,7 @@ namespace Prexonite.Compiler.Symbolic
 
             public override bool Equals(SymbolTransferDirective other)
             {
-                return other is Rename otherRename &&
-                       (OriginalName.Equals(otherRename.OriginalName) && NewName.Equals(otherRename.NewName));
+                return other is Rename otherRename && OriginalName.Equals(otherRename.OriginalName) && NewName.Equals(otherRename.NewName);
             }
 
             public override string ToString()

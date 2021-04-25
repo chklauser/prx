@@ -71,7 +71,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static bool _hasPlaceholder(AstExpr expr)
         {
-            return expr.IsPlaceholder() || (expr is AstListLiteral lit && lit.CheckForPlaceholders());
+            return expr.IsPlaceholder() || expr is AstListLiteral lit && lit.CheckForPlaceholders();
         }
 
         protected override void DoExpand(MacroContext context)
@@ -85,7 +85,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             if (context.Invocation.Arguments.Count == 1
                 && context.Invocation.Arguments[0] is AstPlaceholder p
-                && (p.Index.GetValueOrDefault(0) == 0))
+                && p.Index.GetValueOrDefault(0) == 0)
             {
                 // call(?0) ⇒ call\perform(?0)
 

@@ -62,7 +62,7 @@ namespace Prexonite.Commands.List
             for (var i = 1; i < n - 1; i++)
             {
                 foreach (var x in xss[i])
-                    if ((!d.ContainsKey(x)) && t.ContainsKey(x))
+                    if (!d.ContainsKey(x) && t.ContainsKey(x))
                     {
                         d.Add(x, null); //only current source
                         t[x]++;
@@ -71,7 +71,7 @@ namespace Prexonite.Commands.List
             }
 
             foreach (var x in xss[n - 1])
-                if ((!d.ContainsKey(x)) && t.ContainsKey(x))
+                if (!d.ContainsKey(x) && t.ContainsKey(x))
                 {
                     d.Add(x, null); //only current source
                     var k = t[x] + 1;

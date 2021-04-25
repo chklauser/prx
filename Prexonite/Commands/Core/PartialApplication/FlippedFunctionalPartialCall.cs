@@ -77,7 +77,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             result = null;
 
             //The following code exists in a very similar form in PartialCall.cs, FunctionalPartialCall.cs
-            if ((_subject.Type is ObjectPType))
+            if (_subject.Type is ObjectPType)
             {
                 var raw = _subject.Value;
                 if (raw is IStackAware stackAware)

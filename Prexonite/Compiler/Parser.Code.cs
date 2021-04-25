@@ -442,7 +442,7 @@ namespace Prexonite.Compiler
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
             lex.PopState();
             //Might be id or keyword
-            if ((la.kind > _BEGINKEYWORDS && la.kind < _ENDKEYWORDS) || la.kind == _id)
+            if (la.kind > _BEGINKEYWORDS && la.kind < _ENDKEYWORDS || la.kind == _id)
                 la.kind = lex.checkKeyword(la.val);
         }
 
@@ -603,7 +603,7 @@ namespace Prexonite.Compiler
             var c = la;
             var cla = scanner.Peek();
 
-            return c.kind == _lid || (isId(c) && cla.kind == _colon);
+            return c.kind == _lid || isId(c) && cla.kind == _colon;
         }
 
         /// <summary>
@@ -707,7 +707,7 @@ namespace Prexonite.Compiler
                 //break if lookahead is not valid to save tokens
                 if (
                     !(next.kind == _comma || next.kind == _implementation ||
-                        (next.kind == _rpar && requirePar)))
+                        next.kind == _rpar && requirePar))
                     return false;
                 //Consume 1
                 current = next;
@@ -720,7 +720,7 @@ namespace Prexonite.Compiler
                 //break if lookahead is not valid to save tokens
                 if (
                     !(current.kind == _comma || current.kind == _implementation ||
-                        (current.kind == _rpar && requirePar)))
+                        current.kind == _rpar && requirePar))
                     return false;
                 next = scanner.Peek();
             }
@@ -1163,9 +1163,9 @@ namespace Prexonite.Compiler
             return
                 la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
                     (detail == null
-                        ? (la2.kind != _dot || la3.kind == _integer)
-                        : (la2.kind == _dot && la3.kind != _string &&
-                            Engine.StringsAreEqual(la3.val, detail))
+                        ? la2.kind != _dot || la3.kind == _integer
+                        : la2.kind == _dot && la3.kind != _string &&
+                          Engine.StringsAreEqual(la3.val, detail)
                         );
         }
 

@@ -139,7 +139,7 @@ namespace Prexonite.Compiler
         {
             unchecked
             {
-                var hashCode = (Text != null ? Text.GetHashCode() : 0);
+                var hashCode = Text != null ? Text.GetHashCode() : 0;
                 hashCode = (hashCode*397) ^ (Position != null ? Position.GetHashCode() : 0);
                 hashCode = (hashCode*397) ^ (int) Severity;
                 hashCode = (hashCode*397) ^ (MessageClass != null ? MessageClass.GetHashCode() : 0);

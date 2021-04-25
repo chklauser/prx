@@ -50,7 +50,7 @@ namespace Prx.Benchmarking
 
         public double PassMicroseconds => checked(PassMilliseconds*1000);
 
-        public long ClearedMilliseconds => (RawMilliseconds - OverheadMilliseconds);
+        public long ClearedMilliseconds => RawMilliseconds - OverheadMilliseconds;
 
         public long ClearedMicroseconds => checked(ClearedMilliseconds*1000);
 

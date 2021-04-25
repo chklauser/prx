@@ -210,14 +210,14 @@ namespace Prexonite
                     var leftCache = left._cache;
                     var rightCache = right._cache;
                     const int moveThreshold = 15;
-                    if (leftCache.Count <= (moveThreshold*rightCache.Capacity)/100)
+                    if (leftCache.Count <= moveThreshold*rightCache.Capacity/100)
                     {
                         foreach (var moduleName in leftCache.Contents())
                             rightCache.GetCached(moduleName);
                         if(_trySwap(left, leftCache, rightCache))
                             break;
                     }
-                    else if (rightCache.Count <= (moveThreshold*leftCache.Capacity)/100)
+                    else if (rightCache.Count <= moveThreshold*leftCache.Capacity/100)
                     {
                         foreach (var moduleName in rightCache.Contents())
                             leftCache.GetCached(moduleName);

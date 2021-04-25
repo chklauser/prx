@@ -87,7 +87,7 @@ namespace Prexonite.Compiler.Ast
             {
                 if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
                     expr = null;
-                else if (((bool) condValue.Value) ^ IsNegative)
+                else if ((bool) condValue.Value ^ IsNegative)
                     expr = IfExpression;
                 else
                     expr = ElseExpression;

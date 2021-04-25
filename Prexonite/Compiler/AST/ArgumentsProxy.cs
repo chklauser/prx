@@ -81,7 +81,7 @@ namespace Prexonite.Compiler.Ast
 
         private int _getEffectiveRightAppendPosition()
         {
-            return (RightAppendPosition < 0) ? _arguments.Count : RightAppendPosition;
+            return RightAppendPosition < 0 ? _arguments.Count : RightAppendPosition;
         }
 
         #region IList<AstExpr> Members

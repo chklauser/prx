@@ -135,7 +135,7 @@ namespace Prexonite.Commands.Concurrency
         {
             if (selectCase.Type == PValueKeyValuePair.ObjectType)
             {
-                var kvp = ((PValueKeyValuePair) selectCase.Value);
+                var kvp = (PValueKeyValuePair) selectCase.Value;
                 var key = kvp.Key;
                 if (key.Type == _chanType)
                     return selectCase;
@@ -165,7 +165,7 @@ namespace Prexonite.Commands.Concurrency
         {
             if (c.Type == PValueKeyValuePair.ObjectType)
             {
-                var kvp = ((PValueKeyValuePair) c.Value);
+                var kvp = (PValueKeyValuePair) c.Value;
 
                 if (kvp.Value.Type == PValueKeyValuePair.ObjectType)
                 {

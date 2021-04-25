@@ -220,7 +220,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             var parameter = FilterRuntimeArguments(sctx, ref arguments);
 
             var mappingCandidates = new LinkedList<int>();
-            for (var i = (arguments.Offset + arguments.Count) - 1; arguments.Offset <= i; i--)
+            for (var i = arguments.Offset + arguments.Count - 1; arguments.Offset <= i; i--)
             {
                 if (!arguments.Array[i].TryConvertTo(sctx, PType.Int, out var value))
                     break; //stop at the first non-integer

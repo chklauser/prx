@@ -44,7 +44,7 @@ namespace Prexonite
 
             this.ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
             this.ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-            this.ImportedNamespaces = (importedNamespaces as SymbolCollection) ??
+            this.ImportedNamespaces = importedNamespaces as SymbolCollection ??
                 new SymbolCollection(importedNamespaces);
         }
 

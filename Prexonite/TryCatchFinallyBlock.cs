@@ -303,17 +303,17 @@ namespace Prexonite
             if (ReferenceEquals(a, b) || a == b)
                 return a;
 
-            if ((!a.IsValid) || (!b.IsValid))
+            if (!a.IsValid || !b.IsValid)
                 throw new ArgumentException("One of the try-catch-finally blocks is not valid.");
 
             var aHandles = a.Handles(address);
             var bHandles = b.Handles(address);
 
-            if (aHandles && (!bHandles))
+            if (aHandles && !bHandles)
                 return a;
-            else if (bHandles && (!aHandles))
+            else if (bHandles && !aHandles)
                 return b;
-            else if ((!aHandles))
+            else if (!aHandles)
                 return null; //None of the two blocks handles an exception at the given address.
 
             var aRange = a.Range;
@@ -398,9 +398,9 @@ namespace Prexonite
 
         public static bool operator ==(TryCatchFinallyBlock a, TryCatchFinallyBlock b)
         {
-            if (((object) a) == null && ((object) b) == null)
+            if ((object) a == null && (object) b == null)
                 return true;
-            else if (((object) a) == null || ((object) b) == null)
+            else if ((object) a == null || (object) b == null)
                 return false;
             else
                 return a.Equals(b);

@@ -52,7 +52,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             result = null;
 
             //The following code exists in a very similar form in FunctionalPartialCall.cs, FlippedFunctionalPartialCall.cs
-            if ((nonArguments[0].Type is ObjectPType))
+            if (nonArguments[0].Type is ObjectPType)
             {
                 var raw = nonArguments[0].Value;
                 if (raw is IStackAware stackAware)

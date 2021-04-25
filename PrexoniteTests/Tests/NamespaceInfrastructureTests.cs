@@ -422,7 +422,7 @@ namespace PrexoniteTests.Tests
         private void _assertNotExists([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
         {
             if(view.TryGet(id, out var dummy))
-                Assert.Fail("Unexpected presence of symbol {0} in {1}", id, (viewDesc ?? "scope"));
+                Assert.Fail("Unexpected presence of symbol {0} in {1}", id, viewDesc ?? "scope");
         }
 
         [NotNull]
@@ -430,7 +430,7 @@ namespace PrexoniteTests.Tests
         private Symbol _assertGetSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
         {
             if(!view.TryGet(id, out var symbol))
-                Assert.Fail("Expected {0} in {1}", id, (viewDesc ?? "scope"));
+                Assert.Fail("Expected {0} in {1}", id, viewDesc ?? "scope");
             return symbol;
         }
 
@@ -438,9 +438,9 @@ namespace PrexoniteTests.Tests
         private NamespaceSymbol _assertGetNamespaceSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
         {
             if (!view.TryGet(id, out var symbol))
-                Assert.Fail("Expected {0} in {1}", id, (viewDesc ?? "scope"));
+                Assert.Fail("Expected {0} in {1}", id, viewDesc ?? "scope");
             if(!symbol.TryGetNamespaceSymbol(out var namespaceSymbol))
-                Assert.Fail("Expected {0} in {1} to be a namespace symbol. Was {2} instead.", id, (viewDesc ?? "scope"), symbol);
+                Assert.Fail("Expected {0} in {1} to be a namespace symbol. Was {2} instead.", id, viewDesc ?? "scope", symbol);
             return namespaceSymbol;
         }
 

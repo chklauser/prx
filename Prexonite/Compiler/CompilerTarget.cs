@@ -1328,7 +1328,7 @@ namespace Prexonite.Compiler
                     continue;
 
                 var count = 0;
-                while ((i + count + 1) < code.Count && code[i + count + 1].IsUnconditionalJump)
+                while (i + count + 1 < code.Count && code[i + count + 1].IsUnconditionalJump)
                     count++;
 
                 if (count > 0)
@@ -1409,7 +1409,7 @@ namespace Prexonite.Compiler
                     continue;
                 var uncondJ = code[i + 1];
                 //Unconditional jump
-                if (!(uncondJ.IsUnconditionalJump))
+                if (!uncondJ.IsUnconditionalJump)
                     continue;
                 /*  jump.f  after
                  *  jump    somewhere
@@ -1519,7 +1519,7 @@ namespace Prexonite.Compiler
             prefix ??= "";
             return
                 Function.Id + "\\" + prefix +
-                    (_nestedIdCounter++);
+                    _nestedIdCounter++;
         }
 
         public ModuleName ToInternalModule(ModuleName moduleName)

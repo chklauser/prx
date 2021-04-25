@@ -195,7 +195,7 @@ namespace Prexonite.Types
             if (id == null)
                 id = "";
 
-            if ((!suppressIObject) && subject.Value is IObject iobj &&
+            if (!suppressIObject && subject.Value is IObject iobj &&
                 iobj.TryDynamicCall(sctx, args, call, id, out result))
                 return true;
 
@@ -698,7 +698,7 @@ namespace Prexonite.Types
             sb.Append("Cannot call '");
             sb.Append(candidate);
             sb.Append("' on object of Type ");
-            sb.Append((subject.IsNull ? "null" : subject.ClrType.FullName));
+            sb.Append(subject.IsNull ? "null" : subject.ClrType.FullName);
             sb.Append(" with (");
             foreach (var arg in args)
             {
@@ -752,7 +752,7 @@ namespace Prexonite.Types
             //Criteria No.1: Default indices are called "Item" by convention
             if (!(
                 //Is default member or...
-                (cond.memberRestriction != null && cond.memberRestriction.Contains(candidate)) ||
+                cond.memberRestriction != null && cond.memberRestriction.Contains(candidate) ||
                     //is called "item"
                     candidate.Name.Equals("Item", StringComparison.OrdinalIgnoreCase)
                 ))
@@ -883,13 +883,11 @@ namespace Prexonite.Types
             //NOTE: This might be the source of strange problems!
             //If the one argument is missing and the first formal parameter is a StackContext,
             //supply the StackContext received in cond.sctx.
-            return (
-                //There have to be parameters
-                parameters.Length > 0 &&
-                    //One argument must be missing
-                    cond.Args.Length + 1 == parameters.Length &&
-                        //First parameter must be a StackContext
-                        typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType));
+            return parameters.Length > 0 &&
+                   //One argument must be missing
+                   cond.Args.Length + 1 == parameters.Length &&
+                   //First parameter must be a StackContext
+                   typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType);
         }
 
         private static bool _method_filter(MethodBase method, call_conditions cond)
@@ -1592,9 +1590,9 @@ namespace Prexonite.Types
             if (
                 _try_call_conversion_operator(
                     sctx, arg, PCall.Get, "op_Implicit", target, out result) ||
-                        (useExplicit &&
-                            _try_call_conversion_operator(
-                                sctx, arg, PCall.Get, "op_Explicit", target, out result)))
+                        useExplicit &&
+                        _try_call_conversion_operator(
+                            sctx, arg, PCall.Get, "op_Explicit", target, out result))
                 return true;
             else
                 return false;
@@ -1615,7 +1613,7 @@ namespace Prexonite.Types
 
         protected override bool InternalIsEqual(PType otherType)
         {
-            return (otherType is ObjectPType type && type.ClrType == ClrType);
+            return otherType is ObjectPType type && type.ClrType == ClrType;
         }
 
         public override int GetHashCode()

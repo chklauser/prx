@@ -82,7 +82,7 @@ namespace Prexonite.Compiler.Ast
             {
                 if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
                     goto continueFull;
-                else if (((bool) condValue.Value) ^ IsNegative)
+                else if ((bool) condValue.Value ^ IsNegative)
                     IfBlock.EmitEffectCode(target);
                 else
                     ElseBlock.EmitEffectCode(target);

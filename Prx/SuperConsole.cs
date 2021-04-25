@@ -161,7 +161,7 @@ namespace Prx
             {
                 if (list.Count > 0)
                 {
-                    current = ((current - 1) + list.Count)%list.Count;
+                    current = (current - 1 + list.Count)%list.Count;
                 }
                 return Current;
             }
@@ -452,7 +452,7 @@ namespace Prx
             if (c == 13)
                 return "\r\n";
             if (c <= 26)
-                return "^" + ((char) (c + 'A' - 1));
+                return "^" + (char) (c + 'A' - 1);
 
             return "^?";
             //return c.ToString();
@@ -516,7 +516,7 @@ namespace Prx
                 if (input.Length > 0 && current != 0)
                 {
                     var nonLetter = IsSeperator(input[current - 1]);
-                    while (current > 0 && (current - 1 < input.Length))
+                    while (current > 0 && current - 1 < input.Length)
                     {
                         MoveLeft();
 
@@ -588,7 +588,7 @@ namespace Prx
 
         private void MoveLeft()
         {
-            if (current > 0 && (current - 1 < input.Length))
+            if (current > 0 && current - 1 < input.Length)
             {
                 current--;
                 var c = input[current];
@@ -600,7 +600,7 @@ namespace Prx
 
         private void InsertTab()
         {
-            for (var i = TabSize - (current%TabSize); i > 0; i--)
+            for (var i = TabSize - current%TabSize; i > 0; i--)
             {
                 Insert(' ');
             }

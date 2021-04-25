@@ -115,7 +115,7 @@ function main(seed)
     return ch(seed);
 }
 ");
-            var seed = (new Random()).Next(400, 500);
+            var seed = new Random().Next(400, 500);
             var expected = seed;
             expected = expected + 2;
             expected = expected*2;
@@ -1236,7 +1236,7 @@ function main(x,t)
             var y = x*1.5;
             var t = 0.75;
 
-            Expect((x + (y - x)*t), x, t);
+            Expect(x + (y - x)*t, x, t);
         }
 
         [Test]
@@ -1269,7 +1269,7 @@ function main(x,t)
             var y = x*1.5;
             var t = 0.75;
 
-            Expect((x + (y - x)*t), x, t);
+            Expect(x + (y - x)*t, x, t);
         }
 
         [Test]

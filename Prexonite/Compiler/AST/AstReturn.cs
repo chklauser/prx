@@ -114,8 +114,8 @@ namespace Prexonite.Compiler.Ast
         {
             return
                 target.ScopeBlocks.OfType<AstScopedBlock>().Any(
-                    sb => (sb.LexicalScope is AstForeachLoop) ||
-                        (sb.LexicalScope is AstTryCatchFinally) || (sb.LexicalScope is AstUsing));
+                    sb => sb.LexicalScope is AstForeachLoop ||
+                        sb.LexicalScope is AstTryCatchFinally || sb.LexicalScope is AstUsing);
         }
 
         private void _emitTailCallExit(CompilerTarget target)

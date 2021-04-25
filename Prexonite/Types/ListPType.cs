@@ -495,7 +495,7 @@ namespace Prexonite.Types
         {
             var lst = new List<PValue>();
             result = List.CreatePValue(lst);
-            foreach (var e in ((IEnumerable<PValue>)subject.Value))
+            foreach (var e in (IEnumerable<PValue>)subject.Value)
                 if (e.TryIndirectCall(sctx, args, out var r))
                     lst.Add(r);
                 else

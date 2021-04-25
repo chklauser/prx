@@ -253,7 +253,7 @@ namespace Prexonite.Compiler.Internal
 
             public override int GetHashCode()
             {
-                return (Value != null ? Value.GetHashCode() : 0);
+                return Value != null ? Value.GetHashCode() : 0;
             }
         }
 

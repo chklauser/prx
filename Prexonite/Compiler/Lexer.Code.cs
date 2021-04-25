@@ -254,15 +254,15 @@ internal partial class Lexer
                 case "static":
                     return Parser._static;
                 case "return":
-                    return (Parser._return);
+                    return Parser._return;
                 case "yield":
-                    return (Parser._yield);
+                    return Parser._yield;
                 case "in":
-                    return (Parser._in);
+                    return Parser._in;
                 case "continue":
-                    return (Parser._continue);
+                    return Parser._continue;
                 case "break":
-                    return (Parser._break);
+                    return Parser._break;
                 case "mod":
                     return Parser._mod;
                 case "or":

@@ -125,8 +125,8 @@ namespace Prexonite.Compiler.Ast
                     _getAddress(target, beginTryLabel), _getAddress(target, endTry))
                     {
                         BeginFinally =
-                            (!FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1),
-                        BeginCatch = (!justRethrow ? _getAddress(target, beginCatchLabel) : -1),
+                            !FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1,
+                        BeginCatch = !justRethrow ? _getAddress(target, beginCatchLabel) : -1,
                         UsesException = usesException
                     };
 

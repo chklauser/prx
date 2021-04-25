@@ -368,7 +368,7 @@ namespace Prexonite.Types
             {
                 var arg0 = args[0];
                 if (arg0.Type == Hash ||
-                    (arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>))
+                    arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>)
                 {
                     pvht = new PValueHashtable((IDictionary<PValue, PValue>) arg0.Value);
                 }

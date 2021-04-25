@@ -223,7 +223,7 @@ function test1(x) does
             //Expectation
             var x0 = rnd.Next(1, 589);
             j = 0;
-            j = (7*x0 + 2 + j);
+            j = 7*x0 + 2 + j;
             var expected = (x0 + 2 + j)/j;
 
             var fctx =
@@ -259,7 +259,7 @@ function test1(x) does
             const int j0 = 0;
             var x0 = rnd.Next(1, 300);
             const int x1 = 2 + j0 + j0;
-            const int j1 = 2 + (7*x1) + j0;
+            const int j1 = 2 + 7*x1 + j0;
             const int expected = (2 + x1 + j1)/j1;
 
             var fctx =
@@ -890,7 +890,7 @@ var initGlob = ""init"";
 
 function main = myGlob + initGlob;
 ");
-            Expect("ELLO" + (55*77) + "init");
+            Expect("ELLO" + 55*77 + "init");
         }
 
         [Test]
@@ -1307,7 +1307,7 @@ function main(var m)
 ");
             var rnd = new Random();
             var m = rnd.Next(3, 500);
-            var expected = 2 + (2*m);
+            var expected = 2 + 2*m;
 
             Expect(expected, m);
         }

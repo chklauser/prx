@@ -263,7 +263,7 @@ namespace Prexonite.Compiler.Cil
                         Delegate.CreateDelegate
                             (
                                 typeof (CilFunction),
-                                (_getRuntimeType()).GetMethod(m.Name),
+                                _getRuntimeType().GetMethod(m.Name),
                                 true);
         }
 

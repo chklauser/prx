@@ -228,8 +228,8 @@ namespace Prexonite.Types
                                 var curr = esc[i];
                                 if (
                                     !(char.IsDigit(curr) ||
-                                        (char.IsLetter(curr) &&
-                                            ((char.IsLower(curr) && curr < 'g') || curr < 'G'))))
+                                        char.IsLetter(curr) &&
+                                        (char.IsLower(curr) && curr < 'g' || curr < 'G')))
                                 {
                                     i--;
                                     break;
