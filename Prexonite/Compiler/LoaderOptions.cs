@@ -140,6 +140,21 @@ namespace Prexonite.Compiler
             set => _flagLiteralsEnabled = value;
         }
 
+        [CanBeNull]
+        private string? _storeNewLine;
+
+        /// <summary>
+        /// The line separator to use when storing a compiled Prexonite program. 
+        /// </summary>
+        /// <see cref="Loader.Store(System.Text.StringBuilder)"/>
+        [PublicAPI]
+        [NotNull]
+        public string StoreNewLine
+        {
+            get => _storeNewLine ?? "\n";
+            set => _storeNewLine = value;
+        }
+
         #endregion
 
         public void InheritFrom([NotNull] LoaderOptions options)
@@ -155,6 +170,7 @@ namespace Prexonite.Compiler
             _storeSourceInformation ??= options._storeSourceInformation;
             _preflightModeEnabled ??= options._preflightModeEnabled;
             _flagLiteralsEnabled ??= options._flagLiteralsEnabled;
+            _storeNewLine ??= options._storeNewLine;
         }
     }
 }
