@@ -48,8 +48,30 @@ jobs:
         run: dotnet test --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
       - name: Pack
         run: dotnet pack --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
-      - name: Pack
-        run: dotnet pack --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
+      - name: Publish
+        run: dotnet publish --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
+      - name: Source ZIP
+        run: git archive --format=zip HEAD --output=prexonite-src-v${{steps.determine-version.outputs.version}}.zip
+#      - name: Prepare Binary ZIP
+#        run: |
+#          ver='${{steps.determine-version.outputs.version}}'
+#          cd Prx/bin/Release/net5.0/ && \
+#            mkdir zip-env && \
+#            mv publish "zip-env/prexonite-v$ver"
+#        shell: bash
+#      - name: Binary ZIP
+#        uses: thedoctor0/zip-release@0.4.1
+#        with:
+#          filename: prexonite-v${{steps.determine-version.outputs.version}}
+#          directory: Prx/bin/Release/net5.0/zip-env
+      - name: Push Prexonite Package
+        run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.nupkg
+      - name: Push Prexonite Symbols Package
+        run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.snupkg
+      - name: Push Prx Package
+        run: dotnet nuget push Prx/bin/Release/Prx.${{steps.determine-version.outputs.version}}.nupkg
+      - name: Push Prx Symbols Package
+        run: dotnet nuget push Prx/bin/Release/Prx.${{steps.determine-version.outputs.version}}.snupkg
       - name: Create Release 
         uses: softprops/action-gh-release@v1
         env:
