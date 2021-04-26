@@ -1114,20 +1114,20 @@ namespace Prexonite.Compiler
                     StoreCompressed(fstr);
             else
 #endif
-            using var writer = new StreamWriter(path, false);
+            using var writer = new StreamWriter(path, false) {NewLine = Options.StoreNewLine};
             Store(writer);
         }
 
         public string StoreInString()
         {
-            var writer = new StringWriter();
+            using var writer = new StringWriter {NewLine = Options.StoreNewLine};
             Store(writer);
             return writer.ToString();
         }
 
         public void Store(StringBuilder builder)
         {
-            using var writer = new StringWriter(builder);
+            using var writer = new StringWriter(builder) {NewLine = Options.StoreNewLine};
             Store(writer);
         }
 
@@ -1139,7 +1139,7 @@ namespace Prexonite.Compiler
                 throw new ArgumentNullException("str");
 
             using (GZipStream zip = new GZipStream(str, CompressionMode.Compress, true))
-            using (StreamWriter writer = new StreamWriter(zip, Encoding.UTF8))
+            using (StreamWriter writer = new StreamWriter(zip, Encoding.UTF8){NewLine = Options.StoreNewLine})
             {
                 writer.WriteLine("//PXSC");
                 Store(writer);
@@ -1152,6 +1152,14 @@ namespace Prexonite.Compiler
         {
             var app = ParentApplication;
 
+            // Interpreter line (if defined; nothing by default)
+            var interpreterLine = app.Meta[Application.InterpreterLineKey].Text;
+            if (!string.IsNullOrEmpty(interpreterLine))
+            {
+                writer.Write("#!");
+                writer.WriteLine(interpreterLine);
+            }
+            
             //Header
             writer.WriteLine("//PXS_");
             writer.WriteLine("//--GENERATED");

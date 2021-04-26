@@ -344,6 +344,29 @@ SomeOtherSettings ""Are Valid"";
             Assert.That(ldr.ParentApplication.Meta["SomeOtherSettings"], 
                 Is.EqualTo(new MetaEntry("Are Valid")));
         }
+        
+        [Test]
+        public void InterpreterLineIncludedInStoredRepresentation()
+        {
+            const string previousInterpreterLine = "/usr/bin/prx";
+            target.Meta[Application.InterpreterLineKey] = previousInterpreterLine;
+            var loader1 = _compile(@"
+SomeOtherSettings ""Are Valid"";
+");
+            var storedRepr = loader1.StoreInString();
+            Assert.That(storedRepr, Does.StartWith($"#!{previousInterpreterLine}\n"));
+            
+            var loader2 = new Loader(engine, new Application());
+            loader2.LoadFromString(storedRepr);
+            Assert.That(loader2.Errors, Is.Empty);
+            Assert.That(loader2.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
+            Assert.That(loader2.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
+            
+            Assert.That(loader2.ParentApplication.Meta[Application.InterpreterLineKey], 
+                Is.EqualTo(new MetaEntry(previousInterpreterLine)));
+            Assert.That(loader2.ParentApplication.Meta["SomeOtherSettings"], 
+                Is.EqualTo(new MetaEntry("Are Valid")));
+        }
 
         [Test]
         public void InterpreterLineAfterNoise()
