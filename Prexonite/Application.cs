@@ -551,7 +551,7 @@ namespace Prexonite
 
         public ApplicationCompound Compound => _compound ??= new SingletonCompound(this);
 
-        public bool IsLinked => _compound != null && _compound.Count > 1;
+        public bool IsLinked => _compound is {Count: > 1};
 
         public static void Link(Application application1, Application application2)
         {
@@ -570,11 +570,11 @@ namespace Prexonite
                 else
                     application1._linkInto(application2.Compound);
             }
-            else if(application1.IsLinked || application1._compound != null && !(application1._compound is SingletonCompound))
+            else if(application1.IsLinked || application1._compound is { } and not SingletonCompound)
             {
                 application2._linkInto(application1.Compound);
             }
-            else if(application2.IsLinked || application2._compound != null && !(application2._compound is SingletonCompound))
+            else if(application2.IsLinked || application2._compound is { } and not SingletonCompound)
             {
                 application1._linkInto(application2.Compound);
             }
@@ -681,10 +681,7 @@ namespace Prexonite
 
             public override IEnumerator<Application> GetEnumerator()
             {
-                if (_application == null)
-                    return Enumerable.Empty<Application>().GetEnumerator();
-                else
-                    return _application.Singleton().GetEnumerator();
+                return _application?.Singleton().GetEnumerator() ?? Enumerable.Empty<Application>().GetEnumerator();
             }
 
             internal override void _Unlink(Application application)
@@ -707,10 +704,7 @@ namespace Prexonite
 
             public override bool Contains(ModuleName item)
             {
-                if (_application == null)
-                    return false;
-                else
-                    return _application.Module.Name.Equals(item);
+                return _application != null && _application.Module.Name.Equals(item);
             }
 
             public override bool TryGetApplication(ModuleName moduleName,

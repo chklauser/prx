@@ -31,10 +31,6 @@ jobs:
         with:
           dotnet-version: '5.0.x'
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
-      - name: Install dependencies
-        run: dotnet restore --lock-file-path=./packages.lock.json --verbosity=normal
-      - name: Install tools
-        run: dotnet tool restore --verbosity=normal 
       - uses: actions/cache@v2
         with:
           path: ~/.nuget/packages
@@ -42,6 +38,10 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget
+      - name: Install dependencies
+        run: dotnet restore --lock-file-path=./packages.lock.json --verbosity=normal
+      - name: Install tools
+        run: dotnet tool restore --verbosity=normal 
       - name: Build
         run: dotnet build --configuration=Release --no-restore --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
       - name: Test
@@ -50,8 +50,6 @@ jobs:
         run: dotnet pack --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
       - name: Publish
         run: dotnet publish --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
-      - name: Source ZIP
-        run: git archive --format=zip HEAD --output=prexonite-src-v${{steps.determine-version.outputs.version}}.zip
 #      - name: Prepare Binary ZIP
 #        run: |
 #          ver='${{steps.determine-version.outputs.version}}'

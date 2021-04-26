@@ -163,7 +163,7 @@ namespace Prexonite.Compiler.Symbolic
             {
                 // Compare paths in reverse, because they are much more likely to
                 // differ at the end than at the beginning
-                for (var i = _elements.Length - 1; i >= 0; i++)
+                for (var i = _elements.Length - 1; i >= 0; i--)
                 {
                     if (!Engine.StringsAreEqual(_elements[i],other._elements[i]))
                         return false;

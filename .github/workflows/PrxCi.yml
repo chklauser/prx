@@ -41,10 +41,6 @@ jobs:
         with:
           dotnet-version: '5.0.x'
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
-      - name: Install dependencies
-        run: dotnet restore --lock-file-path=./packages.lock.json --verbosity=normal
-      - name: Install tools
-        run: dotnet tool restore --verbosity=normal 
       - uses: actions/cache@v2
         with:
           path: ~/.nuget/packages
@@ -52,6 +48,10 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget
+      - name: Install dependencies
+        run: dotnet restore --lock-file-path=./packages.lock.json --verbosity=normal
+      - name: Install tools
+        run: dotnet tool restore --verbosity=normal 
       - name: Build
         run: dotnet build --no-restore --verbosity=normal
       - name: Test
