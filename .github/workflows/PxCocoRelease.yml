@@ -43,3 +43,5 @@ jobs:
         run: dotnet pack --no-restore --no-build --configuration Release PxCoco/PxCoco.csproj -p:Version=${{steps.update-version.outputs.version}}
       - name: Push Package (Win)
         run: dotnet nuget push PxCoco/bin/Release/PxCoco.${{steps.update-version.outputs.version}}.nupkg
+      - name: Push Symbols Package (Win)
+        run: dotnet nuget push PxCoco/bin/Release/PxCoco.${{steps.update-version.outputs.version}}.snupkg
