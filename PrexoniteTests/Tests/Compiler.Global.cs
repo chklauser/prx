@@ -27,6 +27,7 @@ using System;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core.Operators;
+using Prexonite.Commands.List;
 using Prexonite.Compiler;
 using Prx.Tests;
 
@@ -326,6 +327,80 @@ Description ""Künste des Überredens von Krähen."";
 
             Assert.AreEqual("Überreden", target.Meta["Name"].Text);
             Assert.AreEqual("Künste des Überredens von Krähen.", target.Meta["Description"].Text);
+        }
+
+        [Test]
+        public void InterpreterLineAtBeginning()
+        {
+            var ldr = _compile(@"#!/usr/bin/env prx --legacy
+SomeOtherSettings ""Are Valid"";
+");
+            
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
+            
+            Assert.That(ldr.ParentApplication.Meta[Application.InterpreterLineKey], 
+                Is.EqualTo(new MetaEntry("/usr/bin/env prx --legacy")));
+            Assert.That(ldr.ParentApplication.Meta["SomeOtherSettings"], 
+                Is.EqualTo(new MetaEntry("Are Valid")));
+        }
+
+        [Test]
+        public void InterpreterLineAfterNoise()
+        {
+
+            var ldr = _compile(@"
+// this comment precedes the interpreter line; won't work in POSIX shells of course
+// It's not technically necessary to support this, but it would be more difficult to detect and forbid
+// it than to just tolerate it
+#!/usr/bin/env prx --legacy
+
+SomeOtherSettings ""Are Valid"";
+");
+            
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
+            
+            Assert.That(ldr.ParentApplication.Meta[Application.InterpreterLineKey], 
+                Is.EqualTo(new MetaEntry("/usr/bin/env prx --legacy")));
+            Assert.That(ldr.ParentApplication.Meta["SomeOtherSettings"], 
+                Is.EqualTo(new MetaEntry("Are Valid")));
+        }
+
+        [Test]
+        public void InterpreterLineAfterOtherGlobalDeclsIsIllegal()
+        {
+            var ldr = _justCompile(@"SomeOtherSettings ""Are Valid"";
+#!/usr/bin/env prx --legacy
+");
+            
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
+            
+            Assert.That(ldr.ParentApplication.Meta["SomeOtherSettings"], 
+                Is.EqualTo(new MetaEntry("Are Valid")));
+            
+            Assert.That(ldr.Errors, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void FirstInterpreterLineWins()
+        {
+            // Some other file has already added the interpreter line
+            const string previousInterpreterLine = "/usr/bin/prx";
+            target.Meta[Application.InterpreterLineKey] = previousInterpreterLine;
+            
+            // Now we load some more code (e.g., via `build does add`). Its interpreter line should be silently ignored.
+            var ldr = _compile(@"#!/usr/bin/env prx --legacy
+SomeOtherSettings ""Are Valid"";
+");
+            
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
+            Assert.That(ldr.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
+            
+            Assert.That(ldr.ParentApplication.Meta["SomeOtherSettings"], 
+                Is.EqualTo(new MetaEntry("Are Valid")));
+            Assert.That(ldr.ParentApplication.Meta[Application.InterpreterLineKey], 
+                Is.EqualTo(new MetaEntry(previousInterpreterLine)));
         }
 
         #endregion

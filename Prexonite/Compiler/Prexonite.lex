@@ -80,6 +80,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 //Only global code
 <YYINITIAL> {
     "to"        { return tok(Parser._to); }
+    "#!" {NotLineBreak}* { return tok(Parser._interpreterline); }
 }
 
 <YYINITIAL,Local,LocalShell> {
@@ -163,6 +164,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "["    { return tok(Parser._lbrack); }
      "(+)" { return tok(Parser._id,OperatorNames.Prexonite.Addition); }
      "(-)" { return tok(Parser._id,OperatorNames.Prexonite.Subtraction); }
+     // NOTE: the multiplication operator has a different meaning in state Transfer vs. other states 
      "(/)" { return tok(Parser._id,OperatorNames.Prexonite.Division); }
      "(" [mM][oO][dD] ")" { return tok(Parser._id,OperatorNames.Prexonite.Modulus); }
      "(^)" { return tok(Parser._id,OperatorNames.Prexonite.Power); }
