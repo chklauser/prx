@@ -73,6 +73,11 @@ namespace Prexonite
         public const string InitializationId = @"\init";
 
         /// <summary>
+        ///     Key used to store the interpreter line (e.g., <c>#!/usr/bin/env prx</c>).
+        /// </summary>
+        public const string InterpreterLineKey = @"\interpreter_line";
+
+        /// <summary>
         ///     Meta table key used for storing initialization generation.
         /// </summary>
         [Obsolete("Prexonite always completes partial initialization. This key has no effect.")] 

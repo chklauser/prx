@@ -125,7 +125,7 @@ namespace Prx.Tests
             TestContext.WriteLine(target.StoreInString());
         }
 
-        private Loader _justCompile(string input)
+        protected internal Loader _justCompile(string input)
         {
             var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
             var ldr = new Loader(opt);

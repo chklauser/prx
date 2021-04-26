@@ -120,8 +120,8 @@
     </Merge>
     <Message Text="$(PrexoniteGrammarDefinition) is now ready." />
   </Target>
-  <Target Name="PrexoniteScanner" Outputs="$(ProjectDir)/Compiler/Scanner.cs" Inputs="$(ProjectDir)/Compiler/$(PrexoniteScannerDefinition)">
-    <Exec Command="&quot;$(ToolsDirectory)/csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)/Compiler" />
+  <Target Name="PrexoniteScanner" Outputs="$(ProjectDir)/Compiler/Lexer.cs" Inputs="$(ProjectDir)/Compiler/$(PrexoniteScannerDefinition)">
+    <Exec Command="&quot;../$(ToolsDirectory)/csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)/Compiler" />
   </Target>
   
   <!-- Text Template -->

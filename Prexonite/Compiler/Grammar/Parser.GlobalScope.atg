@@ -23,8 +23,20 @@
 
 Prexonite
 =
+[   InterpreterLine
+]
     DeclarationLevel
     EOF
+.
+
+InterpreterLine
+=
+    interpreterline         (.  if(!TargetApplication.Meta.ContainsKey(Application.InterpreterLineKey)) 
+                                {
+                                  TargetApplication.Meta[Application.InterpreterLineKey] = t.val[2..];
+                                }
+                                // Don't overwrite interpreter line. Top-most wins.
+                            .)
 .
 
 DeclarationLevel

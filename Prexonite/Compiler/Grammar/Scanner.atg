@@ -80,6 +80,7 @@ TOKENS
 	appendright // >>
 	deltaright // |>
 	deltaleft // <|
+	interpreterline // #!/bin/bash
 	
 
     //Handled by the scanner:
