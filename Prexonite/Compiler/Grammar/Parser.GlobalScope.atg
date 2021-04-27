@@ -932,9 +932,20 @@ NsQualifiedIdImpl<false,out qualifiedId, out _>
 .
 
 NsTransferSource<out bool hasWildcard, out QualifiedId qualifiedId>
-                                    (.  hasWildcard = false; .)
+                                    (.  hasWildcard = false; 
+                                        var qualIdPos = GetPosition(); 
+                                        qualifiedId = new("unknown"); 
+                                    .)
 =
 NsQualifiedIdImpl<true, out qualifiedId, out hasWildcard>
+| GlobalQualifiedId<out var gid>    (.  // This alternative covers a common but hard to spot mistake (`.` vs `::`)
+                                        // It tries to recover, but it's considered a hard error.
+                                        Loader.ReportMessage(Message.Error(
+                                            Resources.Parser_DoubleColonInNamespaceName,
+                                            qualIdPos, MessageClasses.UnexpectedDoubleColonInNamespaceName));
+                                        hasWildcard = false;
+                                        qualifiedId = new(gid.Split('.'));
+                                    .)
 .
 
 NsQualifiedIdImpl<bool allowWildcard, out QualifiedId qualifiedId, out bool hasWildcard>
@@ -1091,7 +1102,7 @@ semicolon                           (.  if(!illegal)
                                     .)
 .
 
-NamespaceDeclaration                (.  QualifiedId fullNsId;
+NamespaceDeclaration                (.  QualifiedId? fullNsId = null;
                                         DeclarationScope scope = null;
                                         ISourcePosition qualIdPos,exportPos;
                                         List<SymbolTransferDirective> directives;
@@ -1100,7 +1111,16 @@ NamespaceDeclaration                (.  QualifiedId fullNsId;
                                     .)
 =                                   (.  .)
 namespace                           (.  qualIdPos = GetPosition(); .)
-NsQualifiedId<out fullNsId>         (.  var declBuilder = _prepareDeclScope(fullNsId, qualIdPos); .)
+(   NsQualifiedId<out var outNsId>  (.  fullNsId = outNsId; .) 
+|   GlobalQualifiedId<out var qid>  (.  // This alternative captures a common and hard to spot mistake (. vs ::)
+                                        // It tries to recover, but it's considered a hard error.
+                                        Loader.ReportMessage(Message.Error(
+                                            Resources.Parser_DoubleColonInNamespaceName,
+                                            qualIdPos, MessageClasses.UnexpectedDoubleColonInNamespaceName));
+                                        // Best-effort recovery based on invalid namespace name
+                                        fullNsId = new QualifiedId(qid.Split('.'));
+                                    .)
+)                                   (.  var declBuilder = _prepareDeclScope(fullNsId ?? new QualifiedId("unknown"), qualIdPos); .)
 [                                   (.  ISourcePosition importKeywordPosition;
                                         _pushLexerState(Lexer.Transfer);
                                     .)
