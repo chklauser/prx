@@ -101,6 +101,7 @@ Prexonite/Commands/Core/Operators/Operators.cs
 PrexoniteTests/OldPrexoniteTests.csproj.xml
 PrexoniteTests/Tests/Configurations/PsrUnitTests.cs
 PrexoniteTests/Tests/Configurations/VMTestConfigurations.cs
+Prexonite/Properties/Resources.Designer.cs
 
 # Ignore NuGet packages folder
 packages/*

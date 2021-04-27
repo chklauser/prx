@@ -1,4 +1,4 @@
-name psr::ast;
+name psr.ast;
 references { prx/1.0 };
 
 namespace psr.ast.v1 import prx.v1(*)
@@ -72,7 +72,7 @@ namespace psr.ast
                     else
                         throw "Supplied symbol entry ($func) is not a function, but was used in SI.func."
                 else if(var args.Count >= 3 and id is String)
-                    new Prexontie::Compiler::SymbolEntry(cache, func, m)
+                    new Prexonite::Compiler::SymbolEntry(cache, func, m)
                 else
                     cache;
         }

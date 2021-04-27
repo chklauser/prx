@@ -82,7 +82,7 @@ MetaAssignment<IHasMetaTable metaTable>    (. string key = null; MetaEntry entry
     ( enabled               (. entry = true; .)
     | disabled              (. entry = false; .)
     | MetaExpr<out entry> 
-      |                     (. entry = true; .)
+    |                       (. entry = true; .)
     )                     
 |   add                     (. MetaEntry subEntry; .)
     MetaExpr<out subEntry>  (. if(!subEntry.IsList) subEntry = (MetaEntry) subEntry.List; .)
@@ -105,12 +105,16 @@ MetaAssignment<IHasMetaTable metaTable>    (. string key = null; MetaEntry entry
 .
 
 MetaExpr<out MetaEntry entry>
-              (. bool sw; int i; double r; entry = null; string str; Version v; .)
+              (. bool sw; int i; double r; entry = null; string str; Version v;
+                 QualifiedId qualifiedId; 
+              .)
 =                            
-  Boolean<out sw>            (. entry = sw; .)
-|    Integer<out i>            (. entry = i.ToString(CultureInfo.InvariantCulture); .)
-|    Real<out r>                (. entry = r.ToString(CultureInfo.InvariantCulture); .)
+  Boolean<out sw>           (. entry = sw; .)
+|    Integer<out i>         (. entry = i.ToString(CultureInfo.InvariantCulture); .)
+|    Real<out r>            (. entry = r.ToString(CultureInfo.InvariantCulture); .)
 |   (   String<out str>     (. entry = str; .)
+    |   NsQualifiedId<out qualifiedId>
+                            (. entry = qualifiedId.ToString(); .)
     |   GlobalQualifiedId<out str> 
                             (. entry = str; .)
     )
@@ -123,7 +127,9 @@ MetaExpr<out MetaEntry entry>
                             .)
     [   MetaExpr<out subEntry> (.  lst.Add(subEntry); .)
         {   comma           (. if(lastWasEmpty)
-                                    SemErr("Missing meta expression in list (two consecutive commas).");
+                                 Loader.ReportMessage(Message.Error(
+                                     Resources.Parser_MissingMetaExprInList,
+                                     GetPosition(), MessageClasses.DuplicateComma));
                             .)
             (   MetaExpr<out subEntry> 
                             (. lst.Add(subEntry); 
@@ -949,7 +955,7 @@ GlobalId<out part>                  (.  parts.Add(part); .)
                                         } 
                                     .)
     dot
-    (   GlobalId<out part>          (.  parts.Add(part); .)
+    (   DotId<out part>             (.  parts.Add(part); .)
     |   timessym                    (.  parts.Add(OperatorNames.Prexonite.Multiplication); .)
     |                               (.  ISourcePosition starPos = GetPosition(); .)
         times                       (.  hasWildcard = true;

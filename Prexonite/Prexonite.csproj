@@ -146,6 +146,17 @@
     <!-- On Windows, deletion will fail because some build process retains a handle to this file. -->
     <!-- <Delete Files="$(PrexoniteGrammarDefinition)" /> -->
   </Target>
+  
+  <ItemGroup>
+    <!-- Generate the Properties/Resources.Designer.cs file from the default translations in Resources.resx -->
+    <EmbeddedResource Update="Properties/Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <StronglyTypedFileName>Properties/Resources.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Prexonite.Properties</StronglyTypedNamespace>
+      <StronglyTypedClassName>Resources</StronglyTypedClassName>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <!-- NUGET References -->
   <ItemGroup>

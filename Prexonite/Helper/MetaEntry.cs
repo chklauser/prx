@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -404,50 +405,91 @@ namespace Prexonite
                     buffer.Append("{}");
                     break;
                 case Type.List:
-                    buffer.Append("{");
+                    buffer.Append('{');
                     foreach (var entry in _list)
                     {
                         if (entry == null)
                             continue;
                         entry.ToString(buffer);
-                        buffer.Append(",");
+                        buffer.Append(',');
                     }
                     if (_list.Length > 0)
                         buffer.Remove(buffer.Length - 1, 1);
-                    buffer.Append("}");
+                    buffer.Append('}');
                     break;
                 case Type.Switch:
-                    buffer.Append(_switch.ToString());
+                    buffer.Append(_switch.ToString(CultureInfo.InvariantCulture));
                     break;
                 case Type.Text when _text == null:
                     buffer.Append("\"\"");
                     break;
                 case Type.Text:
                     //Special case: allow integer numbers
-                    if (_text.Length <= LengthOfInt32MaxValue && _looksLikeNumber(_text) &&
-                        long.TryParse(_text, out var num))
+                    if (_text.Length <= LengthOfInt32MaxValue && _looksLikeNumberOrVersion(_text))
                     {
-                        var format = NumberFormatInfo.InvariantInfo;
-                        var numStr = num.ToString(format);
-                        Debug.Assert(_looksLikeNumber(numStr));
-                        buffer.Append(numStr);
+                        if (long.TryParse(_text, out var num))
+                        {
+                            var format = NumberFormatInfo.InvariantInfo;
+                            var numStr = num.ToString(format);
+                            Debug.Assert(_looksLikeNumberOrVersion(numStr));
+                            buffer.Append(numStr);
+                            break;
+                        }
+                        else if (Version.TryParse(_text, out var version))
+                        {
+                            buffer.Append(version);
+                            break;
+                        }
+                    }
+
+                    if (_text.Contains('.'))
+                    {
+                        var first = true;
+                        foreach (var part in _text.Split('.'))
+                        {
+                            if (!first)
+                            {
+                                buffer.Append('.');
+                            }
+                            first = false;
+
+                            var idOrLiteral = StringPType.ToIdOrLiteral(part);
+                            if (idOrLiteral.StartsWith("\""))
+                            {
+                                buffer.Append('$');
+                            }
+
+                            buffer.Append(idOrLiteral);
+                        }
                     }
                     else
                     {
                         buffer.Append(StringPType.ToIdOrLiteral(_text));
                     }
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        string.Format(Resources.MetaEntry_EntryTypeUnknownToString, EntryType));
             }
         }
 
         private const int LengthOfInt32MaxValue = 10 + 1; //sign allowed
 
-        private static bool _looksLikeNumber(string text)
+        private static bool _looksLikeNumberOrVersion(string text)
         {
             var end = Math.Min(text.Length, LengthOfInt32MaxValue);
+            var remainingDotsAllowed = 4;
             for (var i = 0; i < end; i++)
+            {
+                if (remainingDotsAllowed > 0 && text[i] == '.')
+                {
+                    remainingDotsAllowed -= 1;
+                    continue;
+                }
                 if (!char.IsDigit(text[i]))
                     return false;
+            }
+
             return true;
         }
 

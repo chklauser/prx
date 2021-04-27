@@ -31,6 +31,67 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     )                           (.  id = cache(t.val); .)
 .
 
+// Id that immediately follows a dot; tolerate additional keywords used as identifiers (e.g., method names)
+DotId<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surface. this is for debugging purposes
+=
+    GlobalId<out id>
+|   (   enabled
+    |   disabled
+    |   build
+    |   add
+    |   declare
+    |   function
+    |   command
+    |   build
+    |   ref
+    |   var
+    |   mod
+    |   true
+    |   false
+    |   is
+    |   as
+    |   not
+    |   asm
+    |   return
+    |   in
+    |   to
+    |   continue
+    |   yield
+    |   break
+    |   or
+    |   and
+    |   xor
+    |   static
+    |   goto
+    |   if
+    |   unless
+    |   else
+    |   new
+    |   coroutine
+    |   from
+    |   do
+    |   does
+    |   until
+    |   while
+    |   for
+    |   foreach
+    |   try
+    |   catch
+    |   try
+    |   finally
+    |   throw
+    |   then
+    |   uusing
+    |   macro
+    |   lazy
+    |   let
+    |   method
+    |   this
+    |   namespace
+    |   export
+    )                           (.  id = cache(t.val); .)
+.
+
 Boolean<out bool value>         (.  value = true; .)
 =                   
 	true          

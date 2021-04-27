@@ -1,10 +1,10 @@
-name psr::pattern;
+name psr.pattern;
 references {
     prx/1.0,
-    psr::ast,
-    psr::$macro,
-    psr::struct,
-    psr::prop
+    psr.ast,
+    psr.$macro,
+    psr.struct,
+    psr.prop
 };
 
 namespace psr.pattern.v1 

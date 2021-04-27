@@ -219,12 +219,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     ":"     { return tok(Parser._colon); }
     ";"     { return tok(Parser._semicolon); }
     ","     { return tok(Parser._comma); }
-    "." ({Identifier})?     { Token dot = tok(Parser._dot);
-                              string memberId = yytext();
-                              if(memberId.Length > 1)
-                                return multiple(dot,tok(Parser._id,memberId.Substring(memberId.StartsWith(".$") ? 2 : 1)));
-                              else
-                                return dot; }
+    "."     { return tok(Parser._dot); }
     "@"     { return tok(Parser._at); }
     ">>"	{ return tok(Parser._appendright); }
     "<<"	{ return tok(Parser._appendleft); }
