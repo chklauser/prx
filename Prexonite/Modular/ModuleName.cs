@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Properties;
 using Prexonite.Types;
 
@@ -12,7 +13,7 @@ namespace Prexonite.Modular
     /// Identifies a Prexonite module. Consists of an identifier and 
     /// a version number (major.minor.build.revision).
     /// </summary>
-    [DebuggerDisplay("{Id},{Version}")]
+    [DebuggerDisplay("{Id}/{Version}")]
     public sealed class ModuleName : IEquatable<ModuleName>
     {
         /// <summary>
@@ -20,6 +21,7 @@ namespace Prexonite.Modular
         /// </summary>
         public string Id { get; }
 
+        [PublicAPI]
         public static readonly PType PType = PType.Object[typeof(ModuleName)];
         private static readonly Version ZeroVersion = new();
 
@@ -38,8 +40,8 @@ namespace Prexonite.Modular
 
 #if !DEBUG
 // ReSharper disable PossibleNullReferenceException
-            if (id.Contains(",") || id.Any(char.IsWhiteSpace)) 
-                throw new ArgumentException("A module id cannot contain commas (U+002C) or whitespaces (Unicode general category Zs)");
+            if (id.Contains("/") || id.Any(char.IsWhiteSpace)) 
+                throw new ArgumentException("A module id cannot contain commas (U+002C), slashes (U+002F) or whitespace (Unicode general category Zs)");
 // ReSharper restore PossibleNullReferenceException
 #endif
 
@@ -152,47 +154,52 @@ namespace Prexonite.Modular
             {
                 id = entry.Text;
                 int idx;
-                if((idx = id.LastIndexOf(',')) > 0 && idx < id.Length)
+                if((idx = id.LastIndexOf('/')) > 0 && idx < id.Length)
                 {
-                    rawVersion = id.Substring(idx + 1).Trim();
-                    id = id.Substring(0, idx).Trim();
+                    rawVersion = id[(idx + 1)..].Trim();
+                    id = id[..idx].Trim();
                 }
             }
             else if(entry.IsList)
             {
                 var lst = entry.List;
                 var c = lst.Length;
-                if (c <= 0 || 2 < c)
-                    return false;
-                else if (c == 1)
-                    if (lst[0].IsText)
-                        id = lst[0].Text;
-                    else
-                        return false;
-                else
+                switch (c)
                 {
-                    if (lst[0].IsText)
+                    case <= 0 or > 2:
+                        return false;
+                    case 1 when lst[0].IsText:
                         id = lst[0].Text;
-                    else
+                        break;
+                    case 1:
                         return false;
+                    default:
+                    {
+                        if (lst[0].IsText)
+                            id = lst[0].Text;
+                        else
+                            return false;
 
-                    if (lst[1].IsText)
-                    {
-                        rawVersion = lst[1].Text;
-                    }
-                    else if (lst[1].IsList)
-                    {
-                        lst = lst[1].List;
-                        c = lst.Length;
-                        if(0 <= c || c > 4)
+                        if (lst[1].IsText)
+                        {
+                            rawVersion = lst[1].Text;
+                        }
+                        else if (lst[1].IsList)
+                        {
+                            lst = lst[1].List;
+                            var c2 = lst.Length;
+                            if(c2 is <= 0 or > 4)
+                                return false;
+                            if(!lst.All(_isText))
+                                return false;
+                            rawVersion = lst.Foldr1((l, r) => l + "." + r);
+                        }
+                        else
+                        {
                             return false;
-                        if(!lst.All(_isText))
-                            return false;
-                        rawVersion = lst.Foldr1((l, r) => l + "." + r);
-                    }
-                    else
-                    {
-                        return false;
+                        }
+
+                        break;
                     }
                 }
             }
@@ -203,7 +210,7 @@ namespace Prexonite.Modular
 
             if(id.Length == 0 
                 || id.Any(char.IsWhiteSpace)
-                || rawVersion != null && rawVersion.Length == 0)
+                || rawVersion is {Length: 0})
                 return false;
 
             Version? v;
@@ -227,7 +234,7 @@ namespace Prexonite.Modular
             {
                 return Id;
             }
-            return Id + "," + Version;
+            return Id + "/" + Version;
         }
 
         public MetaEntry ToMetaEntry()
