@@ -1349,6 +1349,46 @@ build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(e
             Assert.That(pointedToFunction.LogicalId, Does.EndWith("fox"));
         }
         
+        [Test]
+        public void DotSeparatedMetaValues()
+        {
+            var ldr = Compile(@"
+name some.module.test;
+references {
+  some.module
+};
+
+function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
+");
+
+            var meta = target.Meta;
+            Assert.That(meta, Does.ContainKey("name"));
+            Assert.That(meta, Does.ContainKey("references"));
+            Assert.That(meta["name"], Is.EqualTo(new MetaEntry("some.module.test")));
+            Assert.That(meta["references"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("some.module")})));
+
+            var f = target.Functions["main"];
+            Assert.That(f.Meta, Does.ContainKey("key1"));
+            Assert.That(f.Meta, Does.ContainKey("key2"));
+            Assert.That(f.Meta, Does.ContainKey("key3"));
+            Assert.That(f.Meta["key1"], Is.EqualTo(new MetaEntry("dot.separated.value")));
+            Assert.That(f.Meta["key2"], Is.EqualTo(new MetaEntry("value2")));
+            Assert.That(f.Meta["key3"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("a.b"), new MetaEntry("c")})));
+        }
+
+        [Test]
+        public void DotNetStaticPropertyAccess()
+        {
+            Compile(@"
+add Prexonite::Compiler to Imports;
+function main {
+    var x = ::SymbolInterpretations.Function;
+    return x;
+}
+");
+            Expect(SymbolInterpretations.Function);
+        }
+        
         [ContractAnnotation("value:null=>halt")]
         private static void _assumeNotNull(object value)
         {

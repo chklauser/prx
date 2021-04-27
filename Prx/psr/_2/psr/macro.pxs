@@ -1,7 +1,7 @@
-name psr::$macro;
+name psr.macro;
 references {
 	prx/1.0,
-	psr::ast
+	psr.ast
 };
 
 namespace psr.macro.v1

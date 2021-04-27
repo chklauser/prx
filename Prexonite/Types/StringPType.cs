@@ -302,23 +302,20 @@ namespace Prexonite.Types
 
         #region IdOrLiteral
 
-        private static readonly Regex idLetters =
-            new(
-                @"^[\w\\][\w\d\\']{0,}$", RegexOptions.Compiled);
+        private static readonly Regex IdLetters = new( @"^[\w\\][\w\d\\']{0,}$");
 
-        private const int anArbitraryIdLengthLimit = 255;
+        private const int AnArbitraryIdLengthLimit = 255;
 
         public static string ToIdOrLiteral(string raw)
         {
-            if (raw == null)
-                raw = "";
+            raw ??= "";
             if (
                 //Empty strings cannot be represented as Ids
                 raw.Length == 0)
                 return "\"\"";
             if (
-                raw.Length > anArbitraryIdLengthLimit ||
-                    !idLetters.IsMatch(raw) ||
+                raw.Length > AnArbitraryIdLengthLimit ||
+                    !IdLetters.IsMatch(raw) ||
                         IsReservedWord(raw) ||
                             char.IsDigit(raw, 0)
                 )
@@ -328,10 +325,7 @@ namespace Prexonite.Types
 
         public static string ToIdLiteral(string physicalId)
         {
-            if (OperatorCommands.TryGetLiteral(physicalId, out var literal))
-                return literal;
-            else
-                return physicalId;
+            return OperatorCommands.TryGetLiteral(physicalId, out var literal) ? literal : physicalId;
         }
 
         #endregion

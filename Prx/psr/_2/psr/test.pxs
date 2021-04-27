@@ -1,4 +1,4 @@
-name psr::test;
+name psr.test;
 references {
     prx/1.0
 };

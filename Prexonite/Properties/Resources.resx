@@ -409,6 +409,9 @@
   <data name="Parser_NamespaceExpected" xml:space="preserve">
     <value>Expected {0} to be a namespace. Was {1}.</value>
   </data>
+  <data name="Parser_MissingMetaExprInList" xml:space="preserve">
+    <value>Missing meta expression in list (two consecutive commas).</value>
+  </data>
   <data name="Parser_CannotExtendMergedNamespace" xml:space="preserve">
     <value>Namespace {0} cannot be extended because it is a merged view of two originally distinct namespaces.</value>
   </data>
@@ -429,5 +432,8 @@
   </data>
   <data name="AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice" xml:space="preserve">
     <value>Cannot translate slice.</value>
+  </data>
+  <data name="MetaEntry_EntryTypeUnknownToString" xml:space="preserve">
+    <value>MetaEntry type {0} does not have a string representation.</value>
   </data>
 </root>

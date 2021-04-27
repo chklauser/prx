@@ -369,6 +369,16 @@ SomeOtherSettings ""Are Valid"";
         }
 
         [Test]
+        public void DotSeparatedMetaWithAnyIdElements()
+        {
+            var ldr = _compile(@"
+key1 $""0"".$""0"";
+");
+            Assert.That(target.Meta, Does.ContainKey("key1"));
+            Assert.That(target.Meta["key1"], Is.EqualTo(new MetaEntry("0.0")));
+        }
+
+        [Test]
         public void InterpreterLineAfterNoise()
         {
 
@@ -1189,7 +1199,7 @@ declare function main/the_module/0.1;
         [Test]
         public void ManyDecls()
         {
-            var ldr = _compile(@"
+            _compile(@"
 declare function main/testApplication/0.0;
 declare command print,println,meta,boxed,concat,map,select,foldl,foldr,dispose,call\perform,thunk,asthunk,force,toseq,call\member\perform,caller,pair,unbind,sort,orderby,LoadAssembly,debug,setcenter,setleft,setright,all,where,skip,limit,take,abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan,char,count,distinct,union,unique,frequency,groupby,intersect,call\tail\perform,list,each,exists,forall,CompileToCil,takewhile,except,range,reverse,headtail,append,sum,contains,chan,call\async\perform,async_seq,call\sub\perform,pa\ind,pa\mem,pa\ctor,pa\check,pa\cast,pa\smem,pa\fun\call,pa\flip\call,pa\call\star,then,id,const,(+),(-),(*),(/),$mod,(^),(&),(|),$xor,(==),(!=),(>),(>=),(<),(<=),(-.),$complement,$not,create_enumerator,create_module_name,seqconcat;
 declare macro command call,call\member,call\tail,call\async,call\sub,call\sub\interpret,macro\pack,macro\unpack,macro\reference,call\star,call\macro,call\macro\impl;

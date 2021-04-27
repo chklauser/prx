@@ -1,6 +1,6 @@
-name psr::test::meta_macro;
+name psr.test.meta_macro;
 references {
-    psr::test,
+    psr.test,
     prx/1.0
 };
 

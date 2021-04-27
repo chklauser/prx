@@ -1,8 +1,8 @@
-name psr::prop;
+name psr.prop;
 references {
 	prx/1.0,
-	psr::ast,
-	psr::$macro
+	psr.ast,
+	psr.$macro
 };
 
 namespace psr.prop.v1

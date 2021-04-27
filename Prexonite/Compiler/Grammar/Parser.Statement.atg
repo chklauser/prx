@@ -137,7 +137,7 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     dot                                 (.  extension = new AstIndirectCall(this, PCall.Get, subject); .)
     Arguments<extension.Arguments>
 |   dot
-    Id<out id>                          (.  var ns = subject as AstNamespaceUsage;
+    DotId<out id>                          (.  var ns = subject as AstNamespaceUsage;
                                             if(ns == null)
                                             {
                                                 // Ordinary member access
@@ -320,7 +320,7 @@ StaticCall<out AstGetSetStatic staticCall>
                                 .)
 =
     ExplicitTypeExpr<out typeExpr>
-    dot Id<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
+    dot DotId<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
     Arguments<staticCall.Arguments>
 .
                                     //Fallback in case of a syntax error to avoid NullReferenceExceptions

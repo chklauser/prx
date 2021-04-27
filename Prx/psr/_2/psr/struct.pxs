@@ -1,8 +1,8 @@
-name psr::struct;
+name psr.struct;
 references {
     prx/1.0,
-    psr::ast,
-    psr::$macro
+    psr.ast,
+    psr.$macro
 };
 
 namespace psr.struct.v1 
