@@ -1388,6 +1388,24 @@ function main {
 ");
             Expect(SymbolInterpretations.Function);
         }
+
+        [Test]
+        public void ErrorSingleColonInMetaValue()
+        {
+            CompileInvalid(@"
+// There is a typo in this declaration: single `:` instead of `::`.
+name psr::pattern:test/2.0;
+");
+        }
+
+        [Test]
+        public void ErrorSingleColonInMetaValue2()
+        {
+            CompileInvalid(@"
+// There is a typo in this declaration: single `:` instead of `.` (this can happen on German keyboards)
+name psr.pattern:test/2.0;
+");
+        }
         
         [ContractAnnotation("value:null=>halt")]
         private static void _assumeNotNull(object value)
