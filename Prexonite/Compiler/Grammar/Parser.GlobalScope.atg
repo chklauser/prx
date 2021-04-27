@@ -69,21 +69,21 @@ DeclarationLevel
 
 /*---- Meta information ----*/
 
-MetaAssignment<IHasMetaTable metaTable>	(. string key = null; MetaEntry entry = null; .)
+MetaAssignment<IHasMetaTable metaTable>    (. string key = null; MetaEntry entry = null; .)
 =
-(	is  					(. entry = true; .)
-  [not					(. entry = false; .)
-  ]
-  GlobalId<out key>
+(   is                      (. entry = true; .)
+    [not                    (. entry = false; .)
+    ]
+    GlobalId<out key>
 |   not                     (. entry = false; .)
     GlobalId<out key>
 |
-  GlobalId<out key>
-  ( enabled				(. entry = true; .)
-  | disabled  			(. entry = false; .)
-  | MetaExpr<out entry>
-    |                       (. entry = true; .)
-  )
+    GlobalId<out key>     
+    ( enabled               (. entry = true; .)
+    | disabled              (. entry = false; .)
+    | MetaExpr<out entry> 
+      |                     (. entry = true; .)
+    )                     
 |   add                     (. MetaEntry subEntry; .)
     MetaExpr<out subEntry>  (. if(!subEntry.IsList) subEntry = (MetaEntry) subEntry.List; .)
     to
@@ -97,19 +97,19 @@ MetaAssignment<IHasMetaTable metaTable>	(. string key = null; MetaEntry entry = 
                                    entry = subEntry;
                                 }
                             .)
-)							(. if(entry == null || key == null) 
+)                            (. if(entry == null || key == null) 
                                     SemErr("Meta assignment did not generate an entry.");
                                else 
                                     metaTable.Meta[key] = entry; 
-                            .)	
+                            .)    
 .
 
 MetaExpr<out MetaEntry entry>
               (. bool sw; int i; double r; entry = null; string str; Version v; .)
-=							
-  Boolean<out sw>			(. entry = sw; .)
-|	Integer<out i>			(. entry = i.ToString(CultureInfo.InvariantCulture); .)
-|	Real<out r>				(. entry = r.ToString(CultureInfo.InvariantCulture); .)
+=                            
+  Boolean<out sw>            (. entry = sw; .)
+|    Integer<out i>            (. entry = i.ToString(CultureInfo.InvariantCulture); .)
+|    Real<out r>                (. entry = r.ToString(CultureInfo.InvariantCulture); .)
 |   (   String<out str>     (. entry = str; .)
     |   GlobalQualifiedId<out str> 
                             (. entry = str; .)
@@ -138,7 +138,7 @@ MetaExpr<out MetaEntry entry>
 
 /* ---- Global variable definition --- */
 
-GlobalVariableDefinition	(.  
+GlobalVariableDefinition    (.  
                                 string id = null; 
                                 List<string> aliases = new List<string>();
                                 string primaryAlias = null;
@@ -167,9 +167,9 @@ GlobalVariableDefinition	(.
                                   Symbols.Declare(alias, entry);
                               DefineGlobalVariable(id,out vari);
                           .)
-  [	lbrack  		    //Meta block for variables
+  [    lbrack              //Meta block for variables
     [   MetaAssignment<vari>
-            {	semicolon
+            {    semicolon
                 [ MetaAssignment<vari> ]
         }
         ]
@@ -177,7 +177,7 @@ GlobalVariableDefinition	(.
   ]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
                                     Symbols.Declare(primaryAlias, entry);
                           .)
-  [	                      (.  _pushLexerState(LocalState); .)
+  [                          (.  _pushLexerState(LocalState); .)
       assign              (.  _PushScope(FunctionTargets[Application.InitializationId]);
                               AstExpr expr;
                           .)
@@ -274,7 +274,7 @@ SYNC
           { comma [ DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true> ] }
         }
         rbrace
-	|	lpar                (.  bool wasComma = false; .)
+    |    lpar                (.  bool wasComma = false; .)
         [   MExprBasedDeclaration
             {   comma       (.  if(wasComma)
                                 {
@@ -343,13 +343,13 @@ SymbolDirective<. Func<string,ModuleName,EntityRef> entityFactory,
   | pointer                 (.  builder.ReferenceTo(); .)
   )
   SymbolDirective<entityFactory,module,builder,out lhsId,preventOverride:preventOverride>
-|	IF(isSymbolDirective("INFO"))
+|    IF(isSymbolDirective("INFO"))
   id
   MessageDirective<entityFactory,module,builder, out lhsId,MessageSeverity.Info,preventOverride:preventOverride>
-|	IF(isSymbolDirective("WARN"))
+|    IF(isSymbolDirective("WARN"))
   id
   MessageDirective<entityFactory,module,builder, out lhsId,MessageSeverity.Warning,preventOverride:preventOverride>
-|	IF(isSymbolDirective("ERROR"))
+|    IF(isSymbolDirective("ERROR"))
   id
   MessageDirective<entityFactory,module,builder, out lhsId,MessageSeverity.Error,preventOverride:preventOverride>
 |                           (. ISourcePosition position = GetPosition(); .)
@@ -381,7 +381,7 @@ DeclarationInstance2<.
                                 string rhsId; 
                                 ISourcePosition position = GetPosition(); 
                             .)
-=		
+=        
   SymbolDirective<entityFactory,module,builder,out lhsId,preventOverride:preventOverride>
                             (.  rhsId = lhsId; .)
   [ as Id<out rhsId> ]
@@ -414,7 +414,7 @@ DeclarationInstance2<.
                                   else
                                   {
                                     var msg = Message.Error(string.Format(Resources.Parser_Could_not_find_previous_declaration, lhsId),
-		                                position,MessageClasses.SymbolNotResolved);
+                                        position,MessageClasses.SymbolNotResolved);
                                     // We report the message AND store it as a message symbol.
                                     //  That way, the symbol is at least declared, avoiding a spurious 
                                     //  symbol not found message.
@@ -471,7 +471,7 @@ BuildBlock
                                 _pushLexerState(LocalState);
                             .)
   
-  [ does ]	
+  [ does ]    
   StatementBlock<target.Ast>
   
                             (.  _popLexerState();                                    
@@ -482,7 +482,7 @@ BuildBlock
 
 /* ---- Global Code ---- */
 
-GlobalCode				(.  PFunction func = TargetApplication._InitializationFunction;
+GlobalCode                (.  PFunction func = TargetApplication._InitializationFunction;
                       CompilerTarget ft = FunctionTargets[func];
                       ISourcePosition position;
                       if(ft == null)
@@ -547,7 +547,7 @@ FunctionDefinition<out PFunction func>
                                         ISourcePosition position;
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
-=	
+=    
   (   lazy [function]             (.  isLazy = true; .)
   |   function
   |   coroutine                   (.  isCoroutine = true; .)
@@ -638,11 +638,11 @@ FunctionDefinition<out PFunction func>
                                         {                                           
                                             if(isLazy)
                                                 ft = ct;
-                                        }	                                    
+                                        }                                        
                                   .)
     [   lpar
-      [	FormalArg<ft> 
-        {	comma               (.  if(missingArg)
+      [    FormalArg<ft> 
+        {    comma               (.  if(missingArg)
                                         {
                                             SemErr("Missing formal argument (two consecutive commas).");
                                         } 
@@ -657,7 +657,7 @@ FunctionDefinition<out PFunction func>
         {   [comma]
             FormalArg<ft>
         }
-  ]	                            (.  if(isNested && isLazy) // keep this assignment for maintainability
+  ]                                (.  if(isNested && isLazy) // keep this assignment for maintainability
                                     // ReSharper disable RedundantAssignment
                                         ft = cst;
                                     // ReSharper restore RedundantAssignment
@@ -673,7 +673,7 @@ FunctionDefinition<out PFunction func>
                                               else
                                                 symEntry = Symbol.CreateDereference(symEntry);
 
-                                              foreach(var alias in funcAliases)	                                                
+                                              foreach(var alias in funcAliases)                                                    
                                                   Symbols.Declare(alias, symEntry);
                                               
                                               //Store the original (logical id, mentioned in the source code)
@@ -825,7 +825,7 @@ FunctionDefinition<out PFunction func>
                           func = derStub;
                           
                           //Generate code for the stub
-                          AstExpr retVal;										    
+                          AstExpr retVal;                                            
                             
                             if(isNested)
                             {
@@ -848,7 +848,7 @@ FunctionDefinition<out PFunction func>
                                 ct.Ast.InsertRange(0,inject);
                             }
                             else
-                            {										            
+                            {                                                    
                                 //Global lazy functions don't technically need a stub. Might be removed later on
                                 var call = Create.Call(position,EntityRef.Function.Create(ct.Function.Id, TargetModule.Name));
                                 
@@ -864,7 +864,7 @@ FunctionDefinition<out PFunction func>
                               }
                               
                               retVal = call;
-                            }								    
+                            }                                    
                           
                           
                           //Assemble return statement
