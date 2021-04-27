@@ -1406,7 +1406,72 @@ name psr::pattern:test/2.0;
 name psr.pattern:test/2.0;
 ");
         }
-        
+
+        [Test]
+        public void ErrorDoubleColonInNamespaceDecl()
+        {
+            var ldr = CompileInvalid(@"
+namespace a::b {
+  function should_be_illegal = null;
+}
+");
+            
+            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+        }
+
+        [Test]
+        public void ErrorDoubleColonInNamespaceImport()
+        {
+            var ldr = CompileInvalid(@"
+namespace a.b 
+{
+    function f = null;
+}
+namespace a.c 
+    import a::b::f 
+{
+    function should_be_illegal = null;
+}
+");
+            
+            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+        }
+
+        [Test]
+        public void ErrorDoubleColonInGlobalNamespaceImport()
+        {
+            var ldr = CompileInvalid(@"
+namespace a.b 
+{
+    function f = null;
+}
+namespace import a::b::f;
+function should_be_illegal = null;
+");
+            
+            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+        }
+
+        [Test]
+        public void ErrorDoubleColonInNamespaceExport()
+        {
+            var ldr = CompileInvalid(@"
+namespace b.c.d {
+    function f = null;
+}
+namespace a
+{
+    
+} export b::c;
+");
+            
+            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+        }
+
         [ContractAnnotation("value:null=>halt")]
         private static void _assumeNotNull(object value)
         {

@@ -436,4 +436,7 @@
   <data name="MetaEntry_EntryTypeUnknownToString" xml:space="preserve">
     <value>MetaEntry type {0} does not have a string representation.</value>
   </data>
+  <data name="Parser_DoubleColonInNamespaceName" xml:space="preserve">
+    <value>Double colon (`::`) not allowed in namespace name.</value>
+  </data>
 </root>
