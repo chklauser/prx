@@ -439,4 +439,10 @@
   <data name="Parser_DoubleColonInNamespaceName" xml:space="preserve">
     <value>Double colon (`::`) not allowed in namespace name.</value>
   </data>
+  <data name="Parser_BinaryOperandMissing_Left" xml:space="preserve">
+    <value>Left-hand side of {0} operation is missing.</value>
+  </data>
+  <data name="Parser_BinaryOperandMissing_Right" xml:space="preserve">
+    <value>Right-hand side of {0} operation is missing.</value>
+  </data>
 </root>
