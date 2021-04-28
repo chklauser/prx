@@ -63,6 +63,7 @@ namespace Prexonite.Compiler
         public const string QualifiedIdPartsAfterWildcard = "P.QualifiedIdPartsAfterWildcard";
         public const string NonTopLevelNamespaceImport = "P.NonTopLevelNamespaceImport";
         public const string UnexpectedDoubleColonInNamespaceName = "P.UnexpectedDoubleColonInNamespaceName";
+        public const string IncompleteBinaryOperation = "P.IncompleteBinaryOperation";
 
         #endregion
 

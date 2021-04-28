@@ -222,8 +222,47 @@ namespace Prexonite.Compiler.Ast
             concatenation._OptimizeInternal(CompileTimeExecutionContext);
         }
 
+        /// <summary>
+        /// Report errors if either of the operands are <c>null</c>.  
+        /// </summary>
+        /// <remarks>
+        ///     We do this in a separate method because <see cref="BinaryOperation"/> is annotated with non-null
+        /// annotations, but there is one caller, the parser, for which it is impractical to have null checking enabled.
+        /// </remarks>
+        /// <returns><c>true</c> if the operands are valid; <c>false</c> otherwise</returns>
+        private bool validateBinaryOperands(ISourcePosition position, [CanBeNull] AstExpr left,
+            BinaryOperator op, [CanBeNull] AstExpr right)
+        {
+            var isValid = true;
+            if (left == null)
+            {
+                ReportMessage(Message.Create(
+                    MessageSeverity.Error, 
+                    string.Format(Resources.Parser_BinaryOperandMissing_Left, op), 
+                    position, 
+                    MessageClasses.IncompleteBinaryOperation));
+                isValid = false;
+            }
+            if (right == null)
+            {
+                ReportMessage(Message.Create(
+                    MessageSeverity.Error, 
+                    string.Format(Resources.Parser_BinaryOperandMissing_Right, op), 
+                    position, 
+                    MessageClasses.IncompleteBinaryOperation));
+                isValid = false;
+            }
+
+            return isValid;
+        }
+        
         public AstExpr BinaryOperation(ISourcePosition position, AstExpr left, BinaryOperator op, AstExpr right)
         {
+            if (!validateBinaryOperands(position, left, op, right))
+            {
+                return IndirectCall(position, Null(position));
+            }
+
             PValue leftNeutral = null;
             PValue rightNeutral = null;
             switch (op)
@@ -269,7 +308,7 @@ namespace Prexonite.Compiler.Ast
                     // If the LH- or RHS was a concatenation, the concatenation variable is set.
                     // Applying other transformations would be wrong. 
                     //  "text" + 0 == "text0"
-                    // We don't want to ellide the addition of 0 here, even though 0 is the neutral element of addition.
+                    // We don't want to elide the addition of 0 here, even though 0 is the neutral element of addition.
                     if (concatenation != null)
                     {
                         _foldConcatenation(concatenation);
@@ -345,7 +384,7 @@ namespace Prexonite.Compiler.Ast
                 case BinaryOperator.Coalescence:
                     return Coalescence(position, new[] {left, right});
                 case BinaryOperator.Cast:
-                    if (!(right is AstTypeExpr T))
+                    if (right is not AstTypeExpr T)
                     {
                         ReportMessage(Message.Error(Resources.AstFactoryBase_BinaryOperation_TypeExprExpected,
                                                     position, MessageClasses.TypeExpressionExpected));

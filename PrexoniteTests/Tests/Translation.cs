@@ -1472,6 +1472,15 @@ namespace a
             Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
         }
 
+        [Test]
+        public void QuestionMarkSpliceIsInvalid()
+        {
+            var ldr = CompileInvalid(@"
+function main = println(?*);
+");
+            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.IncompleteBinaryOperation), Is.Not.Empty);
+        }
+
         [ContractAnnotation("value:null=>halt")]
         private static void _assumeNotNull(object value)
         {
