@@ -8,6 +8,7 @@ using Prexonite.Compiler;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures)]
     [TestFixture]
     public class LoaderTests
     {

@@ -4,6 +4,7 @@ using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests.Modular
 {
+    [Parallelizable(ParallelScope.Fixtures | ParallelScope.Self)]
     [TestFixture]
     public class ModuleNameTests
     {

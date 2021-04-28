@@ -33,6 +33,7 @@ using Prexonite.Compiler.Symbolic.Compatibility;
 
 namespace Prx.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures)]
     public class Compiler
     {
         #region Setup

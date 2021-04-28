@@ -31,6 +31,7 @@ using Prexonite.Compiler.Cil;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures)]
     [TestFixture]
     public class CilRuntime
     {

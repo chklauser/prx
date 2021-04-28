@@ -34,6 +34,7 @@ using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures | ParallelScope.Self)]
     [TestFixture]
     public class ApplicationLinking
     {
