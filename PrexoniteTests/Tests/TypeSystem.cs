@@ -32,6 +32,7 @@ using Prx.Tests;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures | ParallelScope.Self)]
     [TestFixture(Description = "General type system checks")]
     public class TypeSystem
     {

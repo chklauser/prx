@@ -28,6 +28,7 @@ using Prexonite;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures | ParallelScope.Self)]
     [TestFixture]
     public class RandomAccessQueue
     {

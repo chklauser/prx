@@ -6,6 +6,7 @@ namespace PrexoniteTests.Tests
     /// <summary>
     /// These tests just verify that the prxlib/* embedded resources are present.
     /// </summary>
+    [Parallelizable(ParallelScope.Fixtures | ParallelScope.Self)]
     [TestFixture]
     public class EmbeddedPrxLibTests
     {

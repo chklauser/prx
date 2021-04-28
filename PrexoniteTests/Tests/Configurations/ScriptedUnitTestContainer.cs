@@ -38,6 +38,7 @@ using Prexonite.Types;
 
 namespace PrexoniteTests.Tests.Configurations
 {
+    [Parallelizable(ParallelScope.Fixtures)]
     internal abstract class ScriptedUnitTestContainer
     {
         public Application Application { get; set; }

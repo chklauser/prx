@@ -41,6 +41,7 @@ using Compiler = Prexonite.Compiler.Cil.Compiler;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures)]
     public class VMTestsBase
     {
         public const string StoreDebugImplementationKey = "store_debug_implementation";

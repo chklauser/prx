@@ -32,6 +32,7 @@ using Prx.Tests;
 
 namespace PrexoniteTests.Tests
 {
+    [Parallelizable(ParallelScope.Fixtures)]
     [TestFixture]
     public class Storage : Compiler
     {
