@@ -214,6 +214,7 @@ namespace prx.cli.repl
             var lowRaw = raw.ToLower;
             var funcId = nextFuncId; //<-- get the first unique function id
             var cmd = "r"; //<-- assume execution of code
+            var printPrefix = null; //<-- text to print before running the user input (if non-null)
             
             if(lowRaw == ":r" or lowRaw == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
             {
@@ -282,9 +283,10 @@ namespace prx.cli.repl
             else
             {
     executeStatement:
+                var printPrefix = shortened(raw) + " = ";
                 //First, try to compile the code as an expression
-                buffer.AppendFormat(" function {0}() does println = \"{1} = \" + ( \n{2}\n ) ; ", 
-                    [funcId, shortened(raw).Escape, raw]~Object<"System.Object[]">);
+                buffer.AppendFormat(" function {0}() = (\n{1}\n); ", 
+                    [funcId, raw]~Object<"System.Object[]">);
                 if(Not tryLoad)
                 {
                     //should that fail, try to compile the code as a statement
@@ -294,6 +296,7 @@ namespace prx.cli.repl
                     funcId = nextFuncId;
                     buffer.AppendFormat(" function {0}() {{ \n{1}\n ; }} ", 
                         [funcId, raw]~Object<"System.Object[]">);
+                    printPrefix = null;
 
                     if(Not tryLoad)
                     {
@@ -319,8 +322,13 @@ namespace prx.cli.repl
                 if(cmd == "r")
                 {
                     //A function needs to be run
-                    unless(app.Functions[funcId] is Null)
-                        app.Functions[funcId].Run(engine);
+                    if(printPrefix != null) {
+                        print(printPrefix);
+                    }
+                    if(!app.Functions[funcId] is Null) {
+                        var result = app.Functions[funcId].Run(engine);
+                        println(result.self);
+                    }
                 }
                 else if(cmd == "c")
                 {
