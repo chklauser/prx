@@ -144,6 +144,8 @@ namespace PrexoniteTests.Tests.Configurations
                     container.OneTimeSetupLog.WriteLine("Warning: {0}", warning);
                 foreach (var info in target.Messages.Where(m => m.Severity == MessageSeverity.Info))
                     container.OneTimeSetupLog.WriteLine("Info: {0}", info);
+
+                TestContext.WriteLine(container.OneTimeSetupLog);
                 Assert.Fail("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
             }
 

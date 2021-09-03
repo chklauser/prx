@@ -286,7 +286,7 @@ function macro\report_any(message, severity)
 {
     var getContext = macro\get_context;
     var parseMessageSeverity_t = ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.MessageSeverity\")");
-    var getSeverity = ast("GetSetStatic", SI.get, parseMessageSeverity_t, severity);
+    var getSeverity = ast3("StaticMemberAccess", parseMessageSeverity_t, severity, SI.get);
     var getInvocation = ast("GetSetMemberAccess", SI.get, getContext, "Invocation");
     var position = ast("GetSetMemberAccess",SI.get,getInvocation,"Position");
     var reportMessage = ast("GetSetMemberAccess", SI.get, getContext, "ReportMessage");
@@ -553,7 +553,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
         var set_arg_pt = new arg_pt(SI.set);
         set_arg_pt.Arguments.Add(ast("GetSetMemberAccess", box_node_arg, "Type"));
 
-        var obj_type_check = ast("TypeCheck",set_arg_pt,ast("ConstantTypeExpression",
+        var obj_type_check = ast3("Typecheck",set_arg_pt,ast("ConstantTypeExpression",
             "Object(\"Prexonite.Types.ObjectPType\")"));
 
         var cond = ast3("Condition",obj_type_check,true);
@@ -565,10 +565,10 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
 
     // static var node_t ??= System::Type.GetType(node_t_name);
     {
-        var node_t_null_check = ast("TypeCheck", new node_t, ast("ConstantTypeExpression","Null"));
+        var node_t_null_check = ast3("Typecheck", new node_t, ast("ConstantTypeExpression","Null"));
         var cond = ast3("Condition", node_t_null_check,false);
-        var type_getType = ast("GetSetStatic", SI.get,
-            ast("ConstantTypeExpression", "Object(\"System.Type\")"), "GetType");
+        var type_getType = ast3("StaticMemberAccess",
+            ast("ConstantTypeExpression", "Object(\"System.Type\")"), "GetType", SI.get);
         type_getType.Arguments.Add(node_t_name);
         var set_node_t = new node_t(SI.set);
         set_node_t.Arguments.Add(type_getType);

@@ -445,4 +445,25 @@
   <data name="Parser_BinaryOperandMissing_Right" xml:space="preserve">
     <value>Right-hand side of {0} operation is missing.</value>
   </data>
+  <data name="ConvertToBuiltIn_DoExpand_Missing_expression_to_convert_built_in_type" xml:space="preserve">
+    <value>Missing expression to convert built-in type {0}.</value>
+  </data>
+  <data name="StaticCallBuiltIn_DoExpand_Missing_type_arguments_or_method_name_for_static_method_call_" xml:space="preserve">
+    <value>Missing type arguments or method name for static method call.</value>
+  </data>
+  <data name="CheckIsBuiltIn_DoExpand_Missing_expression_to_check_against_built_in_type" xml:space="preserve">
+    <value>Missing inversion flag or expression to check against built-in type {0}.</value>
+  </data>
+  <data name="StaticCallBuiltIn_DoExpand_Static_call_requires_a_constant_method_name" xml:space="preserve">
+    <value>Static call requires a constant method name.</value>
+  </data>
+  <data name="CreateToBuiltIn_DoExpand_Missing_type_arguments_value_creation" xml:space="preserve">
+    <value>Missing type arguments for value creation.</value>
+  </data>
+  <data name="BuiltInTypeCommandBase_DoExpand_0_for_type_1_requires_at_least_2_arguments" xml:space="preserve">
+    <value>{0} for type {1} requires at least {2} arguments. Got {3} instead.</value>
+  </data>
+  <data name="BuiltInTypeCommandBase_DoExpand_0_for_type_1_requires_an_arity_integer_as_the_first_argument" xml:space="preserve">
+    <value>{0} for type {1} requires an arity (integer) as the first argument.</value>
+  </data>
 </root>

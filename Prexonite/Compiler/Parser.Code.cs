@@ -244,10 +244,7 @@ namespace Prexonite.Compiler
                 }
             }
 
-            if (localNs.Prefix == null)
-            {
-                localNs.Prefix = nextPrefix.ToString().Replace('.', '\\');
-            }
+            localNs.Prefix ??= nextPrefix.ToString().Replace('.', '\\');
         }
 
         [CanBeNull]
@@ -257,7 +254,7 @@ namespace Prexonite.Compiler
             {
                 scope.TryGet(qualifiedId[0], out var sym);
                 var expr = Create.ExprFor(qualifiedIdPosition, sym);
-                if (!(expr is AstNamespaceUsage nsUsage))
+                if (expr is not AstNamespaceUsage nsUsage)
                 {
                     Create.ReportMessage(
                         Message.Error(string.Format(Resources.Parser_NamespaceExpected, qualifiedId[0], sym == null ? "not defined" : sym.ToString()),
@@ -825,6 +822,14 @@ namespace Prexonite.Compiler
             return sym;
         }
 
+        /// <summary>
+        /// Resolve a symbol into an expression. Will emit error messages as a side-effect.
+        /// Use with unqualified references. For qualified references, use <see cref="_useSymbolFromNamespace"/> instead.
+        /// </summary>
+        /// <param name="scope">The scope to resolve the symbol in. Usually just <see cref="Symbols"/>.</param>
+        /// <param name="id">The ID to resolve.</param>
+        /// <param name="position">The position to use for error messages.</param>
+        /// <returns>The expression that this symbol resolves to.</returns>
         [NotNull]
         private AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] string id, [NotNull] ISourcePosition position)
         {
@@ -836,7 +841,7 @@ namespace Prexonite.Compiler
                 // If we have a namespace usage at hand, record the id used to access it
                 // (namespaces are otherwise anonymous, they have no physical name)
                 // Note: similar code is located in the GetSetExtension parser production
-                // for subnamespaces
+                // for sub namespaces
                 if (complex is AstNamespaceUsage {ReferencePath: null} nsu)
                 {
                     nsu.ReferencePath = new QualifiedId(id);
@@ -846,6 +851,27 @@ namespace Prexonite.Compiler
             Loader.ReportMessage(Message.Error(Resources.Parser_SymbolicUsageAsLValue, position, MessageClasses.ParserInternal));
             complex = _NullNode(position);
             return complex;
+        }
+        
+        /// <summary>
+        /// Resolve a symbol into an expression. Will emit error messages as a side-effect.
+        /// Use with qualified references. For unqualified references, use <see cref="_useSymbol"/> instead.
+        /// </summary>
+        /// <param name="ns">The namespace usage that serves as the scope for this resolution.</param>
+        /// <param name="id">The ID to resolve within the base namespace.</param>
+        /// <param name="position">The position to use for error messages.</param>
+        /// <returns>The expression that this symbol resolves to.</returns>
+        [NotNull]
+        private AstGetSet _useSymbolFromNamespace([NotNull] AstNamespaceUsage ns, [NotNull] string id, [NotNull] ISourcePosition position)
+        {
+            var expr = _useSymbol(ns.Namespace, id, position);
+            // write down qualified path
+            if(expr is AstNamespaceUsage {ReferencePath: null} subNs)
+            {
+                subNs.ReferencePath = ns.ReferencePath + new QualifiedId(id);
+            }
+
+            return expr;
         }
 
         private Symbol _parseSymbol(MExpr expr)
@@ -882,7 +908,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         private static bool isGlobalId(Token c)
         {
-            return c.kind == _id || c.kind == _anyId;
+            return c.kind is _id or _anyId;
         }
 
         private bool _isNotNewDecl()
@@ -1029,60 +1055,48 @@ namespace Prexonite.Compiler
             }
         }
 
-        private class EnsureInScopeHandler : TransformHandler<Parser>
-        {
-            public override Symbol HandleReference(ReferenceSymbol self, Parser argument)
-            {
-                if(self.Entity.TryGetLocalVariable(out var local)
-                   && argument.isOuterVariable(local.Id))
-                    argument.target.RequireOuterVariable(local.Id);
-                return self;
-            }
-        }
-        private static readonly EnsureInScopeHandler _ensureInScope = new();
+        private static readonly SymbolShift _objectCreationShift = static id => Compiler.Loader.ObjectCreationPrefix + id;
+        private static readonly SymbolShift _conversionShift =  static id => Compiler.Loader.ConversionPrefix + id;
+        private static readonly SymbolShift _typeCheckShift =  static id => Compiler.Loader.TypeCheckPrefix + id;
+        private static readonly SymbolShift _staticCallShift =  static id => Compiler.Loader.StaticCallPrefix + id;
 
-        public void EnsureInScope(Symbol symbol)
+        /// <summary>
+        /// Given the partial application of a type check <c>(? is T)</c>, this method will construct the
+        /// negated partial application <c>(? is not T)</c> by chaining the negation with <c>then</c>:
+        /// <c>(? is T) then (not ?)</c>.
+        /// </summary>
+        /// <param name="position">The position of the overall expression.</param>
+        /// <param name="check">The (non-inverted) type check.</param>
+        /// <returns>The partial application of an inverted type check.</returns>
+        [NotNull]
+        private AstExpr _createPartialInvertedTypeCheck([NotNull] ISourcePosition position, [NotNull] AstExpr check)
         {
-            symbol.HandleWith(_ensureInScope, this);
-        }
+            // Special handling of "? is not Y" as that's not the same thing as "not (? is Y)"
+            // when placeholders are involved.
+            Debug.Assert(check.CheckForPlaceholders(), "check is expected to have placeholders");
 
-        private void _fallbackObjectCreation(AstTypeExpr type, out AstExpr expr,
-            out ArgumentsProxy args)
-        {
-            if (
-                //is a type expression we understand (Parser currently only generates dynamic type expressions)
-                //  constant type expressions are recognized during optimization
-                type is AstDynamicTypeExpression {TypeId: { }} typeExpr && typeExpr.Arguments.Count == 0 && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId) && target.Symbols.TryGet(
-                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
-                    out var fallbackSymbol))
+            // Create "not ?"
+            var notId = OperatorNames.Prexonite.GetName(UnaryOperator.LogicalNot);
+            var notOp = CurrentBlock.Symbols.TryGet(notId, out var notSymbol)
+                ? Create.ExprFor(position, notSymbol)
+                : new AstUnresolved(position, notId);
+            if (notOp is not AstGetSet notCall)
             {
-                EnsureInScope(fallbackSymbol);
+                Loader.ReportMessage(
+                    Message.Error(
+                        Resources.AstFactoryBase_UnaryOperation_NotOperatorForTypecheckRequiresLValue,
+                        position, MessageClasses.LValueExpected));
+                notCall = _NullNode(position);
+            }
 
-                var e = Create.ExprFor(type.Position,fallbackSymbol);
-                if (!(e is AstGetSet call))
-                {
-                    var pos = GetPosition();
-                    call = Create.IndirectCall(pos, Create.Null(pos));
-                    Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                string.Format(Resources.Parser__CannotUseExpressionAsAConstructor,
-                                                              e), pos,
-                                                MessageClasses.CannotUseExpressionAsConstructor));
-                }
-                expr = call;
-                args = call.Arguments;
-            }
-            else if (type != null)
-            {
-                var creation = new AstObjectCreation(this, type);
-                expr = creation;
-                args = creation.Arguments;
-            }
-            else
-            {
-                Loader.ReportMessage(Message.Error(Resources.Parser__fallbackObjectCreation_Failed,GetPosition(),MessageClasses.ObjectCreationSyntax));
-                expr = new AstNull(this);
-                args = new ArgumentsProxy(new List<AstExpr>());
-            }
+            notCall.Arguments.Add(Create.Placeholder(position,0));
+
+            // Assemble "(? is T) then (not ?)"
+            var thenCmd = Create.Call(position, EntityRef.Command.Create(Engine.ThenAlias));
+            thenCmd.Arguments.Add(check);
+            thenCmd.Arguments.Add(notCall);
+
+            return thenCmd;
         }
 
         private AstExpr _createUnknownExpr()

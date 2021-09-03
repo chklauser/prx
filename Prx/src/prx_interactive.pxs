@@ -131,7 +131,7 @@ namespace prx.cli.repl
         //Compile some standard code into the interactive application
         buffer.AppendLine("var prompt = null;");
         if(Not app.Functions.Contains("exit"))
-            buffer.AppendLine("function exit(c) does System::Environment.Exit(c ?? 0);");
+            buffer.AppendLine("function exit(c) namespace import sys.* does System::Environment.Exit(c ?? 0);");
         buffer.AppendLine("declare exit as quit;");
 
         // Top-level namespace import for common standard library functions and 

@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
+using System.Text;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -31,7 +32,7 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstConstant : AstExpr
     {
-        public object Constant;
+        public readonly object Constant;
 
         internal AstConstant(Parser p, object constant)
             : this(p.scanner.File, p.t.line, p.t.col, constant)
@@ -53,12 +54,7 @@ namespace Prexonite.Compiler.Ast
             expr = null;
             if (value.Type is ObjectPType)
                 target.Loader.Options.ParentEngine.CreateNativePValue(value.Value);
-            if (value.Type is IntPType 
-                || value.Type is RealPType 
-                || value.Type is BoolPType 
-                || value.Type is StringPType 
-                || value.Type is NullPType 
-                || _isModuleName(value))
+            if (value.Type is IntPType or RealPType or BoolPType or StringPType or NullPType || _isModuleName(value))
                 expr = new AstConstant(position.File, position.Line, position.Column, value.Value);
             else //Cannot represent value in a constant instruction
                 return false;
@@ -104,9 +100,7 @@ namespace Prexonite.Compiler.Ast
                         target.EmitConstant(Position, (string) Constant);
                         break;
                     default:
-                        var moduleName = Constant as ModuleName;
-
-                        if (moduleName != null)
+                        if (Constant is ModuleName moduleName)
                         {
                             target.EmitConstant(Position, moduleName);
                         }

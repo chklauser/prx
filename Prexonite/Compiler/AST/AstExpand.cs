@@ -30,7 +30,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstExpand : AstGetSetImplBase
+    public class AstExpand : AstGetSetImplBase, IAstPartiallyApplicable
     {
         public AstExpand(ISourcePosition position, EntityRef entity, PCall call) : base(position, call)
         {
@@ -71,6 +71,12 @@ namespace Prexonite.Compiler.Ast
                 if (session != null)
                     target.ReleaseMacroSession(session);
             }
+        }
+
+        void IAstPartiallyApplicable.DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            // This may fail if the macro implementation does not support partial application.
+            DoEmitCode(target, StackSemantics.Value);
         }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)

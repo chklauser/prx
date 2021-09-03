@@ -42,7 +42,7 @@ namespace Prexonite.Commands.List
 
         #endregion
 
-        public const string Alias = Loader.ObjectCreationFallbackPrefix + "enumerator";
+        public const string Alias = Loader.ObjectCreationPrefix + "enumerator";
 
         #region Overrides of PCommand
 

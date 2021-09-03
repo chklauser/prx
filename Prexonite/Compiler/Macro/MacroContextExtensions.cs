@@ -81,8 +81,7 @@ namespace Prexonite.Compiler.Macro
                 position.Line,
                 position.Column,
                 PType.Object[typeof (T)].ToString());
-            return new AstGetSetStatic(position.File, position.Line,
-                position.Column, PCall.Get, pcallT, member);
+            return new AstGetSetStatic(position, PCall.Get, pcallT, member);
         }
 
         /// <summary>

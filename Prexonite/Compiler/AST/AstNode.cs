@@ -106,11 +106,8 @@ namespace Prexonite.Compiler.Ast
         ///      cref = "IAstPartiallyApplicable.CheckForPlaceholders" />, if implemented in derived types.
         /// </summary>
         /// <returns>True if this node has placeholders; false otherwise</returns>
-        public virtual bool CheckForPlaceholders()
-        {
-            var partiallyApplicable = this as IAstPartiallyApplicable;
-            return partiallyApplicable?.CheckNodeApplicationState().HasPlaceholders ?? false;
-        }
+        public bool CheckForPlaceholders() => 
+            this is IAstPartiallyApplicable pa && pa.CheckNodeApplicationState().HasPlaceholders;
 
         [NotNull]
         internal static AstExpr _GetOptimizedNode(

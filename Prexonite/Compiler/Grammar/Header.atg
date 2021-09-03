@@ -33,6 +33,7 @@ using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Properties;
 
 COMPILER Prexonite

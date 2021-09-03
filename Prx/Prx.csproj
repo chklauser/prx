@@ -9,7 +9,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AppConfig>config/app.$(Configuration).config</AppConfig>
     <LangVersion>9</LangVersion>
-    <Version>1.95</Version>
+    <Version>1.98</Version>
     <Title>Prexonite CLI</Title>
     <Description>Prexonite command line interpreter and compiler.</Description>
     <Copyright>Christian Klauser © 2020</Copyright>

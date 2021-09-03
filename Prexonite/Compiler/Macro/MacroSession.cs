@@ -50,8 +50,7 @@ namespace Prexonite.Compiler.Macro
         private readonly SymbolCollection _allocationList = new();
 
         [NotNull]
-        private readonly HashSet<AstGetSet> _invocations =
-            new();
+        private readonly HashSet<AstGetSet> _invocations = new();
 
         [NotNull]
         private readonly object _buildCommandToken;
