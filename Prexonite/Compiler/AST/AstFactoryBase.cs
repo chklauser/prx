@@ -153,7 +153,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstTypeExpr DynamicType(ISourcePosition position, string typeId, IEnumerable<AstExpr> arguments)
         {
-            var t = new AstDynamicTypeExpression(position.File, position.Line,position.Column, typeId);
+            var t = new AstDynamicTypeExpression(position, typeId);
             t.Arguments.AddRange(arguments);
             return t;
         }
@@ -469,44 +469,6 @@ namespace Prexonite.Compiler.Ast
             switch (op)
             {
                 case UnaryOperator.LogicalNot:
-                    {
-                        if (operand is AstTypecheck typecheck && typecheck.CheckForPlaceholders() && typecheck.IsInverted)
-                        {
-                            // Special handling of "? is not Y", where typecheck.IsInverted is set to true.
-                            // Note that "not (? is Y)" is not the same thing.
-
-                            var thenCmd = this.Call(position, EntityRef.Command.Create(Engine.ThenAlias));
-
-                            // Create "not ?"
-                            var notId = OperatorNames.Prexonite.GetName(UnaryOperator.LogicalNot);
-                            var notOp = CurrentBlock.Symbols.TryGet(notId, out var notSymbol)
-                                ? ExprFor(position, notSymbol)
-                                : new AstUnresolved(position, notId);
-                            if (!(notOp is AstGetSet notCall))
-                            {
-                                ReportMessage(
-                                    Message.Error(
-                                        Resources.AstFactoryBase_UnaryOperation_NotOperatorForTypecheckRequiresLValue,
-                                        position, MessageClasses.LValueExpected));
-                                notCall = CreateNullNode(position);
-                            }
-
-                            notCall.Arguments.Add(Placeholder(position,0));
-
-                            // Create "? is T"
-                            var partialTypecheck = Typecheck(position, typecheck.Subject, typecheck.Type);
-
-                            // Assemble "(? is T) then (not ?)"
-                            thenCmd.Arguments.Add(partialTypecheck);
-                            thenCmd.Arguments.Add(notCall);
-
-                            return thenCmd;
-                        }
-                        else
-                        {
-                            goto case UnaryOperator.UnaryNegation;
-                        }
-                    }
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.OnesComplement:
                 case UnaryOperator.PostDeltaLeft:
@@ -633,13 +595,21 @@ namespace Prexonite.Compiler.Ast
                         getVariation.Call = PCall.Get;
                         getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
 
-                        if (!(assignment.Arguments[^1] is AstTypeExpr T))
+                        if (assignment.Arguments[^1] is AstTypeExpr T)
+                        {
+                            assignment.Arguments[^1] = Typecast(position, getVariation, T);
+                        }
+                        else if (assignment.Arguments[^1] is AstGetSet castExpr)
+                        {
+                            castExpr.Arguments.Add(getVariation);
+                        }
+                        else 
                         {
                             ReportMessage(Message.Error(Resources.AstFactoryBase_ModifyingAssignment_TypeExpressionExpected,position, MessageClasses.TypeExpressionExpected));
                             T = ConstantType(position, NullPType.Literal);
+                            assignment.Arguments[^1] = Typecast(position, getVariation, T);
                         }
 
-                        assignment.Arguments[^1] = Typecast(position, getVariation, T);
                         return assignment;
                     }
                 case BinaryOperator.Addition:
@@ -657,6 +627,8 @@ namespace Prexonite.Compiler.Ast
                 case BinaryOperator.GreaterThanOrEqual:
                 case BinaryOperator.LessThan:
                 case BinaryOperator.LessThanOrEqual:
+                case BinaryOperator.DeltaLeft:
+                case BinaryOperator.DeltaRight:
                     {
                         if (assignPrototype.Arguments.Count < 1)
                         {
@@ -786,17 +758,17 @@ namespace Prexonite.Compiler.Ast
 
         public AstObjectCreation CreateObject(ISourcePosition position, AstTypeExpr type)
         {
-            return new(position.File, position.Line, position.Column, type);
+            return new(position, type);
         }
 
         public AstExpr Typecheck(ISourcePosition position, AstExpr operand, AstTypeExpr type)
         {
-            return new AstTypecheck(position.File, position.Line, position.Column,operand,type);
+            return new AstTypecheck(position, operand, type);
         }
 
         public AstExpr Typecast(ISourcePosition position, AstExpr operand, AstTypeExpr type)
         {
-            return new AstTypecast(position.File, position.Line, position.Column,operand,type);
+            return new AstTypecast(position, operand, type);
         }
 
         public AstExpr Reference(ISourcePosition position, EntityRef entity)
@@ -811,7 +783,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstGetSet StaticMemberAccess(ISourcePosition position, AstTypeExpr typeExpr, string memberId, PCall call = PCall.Get)
         {
-            return new AstGetSetStatic(position.File, position.Line, position.Column,call,typeExpr,memberId);
+            return new AstGetSetStatic(position,call,typeExpr,memberId);
         }
 
         public AstGetSet IndirectCall(ISourcePosition position, AstExpr receiver, PCall call = PCall.Get)

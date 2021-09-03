@@ -64,6 +64,8 @@ namespace Prexonite.Compiler
         public const string NonTopLevelNamespaceImport = "P.NonTopLevelNamespaceImport";
         public const string UnexpectedDoubleColonInNamespaceName = "P.UnexpectedDoubleColonInNamespaceName";
         public const string IncompleteBinaryOperation = "P.IncompleteBinaryOperation";
+        public const string ShiftedSymbolRequired = "P.ShiftedSymbolRequired";
+        public const string TypeArgumentsNotSupported = "P.TypeArgumentsNotSupported";
 
         #endregion
 
@@ -80,6 +82,10 @@ namespace Prexonite.Compiler
         public const string TypeExpressionExpected = "C.TypeExpressionExpected";
         public const string ExpectedEntityFoundNamespace = "C.NamespaceInEntityPosition";
         public const string ArgumentSpliceNotSupported = "C.ArgumentSpliceNotSupported";
+        public const string IncompleteBuiltinConversion = "C.IncompleteBuiltinConversion";
+        public const string IncompleteBuiltinTypeCheck = "C.IncompleteBuiltinTypeCheck";
+        public const string IncompleteBuiltinStaticCall = "C.IncompleteBuiltinStaticCall";
+        public const string IncompleteBuiltinObjectCreation = "C.IncompleteBuiltinObjectCreation";
 
         #endregion
 

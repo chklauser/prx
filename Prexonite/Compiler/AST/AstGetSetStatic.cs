@@ -36,8 +36,8 @@ namespace Prexonite.Compiler.Ast
 
         [DebuggerStepThrough]
         public AstGetSetStatic(
-            string file, int line, int col, PCall call, AstTypeExpr typeExpr, string memberId)
-            : base(file, line, col, call)
+            ISourcePosition position, PCall call, AstTypeExpr typeExpr, string memberId)
+            : base(position, call)
         {
             TypeExpr = typeExpr ?? throw new ArgumentNullException(nameof(typeExpr));
             MemberId = memberId ?? throw new ArgumentNullException(nameof(memberId));
@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Ast
 
         [DebuggerStepThrough]
         internal AstGetSetStatic(Parser p, PCall call, AstTypeExpr typeExpr, string memberId)
-            : this(p.scanner.File, p.t.line, p.t.col, call, typeExpr, memberId)
+            : this(p.GetPosition(), call, typeExpr, memberId)
         {
         }
 
@@ -116,7 +116,7 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            var copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, MemberId);
+            var copy = new AstGetSetStatic(Position, Call, TypeExpr, MemberId);
             CopyBaseMembers(copy);
             return copy;
         }

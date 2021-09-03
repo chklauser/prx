@@ -156,12 +156,6 @@ namespace Prexonite.Compiler.Ast
             target.Arguments.AddRange(Arguments);
         }
 
-        public override bool CheckForPlaceholders()
-        {
-            return this is IAstPartiallyApplicable &&
-                (base.CheckForPlaceholders() || Arguments.Any(AstPartiallyApplicable.IsPlaceholder));
-        }
-        
         public virtual NodeApplicationState CheckNodeApplicationState()
         {
             return new(

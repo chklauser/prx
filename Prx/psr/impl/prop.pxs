@@ -72,7 +72,7 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
 
     var prop_arg = ast\lvar(parameters[dummyArgs]);
 
-    var nullCheck = ast("Typecheck",prop_arg,ast("ConstantTypeExpression",::NullPType.Literal));
+    var nullCheck = ast3("Typecheck",prop_arg,ast("ConstantTypeExpression",::NullPType.Literal));
     var varargsId = ::PFunction.ArgumentListId;
     var getArgs = ast\lvar(varargsId);
     if(not context.Function.Variables.Contains(varargsId))

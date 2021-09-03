@@ -453,6 +453,8 @@ namespace Prexonite.Compiler.Ast
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
                     }
+                case "getsetstatic":
+                    throw new PrexoniteException("Cannot construct \"GetSetStatic\" node. Did you mean \"StaticMemberAccess\"?");
                 case "staticmemberaccess":
                     {
                         const string sig = "StaticMemberAccess(position, typeExpr~AstTypeExpr, memberId~String, call~PCall, args~List<AstExpr> = [])";

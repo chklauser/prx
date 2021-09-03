@@ -34,30 +34,12 @@ namespace Prexonite.Compiler.Ast
     {
         private AstExpr _subject;
 
-        /// <summary>
-        /// Indicates whether this typecheck is inverted (X is not Y).
-        /// Does not, however, change the behaviour of AstTypecheck itself.
-        /// It is used to distinguish between
-        ///     not (X is Y)
-        /// and
-        ///     X is not Y
-        /// 
-        /// Both times, the typecheck is wrapped in a unary not, but the flag
-        /// is only set in the second case.
-        /// </summary>
-        public bool IsInverted { get; set; }
-
         public AstTypecheck(
-            string file, int line, int column, AstExpr subject, AstTypeExpr type)
-            : base(file, line, column)
+            ISourcePosition position, AstExpr subject, AstTypeExpr type)
+            : base(position)
         {
             _subject = subject ?? throw new ArgumentNullException(nameof(subject));
             Type = type ?? throw new ArgumentNullException(nameof(type));
-        }
-
-        internal AstTypecheck(Parser p, AstExpr subject, AstTypeExpr type)
-            : this(p.scanner.File, p.t.line, p.t.col, subject, type)
-        {
         }
 
         #region IAstHasExpressions Members

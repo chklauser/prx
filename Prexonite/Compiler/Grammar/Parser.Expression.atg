@@ -197,7 +197,7 @@ PowExpr<out AstExpr expr>
 .
 
 AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
-                                            AstTypeExpr typeExpr;
+                                            AstGetSet typeExpr;
                                             ISourcePosition position;
                                         .)
 =                                       (.  position = GetPosition(); .)
@@ -225,8 +225,9 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 	        |   deltaright assign       (.  setModifier = BinaryOperator.DeltaRight; .)
 	        )   Expr<out expr>        //(.  expr = expr; .)
 	        
-	    |   (   tilde  assign           (.  setModifier = BinaryOperator.Cast; .)
-	        )TypeExpr<out typeExpr>     (.  expr = typeExpr; .)
+	    |   tilde  assign               (.  setModifier = BinaryOperator.Cast; .)
+	        TypeExpr<out typeExpr, _conversionShift>     
+	                                    (.  expr = typeExpr; .)
 	    )                               
 	                                    (.  assignment.Arguments.Add(expr); 
 	                                        if(setModifier == BinaryOperator.None)
@@ -238,19 +239,28 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 .
 
 PostfixUnaryExpr<out AstExpr expr>
-                                        (.  AstTypeExpr type; AstGetSet extension; bool isInverted = false; .)
+                                        (.  AstGetSet type; AstGetSet extension; bool isInverted = false;
+                                            ISourcePosition notPosition = GetPosition();
+                                        .)
 =
     PrefixUnaryExpr<out expr>           (.  var position = GetPosition(); .)
-    {   tilde TypeExpr<out type>        (.  expr = new AstTypecast(this, expr, type); .)
+    {   tilde TypeExpr<out type, _conversionShift>  
+                                        (.  type.Arguments.Add(expr);  
+                                            expr = type; 
+                                        .)
     |   is	                            
-        [ not						    (.	isInverted = true; .) 
+        [ not						    (.	isInverted = true; notPosition = GetPosition(); .) 
         ]
-    		 TypeExpr<out type>         (.  expr = new AstTypecheck(this, expr, type);
-    										if(isInverted)
-                                            {
-                                                ((AstTypecheck)expr).IsInverted = true;
-    											expr = Create.UnaryOperation(position, UnaryOperator.LogicalNot, expr);
-                                            }
+    	TypeExpr<out type, _typeCheckShift>         
+    		                            (.  type.Arguments.Add(expr);
+    		                                expr = isInverted 
+    		                                    ? (type.CheckForPlaceholders() 
+                                                    // Special handling of "? is not Y" as that's not the same thing
+                                                    // as "not (? is Y)" when placeholders are involved.
+    		                                        ? _createPartialInvertedTypeCheck(position, type)
+    		                                        : Create.UnaryOperation(position, UnaryOperator.LogicalNot, type)
+    		                                      )
+    		                                    : type;
     									.)
     |   inc                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostIncrement, expr); .)
     |   dec                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostDecrement, expr); .)
@@ -391,12 +401,12 @@ LoopExpr<out AstExpr expr>
 											
 
 ObjectCreation<out AstExpr expr>
-                                        (.  AstTypeExpr type; 
-                                            ArgumentsProxy args; 
+                                        (.  AstGetSet type;
                                         .)
 =
-    new TypeExpr<out type>              (.  _fallbackObjectCreation(type, out expr, out args); .)
-    Arguments<args>
+    new TypeExpr<out type, _objectCreationShift>
+                                        (.  expr = type; .)
+    Arguments<type.Arguments>
 .
 
 CoroutineCreation<out AstExpr expr>
@@ -513,20 +523,22 @@ ThisExpression<out AstExpr expr>        (.  var position = GetPosition();
     this                                (.  Loader.ReportMessage(Message.Error("Illegal use of reserved keyword `this`.",position,MessageClasses.ThisReserved)); .)
 .
 
-ExplicitTypeExpr<out AstTypeExpr type>     (.  type = null; .)
+ExplicitTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
+                                        (.  type = null; .)
 =
-    tilde PrexoniteTypeExpr<out type>
-|   ClrTypeExpr<out type>
+    tilde PrexoniteTypeExpr<out type, shift>
+|   ClrTypeExpr<out type, shift>
 .
 
-TypeExpr<out AstTypeExpr type>             (.  type = null; .)
+TypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
+                                        (.  type = null; .)
 =
-    PrexoniteTypeExpr<out type>
-|   ClrTypeExpr<out type>
+    PrexoniteTypeExpr<out type, shift>
+|   ClrTypeExpr<out type, shift>
 .
 
-ClrTypeExpr<out AstTypeExpr type>          
-                                        (.  string id; .)
+ClrTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>          
+                                        (.  string id; ISourcePosition position = GetPosition(); .)
 =
                                         (.  StringBuilder typeId = new StringBuilder(); .)
     (   doublecolon
@@ -535,30 +547,101 @@ ClrTypeExpr<out AstTypeExpr type>
     {   ns                              (.  typeId.Append(t.val); typeId.Append('.'); .)
     }
     Id<out id>                          (.  typeId.Append(id);
-                                            type = new AstConstantTypeExpression(this, 
-                                                "Object(\"" + StringPType.Escape(typeId.ToString()) + "\")");
+                                            type = _useSymbol(Symbols, shift(ObjectPType.Literal), position);
+                                            // arity of PType Object = 1
+                                            type.Arguments.Add(Create.Constant(position, 1));
+                                            // CLR type name
+                                            type.Arguments.Add(Create.Constant(position, typeId.ToString()));
                                         .)
 .
 
-PrexoniteTypeExpr<out AstTypeExpr type>
-                                        (.  string id = null; .)
-=
-    ( Id<out id> | null                 (.  id = NullPType.Literal; .)                          
+PrexoniteTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
+                                        (.  AstGetSet expr = null;
+                                            string id = "<unknownId>";
+                                            string shiftedId = "<unknownShiftedId>";
+                                            ISourcePosition position;
+                                            AstNamespaceUsage lastNs;
+                                            bool shiftUsed = false;
+                                            ISourcePosition argPos;
+                                        .)
+=                                       (.  position = GetPosition(); .)
+    ( Id<out id>                        (.  
+                                            shiftedId = shift(id);
+                                            if(Symbols.TryGet(shiftedId, out _)) 
+                                            {
+                                                expr = _useSymbol(Symbols, shiftedId, position); 
+                                                shiftUsed = true;
+                                            }
+                                            else 
+                                            {
+                                                expr = _useSymbol(Symbols, id, position);
+                                            }
+                                        .)
+      { IF(!shiftUsed && expr is AstNamespaceUsage ns)
+                                        (.  position = GetPosition(); lastNs = ns; .)
+        dot
+        DotId<out id>                   (.
+                                            shiftedId = shift(id);
+                                            if(ns.Namespace.TryGet(shiftedId, out _)) 
+                                            {
+                                                expr = _useSymbolFromNamespace(ns, shiftedId, position);
+                                                shiftUsed = true;
+                                            }
+                                            else 
+                                            {
+                                                expr = _useSymbolFromNamespace(ns, id, position);
+                                            } 
+                                        .)
+      }
+    | null                              (.  shiftedId = shift(NullPType.Literal);
+                                            id = NullPType.Literal;
+                                            expr = _useSymbol(Symbols, shiftedId, position);
+                                            shiftUsed = true; 
+                                        .)                          
     )
-                                        (.  AstDynamicTypeExpression dType = new AstDynamicTypeExpression(this, id); .)
+                                        (.  if(!shiftUsed) {
+                                                Loader.ReportMessage(Message.Error(
+                                                    string.Format("Cannot find {0} in scope.", shiftedId), 
+                                                    position,
+                                                    MessageClasses.ShiftedSymbolRequired));
+                                                expr = _NullNode(position);
+                                            }
+                                            if(expr == null) {
+                                                Loader.ReportMessage(Message.Error(
+                                                "Internal parser error: expression in prexonite type expression should not be null.", 
+                                                position, 
+                                                MessageClasses.ParserInternal));
+                                                expr = _NullNode(position);
+                                            }
+                                            argPos = GetPosition();
+                                            var supportsTypeArguments = 
+                                                BuiltInTypeCommandBase.SupportsTypeArguments(Loader, expr);
+                                            var typeArgs = new List<AstExpr>();
+                                        .)
     [   lt
-        [   TypeExprElement<dType.Arguments>   
-            { comma TypeExprElement<dType.Arguments> }
+        [                               (.  argPos = GetPosition(); .)
+            TypeExprElement<typeArgs>   
+            { comma TypeExprElement<typeArgs> }
         ]
         gt
-    ]
-                                        (.  type = dType; .)
+    ]                                   (.  if(supportsTypeArguments) {
+                                                expr.Arguments.Add(Create.Constant(argPos, typeArgs.Count));
+                                                expr.Arguments.AddRange(typeArgs);
+                                            }
+                                            else if(typeArgs.Count > 0 && !supportsTypeArguments) {
+                                                Loader.ReportMessage(Message.Error(
+                                                    string.Format("The type {0} does not support type arguments.", id),
+                                                    position,
+                                                    MessageClasses.TypeArgumentsNotSupported
+                                                ));
+                                            }
+                                            type = expr; 
+                                        .)
 .
 
-TypeExprElement<. List<AstExpr> args .>
-                                        (.  AstExpr expr; AstTypeExpr type; .)
+TypeExprElement<. IList<AstExpr> args .>
+                                        (.  AstExpr expr; .)
 =
     Constant<out expr>                  (.  args.Add(expr); .)
-|   ExplicitTypeExpr<out type>          (.  args.Add(type); .)
 |   lpar Expr<out expr> rpar            (.  args.Add(expr); .)
 .

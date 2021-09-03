@@ -1182,6 +1182,9 @@ rbrace                              (.  scope = _popDeclScope();
             semicolon
         ]
     |   NsTransferSpec<exportBuilder>
+        {   comma
+            NsTransferSpec<exportBuilder>
+        }
         semicolon
     )                               (.  _popLexerState(); .)  
 |                                   (.  // In the absence of an export spec, we export

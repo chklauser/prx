@@ -163,7 +163,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var getRetVar =
                 context.CreateGetSetMember(context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get,
                                            "Key");
-            var asInt = new AstTypecast(inv.File, inv.Line, inv.Column, getRetVar, intT);
+            var asInt = new AstTypecast(inv.Position, getRetVar, intT);
             var setRetVar = context.CreateCall(EntityRef.Variable.Local.Create(retVarV), PCall.Set, asInt);
             context.Block.Add(setRetVar);
         }

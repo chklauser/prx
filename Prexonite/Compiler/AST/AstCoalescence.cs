@@ -160,12 +160,6 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override bool CheckForPlaceholders()
-        {
-            return base.CheckForPlaceholders() ||
-                Expressions.Any(AstPartiallyApplicable.IsPlaceholder);
-        }
-
         public NodeApplicationState CheckNodeApplicationState()
         {
             var hasSplices = Expressions.Any(x => x is AstArgumentSplice);

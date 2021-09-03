@@ -35,15 +35,15 @@ namespace Prexonite.Compiler.Ast
         public AstExpr Subject { get; private set; }
         public AstTypeExpr Type { get; private set; }
 
-        public AstTypecast(string file, int line, int column, AstExpr subject, AstTypeExpr type)
-            : base(file, line, column)
+        public AstTypecast(ISourcePosition position, AstExpr subject, AstTypeExpr type)
+            :base(position)
         {
             Subject = subject ?? throw new ArgumentNullException(nameof(subject));
-            Type = type ?? throw new ArgumentNullException(nameof(type));
+            Type = type ?? throw new ArgumentNullException(nameof(type));   
         }
 
         internal AstTypecast(Parser p, AstExpr subject, AstTypeExpr type)
-            : this(p.scanner.File, p.t.line, p.t.col, subject, type)
+            : this(p.GetPosition(), subject, type)
         {
         }
 

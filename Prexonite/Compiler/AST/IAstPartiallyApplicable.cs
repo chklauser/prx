@@ -47,7 +47,10 @@ namespace Prexonite.Compiler.Ast
         /// This method mainly exists for backwards compatibility with script code.</para>
         /// <returns>True if this node has placeholders; false otherwise</returns>
         [Obsolete("Use CheckNodeApplicationState instead")]
-        bool CheckForPlaceholders();
+        bool CheckForPlaceholders()
+        {
+            return CheckNodeApplicationState().HasPlaceholders;
+        }
 
         /// <summary>
         ///     Checks the node's immediate child nodes for <see cref="AstPlaceholder"/>s and 

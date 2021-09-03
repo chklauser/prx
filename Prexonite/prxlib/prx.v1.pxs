@@ -126,7 +126,51 @@ namespace prx.v1 {
             call\star,
             call\macro,
             call\macro\impl,
-            entityref_to
+            entityref_to,
+            // constructor (new T)
+            create_Bool,
+            create_Char,
+            create_Hash,
+            create_Int,
+            create_List,
+            create_Null,
+            create_Object,
+            create_Real,
+            create_String,
+            create_Structure,
+            // type check (is T)
+            is_Bool,
+            is_Char,
+            is_Hash,
+            is_Int,
+            is_List,
+            is_Null,
+            is_Object,
+            is_Real,
+            is_String,
+            is_Structure,
+            // type cast (~T)
+            to_Bool,
+            to_Char,
+            to_Hash,
+            to_Int,
+            to_List,
+            to_Null,
+            to_Object,
+            to_Real,
+            to_String,
+            to_Structure,
+            // static call (~T.method)
+            static_call_Bool,
+            static_call_Char,
+            static_call_Hash,
+            static_call_Int,
+            static_call_List,
+            static_call_Null,
+            static_call_Object,
+            static_call_Real,
+            static_call_String,
+            static_call_Structure
     };
 
 }

@@ -375,6 +375,23 @@ ret.continue
         }
 
         [Test]
+        public void StaticCallAssign()
+        {
+            _compile(@"
+function test\static_assign
+{
+    ::System::Console.WriteLine = ""Hi"";
+}
+");
+            Expect(@"test\static_assign", @"
+ ldc.string ""Hi""
+ dup 1
+ sset.1 ""Object(\""System.Console\"")::WriteLine""
+ ret.value
+");
+        } 
+        
+        [Test]
         public void StaticCalls()
         {
             _compile(
@@ -3052,6 +3069,33 @@ ret
         }
 
         [Test]
+        public void CastAssignSingle()
+        {
+            _compile(@"
+function main(a, b)
+{
+    var x = b;
+    x ~ = Object<""System.Version"">;
+    return x;
+}
+");
+
+            Expect(@"
+var a,b,x
+
+ldloc b
+stloc x
+
+ldloc x
+cast.const ""Object(\""System.Version\"")""
+stloc x
+
+ldloc x
+ret
+");
+        }
+
+        [Test]
         public void SimpleAssignExpr()
         {
             _compile(@"
@@ -3119,7 +3163,7 @@ function main()
 {
     var a;
     var b = a *= 5;
-    var c ~= T;
+    var c ~= String;
     var d = b ??= a;
 
     return null;
@@ -3136,7 +3180,7 @@ var a,b,c,d
             stloc   b
 
             ldloc   c
-            cast.const  ""T""
+            cast.const  ""String""
             stloc   c
 
             ldloc   b
@@ -3657,6 +3701,165 @@ ldloc x
 ldloc y
 func.2 make_foo
 ret
+");
+        }
+
+        [Test]
+        public void ObjectCreationFallbackWithTypeArgs()
+        {
+            _compile(@"
+declare function make_foo as create_foo;
+function make_foo()[pxs\supportsTypeArguments]{}
+function main(x,y)
+{
+    return new foo<1,""a"">(x,y);
+}
+
+
+");
+            Expect(@"
+ldc.int 2
+ldc.int 1
+ldc.string ""a""
+ldloc x
+ldloc y
+func.5 make_foo
+ret
+");
+        }
+
+        [Test]
+        public void CustomTypeConversion()
+        {
+            _compile(@"
+function convert_to_foo as to_foo(){};
+function main(x) {
+    return x~foo;
+}
+");
+            Expect(@"
+ldloc x
+func.1 convert_to_foo
+ret.value
+");
+        }
+
+        [Test]
+        public void CustomTypeConversionWithTypeArgs()
+        {
+            _compile(@"
+function convert_to_foo as to_foo()[pxs\supportsTypeArguments]{};
+function main(x) {
+    return x~foo<1, ""a"">;
+}
+");
+            Expect(@"
+ldc.int 2
+ldc.int 1
+ldc.string ""a""
+ldloc x
+func.4 convert_to_foo
+ret.value
+");
+        }
+
+        [Test]
+        public void CustomTypeCheck()
+        {
+            _compile(@"
+function check_foo as is_foo(){}
+function main(x) {
+    println(x is not foo);
+    return x is foo;
+}
+");
+            Expect(@"
+ldloc x
+func.1 check_foo
+not
+@cmd.1 println
+ldloc x
+func.1 check_foo
+ret.value
+");
+        }
+
+        [Test]
+        public void CustomTypeCheckWithTypeArgs()
+        {
+            _compile(@"
+function check_foo as is_foo()[pxs\supportsTypeArguments]{}
+function main(x) {
+    println(x is not foo<3, ""a"">);
+    return x is foo<1, ""b"">;
+}
+");
+            Expect(@"
+ldc.int 2
+ldc.int 3
+ldc.string ""a""
+ldloc x
+func.4 check_foo
+not
+@cmd.1 println
+ldc.int 2
+ldc.int 1
+ldc.string ""b""
+ldloc x
+func.4 check_foo
+ret.value
+");
+        }
+
+        [Test]
+        public void CustomTypeStaticCall()
+        {
+            _compile(@"
+function static_foo as static_call_foo(){}
+function main(x,y) {
+    ~foo.the_property = x;
+    return ~foo.the_method(x,y);
+}
+");
+            Expect(@"
+ ldc.string ""the_property""
+ ldloc x
+@func.2 static_foo
+ 
+ ldc.string ""the_method""
+ ldloc x
+ ldloc y
+ func.3 static_foo
+ ret.value
+");
+        }
+
+        [Test]
+        public void CustomTypeStaticCallWithTypeArgs()
+        {
+            _compile(@"
+function static_foo as static_call_foo()[pxs\supportsTypeArguments]{}
+function main(x,y) {
+    ~foo<1, ""a"">.the_property = x;
+    return ~foo<3, ""b"">.the_method(x,y);
+}
+");
+            Expect(@"
+ ldc.int 2
+ ldc.int 1
+ ldc.string a
+ ldc.string ""the_property""
+ ldloc x
+@func.5 static_foo
+ 
+ ldc.int 2
+ ldc.int 3
+ ldc.string b
+ ldc.string ""the_method""
+ ldloc x
+ ldloc y
+ func.6 static_foo
+ ret.value
 ");
         }
 

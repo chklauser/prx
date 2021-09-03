@@ -33,17 +33,22 @@ namespace Prexonite.Compiler.Ast
     public class AstDynamicTypeExpression : AstTypeExpr,
                                             IAstHasExpressions
     {
-        public List<AstExpr> Arguments = new();
-        public string TypeId;
+        public List<AstExpr> Arguments { get; } = new();
+        public string TypeId { get; }
 
         public AstDynamicTypeExpression(string file, int line, int column, string typeId)
-            : base(file, line, column)
+            : this(new SourcePosition(file, line, column), typeId)
+        {
+        }
+
+        public AstDynamicTypeExpression(ISourcePosition position, string typeId)
+            :base(position)
         {
             TypeId = typeId ?? throw new ArgumentNullException(nameof(typeId));
         }
 
         internal AstDynamicTypeExpression(Parser p, string typeId)
-            : this(p.scanner.File, p.t.line, p.t.col, typeId)
+            : this(p.GetPosition(), typeId)
         {
         }
 

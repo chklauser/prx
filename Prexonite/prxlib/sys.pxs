@@ -18,7 +18,7 @@ export prx.prim.*;
 // behavior while prx.core would move forward
 // Adventurous users can depend directly on prx.prim to be on the bleeding edge.
 namespace sys {}
-export prx.core.*;
+export prx.core.*, prx.core.rt.builtin.*;
 
 // We deliberately re-export this 'as-is' as part of the standard library.
 // Things in here are too experimental for use inside the standard library

@@ -1473,6 +1473,103 @@ namespace a
         }
 
         [Test]
+        public void CustomTypeFunctionsInNamespaces()
+        {
+            Compile(@"
+namespace a.b.c {
+    function create_pot(x) = ""pot($x)"";
+    function static_call_pot(m, arg) = ""pot.$m($arg)"";
+    function to_pot(x) = ""$x~pot"";
+    function is_pot(x) = x is String and x.Contains(""pot"");
+}
+
+function main(x,y) {
+    var p1 = new a.b.c.pot(x);
+    var p2 = y~a.b.c.pot;
+    var z = ~a.b.c.pot.heat(x); 
+    return [p1, p2, z, p1 is a.b.c.pot, 5 is not a.b.c.pot, ""fire"" is not a.b.c.pot];
+}
+");
+            Expect(new List<PValue>
+            {
+                "pot(X)",
+                "Y~pot",
+                "pot.heat(X)",
+                true,
+                true,
+                true
+            }, "X", "Y");
+        }
+
+        [Test]
+        public void CustomTypeFunctionsWithDotSuffix()
+        {
+            Compile(@"
+namespace a.b.c {
+    function create_pot() = ""pot()"";
+    function static_call_pot(m) = ""pot.$m"";
+    function to_pot(x) = ""$x~pot"";
+    function is_pot(x) = x is String and x.Contains(""pot"");
+}
+function main(y) {
+    var p1 = new a.b.c.pot.ToString;
+    var p2 = y~a.b.c.pot.ToString;
+    var z = ~a.b.c.pot.heat.ToString; 
+    return [p1, p2, z, p1 is a.b.c.pot.ToString, 5 is not a.b.c.pot.ToString, ""fire"" is not a.b.c.pot.ToString];
+}
+");
+            Expect(new List<PValue>
+            {
+                "pot()",
+                "Y~pot",
+                "pot.heat",
+                "True",
+                "True",
+                "True"
+                
+            },"Y");
+        }
+
+        [Test]
+        public void CustomTypeFunctionsInNamespacesWithTypeArgs()
+        {
+            Compile(@"
+namespace a.b.c {
+    function create_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = ""pot`$nT<$T1,$T2>($x)"";
+    function static_call_pot(nT, T1, T2, m, arg)[pxs\supportsTypeArguments] = ""pot`$nT<$T1,$T2>.$m($arg)"";
+    function to_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = ""$x~pot`$nT<$T1,$T2>"";
+    function is_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = x is String 
+        and x.Contains(""pot"") 
+        and x.Contains(T1) 
+        and x.Contains(T2);
+}
+
+function main(x,y) {
+    var p1 = new a.b.c.pot<""a"", ""b"">(x);
+    var p2 = y~a.b.c.pot<""c"", ""d"">;
+    var z = ~a.b.c.pot<""e"", ""f"">.heat(x); 
+    return [p1, p2, z,
+        // should match 
+        p1 is a.b.c.pot<""a"", ""b"">,
+        // should not match => eval to true 
+        p2 is not a.b.c.pot<""c"", ""zz"">,
+        // should not match => eval to true 
+        ""fire"" is not a.b.c.pot
+    ];
+}
+");
+            Expect(new List<PValue>
+            {
+                "pot`2<a,b>(X)",
+                "Y~pot`2<c,d>",
+                "pot`2<e,f>.heat(X)",
+                true,
+                true,
+                true
+            }, "X", "Y");
+        }
+
+        [Test]
         public void QuestionMarkSpliceIsInvalid()
         {
             var ldr = CompileInvalid(@"

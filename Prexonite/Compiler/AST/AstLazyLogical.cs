@@ -331,8 +331,7 @@ namespace Prexonite.Compiler.Ast
             var constExpr = CreatePrefix(Position, Conditions.Take(Conditions.Count - 1));
             //var identityFunc = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Id.Alias, SymbolInterpretations.Command);
             //identityFunc.Arguments.Add(new AstPlaceholder(File, Line, Column, placeholder.Index));
-            var identityFunc = new AstTypecast(File, Line, Column,
-                placeholder.GetCopy(),
+            var identityFunc = new AstTypecast(Position, placeholder.GetCopy(),
                 new AstConstantTypeExpression(File, Line, Column, PType.Bool.ToString()));
             var conditional = new AstConditionalExpression(File, Line, Column, constExpr,
                 ShortcircuitValue)
@@ -415,8 +414,7 @@ namespace Prexonite.Compiler.Ast
             {
                 var primaryExpr = Conditions.First.Value;
                 expr = _GetOptimizedNode(target,
-                    new AstTypecast(primaryExpr.File, primaryExpr.Line, primaryExpr.Column,
-                        primaryExpr,
+                    new AstTypecast(primaryExpr.Position, primaryExpr,
                         new AstConstantTypeExpression(primaryExpr.File,
                             primaryExpr.Line,
                             primaryExpr.Column,

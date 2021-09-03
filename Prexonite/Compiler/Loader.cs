@@ -102,9 +102,8 @@ namespace Prexonite.Compiler
 
         private void _imprintCommandInfo()
         {
-            foreach (var buildCommand in BuildCommands)
-                ParentEngine.Commands.ProvideFallbackInfo(buildCommand.Key,
-                    buildCommand.Value.ToCommandInfo());
+            foreach (var (alias, command) in BuildCommands)
+                ParentEngine.Commands.ProvideFallbackInfo(alias, command.ToCommandInfo());
         }
 
         public void RegisterExistingCommands()
@@ -586,6 +585,15 @@ namespace Prexonite.Compiler
             _addMacroCommand(Call_Tail.Instance.Partial);
             _addMacroCommand(CallAsync.Instance.Partial);
             _addCallMacro();
+            
+            // Type conversions / type checks / static calls on built-ins
+            foreach (var (typeId, _) in ParentEngine.PTypeRegistry)
+            {
+                _addMacroCommand(new ConvertToBuiltIn(typeId));
+                _addMacroCommand(new CheckIsBuiltIn(typeId));
+                _addMacroCommand(new StaticCallBuiltIn(typeId));
+                _addMacroCommand(new CreateBuiltIn(typeId));
+            }
         }
 
         private void _addCallMacro()
@@ -1386,7 +1394,13 @@ namespace Prexonite.Compiler
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
             MessageId = "Cil")] public const string CilHintsKey = "cilhints";
 
-        public const string ObjectCreationFallbackPrefix = "create_";
+        [Obsolete("Use ObjectCreationPrefix instead")]
+        [PublicAPI]
+        public const string ObjectCreationFallbackPrefix = ObjectCreationPrefix;
+        public const string ObjectCreationPrefix = "create_";
+        public const string ConversionPrefix = "to_";
+        public const string TypeCheckPrefix = "is_";
+        public const string StaticCallPrefix = "static_call_";
         private const string DirectorySeparatorKey = @"\directory_separator";
     }
 }

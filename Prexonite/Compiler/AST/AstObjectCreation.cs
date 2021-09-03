@@ -48,17 +48,23 @@ namespace Prexonite.Compiler.Ast
 
         private readonly List<AstExpr> _arguments = new();
 
-        [DebuggerStepThrough]
-        public AstObjectCreation(string file, int line, int col, AstTypeExpr type)
-            : base(file, line, col)
+        public AstObjectCreation(ISourcePosition position, AstTypeExpr type)
+            : base(position)
         {
             TypeExpr = type ?? throw new ArgumentNullException(nameof(type));
-            Arguments = new ArgumentsProxy(_arguments);
+            Arguments = new(_arguments);
+        }
+        
+        [Obsolete]
+        [DebuggerStepThrough]
+        public AstObjectCreation(string file, int line, int col, AstTypeExpr type)
+            : this(new SourcePosition(file, line, col), type)
+        {
         }
 
         [DebuggerStepThrough]
         internal AstObjectCreation(Parser p, AstTypeExpr type)
-            : this(p.scanner.File, p.t.line, p.t.col, type)
+            : this(p.GetPosition(), type)
         {
         }
 
@@ -107,12 +113,6 @@ namespace Prexonite.Compiler.Ast
         #endregion
 
         #region Implementation of IAstPartiallyApplicable
-
-        public override bool CheckForPlaceholders()
-        {
-            return base.CheckForPlaceholders() ||
-                Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
-        }
 
         public NodeApplicationState CheckNodeApplicationState()
         {

@@ -146,13 +146,7 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
                                             else
                                             {
                                                 // Namespace lookup
-                                                extension = _useSymbol(ns.Namespace, id, GetPosition());
-                                                // write down qualified path
-                                                AstNamespaceUsage subns = extension as AstNamespaceUsage;
-                                                if(subns != null && subns.ReferencePath == null)
-                                                {
-                                                    subns.ReferencePath = ns.ReferencePath + new QualifiedId(id);
-                                                }
+                                                extension = _useSymbolFromNamespace(ns, id, GetPosition());
                                             }
                                         .)
     Arguments<extension.Arguments> 
@@ -171,7 +165,7 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
 GetInitiator<out AstExpr complex>
                                         (.  complex = null; 
                                             AstGetSet actualComplex = null;
-                                            AstGetSetStatic staticCall = null;
+                                            AstGetSet staticCall = null;
                                             AstGetSet member = null;
                                             AstExpr expr;
                                             List<AstExpr> args = new List<AstExpr>();
@@ -314,13 +308,14 @@ SymbolicUsage<out AstGetSet complex>
     Arguments<complex.Arguments>    
 .
 
-StaticCall<out AstGetSetStatic staticCall>
-                                (.  AstTypeExpr typeExpr;
-                                    string memberId;
+StaticCall<out AstGetSet staticCall>
+                                (.  string memberId;
+                                    ISourcePosition idPosition;
                                 .)
 =
-    ExplicitTypeExpr<out typeExpr>
-    dot DotId<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
+    ExplicitTypeExpr<out staticCall, _staticCallShift>
+    dot                         (. idPosition = GetPosition(); .)
+    DotId<out memberId>         (.  staticCall.Arguments.Add(Create.Constant(idPosition, memberId)); .)
     Arguments<staticCall.Arguments>
 .
                                     //Fallback in case of a syntax error to avoid NullReferenceExceptions
@@ -340,7 +335,7 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
 Assignment<AstGetSet lvalue, out AstNode node>
                                 (.  AstExpr expr = null;
 									BinaryOperator setModifier = BinaryOperator.None;
-									AstTypeExpr typeExpr;
+									AstGetSet typeExpr;
 									node = lvalue;
                                     ISourcePosition position;
 								.)
@@ -356,8 +351,9 @@ Assignment<AstGetSet lvalue, out AstNode node>
 	|	coalescence assign      (.	setModifier = BinaryOperator.Coalescence; .)
 	)   Expr<out expr>        //(.	expr = expr; .)
 	
-|	(	tilde assign            (.	setModifier = BinaryOperator.Cast; .)
-	)	TypeExpr<out typeExpr>  (.  expr = typeExpr; .)
+|	tilde assign                (.	setModifier = BinaryOperator.Cast; .)
+	TypeExpr<out typeExpr, _conversionShift>  
+	                            (.  expr = typeExpr; .)
 )								
 								(.  if(expr == null)
                                     {

@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Version>1.95</Version>
+    <Version>1.98</Version>
     <Title>Prexonite Scripting Language</Title>
     <PackageDescription>An embeddable scripting language with a focus on meta programming and domain specific languages.</PackageDescription>
     <Description>$(PackageDescription)</Description>
@@ -78,6 +78,7 @@
     <Compile Include="$(ProjectDir)\Internal\Parser.cs" />
     <Compile Include="$(ProjectDir)\Internal\Scanner.cs" />
     <Compile Include="Commands\Core\Operators\Operators.cs" />
+    <None Remove="Compiler\Lexer.cs~" />
   </ItemGroup>
   <ItemGroup>
     <Grammar Include="PTypeExpression.atg" />

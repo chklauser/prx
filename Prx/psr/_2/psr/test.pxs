@@ -3,6 +3,8 @@ references {
     prx/1.0
 };
 
+namespace import sys.rt.builtin.create_Object;
+
 namespace psr.test.v1 
     import prx.v1(*) 
 {
