@@ -466,4 +466,7 @@
   <data name="BuiltInTypeCommandBase_DoExpand_0_for_type_1_requires_an_arity_integer_as_the_first_argument" xml:space="preserve">
     <value>{0} for type {1} requires an arity (integer) as the first argument.</value>
   </data>
+  <data name="Parser_NsTransferSpec_Import_has_no_effect_0" xml:space="preserve">
+    <value>Import of symbol `{0}` has no effect. Did you mean `{0}(*)`?</value>
+  </data>
 </root>

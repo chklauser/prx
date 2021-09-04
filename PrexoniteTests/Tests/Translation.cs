@@ -1440,6 +1440,28 @@ namespace a.c
         }
 
         [Test]
+        public void WarningUnqualifiedNamespace()
+        {
+            var ldr = new Loader(options);
+            Compile(ldr, @"
+namespace import unknown;
+");
+            Assert.That(ldr.Warnings.Where(m => m.MessageClass == MessageClasses.UnqualifiedImport), Is.Not.Empty);
+            Assert.That(ldr.Warnings.Count, Is.EqualTo(1), "Warning count");
+        }
+
+        [Test]
+        public void ErrorUnresolvedNamespace()
+        {
+            var ldr = CompileInvalid(@"
+namespace a {}
+namespace import a.b.c;
+");
+            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.NamespaceExcepted), Is.Not.Empty);
+            Assert.That(ldr.ErrorCount, Is.EqualTo(1));
+        }
+
+        [Test]
         public void ErrorDoubleColonInGlobalNamespaceImport()
         {
             var ldr = CompileInvalid(@"

@@ -1025,6 +1025,7 @@ NsTransferSpec<SymbolStoreBuilder builder>
                                         ISourcePosition pos;
                                         ISymbolView<Symbol> sourceScope = null;
                                         var hasWildcard = false;
+                                        var sourcePosition = GetNextPosition();
                                     .)
 =
 NsTransferSource<out hasWildcard, out specRoot>              
@@ -1040,8 +1041,16 @@ NsTransferSource<out hasWildcard, out specRoot>
                                         }
                                         else
                                         {
-                                            var symId = specRoot[specRoot.Count-1];
+                                            var symId = specRoot[^1];
                                             specRoot = specRoot.WithSuffixDropped(1);
+                                            if (specRoot.Count == 0)
+                                            {
+                                                var msg = string.Format(Resources.Parser_NsTransferSpec_Import_has_no_effect_0, symId);
+                                                Loader.ReportMessage(Message.Warning(
+                                                    msg,
+                                                    sourcePosition,
+                                                    MessageClasses.UnqualifiedImport));
+                                            }
                                             sourceScope = _resolveNamespace(Symbols, pos, specRoot);
                                             directives.Add(SymbolTransferDirective.CreateRename(pos,symId,symId));
                                         }
