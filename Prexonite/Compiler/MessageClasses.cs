@@ -32,6 +32,7 @@ namespace Prexonite.Compiler
         public const string InvalidSymbolInterpretation = "ES.InvalidSymbolInterpretation";
         public const string SymbolConflict = "ES.SymbolConflict";
         public const string SymbolNotResolved = "ES.SymbolNotResolved";
+        public const string UnqualifiedImport = "ES.UnqualifiedImport";
 
         #region Parser
 

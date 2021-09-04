@@ -66,11 +66,23 @@ internal partial class Parser {
 		errors.parentParser = this;
 	}
 
-  
-  public Prexonite.Compiler.ISourcePosition GetPosition()
-  {
-      return new Prexonite.Compiler.SourcePosition(scanner.File, t.line, t.col);
-  }
+  	/// <summary>
+  	/// Constructs the position of the last token.
+  	/// </summary>
+  	/// <returns>The position of the last token.</returns>
+    public Prexonite.Compiler.ISourcePosition GetPosition()
+    {
+        return new Prexonite.Compiler.SourcePosition(scanner.File, t.line, t.col);
+    }
+
+    /// <summary>
+    /// Constructs the position of the next (look-ahead) token.
+    /// </summary>
+    /// <returns>The position of the next (look-ahead) token.</returns>
+    public Prexonite.Compiler.ISourcePosition GetNextPosition()
+    {
+        return new Prexonite.Compiler.SourcePosition(scanner.File, la.line, la.col);
+    }
 
     [DebuggerNonUserCode]
 	void SynErr (int n) {
