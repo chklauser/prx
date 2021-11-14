@@ -25,40 +25,39 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+internal class Token
 {
-    internal class Token
+    internal int kind;
+    internal string val;
+    internal int pos;
+    internal int line;
+    internal int col;
+    internal Token next;
+
+    public Token()
     {
-        internal int kind;
-        internal string val;
-        internal int pos;
-        internal int line;
-        internal int col;
-        internal Token next;
+    }
 
-        public Token()
-        {
-        }
+    public Token(Token next)
+    {
+        this.next = next;
+    }
 
-        public Token(Token next)
-        {
-            this.next = next;
-        }
+    public override string ToString()
+    {
+        return ToString(true);
+    }
 
-        public override string ToString()
-        {
-            return ToString(true);
-        }
-
-        public string ToString(bool includePosition)
-        {
-            return
-                string.Format(
-                    "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
-                    val,
-                    Enum.GetName(typeof (Parser.Terminals), (Parser.Terminals) kind),
-                    line,
-                    col);
-        }
+    public string ToString(bool includePosition)
+    {
+        return
+            string.Format(
+                "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
+                val,
+                Enum.GetName(typeof (Parser.Terminals), (Parser.Terminals) kind),
+                line,
+                col);
     }
 }

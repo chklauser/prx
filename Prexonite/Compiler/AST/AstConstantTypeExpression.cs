@@ -3,45 +3,44 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstConstantTypeExpression : AstTypeExpr
 {
-    public class AstConstantTypeExpression : AstTypeExpr
+    #region AstExpr Members
+
+    public string TypeExpression;
+
+    public AstConstantTypeExpression(string file, int line, int column, string typeExpression)
+        : base(file, line, column)
     {
-        #region AstExpr Members
+        TypeExpression = typeExpression ?? throw new ArgumentNullException(nameof(typeExpression));
+    }
 
-        public string TypeExpression;
+    internal AstConstantTypeExpression(Parser p, string typeExpression)
+        : this(p.scanner.File, p.t.line, p.t.col, typeExpression)
+    {
+    }
 
-        public AstConstantTypeExpression(string file, int line, int column, string typeExpression)
-            : base(file, line, column)
-        {
-            TypeExpression = typeExpression ?? throw new ArgumentNullException(nameof(typeExpression));
-        }
+    /// <inheritdoc />
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
+    {
+        expr = null;
+        return false;
+    }
 
-        internal AstConstantTypeExpression(Parser p, string typeExpression)
-            : this(p.scanner.File, p.t.line, p.t.col, typeExpression)
-        {
-        }
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        if(stackSemantics == StackSemantics.Effect)
+            return;
 
-        /// <inheritdoc />
-        public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
-        {
-            expr = null;
-            return false;
-        }
+        target.Emit(Position,OpCode.ldr_type, TypeExpression);
+    }
 
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            if(stackSemantics == StackSemantics.Effect)
-                return;
+    #endregion
 
-            target.Emit(Position,OpCode.ldr_type, TypeExpression);
-        }
-
-        #endregion
-
-        public override string ToString()
-        {
-            return "~" + TypeExpression;
-        }
+    public override string ToString()
+    {
+        return "~" + TypeExpression;
     }
 }

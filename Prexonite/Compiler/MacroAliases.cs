@@ -25,15 +25,14 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 
-namespace Prexonite.Compiler
-{
-    public static class MacroAliases
-    {
-        public const string ContextAlias = "context";
+namespace Prexonite.Compiler;
 
-        public static IEnumerable<string> Aliases()
-        {
-            yield return ContextAlias;
-        }
+public static class MacroAliases
+{
+    public const string ContextAlias = "context";
+
+    public static IEnumerable<string> Aliases()
+    {
+        yield return ContextAlias;
     }
 }

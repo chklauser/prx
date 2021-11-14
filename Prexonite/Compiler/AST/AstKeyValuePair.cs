@@ -26,118 +26,117 @@
 using System;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstKeyValuePair : AstExpr,
+    IAstHasExpressions, IAstPartiallyApplicable
 {
-    public class AstKeyValuePair : AstExpr,
-                                   IAstHasExpressions, IAstPartiallyApplicable
+    public AstKeyValuePair(string file, int line, int column)
+        : this(file, line, column, null, null)
     {
-        public AstKeyValuePair(string file, int line, int column)
-            : this(file, line, column, null, null)
+    }
+
+    public AstKeyValuePair(
+        string file, int line, int column, AstExpr key, AstExpr value)
+        : base(file, line, column)
+    {
+        Key = key;
+        Value = value;
+    }
+
+    internal AstKeyValuePair(Parser p)
+        : this(p, null, null)
+    {
+    }
+
+    internal AstKeyValuePair(Parser p, AstExpr key, AstExpr value)
+        : base(p)
+    {
+        Key = key;
+        Value = value;
+    }
+
+    public AstExpr Key;
+    public AstExpr Value;
+
+    #region IAstHasExpressions Members
+
+    public AstExpr[] Expressions => new[] {Key, Value};
+
+    #endregion
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        if (Key == null)
+            throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
+        if (Value == null)
+            throw new ArgumentNullException(nameof(target));
+
+        if (Key.IsArgumentSplice())
         {
+            AstArgumentSplice.ReportNotSupported(Key, target, stackSemantics);
         }
 
-        public AstKeyValuePair(
-            string file, int line, int column, AstExpr key, AstExpr value)
-            : base(file, line, column)
+        if (Value.IsArgumentSplice())
         {
-            Key = key;
-            Value = value;
+            AstArgumentSplice.ReportNotSupported(Value, target, stackSemantics);
         }
 
-        internal AstKeyValuePair(Parser p)
-            : this(p, null, null)
+        var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.PairAlias));
+        call.Arguments.Add(Key);
+        call.Arguments.Add(Value);
+        call.EmitCode(target, stackSemantics);
+    }
+
+    #region AstExpr Members
+
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        if (Key == null)
+            throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
+        if (Value == null)
+            throw new ArgumentNullException(nameof(target));
+
+        _OptimizeNode(target, ref Key);
+        _OptimizeNode(target, ref Value);
+
+        expr = null;
+
+        return false;
+    }
+
+    #endregion
+
+    #region Implementation of IAstPartiallyApplicable
+
+    public NodeApplicationState CheckNodeApplicationState()
+    {
+        return new(
+            (Key?.IsPlaceholder() ?? false) || (Value?.IsPlaceholder() ?? false), 
+            (Key?.IsArgumentSplice() ?? false) || (Value?.IsArgumentSplice() ?? false));
+    }
+
+    public void DoEmitPartialApplicationCode(CompilerTarget target)
+    {            
+        if (Key.IsArgumentSplice())
         {
+            AstArgumentSplice.ReportNotSupported(Key, target, StackSemantics.Value);
         }
 
-        internal AstKeyValuePair(Parser p, AstExpr key, AstExpr value)
-            : base(p)
+        if (Value.IsArgumentSplice())
         {
-            Key = key;
-            Value = value;
+            AstArgumentSplice.ReportNotSupported(Value, target, StackSemantics.Value);
         }
+        DoEmitCode(target,StackSemantics.Value);
+        //Partial application is handled by AstGetSetSymbol. Code is the same
+    }
 
-        public AstExpr Key;
-        public AstExpr Value;
+    #endregion
 
-        #region IAstHasExpressions Members
-
-        public AstExpr[] Expressions => new[] {Key, Value};
-
-        #endregion
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            if (Key == null)
-                throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
-            if (Value == null)
-                throw new ArgumentNullException(nameof(target));
-
-            if (Key.IsArgumentSplice())
-            {
-                AstArgumentSplice.ReportNotSupported(Key, target, stackSemantics);
-            }
-
-            if (Value.IsArgumentSplice())
-            {
-                AstArgumentSplice.ReportNotSupported(Value, target, stackSemantics);
-            }
-
-            var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.PairAlias));
-            call.Arguments.Add(Key);
-            call.Arguments.Add(Value);
-            call.EmitCode(target, stackSemantics);
-        }
-
-        #region AstExpr Members
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            if (Key == null)
-                throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
-            if (Value == null)
-                throw new ArgumentNullException(nameof(target));
-
-            _OptimizeNode(target, ref Key);
-            _OptimizeNode(target, ref Value);
-
-            expr = null;
-
-            return false;
-        }
-
-        #endregion
-
-        #region Implementation of IAstPartiallyApplicable
-
-        public NodeApplicationState CheckNodeApplicationState()
-        {
-            return new(
-                (Key?.IsPlaceholder() ?? false) || (Value?.IsPlaceholder() ?? false), 
-                (Key?.IsArgumentSplice() ?? false) || (Value?.IsArgumentSplice() ?? false));
-        }
-
-        public void DoEmitPartialApplicationCode(CompilerTarget target)
-        {            
-            if (Key.IsArgumentSplice())
-            {
-                AstArgumentSplice.ReportNotSupported(Key, target, StackSemantics.Value);
-            }
-
-            if (Value.IsArgumentSplice())
-            {
-                AstArgumentSplice.ReportNotSupported(Value, target, StackSemantics.Value);
-            }
-            DoEmitCode(target,StackSemantics.Value);
-            //Partial application is handled by AstGetSetSymbol. Code is the same
-        }
-
-        #endregion
-
-        public override string ToString()
-        {
-            var key = Key?.ToString() ?? "-null-";
-            var value = Value?.ToString() ?? "-null-";
-            return $"Key = ({key}): Value = ({value})";
-        }
+    public override string ToString()
+    {
+        var key = Key?.ToString() ?? "-null-";
+        var value = Value?.ToString() ?? "-null-";
+        return $"Key = ({key}): Value = ({value})";
     }
 }

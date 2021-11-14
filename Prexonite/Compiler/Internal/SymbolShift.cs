@@ -1,4 +1,3 @@
-namespace Prexonite.Compiler.Internal
-{
-    public delegate string SymbolShift(string id);
-}
+namespace Prexonite.Compiler.Internal;
+
+public delegate string SymbolShift(string id);

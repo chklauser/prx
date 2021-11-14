@@ -23,36 +23,35 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstGetException : AstExpr
 {
-    public class AstGetException : AstExpr
+    internal AstGetException(Parser p)
+        : base(p)
     {
-        internal AstGetException(Parser p)
-            : base(p)
-        {
-        }
-
-        public AstGetException(string file, int line, int column)
-            : base(file, line, column)
-        {
-        }
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            if(stackSemantics == StackSemantics.Effect)
-                return;
-
-            target.Emit(Position,OpCode.exc);
-        }
-
-        #region AstExpr Members
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            expr = null;
-            return false;
-        }
-
-        #endregion
     }
+
+    public AstGetException(string file, int line, int column)
+        : base(file, line, column)
+    {
+    }
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        if(stackSemantics == StackSemantics.Effect)
+            return;
+
+        target.Emit(Position,OpCode.exc);
+    }
+
+    #region AstExpr Members
+
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        expr = null;
+        return false;
+    }
+
+    #endregion
 }

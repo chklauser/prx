@@ -23,36 +23,35 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Cil
+namespace Prexonite.Compiler.Cil;
+
+/// <summary>
+///     Indicates how a branching instruction must be handled.
+/// </summary>
+public enum BranchHandling
 {
     /// <summary>
-    ///     Indicates how a branching instruction must be handled.
+    ///     A normal branching instruction can be used (br, brtrue, etc.)
     /// </summary>
-    public enum BranchHandling
-    {
-        /// <summary>
-        ///     A normal branching instruction can be used (br, brtrue, etc.)
-        /// </summary>
-        Branch,
+    Branch,
 
-        /// <summary>
-        ///     A leave instruction must be used (leave, leave.s)
-        /// </summary>
-        Leave,
+    /// <summary>
+    ///     A leave instruction must be used (leave, leave.s)
+    /// </summary>
+    Leave,
 
-        /// <summary>
-        ///     An endfinally must be used.
-        /// </summary>
-        EndFinally,
+    /// <summary>
+    ///     An endfinally must be used.
+    /// </summary>
+    EndFinally,
 
-        /// <summary>
-        ///     A leave instruction is used, and the target is the natural control flow target after the try block.
-        /// </summary>
-        LeaveSkipTry,
+    /// <summary>
+    ///     A leave instruction is used, and the target is the natural control flow target after the try block.
+    /// </summary>
+    LeaveSkipTry,
 
-        /// <summary>
-        ///     The jump in question is illegal in CIL. It cannot be repaired on the fly.
-        /// </summary>
-        Invalid
-    }
+    /// <summary>
+    ///     The jump in question is illegal in CIL. It cannot be repaired on the fly.
+    /// </summary>
+    Invalid
 }

@@ -25,29 +25,28 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 
-namespace Prexonite.Compiler.Build.Internal
+namespace Prexonite.Compiler.Build.Internal;
+
+internal class StringSource : ISource
 {
-    internal class StringSource : ISource
+    private readonly string _source;
+
+    public StringSource(string source)
     {
-        private readonly string _source;
-
-        public StringSource(string source)
-        {
-            _source = source ?? throw new System.ArgumentNullException(nameof(source));
-        }
-
-        #region Implementation of ISource
-
-        public bool CanOpen => true;
-
-        public bool IsSingleUse => false;
-
-        public bool TryOpen(out TextReader reader)
-        {
-            reader = new StringReader(_source);
-            return true;
-        }
-
-        #endregion
+        _source = source ?? throw new System.ArgumentNullException(nameof(source));
     }
+
+    #region Implementation of ISource
+
+    public bool CanOpen => true;
+
+    public bool IsSingleUse => false;
+
+    public bool TryOpen(out TextReader reader)
+    {
+        reader = new StringReader(_source);
+        return true;
+    }
+
+    #endregion
 }

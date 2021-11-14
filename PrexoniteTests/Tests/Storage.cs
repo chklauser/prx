@@ -30,43 +30,43 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prx.Tests;
 
-namespace PrexoniteTests.Tests
+namespace PrexoniteTests.Tests;
+
+[Parallelizable(ParallelScope.Fixtures)]
+[TestFixture]
+public class Storage : Compiler
 {
-    [Parallelizable(ParallelScope.Fixtures)]
-    [TestFixture]
-    public class Storage : Compiler
+    private const string _storedShouldBeEqual =
+        "Since the in-memory and the restored application are the same, they should" +
+        " result in the same serialized form.";
+
+    [Test]
+    public void TestEmpty()
     {
-        private const string _storedShouldBeEqual =
-            "Since the in-memory and the restored application are the same, they should" +
-                " result in the same serialized form.";
+        const string input1 = "";
+        var ldr = new Loader(engine, target);
+        TestContext.WriteLine("-- Compiling fixture");
+        ldr.LoadFromString(input1);
+        Assert.AreEqual(0, ldr.ErrorCount);
 
-        [Test]
-        public void TestEmpty()
-        {
-            const string input1 = "";
-            var ldr = new Loader(engine, target);
-            TestContext.WriteLine("-- Compiling fixture");
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount);
+        var stored = ldr.Options.TargetApplication.StoreInString();
+        TestContext.WriteLine(stored);
 
-            var stored = ldr.Options.TargetApplication.StoreInString();
-            TestContext.WriteLine(stored);
+        TestContext.WriteLine("-- Compiling stored result");
+        var reldr = new Loader(engine, new Application());
+        reldr.LoadFromString(stored);
+        var restored = reldr.Options.TargetApplication.StoreInString();
 
-            TestContext.WriteLine("-- Compiling stored result");
-            var reldr = new Loader(engine, new Application());
-            reldr.LoadFromString(stored);
-            var restored = reldr.Options.TargetApplication.StoreInString();
+        Assert.That(stored,
+            Is.EqualTo(stored).Using((IEqualityComparer<string>) Engine.DefaultStringComparer),
+            _storedShouldBeEqual);
+    }
 
-            Assert.That(stored,
-                Is.EqualTo(stored).Using((IEqualityComparer<string>) Engine.DefaultStringComparer),
-                _storedShouldBeEqual);
-        }
-
-        [Test]
-        public void TestMeta()
-        {
-            const string input1 =
-                @"
+    [Test]
+    public void TestMeta()
+    {
+        const string input1 =
+            @"
 Name fixture\storage\meta;
 Description ""Contains dummy meta information for a unit test"";
 Author SealedSun;
@@ -81,27 +81,27 @@ Is AsFastAsPossible;
 
 Add System::Xml To Imports;
 ";
-            var ldr = new Loader(engine, target);
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount);
+        var ldr = new Loader(engine, target);
+        ldr.LoadFromString(input1);
+        Assert.AreEqual(0, ldr.ErrorCount);
 
-            var stored = ldr.Options.TargetApplication.StoreInString();
-            TestContext.WriteLine(stored);
+        var stored = ldr.Options.TargetApplication.StoreInString();
+        TestContext.WriteLine(stored);
 
-            var reldr = new Loader(engine, new Application());
-            reldr.LoadFromString(stored);
-            var restored = reldr.Options.TargetApplication.StoreInString();
+        var reldr = new Loader(engine, new Application());
+        reldr.LoadFromString(stored);
+        var restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.That(stored,
-                Is.EqualTo(stored).Using((IEqualityComparer<string>)Engine.DefaultStringComparer),
-                _storedShouldBeEqual);
-        }
+        Assert.That(stored,
+            Is.EqualTo(stored).Using((IEqualityComparer<string>)Engine.DefaultStringComparer),
+            _storedShouldBeEqual);
+    }
 
-        [Test]
-        public void TestDeclarations()
-        {
-            const string input1 =
-                @"
+    [Test]
+    public void TestDeclarations()
+    {
+        const string input1 =
+            @"
 var obj0;
 var obj1;
 ref func0 
@@ -132,24 +132,24 @@ function func2(arg0, arg1, arg2)
     LE:;
 }
 ";
-            var ldr = new Loader(engine, target);
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount);
+        var ldr = new Loader(engine, target);
+        ldr.LoadFromString(input1);
+        Assert.AreEqual(0, ldr.ErrorCount);
 
-            var stored = ldr.Options.TargetApplication.StoreInString();
-            TestContext.WriteLine("//== 1st Store");
-            TestContext.WriteLine(stored);
+        var stored = ldr.Options.TargetApplication.StoreInString();
+        TestContext.WriteLine("//== 1st Store");
+        TestContext.WriteLine(stored);
 
-            var reldr = new Loader(engine, new Application());
-            reldr.LoadFromString(stored);
-            var restored = reldr.Options.TargetApplication.StoreInString();
-            TestContext.WriteLine("//== 2nd Store");
-            TestContext.WriteLine(restored);
+        var reldr = new Loader(engine, new Application());
+        reldr.LoadFromString(stored);
+        var restored = reldr.Options.TargetApplication.StoreInString();
+        TestContext.WriteLine("//== 2nd Store");
+        TestContext.WriteLine(restored);
 
-            //The two of them are not supposed to be equal because of a debug feature
-            /*Assert.IsTrue(Engine.StringsAreEqual(stored, restored),
-                storedShouldBeEqual); //*/
-        }
+        //The two of them are not supposed to be equal because of a debug feature
+        /*Assert.IsTrue(Engine.StringsAreEqual(stored, restored),
+            storedShouldBeEqual); //*/
+    }
 
 #if Compressed
 
@@ -172,30 +172,29 @@ coroutine mapf(ref f, xs) does
         }
 #endif
 
-        [Test]
-        public void MetaEntryIntegerNotString()
-        {
-            var ldr = new Loader(engine, target);
-            const string numberToStore = "1234567890";
-            ldr.LoadFromString(@"
+    [Test]
+    public void MetaEntryIntegerNotString()
+    {
+        var ldr = new Loader(engine, target);
+        const string numberToStore = "1234567890";
+        ldr.LoadFromString(@"
 meta_entry " + numberToStore + @";
 ");
-            foreach (var error in ldr.Errors)
-                TestContext.WriteLine("ERROR: {0}", error);
-            Assert.AreEqual(0, ldr.ErrorCount, "no errors expected");
-            var stored = ldr.Options.TargetApplication.StoreInString();
-            TestContext.WriteLine("//== 1st Store");
-            TestContext.WriteLine(stored);
+        foreach (var error in ldr.Errors)
+            TestContext.WriteLine("ERROR: {0}", error);
+        Assert.AreEqual(0, ldr.ErrorCount, "no errors expected");
+        var stored = ldr.Options.TargetApplication.StoreInString();
+        TestContext.WriteLine("//== 1st Store");
+        TestContext.WriteLine(stored);
 
-            var reldr = new Loader(engine, new Application());
-            reldr.LoadFromString(stored);
-            var restored = ldr.Options.TargetApplication.StoreInString();
-            TestContext.WriteLine("//== 2nd Store");
-            TestContext.WriteLine(restored);
+        var reldr = new Loader(engine, new Application());
+        reldr.LoadFromString(stored);
+        var restored = ldr.Options.TargetApplication.StoreInString();
+        TestContext.WriteLine("//== 2nd Store");
+        TestContext.WriteLine(restored);
 
-            Assert.AreEqual(stored, restored);
-            Assert.AreEqual(numberToStore, ldr.Options.TargetApplication.Meta["meta_entry"].Text);
-            Assert.AreEqual(numberToStore, reldr.Options.TargetApplication.Meta["meta_entry"].Text);
-        }
+        Assert.AreEqual(stored, restored);
+        Assert.AreEqual(numberToStore, ldr.Options.TargetApplication.Meta["meta_entry"].Text);
+        Assert.AreEqual(numberToStore, reldr.Options.TargetApplication.Meta["meta_entry"].Text);
     }
 }

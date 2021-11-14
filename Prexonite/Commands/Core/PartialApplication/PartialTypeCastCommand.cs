@@ -27,35 +27,34 @@ using System;
 using System.Reflection;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
 {
-    public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
+    private PartialTypecastCommand()
     {
-        private PartialTypecastCommand()
-        {
-        }
-
-        public static PartialTypecastCommand Instance { get; } = new();
-
-        private ConstructorInfo _partialTypeCastCtor;
-
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-            PValue[] closedArguments, PTypeInfo parameter)
-        {
-            return new PartialTypecast(mappings, closedArguments, parameter.Type);
-        }
-
-        protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
-        {
-            return _partialTypeCastCtor ??= typeof (PartialTypecast).GetConstructor(new[]
-                {typeof (int[]), typeof (PValue[]), typeof (PType)});
-        }
-
-        protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
-        {
-            return typeof (PartialTypecast);
-        }
-
-        protected override string PartialApplicationKind => "Partial type cast";
     }
+
+    public static PartialTypecastCommand Instance { get; } = new();
+
+    private ConstructorInfo _partialTypeCastCtor;
+
+    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
+        PValue[] closedArguments, PTypeInfo parameter)
+    {
+        return new PartialTypecast(mappings, closedArguments, parameter.Type);
+    }
+
+    protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
+    {
+        return _partialTypeCastCtor ??= typeof (PartialTypecast).GetConstructor(new[]
+            {typeof (int[]), typeof (PValue[]), typeof (PType)});
+    }
+
+    protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
+    {
+        return typeof (PartialTypecast);
+    }
+
+    protected override string PartialApplicationKind => "Partial type cast";
 }

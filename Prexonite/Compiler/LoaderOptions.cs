@@ -30,147 +30,146 @@ using Prexonite.Compiler.Symbolic;
 
 #nullable enable
 
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+[DebuggerStepThrough]
+public class LoaderOptions
 {
-    [DebuggerStepThrough]
-    public class LoaderOptions
+    #region Construction
+
+    public LoaderOptions(Engine? parentEngine, Application? targetApplication)
     {
-        #region Construction
+        ParentEngine = parentEngine;
+        TargetApplication = targetApplication;
+        ExternalSymbols = new EmptySymbolView<Symbol>();
+    }
 
-        public LoaderOptions(Engine? parentEngine, Application? targetApplication)
-        {
-            ParentEngine = parentEngine;
-            TargetApplication = targetApplication;
-            ExternalSymbols = new EmptySymbolView<Symbol>();
-        }
+    public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, ISymbolView<Symbol>? externalSymbols)
+    {
+        ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
+        TargetApplication = targetApplication ?? throw new ArgumentNullException(nameof(targetApplication));
+        ExternalSymbols = externalSymbols ?? throw new ArgumentNullException(nameof(externalSymbols));
+    }
 
-        public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, ISymbolView<Symbol>? externalSymbols)
-        {
-            ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-            TargetApplication = targetApplication ?? throw new ArgumentNullException(nameof(targetApplication));
-            ExternalSymbols = externalSymbols ?? throw new ArgumentNullException(nameof(externalSymbols));
-        }
+    #endregion
 
-        #endregion
+    #region Properties
 
-        #region Properties
+    public Engine? ParentEngine { get; }
 
-        public Engine? ParentEngine { get; }
+    public Application? TargetApplication { get; }
 
-        public Application? TargetApplication { get; }
+    [NotNull]
+    public ISymbolView<Symbol> ExternalSymbols { get; }
 
-        [NotNull]
-        public ISymbolView<Symbol> ExternalSymbols { get; }
+    private bool? _registerCommands;
+    public bool RegisterCommands
+    {
+        get => _registerCommands ?? true;
+        set => _registerCommands = value;
+    }
 
-        private bool? _registerCommands;
-        public bool RegisterCommands
-        {
-            get => _registerCommands ?? true;
-            set => _registerCommands = value;
-        }
+    private bool? _reconstructSymbols;
+    public bool ReconstructSymbols
+    {
+        get => _reconstructSymbols ?? true;
+        set => _reconstructSymbols = value;
+    }
 
-        private bool? _reconstructSymbols;
-        public bool ReconstructSymbols
-        {
-            get => _reconstructSymbols ?? true;
-            set => _reconstructSymbols = value;
-        }
+    private bool? _storeSymbols;
+    public bool StoreSymbols
+    {
+        get => _storeSymbols ?? true;
+        set => _storeSymbols = value;
+    }
 
-        private bool? _storeSymbols;
-        public bool StoreSymbols
-        {
-            get => _storeSymbols ?? true;
-            set => _storeSymbols = value;
-        }
+    private bool? _dumpExternalSymbols;
 
-        private bool? _dumpExternalSymbols;
+    /// <summary>
+    /// Indicates whether the loader will include external symbols when storing a representation of the application.
+    /// </summary>
+    /// <para>
+    /// This is only useful to diagnose the symbol environment that the loader is working with. While the resulting
+    /// image can be loaded it should not be used in production code as it effectively re-exports all of the symbols
+    /// of all of its dependencies (including conflicts).
+    /// </para>
+    public bool DumpExternalSymbols
+    {
+        get => _dumpExternalSymbols ?? false;
+        set => _dumpExternalSymbols = value;
+    }
 
-        /// <summary>
-        /// Indicates whether the loader will include external symbols when storing a representation of the application.
-        /// </summary>
-        /// <para>
-        /// This is only useful to diagnose the symbol environment that the loader is working with. While the resulting
-        /// image can be loaded it should not be used in production code as it effectively re-exports all of the symbols
-        /// of all of its dependencies (including conflicts).
-        /// </para>
-        public bool DumpExternalSymbols
-        {
-            get => _dumpExternalSymbols ?? false;
-            set => _dumpExternalSymbols = value;
-        }
+    private bool? _useIndicesLocally;
+    public bool UseIndicesLocally
+    {
+        get => _useIndicesLocally ?? true;
+        set => _useIndicesLocally = value;
+    }
 
-        private bool? _useIndicesLocally;
-        public bool UseIndicesLocally
-        {
-            get => _useIndicesLocally ?? true;
-            set => _useIndicesLocally = value;
-        }
+    private bool? _storeSourceInformation;
+    public bool StoreSourceInformation
+    {
+        get => _storeSourceInformation ?? false;
+        set => _storeSourceInformation = value;
+    }
 
-        private bool? _storeSourceInformation;
-        public bool StoreSourceInformation
-        {
-            get => _storeSourceInformation ?? false;
-            set => _storeSourceInformation = value;
-        }
+    private bool? _preflightModeEnabled;
 
-        private bool? _preflightModeEnabled;
+    /// <summary>
+    /// Preflight mode causes the parser to abort at the 
+    /// first non-meta construct, giving the user the opportunity 
+    /// to inspect a file's "header" without fully compiling 
+    /// that file.
+    /// </summary>
+    public bool PreflightModeEnabled
+    {
+        get => _preflightModeEnabled ?? false;
+        set => _preflightModeEnabled = value;
+    }
 
-        /// <summary>
-        /// Preflight mode causes the parser to abort at the 
-        /// first non-meta construct, giving the user the opportunity 
-        /// to inspect a file's "header" without fully compiling 
-        /// that file.
-        /// </summary>
-        public bool PreflightModeEnabled
-        {
-            get => _preflightModeEnabled ?? false;
-            set => _preflightModeEnabled = value;
-        }
+    private bool? _flagLiteralsEnabled;
 
-        private bool? _flagLiteralsEnabled;
+    ///<summary>
+    /// Determines whether flag literals (-f, --query, --option=value) are parsed globally. Not backwards compatible
+    /// because of overlap with unary minus and pre-decrement.
+    ///</summary>
+    [PublicAPI]
+    public bool FlagLiteralsEnabled
+    {
+        get => _flagLiteralsEnabled ?? false;
+        set => _flagLiteralsEnabled = value;
+    }
 
-        ///<summary>
-        /// Determines whether flag literals (-f, --query, --option=value) are parsed globally. Not backwards compatible
-        /// because of overlap with unary minus and pre-decrement.
-        ///</summary>
-        [PublicAPI]
-        public bool FlagLiteralsEnabled
-        {
-            get => _flagLiteralsEnabled ?? false;
-            set => _flagLiteralsEnabled = value;
-        }
+    [CanBeNull]
+    private string? _storeNewLine;
 
-        [CanBeNull]
-        private string? _storeNewLine;
+    /// <summary>
+    /// The line separator to use when storing a compiled Prexonite program. 
+    /// </summary>
+    /// <see cref="Loader.Store(System.Text.StringBuilder)"/>
+    [PublicAPI]
+    [NotNull]
+    public string StoreNewLine
+    {
+        get => _storeNewLine ?? "\n";
+        set => _storeNewLine = value;
+    }
 
-        /// <summary>
-        /// The line separator to use when storing a compiled Prexonite program. 
-        /// </summary>
-        /// <see cref="Loader.Store(System.Text.StringBuilder)"/>
-        [PublicAPI]
-        [NotNull]
-        public string StoreNewLine
-        {
-            get => _storeNewLine ?? "\n";
-            set => _storeNewLine = value;
-        }
+    #endregion
 
-        #endregion
+    public void InheritFrom([NotNull] LoaderOptions options)
+    {
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
 
-        public void InheritFrom([NotNull] LoaderOptions options)
-        {
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
-
-            _registerCommands ??= options._registerCommands;
-            _reconstructSymbols ??= options._reconstructSymbols;
-            _storeSymbols ??= options._storeSymbols;
-            _dumpExternalSymbols ??= options._dumpExternalSymbols;
-            _useIndicesLocally ??= options._useIndicesLocally;
-            _storeSourceInformation ??= options._storeSourceInformation;
-            _preflightModeEnabled ??= options._preflightModeEnabled;
-            _flagLiteralsEnabled ??= options._flagLiteralsEnabled;
-            _storeNewLine ??= options._storeNewLine;
-        }
+        _registerCommands ??= options._registerCommands;
+        _reconstructSymbols ??= options._reconstructSymbols;
+        _storeSymbols ??= options._storeSymbols;
+        _dumpExternalSymbols ??= options._dumpExternalSymbols;
+        _useIndicesLocally ??= options._useIndicesLocally;
+        _storeSourceInformation ??= options._storeSourceInformation;
+        _preflightModeEnabled ??= options._preflightModeEnabled;
+        _flagLiteralsEnabled ??= options._flagLiteralsEnabled;
+        _storeNewLine ??= options._storeNewLine;
     }
 }

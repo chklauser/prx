@@ -39,15 +39,15 @@ using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Types;
 
-namespace PrexoniteTests.Tests
+namespace PrexoniteTests.Tests;
+
+public class Translation : VMTestsBase
 {
-    public class Translation : VMTestsBase
+    [Test]
+    public void SimpleSwitchMetaEntry()
     {
-        [Test]
-        public void SimpleSwitchMetaEntry()
-        {
-            Compile(
-                @"
+        Compile(
+            @"
 globalSwitch;
 is gloS;
 is not gloS2;
@@ -66,30 +66,30 @@ not loc4]
 
 ");
 
-            var main = target.Functions["main"];
-            var main2 = target.Functions["main2"];
+        var main = target.Functions["main"];
+        var main2 = target.Functions["main2"];
 
-            //Global entries
-            Assert.That(target, Meta.ContainsExact("globalSwitch", true));
-            Assert.That(target, Meta.ContainsExact("gloS", true));
-            Assert.That(target, Meta.ContainsExact("gloS2", false));
-            Assert.That(target, Meta.ContainsExact("glos3", false));
+        //Global entries
+        Assert.That(target, Meta.ContainsExact("globalSwitch", true));
+        Assert.That(target, Meta.ContainsExact("gloS", true));
+        Assert.That(target, Meta.ContainsExact("gloS2", false));
+        Assert.That(target, Meta.ContainsExact("glos3", false));
 
-            //First function
-            Assert.That(main, Is.Not.Null);
-            Assert.That(main, Meta.ContainsExact("loc", true));
+        //First function
+        Assert.That(main, Is.Not.Null);
+        Assert.That(main, Meta.ContainsExact("loc", true));
 
-            //Second function
-            Assert.That(main2, Is.Not.Null);
-            Assert.That(main2, Meta.ContainsExact("loc2", true));
-            Assert.That(main2, Meta.ContainsExact("loc3", true));
-            Assert.That(main2, Meta.ContainsExact("loc4", false));
-        }
+        //Second function
+        Assert.That(main2, Is.Not.Null);
+        Assert.That(main2, Meta.ContainsExact("loc2", true));
+        Assert.That(main2, Meta.ContainsExact("loc3", true));
+        Assert.That(main2, Meta.ContainsExact("loc4", false));
+    }
 
-        [Test]
-        public void TrailingCommaMetaList()
-        {
-            Compile(@"
+    [Test]
+    public void TrailingCommaMetaList()
+    {
+        Compile(@"
 glob {1,2,3,};
 
 function main [loc {1,2,3,}]
@@ -97,30 +97,30 @@ function main [loc {1,2,3,}]
 
 ");
 
-            var entry = new MetaEntry(new MetaEntry[] {"1", "2", "3"});
+        var entry = new MetaEntry(new MetaEntry[] {"1", "2", "3"});
 
-            Assert.That(target, Meta.Contains("glob", entry));
-            var main = target.Functions["main"];
+        Assert.That(target, Meta.Contains("glob", entry));
+        var main = target.Functions["main"];
 
-            Assert.That(main, Is.Not.Null);
-            Assert.That(main, Meta.Contains("loc", entry));
-        }
+        Assert.That(main, Is.Not.Null);
+        Assert.That(main, Meta.Contains("loc", entry));
+    }
 
-        [Test]
-        public void TrailingCommaListLiteral()
-        {
-            Compile(@"
+    [Test]
+    public void TrailingCommaListLiteral()
+    {
+        Compile(@"
 function main = [1,2,3,];
 ");
 
-            Expect(new List<PValue> {1, 2, 3});
-        }
+        Expect(new List<PValue> {1, 2, 3});
+    }
 
-        [Test]
-        public void TrailingCommaHashLiteral()
-        {
-            Compile(
-                @"
+    [Test]
+    public void TrailingCommaHashLiteral()
+    {
+        Compile(
+            @"
 function main(ks,vs)
 {
     var h = {1: ""a"", 2: ""b"", 3: ""c"",};
@@ -134,15 +134,15 @@ function main(ks,vs)
 }
 ");
 
-            Expect("110101", (PValue) new List<PValue> {1, 2, 4, 3, 2, 1},
-                (PValue) new List<PValue> {"a", "b", "d", "c", "a", "a"});
-        }
+        Expect("110101", (PValue) new List<PValue> {1, 2, 4, 3, 2, 1},
+            (PValue) new List<PValue> {"a", "b", "d", "c", "a", "a"});
+    }
 
-        [Test]
-        public void TrailingArgumentList()
-        {
-            Compile(
-                @"
+    [Test]
+    public void TrailingArgumentList()
+    {
+        Compile(
+            @"
 function f(a,b,) = a + 2*b;
 function main(x,y)
 {
@@ -150,15 +150,15 @@ function main(x,y)
 }
 ");
 
-            Expect(2 + 6, 2, 3);
-        }
+        Expect(2 + 6, 2, 3);
+    }
 
-        [Test]
-        public void SuppressSymbols()
-        {
-            var ldr =
-                Compile(
-                    @"
+    [Test]
+    public void SuppressSymbols()
+    {
+        var ldr =
+            Compile(
+                @"
 function g = 5;
 var f = 7;
 
@@ -184,55 +184,55 @@ function main(x)
 }
 ");
 
-            Expect(3*2 + 5 + 7, 2);
-            Expect(3*11 + 5 + 7, 11);
+        Expect(3*2 + 5 + 7, 2);
+        Expect(3*11 + 5 + 7, 11);
 
-            var mn = ldr.ParentApplication.Module.Name;
+        var mn = ldr.ParentApplication.Module.Name;
 
-            {
-                Assert.That(ldr.Symbols.Contains("f"), Is.True,
-                    "Symbol table must contain an entry for 'f'.");
-                var entry = LookupSymbolEntry(ldr.Symbols,"f");
-                Assert.That(entry,Is.InstanceOf<DereferenceSymbol>());
-                var deref = (DereferenceSymbol) entry;
-                Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
-                var refSym = (ReferenceSymbol) deref.InnerSymbol;
-                Assert.That(refSym.Entity,Is.InstanceOf<EntityRef.Variable.Global>());
-                refSym.Entity.TryGetGlobalVariable(out var globVar);
-                Assert.That(globVar,Is.EqualTo(EntityRef.Variable.Global.Create("f",mn)));
-            }
-
-            {
-                Assert.That(ldr.Symbols.Contains("g"), Is.True,
-                    "Symbol table must contain an entry for 'g'.");
-                var entry = LookupSymbolEntry(ldr.Symbols, "g");
-                Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
-                var deref = (DereferenceSymbol)entry;
-                Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
-                var refSym = (ReferenceSymbol)deref.InnerSymbol;
-                Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
-                refSym.Entity.TryGetFunction(out var func);
-                Assert.That(func, Is.EqualTo(EntityRef.Function.Create("g",mn)));
-            }
-
-            {
-                Assert.That(ldr.Symbols.Contains("p"), Is.True,
-                    "Symbol table must contain an entry for 'p'.");
-                var entry = LookupSymbolEntry(ldr.Symbols, "p");
-                Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
-                var deref = (DereferenceSymbol)entry;
-                Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
-                var refSym = (ReferenceSymbol)deref.InnerSymbol;
-                Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
-                refSym.Entity.TryGetFunction(out var func);
-                Assert.That(func, Is.EqualTo(EntityRef.Function.Create("f",mn)));
-            }
+        {
+            Assert.That(ldr.Symbols.Contains("f"), Is.True,
+                "Symbol table must contain an entry for 'f'.");
+            var entry = LookupSymbolEntry(ldr.Symbols,"f");
+            Assert.That(entry,Is.InstanceOf<DereferenceSymbol>());
+            var deref = (DereferenceSymbol) entry;
+            Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
+            var refSym = (ReferenceSymbol) deref.InnerSymbol;
+            Assert.That(refSym.Entity,Is.InstanceOf<EntityRef.Variable.Global>());
+            refSym.Entity.TryGetGlobalVariable(out var globVar);
+            Assert.That(globVar,Is.EqualTo(EntityRef.Variable.Global.Create("f",mn)));
         }
 
-        [Test]
-        public void AppendRightLocalFunc()
         {
-            Compile(@"
+            Assert.That(ldr.Symbols.Contains("g"), Is.True,
+                "Symbol table must contain an entry for 'g'.");
+            var entry = LookupSymbolEntry(ldr.Symbols, "g");
+            Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
+            var deref = (DereferenceSymbol)entry;
+            Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
+            var refSym = (ReferenceSymbol)deref.InnerSymbol;
+            Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
+            refSym.Entity.TryGetFunction(out var func);
+            Assert.That(func, Is.EqualTo(EntityRef.Function.Create("g",mn)));
+        }
+
+        {
+            Assert.That(ldr.Symbols.Contains("p"), Is.True,
+                "Symbol table must contain an entry for 'p'.");
+            var entry = LookupSymbolEntry(ldr.Symbols, "p");
+            Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
+            var deref = (DereferenceSymbol)entry;
+            Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
+            var refSym = (ReferenceSymbol)deref.InnerSymbol;
+            Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
+            refSym.Entity.TryGetFunction(out var func);
+            Assert.That(func, Is.EqualTo(EntityRef.Function.Create("f",mn)));
+        }
+    }
+
+    [Test]
+    public void AppendRightLocalFunc()
+    {
+        Compile(@"
 function main()
 {
     var ys = [];
@@ -248,13 +248,13 @@ function main()
     return (var args >> trace(77) >> map(?~String) >> foldl((l,r) => l + "" "" + r, """")) + ys;
 }
 ");
-            Expect(" 1 2 3 4 5 6 7[ 33: 1, 33: 2, 77: 1, 77: 2, 77: 3, 77: 4, 77: 5, 77: 6, 77: 7 ]",1,2,3,4,5,6,7);
-        }
+        Expect(" 1 2 3 4 5 6 7[ 33: 1, 33: 2, 77: 1, 77: 2, 77: 3, 77: 4, 77: 5, 77: 6, 77: 7 ]",1,2,3,4,5,6,7);
+    }
 
-        [Test]
-        public void TestPsrTestRunSingleTest()
-        {
-            Compile(@"function test\run_single_test as run_single_test(testFunc)
+    [Test]
+    public void TestPsrTestRunSingleTest()
+    {
+        Compile(@"function test\run_single_test as run_single_test(testFunc)
 {
     var t = new Structure;
     t.\(""test"") = testFunc;
@@ -276,13 +276,13 @@ function main()
     return ""$(tp.Key):$(tp.Value.test.Id)"";
 }");
 
-            Expect("True:main\\0");
-        }
+        Expect("True:main\\0");
+    }
 
-        [Test]
-        public void TestPsrAst3WithPos()
-        {
-            Compile(@"
+    [Test]
+    public void TestPsrAst3WithPos()
+    {
+        Compile(@"
 function ast3\withPos(factory,type) [compiler]
 {
 	var args;
@@ -293,17 +293,17 @@ function ast3\withPos(factory,type) [compiler]
 		
 	return call\member(factory,type, targs);
 }");
-            var factory = new Mock<IAstFactory>(MockBehavior.Strict);
-            var astPlaceholder = new AstPlaceholder(NoSourcePosition.MissingFileName, NoSourcePosition.Instance.Line, NoSourcePosition.Instance.Column);
-            factory.Setup(f => f.Placeholder(It.IsAny<ISourcePosition>(), 5))
-                   .Returns(astPlaceholder);
-            ExpectNamed("ast3\\withPos", astPlaceholder, sctx.CreateNativePValue(factory.Object), "Placeholder", sctx.CreateNativePValue(NoSourcePosition.Instance), 5);
-        }
+        var factory = new Mock<IAstFactory>(MockBehavior.Strict);
+        var astPlaceholder = new AstPlaceholder(NoSourcePosition.MissingFileName, NoSourcePosition.Instance.Line, NoSourcePosition.Instance.Column);
+        factory.Setup(f => f.Placeholder(It.IsAny<ISourcePosition>(), 5))
+            .Returns(astPlaceholder);
+        ExpectNamed("ast3\\withPos", astPlaceholder, sctx.CreateNativePValue(factory.Object), "Placeholder", sctx.CreateNativePValue(NoSourcePosition.Instance), 5);
+    }
 
-        [Test]
-        public void TestSysDeclaresMacroCommand()
-        {
-            Compile(@"//PRX
+    [Test]
+    public void TestSysDeclaresMacroCommand()
+    {
+        Compile(@"//PRX
 
 Name sys;
 
@@ -432,15 +432,15 @@ function main(x,y)
 }
 ");
 
-            var x = new Mock<ISourcePosition>(MockBehavior.Strict);
-            x.SetupGet(s => s.Line).Returns(15);
-            Expect(15,sctx.CreateNativePValue(x.Object),"Line");
-        }
+        var x = new Mock<ISourcePosition>(MockBehavior.Strict);
+        x.SetupGet(s => s.Line).Returns(15);
+        Expect(15,sctx.CreateNativePValue(x.Object),"Line");
+    }
 
-        [Test]
-        public void BlockDeclarationOfMacroCommand()
-        {
-            Compile(@"
+    [Test]
+    public void BlockDeclarationOfMacroCommand()
+    {
+        Compile(@"
 declare macro command call\member;
 
 function main(x,y)
@@ -448,15 +448,15 @@ function main(x,y)
     return call\member(x,y);
 }
 ");
-            var x = new Mock<ISourcePosition>(MockBehavior.Strict);
-            x.SetupGet(s => s.Line).Returns(15);
-            Expect(15, sctx.CreateNativePValue(x.Object), "Line");
-        }
+        var x = new Mock<ISourcePosition>(MockBehavior.Strict);
+        x.SetupGet(s => s.Line).Returns(15);
+        Expect(15, sctx.CreateNativePValue(x.Object), "Line");
+    }
 
-        [Test]
-        public void ReferenceToSymbolWithMessage()
-        {
-            var ldr = Compile(@"
+    [Test]
+    public void ReferenceToSymbolWithMessage()
+    {
+        var ldr = Compile(@"
 function t1 = 7;
 ref t2 = ->t1;
 declare(
@@ -469,15 +469,15 @@ function main()
 }
 ");
 
-            Expect(true);
-            Assert.That(ldr.Warnings.Count,Is.EqualTo(1));
-            Assert.That(ldr.Warnings[0].MessageClass,Is.EqualTo("T.tt"));
-        }
+        Expect(true);
+        Assert.That(ldr.Warnings.Count,Is.EqualTo(1));
+        Assert.That(ldr.Warnings[0].MessageClass,Is.EqualTo("T.tt"));
+    }
 
-        [Test]
-        public void EntityRefToCommand()
-        {
-            var ldr = Compile(@"
+    [Test]
+    public void EntityRefToCommand()
+    {
+        var ldr = Compile(@"
 function f{}
 var v;
 ref r;
@@ -498,108 +498,108 @@ function main()
         + entityref_to(print);
 }
 ");
-            var nm = ldr.ParentApplication.Module.Name;
+        var nm = ldr.ParentApplication.Module.Name;
 
-            Expect(rv =>
-                       {
-                           var r = rv.CallToString(sctx).Split('|');
-                           TestContext.WriteLine(rv);
-                           Assert.That((object) r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
-
-                           Assert.That(r[0], Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
-                           Assert.That(r[1], Is.EqualTo(EntityRef.Variable.Global.Create("v", nm).ToString()));
-                           Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create("r", nm).ToString()));
-                           Assert.That(r[3], Is.EqualTo(EntityRef.Function.Create("m", nm).ToString()));
-                           Assert.That(r[4], Is.EqualTo(EntityRef.Variable.Local.Create("loc").ToString()));
-                           Assert.That(r[5], Is.EqualTo(EntityRef.Variable.Local.Create("rloc").ToString()));
-                           Assert.That(r[6], Is.EqualTo(EntityRef.MacroCommand.Create("entityref_to").ToString()));
-                           Assert.That(r[7], Is.EqualTo(EntityRef.Command.Create("print").ToString()));
-                       });
-        }
-
-        [Test]
-        public void NamespaceLookup()
+        Expect(rv =>
         {
-            var ldr = new Loader(options);
-            Compile(ldr, @"
+            var r = rv.CallToString(sctx).Split('|');
+            TestContext.WriteLine(rv);
+            Assert.That((object) r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
+
+            Assert.That(r[0], Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
+            Assert.That(r[1], Is.EqualTo(EntityRef.Variable.Global.Create("v", nm).ToString()));
+            Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create("r", nm).ToString()));
+            Assert.That(r[3], Is.EqualTo(EntityRef.Function.Create("m", nm).ToString()));
+            Assert.That(r[4], Is.EqualTo(EntityRef.Variable.Local.Create("loc").ToString()));
+            Assert.That(r[5], Is.EqualTo(EntityRef.Variable.Local.Create("rloc").ToString()));
+            Assert.That(r[6], Is.EqualTo(EntityRef.MacroCommand.Create("entityref_to").ToString()));
+            Assert.That(r[7], Is.EqualTo(EntityRef.Command.Create("print").ToString()));
+        });
+    }
+
+    [Test]
+    public void NamespaceLookup()
+    {
+        var ldr = new Loader(options);
+        Compile(ldr, @"
 function f = 17;
 ");
-            if(!ldr.Symbols.TryGet("f",out var f))
-                Assert.Fail("Expected module level symbol f to exist.");
+        if(!ldr.Symbols.TryGet("f",out var f))
+            Assert.Fail("Expected module level symbol f to exist.");
 
-            var scopea = SymbolStore.Create();
-            scopea.Declare("g",f);
-            var nsa = new MergedNamespace(scopea);
-            var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
-            ldr.Symbols.Declare("a",a);
+        var scopea = SymbolStore.Create();
+        scopea.Declare("g",f);
+        var nsa = new MergedNamespace(scopea);
+        var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
+        ldr.Symbols.Declare("a",a);
 
-            Compile(ldr, @"
+        Compile(ldr, @"
 function main()
 {
     return a.g;
 }
 ");
 
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void NestedNamespaceLookup()
-        {
+    [Test]
+    public void NestedNamespaceLookup()
+    {
 
-            var ldr = new Loader(options);
-            Compile(ldr, @"
+        var ldr = new Loader(options);
+        Compile(ldr, @"
 function f = 17;
 ");
-            if (!ldr.Symbols.TryGet("f", out var f))
-                Assert.Fail("Expected module level symbol f to exist.");
+        if (!ldr.Symbols.TryGet("f", out var f))
+            Assert.Fail("Expected module level symbol f to exist.");
 
-            var scopea = SymbolStore.Create();
-            scopea.Declare("g", f);
-            var nsa = new MergedNamespace(scopea);
-            var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
+        var scopea = SymbolStore.Create();
+        scopea.Declare("g", f);
+        var nsa = new MergedNamespace(scopea);
+        var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
 
-            var scopeb = SymbolStore.Create();
-            scopeb.Declare("a",a);
-            var nsb = new MergedNamespace(scopeb);
-            var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
+        var scopeb = SymbolStore.Create();
+        scopeb.Declare("a",a);
+        var nsb = new MergedNamespace(scopeb);
+        var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
 
-            ldr.Symbols.Declare("b",b);
+        ldr.Symbols.Declare("b",b);
 
-            Compile(ldr, @"
+        Compile(ldr, @"
 function main()
 {
     return b.a.g;
 }
 ");
 
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void AliasedNamespaceLookup()
-        {
+    [Test]
+    public void AliasedNamespaceLookup()
+    {
 
-            var ldr = new Loader(options);
-            Compile(ldr, @"
+        var ldr = new Loader(options);
+        Compile(ldr, @"
 function f = 17;
 ");
-            if (!ldr.Symbols.TryGet("f", out var f))
-                Assert.Fail("Expected module level symbol f to exist.");
+        if (!ldr.Symbols.TryGet("f", out var f))
+            Assert.Fail("Expected module level symbol f to exist.");
 
-            var scopea = SymbolStore.Create();
-            scopea.Declare("g", f);
-            var nsa = new MergedNamespace(scopea);
-            var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
+        var scopea = SymbolStore.Create();
+        scopea.Declare("g", f);
+        var nsa = new MergedNamespace(scopea);
+        var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
 
-            var scopeb = SymbolStore.Create();
-            scopeb.Declare("a", a);
-            var nsb = new MergedNamespace(scopeb);
-            var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
+        var scopeb = SymbolStore.Create();
+        scopeb.Declare("a", a);
+        var nsb = new MergedNamespace(scopeb);
+        var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
 
-            ldr.Symbols.Declare("b", b);
+        ldr.Symbols.Declare("b", b);
 
-            Compile(ldr, @"
+        Compile(ldr, @"
 declare(z = sym(""b"",""a""));
 function main()
 {
@@ -607,13 +607,13 @@ function main()
 }
 ");
 
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void NamespaceDeclaration()
-        {
-            var ldr = Compile(@"
+    [Test]
+    public void NamespaceDeclaration()
+    {
+        var ldr = Compile(@"
 namespace a 
 {
     function f = 17;
@@ -621,15 +621,15 @@ namespace a
 
 function main = a.f;
 ");
-            Expect(17);
-            Assert.That(ldr.TopLevelSymbols.TryGet("f",out var dummy),Is.False,"Existence of symbol f in the global scope");
-        }
+        Expect(17);
+        Assert.That(ldr.TopLevelSymbols.TryGet("f",out var dummy),Is.False,"Existence of symbol f in the global scope");
+    }
 
-        [Test]
-        public void SugaredNestedNamespaceDeclaration()
-        {
+    [Test]
+    public void SugaredNestedNamespaceDeclaration()
+    {
 
-            Compile(@"
+        Compile(@"
 namespace a.b 
 {
     function f = 17;
@@ -637,14 +637,14 @@ namespace a.b
 
 function main = a.b.f;
 ");
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void NestedNamespaceDeclaration()
-        {
+    [Test]
+    public void NestedNamespaceDeclaration()
+    {
 
-            Compile(@"
+        Compile(@"
 namespace a 
 {
     namespace b 
@@ -655,14 +655,14 @@ namespace a
 
 function main = a.b.f;
 ");
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void TopLevelAccessFromNamespace()
-        {
+    [Test]
+    public void TopLevelAccessFromNamespace()
+    {
 
-            Compile(@"
+        Compile(@"
 function f = 17;
 
 namespace a 
@@ -672,14 +672,14 @@ namespace a
 
 function main = a.g;
 ");
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void SurroundingAccessFromNamespace()
-        {
+    [Test]
+    public void SurroundingAccessFromNamespace()
+    {
 
-            Compile(@"
+        Compile(@"
 namespace a 
 {
     function f = 17;
@@ -691,14 +691,14 @@ namespace a
 
 function main = a.b.g;
 ");
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void Surrounding2AccessFromNamespace()
-        {
+    [Test]
+    public void Surrounding2AccessFromNamespace()
+    {
 
-            Compile(@"
+        Compile(@"
 namespace a 
 {
     function f = 17;
@@ -713,13 +713,13 @@ namespace a
 
 function main = a.b.c.g;
 ");
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void SugarComposeNamespaces()
-        {
-            Compile(@"
+    [Test]
+    public void SugarComposeNamespaces()
+    {
+        Compile(@"
 namespace a.b
 {
     function f = 17;
@@ -732,13 +732,13 @@ namespace a.c
 
 function main = a.b.f + a.c.g;
 ");
-            Expect(20);
-        }
+        Expect(20);
+    }
 
-        [Test]
-        public void SugarNsOverride()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void SugarNsOverride()
+    {
+        CompileInvalid(@"
 namespace a
 {
     function b = 13;
@@ -751,12 +751,12 @@ namespace a.b
 
 function main = a.b.f;
 ","Expected","namespace","func");
-        }
+    }
 
-        [Test]
-        public void DontReExportSurrounding()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void DontReExportSurrounding()
+    {
+        CompileInvalid(@"
 function f = 13;
 namespace a 
 {
@@ -766,12 +766,12 @@ namespace a
 function main = a.f;
 ","symbol","resolve","f");
 
-        }
+    }
 
-        [Test]
-        public void RestoreExportedOnExtend()
-        {
-            Compile(@"
+    [Test]
+    public void RestoreExportedOnExtend()
+    {
+        Compile(@"
 namespace a {
     function f = 13;
 }
@@ -783,13 +783,13 @@ namespace a {
 function main = a.g;
 ");
 
-            Expect(13+2);
-        }
+        Expect(13+2);
+    }
 
-        [Test]
-        public void SuppressRestoreExportedOnExtend()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void SuppressRestoreExportedOnExtend()
+    {
+        CompileInvalid(@"
 namespace a {
     function zz_f = 13;
 }
@@ -802,12 +802,12 @@ namespace a
 
 function main = a.g;
 ","symbol","resolve","zz_f");
-        }
+    }
 
-        [Test]
-        public void SimpleNsSugarExtend()
-        {
-            Compile(@"
+    [Test]
+    public void SimpleNsSugarExtend()
+    {
+        Compile(@"
 namespace a.c
 {
     function f = 17;
@@ -823,13 +823,13 @@ namespace a
 
 function main = a.c.f + a.c.g;
 ");
-            Expect(17+2);
-        }
+        Expect(17+2);
+    }
 
-        [Test]
-        public void SugarNsExtend()
-        {
-            Compile(@"
+    [Test]
+    public void SugarNsExtend()
+    {
+        Compile(@"
 namespace a
 {
     function b = 13;
@@ -856,15 +856,15 @@ namespace a
 function main = a.b + a.c.f + a.d + a.c.g;
 ");
 
-            Expect(13 + 17 + 10 + 2);
-        }
+        Expect(13 + 17 + 10 + 2);
+    }
 
-        [Test]
-        public void NsPhysical()
-        {
-            SkipStore = true;
+    [Test]
+    public void NsPhysical()
+    {
+        SkipStore = true;
 
-            Compile(@"
+        Compile(@"
 namespace a 
 {
     function f = 3;
@@ -878,13 +878,13 @@ namespace b
 function main = a.f + b.f;
 ");
 
-            Expect(17);
-        }
+        Expect(17);
+    }
 
-        [Test]
-        public void ImportBackgroundConflict()
-        {
-            Compile(@"
+    [Test]
+    public void ImportBackgroundConflict()
+    {
+        Compile(@"
 namespace a {
     function f = 13;
     function g = 12;
@@ -906,13 +906,13 @@ namespace c
 function main = c.s;
 ");
 
-            Expect(4+3+13);
-        }
+        Expect(4+3+13);
+    }
 
-        [Test]
-        public void ImportConflict()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void ImportConflict()
+    {
+        CompileInvalid(@"
 namespace a 
 {
     function f = 13;
@@ -931,12 +931,12 @@ namespace c
 
 function main = c.s;
 ","incompatible","namespace a","namespace b","symbol f");
-        }
+    }
 
-        [Test]
-        public void RenameOneAvoidsConflict()
-        {
-            Compile(@"
+    [Test]
+    public void RenameOneAvoidsConflict()
+    {
+        Compile(@"
 namespace a 
 {
     function f = 13;
@@ -955,13 +955,13 @@ namespace c
 
 function main = c.s;
 ");
-            Expect(13+14);
-        }
+        Expect(13+14);
+    }
 
-        [Test]
-        public void UseMultiplicationAsNamespaceName()
-        {
-            Compile(@"
+    [Test]
+    public void UseMultiplicationAsNamespaceName()
+    {
+        Compile(@"
 namespace a.(*).c {
     function f = 3;
 }
@@ -974,13 +974,13 @@ namespace b
 
 function main = b.g;
 ");
-            Expect(3);
-        }
+        Expect(3);
+    }
 
-        [Test]
-        public void UseMultiplicationInExplicitTransfer()
-        {
-            Compile(@"
+    [Test]
+    public void UseMultiplicationInExplicitTransfer()
+    {
+        Compile(@"
 namespace a {
     function (*) = 3;
     var gobb = 4;
@@ -998,25 +998,25 @@ namespace b
 
 function main = b.g;
 ");
-        }
+    }
 
-        [Test]
-        public void ExplicitWildcardTransfer()
-        {
-            Compile(@"
+    [Test]
+    public void ExplicitWildcardTransfer()
+    {
+        Compile(@"
 namespace a { function f = 13; }
 namespace b import a(*)
 { function g = f; }
 function main = b.g;
 ");
 
-            Expect(13);
-        }
+        Expect(13);
+    }
 
-        [Test]
-        public void DropAvoidsConflict()
-        {
-            Compile(@"
+    [Test]
+    public void DropAvoidsConflict()
+    {
+        Compile(@"
 namespace a 
 {
     function f = 13;
@@ -1038,13 +1038,13 @@ namespace c
 
 function main = c.s;
 ");
-            Expect(13 + 12);
-        }
+        Expect(13 + 12);
+    }
 
-        [Test]
-        public void FunctionScopeImport()
-        {
-            Compile(@"
+    [Test]
+    public void FunctionScopeImport()
+    {
+        Compile(@"
 namespace a
 {
     function f = 13;
@@ -1052,13 +1052,13 @@ namespace a
 
 function main namespace import a.f = f;
 ");
-            Expect(13);
-        }
+        Expect(13);
+    }
 
-        [Test]
-        public void ForwardDeclarationAncientSyntax()
-        {
-            Compile(@"
+    [Test]
+    public void ForwardDeclarationAncientSyntax()
+    {
+        Compile(@"
 namespace a
 {
     declare function f;
@@ -1069,13 +1069,13 @@ namespace a
 function main(x) = a.g(x);
 ");
 
-            Expect(16,8);
-        }
+        Expect(16,8);
+    }
 
-        [Test]
-        public void ForwardDeclarationOldSyntax()
-        {
-            Compile(@"
+    [Test]
+    public void ForwardDeclarationOldSyntax()
+    {
+        Compile(@"
 namespace a
 {
     declare { function: f };
@@ -1086,13 +1086,13 @@ namespace a
 function main(x) = a.g(x);
 ");
 
-            Expect(16,8);
-        }
+        Expect(16,8);
+    }
 
-        [Test]
-        public void ForwardDeclarationMachineSyntax()
-        {
-            Compile(@"
+    [Test]
+    public void ForwardDeclarationMachineSyntax()
+    {
+        Compile(@"
 namespace a
 {
     // This forward declaration is not taken as relative to the namesapce.
@@ -1106,31 +1106,31 @@ function f(x) = 2*x;
 function main(x) = a.g(x);
 ");
 
-            Expect(16, 8);
-        }
+        Expect(16, 8);
+    }
 
-        [Test]
-        public void ExportInterferenceWithTimesLiteral()
-        {
-            Compile(@"
+    [Test]
+    public void ExportInterferenceWithTimesLiteral()
+    {
+        Compile(@"
 namespace a{var g;}
 namespace b{}export(*),a(g);
 ");
-        }
+    }
 
-        [Test]
-        public void AlternateExportAllSyntax()
-        {
-            Compile(@"
+    [Test]
+    public void AlternateExportAllSyntax()
+    {
+        Compile(@"
 namespace a{var g;}
 namespace b{}export.*,a(g);
 ");
-        }
+    }
 
-        [Test]
-        public void SelfReferenceInVarInit()
-        {
-            Compile(@"
+    [Test]
+    public void SelfReferenceInVarInit()
+    {
+        Compile(@"
 namespace a 
 {
     var h = 4;
@@ -1142,13 +1142,13 @@ namespace a{
 
 function main = a.g+a.h;
 ");
-            Expect(15+4);
-        }
+        Expect(15+4);
+    }
 
-        [Test]
-        public void TopLevelNamespaceImport()
-        {
-            Compile(@"
+    [Test]
+    public void TopLevelNamespaceImport()
+    {
+        Compile(@"
 
 namespace a 
 {
@@ -1161,13 +1161,13 @@ function main(y) = f(y + 2);
 
 ");
             
-            Expect(20, 8);
-        }
+        Expect(20, 8);
+    }
 
-        [Test]
-        public void TopLevelNamespaceImportMultiple()
-        {
-            Compile(@"
+    [Test]
+    public void TopLevelNamespaceImportMultiple()
+    {
+        Compile(@"
 
 namespace a 
 {
@@ -1187,13 +1187,13 @@ function main(y) = f(g(y));
 
 ");
             
-            Expect(20, 3);
-        }
+        Expect(20, 3);
+    }
 
-        [Test]
-        public void TopLevelImportReplacement()
-        {
-            Compile(@"
+    [Test]
+    public void TopLevelImportReplacement()
+    {
+        Compile(@"
 
 namespace a 
 {
@@ -1213,13 +1213,13 @@ function main(y) = f(y + 2);
 
 ");
             
-            Expect(5, 8);
-        }
+        Expect(5, 8);
+    }
 
-        [Test]
-        public void TopLevelImportsDoNotShadow()
-        {
-            Compile(@"
+    [Test]
+    public void TopLevelImportsDoNotShadow()
+    {
+        Compile(@"
 
 function f(x) = x*2;
 
@@ -1234,13 +1234,13 @@ function main(y) = f(y + 2);
 
 ");
             
-            Expect(20, 8);
-        }
+        Expect(20, 8);
+    }
 
-        [Test]
-        public void TopLevelImportIllegalInNamespace()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void TopLevelImportIllegalInNamespace()
+    {
+        CompileInvalid(@"
 namespace a 
 {
     function f(x) = 2*x;
@@ -1254,29 +1254,29 @@ namespace b
 
 function main(x) = b.g(3 * x);
 ", "namespace", "import", "inside");
-        }
+    }
 
-        [Test]
-        public void TopLevelImportMustResolveSymbol()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void TopLevelImportMustResolveSymbol()
+    {
+        CompileInvalid(@"
 namespace import this_symbol_does_not_exist.*;
 ", "this_symbol_does_not_exist");
-        }
+    }
 
-        [Test]
-        public void NamespaceExtensionCrossModule()
-        {
-            var plan = Plan.CreateSelfAssembling(StandardLibraryPreference.None);
+    [Test]
+    public void NamespaceExtensionCrossModule()
+    {
+        var plan = Plan.CreateSelfAssembling(StandardLibraryPreference.None);
 
-            plan.Assemble(Source.FromString(@"
+        plan.Assemble(Source.FromString(@"
 name one;
 namespace a {
     function b = 15;
 }
 "));
 
-            var moduleTwoDesc = plan.Assemble(Source.FromString(@"
+        var moduleTwoDesc = plan.Assemble(Source.FromString(@"
 name two;
 references {one};
 namespace a {
@@ -1284,29 +1284,29 @@ namespace a {
 }
 "));
 
-            var moduleTwo = plan.Build(moduleTwoDesc.Name);
-            Assert.That(moduleTwo.Messages.Where(m => m.Severity == MessageSeverity.Error),Is.Empty,"Modules should compile without any error messages.");
-            foreach (var message in moduleTwo.Messages)
-                TestContext.WriteLine(message);
-            Assert.That(moduleTwo.Exception,Is.Null);
+        var moduleTwo = plan.Build(moduleTwoDesc.Name);
+        Assert.That(moduleTwo.Messages.Where(m => m.Severity == MessageSeverity.Error),Is.Empty,"Modules should compile without any error messages.");
+        foreach (var message in moduleTwo.Messages)
+            TestContext.WriteLine(message);
+        Assert.That(moduleTwo.Exception,Is.Null);
 
-            var symbols = moduleTwo.Symbols;
-            Assert.That(symbols.TryGet("a",out var symbol),Is.True,"Expect module two to have a symbol called 'a'");
-            Assert.That(symbol,Is.InstanceOf<NamespaceSymbol>());
-            var nsSym = (NamespaceSymbol) symbol;
-            _assumeNotNull(nsSym);
-            Assert.That(nsSym.Namespace.TryGet("b",out symbol),"Expect namespace a to contain a symbol b.");
-            Assert.That(nsSym.Namespace.TryGet("c",out symbol),"Expect namespace a to contain a symbol c.");
+        var symbols = moduleTwo.Symbols;
+        Assert.That(symbols.TryGet("a",out var symbol),Is.True,"Expect module two to have a symbol called 'a'");
+        Assert.That(symbol,Is.InstanceOf<NamespaceSymbol>());
+        var nsSym = (NamespaceSymbol) symbol;
+        _assumeNotNull(nsSym);
+        Assert.That(nsSym.Namespace.TryGet("b",out symbol),"Expect namespace a to contain a symbol b.");
+        Assert.That(nsSym.Namespace.TryGet("c",out symbol),"Expect namespace a to contain a symbol c.");
 
-        }
+    }
 
-        [Test]
-        public void CommentAtEnd()
-        {
-            var ldr = new Loader(options);
-            var add = new InternalLoadCommand(ldr);
-            ldr.ParentEngine.Commands.AddHostCommand("add_internal", add);
-            add.VirtualFiles.Add("f1",@"
+    [Test]
+    public void CommentAtEnd()
+    {
+        var ldr = new Loader(options);
+        var add = new InternalLoadCommand(ldr);
+        ldr.ParentEngine.Commands.AddHostCommand("add_internal", add);
+        add.VirtualFiles.Add("f1",@"
 function f1() {
     println(""f1 called"");
     // something
@@ -1314,7 +1314,7 @@ function f1() {
 }
 
 //s");
-            Compile(ldr, @"
+        Compile(ldr, @"
 declare command add_internal;
 
 function f0() {
@@ -1330,29 +1330,29 @@ function main() {
 }
 ");
 
-            Expect(15+16);
-        }
+        Expect(15+16);
+    }
 
-        [Test]
-        public void AssignMetaInBuildBlock()
-        {
-            var ldr = Compile(@"
+    [Test]
+    public void AssignMetaInBuildBlock()
+    {
+        var ldr = Compile(@"
 namespace ns {
   function fox(){}
 }
 build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(entityref_to(ns.fox).Id);");
 
-            var actualFuncId = ldr.ParentApplication.Meta["psr.test.run_test"].Text;
-            Assert.That(actualFuncId, Is.Not.Empty);
-            var pointedToFunction = ldr.ParentApplication.Functions[actualFuncId];
-            Assert.That(pointedToFunction, Is.Not.Null);
-            Assert.That(pointedToFunction.LogicalId, Does.EndWith("fox"));
-        }
+        var actualFuncId = ldr.ParentApplication.Meta["psr.test.run_test"].Text;
+        Assert.That(actualFuncId, Is.Not.Empty);
+        var pointedToFunction = ldr.ParentApplication.Functions[actualFuncId];
+        Assert.That(pointedToFunction, Is.Not.Null);
+        Assert.That(pointedToFunction.LogicalId, Does.EndWith("fox"));
+    }
         
-        [Test]
-        public void DotSeparatedMetaValues()
-        {
-            var ldr = Compile(@"
+    [Test]
+    public void DotSeparatedMetaValues()
+    {
+        var ldr = Compile(@"
 name some.module.test;
 references {
   some.module
@@ -1361,69 +1361,69 @@ references {
 function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
 ");
 
-            var meta = target.Meta;
-            Assert.That(meta, Does.ContainKey("name"));
-            Assert.That(meta, Does.ContainKey("references"));
-            Assert.That(meta["name"], Is.EqualTo(new MetaEntry("some.module.test")));
-            Assert.That(meta["references"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("some.module")})));
+        var meta = target.Meta;
+        Assert.That(meta, Does.ContainKey("name"));
+        Assert.That(meta, Does.ContainKey("references"));
+        Assert.That(meta["name"], Is.EqualTo(new MetaEntry("some.module.test")));
+        Assert.That(meta["references"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("some.module")})));
 
-            var f = target.Functions["main"];
-            Assert.That(f.Meta, Does.ContainKey("key1"));
-            Assert.That(f.Meta, Does.ContainKey("key2"));
-            Assert.That(f.Meta, Does.ContainKey("key3"));
-            Assert.That(f.Meta["key1"], Is.EqualTo(new MetaEntry("dot.separated.value")));
-            Assert.That(f.Meta["key2"], Is.EqualTo(new MetaEntry("value2")));
-            Assert.That(f.Meta["key3"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("a.b"), new MetaEntry("c")})));
-        }
+        var f = target.Functions["main"];
+        Assert.That(f.Meta, Does.ContainKey("key1"));
+        Assert.That(f.Meta, Does.ContainKey("key2"));
+        Assert.That(f.Meta, Does.ContainKey("key3"));
+        Assert.That(f.Meta["key1"], Is.EqualTo(new MetaEntry("dot.separated.value")));
+        Assert.That(f.Meta["key2"], Is.EqualTo(new MetaEntry("value2")));
+        Assert.That(f.Meta["key3"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("a.b"), new MetaEntry("c")})));
+    }
 
-        [Test]
-        public void DotNetStaticPropertyAccess()
-        {
-            Compile(@"
+    [Test]
+    public void DotNetStaticPropertyAccess()
+    {
+        Compile(@"
 add Prexonite::Compiler to Imports;
 function main {
     var x = ::SymbolInterpretations.Function;
     return x;
 }
 ");
-            Expect(SymbolInterpretations.Function);
-        }
+        Expect(SymbolInterpretations.Function);
+    }
 
-        [Test]
-        public void ErrorSingleColonInMetaValue()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void ErrorSingleColonInMetaValue()
+    {
+        CompileInvalid(@"
 // There is a typo in this declaration: single `:` instead of `::`.
 name psr::pattern:test/2.0;
 ");
-        }
+    }
 
-        [Test]
-        public void ErrorSingleColonInMetaValue2()
-        {
-            CompileInvalid(@"
+    [Test]
+    public void ErrorSingleColonInMetaValue2()
+    {
+        CompileInvalid(@"
 // There is a typo in this declaration: single `:` instead of `.` (this can happen on German keyboards)
 name psr.pattern:test/2.0;
 ");
-        }
+    }
 
-        [Test]
-        public void ErrorDoubleColonInNamespaceDecl()
-        {
-            var ldr = CompileInvalid(@"
+    [Test]
+    public void ErrorDoubleColonInNamespaceDecl()
+    {
+        var ldr = CompileInvalid(@"
 namespace a::b {
   function should_be_illegal = null;
 }
 ");
             
-            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
-            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
-        }
+        Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+        Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+    }
 
-        [Test]
-        public void ErrorDoubleColonInNamespaceImport()
-        {
-            var ldr = CompileInvalid(@"
+    [Test]
+    public void ErrorDoubleColonInNamespaceImport()
+    {
+        var ldr = CompileInvalid(@"
 namespace a.b 
 {
     function f = null;
@@ -1435,36 +1435,36 @@ namespace a.c
 }
 ");
             
-            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
-            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
-        }
+        Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+        Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+    }
 
-        [Test]
-        public void WarningUnqualifiedNamespace()
-        {
-            var ldr = new Loader(options);
-            Compile(ldr, @"
+    [Test]
+    public void WarningUnqualifiedNamespace()
+    {
+        var ldr = new Loader(options);
+        Compile(ldr, @"
 namespace import unknown;
 ");
-            Assert.That(ldr.Warnings.Where(m => m.MessageClass == MessageClasses.UnqualifiedImport), Is.Not.Empty);
-            Assert.That(ldr.Warnings.Count, Is.EqualTo(1), "Warning count");
-        }
+        Assert.That(ldr.Warnings.Where(m => m.MessageClass == MessageClasses.UnqualifiedImport), Is.Not.Empty);
+        Assert.That(ldr.Warnings.Count, Is.EqualTo(1), "Warning count");
+    }
 
-        [Test]
-        public void ErrorUnresolvedNamespace()
-        {
-            var ldr = CompileInvalid(@"
+    [Test]
+    public void ErrorUnresolvedNamespace()
+    {
+        var ldr = CompileInvalid(@"
 namespace a {}
 namespace import a.b.c;
 ");
-            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.NamespaceExcepted), Is.Not.Empty);
-            Assert.That(ldr.ErrorCount, Is.EqualTo(1));
-        }
+        Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.NamespaceExcepted), Is.Not.Empty);
+        Assert.That(ldr.ErrorCount, Is.EqualTo(1));
+    }
 
-        [Test]
-        public void ErrorDoubleColonInGlobalNamespaceImport()
-        {
-            var ldr = CompileInvalid(@"
+    [Test]
+    public void ErrorDoubleColonInGlobalNamespaceImport()
+    {
+        var ldr = CompileInvalid(@"
 namespace a.b 
 {
     function f = null;
@@ -1473,14 +1473,14 @@ namespace import a::b::f;
 function should_be_illegal = null;
 ");
             
-            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
-            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
-        }
+        Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+        Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+    }
 
-        [Test]
-        public void ErrorDoubleColonInNamespaceExport()
-        {
-            var ldr = CompileInvalid(@"
+    [Test]
+    public void ErrorDoubleColonInNamespaceExport()
+    {
+        var ldr = CompileInvalid(@"
 namespace b.c.d {
     function f = null;
 }
@@ -1490,14 +1490,14 @@ namespace a
 } export b::c;
 ");
             
-            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
-            Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
-        }
+        Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
+        Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
+    }
 
-        [Test]
-        public void CustomTypeFunctionsInNamespaces()
-        {
-            Compile(@"
+    [Test]
+    public void CustomTypeFunctionsInNamespaces()
+    {
+        Compile(@"
 namespace a.b.c {
     function create_pot(x) = ""pot($x)"";
     function static_call_pot(m, arg) = ""pot.$m($arg)"";
@@ -1512,21 +1512,21 @@ function main(x,y) {
     return [p1, p2, z, p1 is a.b.c.pot, 5 is not a.b.c.pot, ""fire"" is not a.b.c.pot];
 }
 ");
-            Expect(new List<PValue>
-            {
-                "pot(X)",
-                "Y~pot",
-                "pot.heat(X)",
-                true,
-                true,
-                true
-            }, "X", "Y");
-        }
-
-        [Test]
-        public void CustomTypeFunctionsWithDotSuffix()
+        Expect(new List<PValue>
         {
-            Compile(@"
+            "pot(X)",
+            "Y~pot",
+            "pot.heat(X)",
+            true,
+            true,
+            true
+        }, "X", "Y");
+    }
+
+    [Test]
+    public void CustomTypeFunctionsWithDotSuffix()
+    {
+        Compile(@"
 namespace a.b.c {
     function create_pot() = ""pot()"";
     function static_call_pot(m) = ""pot.$m"";
@@ -1540,22 +1540,22 @@ function main(y) {
     return [p1, p2, z, p1 is a.b.c.pot.ToString, 5 is not a.b.c.pot.ToString, ""fire"" is not a.b.c.pot.ToString];
 }
 ");
-            Expect(new List<PValue>
-            {
-                "pot()",
-                "Y~pot",
-                "pot.heat",
-                "True",
-                "True",
-                "True"
-                
-            },"Y");
-        }
-
-        [Test]
-        public void CustomTypeFunctionsInNamespacesWithTypeArgs()
+        Expect(new List<PValue>
         {
-            Compile(@"
+            "pot()",
+            "Y~pot",
+            "pot.heat",
+            "True",
+            "True",
+            "True"
+                
+        },"Y");
+    }
+
+    [Test]
+    public void CustomTypeFunctionsInNamespacesWithTypeArgs()
+    {
+        Compile(@"
 namespace a.b.c {
     function create_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = ""pot`$nT<$T1,$T2>($x)"";
     function static_call_pot(nT, T1, T2, m, arg)[pxs\supportsTypeArguments] = ""pot`$nT<$T1,$T2>.$m($arg)"";
@@ -1580,58 +1580,57 @@ function main(x,y) {
     ];
 }
 ");
-            Expect(new List<PValue>
-            {
-                "pot`2<a,b>(X)",
-                "Y~pot`2<c,d>",
-                "pot`2<e,f>.heat(X)",
-                true,
-                true,
-                true
-            }, "X", "Y");
-        }
-
-        [Test]
-        public void QuestionMarkSpliceIsInvalid()
+        Expect(new List<PValue>
         {
-            var ldr = CompileInvalid(@"
+            "pot`2<a,b>(X)",
+            "Y~pot`2<c,d>",
+            "pot`2<e,f>.heat(X)",
+            true,
+            true,
+            true
+        }, "X", "Y");
+    }
+
+    [Test]
+    public void QuestionMarkSpliceIsInvalid()
+    {
+        var ldr = CompileInvalid(@"
 function main = println(?*);
 ");
-            Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.IncompleteBinaryOperation), Is.Not.Empty);
+        Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.IncompleteBinaryOperation), Is.Not.Empty);
+    }
+
+    [ContractAnnotation("value:null=>halt")]
+    private static void _assumeNotNull(object value)
+    {
+        Assert.That(value,Is.Not.Null);
+    }
+
+    /// <summary>
+    /// A command that works in a fashion very similar to the add and requires commands
+    /// that a loader exposes in build blocks.
+    /// Needs to be initialized first.
+    /// </summary>
+    private class InternalLoadCommand : PCommand
+    {
+        [NotNull]
+        private readonly Loader _loaderReference;
+
+        public InternalLoadCommand([NotNull] Loader loaderReference)
+        {
+            _loaderReference = loaderReference;
         }
 
-        [ContractAnnotation("value:null=>halt")]
-        private static void _assumeNotNull(object value)
+        [NotNull]
+        public Dictionary<string, string> VirtualFiles { get; } = new();
+
+        public override PValue Run(StackContext sctx, PValue[] args)
         {
-            Assert.That(value,Is.Not.Null);
-        }
-
-        /// <summary>
-        /// A command that works in a fashion very similar to the add and requires commands
-        /// that a loader exposes in build blocks.
-        /// Needs to be initialized first.
-        /// </summary>
-        private class InternalLoadCommand : PCommand
-        {
-            [NotNull]
-            private readonly Loader _loaderReference;
-
-            public InternalLoadCommand([NotNull] Loader loaderReference)
-            {
-                _loaderReference = loaderReference;
-            }
-
-            [NotNull]
-            public Dictionary<string, string> VirtualFiles { get; } = new();
-
-            public override PValue Run(StackContext sctx, PValue[] args)
-            {
-                var n = args[0].CallToString(sctx);
-                var virtualFile = VirtualFiles[n];
-                using var cr = new StringReader(virtualFile);
-                _loaderReference.LoadFromReader(cr,n);
-                return PType.Null;
-            }
+            var n = args[0].CallToString(sctx);
+            var virtualFile = VirtualFiles[n];
+            using var cr = new StringReader(virtualFile);
+            _loaderReference.LoadFromReader(cr,n);
+            return PType.Null;
         }
     }
 }

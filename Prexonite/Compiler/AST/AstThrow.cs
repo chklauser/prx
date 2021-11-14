@@ -23,58 +23,57 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstThrow : AstExpr,
+    IAstHasExpressions
 {
-    public class AstThrow : AstExpr,
-                            IAstHasExpressions
+    public AstExpr Expression;
+
+    public AstThrow(string file, int line, int column)
+        : base(file, line, column)
     {
-        public AstExpr Expression;
+    }
 
-        public AstThrow(string file, int line, int column)
-            : base(file, line, column)
-        {
-        }
+    internal AstThrow(Parser p)
+        : this(p.scanner.File, p.t.line, p.t.col)
+    {
+    }
 
-        internal AstThrow(Parser p)
-            : this(p.scanner.File, p.t.line, p.t.col)
-        {
-        }
+    #region IAstHasExpressions Members
 
-        #region IAstHasExpressions Members
+    public AstExpr[] Expressions
+    {
+        get { return new[] {Expression}; }
+    }
 
-        public AstExpr[] Expressions
-        {
-            get { return new[] {Expression}; }
-        }
+    #endregion
 
-        #endregion
+    #region AstExpr Members
 
-        #region AstExpr Members
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        expr = null;
+        return false;
+    }
 
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            expr = null;
-            return false;
-        }
-
-        #endregion
+    #endregion
 
 
-        public override string ToString()
-        {
-            return "throw " + (Expression.ToString() ?? "");
-        }
+    public override string ToString()
+    {
+        return "throw " + (Expression.ToString() ?? "");
+    }
 
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            if (Expression == null)
-                throw new PrexoniteException("Expression must be assigned.");
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        if (Expression == null)
+            throw new PrexoniteException("Expression must be assigned.");
 
-            Expression.EmitValueCode(target);
-            target.Emit(Position,OpCode.@throw);
+        Expression.EmitValueCode(target);
+        target.Emit(Position,OpCode.@throw);
 
-            if (stackSemantics == StackSemantics.Value)
-                target.Emit(Position,OpCode.ldc_null);
-        }
+        if (stackSemantics == StackSemantics.Value)
+            target.Emit(Position,OpCode.ldc_null);
     }
 }

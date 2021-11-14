@@ -23,26 +23,25 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+/// <summary>
+///     Provides source position information.
+/// </summary>
+public interface ISourcePosition
 {
     /// <summary>
-    ///     Provides source position information.
+    ///     The source file that declared this object.
     /// </summary>
-    public interface ISourcePosition
-    {
-        /// <summary>
-        ///     The source file that declared this object.
-        /// </summary>
-        string File { get; }
+    string File { get; }
 
-        /// <summary>
-        ///     The line in the source file that declared this object.
-        /// </summary>
-        int Line { get; }
+    /// <summary>
+    ///     The line in the source file that declared this object.
+    /// </summary>
+    int Line { get; }
 
-        /// <summary>
-        ///     The column in the source file that declared this object.
-        /// </summary>
-        int Column { get; }
-    }
+    /// <summary>
+    ///     The column in the source file that declared this object.
+    /// </summary>
+    int Column { get; }
 }

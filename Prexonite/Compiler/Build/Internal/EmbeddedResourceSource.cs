@@ -4,34 +4,33 @@ using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Build.Internal
+namespace Prexonite.Compiler.Build.Internal;
+
+public class EmbeddedResourceSource : ISource
 {
-    public class EmbeddedResourceSource : ISource
+    [NotNull] private readonly Assembly _assembly;
+    [NotNull] private readonly string _name;
+    [NotNull] private readonly Encoding _encoding;
+
+    public EmbeddedResourceSource([NotNull] Assembly assembly, [NotNull] string name, [CanBeNull] Encoding encoding = null)
     {
-        [NotNull] private readonly Assembly _assembly;
-        [NotNull] private readonly string _name;
-        [NotNull] private readonly Encoding _encoding;
+        _assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
+        _name = name ?? throw new ArgumentNullException(nameof(name));
+        _encoding = encoding ?? Encoding.UTF8;
+    }
 
-        public EmbeddedResourceSource([NotNull] Assembly assembly, [NotNull] string name, [CanBeNull] Encoding encoding = null)
+    public bool CanOpen => true;
+    public bool IsSingleUse => false;
+    public bool TryOpen(out TextReader reader)
+    {
+        var stream = _assembly.GetManifestResourceStream(_name);
+        if(stream == null)
         {
-            _assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
-            _name = name ?? throw new ArgumentNullException(nameof(name));
-            _encoding = encoding ?? Encoding.UTF8;
+            reader = null;
+            return false;
         }
 
-        public bool CanOpen => true;
-        public bool IsSingleUse => false;
-        public bool TryOpen(out TextReader reader)
-        {
-            var stream = _assembly.GetManifestResourceStream(_name);
-            if(stream == null)
-            {
-                reader = null;
-                return false;
-            }
-
-            reader = new StreamReader(stream, _encoding, false, 4096, false);
-            return true;
-        }
+        reader = new StreamReader(stream, _encoding, false, 4096, false);
+        return true;
     }
 }

@@ -29,25 +29,24 @@ using System.Diagnostics.CodeAnalysis;
 
 #nullable enable
 
-namespace Prexonite
+namespace Prexonite;
+
+public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: class
 {
-    public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: class
+    bool TryGet(string id, [NotNullWhen(true)] out T? value);
+    bool IsEmpty { get; }
+}
+
+public static class SymbolViewExtensions
+{
+    public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue) where T: class
     {
-        bool TryGet(string id, [NotNullWhen(true)] out T? value);
-        bool IsEmpty { get; }
+        return view.TryGet(key, out var result) ? result : defaultValue;
     }
 
-    public static class SymbolViewExtensions
+    public static bool Contains<T>(this ISymbolView<T> view, string key) where T: class
     {
-        public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue) where T: class
-        {
-            return view.TryGet(key, out var result) ? result : defaultValue;
-        }
-
-        public static bool Contains<T>(this ISymbolView<T> view, string key) where T: class
-        {
-            return view.TryGet(key, out var dummy);
-        }
+        return view.TryGet(key, out var dummy);
+    }
  
-    }
 }

@@ -31,125 +31,124 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 
-namespace PrexoniteTests.Tests.Configurations
+namespace PrexoniteTests.Tests.Configurations;
+
+internal abstract class UnitTestConfiguration
 {
-    internal abstract class UnitTestConfiguration
+    public class InMemory : UnitTestConfiguration
     {
-        public class InMemory : UnitTestConfiguration
+    }
+
+    public class FromStored : UnitTestConfiguration
+    {
+        public FromStored()
         {
+            throw new NotSupportedException("Store round-tripping is not currently implemented.");
         }
 
-        public class FromStored : UnitTestConfiguration
+        internal override void Configure(TestModel model, ScriptedUnitTestContainer container)
         {
-            public FromStored()
-            {
-                throw new NotSupportedException("Store round-tripping is not currently implemented.");
-            }
-
-            internal override void Configure(TestModel model, ScriptedUnitTestContainer container)
-            {
-                // Rewire the units under test to point to stored representations
-                var originalUnits = model.UnitsUnderTest.ToList();
-                var storedNameMap = originalUnits.ToDictionary(td => td.ScriptName,
-                    td =>
-                    {
-                        var ext = Path.GetExtension(td.ScriptName);
-                        var extLen = ext?.Length ?? 0;
-                        var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
-                        return $"{baseName}~-stored{ext}";
-                    });
-
-                model.UnitsUnderTest = model.UnitsUnderTest.Select(td => new TestDependency
+            // Rewire the units under test to point to stored representations
+            var originalUnits = model.UnitsUnderTest.ToList();
+            var storedNameMap = originalUnits.ToDictionary(td => td.ScriptName,
+                td =>
                 {
-                    ScriptName = storedNameMap[td.ScriptName],
-                    Dependencies = td.Dependencies.Select(d => storedNameMap[d]).ToArray()
-                }).ToArray();
-
-                // Configure the test as per usual
-                base.Configure(model, container);
-            }
-
-        }
-
-        protected UnitTestConfiguration()
-        {
-            Linking = FunctionLinking.FullyStatic;
-            CompileToCil = false;
-        }
-
-        public FunctionLinking Linking { get; set; }
-        public bool CompileToCil { get; set; }
-
-        /// <summary>
-        /// Executed as the last step of loading, immediately before the actual test methods are executed.
-        /// </summary>
-        /// <param name="runner">The container under which the test is being executed.</param>
-        private void _prepareExecution(ScriptedUnitTestContainer runner)
-        {
-            if (CompileToCil)
-                Compiler.Compile(runner.Application, runner.Engine, Linking);
-        }
-
-        protected static void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
-        {
-            ModuleCache.Describe(container.Loader,new TestDependency
-                {
-                    ScriptName = ScriptedUnitTestContainer.PrexoniteUnitTestFramework
+                    var ext = Path.GetExtension(td.ScriptName);
+                    var extLen = ext?.Length ?? 0;
+                    var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
+                    return $"{baseName}~-stored{ext}";
                 });
+
+            model.UnitsUnderTest = model.UnitsUnderTest.Select(td => new TestDependency
+            {
+                ScriptName = storedNameMap[td.ScriptName],
+                Dependencies = td.Dependencies.Select(d => storedNameMap[d]).ToArray()
+            }).ToArray();
+
+            // Configure the test as per usual
+            base.Configure(model, container);
         }
+
+    }
+
+    protected UnitTestConfiguration()
+    {
+        Linking = FunctionLinking.FullyStatic;
+        CompileToCil = false;
+    }
+
+    public FunctionLinking Linking { get; set; }
+    public bool CompileToCil { get; set; }
+
+    /// <summary>
+    /// Executed as the last step of loading, immediately before the actual test methods are executed.
+    /// </summary>
+    /// <param name="runner">The container under which the test is being executed.</param>
+    private void _prepareExecution(ScriptedUnitTestContainer runner)
+    {
+        if (CompileToCil)
+            Compiler.Compile(runner.Application, runner.Engine, Linking);
+    }
+
+    protected static void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
+    {
+        ModuleCache.Describe(container.Loader,new TestDependency
+        {
+            ScriptName = ScriptedUnitTestContainer.PrexoniteUnitTestFramework
+        });
+    }
 
 // ReSharper disable InconsistentNaming
-        internal virtual void Configure(TestModel model, ScriptedUnitTestContainer container)
+    internal virtual void Configure(TestModel model, ScriptedUnitTestContainer container)
 // ReSharper restore InconsistentNaming
+    {
+        // describe units under test
+        foreach (var unit in model.UnitsUnderTest)
+            ModuleCache.Describe(container.Loader, unit);
+
+        // describe unit testing framework
+        LoadUnitTestingFramework(container);
+
+        // describe unit testing extensions
+        foreach(var extension in model.TestDependencies)
+            ModuleCache.Describe(container.Loader, extension);
+
+        // describe test suite
+        var suiteDependencies =
+            model.UnitsUnderTest
+                .Append(model.TestDependencies)
+                .Select(d => d.ScriptName)
+                .Append(ScriptedUnitTestContainer.PrexoniteUnitTestFramework)
+                .ToArray();
+        var suiteDescription = new TestDependency
         {
-            // describe units under test
-            foreach (var unit in model.UnitsUnderTest)
-                ModuleCache.Describe(container.Loader, unit);
+            ScriptName = model.TestSuiteScript, Dependencies = suiteDependencies
+        };
+        ModuleCache.Describe(container.Loader, suiteDescription);
 
-            // describe unit testing framework
-            LoadUnitTestingFramework(container);
+        // Finally instantiate the test suite application(s)
+        var (application, target) = ModuleCache.Load(model.TestSuiteScript);
+        container.Application = application;
+        container.PrintCompound();
 
-            // describe unit testing extensions
-            foreach(var extension in model.TestDependencies)
-                ModuleCache.Describe(container.Loader, extension);
+        if (!target.IsSuccessful)
+        {
+            container.OneTimeSetupLog.WriteLine("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
 
-            // describe test suite
-            var suiteDependencies =
-                model.UnitsUnderTest
-                    .Append(model.TestDependencies)
-                    .Select(d => d.ScriptName)
-                    .Append(ScriptedUnitTestContainer.PrexoniteUnitTestFramework)
-                    .ToArray();
-            var suiteDescription = new TestDependency
-                {
-                    ScriptName = model.TestSuiteScript, Dependencies = suiteDependencies
-                };
-            ModuleCache.Describe(container.Loader, suiteDescription);
+            if(target.Exception != null)
+                container.OneTimeSetupLog.WriteLine(target.Exception);
 
-            // Finally instantiate the test suite application(s)
-            var (application, target) = ModuleCache.Load(model.TestSuiteScript);
-            container.Application = application;
-            container.PrintCompound();
+            foreach (var error in target.Messages.Where(m => m.Severity == MessageSeverity.Error))
+                container.OneTimeSetupLog.WriteLine("Error: {0}", error);
+            foreach (var warning in target.Messages.Where(m => m.Severity == MessageSeverity.Warning))
+                container.OneTimeSetupLog.WriteLine("Warning: {0}", warning);
+            foreach (var info in target.Messages.Where(m => m.Severity == MessageSeverity.Info))
+                container.OneTimeSetupLog.WriteLine("Info: {0}", info);
 
-            if (!target.IsSuccessful)
-            {
-                container.OneTimeSetupLog.WriteLine("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
-
-                if(target.Exception != null)
-                    container.OneTimeSetupLog.WriteLine(target.Exception);
-
-                foreach (var error in target.Messages.Where(m => m.Severity == MessageSeverity.Error))
-                    container.OneTimeSetupLog.WriteLine("Error: {0}", error);
-                foreach (var warning in target.Messages.Where(m => m.Severity == MessageSeverity.Warning))
-                    container.OneTimeSetupLog.WriteLine("Warning: {0}", warning);
-                foreach (var info in target.Messages.Where(m => m.Severity == MessageSeverity.Info))
-                    container.OneTimeSetupLog.WriteLine("Info: {0}", info);
-
-                TestContext.WriteLine(container.OneTimeSetupLog);
-                Assert.Fail("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
-            }
-
-            _prepareExecution(container);
+            TestContext.WriteLine(container.OneTimeSetupLog);
+            Assert.Fail("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
         }
+
+        _prepareExecution(container);
     }
 }

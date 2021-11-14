@@ -26,26 +26,25 @@
 using System;
 using System.Diagnostics.Contracts;
 
-namespace Prexonite
+namespace Prexonite;
+
+public class CombinedSymbolProxy<T>
 {
-    public class CombinedSymbolProxy<T>
+    private CombinedSymbolProxy(ISymbolTable<T>[] tables)
     {
-        private CombinedSymbolProxy(ISymbolTable<T>[] tables)
-        {
-            Contract.Requires<ArgumentNullException>(tables != null);
-            Contract.Requires(tables.Length > 0,"A CombinedSymbolProxy needs to be backed by at least one SymbolTable. (Array was empty)");
+        Contract.Requires<ArgumentNullException>(tables != null);
+        Contract.Requires(tables.Length > 0,"A CombinedSymbolProxy needs to be backed by at least one SymbolTable. (Array was empty)");
 
-            var copy = new ISymbolTable<T>[tables.Length];
-            Array.Copy(tables, copy, tables.Length);
-            _tables = tables;
-        }
-
-        public static CombinedSymbolProxy<T> CreateHierarchy(params ISymbolTable<T>[] tableHierarchy)
-        {
-            return new(tableHierarchy);
-        }
-
-        private readonly ISymbolTable<T>[] _tables;
-        protected ISymbolTable<T> TargetTable => _tables[^1];
+        var copy = new ISymbolTable<T>[tables.Length];
+        Array.Copy(tables, copy, tables.Length);
+        _tables = tables;
     }
+
+    public static CombinedSymbolProxy<T> CreateHierarchy(params ISymbolTable<T>[] tableHierarchy)
+    {
+        return new(tableHierarchy);
+    }
+
+    private readonly ISymbolTable<T>[] _tables;
+    protected ISymbolTable<T> TargetTable => _tables[^1];
 }

@@ -29,87 +29,86 @@ using System.Text;
 using JetBrains.Annotations;
 using Prexonite.Properties;
 
-namespace Prexonite.Compiler.Build.Internal
+namespace Prexonite.Compiler.Build.Internal;
+
+internal class StreamSource : ISource, IDisposable
 {
-    internal class StreamSource : ISource, IDisposable
+    private readonly Encoding _encoding;
+    private readonly bool _forceSingleUse;
+    private Stream _stream;
+
+    public StreamSource([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
     {
-        private readonly Encoding _encoding;
-        private readonly bool _forceSingleUse;
-        private Stream _stream;
+        if (stream == null)
+            throw new ArgumentNullException(nameof(stream));
+        if(!stream.CanRead)
+            throw new ArgumentException(Resources.Exception_StreamSource_CannotUseWriteOnlyStream, nameof(stream));
 
-        public StreamSource([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
-        {
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
-            if(!stream.CanRead)
-                throw new ArgumentException(Resources.Exception_StreamSource_CannotUseWriteOnlyStream, nameof(stream));
-
-            _stream = stream;
-            _encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
-            _forceSingleUse = forceSingleUse;
-        }
-
-        #region Implementation of ISource
-
-        public bool CanOpen
-        {
-            get
-            {
-                var stream = _stream;
-                return stream != null && stream.CanRead;
-            }
-        }
-
-        public bool IsSingleUse => _forceSingleUse || _stream == null || !_stream.CanSeek;
-
-        public bool TryOpen(out TextReader reader)
-        {
-            object streamObject = _stream;
-            if(_stream == null)
-            {
-                reader = null;
-                return false;
-            }
-            else
-            {
-                lock (streamObject)
-                {
-                    if(_stream == null)
-                    {
-                        reader = null;
-                        return false;
-                    }
-                    else
-                    {
-                        reader = new StreamReader(_stream,_encoding);
-                        if (IsSingleUse)
-                            _stream = null;
-                        return true;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region Implementation of IDisposable
-
-        public void Dispose()
-        {
-            var d = _stream;
-            if(d != null)
-            {
-                lock (d)
-                {
-                    if (_stream != null)
-                    {
-                        _stream.Dispose();
-                        _stream = null;
-                    }
-                }
-            }
-        }
-
-        #endregion
+        _stream = stream;
+        _encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
+        _forceSingleUse = forceSingleUse;
     }
+
+    #region Implementation of ISource
+
+    public bool CanOpen
+    {
+        get
+        {
+            var stream = _stream;
+            return stream != null && stream.CanRead;
+        }
+    }
+
+    public bool IsSingleUse => _forceSingleUse || _stream == null || !_stream.CanSeek;
+
+    public bool TryOpen(out TextReader reader)
+    {
+        object streamObject = _stream;
+        if(_stream == null)
+        {
+            reader = null;
+            return false;
+        }
+        else
+        {
+            lock (streamObject)
+            {
+                if(_stream == null)
+                {
+                    reader = null;
+                    return false;
+                }
+                else
+                {
+                    reader = new StreamReader(_stream,_encoding);
+                    if (IsSingleUse)
+                        _stream = null;
+                    return true;
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Implementation of IDisposable
+
+    public void Dispose()
+    {
+        var d = _stream;
+        if(d != null)
+        {
+            lock (d)
+            {
+                if (_stream != null)
+                {
+                    _stream.Dispose();
+                    _stream = null;
+                }
+            }
+        }
+    }
+
+    #endregion
 }

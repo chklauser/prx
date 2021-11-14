@@ -26,95 +26,94 @@
 using System;
 using Prexonite.Types;
 
-namespace Prexonite
+namespace Prexonite;
+
+public class Continuation : Closure
 {
-    public class Continuation : Closure
+    public int EntryOffset { get; }
+
+    public SymbolTable<PValue> State { get; }
+
+    public PValue[] Stack { get; }
+
+    public Continuation(FunctionContext fctx)
+        : base(fctx.Implementation, _getSharedVariables(fctx))
     {
-        public int EntryOffset { get; }
+        EntryOffset = fctx.Pointer; //Pointer must already be incremented
+        State = new SymbolTable<PValue>(fctx.LocalVariables.Count);
+        foreach (var variable in fctx.LocalVariables)
+            State[variable.Key] = variable.Value.Value;
+        var stack = new PValue[fctx.StackSize];
+        for (var i = 0; i < stack.Length; i++)
+            stack[i] = fctx.Pop();
+        Stack = stack;
+        _populateStack(fctx);
+    }
 
-        public SymbolTable<PValue> State { get; }
-
-        public PValue[] Stack { get; }
-
-        public Continuation(FunctionContext fctx)
-            : base(fctx.Implementation, _getSharedVariables(fctx))
+    private void _populateStack(FunctionContext fctx)
+    {
+        for (var i = Stack.Length - 1; i >= 0; i--)
         {
-            EntryOffset = fctx.Pointer; //Pointer must already be incremented
-            State = new SymbolTable<PValue>(fctx.LocalVariables.Count);
-            foreach (var variable in fctx.LocalVariables)
-                State[variable.Key] = variable.Value.Value;
-            var stack = new PValue[fctx.StackSize];
-            for (var i = 0; i < stack.Length; i++)
-                stack[i] = fctx.Pop();
-            Stack = stack;
-            _populateStack(fctx);
+            fctx.Push(Stack[i]);
         }
+    }
 
-        private void _populateStack(FunctionContext fctx)
+    private static PVariable[] _getSharedVariables(FunctionContext fctx)
+    {
+        var metaTable = fctx.Implementation.Meta;
+        if (!(metaTable.TryGetValue(PFunction.SharedNamesKey, out var entry) && entry.IsList))
         {
-            for (var i = Stack.Length - 1; i >= 0; i--)
-            {
-                fctx.Push(Stack[i]);
-            }
+            return Array.Empty<PVariable>();
         }
-
-        private static PVariable[] _getSharedVariables(FunctionContext fctx)
+        var sharedNames = entry.List;
+        var sharedVariables = new PVariable[sharedNames.Length];
+        for (var i = 0; i < sharedNames.Length; i++)
         {
-            var metaTable = fctx.Implementation.Meta;
-            if (!(metaTable.TryGetValue(PFunction.SharedNamesKey, out var entry) && entry.IsList))
-            {
-                return Array.Empty<PVariable>();
-            }
-            var sharedNames = entry.List;
-            var sharedVariables = new PVariable[sharedNames.Length];
-            for (var i = 0; i < sharedNames.Length; i++)
-            {
-                var name = sharedNames[i].Text;
-                sharedVariables[i] = fctx.LocalVariables[name];
-            }
-            return sharedVariables;
+            var name = sharedNames[i].Text;
+            sharedVariables[i] = fctx.LocalVariables[name];
         }
+        return sharedVariables;
+    }
 
-        public override PValue IndirectCall(StackContext sctx, PValue[] args)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
+    public override PValue IndirectCall(StackContext sctx, PValue[] args)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
 
-            var fctx = CreateFunctionContext(sctx, args);
+        var fctx = CreateFunctionContext(sctx, args);
 
-            //run the continuation
-            return sctx.ParentEngine.Process(fctx);
-        }
+        //run the continuation
+        return sctx.ParentEngine.Process(fctx);
+    }
 
-        public override FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
-        {
-            PValue returnValue;
-            if (args.Length < 1)
-                returnValue = PType.Null.CreatePValue();
-            else
-                returnValue = args[0];
+    public override FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
+    {
+        PValue returnValue;
+        if (args.Length < 1)
+            returnValue = PType.Null.CreatePValue();
+        else
+            returnValue = args[0];
 
-            var fctx = base.CreateFunctionContext(sctx, args);
+        var fctx = base.CreateFunctionContext(sctx, args);
 
-            //restore state
-            fctx.Pointer = EntryOffset;
+        //restore state
+        fctx.Pointer = EntryOffset;
 
-            _populateStack(fctx);
+        _populateStack(fctx);
 
-            foreach (var variable in State)
-                fctx.LocalVariables[variable.Key].Value = variable.Value;
+        foreach (var variable in State)
+            fctx.LocalVariables[variable.Key].Value = variable.Value;
 
-            //insert the value returned by the called function
-            fctx.Push(returnValue);
+        //insert the value returned by the called function
+        fctx.Push(returnValue);
 
-            return fctx;
-        }
+        return fctx;
+    }
 
-        public override string ToString()
-        {
-            return "Continuation(" + Function.Id + ")";
-        }
+    public override string ToString()
+    {
+        return "Continuation(" + Function.Id + ")";
     }
 }

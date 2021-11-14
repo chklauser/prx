@@ -25,14 +25,13 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using Prexonite.Compiler;
 
-namespace Prexonite.Internal
+namespace Prexonite.Internal;
+
+internal interface IScanner
 {
-    internal interface IScanner
-    {
-        Token Scan();
-        Token Peek();
-        void ResetPeek();
-        string File { get; }
-        void Abort();
-    }
+    Token Scan();
+    Token Peek();
+    void ResetPeek();
+    string File { get; }
+    void Abort();
 }

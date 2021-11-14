@@ -25,20 +25,19 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using Prexonite.Types;
 
-namespace Prexonite.Internal
+namespace Prexonite.Internal;
+
+internal partial class Parser
 {
-    internal partial class Parser
+    internal Parser(IScanner scanner, StackContext sctx)
+        : this(scanner)
     {
-        internal Parser(IScanner scanner, StackContext sctx)
-            : this(scanner)
-        {
-            Sctx = sctx;
-        }
-
-        public StackContext Sctx { get; }
-
-        private PType _lastType;
-
-        public PType LastType => _lastType;
+        Sctx = sctx;
     }
+
+    public StackContext Sctx { get; }
+
+    private PType _lastType;
+
+    public PType LastType => _lastType;
 }

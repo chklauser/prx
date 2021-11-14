@@ -41,15 +41,15 @@ using Prexonite.Modular;
 using Prexonite.Types;
 using PrexoniteTests.Tests;
 
-namespace Prx.Tests
+namespace Prx.Tests;
+
+public abstract partial class VMTests : VMTestsBase
 {
-    public abstract partial class VMTests : VMTestsBase
+    [Test]
+    public void CallSubMacroCommandNested()
     {
-        [Test]
-        public void CallSubMacroCommandNested()
-        {
-            CompileInvalid(
-                @"
+        CompileInvalid(
+            @"
 function main(xs)
 {
     var zs = [];
@@ -69,17 +69,17 @@ function main(xs)
     return zs.ToString();
 }
 ",
-                CallSub.Alias, "expression");
+            CallSub.Alias, "expression");
 
-            //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
-            //Expect("[ 4, 10, 16 ]", (PValue)xs);
-        }
+        //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+        //Expect("[ 4, 10, 16 ]", (PValue)xs);
+    }
 
-        [Test]
-        public void CallSubMacroCommandTopLevel()
-        {
-            Compile(
-                @"
+    [Test]
+    public void CallSubMacroCommandTopLevel()
+    {
+        Compile(
+            @"
 var zs = [];
 function main(x1,x2,x3)
 {
@@ -99,39 +99,39 @@ function main(x1,x2,x3)
     return zs.ToString();
 }
 ");
-            Func<List<PValue>> getZs = () =>
-                {
-                    var pv = target.Variables["zs"].Value.Value as List<PValue>;
-                    return pv ?? new List<PValue>(0);
-                };
-            Action resetZs = () => getZs().Clear();
-
-            Expect("[ 4, 10 ]", 1, 3);
-            resetZs();
-
-            ExpectNull(2, 4, 8);
-            Assert.AreEqual(0, getZs().Count);
-            resetZs();
-
-            ExpectNull(1, 8, 8);
-            var zs = getZs();
-            Assert.AreEqual(1, zs.Count);
-            AssertPValuesAreEqual(4, zs[0]);
-            resetZs();
-
-            ExpectNull(1, 3, 8);
-            zs = getZs();
-            Assert.AreEqual(2, zs.Count);
-            AssertPValuesAreEqual(4, zs[0]);
-            AssertPValuesAreEqual(10, zs[1]);
-            resetZs();
-        }
-
-        [Test]
-        public void CallSubMinimal()
+        Func<List<PValue>> getZs = () =>
         {
-            Compile(
-                @"
+            var pv = target.Variables["zs"].Value.Value as List<PValue>;
+            return pv ?? new List<PValue>(0);
+        };
+        Action resetZs = () => getZs().Clear();
+
+        Expect("[ 4, 10 ]", 1, 3);
+        resetZs();
+
+        ExpectNull(2, 4, 8);
+        Assert.AreEqual(0, getZs().Count);
+        resetZs();
+
+        ExpectNull(1, 8, 8);
+        var zs = getZs();
+        Assert.AreEqual(1, zs.Count);
+        AssertPValuesAreEqual(4, zs[0]);
+        resetZs();
+
+        ExpectNull(1, 3, 8);
+        zs = getZs();
+        Assert.AreEqual(2, zs.Count);
+        AssertPValuesAreEqual(4, zs[0]);
+        AssertPValuesAreEqual(10, zs[1]);
+        resetZs();
+    }
+
+    [Test]
+    public void CallSubMinimal()
+    {
+        Compile(
+            @"
 function f(x)
 {
     return x;
@@ -144,14 +144,14 @@ function main()
 }
 ");
 
-            Expect(2);
-        }
+        Expect(2);
+    }
 
-        [Test]
-        public void CallSubMinimalReturn()
-        {
-            Compile(
-                @"
+    [Test]
+    public void CallSubMinimalReturn()
+    {
+        Compile(
+            @"
 function f()
 {
     return 1;
@@ -167,14 +167,14 @@ function main()
 }
 ");
 
-            Expect(1);
-        }
+        Expect(1);
+    }
 
-        [Test]
-        public void CallSubOfPartial()
-        {
-            CompileInvalid(
-                @"
+    [Test]
+    public void CallSubOfPartial()
+    {
+        CompileInvalid(
+            @"
 function main(xs,y)
 {
     var zs = [];
@@ -194,18 +194,18 @@ function main(xs,y)
     return zs.ToString();
 }
 ",
-                CallSub.Alias, "expression");
+            CallSub.Alias, "expression");
 
-            //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
-            //Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
-            //Expect("[ 4, 10 ]", (PValue)xs, 4);
-        }
+        //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+        //Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
+        //Expect("[ 4, 10 ]", (PValue)xs, 4);
+    }
 
-        [Test]
-        public void CaptureUnmentionedMacroVariable()
-        {
-            Compile(
-                @"
+    [Test]
+    public void CaptureUnmentionedMacroVariable()
+    {
+        Compile(
+            @"
     macro echo() 
     {
         var f = (x) => 
@@ -225,21 +225,21 @@ function main(xs,y)
         return x;
     }
 ");
-            var clo = target.Functions["echo\\0"];
-            Assert.IsNotNull(clo, "Closure must exist.");
-            Assert.IsTrue(clo.Meta.ContainsKey(PFunction.SharedNamesKey));
-            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
-            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
-                MacroAliases.ContextAlias);
+        var clo = target.Functions["echo\\0"];
+        Assert.IsNotNull(clo, "Closure must exist.");
+        Assert.IsTrue(clo.Meta.ContainsKey(PFunction.SharedNamesKey));
+        Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
+        Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
+            MacroAliases.ContextAlias);
 
-            Expect(15, Array.Empty<PValue>());
-        }
+        Expect(15, Array.Empty<PValue>());
+    }
 
-        [Test]
-        public void MacroTransport()
-        {
-            Compile(
-                @"
+    [Test]
+    public void MacroTransport()
+    {
+        Compile(
+            @"
 macro echo(lst)
 {
     lst = macro\unpack(lst);
@@ -267,15 +267,15 @@ function main2()
 }
 ");
 
-            Expect(1 + 2 + 3 + 4 + 4);
-            ExpectNamed("main2", 1 + 2 + 3 + 4 + 5 + 5);
-        }
+        Expect(1 + 2 + 3 + 4 + 4);
+        ExpectNamed("main2", 1 + 2 + 3 + 4 + 5 + 5);
+    }
 
-        [Test]
-        public void CallMacroOnFunction()
-        {
-            Compile(
-                @"
+    [Test]
+    public void CallMacroOnFunction()
+    {
+        Compile(
+            @"
 macro __append(con)
 {
     var c = con.Constant + ""__"";
@@ -320,35 +320,35 @@ function main(x,y)
 }
 ");
 
-            Expect(new List<PValue>
-                {
-                    "a__xXx__b",
-                    "a__xXx__b",
-                    "a__xXx__=b",
-                    "a__xXx__jeb",
-                    "a__xXx__b",
-                    "a__xXx__jeb",
-                    "a__xXx__b",
-                    "a__xXx__je=b",
-                    "a__xXx__=b"
-                }, "a", "b");
-
-            if (CompileToCil)
-            {
-                var surround = target.Functions["__surround"];
-                Assert.That(surround, Is.Not.Null, "Function __surround does not exist.");
-                Assert.That(surround.Meta[PFunction.VolatileKey].Switch,
-                    Is.False,
-                    $"Function {surround.Id} is volatile. Reason: {surround.Meta[PFunction.DeficiencyKey].Text}");
-            }
-        }
-
-
-        [Test,Ignore("TODO: figure out why this is ignored")]
-        public void PartialCallMacroOnFunction()
+        Expect(new List<PValue>
         {
-            Compile(
-                @"
+            "a__xXx__b",
+            "a__xXx__b",
+            "a__xXx__=b",
+            "a__xXx__jeb",
+            "a__xXx__b",
+            "a__xXx__jeb",
+            "a__xXx__b",
+            "a__xXx__je=b",
+            "a__xXx__=b"
+        }, "a", "b");
+
+        if (CompileToCil)
+        {
+            var surround = target.Functions["__surround"];
+            Assert.That(surround, Is.Not.Null, "Function __surround does not exist.");
+            Assert.That(surround.Meta[PFunction.VolatileKey].Switch,
+                Is.False,
+                $"Function {surround.Id} is volatile. Reason: {surround.Meta[PFunction.DeficiencyKey].Text}");
+        }
+    }
+
+
+    [Test,Ignore("TODO: figure out why this is ignored")]
+    public void PartialCallMacroOnFunction()
+    {
+        Compile(
+            @"
 macro __append(con)
 {
     var c = con.Constant + ""__"";
@@ -424,24 +424,24 @@ function main(x,y)
 }
 ");
 
-            Expect(new List<PValue>
-                {
-                    "a__xXx__b",
-                    "a__xXx__b",
-                    "a__xXx__=b",
-                    "a__xXx__jeb",
-                    "a__xXx__b",
-                    "a__xXx__jeb",
-                    "a__xXx__b",
-                    "a__xXx__je=b",
-                    "a__xXx__=b"
-                }, "a", "b");
-        }
-
-        [Test]
-        public void AstIsExpand()
+        Expect(new List<PValue>
         {
-            Compile(@"
+            "a__xXx__b",
+            "a__xXx__b",
+            "a__xXx__=b",
+            "a__xXx__jeb",
+            "a__xXx__b",
+            "a__xXx__jeb",
+            "a__xXx__b",
+            "a__xXx__je=b",
+            "a__xXx__=b"
+        }, "a", "b");
+    }
+
+    [Test]
+    public void AstIsExpand()
+    {
+        Compile(@"
 var uniq\\node_t6;
 
 function ast_is_Expand(node_arg)
@@ -479,10 +479,9 @@ var tmpp0
 
 function main(n) = ast_is_Expand(n);");
 
-            Expect(true,
-                   sctx.CreateNativePValue(new AstExpand(NoSourcePosition.Instance,
-                                                         EntityRef.MacroCommand.Create("call\\macro"), PCall.Get)));
+        Expect(true,
+            sctx.CreateNativePValue(new AstExpand(NoSourcePosition.Instance,
+                EntityRef.MacroCommand.Create("call\\macro"), PCall.Get)));
 
-        }
     }
 }

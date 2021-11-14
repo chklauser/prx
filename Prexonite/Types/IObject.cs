@@ -23,11 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Types
+namespace Prexonite.Types;
+
+public interface IObject
 {
-    public interface IObject
-    {
-        bool TryDynamicCall(
-            StackContext sctx, PValue[] args, PCall call, string id, out PValue result);
-    }
+    bool TryDynamicCall(
+        StackContext sctx, PValue[] args, PCall call, string id, out PValue result);
 }

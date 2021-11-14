@@ -26,38 +26,37 @@
 using System;
 using Prexonite.Compiler;
 
-namespace Prexonite.Commands.Core
-{
-    /// <summary>
-    ///     A command that aids in generating debug output. Best used in conjunction with the <see cref = "DebugHook" />.
-    /// </summary>
-    public class Debug : PCommand
-    {
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            args ??= Array.Empty<PValue>();
-            if (!(sctx is FunctionContext fctx))
-                return false;
-            var debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);
-            var println = sctx.ParentEngine.Commands[Engine.PrintLineAlias];
-            if (debugging)
-                foreach (var arg in args)
-                {
-                    println.Run(
-                        sctx, new PValue[] {string.Concat("DEBUG ??? = ", arg.CallToString(sctx))});
-                }
-            return debugging;
-        }
+namespace Prexonite.Commands.Core;
 
-        /// <summary>
-        ///     A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>
-        ///     Pure commands can be applied at compile time.
-        /// </remarks>
-        [Obsolete]
-        public override bool IsPure => false;
+/// <summary>
+///     A command that aids in generating debug output. Best used in conjunction with the <see cref = "DebugHook" />.
+/// </summary>
+public class Debug : PCommand
+{
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        args ??= Array.Empty<PValue>();
+        if (!(sctx is FunctionContext fctx))
+            return false;
+        var debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);
+        var println = sctx.ParentEngine.Commands[Engine.PrintLineAlias];
+        if (debugging)
+            foreach (var arg in args)
+            {
+                println.Run(
+                    sctx, new PValue[] {string.Concat("DEBUG ??? = ", arg.CallToString(sctx))});
+            }
+        return debugging;
     }
+
+    /// <summary>
+    ///     A flag indicating whether the command acts like a pure function.
+    /// </summary>
+    /// <remarks>
+    ///     Pure commands can be applied at compile time.
+    /// </remarks>
+    [Obsolete]
+    public override bool IsPure => false;
 }

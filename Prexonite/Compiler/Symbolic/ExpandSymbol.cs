@@ -26,49 +26,48 @@
 using System.Diagnostics;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+[DebuggerDisplay("{ToString()}")]
+public sealed class ExpandSymbol : WrappingSymbol
 {
-    [DebuggerDisplay("{ToString()}")]
-    public sealed class ExpandSymbol : WrappingSymbol
+    public override string ToString()
     {
-        public override string ToString()
-        {
-            return $"expand {InnerSymbol}";
-        }
+        return $"expand {InnerSymbol}";
+    }
 
-        [NotNull]
-        internal static ExpandSymbol _Create([NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
-        {
-            return new(position ?? inner.Position, inner);
-        }
+    [NotNull]
+    internal static ExpandSymbol _Create([NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
+    {
+        return new(position ?? inner.Position, inner);
+    }
 
-        private ExpandSymbol([NotNull] ISourcePosition position, [NotNull] Symbol inner) : base(position, inner)
-        {
-        }
+    private ExpandSymbol([NotNull] ISourcePosition position, [NotNull] Symbol inner) : base(position, inner)
+    {
+    }
 
-        protected override int HashCodeXorFactor => 588697;
+    protected override int HashCodeXorFactor => 588697;
 
-        public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
-        {
-            return new ExpandSymbol(newPosition ??  Position,newInnerSymbol);
-        }
+    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
+    {
+        return new ExpandSymbol(newPosition ??  Position,newInnerSymbol);
+    }
 
-        public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
-        {
-            return handler.HandleExpand(this, argument);
-        }
+    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    {
+        return handler.HandleExpand(this, argument);
+    }
 
-        public override bool TryGetExpandSymbol(out ExpandSymbol expandSymbol)
-        {
-            expandSymbol = this;
-            return true;
-        }
+    public override bool TryGetExpandSymbol(out ExpandSymbol expandSymbol)
+    {
+        expandSymbol = this;
+        return true;
+    }
 
-        public override bool Equals(Symbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return other is ExpandSymbol otherExpand && Equals(otherExpand);
-        }
+    public override bool Equals(Symbol other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return other is ExpandSymbol otherExpand && Equals(otherExpand);
     }
 }

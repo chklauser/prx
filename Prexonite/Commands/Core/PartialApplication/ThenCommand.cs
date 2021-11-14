@@ -27,80 +27,79 @@ using System;
 using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class ThenCommand : PCommand, ICilCompilerAware
 {
-    public class ThenCommand : PCommand, ICilCompilerAware
+    #region Singleton pattern
+
+    private ThenCommand()
     {
-        #region Singleton pattern
-
-        private ThenCommand()
-        {
-        }
-
-        public static ThenCommand Instance { get; } = new();
-
-        #endregion
-
-        #region Overrides of PCommand
-
-        [Obsolete]
-        public override bool IsPure => false;
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
-        {
-            if (args.Length < 2)
-                throw new PrexoniteException("then command requires two arguments.");
-
-            return sctx.CreateNativePValue(new CallComposition(args[0], args[1]));
-        }
-
-        #endregion
-
-        #region Implementation of ICilCompilerAware
-
-        public CompilationFlags CheckQualification(Instruction ins)
-        {
-            return CompilationFlags.PrefersRunStatically;
-        }
-
-        public void ImplementInCil(CompilerState state, Instruction ins)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion
     }
 
-    public class CallComposition : IIndirectCall
+    public static ThenCommand Instance { get; } = new();
+
+    #endregion
+
+    #region Overrides of PCommand
+
+    [Obsolete]
+    public override bool IsPure => false;
+
+    public override PValue Run(StackContext sctx, PValue[] args)
     {
-        public PValue InnerExpression { [DebuggerStepThrough] get; }
+        return RunStatically(sctx, args);
+    }
 
-        public PValue OuterExpression { [DebuggerStepThrough] get; }
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if (args.Length < 2)
+            throw new PrexoniteException("then command requires two arguments.");
 
-        public CallComposition(PValue innerExpression, PValue outerExpression)
-        {
-            InnerExpression = innerExpression ?? throw new ArgumentNullException(nameof(innerExpression));
-            OuterExpression = outerExpression ?? throw new ArgumentNullException(nameof(outerExpression));
-        }
+        return sctx.CreateNativePValue(new CallComposition(args[0], args[1]));
+    }
 
-        #region Implementation of IIndirectCall
+    #endregion
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
-        {
-            return OuterExpression.IndirectCall(sctx,
-                new[] {InnerExpression.IndirectCall(sctx, args)});
-        }
+    #region Implementation of ICilCompilerAware
 
-        #endregion
+    public CompilationFlags CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
 
-        public override string ToString()
-        {
-            return $"{InnerExpression} then ({OuterExpression})";
-        }
+    public void ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException();
+    }
+
+    #endregion
+}
+
+public class CallComposition : IIndirectCall
+{
+    public PValue InnerExpression { [DebuggerStepThrough] get; }
+
+    public PValue OuterExpression { [DebuggerStepThrough] get; }
+
+    public CallComposition(PValue innerExpression, PValue outerExpression)
+    {
+        InnerExpression = innerExpression ?? throw new ArgumentNullException(nameof(innerExpression));
+        OuterExpression = outerExpression ?? throw new ArgumentNullException(nameof(outerExpression));
+    }
+
+    #region Implementation of IIndirectCall
+
+    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    {
+        return OuterExpression.IndirectCall(sctx,
+            new[] {InnerExpression.IndirectCall(sctx, args)});
+    }
+
+    #endregion
+
+    public override string ToString()
+    {
+        return $"{InnerExpression} then ({OuterExpression})";
     }
 }

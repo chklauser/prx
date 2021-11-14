@@ -25,83 +25,82 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands;
+
+/// <summary>
+///     Implementation of <see cref = "PCommand" /> using delegates.
+/// </summary>
+/// <seealso cref = "PCommand" />
+/// <seealso cref = "PCommandAction" />
+public sealed class DelegatePCommand : PCommand
 {
     /// <summary>
-    ///     Implementation of <see cref = "PCommand" /> using delegates.
+    ///     Provides readonly access to the delegate used to implement the current instance of <see cref = "DelegatePCommand" />.
     /// </summary>
-    /// <seealso cref = "PCommand" />
-    /// <seealso cref = "PCommandAction" />
-    public sealed class DelegatePCommand : PCommand
+    public PCommandAction Action { get; }
+
+    /// <summary>
+    ///     Returns a string that describes the current instance of <see cref = "DelegatePCommand" />.
+    /// </summary>
+    /// <returns>A string that describes the current instance of <see cref = "DelegatePCommand" /></returns>
+    public override string ToString()
     {
-        /// <summary>
-        ///     Provides readonly access to the delegate used to implement the current instance of <see cref = "DelegatePCommand" />.
-        /// </summary>
-        public PCommandAction Action { get; }
-
-        /// <summary>
-        ///     Returns a string that describes the current instance of <see cref = "DelegatePCommand" />.
-        /// </summary>
-        /// <returns>A string that describes the current instance of <see cref = "DelegatePCommand" /></returns>
-        public override string ToString()
-        {
-            return "Delegate(" + Action + ")";
-        }
-
-        /// <summary>
-        ///     Forwards the call to the actual implementation, the delegate <see cref = "Action" />.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execute the command.</param>
-        /// <param name = "args">The array of arguments to pass to the command.</param>
-        /// <returns></returns>
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return Action(sctx, args);
-        }
-
-        /// <summary>
-        ///     Creates a new <see cref = "DelegatePCommand" />.
-        /// </summary>
-        /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
-        /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
-        public DelegatePCommand(PCommandAction action)
-            : this(action, false)
-        {
-        }
-
-        /// <summary>
-        ///     Creates a new <see cref = "DelegatePCommand" />.
-        /// </summary>
-        /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
-        /// <param name = "isPure">A boolean value indicating whether the command is to be treated like a pure function.</param>
-        /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
-        public DelegatePCommand(PCommandAction action, bool isPure)
-        {
-            Action = action ?? throw new ArgumentNullException(nameof(action));
-        }
-
-        /// <summary>
-        ///     Syntactic sugar for the creation of commands.
-        /// </summary>
-        /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
-        /// <returns>A new instance of <see cref = "DelegatePCommand" />.</returns>
-        /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
-        public static implicit operator DelegatePCommand(PCommandAction action)
-        {
-            return new(action);
-        }
+        return "Delegate(" + Action + ")";
     }
 
     /// <summary>
-    ///     Emulates <see cref = "PCommand.Run" /> for use in <see cref = "DelegatePCommand" />.
+    ///     Forwards the call to the actual implementation, the delegate <see cref = "Action" />.
     /// </summary>
-    /// <param name = "sctx">The stack context in which the command is executed.</param>
-    /// <param name = "arguments">The array of arguments passed to the command invocation.</param>
-    /// <returns>The value returned by the command.</returns>
-    /// <remarks>
-    ///     If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!
-    /// </remarks>
-    /// <seealso cref = "DelegatePCommand" />
-    /// <seealso cref = "PCommand" />
-    public delegate PValue PCommandAction(StackContext sctx, PValue[] arguments);
+    /// <param name = "sctx">The stack context in which to execute the command.</param>
+    /// <param name = "args">The array of arguments to pass to the command.</param>
+    /// <returns></returns>
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return Action(sctx, args);
+    }
+
+    /// <summary>
+    ///     Creates a new <see cref = "DelegatePCommand" />.
+    /// </summary>
+    /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
+    /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
+    public DelegatePCommand(PCommandAction action)
+        : this(action, false)
+    {
+    }
+
+    /// <summary>
+    ///     Creates a new <see cref = "DelegatePCommand" />.
+    /// </summary>
+    /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
+    /// <param name = "isPure">A boolean value indicating whether the command is to be treated like a pure function.</param>
+    /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
+    public DelegatePCommand(PCommandAction action, bool isPure)
+    {
+        Action = action ?? throw new ArgumentNullException(nameof(action));
+    }
+
+    /// <summary>
+    ///     Syntactic sugar for the creation of commands.
+    /// </summary>
+    /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
+    /// <returns>A new instance of <see cref = "DelegatePCommand" />.</returns>
+    /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
+    public static implicit operator DelegatePCommand(PCommandAction action)
+    {
+        return new(action);
+    }
 }
+
+/// <summary>
+///     Emulates <see cref = "PCommand.Run" /> for use in <see cref = "DelegatePCommand" />.
+/// </summary>
+/// <param name = "sctx">The stack context in which the command is executed.</param>
+/// <param name = "arguments">The array of arguments passed to the command invocation.</param>
+/// <returns>The value returned by the command.</returns>
+/// <remarks>
+///     If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!
+/// </remarks>
+/// <seealso cref = "DelegatePCommand" />
+/// <seealso cref = "PCommand" />
+public delegate PValue PCommandAction(StackContext sctx, PValue[] arguments);

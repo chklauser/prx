@@ -27,43 +27,42 @@ using System;
 using System.Reflection;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialConstructionCommand : PartialWithPTypeCommandBase<PTypeInfo>
 {
-    public class PartialConstructionCommand : PartialWithPTypeCommandBase<PTypeInfo>
+    #region Singleton pattern
+
+    private PartialConstructionCommand()
     {
-        #region Singleton pattern
-
-        private PartialConstructionCommand()
-        {
-        }
-
-        private ConstructorInfo _ptypeConstructCtor;
-
-        public static PartialConstructionCommand Instance { get; } = new();
-
-        #endregion
-
-        #region Overrides of PartialApplicationCommandBase<TypeInfo>
-
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-            PValue[] closedArguments, PTypeInfo parameter)
-        {
-            return new PartialConstruction(mappings, closedArguments, parameter.Type);
-        }
-
-        protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
-        {
-            return _ptypeConstructCtor ??= GetPartialCallRepresentationType(parameter).GetConstructor(
-                new[] {typeof (int[]), typeof (PValue[]), typeof (PType)});
-        }
-
-        protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
-        {
-            return typeof (PartialConstruction);
-        }
-
-        protected override string PartialApplicationKind => "Partial Construction";
-
-        #endregion
     }
+
+    private ConstructorInfo _ptypeConstructCtor;
+
+    public static PartialConstructionCommand Instance { get; } = new();
+
+    #endregion
+
+    #region Overrides of PartialApplicationCommandBase<TypeInfo>
+
+    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
+        PValue[] closedArguments, PTypeInfo parameter)
+    {
+        return new PartialConstruction(mappings, closedArguments, parameter.Type);
+    }
+
+    protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
+    {
+        return _ptypeConstructCtor ??= GetPartialCallRepresentationType(parameter).GetConstructor(
+            new[] {typeof (int[]), typeof (PValue[]), typeof (PType)});
+    }
+
+    protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
+    {
+        return typeof (PartialConstruction);
+    }
+
+    protected override string PartialApplicationKind => "Partial Construction";
+
+    #endregion
 }

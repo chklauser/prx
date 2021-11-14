@@ -31,277 +31,276 @@ using System.Threading;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Lazy
+namespace Prexonite.Commands.Lazy;
+
+public class ThunkCommand : PCommand, ICilCompilerAware
 {
-    public class ThunkCommand : PCommand, ICilCompilerAware
+    #region Singleton
+
+    private ThunkCommand()
     {
-        #region Singleton
+    }
 
-        private ThunkCommand()
+    public static ThunkCommand Instance { get; } = new();
+
+    #endregion
+
+    [Obsolete]
+    public override bool IsPure => false;
+
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    // ReSharper disable MemberCanBePrivate.Global
+    // Part of CIL compiler infrastructure.
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null || args.Length == 0 || args[0] == null)
+            throw new PrexoniteException("The thunk command requires an expression.");
+
+        var expr = args[0];
+        var parameters = args.Skip(1).Select(_EnforceThunk).ToArray();
+
+        return PType.Object.CreatePValue(Thunk.NewExpression(expr, parameters));
+    }
+
+    // ReSharper restore MemberCanBePrivate.Global
+
+    internal static PValue _EnforceThunk(PValue value)
+    {
+        if (value.Type.Equals(PType.Object[typeof (Thunk)]))
+            return value;
+        else
+            return PType.Object.CreatePValue(Thunk.NewValue(value));
+    }
+
+
+    CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException("The command " + GetType().Name +
+            " does not support CIL compilation via ICilCompilerAware.");
+    }
+}
+
+public class Thunk : IIndirectCall, IObject
+{
+    private struct BlackHole
+    {
+        private readonly bool _isActive;
+        private readonly int _threadId;
+        private readonly ManualResetEvent _evaluationDone;
+
+        private BlackHole(int threadId)
         {
+            _isActive = true;
+            _threadId = threadId;
+            _evaluationDone = new ManualResetEvent(false);
         }
 
-        public static ThunkCommand Instance { get; } = new();
-
-        #endregion
-
-        [Obsolete]
-        public override bool IsPure => false;
-
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public static BlackHole Active(int threadId)
         {
-            return RunStatically(sctx, args);
+            return new(threadId);
         }
 
-        // ReSharper disable MemberCanBePrivate.Global
-        // Part of CIL compiler infrastructure.
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
-
+        public BlackHole Inactivate()
         {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null || args.Length == 0 || args[0] == null)
-                throw new PrexoniteException("The thunk command requires an expression.");
-
-            var expr = args[0];
-            var parameters = args.Skip(1).Select(_EnforceThunk).ToArray();
-
-            return PType.Object.CreatePValue(Thunk.NewExpression(expr, parameters));
+            _evaluationDone?.Set();
+            return _inactive();
         }
 
-        // ReSharper restore MemberCanBePrivate.Global
-
-        internal static PValue _EnforceThunk(PValue value)
+        private static BlackHole _inactive()
         {
-            if (value.Type.Equals(PType.Object[typeof (Thunk)]))
-                return value;
-            else
-                return PType.Object.CreatePValue(Thunk.NewValue(value));
+            return new();
         }
 
-
-        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        public bool Trap()
         {
-            return CompilationFlags.PrefersRunStatically;
-        }
-
-        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
-        {
-            throw new NotSupportedException("The command " + GetType().Name +
-                " does not support CIL compilation via ICilCompilerAware.");
+            if (_isActive)
+            {
+                if (_threadId == Thread.CurrentThread.ManagedThreadId)
+                {
+                    throw new PrexoniteException("Thunk is already being evaluated!");
+                }
+                else
+                {
+                    _evaluationDone.WaitOne(Timeout.Infinite, true);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
-    public class Thunk : IIndirectCall, IObject
+    private BlackHole _blackHole;
+
+    private PValue _expr;
+    private PValue[] _parameters;
+    private PValue _value;
+    private Exception _exception;
+
+    #region Construction
+
+    private Thunk(PValue expr, PValue[] parameters)
     {
-        private struct BlackHole
+        _expr = expr ?? throw new ArgumentNullException(nameof(expr));
+        _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+    }
+
+    private Thunk(PValue value)
+    {
+        _value = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public static Thunk NewValue(PValue value)
+    {
+        return new(value);
+    }
+
+    public static Thunk NewExpression(PValue expr, PValue[] parameters)
+    {
+        return new(expr, parameters);
+    }
+
+    #endregion
+
+    #region Interface
+
+    public PValue Force(StackContext sctx)
+    {
+        return ((IIndirectCall) this).IndirectCall(sctx, Array.Empty<PValue>());
+    }
+
+    public bool IsEvaluated => _value != null;
+
+    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
+        out PValue result)
+    {
+        result = null;
+        switch (id.ToUpperInvariant())
         {
-            private readonly bool _isActive;
-            private readonly int _threadId;
-            private readonly ManualResetEvent _evaluationDone;
-
-            private BlackHole(int threadId)
-            {
-                _isActive = true;
-                _threadId = threadId;
-                _evaluationDone = new ManualResetEvent(false);
-            }
-
-            public static BlackHole Active(int threadId)
-            {
-                return new(threadId);
-            }
-
-            public BlackHole Inactivate()
-            {
-                _evaluationDone?.Set();
-                return _inactive();
-            }
-
-            private static BlackHole _inactive()
-            {
-                return new();
-            }
-
-            public bool Trap()
-            {
-                if (_isActive)
-                {
-                    if (_threadId == Thread.CurrentThread.ManagedThreadId)
-                    {
-                        throw new PrexoniteException("Thunk is already being evaluated!");
-                    }
-                    else
-                    {
-                        _evaluationDone.WaitOne(Timeout.Infinite, true);
-                        return true;
-                    }
-                }
-                return false;
-            }
+            case "FORCE":
+                result = Force(sctx);
+                break;
+            case "EVALUATED":
+            case "ISEVALUATED":
+                result = IsEvaluated;
+                break;
         }
 
-        private BlackHole _blackHole;
+        return result != null;
+    }
 
-        private PValue _expr;
-        private PValue[] _parameters;
-        private PValue _value;
-        private Exception _exception;
+    #endregion
 
-        #region Construction
+    private IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
 
-        private Thunk(PValue expr, PValue[] parameters)
+        while (true)
         {
-            _expr = expr ?? throw new ArgumentNullException(nameof(expr));
-            _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
-        }
+            //Check if evaluation resulted in exception
+            if (_exception != null)
+                throw _exception;
 
-        private Thunk(PValue value)
-        {
-            _value = value ?? throw new ArgumentNullException(nameof(value));
-        }
+            //Check if value is available
+            if (_value != null)
+                break;
 
-        public static Thunk NewValue(PValue value)
-        {
-            return new(value);
-        }
+            //Prevent infinite loops
+            if (_blackHole.Trap())
+                continue; //If we have been trapped, check exception again
 
-        public static Thunk NewExpression(PValue expr, PValue[] parameters)
-        {
-            return new(expr, parameters);
-        }
+            //Tag thunk as being evaluated
+            _blackHole = BlackHole.Active(Thread.CurrentThread.ManagedThreadId);
 
-        #endregion
-
-        #region Interface
-
-        public PValue Force(StackContext sctx)
-        {
-            return ((IIndirectCall) this).IndirectCall(sctx, Array.Empty<PValue>());
-        }
-
-        public bool IsEvaluated => _value != null;
-
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-            out PValue result)
-        {
-            result = null;
-            switch (id.ToUpperInvariant())
+            Debug.Indent();
+            //We need to save stack space here, so try to invoke via IStackAware
+            //  Since most expressions are closures, this has a high success rate
+            if (_expr.Value is IStackAware stackAware)
             {
-                case "FORCE":
-                    result = Force(sctx);
-                    break;
-                case "EVALUATED":
-                case "ISEVALUATED":
-                    result = IsEvaluated;
-                    break;
-            }
-
-            return result != null;
-        }
-
-        #endregion
-
-        private IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-
-            while (true)
-            {
-                //Check if evaluation resulted in exception
-                if (_exception != null)
-                    throw _exception;
-
-                //Check if value is available
-                if (_value != null)
-                    break;
-
-                //Prevent infinite loops
-                if (_blackHole.Trap())
-                    continue; //If we have been trapped, check exception again
-
-                //Tag thunk as being evaluated
-                _blackHole = BlackHole.Active(Thread.CurrentThread.ManagedThreadId);
-
-                Debug.Indent();
-                //We need to save stack space here, so try to invoke via IStackAware
-                //  Since most expressions are closures, this has a high success rate
-                if (_expr.Value is IStackAware stackAware)
-                {
-                    //Exception handler defined in creation of cooperative context
-                    var exprCtx = stackAware.CreateStackContext(sctx, _parameters);
-                    sctx.ParentEngine.Stack.AddLast(exprCtx);
-                    yield return true;
-                    _value = exprCtx.ReturnValue;
-                }
-                else
-                {
-                    try
-                    {
-                        _value = _expr.IndirectCall(sctx, _parameters);
-                    }
-                    catch (Exception ex)
-                    {
-                        _blackHole = _blackHole.Inactivate();
-                        _value = PType.Null;
-                        _exception = ex;
-                        throw;
-                    }
-                }
-                Debug.Unindent();
-
-
-                if (_value.Value is Thunk t)
-                {
-                    //Assimilate nested thunk
-                    _blackHole = t._blackHole;
-                    _expr = t._expr;
-                    _parameters = t._parameters;
-                    _value = t._value;
-                    _exception = t._exception;
-                    continue;
-                }
-                else
-                {
-                    //Release expression
-                    _expr = null;
-                    _parameters = null;
-                    _blackHole = _blackHole.Inactivate();
-                    break;
-                }
-            }
-
-            setReturnValue(_value);
-            yield break;
-        }
-
-        PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
-        {
-            CooperativeContext coopctx = null;
-            coopctx = new CooperativeContext(sctx, f => _cooperativeForce(coopctx, f))
-                {
-                    ExceptionHandler = ex =>
-                        {
-                            _blackHole = _blackHole.Inactivate();
-                            _value = PType.Null;
-                            _exception = ex;
-                            return false;
-                        }
-                };
-
-            if (sctx is FunctionContext fctx)
-            {
-                //Turn CLR call into Prexonite stack call
-                fctx._UseVirtualMachineStackInstead();
-                sctx.ParentEngine.Stack.AddLast(coopctx);
-                return PType.Null;
+                //Exception handler defined in creation of cooperative context
+                var exprCtx = stackAware.CreateStackContext(sctx, _parameters);
+                sctx.ParentEngine.Stack.AddLast(exprCtx);
+                yield return true;
+                _value = exprCtx.ReturnValue;
             }
             else
             {
-                //Traditional implementation using the managed stack
-                return sctx.ParentEngine.Process(coopctx);
+                try
+                {
+                    _value = _expr.IndirectCall(sctx, _parameters);
+                }
+                catch (Exception ex)
+                {
+                    _blackHole = _blackHole.Inactivate();
+                    _value = PType.Null;
+                    _exception = ex;
+                    throw;
+                }
             }
+            Debug.Unindent();
+
+
+            if (_value.Value is Thunk t)
+            {
+                //Assimilate nested thunk
+                _blackHole = t._blackHole;
+                _expr = t._expr;
+                _parameters = t._parameters;
+                _value = t._value;
+                _exception = t._exception;
+                continue;
+            }
+            else
+            {
+                //Release expression
+                _expr = null;
+                _parameters = null;
+                _blackHole = _blackHole.Inactivate();
+                break;
+            }
+        }
+
+        setReturnValue(_value);
+        yield break;
+    }
+
+    PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
+    {
+        CooperativeContext coopctx = null;
+        coopctx = new CooperativeContext(sctx, f => _cooperativeForce(coopctx, f))
+        {
+            ExceptionHandler = ex =>
+            {
+                _blackHole = _blackHole.Inactivate();
+                _value = PType.Null;
+                _exception = ex;
+                return false;
+            }
+        };
+
+        if (sctx is FunctionContext fctx)
+        {
+            //Turn CLR call into Prexonite stack call
+            fctx._UseVirtualMachineStackInstead();
+            sctx.ParentEngine.Stack.AddLast(coopctx);
+            return PType.Null;
+        }
+        else
+        {
+            //Traditional implementation using the managed stack
+            return sctx.ParentEngine.Process(coopctx);
         }
     }
 }

@@ -27,60 +27,59 @@ using System;
 using Prexonite.Compiler.Ast;
 using Prexonite.Properties;
 
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+internal class ParserAstFactory : AstFactoryBase
 {
-    internal class ParserAstFactory : AstFactoryBase
+    private readonly Parser _parser;
+
+    protected override AstBlock CurrentBlock => _parser.CurrentBlock;
+
+    protected override AstGetSet CreateNullNode(ISourcePosition position)
     {
-        private readonly Parser _parser;
+        return Parser._NullNode(position);
+    }
 
-        protected override AstBlock CurrentBlock => _parser.CurrentBlock;
+    protected override bool IsOuterVariable(string id)
+    {
+        if (_parser.target == null)
+            return false;
+        else
+            return _parser.target._IsOuterVariable(id);
+    }
 
-        protected override AstGetSet CreateNullNode(ISourcePosition position)
+    protected override void RequireOuterVariable(string id)
+    {
+        if (_parser.target == null)
+            ReportMessage(
+                Message.Error(Resources.ParserAstFactory_RequireOuterVariable_Outside_function,
+                    _parser.GetPosition(), MessageClasses.ParserInternal));
+        _parser.target.RequireOuterVariable(id);
+    }
+
+    public override void ReportMessage(Message message)
+    {
+        _parser.Loader.ReportMessage(message);
+    }
+
+    protected override CompilerTarget CompileTimeExecutionContext
+    {
+        get
         {
-            return Parser._NullNode(position);
-        }
-
-        protected override bool IsOuterVariable(string id)
-        {
-            if (_parser.target == null)
-                return false;
-            else
-                return _parser.target._IsOuterVariable(id);
-        }
-
-        protected override void RequireOuterVariable(string id)
-        {
-            if (_parser.target == null)
-                ReportMessage(
-                    Message.Error(Resources.ParserAstFactory_RequireOuterVariable_Outside_function,
-                        _parser.GetPosition(), MessageClasses.ParserInternal));
-            _parser.target.RequireOuterVariable(id);
-        }
-
-        public override void ReportMessage(Message message)
-        {
-            _parser.Loader.ReportMessage(message);
-        }
-
-        protected override CompilerTarget CompileTimeExecutionContext
-        {
-            get
+            var compilerTarget = _parser.target;
+            if (compilerTarget == null)
             {
-                var compilerTarget = _parser.target;
-                if (compilerTarget == null)
-                {
-                    throw new InvalidOperationException("Internal parser error. Cannot access compilation target on top level.");
-                }
-                else
-                {
-                    return compilerTarget;
-                }
+                throw new InvalidOperationException("Internal parser error. Cannot access compilation target on top level.");
+            }
+            else
+            {
+                return compilerTarget;
             }
         }
+    }
 
-        public ParserAstFactory(Parser parser)
-        {
-            _parser = parser ?? throw new ArgumentNullException(nameof(parser));
-        }
+    public ParserAstFactory(Parser parser)
+    {
+        _parser = parser ?? throw new ArgumentNullException(nameof(parser));
     }
 }

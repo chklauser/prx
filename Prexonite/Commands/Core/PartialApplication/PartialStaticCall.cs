@@ -25,26 +25,25 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialStaticCall : PartialApplicationBase
 {
-    public class PartialStaticCall : PartialApplicationBase
+    private readonly PType _ptype;
+    private readonly string _memberId;
+    private readonly PCall _call;
+
+    public PartialStaticCall(int[] mappings, PValue[] closedArguments, PCall call,
+        string memberId, PType ptype) : base(mappings, closedArguments, 0)
     {
-        private readonly PType _ptype;
-        private readonly string _memberId;
-        private readonly PCall _call;
+        _ptype = ptype;
+        _call = call;
+        _memberId = memberId;
+    }
 
-        public PartialStaticCall(int[] mappings, PValue[] closedArguments, PCall call,
-            string memberId, PType ptype) : base(mappings, closedArguments, 0)
-        {
-            _ptype = ptype;
-            _call = call;
-            _memberId = memberId;
-        }
-
-        protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-            PValue[] arguments)
-        {
-            return _ptype.StaticCall(sctx, arguments, _call, _memberId);
-        }
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
+        PValue[] arguments)
+    {
+        return _ptype.StaticCall(sctx, arguments, _call, _memberId);
     }
 }

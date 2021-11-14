@@ -37,15 +37,15 @@ using Prexonite;
 using Prexonite.Types;
 using PrexoniteTests.Tests;
 
-namespace Prx.Tests
+namespace Prx.Tests;
+
+public abstract partial class VMTests : VMTestsBase
 {
-    public abstract partial class VMTests : VMTestsBase
+    [Test]
+    public void UnusedTry()
     {
-        [Test]
-        public void UnusedTry()
-        {
-            Compile(
-                @"
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -75,14 +75,14 @@ function main()
 }
 ");
 
-            Expect("001234--");
-        }
+        Expect("001234--");
+    }
 
-        [Test]
-        public void UnusedSimpleTry()
-        {
-            Compile(
-                @"
+    [Test]
+    public void UnusedSimpleTry()
+    {
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -105,14 +105,14 @@ function main()
 }
 ");
 
-            Expect("001234--");
-        }
+        Expect("001234--");
+    }
 
-        [Test]
-        public void IgnoreTry()
-        {
-            Compile(
-                @"
+    [Test]
+    public void IgnoreTry()
+    {
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -135,14 +135,14 @@ function main()
 }
 ");
 
-            Expect("012345");
-        }
+        Expect("012345");
+    }
 
-        [Test]
-        public void FinallyTry()
-        {
-            Compile(
-                @"
+    [Test]
+    public void FinallyTry()
+    {
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -167,29 +167,29 @@ function main()
     return tos(xs);
 }
 ");
-            try
-            {
-                Expect("012345");
-            }
-            catch (Exception exc)
-            {
-                Assert.AreEqual("3", exc.Message);
-            }
-
-            var pxs = target.Variables["xs"].Value;
-            Assert.IsInstanceOf(typeof (ListPType), pxs.Type, "xs must be a ~List.");
-            var xs = (List<PValue>) pxs.Value;
-            Assert.AreEqual("0", xs[0].CallToString(sctx));
-            Assert.AreEqual("1", xs[1].CallToString(sctx));
-            Assert.AreEqual("2", xs[2].CallToString(sctx));
-            Assert.AreEqual("3", xs[3].CallToString(sctx));
+        try
+        {
+            Expect("012345");
+        }
+        catch (Exception exc)
+        {
+            Assert.AreEqual("3", exc.Message);
         }
 
-        [Test]
-        public void CatchTry()
-        {
-            Compile(
-                @"
+        var pxs = target.Variables["xs"].Value;
+        Assert.IsInstanceOf(typeof (ListPType), pxs.Type, "xs must be a ~List.");
+        var xs = (List<PValue>) pxs.Value;
+        Assert.AreEqual("0", xs[0].CallToString(sctx));
+        Assert.AreEqual("1", xs[1].CallToString(sctx));
+        Assert.AreEqual("2", xs[2].CallToString(sctx));
+        Assert.AreEqual("3", xs[3].CallToString(sctx));
+    }
+
+    [Test]
+    public void CatchTry()
+    {
+        Compile(
+            @"
 function main()
 {
     var xs = [0];
@@ -208,14 +208,14 @@ function main()
     return xs.ToString;
 }
 ");
-            Expect("[ 0, 1, 2, 3 ]");
-        }
+        Expect("[ 0, 1, 2, 3 ]");
+    }
 
-        [Test]
-        public void CatchFinallyTry()
-        {
-            Compile(
-                @"
+    [Test]
+    public void CatchFinallyTry()
+    {
+        Compile(
+            @"
 function tos(xs) = foldl((a,b) => a + b,"""",xs);
 
 function main()
@@ -238,14 +238,14 @@ function main()
     return tos(xs);
 }
 ");
-            Expect("0123345");
-        }
+        Expect("0123345");
+    }
 
-        [Test]
-        public void NestedTries()
-        {
-            Compile(
-                @"
+    [Test]
+    public void NestedTries()
+    {
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -282,21 +282,21 @@ function main()  [store_debug_implementation enabled;]
     return tos(xs);
 }
 ");
-            try
-            {
-                Expect("0123445");
-            }
-            catch (Exception exc)
-            {
-                Assert.Fail(exc.Message, exc);
-            }
-        }
-
-        [Test]
-        public void CrossFunctionTry()
+        try
         {
-            Compile(
-                @"
+            Expect("0123445");
+        }
+        catch (Exception exc)
+        {
+            Assert.Fail(exc.Message, exc);
+        }
+    }
+
+    [Test]
+    public void CrossFunctionTry()
+    {
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -328,14 +328,14 @@ function main()
     return tos(xs);
 }
 ");
-            Expect("0123345");
-        }
+        Expect("0123345");
+    }
 
-        [Test]
-        public void HandledSurfaceTry()
-        {
-            Compile(
-                @"
+    [Test]
+    public void HandledSurfaceTry()
+    {
+        Compile(
+            @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -373,14 +373,14 @@ function main()
     return tos(xs);
 }
 ");
-            Expect("01233i45");
-        }
+        Expect("01233i45");
+    }
 
-        [Test]
-        public void CrossForeachTryCatch()
-        {
-            Compile(
-                @"
+    [Test]
+    public void CrossForeachTryCatch()
+    {
+        Compile(
+            @"
 coroutine mayFail
 {
     yield 1;
@@ -411,14 +411,14 @@ function main(sum)
     return sum;
 }
 ");
-            Expect((1 + 4 + 2 + 5 + 1)*20, 1);
-        }
+        Expect((1 + 4 + 2 + 5 + 1)*20, 1);
+    }
 
-        [Test]
-        public void HarmlessTryFinally()
-        {
-            Compile(
-                @"
+    [Test]
+    public void HarmlessTryFinally()
+    {
+        Compile(
+            @"
 function main
 {
     var r;
@@ -433,14 +433,14 @@ function main
     return r;
 }
 ");
-            Expect("NO_ERROR, REALLY");
-        }
+        Expect("NO_ERROR, REALLY");
+    }
 
-        [Test]
-        public void TryCatchInFinally()
-        {
-            Compile(
-                @"
+    [Test]
+    public void TryCatchInFinally()
+    {
+        Compile(
+            @"
 function mightFail(x)
 {
     throw ""I don't like $x."";
@@ -477,16 +477,16 @@ function main()
 }
 ");
 
-            var xs = new List<PValue> {4, "Hello", 3.4};
+        var xs = new List<PValue> {4, "Hello", 3.4};
 
-            Expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
-        }
+        Expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
+    }
 
-        [Test]
-        public void ReturnFromForeach()
-        {
-            Compile(
-                @"
+    [Test]
+    public void ReturnFromForeach()
+    {
+        Compile(
+            @"
 function main(xs)
 {
     foreach(var x in xs)
@@ -495,16 +495,16 @@ function main(xs)
     return -1;
 }
 ");
-            var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
+        var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
 
-            Expect(7, xs);
-        }
+        Expect(7, xs);
+    }
 
-        [Test]
-        public void ForeachLastInConditionCil()
-        {
-            Compile(
-                @"
+    [Test]
+    public void ForeachLastInConditionCil()
+    {
+        Compile(
+            @"
 function main(cond, xs)
 {
     var z = 0;
@@ -521,23 +521,23 @@ function main(cond, xs)
 }
 ");
 
-            if (CompileToCil)
-            {
-                var main = target.Functions["main"];
-                Assert.IsFalse(main.Meta[PFunction.VolatileKey], "main must not be volatile.");
-                Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey),
-                    "main must not have a deficiency");
-                Assert.IsTrue(main.HasCilImplementation, "main must have CIL implementation.");
-            }
-
-            Expect(6, true, (PValue) new List<PValue> {1, 2, 3});
+        if (CompileToCil)
+        {
+            var main = target.Functions["main"];
+            Assert.IsFalse(main.Meta[PFunction.VolatileKey], "main must not be volatile.");
+            Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey),
+                "main must not have a deficiency");
+            Assert.IsTrue(main.HasCilImplementation, "main must have CIL implementation.");
         }
 
-        [Test]
-        public void ReturnContinueFormTryFinally()
-        {
-            Compile(
-                @"
+        Expect(6, true, (PValue) new List<PValue> {1, 2, 3});
+    }
+
+    [Test]
+    public void ReturnContinueFormTryFinally()
+    {
+        Compile(
+            @"
 function main()
 {
     try
@@ -551,32 +551,32 @@ function main()
 }
 ");
 
-            var func = target.Functions["main"];
+        var func = target.Functions["main"];
 
-            var emptyArgV = Array.Empty<PValue>();
-            var emptyEnvironment = Array.Empty<PVariable>();
+        var emptyArgV = Array.Empty<PValue>();
+        var emptyEnvironment = Array.Empty<PVariable>();
 
-            if (CompileToCil)
-            {
-                var nullContext = new NullContext(engine, target, new List<string>());
-                Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
-                func.CilImplementation(
-                    func, nullContext, emptyArgV, emptyEnvironment, out var value, out var returnMode);
-                Assert.AreEqual(value.Type, PType.Null);
-                Assert.AreEqual(returnMode, ReturnMode.Continue);
-            }
-
-            var fctx = func.CreateFunctionContext(engine, emptyArgV, emptyEnvironment);
-            engine.Process(fctx);
-            Assert.AreEqual(fctx.ReturnValue.Type, PType.Null);
-            Assert.AreEqual(fctx.ReturnMode, ReturnMode.Continue);
+        if (CompileToCil)
+        {
+            var nullContext = new NullContext(engine, target, new List<string>());
+            Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
+            func.CilImplementation(
+                func, nullContext, emptyArgV, emptyEnvironment, out var value, out var returnMode);
+            Assert.AreEqual(value.Type, PType.Null);
+            Assert.AreEqual(returnMode, ReturnMode.Continue);
         }
 
-        [Test]
-        public void JumpToAfterEmptyFinally()
-        {
-            Compile(
-                @"
+        var fctx = func.CreateFunctionContext(engine, emptyArgV, emptyEnvironment);
+        engine.Process(fctx);
+        Assert.AreEqual(fctx.ReturnValue.Type, PType.Null);
+        Assert.AreEqual(fctx.ReturnMode, ReturnMode.Continue);
+    }
+
+    [Test]
+    public void JumpToAfterEmptyFinally()
+    {
+        Compile(
+            @"
 function main()
 {
     try
@@ -592,22 +592,22 @@ after:
 }
 ");
 
-            var func = target.Functions["main"];
+        var func = target.Functions["main"];
 
 
-            if (CompileToCil)
-            {
-                Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
-            }
-
-            ExpectNull(Array.Empty<PValue>());
+        if (CompileToCil)
+        {
+            Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
         }
 
-        [Test]
-        public void ReturnFromFinally()
-        {
-            Compile(
-                @"
+        ExpectNull(Array.Empty<PValue>());
+    }
+
+    [Test]
+    public void ReturnFromFinally()
+    {
+        Compile(
+            @"
 var t = """";
 function trace x = t += x;
 
@@ -626,23 +626,23 @@ function main(x)
 }
 ");
 
-            var mainTable = target.Functions["main"].Meta;
+        var mainTable = target.Functions["main"].Meta;
 
-            if (CompileToCil)
-            {
-                Assert.IsTrue(mainTable[PFunction.VolatileKey].Switch,
-                    "return from finally is illegal in CIL");
-                Assert.IsTrue(mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
-                    "deficiency must be related to SEH.");
-            }
-            Expect("tn", false);
-        }
-
-        [Test]
-        public void BreakFromProtected()
+        if (CompileToCil)
         {
-            Compile(
-                @"
+            Assert.IsTrue(mainTable[PFunction.VolatileKey].Switch,
+                "return from finally is illegal in CIL");
+            Assert.IsTrue(mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
+                "deficiency must be related to SEH.");
+        }
+        Expect("tn", false);
+    }
+
+    [Test]
+    public void BreakFromProtected()
+    {
+        Compile(
+            @"
 var t = """";
 function trace x=t+=x;
 function main()
@@ -658,16 +658,16 @@ function main()
 }
 ");
 
-            ExpectNull();
-            Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"].Value).Value,
-                "trace does not match");
-        }
+        ExpectNull();
+        Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"].Value).Value,
+            "trace does not match");
+    }
 
-        [Test]
-        public void TryAsLastStatement()
-        {
-            Compile(
-                @"
+    [Test]
+    public void TryAsLastStatement()
+    {
+        Compile(
+            @"
 var t;
 function main(x)
 {
@@ -678,16 +678,16 @@ function main(x)
     }
 }");
 
-            ExpectNull();
-            Assert.IsTrue((bool) target.Variables["t"].Value.Equality(sctx, "tf").Value,
-                "Unexpected trace");
-        }
+        ExpectNull();
+        Assert.IsTrue((bool) target.Variables["t"].Value.Equality(sctx, "tf").Value,
+            "Unexpected trace");
+    }
 
-        [Test]
-        public void EndFinallies()
-        {
-            Compile(
-                @"
+    [Test]
+    public void EndFinallies()
+    {
+        Compile(
+            @"
 var t = """";
 function trace x=t+=x;
 function main(x,y)
@@ -726,20 +726,20 @@ endfinally3:
     return t;
 }
 ");
-            if (CompileToCil)
-            {
-                Assert.IsNotNull(target.Functions["main"], "function main must exist.");
-                Assert.IsFalse(target.Functions["main"].Meta[PFunction.VolatileKey].Switch,
-                    "should compile to cil successfully");
-            }
-            Expect("t1e1t2e2t3e3", true, false);
-        }
-
-        [Test]
-        public void ReturnFromCatch()
+        if (CompileToCil)
         {
-            Compile
-                (@"
+            Assert.IsNotNull(target.Functions["main"], "function main must exist.");
+            Assert.IsFalse(target.Functions["main"].Meta[PFunction.VolatileKey].Switch,
+                "should compile to cil successfully");
+        }
+        Expect("t1e1t2e2t3e3", true, false);
+    }
+
+    [Test]
+    public void ReturnFromCatch()
+    {
+        Compile
+        (@"
 
 var lastCode = -1;
 var buffer = new System::Text::StringBuilder;
@@ -777,7 +777,6 @@ function main()
     return errors.Count == 0;
 }");
 
-            Expect(false);
-        }
+        Expect(false);
     }
 }

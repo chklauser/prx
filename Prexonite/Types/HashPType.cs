@@ -34,518 +34,517 @@ using Prexonite.Compiler.Cil;
 
 #endregion
 
-namespace Prexonite.Types
+namespace Prexonite.Types;
+
+[PTypeLiteral(Literal)]
+public class HashPType : PType, ICilCompilerAware
 {
-    [PTypeLiteral(Literal)]
-    public class HashPType : PType, ICilCompilerAware
+    #region Singleton
+
+    private HashPType()
     {
-        #region Singleton
+    }
 
-        private HashPType()
+    public static HashPType Instance { get; } = new();
+
+    #endregion
+
+    #region PType Interface
+
+    private static bool _tryConvertToPair(
+        StackContext sctx, PValue inpv, out PValueKeyValuePair result)
+    {
+        result = null;
+        if (!inpv.TryConvertTo(sctx, typeof (PValueKeyValuePair), out var res))
+            return false;
+        else
+            result = (PValueKeyValuePair) res.Value;
+        return true;
+    }
+
+    public override bool IndirectCall(
+        StackContext sctx, PValue subject, PValue[] args, out PValue result)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (subject == null)
+            throw new ArgumentNullException(nameof(subject));
+        args ??= Array.Empty<PValue>();
+
+        result = null;
+
+        var argc = args.Length;
+
+        var pvht = (PValueHashtable) subject.Value;
+
+        if (argc == 0)
         {
+            result =
+                sctx.CreateNativePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
+        }
+        else if (argc == 1)
+        {
+            if (!pvht.TryGetValue(args[0], out result))
+                result = false;
+        }
+        else
+        {
+            pvht.AddOverride(args[0], args[1]);
         }
 
-        public static HashPType Instance { get; } = new();
+        return result != null;
+    }
 
-        #endregion
+    public override bool TryDynamicCall(
+        StackContext sctx,
+        PValue subject,
+        PValue[] args,
+        PCall call,
+        string id,
+        out PValue result)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (subject == null)
+            throw new ArgumentNullException(nameof(subject));
+        args ??= Array.Empty<PValue>();
+        id ??= "";
 
-        #region PType Interface
+        if (!(subject.Value is PValueHashtable pvht))
+            throw new ArgumentException("Subject must be a Hash.");
 
-        private static bool _tryConvertToPair(
-            StackContext sctx, PValue inpv, out PValueKeyValuePair result)
+        result = null;
+
+        for (var i = 0; i < args.Length; i++)
         {
-            result = null;
-            if (!inpv.TryConvertTo(sctx, typeof (PValueKeyValuePair), out var res))
-                return false;
-            else
-                result = (PValueKeyValuePair) res.Value;
-            return true;
+            if (args[i] == null)
+                args[i] = Null.CreatePValue();
         }
 
-        public override bool IndirectCall(
-            StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        var argc = args.Length;
+
+        switch (id.ToLowerInvariant())
         {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            args ??= Array.Empty<PValue>();
-
-            result = null;
-
-            var argc = args.Length;
-
-            var pvht = (PValueHashtable) subject.Value;
-
-            if (argc == 0)
-            {
-                result =
-                    sctx.CreateNativePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
-            }
-            else if (argc == 1)
-            {
-                if (!pvht.TryGetValue(args[0], out result))
-                    result = false;
-            }
-            else
-            {
-                pvht.AddOverride(args[0], args[1]);
-            }
-
-            return result != null;
-        }
-
-        public override bool TryDynamicCall(
-            StackContext sctx,
-            PValue subject,
-            PValue[] args,
-            PCall call,
-            string id,
-            out PValue result)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            args ??= Array.Empty<PValue>();
-            id ??= "";
-
-            if (!(subject.Value is PValueHashtable pvht))
-                throw new ArgumentException("Subject must be a Hash.");
-
-            result = null;
-
-            for (var i = 0; i < args.Length; i++)
-            {
-                if (args[i] == null)
-                    args[i] = Null.CreatePValue();
-            }
-
-            var argc = args.Length;
-
-            switch (id.ToLowerInvariant())
-            {
-                case "":
-                    if (call == PCall.Get && argc > 0)
-                    {
-                        var key = args[0];
-                        if (pvht.ContainsKey(key))
-                            result = pvht[key];
-                        else
-                            result = Null.CreatePValue();
-                    }
-                    else if (call == PCall.Set)
-                    {
-                        if (argc > 1)
-                        {
-                            pvht.AddOverride(args[0], args[1]);
-                            result = Null.CreatePValue();
-                        }
-                        else if (argc == 1)
-                        {
-                            goto case "add";
-                        }
-                    }
-                    break;
-
-                case "add":
-                    if (argc == 1)
-                    {
+            case "":
+                if (call == PCall.Get && argc > 0)
+                {
+                    var key = args[0];
+                    if (pvht.ContainsKey(key))
+                        result = pvht[key];
+                    else
                         result = Null.CreatePValue();
-
-                        if (args[0].IsNull)
-                        {
-                        } //Ignore this one
-                        else if (_tryConvertToPair(sctx, args[0], out var pair))
-                            pvht.AddOverride(pair);
-                    }
-                    else if (argc > 1)
+                }
+                else if (call == PCall.Set)
+                {
+                    if (argc > 1)
                     {
                         pvht.AddOverride(args[0], args[1]);
                         result = Null.CreatePValue();
                     }
-                    break;
+                    else if (argc == 1)
+                    {
+                        goto case "add";
+                    }
+                }
+                break;
 
-                case "clear":
-                    pvht.Clear();
+            case "add":
+                if (argc == 1)
+                {
                     result = Null.CreatePValue();
-                    break;
 
-                case "containskey":
-                    if (argc == 1)
+                    if (args[0].IsNull)
                     {
-                        result = pvht.ContainsKey(args[0]);
-                    }
-                    else if (argc > 1)
-                    {
-                        var found = true;
-                        foreach (var arg in args)
-                        {
-                            if (!pvht.ContainsKey(arg))
-                            {
-                                found = false;
-                                break;
-                            }
-                        }
-                        result = found;
-                    }
-                    break;
+                    } //Ignore this one
+                    else if (_tryConvertToPair(sctx, args[0], out var pair))
+                        pvht.AddOverride(pair);
+                }
+                else if (argc > 1)
+                {
+                    pvht.AddOverride(args[0], args[1]);
+                    result = Null.CreatePValue();
+                }
+                break;
 
-                case "containsvalue":
-                    if (argc == 1)
-                    {
-                        result = pvht.ContainsValue(args[0]);
-                    }
-                    else if (argc > 1)
-                    {
-                        var found = true;
-                        foreach (var arg in args)
-                        {
-                            if (!pvht.ContainsValue(arg))
-                            {
-                                found = false;
-                                break;
-                            }
-                        }
-                        result = found;
-                    }
-                    break;
+            case "clear":
+                pvht.Clear();
+                result = Null.CreatePValue();
+                break;
 
-                case "count":
-                case "length":
-                    result = pvht.Count;
-                    break;
-
-                case "getenumerator":
-                    result =
-                        Object.CreatePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
-                    break;
-
-                case "gethashcode":
-                    result = pvht.GetHashCode();
-                    break;
-
-                case "gettype":
-                    result = Object.CreatePValue(typeof (PValueHashtable));
-                    break;
-
-                case "keys":
-                    result = List.CreatePValue(new List<PValue>(pvht.Keys));
-                    break;
-
-                case "remove":
-                    if (argc == 1)
-                    {
-                        result = pvht.Remove(args[0]);
-                    }
-                    else if (argc > 1)
-                    {
-                        var removed = new List<PValue>(pvht.Count);
-                        foreach (var arg in args)
-                            removed.Add(pvht.Remove(arg));
-
-                        result = List.CreatePValue(removed);
-                    }
-                    break;
-
-                case "tostring":
-                    var sb = new StringBuilder("{ ");
-                    foreach (var pair in pvht)
-                    {
-                        sb.Append(pair.Key.CallToString(sctx));
-                        sb.Append(": ");
-                        sb.Append(pair.Value.CallToString(sctx));
-                        sb.Append(", ");
-                    }
-                    if (pvht.Count > 0)
-                        sb.Length -= 2;
-                    sb.Append(" }");
-                    result = sb.ToString();
-                    break;
-
-                case "trygetvalue":
-                    if (argc >= 2)
-                    {
-                        if (pvht.TryGetValue(args[0], out var value))
-                        {
-                            args[1].IndirectCall(sctx, new[] {value});
-                            result = true;
-                        }
-                        else
-                        {
-                            result = false;
-                        }
-                    }
-                    break;
-                case "values":
-                    result = List.CreatePValue(new List<PValue>(pvht.Values));
-                    break;
-
-                default:
-                    return
-                        PValueHashtable.ObjectType.TryDynamicCall(
-                            sctx, subject, args, call, id, out result);
-            }
-
-            return result != null;
-        }
-
-        public override bool TryStaticCall(
-            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                args = Array.Empty<PValue>();
-            if (id == null)
-                id = "";
-
-            result = null;
-
-            for (var i = 0; i < args.Length; i++)
-            {
-                if (args[i] == null)
-                    args[i] = Null.CreatePValue();
-            }
-
-            PValueHashtable pvht;
-
-            switch (id.ToLowerInvariant())
-            {
-                case "create":
-                    //Create(params KeyValuePair[] pairs)
-                    pvht = new PValueHashtable(args.Length);
+            case "containskey":
+                if (argc == 1)
+                {
+                    result = pvht.ContainsKey(args[0]);
+                }
+                else if (argc > 1)
+                {
+                    var found = true;
                     foreach (var arg in args)
                     {
-                        if (_tryConvertToPair(sctx, arg, out var pairArg))
-                            pvht.AddOverride(pairArg);
+                        if (!pvht.ContainsKey(arg))
+                        {
+                            found = false;
+                            break;
+                        }
                     }
-                    result = new PValue(pvht, this);
-                    break;
+                    result = found;
+                }
+                break;
 
-                case "createFromArgs":
-                    if (args.Length%2 != 0)
-                        break;
-                    pvht = new PValueHashtable(args.Length/2);
-                    for (var i = 0; i < args.Length; i += 2)
-                        pvht.AddOverride(args[i], args[i + 1]);
-                    result = new PValue(pvht, this);
-                    break;
+            case "containsvalue":
+                if (argc == 1)
+                {
+                    result = pvht.ContainsValue(args[0]);
+                }
+                else if (argc > 1)
+                {
+                    var found = true;
+                    foreach (var arg in args)
+                    {
+                        if (!pvht.ContainsValue(arg))
+                        {
+                            found = false;
+                            break;
+                        }
+                    }
+                    result = found;
+                }
+                break;
 
-                default:
-                    return
-                        PValueHashtable.ObjectType.TryStaticCall(sctx, args, call, id, out result);
-            }
+            case "count":
+            case "length":
+                result = pvht.Count;
+                break;
 
-            return result != null;
+            case "getenumerator":
+                result =
+                    Object.CreatePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
+                break;
+
+            case "gethashcode":
+                result = pvht.GetHashCode();
+                break;
+
+            case "gettype":
+                result = Object.CreatePValue(typeof (PValueHashtable));
+                break;
+
+            case "keys":
+                result = List.CreatePValue(new List<PValue>(pvht.Keys));
+                break;
+
+            case "remove":
+                if (argc == 1)
+                {
+                    result = pvht.Remove(args[0]);
+                }
+                else if (argc > 1)
+                {
+                    var removed = new List<PValue>(pvht.Count);
+                    foreach (var arg in args)
+                        removed.Add(pvht.Remove(arg));
+
+                    result = List.CreatePValue(removed);
+                }
+                break;
+
+            case "tostring":
+                var sb = new StringBuilder("{ ");
+                foreach (var pair in pvht)
+                {
+                    sb.Append(pair.Key.CallToString(sctx));
+                    sb.Append(": ");
+                    sb.Append(pair.Value.CallToString(sctx));
+                    sb.Append(", ");
+                }
+                if (pvht.Count > 0)
+                    sb.Length -= 2;
+                sb.Append(" }");
+                result = sb.ToString();
+                break;
+
+            case "trygetvalue":
+                if (argc >= 2)
+                {
+                    if (pvht.TryGetValue(args[0], out var value))
+                    {
+                        args[1].IndirectCall(sctx, new[] {value});
+                        result = true;
+                    }
+                    else
+                    {
+                        result = false;
+                    }
+                }
+                break;
+            case "values":
+                result = List.CreatePValue(new List<PValue>(pvht.Values));
+                break;
+
+            default:
+                return
+                    PValueHashtable.ObjectType.TryDynamicCall(
+                        sctx, subject, args, call, id, out result);
         }
 
-        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+        return result != null;
+    }
+
+    public override bool TryStaticCall(
+        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null)
+            args = Array.Empty<PValue>();
+        if (id == null)
+            id = "";
+
+        result = null;
+
+        for (var i = 0; i < args.Length; i++)
         {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            args ??= Array.Empty<PValue>();
+            if (args[i] == null)
+                args[i] = Null.CreatePValue();
+        }
 
-            result = null;
+        PValueHashtable pvht;
 
-            for (var i = 0; i < args.Length; i++)
-            {
-                args[i] ??= Null.CreatePValue();
-            }
-
-            var argc = args.Length;
-            PValueHashtable pvht = null;
-
-            if (argc == 0)
-            {
-                pvht = new PValueHashtable();
-            }
-            else if (args[0].IsNull)
-            {
-                pvht = new PValueHashtable();
-            }
-            else if (argc > 0)
-            {
-                var arg0 = args[0];
-                if (arg0.Type == Hash ||
-                    arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>)
+        switch (id.ToLowerInvariant())
+        {
+            case "create":
+                //Create(params KeyValuePair[] pairs)
+                pvht = new PValueHashtable(args.Length);
+                foreach (var arg in args)
                 {
-                    pvht = new PValueHashtable((IDictionary<PValue, PValue>) arg0.Value);
+                    if (_tryConvertToPair(sctx, arg, out var pairArg))
+                        pvht.AddOverride(pairArg);
                 }
-                else if (arg0.Type == Int)
-                {
-                    pvht = new PValueHashtable((int) arg0.Value);
-                }
-            }
-
-            if (pvht != null)
                 result = new PValue(pvht, this);
+                break;
 
-            return result != null;
+            case "createFromArgs":
+                if (args.Length%2 != 0)
+                    break;
+                pvht = new PValueHashtable(args.Length/2);
+                for (var i = 0; i < args.Length; i += 2)
+                    pvht.AddOverride(args[i], args[i + 1]);
+                result = new PValue(pvht, this);
+                break;
+
+            default:
+                return
+                    PValueHashtable.ObjectType.TryStaticCall(sctx, args, call, id, out result);
         }
 
-        protected override bool InternalConvertTo(
-            StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
+        return result != null;
+    }
+
+    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        args ??= Array.Empty<PValue>();
+
+        result = null;
+
+        for (var i = 0; i < args.Length; i++)
         {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            if ((object) target == null)
-                throw new ArgumentNullException(nameof(target));
+            args[i] ??= Null.CreatePValue();
+        }
 
-            if (!(subject.Value is PValueHashtable pvht))
-                throw new ArgumentException("Subject must be a Hash.");
+        var argc = args.Length;
+        PValueHashtable pvht = null;
 
-            result = null;
-
-            if (target is ObjectPType)
+        if (argc == 0)
+        {
+            pvht = new PValueHashtable();
+        }
+        else if (args[0].IsNull)
+        {
+            pvht = new PValueHashtable();
+        }
+        else if (argc > 0)
+        {
+            var arg0 = args[0];
+            if (arg0.Type == Hash ||
+                arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>)
             {
-                var tT = ((ObjectPType) target).ClrType;
-                if (tT == typeof (IDictionary<PValue, PValue>) ||
-                    tT == typeof (Dictionary<PValue, PValue>) ||
-                        tT == typeof (IDictionary) ||
-                            tT == typeof (IEnumerable<KeyValuePair<PValue, PValue>>) ||
-                                tT == typeof (IEnumerable) ||
-                                    tT == typeof (ICollection<KeyValuePair<PValue, PValue>>) ||
-                                        tT == typeof (ICollection))
-                {
-                    result = new PValue(pvht, target);
-                }
-                else if (tT == typeof (IEnumerable<PValue>) || tT == typeof (IList<PValue>) ||
-                    tT == typeof (IList))
-                {
-                    var lst = new List<PValue>(pvht.Count);
-                    foreach (var pair in pvht)
-                        lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair)));
-                    result = new PValue(lst, target);
-                }
+                pvht = new PValueHashtable((IDictionary<PValue, PValue>) arg0.Value);
             }
-            else if (target is ListPType)
+            else if (arg0.Type == Int)
+            {
+                pvht = new PValueHashtable((int) arg0.Value);
+            }
+        }
+
+        if (pvht != null)
+            result = new PValue(pvht, this);
+
+        return result != null;
+    }
+
+    protected override bool InternalConvertTo(
+        StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (subject == null)
+            throw new ArgumentNullException(nameof(subject));
+        if ((object) target == null)
+            throw new ArgumentNullException(nameof(target));
+
+        if (!(subject.Value is PValueHashtable pvht))
+            throw new ArgumentException("Subject must be a Hash.");
+
+        result = null;
+
+        if (target is ObjectPType)
+        {
+            var tT = ((ObjectPType) target).ClrType;
+            if (tT == typeof (IDictionary<PValue, PValue>) ||
+                tT == typeof (Dictionary<PValue, PValue>) ||
+                tT == typeof (IDictionary) ||
+                tT == typeof (IEnumerable<KeyValuePair<PValue, PValue>>) ||
+                tT == typeof (IEnumerable) ||
+                tT == typeof (ICollection<KeyValuePair<PValue, PValue>>) ||
+                tT == typeof (ICollection))
+            {
+                result = new PValue(pvht, target);
+            }
+            else if (tT == typeof (IEnumerable<PValue>) || tT == typeof (IList<PValue>) ||
+                     tT == typeof (IList))
             {
                 var lst = new List<PValue>(pvht.Count);
                 foreach (var pair in pvht)
-                    lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair.Key, pair.Value)));
-                result = List.CreatePValue(lst);
+                    lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair)));
+                result = new PValue(lst, target);
             }
-
-            return result != null;
+        }
+        else if (target is ListPType)
+        {
+            var lst = new List<PValue>(pvht.Count);
+            foreach (var pair in pvht)
+                lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair.Key, pair.Value)));
+            result = List.CreatePValue(lst);
         }
 
-        protected override bool InternalConvertFrom(
-            StackContext sctx, PValue subject, bool useExplicit, out PValue result)
+        return result != null;
+    }
+
+    protected override bool InternalConvertFrom(
+        StackContext sctx, PValue subject, bool useExplicit, out PValue result)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (subject == null)
+            throw new ArgumentNullException(nameof(subject));
+
+        result = null;
+        PValueHashtable pvht = null;
+
+        var sT = subject.Type;
+
+        if (sT is ObjectPType)
         {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-
-            result = null;
-            PValueHashtable pvht = null;
-
-            var sT = subject.Type;
-
-            if (sT is ObjectPType)
+            var os = subject.Value;
+            if (os is PValueHashtable o_pvht)
+                pvht = o_pvht;
+            else
             {
-                var os = subject.Value;
-                if (os is PValueHashtable o_pvht)
-                    pvht = o_pvht;
+                if (os is IDictionary<PValue, PValue> id)
+                    pvht = new PValueHashtable(id);
                 else
                 {
-                    if (os is IDictionary<PValue, PValue> id)
-                        pvht = new PValueHashtable(id);
-                    else
+                    if (os is PValueKeyValuePair pvkvp)
                     {
-                        if (os is PValueKeyValuePair pvkvp)
-                        {
-                            pvht = new PValueHashtable(1);
-                            pvht.Add(pvkvp);
-                        }
-                        else if (os is KeyValuePair<PValue, PValue>)
-                        {
-                            pvht = new PValueHashtable(1);
-                            pvht.Add((KeyValuePair<PValue, PValue>) os);
-                        }
+                        pvht = new PValueHashtable(1);
+                        pvht.Add(pvkvp);
+                    }
+                    else if (os is KeyValuePair<PValue, PValue>)
+                    {
+                        pvht = new PValueHashtable(1);
+                        pvht.Add((KeyValuePair<PValue, PValue>) os);
                     }
                 }
             }
-            else if (sT == Null)
-                pvht = new PValueHashtable();
-
-            if (pvht != null)
-                result = new PValue(pvht, this);
-
-            return result != null;
         }
+        else if (sT == Null)
+            pvht = new PValueHashtable();
 
-        public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand,
-            out PValue result)
-        {
-            result = null;
+        if (pvht != null)
+            result = new PValue(pvht, this);
 
-            if (leftOperand.Type is HashPType && rightOperand.Type is HashPType)
-            {
-                var pvht1 = (PValueHashtable) leftOperand.Value;
-                var pvht2 = (PValueHashtable) rightOperand.Value;
-
-                var pvht = new PValueHashtable(pvht1.Count + pvht2.Count);
-                foreach (var pair in pvht1)
-                    pvht.Add(pair);
-                foreach (var pair in pvht2)
-                    pvht.AddOverride(pair);
-
-                result = (PValue) pvht;
-            }
-
-            return result != null;
-        }
-
-        protected override bool InternalIsEqual(PType otherType)
-        {
-            return otherType is HashPType;
-        }
-
-        private const int _code = 912499480;
-
-        public override int GetHashCode()
-        {
-            return _code;
-        }
-
-        public const string Literal = "Hash";
-
-        public override string ToString()
-        {
-            return Literal;
-        }
-
-        #endregion
-
-        #region ICilCompilerAware Members
-
-        /// <summary>
-        ///     Asses qualification and preferences for a certain instruction.
-        /// </summary>
-        /// <param name = "ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
-        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
-        {
-            return CompilationFlags.PrefersCustomImplementation;
-        }
-
-        private static readonly MethodInfo GetHashPType =
-            typeof (PType).GetProperty("Hash").GetGetMethod();
-
-        /// <summary>
-        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
-        /// </summary>
-        /// <param name = "state">The compiler state.</param>
-        /// <param name = "ins">The instruction to compile.</param>
-        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
-        {
-            state.EmitCall(GetHashPType);
-        }
-
-        #endregion
+        return result != null;
     }
+
+    public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand,
+        out PValue result)
+    {
+        result = null;
+
+        if (leftOperand.Type is HashPType && rightOperand.Type is HashPType)
+        {
+            var pvht1 = (PValueHashtable) leftOperand.Value;
+            var pvht2 = (PValueHashtable) rightOperand.Value;
+
+            var pvht = new PValueHashtable(pvht1.Count + pvht2.Count);
+            foreach (var pair in pvht1)
+                pvht.Add(pair);
+            foreach (var pair in pvht2)
+                pvht.AddOverride(pair);
+
+            result = (PValue) pvht;
+        }
+
+        return result != null;
+    }
+
+    protected override bool InternalIsEqual(PType otherType)
+    {
+        return otherType is HashPType;
+    }
+
+    private const int _code = 912499480;
+
+    public override int GetHashCode()
+    {
+        return _code;
+    }
+
+    public const string Literal = "Hash";
+
+    public override string ToString()
+    {
+        return Literal;
+    }
+
+    #endregion
+
+    #region ICilCompilerAware Members
+
+    /// <summary>
+    ///     Asses qualification and preferences for a certain instruction.
+    /// </summary>
+    /// <param name = "ins">The instruction that is about to be compiled.</param>
+    /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
+    CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersCustomImplementation;
+    }
+
+    private static readonly MethodInfo GetHashPType =
+        typeof (PType).GetProperty("Hash").GetGetMethod();
+
+    /// <summary>
+    ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+    /// </summary>
+    /// <param name = "state">The compiler state.</param>
+    /// <param name = "ins">The instruction to compile.</param>
+    void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+    {
+        state.EmitCall(GetHashPType);
+    }
+
+    #endregion
 }

@@ -27,35 +27,34 @@ using System;
 using System.Reflection;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialTypeCheckCommand : PartialWithPTypeCommandBase<PTypeInfo>
 {
-    public class PartialTypeCheckCommand : PartialWithPTypeCommandBase<PTypeInfo>
+    private PartialTypeCheckCommand()
     {
-        private PartialTypeCheckCommand()
-        {
-        }
-
-        public static PartialTypeCheckCommand Instance { get; } = new();
-
-        private ConstructorInfo _partialTypeCheckCtor;
-
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-            PValue[] closedArguments, PTypeInfo parameter)
-        {
-            return new PartialTypeCheck(mappings, closedArguments, parameter.Type);
-        }
-
-        protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
-        {
-            return _partialTypeCheckCtor ??= typeof (PartialTypeCheck).GetConstructor(new[]
-                {typeof (int[]), typeof (PValue[]), typeof (PType)});
-        }
-
-        protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
-        {
-            return typeof (PartialTypeCheck);
-        }
-
-        protected override string PartialApplicationKind => "Partial type check";
     }
+
+    public static PartialTypeCheckCommand Instance { get; } = new();
+
+    private ConstructorInfo _partialTypeCheckCtor;
+
+    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
+        PValue[] closedArguments, PTypeInfo parameter)
+    {
+        return new PartialTypeCheck(mappings, closedArguments, parameter.Type);
+    }
+
+    protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
+    {
+        return _partialTypeCheckCtor ??= typeof (PartialTypeCheck).GetConstructor(new[]
+            {typeof (int[]), typeof (PValue[]), typeof (PType)});
+    }
+
+    protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
+    {
+        return typeof (PartialTypeCheck);
+    }
+
+    protected override string PartialApplicationKind => "Partial type check";
 }

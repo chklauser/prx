@@ -27,85 +27,84 @@ using System.Reflection;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core
+namespace Prexonite.Commands.Core;
+
+public class Const : PCommand, ICilCompilerAware
 {
-    public class Const : PCommand, ICilCompilerAware
+    #region Singleton pattern
+
+    public static Const Instance { get; } = new();
+
+    private Const()
     {
-        #region Singleton pattern
+    }
 
-        public static Const Instance { get; } = new();
+    #endregion
 
-        private Const()
+    public const string Alias = "const";
+
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        PValue constant;
+        if (args.Length < 1)
+            constant = PType.Null;
+        else
+            constant = args[0];
+
+        return CreateConstFunction(constant, sctx);
+    }
+
+    private class Impl : IIndirectCall
+    {
+        private readonly PValue _value;
+
+        public Impl(PValue value)
         {
+            _value = value;
         }
 
-        #endregion
-
-        public const string Alias = "const";
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            PValue constant;
-            if (args.Length < 1)
-                constant = PType.Null;
-            else
-                constant = args[0];
-
-            return CreateConstFunction(constant, sctx);
+            return _value;
         }
+    }
 
-        private class Impl : IIndirectCall
+    private MethodInfo _createConstFunctionInfoCache;
+
+    private MethodInfo _createConstFunction
+    {
+        get
         {
-            private readonly PValue _value;
-
-            public Impl(PValue value)
-            {
-                _value = value;
-            }
-
-            public PValue IndirectCall(StackContext sctx, PValue[] args)
-            {
-                return _value;
-            }
+            return _createConstFunctionInfoCache ??= typeof (Const).GetMethod("CreateConstFunction",
+                new[] {typeof (PValue), typeof (StackContext)});
         }
+    }
 
-        private MethodInfo _createConstFunctionInfoCache;
+    public static PValue CreateConstFunction(PValue constant, StackContext sctx)
+    {
+        return sctx.CreateNativePValue(new Impl(constant));
+    }
 
-        private MethodInfo _createConstFunction
-        {
-            get
-            {
-                return _createConstFunctionInfoCache ??= typeof (Const).GetMethod("CreateConstFunction",
-                    new[] {typeof (PValue), typeof (StackContext)});
-            }
-        }
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
 
-        public static PValue CreateConstFunction(PValue constant, StackContext sctx)
-        {
-            return sctx.CreateNativePValue(new Impl(constant));
-        }
+    public CompilationFlags CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersCustomImplementation;
+    }
 
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
+    public void ImplementInCil(CompilerState state, Instruction ins)
+    {
+        var argc = ins.Arguments;
+        if (argc > 1)
+            state.EmitIgnoreArguments(argc - 1);
 
-        public CompilationFlags CheckQualification(Instruction ins)
-        {
-            return CompilationFlags.PrefersCustomImplementation;
-        }
+        state.EmitLoadLocal(state.SctxLocal);
+        if (argc == 0)
+            state.EmitLoadNullAsPValue();
 
-        public void ImplementInCil(CompilerState state, Instruction ins)
-        {
-            var argc = ins.Arguments;
-            if (argc > 1)
-                state.EmitIgnoreArguments(argc - 1);
-
-            state.EmitLoadLocal(state.SctxLocal);
-            if (argc == 0)
-                state.EmitLoadNullAsPValue();
-
-            state.EmitCall(_createConstFunction);
-        }
+        state.EmitCall(_createConstFunction);
     }
 }

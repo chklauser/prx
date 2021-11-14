@@ -23,32 +23,31 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstNull : AstExpr
 {
-    public class AstNull : AstExpr
+    public AstNull(string file, int line, int column)
+        : base(file, line, column)
     {
-        public AstNull(string file, int line, int column)
-            : base(file, line, column)
-        {
-        }
+    }
 
-        internal AstNull(Parser p)
-            : base(p)
-        {
-        }
+    internal AstNull(Parser p)
+        : base(p)
+    {
+    }
 
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            expr = null;
-            return false;
-        }
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        expr = null;
+        return false;
+    }
 
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            if(stackSemantics == StackSemantics.Effect)
-                return;
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        if(stackSemantics == StackSemantics.Effect)
+            return;
 
-            target.EmitNull(Position);
-        }
+        target.EmitNull(Position);
     }
 }

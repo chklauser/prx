@@ -26,48 +26,47 @@
 using System;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.List
+namespace Prexonite.Commands.List;
+
+public class ForAll : PCommand
 {
-    public class ForAll : PCommand
+    public override PValue Run(StackContext sctx, PValue[] args)
     {
-        public override PValue Run(StackContext sctx, PValue[] args)
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
+
+        if (args.Length < 1)
+            throw new PrexoniteException("Exists requires at least two arguments");
+        var f = args[0];
+
+        var eargs = new PValue[1];
+        for (var i = 1; i < args.Length; i++)
         {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-
-            if (args.Length < 1)
-                throw new PrexoniteException("Exists requires at least two arguments");
-            var f = args[0];
-
-            var eargs = new PValue[1];
-            for (var i = 1; i < args.Length; i++)
+            var arg = args[i];
+            var set = Map._ToEnumerable(sctx, arg);
+            if (set == null)
+                continue;
+            foreach (var value in set)
             {
-                var arg = args[i];
-                var set = Map._ToEnumerable(sctx, arg);
-                if (set == null)
-                    continue;
-                foreach (var value in set)
-                {
-                    eargs[0] = value;
-                    var result = f.IndirectCall(sctx, eargs);
-                    if (!result.TryConvertTo(sctx, PType.Bool, true, out var existence) ||
-                        !(bool) existence.Value)
-                        return false;
-                }
+                eargs[0] = value;
+                var result = f.IndirectCall(sctx, eargs);
+                if (!result.TryConvertTo(sctx, PType.Bool, true, out var existence) ||
+                    !(bool) existence.Value)
+                    return false;
             }
-
-            return true;
         }
 
-        /// <summary>
-        ///     A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>
-        ///     Pure commands can be applied at compile time.
-        /// </remarks>
-        [Obsolete]
-        public override bool IsPure => false;
+        return true;
     }
+
+    /// <summary>
+    ///     A flag indicating whether the command acts like a pure function.
+    /// </summary>
+    /// <remarks>
+    ///     Pure commands can be applied at compile time.
+    /// </remarks>
+    [Obsolete]
+    public override bool IsPure => false;
 }

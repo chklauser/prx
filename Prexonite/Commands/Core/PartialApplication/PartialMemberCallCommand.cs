@@ -30,139 +30,138 @@ using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialMemberCallCommand :
+    PartialApplicationCommandBase<PartialMemberCallCommand.MemberCallInfo>
 {
-    public class PartialMemberCallCommand :
-        PartialApplicationCommandBase<PartialMemberCallCommand.MemberCallInfo>
+    #region Singleton pattern
+
+    private PartialMemberCallCommand()
     {
-        #region Singleton pattern
-
-        private PartialMemberCallCommand()
-        {
-        }
-
-        public static PartialMemberCallCommand Instance { get; } = new();
-
-        #endregion
-
-        public struct MemberCallInfo
-        {
-            public string MemberId;
-            public PCall Call;
-        }
-
-        #region Overrides of PartialApplicationCommandBase<MemberCallInfo>
-
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-            PValue[] closedArguments, MemberCallInfo parameter)
-        {
-            return new PartialMemberCall(mappings, closedArguments, parameter.MemberId,
-                parameter.Call);
-        }
-
-        protected override Type GetPartialCallRepresentationType(MemberCallInfo parameter)
-        {
-            return typeof (PartialMemberCall);
-        }
-
-        protected override MemberCallInfo FilterRuntimeArguments(StackContext sctx,
-            ref ArraySegment<PValue> arguments)
-        {
-            if (arguments.Count < 2)
-                throw new PrexoniteException(
-                    "Partial member call constructor needs call type and member id.");
-
-            var lastIndex = arguments.Offset + arguments.Count - 1;
-            var rawMemberId = arguments.Array[lastIndex];
-            var rawCall = arguments.Array[lastIndex - 1];
-
-            if (!rawMemberId.TryConvertTo(sctx, PType.String, out rawMemberId))
-                throw new PrexoniteException(
-                    "Partial member call constructor expects the second but last argument to be the member id.");
-            if (!rawCall.TryConvertTo(sctx, PType.Int, out rawCall))
-                throw new PrexoniteException(
-                    $"Partial member call constructor expects the last argument to be the call type. (either {(int) PCall.Get} or {(int) PCall.Set})");
-
-            MemberCallInfo info;
-            info.MemberId = (string) rawMemberId.Value;
-            info.Call = (PCall) (int) rawCall.Value;
-
-            arguments = new ArraySegment<PValue>(arguments.Array, 0, arguments.Count - 2);
-            return info;
-        }
-
-        protected override bool FilterCompileTimeArguments(
-            ref ArraySegment<CompileTimeValue> staticArgv, out MemberCallInfo parameter)
-        {
-            parameter = default;
-            if (staticArgv.Count < 2)
-                return false;
-
-            var lastIndex = staticArgv.Offset + staticArgv.Count - 1;
-            var rawMemberId = staticArgv.Array[lastIndex];
-            var rawCall = staticArgv.Array[lastIndex - 1];
-
-            if (!rawMemberId.TryGetString(out parameter.MemberId) ||
-                !rawCall.TryGetInt(out var rawCallInt32))
-                return false;
-            parameter.Call = (PCall) rawCallInt32;
-
-            if (!Enum.IsDefined(typeof (PCall), parameter.Call))
-                return false;
-
-            staticArgv = new ArraySegment<CompileTimeValue>(staticArgv.Array, staticArgv.Offset,
-                staticArgv.Count - 2);
-            return true;
-        }
-
-        private ConstructorInfo _partialMemberCallCtor;
-
-        protected override void EmitConstructorCall(CompilerState state, MemberCallInfo parameter)
-        {
-            state.Il.Emit(OpCodes.Ldstr, parameter.MemberId);
-            state.EmitLdcI4((int) parameter.Call);
-            state.Il.Emit(
-                OpCodes.Newobj,
-                _partialMemberCallCtor ??= typeof (PartialMemberCall).GetConstructor(
-                    new[]
-                    {
-                        typeof (int[]),
-                        typeof (PValue[]),
-                        typeof (string),
-                        typeof (PCall)
-                    }));
-        }
-
-        #endregion
     }
 
-    public class PartialMemberCall : PartialApplicationBase
+    public static PartialMemberCallCommand Instance { get; } = new();
+
+    #endregion
+
+    public struct MemberCallInfo
     {
-        public string MemberId { [DebuggerStepThrough] get; }
-
-        public PCall Call { [DebuggerStepThrough] get; }
-
-        public PartialMemberCall(int[] mappings, PValue[] closedArguments, string memberId,
-            PCall call) : base(mappings, closedArguments, 1)
-        {
-            MemberId = memberId;
-            Call = call;
-        }
-
-        #region Overrides of PartialApplicationBase
-
-        protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-            PValue[] arguments)
-        {
-            var result = nonArguments[0].DynamicCall(sctx, arguments, Call, MemberId);
-            if (Call == PCall.Get)
-                return result;
-            else if (arguments.Length == 0)
-                return PType.Null.CreatePValue();
-            else
-                return arguments[^1];
-        }
-
-        #endregion
+        public string MemberId;
+        public PCall Call;
     }
+
+    #region Overrides of PartialApplicationCommandBase<MemberCallInfo>
+
+    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
+        PValue[] closedArguments, MemberCallInfo parameter)
+    {
+        return new PartialMemberCall(mappings, closedArguments, parameter.MemberId,
+            parameter.Call);
+    }
+
+    protected override Type GetPartialCallRepresentationType(MemberCallInfo parameter)
+    {
+        return typeof (PartialMemberCall);
+    }
+
+    protected override MemberCallInfo FilterRuntimeArguments(StackContext sctx,
+        ref ArraySegment<PValue> arguments)
+    {
+        if (arguments.Count < 2)
+            throw new PrexoniteException(
+                "Partial member call constructor needs call type and member id.");
+
+        var lastIndex = arguments.Offset + arguments.Count - 1;
+        var rawMemberId = arguments.Array[lastIndex];
+        var rawCall = arguments.Array[lastIndex - 1];
+
+        if (!rawMemberId.TryConvertTo(sctx, PType.String, out rawMemberId))
+            throw new PrexoniteException(
+                "Partial member call constructor expects the second but last argument to be the member id.");
+        if (!rawCall.TryConvertTo(sctx, PType.Int, out rawCall))
+            throw new PrexoniteException(
+                $"Partial member call constructor expects the last argument to be the call type. (either {(int) PCall.Get} or {(int) PCall.Set})");
+
+        MemberCallInfo info;
+        info.MemberId = (string) rawMemberId.Value;
+        info.Call = (PCall) (int) rawCall.Value;
+
+        arguments = new ArraySegment<PValue>(arguments.Array, 0, arguments.Count - 2);
+        return info;
+    }
+
+    protected override bool FilterCompileTimeArguments(
+        ref ArraySegment<CompileTimeValue> staticArgv, out MemberCallInfo parameter)
+    {
+        parameter = default;
+        if (staticArgv.Count < 2)
+            return false;
+
+        var lastIndex = staticArgv.Offset + staticArgv.Count - 1;
+        var rawMemberId = staticArgv.Array[lastIndex];
+        var rawCall = staticArgv.Array[lastIndex - 1];
+
+        if (!rawMemberId.TryGetString(out parameter.MemberId) ||
+            !rawCall.TryGetInt(out var rawCallInt32))
+            return false;
+        parameter.Call = (PCall) rawCallInt32;
+
+        if (!Enum.IsDefined(typeof (PCall), parameter.Call))
+            return false;
+
+        staticArgv = new ArraySegment<CompileTimeValue>(staticArgv.Array, staticArgv.Offset,
+            staticArgv.Count - 2);
+        return true;
+    }
+
+    private ConstructorInfo _partialMemberCallCtor;
+
+    protected override void EmitConstructorCall(CompilerState state, MemberCallInfo parameter)
+    {
+        state.Il.Emit(OpCodes.Ldstr, parameter.MemberId);
+        state.EmitLdcI4((int) parameter.Call);
+        state.Il.Emit(
+            OpCodes.Newobj,
+            _partialMemberCallCtor ??= typeof (PartialMemberCall).GetConstructor(
+                new[]
+                {
+                    typeof (int[]),
+                    typeof (PValue[]),
+                    typeof (string),
+                    typeof (PCall)
+                }));
+    }
+
+    #endregion
+}
+
+public class PartialMemberCall : PartialApplicationBase
+{
+    public string MemberId { [DebuggerStepThrough] get; }
+
+    public PCall Call { [DebuggerStepThrough] get; }
+
+    public PartialMemberCall(int[] mappings, PValue[] closedArguments, string memberId,
+        PCall call) : base(mappings, closedArguments, 1)
+    {
+        MemberId = memberId;
+        Call = call;
+    }
+
+    #region Overrides of PartialApplicationBase
+
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
+        PValue[] arguments)
+    {
+        var result = nonArguments[0].DynamicCall(sctx, arguments, Call, MemberId);
+        if (Call == PCall.Get)
+            return result;
+        else if (arguments.Length == 0)
+            return PType.Null.CreatePValue();
+        else
+            return arguments[^1];
+    }
+
+    #endregion
 }

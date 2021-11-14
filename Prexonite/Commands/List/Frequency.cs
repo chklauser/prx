@@ -27,45 +27,44 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.List
+namespace Prexonite.Commands.List;
+
+public class Frequency : CoroutineCommand
 {
-    public class Frequency : CoroutineCommand
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
+        PValue[] args)
     {
-        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-            PValue[] args)
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
+        if (sctxCarrier == null)
+            throw new ArgumentNullException(nameof(sctxCarrier));
+
+        var t = new Dictionary<PValue, int>();
+
+        var sctx = sctxCarrier.StackContext;
+
+        foreach (var arg in args)
         {
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-            if (sctxCarrier == null)
-                throw new ArgumentNullException(nameof(sctxCarrier));
-
-            var t = new Dictionary<PValue, int>();
-
-            var sctx = sctxCarrier.StackContext;
-
-            foreach (var arg in args)
-            {
-                var xs = Map._ToEnumerable(sctx, arg);
-                if (xs == null)
-                    continue;
-                foreach (var x in xs)
-                    if (t.ContainsKey(x))
-                        t[x]++;
-                    else
-                        t.Add(x, 1);
-            }
-
-            foreach (var pair in t)
-                yield return new PValueKeyValuePair(pair.Key, pair.Value);
+            var xs = Map._ToEnumerable(sctx, arg);
+            if (xs == null)
+                continue;
+            foreach (var x in xs)
+                if (t.ContainsKey(x))
+                    t[x]++;
+                else
+                    t.Add(x, 1);
         }
 
-        /// <summary>
-        ///     A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>
-        ///     Pure commands can be applied at compile time.
-        /// </remarks>
-        [Obsolete]
-        public override bool IsPure => false;
+        foreach (var pair in t)
+            yield return new PValueKeyValuePair(pair.Key, pair.Value);
     }
+
+    /// <summary>
+    ///     A flag indicating whether the command acts like a pure function.
+    /// </summary>
+    /// <remarks>
+    ///     Pure commands can be applied at compile time.
+    /// </remarks>
+    [Obsolete]
+    public override bool IsPure => false;
 }

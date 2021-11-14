@@ -23,23 +23,22 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Symbolic.Internal
+namespace Prexonite.Compiler.Symbolic.Internal;
+
+public abstract class TransformHandler<TArg> : SymbolHandler<TArg,Symbol>
 {
-    public abstract class TransformHandler<TArg> : SymbolHandler<TArg,Symbol>
+    #region Overrides of SymbolHandler<TArg,Symbol>
+
+    protected override Symbol HandleWrappingSymbol(WrappingSymbol self, TArg argument)
     {
-        #region Overrides of SymbolHandler<TArg,Symbol>
-
-        protected override Symbol HandleWrappingSymbol(WrappingSymbol self, TArg argument)
-        {
-            var newInner = self.InnerSymbol.HandleWith(this, argument);
-            return self.InnerSymbol.Equals(newInner) ? self : self.With(newInner);
-        }
-
-        protected override Symbol HandleLeafSymbol(Symbol self, TArg argument)
-        {
-            return self;
-        }
-
-        #endregion
+        var newInner = self.InnerSymbol.HandleWith(this, argument);
+        return self.InnerSymbol.Equals(newInner) ? self : self.With(newInner);
     }
+
+    protected override Symbol HandleLeafSymbol(Symbol self, TArg argument)
+    {
+        return self;
+    }
+
+    #endregion
 }

@@ -25,22 +25,21 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialTypecast : PartialApplicationBase
 {
-    public class PartialTypecast : PartialApplicationBase
+    private readonly PType _ptype;
+
+    public PartialTypecast(int[] mappings, PValue[] closedArguments, PType ptype)
+        : base(mappings, closedArguments, 1)
     {
-        private readonly PType _ptype;
+        _ptype = ptype;
+    }
 
-        public PartialTypecast(int[] mappings, PValue[] closedArguments, PType ptype)
-            : base(mappings, closedArguments, 1)
-        {
-            _ptype = ptype;
-        }
-
-        protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-            PValue[] arguments)
-        {
-            return nonArguments[0].ConvertTo(sctx, _ptype, true);
-        }
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
+        PValue[] arguments)
+    {
+        return nonArguments[0].ConvertTo(sctx, _ptype, true);
     }
 }

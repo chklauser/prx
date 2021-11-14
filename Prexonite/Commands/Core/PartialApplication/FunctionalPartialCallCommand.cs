@@ -28,52 +28,51 @@ using System.Reflection;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class FunctionalPartialCallCommand : PCommand, ICilExtension
 {
-    public class FunctionalPartialCallCommand : PCommand, ICilExtension
+    #region Singleton pattern
+
+    public static FunctionalPartialCallCommand Instance { get; } = new();
+
+    private FunctionalPartialCallCommand()
     {
-        #region Singleton pattern
+    }
 
-        public static FunctionalPartialCallCommand Instance { get; } = new();
+    public const string Alias = @"pa\fun\call";
 
-        private FunctionalPartialCallCommand()
+    #endregion
+
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        if (args.Length < 1)
+            return PType.Null;
+
+        var closed = new PValue[args.Length - 1];
+        Array.Copy(args, 1, closed, 0, args.Length - 1);
+        return sctx.CreateNativePValue(new FunctionalPartialCall(args[0], closed));
+    }
+
+    bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+    {
+        return true;
+    }
+
+    private ConstructorInfo _functionPartialCallCtorCache;
+
+    private ConstructorInfo _functionPartialCallCtor
+    {
+        get
         {
+            return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor(new[]
+                {typeof (PValue), typeof (PValue[])});
         }
+    }
 
-        public const string Alias = @"pa\fun\call";
-
-        #endregion
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            if (args.Length < 1)
-                return PType.Null;
-
-            var closed = new PValue[args.Length - 1];
-            Array.Copy(args, 1, closed, 0, args.Length - 1);
-            return sctx.CreateNativePValue(new FunctionalPartialCall(args[0], closed));
-        }
-
-        bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
-        {
-            return true;
-        }
-
-        private ConstructorInfo _functionPartialCallCtorCache;
-
-        private ConstructorInfo _functionPartialCallCtor
-        {
-            get
-            {
-                return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor(new[]
-                    {typeof (PValue), typeof (PValue[])});
-            }
-        }
-
-        void ICilExtension.Implement(CompilerState state, Instruction ins,
-            CompileTimeValue[] staticArgv, int dynamicArgc)
-        {
-            FlippedFunctionalPartialCallCommand._ImplementCtorCall(state, ins, staticArgv, dynamicArgc, _functionPartialCallCtor);
-        }
+    void ICilExtension.Implement(CompilerState state, Instruction ins,
+        CompileTimeValue[] staticArgv, int dynamicArgc)
+    {
+        FlippedFunctionalPartialCallCommand._ImplementCtorCall(state, ins, staticArgv, dynamicArgc, _functionPartialCallCtor);
     }
 }

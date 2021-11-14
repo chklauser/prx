@@ -29,247 +29,246 @@ using System.Diagnostics;
 using System.Text;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+/// <summary>
+///     An AST expression node for optimized string concatenation.
+/// </summary>
+/// <remarks>
+///     <para>
+///         This node get's created as a replacement for nodes created by <see cref = "IAstFactory.BinaryOperation" /> with string operands.
+///     </para>
+/// </remarks>
+public class AstStringConcatenation : AstExpr,
+    IAstHasExpressions
 {
+    [NotNull]
+    private readonly AstGetSet _simpleConcatPrototype;
+    [NotNull]
+    private readonly AstGetSet _multiConcatPrototype;
+
     /// <summary>
-    ///     An AST expression node for optimized string concatenation.
+    ///     The list of arguments for the string concatenation.
     /// </summary>
+    [NotNull] private readonly List<AstExpr> _arguments = new();
+
+    /// <summary>
+    ///     Creates a new AstStringConcatenation AST node.
+    /// </summary>
+    /// <param name="position">The portion of source code that spawned this AST node.</param>
+    /// <param name="simpleConcatPrototype">A prototype of the call that implements the simple string concatenation (two operands).</param>
+    /// <param name="multiConcatPrototype">A prototype of the call that implements the multi-string concatenation (more than two operands).</param>
+    /// <param name = "arguments">A list of expressions to be added to the <see cref = "_arguments" /> list.</param>
+    [DebuggerNonUserCode]
+    public AstStringConcatenation(ISourcePosition position, AstGetSet simpleConcatPrototype, AstGetSet multiConcatPrototype, params AstExpr[] arguments)
+        : base(position)
+    {
+        if (simpleConcatPrototype == null)
+            throw new ArgumentNullException(nameof(simpleConcatPrototype));
+        if (multiConcatPrototype == null)
+            throw new ArgumentNullException(nameof(multiConcatPrototype));
+            
+        arguments ??= Array.Empty<AstExpr>();
+
+        _arguments.AddRange(arguments);
+        _simpleConcatPrototype = simpleConcatPrototype;
+        _multiConcatPrototype = multiConcatPrototype;
+    }
+
+    #region IAstHasExpressions Members
+
+    public AstExpr[] Expressions => _arguments.ToArray();
+
+    /// <summary>
+    ///     The list of arguments for the string concatenation.
+    /// </summary>
+    public List<AstExpr> Arguments => _arguments;
+
+    #endregion
+
+    /// <summary>
+    ///     Emits code for the AstStringConcatenation node.
+    /// </summary>
+    /// <param name = "target">The target to which to write the code to.</param>
+    /// <param name="stackSemantics">The stack semantics with which to emit code. </param>
     /// <remarks>
     ///     <para>
-    ///         This node get's created as a replacement for nodes created by <see cref = "IAstFactory.BinaryOperation" /> with string operands.
+    ///         AstStringConcatenation tries to find the most efficient way to concatenate strings. StringBuilders are actually slower when concatenating only two arguments.
+    ///     </para>
+    ///     <para>
+    ///         <list type = "table">
+    ///             <listheader>
+    ///                 <term>Arguments</term>
+    ///                 <description>Emitted code</description>
+    ///             </listheader>
+    ///             <item>
+    ///                 <term>0</term>
+    ///                 <description><c><see cref = "OpCode.ldc_string">ldc.string</see> ""</c> (Empty string)</description>
+    ///             </item>
+    ///             <item>
+    ///                 <term>1</term>
+    ///                 <description>Just that argument and, unless it is a <see cref = "AstConstant">string constant</see>, a call to <c>ToString</c>.</description>
+    ///             </item>
+    ///             <item>
+    ///                 <term>2</term>
+    ///                 <description>Concatenation using the Addition (<c><see cref = "OpCode.add">add</see></c>) operator.</description>
+    ///             </item>
+    ///             <item>
+    ///                 <term>n</term>
+    ///                 <description>A call to the <c><see cref = "Prexonite.Engine.ConcatenateAlias">concat</see></c> command.</description>
+    ///             </item>
+    ///         </list>
     ///     </para>
     /// </remarks>
-    public class AstStringConcatenation : AstExpr,
-                                          IAstHasExpressions
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        [NotNull]
-        private readonly AstGetSet _simpleConcatPrototype;
-        [NotNull]
-        private readonly AstGetSet _multiConcatPrototype;
-
-        /// <summary>
-        ///     The list of arguments for the string concatenation.
-        /// </summary>
-        [NotNull] private readonly List<AstExpr> _arguments = new();
-
-        /// <summary>
-        ///     Creates a new AstStringConcatenation AST node.
-        /// </summary>
-        /// <param name="position">The portion of source code that spawned this AST node.</param>
-        /// <param name="simpleConcatPrototype">A prototype of the call that implements the simple string concatenation (two operands).</param>
-        /// <param name="multiConcatPrototype">A prototype of the call that implements the multi-string concatenation (more than two operands).</param>
-        /// <param name = "arguments">A list of expressions to be added to the <see cref = "_arguments" /> list.</param>
-        [DebuggerNonUserCode]
-        public AstStringConcatenation(ISourcePosition position, AstGetSet simpleConcatPrototype, AstGetSet multiConcatPrototype, params AstExpr[] arguments)
-            : base(position)
+        if (_arguments.Count > 2)
         {
-            if (simpleConcatPrototype == null)
-                throw new ArgumentNullException(nameof(simpleConcatPrototype));
-            if (multiConcatPrototype == null)
-                throw new ArgumentNullException(nameof(multiConcatPrototype));
-            
-            arguments ??= Array.Empty<AstExpr>();
-
-            _arguments.AddRange(arguments);
-            _simpleConcatPrototype = simpleConcatPrototype;
-            _multiConcatPrototype = multiConcatPrototype;
+            var call = _multiConcatPrototype.GetCopy();
+            call.Arguments.AddRange(Arguments);
+            call.EmitCode(target, stackSemantics);
         }
-
-        #region IAstHasExpressions Members
-
-        public AstExpr[] Expressions => _arguments.ToArray();
-
-        /// <summary>
-        ///     The list of arguments for the string concatenation.
-        /// </summary>
-        public List<AstExpr> Arguments => _arguments;
-
-        #endregion
-
-        /// <summary>
-        ///     Emits code for the AstStringConcatenation node.
-        /// </summary>
-        /// <param name = "target">The target to which to write the code to.</param>
-        /// <param name="stackSemantics">The stack semantics with which to emit code. </param>
-        /// <remarks>
-        ///     <para>
-        ///         AstStringConcatenation tries to find the most efficient way to concatenate strings. StringBuilders are actually slower when concatenating only two arguments.
-        ///     </para>
-        ///     <para>
-        ///         <list type = "table">
-        ///             <listheader>
-        ///                 <term>Arguments</term>
-        ///                 <description>Emitted code</description>
-        ///             </listheader>
-        ///             <item>
-        ///                 <term>0</term>
-        ///                 <description><c><see cref = "OpCode.ldc_string">ldc.string</see> ""</c> (Empty string)</description>
-        ///             </item>
-        ///             <item>
-        ///                 <term>1</term>
-        ///                 <description>Just that argument and, unless it is a <see cref = "AstConstant">string constant</see>, a call to <c>ToString</c>.</description>
-        ///             </item>
-        ///             <item>
-        ///                 <term>2</term>
-        ///                 <description>Concatenation using the Addition (<c><see cref = "OpCode.add">add</see></c>) operator.</description>
-        ///             </item>
-        ///             <item>
-        ///                 <term>n</term>
-        ///                 <description>A call to the <c><see cref = "Prexonite.Engine.ConcatenateAlias">concat</see></c> command.</description>
-        ///             </item>
-        ///         </list>
-        ///     </para>
-        /// </remarks>
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+        else if (_arguments.Count >= 2)
         {
-            if (_arguments.Count > 2)
-            {
-                var call = _multiConcatPrototype.GetCopy();
-                call.Arguments.AddRange(Arguments);
-                call.EmitCode(target, stackSemantics);
-            }
-            else if (_arguments.Count >= 2)
-            {
-                var call = _simpleConcatPrototype.GetCopy();
-                call.Arguments.AddRange(Arguments);
-                call.EmitCode(target, stackSemantics);
-            }
-            else if (_arguments.Count == 1)
-            {
-                if (stackSemantics == StackSemantics.Value)
-                {
-                    _arguments[0].EmitValueCode(target);
-
-                    AstConstant constant;
-                    if ((constant = _arguments[0] as AstConstant) != null &&
-                        !(constant.Constant is string))
-                        target.EmitGetCall(Position, 1, "ToString");
-                }
-                else
-                {
-                    _arguments[0].EmitEffectCode(target);
-                }
-            }
-            else if (_arguments.Count == 0)
-            {
-                if(stackSemantics == StackSemantics.Value)
-                    target.EmitConstant(Position, "");
-            }
+            var call = _simpleConcatPrototype.GetCopy();
+            call.Arguments.AddRange(Arguments);
+            call.EmitCode(target, stackSemantics);
         }
-
-        #region AstExpr Members
-
-        /// <summary>
-        ///     Tries to optimize the AstStringConcatenation node.
-        /// </summary>
-        /// <param name = "target">The context in which to perform the optimization.</param>
-        /// <param name = "expr">A possible replacement for the called node.</param>
-        /// <returns>True, if <paramref name = "expr" /> contains a replacement for the called node. 
-        ///     False otherwise.</returns>
-        /// <remarks>
-        ///     <para>
-        ///         Note that <c>false</c> as the return value doesn't mean that the node cannot be 
-        ///         optimized. It just cannot be replaced by <paramref name = "expr" />.
-        ///     </para>
-        ///     <para>
-        ///         Also, <paramref name = "expr" /> is only defined if the method call returns <c>true</c>. Don't use it otherwise.
-        ///     </para>
-        /// </remarks>
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+        else if (_arguments.Count == 1)
         {
-            _OptimizeInternal(target);
-
-            AstConstant collapsed;
-            if (Arguments.Count == 1 && (collapsed = Arguments[0] as AstConstant) != null)
+            if (stackSemantics == StackSemantics.Value)
             {
-                expr = collapsed.Constant is string
-                    ? (AstExpr) collapsed
-                    : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
+                _arguments[0].EmitValueCode(target);
+
+                AstConstant constant;
+                if ((constant = _arguments[0] as AstConstant) != null &&
+                    !(constant.Constant is string))
+                    target.EmitGetCall(Position, 1, "ToString");
             }
             else
             {
-                expr = null;
+                _arguments[0].EmitEffectCode(target);
             }
-
-            return expr != null;
         }
-
-        internal void _OptimizeInternal(CompilerTarget target)
+        else if (_arguments.Count == 0)
         {
-//Optimize arguments
-            foreach (var arg in _arguments.ToArray())
-            {
-                if (arg == null)
-                    throw new PrexoniteException(
-                        "Invalid (null) argument in StringConcat node (" + ToString() +
-// ReSharper disable ConditionIsAlwaysTrueOrFalse
-                            ") detected.");
-// ReSharper restore ConditionIsAlwaysTrueOrFalse
-                var oArg = _GetOptimizedNode(target, arg);
-                if (!ReferenceEquals(oArg, arg))
-                {
-                    var idx = _arguments.IndexOf(arg);
-                    _arguments.Insert(idx, oArg);
-                    _arguments.RemoveAt(idx + 1);
-                }
-            }
+            if(stackSemantics == StackSemantics.Value)
+                target.EmitConstant(Position, "");
+        }
+    }
 
-            //Expand embedded concatenates argument list
-            var argumentArray = _arguments.ToArray();
-            for (var i = 0; i < argumentArray.Length; i++)
-            {
-                var argument = argumentArray[i];
+    #region AstExpr Members
 
-                if (argument is AstStringConcatenation concat)
-                {
-                    _arguments.RemoveAt(i); //Remove embedded concat
-                    _arguments.InsertRange(i, concat._arguments); //insert it's arguments instead
-                }
-            }
+    /// <summary>
+    ///     Tries to optimize the AstStringConcatenation node.
+    /// </summary>
+    /// <param name = "target">The context in which to perform the optimization.</param>
+    /// <param name = "expr">A possible replacement for the called node.</param>
+    /// <returns>True, if <paramref name = "expr" /> contains a replacement for the called node. 
+    ///     False otherwise.</returns>
+    /// <remarks>
+    ///     <para>
+    ///         Note that <c>false</c> as the return value doesn't mean that the node cannot be 
+    ///         optimized. It just cannot be replaced by <paramref name = "expr" />.
+    ///     </para>
+    ///     <para>
+    ///         Also, <paramref name = "expr" /> is only defined if the method call returns <c>true</c>. Don't use it otherwise.
+    ///     </para>
+    /// </remarks>
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        _OptimizeInternal(target);
 
-            //Try to shorten argument list
-            var nlst = new List<AstExpr>();
-            string last = null;
-            var buffer = new StringBuilder();
-            foreach (var e in _arguments)
-            {
-                string current;
-                if (e is AstConstant currConst)
-                    current = currConst.ToPValue(target).CallToString(target.Loader);
-                else
-                    current = null;
-
-                if (current != null)
-                {
-                    //Drop empty strings
-                    if (current.Length == 0)
-                        continue;
-
-                    buffer.Append(current);
-                }
-                else //current == null
-                {
-                    if (last != null)
-                    {
-                        nlst.Add(new AstConstant(File, Line, Column, buffer.ToString()));
-                        buffer.Length = 0;
-                    }
-
-                    nlst.Add(e);
-                }
-
-                last = current;
-            }
-            if (last != null)
-            {
-                nlst.Add(new AstConstant(File, Line, Column, buffer.ToString()));
-                buffer.Length = 0;
-            }
-
-            _arguments.Clear();
-            _arguments.AddRange(nlst);
+        AstConstant collapsed;
+        if (Arguments.Count == 1 && (collapsed = Arguments[0] as AstConstant) != null)
+        {
+            expr = collapsed.Constant is string
+                ? (AstExpr) collapsed
+                : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
+        }
+        else
+        {
+            expr = null;
         }
 
-        #endregion
+        return expr != null;
     }
+
+    internal void _OptimizeInternal(CompilerTarget target)
+    {
+//Optimize arguments
+        foreach (var arg in _arguments.ToArray())
+        {
+            if (arg == null)
+                throw new PrexoniteException(
+                    "Invalid (null) argument in StringConcat node (" + ToString() +
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+                    ") detected.");
+// ReSharper restore ConditionIsAlwaysTrueOrFalse
+            var oArg = _GetOptimizedNode(target, arg);
+            if (!ReferenceEquals(oArg, arg))
+            {
+                var idx = _arguments.IndexOf(arg);
+                _arguments.Insert(idx, oArg);
+                _arguments.RemoveAt(idx + 1);
+            }
+        }
+
+        //Expand embedded concatenates argument list
+        var argumentArray = _arguments.ToArray();
+        for (var i = 0; i < argumentArray.Length; i++)
+        {
+            var argument = argumentArray[i];
+
+            if (argument is AstStringConcatenation concat)
+            {
+                _arguments.RemoveAt(i); //Remove embedded concat
+                _arguments.InsertRange(i, concat._arguments); //insert it's arguments instead
+            }
+        }
+
+        //Try to shorten argument list
+        var nlst = new List<AstExpr>();
+        string last = null;
+        var buffer = new StringBuilder();
+        foreach (var e in _arguments)
+        {
+            string current;
+            if (e is AstConstant currConst)
+                current = currConst.ToPValue(target).CallToString(target.Loader);
+            else
+                current = null;
+
+            if (current != null)
+            {
+                //Drop empty strings
+                if (current.Length == 0)
+                    continue;
+
+                buffer.Append(current);
+            }
+            else //current == null
+            {
+                if (last != null)
+                {
+                    nlst.Add(new AstConstant(File, Line, Column, buffer.ToString()));
+                    buffer.Length = 0;
+                }
+
+                nlst.Add(e);
+            }
+
+            last = current;
+        }
+        if (last != null)
+        {
+            nlst.Add(new AstConstant(File, Line, Column, buffer.ToString()));
+            buffer.Length = 0;
+        }
+
+        _arguments.Clear();
+        _arguments.AddRange(nlst);
+    }
+
+    #endregion
 }

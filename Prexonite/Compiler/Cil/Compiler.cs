@@ -45,1870 +45,1869 @@ using CilException = Prexonite.PrexoniteException;
 
 #endregion
 
-namespace Prexonite.Compiler.Cil
+namespace Prexonite.Compiler.Cil;
+
+[SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
+public static class Compiler
 {
-    [SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
-    public static class Compiler
+    #region Public interface and LCG Setup
+
+    public static void Compile(Application app, Engine targetEngine)
     {
-        #region Public interface and LCG Setup
+        Compile(app, targetEngine, FunctionLinking.FullyStatic);
+    }
 
-        public static void Compile(Application app, Engine targetEngine)
-        {
-            Compile(app, targetEngine, FunctionLinking.FullyStatic);
-        }
+    public static void Compile(Application app, Engine targetEngine, FunctionLinking linking)
+    {
+        if (app == null)
+            throw new ArgumentNullException(nameof(app));
+        Compile(app.Functions, targetEngine, linking);
+    }
 
-        public static void Compile(Application app, Engine targetEngine, FunctionLinking linking)
-        {
-            if (app == null)
-                throw new ArgumentNullException(nameof(app));
-            Compile(app.Functions, targetEngine, linking);
-        }
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void Compile(StackContext sctx, Application app)
+    {
+        Compile(sctx, app, FunctionLinking.FullyStatic);
+    }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void Compile(StackContext sctx, Application app)
-        {
-            Compile(sctx, app, FunctionLinking.FullyStatic);
-        }
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void Compile(StackContext sctx, Application app, FunctionLinking linking)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        Compile(app, sctx.ParentEngine, linking);
+    }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void Compile(StackContext sctx, Application app, FunctionLinking linking)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            Compile(app, sctx.ParentEngine, linking);
-        }
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void Compile(StackContext sctx, List<PValue> lst)
+    {
+        Compile(sctx, lst, FunctionLinking.FullyStatic);
+    }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void Compile(StackContext sctx, List<PValue> lst)
-        {
-            Compile(sctx, lst, FunctionLinking.FullyStatic);
-        }
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void Compile(StackContext sctx, List<PValue> lst, bool fullyStatic)
+    {
+        Compile(sctx, lst,
+            fullyStatic ? FunctionLinking.FullyStatic : FunctionLinking.FullyIsolated);
+    }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void Compile(StackContext sctx, List<PValue> lst, bool fullyStatic)
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void Compile(StackContext sctx, List<PValue> lst, FunctionLinking linking)
+    {
+        if (lst == null)
+            throw new ArgumentNullException(nameof(lst));
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        var functions = new List<PFunction>();
+        foreach (var value in lst)
         {
-            Compile(sctx, lst,
-                fullyStatic ? FunctionLinking.FullyStatic : FunctionLinking.FullyIsolated);
-        }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void Compile(StackContext sctx, List<PValue> lst, FunctionLinking linking)
-        {
-            if (lst == null)
-                throw new ArgumentNullException(nameof(lst));
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            var functions = new List<PFunction>();
-            foreach (var value in lst)
+            if (value == null)
+                continue;
+            var T = value.Type.ToBuiltIn();
+            PFunction func;
+            switch (T)
             {
-                if (value == null)
-                    continue;
-                var T = value.Type.ToBuiltIn();
-                PFunction func;
-                switch (T)
-                {
-                    case PType.BuiltIn.String:
-                        if (
-                            !sctx.ParentApplication.Functions.TryGetValue((string) value.Value,
-                                out func))
-                            continue;
-                        break;
-                    case PType.BuiltIn.Object:
-                        if (!value.TryConvertTo(sctx, false, out func))
-                            continue;
-                        break;
-                    default:
+                case PType.BuiltIn.String:
+                    if (
+                        !sctx.ParentApplication.Functions.TryGetValue((string) value.Value,
+                            out func))
                         continue;
-                }
-                functions.Add(func);
+                    break;
+                case PType.BuiltIn.Object:
+                    if (!value.TryConvertTo(sctx, false, out func))
+                        continue;
+                    break;
+                default:
+                    continue;
             }
-
-            Compile(functions, sctx.ParentEngine, linking);
+            functions.Add(func);
         }
 
-        public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine)
+        Compile(functions, sctx.ParentEngine, linking);
+    }
+
+    public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine)
+    {
+        Compile(functions, targetEngine, FunctionLinking.FullyStatic);
+    }
+
+    public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine,
+        FunctionLinking linking)
+    {
+        _checkQualification(functions, targetEngine);
+
+        var qfuncs = new List<PFunction>();
+
+        //Get a list of qualifying functions
+        foreach (var func in functions)
+            if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
+                qfuncs.Add(func);
+
+        if (qfuncs.Count == 0)
+            return; //No compilation to be done
+
+        var pass = new CompilerPass(linking);
+
+        //Generate method stubs
+        foreach (var func in qfuncs)
+            pass.DefineImplementationMethod(func.Id);
+
+        //Emit IL
+        foreach (var func in qfuncs)
         {
-            Compile(functions, targetEngine, FunctionLinking.FullyStatic);
+            _compile(func, CompilerPass.GetIlGenerator(pass.Implementations[func.Id]),
+                targetEngine, pass, linking);
         }
 
-        public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine,
-            FunctionLinking linking)
+        //Enable by name linking and link meta data to CIL implementations
+        foreach (var func in qfuncs)
         {
-            _checkQualification(functions, targetEngine);
-
-            var qfuncs = new List<PFunction>();
-
-            //Get a list of qualifying functions
-            foreach (var func in functions)
-                if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
-                    qfuncs.Add(func);
-
-            if (qfuncs.Count == 0)
-                return; //No compilation to be done
-
-            var pass = new CompilerPass(linking);
-
-            //Generate method stubs
-            foreach (var func in qfuncs)
-                pass.DefineImplementationMethod(func.Id);
-
-            //Emit IL
-            foreach (var func in qfuncs)
-            {
-                _compile(func, CompilerPass.GetIlGenerator(pass.Implementations[func.Id]),
-                    targetEngine, pass, linking);
-            }
-
-            //Enable by name linking and link meta data to CIL implementations
-            foreach (var func in qfuncs)
-            {
-                func.Declaration.CilImplementation = pass.GetDelegate(func.Id);
-                pass.LinkMetadata(func);
-            }
+            func.Declaration.CilImplementation = pass.GetDelegate(func.Id);
+            pass.LinkMetadata(func);
         }
+    }
 
-        [PublicAPI]
-        public static async Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(IPlan plan, IEnumerable<ModuleName> moduleNames,
-            Engine engine, FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
-        {
-            var dependencyClosure = new DependencyAnalysis<ModuleName, ITargetDescription>(
-                moduleNames.Select(m => plan.TargetDescriptions[m]),
-                false);
-            var compiledApplications = new Dictionary<ModuleName, Tuple<Application, ITarget>>();
+    [PublicAPI]
+    public static async Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(IPlan plan, IEnumerable<ModuleName> moduleNames,
+        Engine engine, FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
+    {
+        var dependencyClosure = new DependencyAnalysis<ModuleName, ITargetDescription>(
+            moduleNames.Select(m => plan.TargetDescriptions[m]),
+            false);
+        var compiledApplications = new Dictionary<ModuleName, Tuple<Application, ITarget>>();
             
-            foreach (var group in dependencyClosure.GetMutuallyRecursiveGroups())
+        foreach (var group in dependencyClosure.GetMutuallyRecursiveGroups())
+        {
+            var groupTargets = await Task.WhenAll(group.Select(t => plan.LoadAsync(t.Name, ct)));
+            foreach(var (_, groupTarget) in groupTargets)
             {
-                var groupTargets = await Task.WhenAll(group.Select(t => plan.LoadAsync(t.Name, ct)));
-                foreach(var (_, groupTarget) in groupTargets)
-                {
-                    groupTarget.ThrowIfFailed(plan.TargetDescriptions[groupTarget.Name]);
-                }
-                
-                Compile(groupTargets.SelectMany(t => t.Item1.Functions), engine, linking);
-                
-                foreach (var groupTarget in groupTargets)
-                {
-                    compiledApplications[groupTarget.Item2.Name] = groupTarget;
-                }
+                groupTarget.ThrowIfFailed(plan.TargetDescriptions[groupTarget.Name]);
             }
+                
+            Compile(groupTargets.SelectMany(t => t.Item1.Functions), engine, linking);
+                
+            foreach (var groupTarget in groupTargets)
+            {
+                compiledApplications[groupTarget.Item2.Name] = groupTarget;
+            }
+        }
             
-            return compiledApplications;
-        }
+        return compiledApplications;
+    }
 
-        [PublicAPI]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(StackContext sctx, IPlan plan, IEnumerable<ModuleName> moduleNames,
-            FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
+    [PublicAPI]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static Task<IDictionary<ModuleName, Tuple<Application, ITarget>>> CompileModulesAsync(StackContext sctx, IPlan plan, IEnumerable<ModuleName> moduleNames,
+        FunctionLinking linking = FunctionLinking.JustStatic, CancellationToken ct = default)
+    {
+        return CompileModulesAsync(plan, moduleNames, sctx.ParentEngine, linking, ct);
+    }
+
+    public static bool TryCompile(PFunction func, Engine targetEngine)
+    {
+        return TryCompile(func, targetEngine, FunctionLinking.FullyStatic);
+    }
+
+    public static bool TryCompile(PFunction func, Engine targetEngine, FunctionLinking linking)
+    {
+        if (_checkQualification(func, targetEngine))
         {
-            return CompileModulesAsync(plan, moduleNames, sctx.ParentEngine, linking, ct);
-        }
-
-        public static bool TryCompile(PFunction func, Engine targetEngine)
-        {
-            return TryCompile(func, targetEngine, FunctionLinking.FullyStatic);
-        }
-
-        public static bool TryCompile(PFunction func, Engine targetEngine, FunctionLinking linking)
-        {
-            if (_checkQualification(func, targetEngine))
-            {
-                var pass = new CompilerPass(func.ParentApplication, linking);
-
-                var m = pass.DefineImplementationMethod(func.Id);
-                var il = CompilerPass.GetIlGenerator(m);
-
-                _compile(func, il, targetEngine, pass, linking);
-
-                func.Declaration.CilImplementation = pass.GetDelegate(m);
-                pass.LinkMetadata(func);
-
-                return true;
-            }
-            return false;
-        }
-
-        #endregion
-
-        #region Store debug implementation
-
-        public static void StoreDebugImplementation(StackContext sctx)
-        {
-            StoreDebugImplementation(sctx.ParentApplication, sctx.ParentEngine);
-        }
-
-        public static void StoreDebugImplementation(StackContext sctx, Application app)
-        {
-            StoreDebugImplementation(app, sctx.ParentEngine);
-        }
-
-        private static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
-            new(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
-
-        public static void StoreDebugImplementation(Application app, Engine targetEngine)
-        {
-            _checkQualification(app.Functions, targetEngine);
-
-            const FunctionLinking linking = FunctionLinking.FullyStatic;
-            var pass = new CompilerPass(linking);
-
-            var qfuncs = new List<PFunction>();
-            foreach (var func in app.Functions)
-            {
-                if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
-                {
-                    qfuncs.Add(func);
-                    pass.DefineImplementationMethod(func.Id);
-                }
-            }
-
-            foreach (var func in qfuncs)
-            {
-                _compile(func, pass.GetIlGenerator(func.Id), targetEngine, pass, linking);
-            }
-
-            pass.TargetType.CreateType();
-
-            // .NET Core no longer offers AssemblyBuilder.Save. We use Lokad.ILPack instead.
-            AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
-        }
-
-        public static void StoreDebugImplementation(PFunction func, Engine targetEngine)
-        {
-            const FunctionLinking linking = FunctionLinking.FullyStatic;
-            var pass = new CompilerPass(linking);
+            var pass = new CompilerPass(func.ParentApplication, linking);
 
             var m = pass.DefineImplementationMethod(func.Id);
-
             var il = CompilerPass.GetIlGenerator(m);
 
             _compile(func, il, targetEngine, pass, linking);
 
-            pass.TargetType.CreateType();
+            func.Declaration.CilImplementation = pass.GetDelegate(m);
+            pass.LinkMetadata(func);
 
-            //var sm = tb.DefineMethod("whoop", MethodAttributes.Static | MethodAttributes.Public);
-
-            //ab.SetEntryPoint(sm);
-            AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
+            return true;
         }
+        return false;
+    }
 
-        public static void StoreDebugImplementation(StackContext sctx, PFunction func)
+    #endregion
+
+    #region Store debug implementation
+
+    public static void StoreDebugImplementation(StackContext sctx)
+    {
+        StoreDebugImplementation(sctx.ParentApplication, sctx.ParentEngine);
+    }
+
+    public static void StoreDebugImplementation(StackContext sctx, Application app)
+    {
+        StoreDebugImplementation(app, sctx.ParentEngine);
+    }
+
+    private static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
+        new(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
+
+    public static void StoreDebugImplementation(Application app, Engine targetEngine)
+    {
+        _checkQualification(app.Functions, targetEngine);
+
+        const FunctionLinking linking = FunctionLinking.FullyStatic;
+        var pass = new CompilerPass(linking);
+
+        var qfuncs = new List<PFunction>();
+        foreach (var func in app.Functions)
         {
-            StoreDebugImplementation(func, sctx.ParentEngine);
-        }
-
-        #endregion
-
-        #region Check Qualification
-
-        private static bool _checkQualification(PFunction source, Engine targetEngine)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            lock (source)
+            if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
             {
-                var qualifies = _check(source, targetEngine, out var reason);
-                _registerCheckResults(source, qualifies, reason);
-                return qualifies;
+                qfuncs.Add(func);
+                pass.DefineImplementationMethod(func.Id);
             }
         }
 
-        private static void _registerCheckResults(IHasMetaTable source, bool qualifies,
-            string reason)
+        foreach (var func in qfuncs)
         {
-            if (!qualifies && source.Meta[PFunction.DeficiencyKey].Text == "" && reason != null)
-            {
-                source.Meta[PFunction.DeficiencyKey] = reason;
-            } //else nothing
-            if (!qualifies || source.Meta.ContainsKey(PFunction.VolatileKey))
-            {
-                source.Meta[PFunction.VolatileKey] = !qualifies;
-            }
+            _compile(func, pass.GetIlGenerator(func.Id), targetEngine, pass, linking);
         }
 
-        private static void _checkQualification(IEnumerable<PFunction> functions,
-            Engine targetEngine)
-        {
-            //Handle dynamic functions (functions that operate on their caller)
-            foreach (var func in functions)
-            {
-                if (func.Meta[PFunction.VolatileKey].Switch ||
-                    func.Meta.ContainsKey(PFunction.DynamicKey))
-                    continue;
-            }
+        pass.TargetType.CreateType();
 
-            //Check qualifications (whether a function can be compiled by the CIL compiler)
-            foreach (var func in functions)
-            {
-                var qualifies = _check(func, targetEngine, out var reason);
-                _registerCheckResults(func, qualifies, reason);
-            }
+        // .NET Core no longer offers AssemblyBuilder.Save. We use Lokad.ILPack instead.
+        AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
+    }
+
+    public static void StoreDebugImplementation(PFunction func, Engine targetEngine)
+    {
+        const FunctionLinking linking = FunctionLinking.FullyStatic;
+        var pass = new CompilerPass(linking);
+
+        var m = pass.DefineImplementationMethod(func.Id);
+
+        var il = CompilerPass.GetIlGenerator(m);
+
+        _compile(func, il, targetEngine, pass, linking);
+
+        pass.TargetType.CreateType();
+
+        //var sm = tb.DefineMethod("whoop", MethodAttributes.Static | MethodAttributes.Public);
+
+        //ab.SetEntryPoint(sm);
+        AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
+    }
+
+    public static void StoreDebugImplementation(StackContext sctx, PFunction func)
+    {
+        StoreDebugImplementation(func, sctx.ParentEngine);
+    }
+
+    #endregion
+
+    #region Check Qualification
+
+    private static bool _checkQualification(PFunction source, Engine targetEngine)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        lock (source)
+        {
+            var qualifies = _check(source, targetEngine, out var reason);
+            _registerCheckResults(source, qualifies, reason);
+            return qualifies;
+        }
+    }
+
+    private static void _registerCheckResults(IHasMetaTable source, bool qualifies,
+        string reason)
+    {
+        if (!qualifies && source.Meta[PFunction.DeficiencyKey].Text == "" && reason != null)
+        {
+            source.Meta[PFunction.DeficiencyKey] = reason;
+        } //else nothing
+        if (!qualifies || source.Meta.ContainsKey(PFunction.VolatileKey))
+        {
+            source.Meta[PFunction.VolatileKey] = !qualifies;
+        }
+    }
+
+    private static void _checkQualification(IEnumerable<PFunction> functions,
+        Engine targetEngine)
+    {
+        //Handle dynamic functions (functions that operate on their caller)
+        foreach (var func in functions)
+        {
+            if (func.Meta[PFunction.VolatileKey].Switch ||
+                func.Meta.ContainsKey(PFunction.DynamicKey))
+                continue;
         }
 
-        private static bool _rangeInSet(int offset, int count, HashSet<int> hashSet)
+        //Check qualifications (whether a function can be compiled by the CIL compiler)
+        foreach (var func in functions)
         {
-            for (var i = offset; i < offset + count; i++)
-                if (hashSet.Contains(i))
-                    return true;
+            var qualifies = _check(func, targetEngine, out var reason);
+            _registerCheckResults(func, qualifies, reason);
+        }
+    }
+
+    private static bool _rangeInSet(int offset, int count, HashSet<int> hashSet)
+    {
+        for (var i = offset; i < offset + count; i++)
+            if (hashSet.Contains(i))
+                return true;
+        return false;
+    }
+
+    private static bool _check(PFunction source, Engine targetEngine, out string reason)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        if (targetEngine == null)
+            throw new ArgumentNullException(nameof(targetEngine));
+        //Application does not allow cil compilation
+        if (!source.Meta.ContainsKey(PFunction.VolatileKey) &&
+            source.ParentApplication.Meta[PFunction.VolatileKey].Switch)
+        {
+            reason = "Application does not allow cil compilation";
+            return false;
+        }
+        //Function does not allow cil compilation
+        if (source.Meta[PFunction.VolatileKey].Switch)
+        {
+            reason = null; //don't add a message
             return false;
         }
 
-        private static bool _check(PFunction source, Engine targetEngine, out string reason)
+        //Prepare for CIL extensions
+        var cilExtensions = new List<int>();
+        var localVariableMapping = new Dictionary<int, string>(source.LocalVariableMapping.Count);
+        foreach (var kvp in source.LocalVariableMapping)
+            localVariableMapping[kvp.Value] = kvp.Key;
+
+        var jumpTargets = new HashSet<int>(from ins in source.Code
+            where ins.OpCode == OpCode.jump
+                || ins.OpCode == OpCode.jump_t
+                || ins.OpCode == OpCode.jump_f
+            select ins.Arguments);
+
+        var seh = new StructuredExceptionHandling(source);
+
+        //Check for not supported instructions and instructions used in a way
+        //  that is not supported by the CIL compiler)
+        for (var insOffset = 0; insOffset < source.Code.Count; insOffset++)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            if (targetEngine == null)
-                throw new ArgumentNullException(nameof(targetEngine));
-            //Application does not allow cil compilation
-            if (!source.Meta.ContainsKey(PFunction.VolatileKey) &&
-                source.ParentApplication.Meta[PFunction.VolatileKey].Switch)
+            var address = insOffset;
+            var ins = source.Code[address];
+            switch (ins.OpCode)
             {
-                reason = "Application does not allow cil compilation";
-                return false;
-            }
-            //Function does not allow cil compilation
-            if (source.Meta[PFunction.VolatileKey].Switch)
-            {
-                reason = null; //don't add a message
-                return false;
-            }
-
-            //Prepare for CIL extensions
-            var cilExtensions = new List<int>();
-            var localVariableMapping = new Dictionary<int, string>(source.LocalVariableMapping.Count);
-            foreach (var kvp in source.LocalVariableMapping)
-                localVariableMapping[kvp.Value] = kvp.Key;
-
-            var jumpTargets = new HashSet<int>(from ins in source.Code
-                                               where ins.OpCode == OpCode.jump
-                                                   || ins.OpCode == OpCode.jump_t
-                                                       || ins.OpCode == OpCode.jump_f
-                                               select ins.Arguments);
-
-            var seh = new StructuredExceptionHandling(source);
-
-            //Check for not supported instructions and instructions used in a way
-            //  that is not supported by the CIL compiler)
-            for (var insOffset = 0; insOffset < source.Code.Count; insOffset++)
-            {
-                var address = insOffset;
-                var ins = source.Code[address];
-                switch (ins.OpCode)
-                {
-                    case OpCode.cmd:
-                        //Check for commands that are not compatible.
-                        if (!targetEngine.Commands.TryGetInfo(ins.Id, out var cmd))
-                        {
-                            reason = "Cannot find information about command " + ins.Id;
-                            return false;
-                        }
-
-                        CompileTimeValue[] staticArgv;
-
-                        //First allow CIL extensions to kick in, and only if they don't apply, check for CIL awareness.
-                        if (cmd.TryGetCilExtension(out var extension)
-                            &&
-                            !_rangeInSet(
-                                insOffset -
-                                    (staticArgv =
-                                        CompileTimeValue.ParseSequenceReverse(source.Code,
-                                            localVariableMapping, address - 1, source.ParentApplication.Module.Cache,source.ParentApplication.Module.Name)).Length + 1,
-                                staticArgv.Length, jumpTargets)
-                                    &&
-                                    extension.ValidateArguments(staticArgv,
-                                        ins.Arguments - staticArgv.Length))
-                        {
-                            cilExtensions.Add(address - staticArgv.Length);
-                        }
-                        else if (cmd.TryGetCilCompilerAware(out var aware))
-                        {
-                            var flags = aware.CheckQualification(ins);
-                            if (flags == CompilationFlags.IsIncompatible)
-                                //Incompatible and no workaround
-                            {
-                                reason = "Incompatible command " + ins.Id;
-                                return false;
-                            }
-                        }
-                        break;
-                    case OpCode.func:
-                        //Check for functions that use dynamic features
-                        if (source.ParentApplication.Functions.TryGetValue(ins.Id, out var func) &&
-                            func.Meta[PFunction.DynamicKey].Switch)
-                        {
-                            reason = "Uses dynamic function " + ins.Id;
-                            return false;
-                        }
-                        break;
-                    case OpCode.tail:
-                    case OpCode.invalid:
-                        reason = "Unsupported instruction " + ins;
+                case OpCode.cmd:
+                    //Check for commands that are not compatible.
+                    if (!targetEngine.Commands.TryGetInfo(ins.Id, out var cmd))
+                    {
+                        reason = "Cannot find information about command " + ins.Id;
                         return false;
-                    case OpCode.newclo:
-                        //Function must already be available
-                        if (!source.ParentApplication.Functions.Contains(ins.Id))
+                    }
+
+                    CompileTimeValue[] staticArgv;
+
+                    //First allow CIL extensions to kick in, and only if they don't apply, check for CIL awareness.
+                    if (cmd.TryGetCilExtension(out var extension)
+                        &&
+                        !_rangeInSet(
+                            insOffset -
+                            (staticArgv =
+                                CompileTimeValue.ParseSequenceReverse(source.Code,
+                                    localVariableMapping, address - 1, source.ParentApplication.Module.Cache,source.ParentApplication.Module.Name)).Length + 1,
+                            staticArgv.Length, jumpTargets)
+                        &&
+                        extension.ValidateArguments(staticArgv,
+                            ins.Arguments - staticArgv.Length))
+                    {
+                        cilExtensions.Add(address - staticArgv.Length);
+                    }
+                    else if (cmd.TryGetCilCompilerAware(out var aware))
+                    {
+                        var flags = aware.CheckQualification(ins);
+                        if (flags == CompilationFlags.IsIncompatible)
+                            //Incompatible and no workaround
                         {
-                            reason = "Enclosed function " + ins.Id +
-                                " must already be compiled (closure creation)";
+                            reason = "Incompatible command " + ins.Id;
                             return false;
                         }
-                        break;
-                    case OpCode.@try:
-                        //must be the first instruction of a try block
-                        var isCorrect =
-                            source.TryCatchFinallyBlocks.Any(block => block.BeginTry == address);
-                        if (!isCorrect)
-                        {
-                            reason =
-                                "try instruction is not the first instruction of a guarded block.";
-                            return false;
-                        }
-                        break;
-                    case OpCode.exc:
-                        //must be the first instruction of a catch block
-                        isCorrect =
-                            source.TryCatchFinallyBlocks.Any(block => block.BeginCatch == address);
-                        if (!isCorrect)
-                        {
-                            reason =
-                                "exc instruction is not the first instruction of a catch clause.";
-                            return false;
-                        }
-                        break;
-                    case OpCode.jump:
-                    case OpCode.jump_t:
-                    case OpCode.jump_f:
-                    case OpCode.leave:
-                        if (seh.AssessJump(address, ins.Arguments) == BranchHandling.Invalid)
-                        {
-                            reason = "jumping instruction at " + address + " invalid for SEH";
-                            return false;
-                        }
-                        break;
-                    case OpCode.ret_break:
-                    case OpCode.ret_continue:
-                    case OpCode.ret_exit:
-                    case OpCode.ret_value:
-                        if (seh.AssessJump(address, source.Code.Count) == BranchHandling.Invalid)
-                        {
-                            reason = "return instruction at " + address + " invalid for SEH";
-                            return false;
-                        }
-                        break;
-                }
+                    }
+                    break;
+                case OpCode.func:
+                    //Check for functions that use dynamic features
+                    if (source.ParentApplication.Functions.TryGetValue(ins.Id, out var func) &&
+                        func.Meta[PFunction.DynamicKey].Switch)
+                    {
+                        reason = "Uses dynamic function " + ins.Id;
+                        return false;
+                    }
+                    break;
+                case OpCode.tail:
+                case OpCode.invalid:
+                    reason = "Unsupported instruction " + ins;
+                    return false;
+                case OpCode.newclo:
+                    //Function must already be available
+                    if (!source.ParentApplication.Functions.Contains(ins.Id))
+                    {
+                        reason = "Enclosed function " + ins.Id +
+                            " must already be compiled (closure creation)";
+                        return false;
+                    }
+                    break;
+                case OpCode.@try:
+                    //must be the first instruction of a try block
+                    var isCorrect =
+                        source.TryCatchFinallyBlocks.Any(block => block.BeginTry == address);
+                    if (!isCorrect)
+                    {
+                        reason =
+                            "try instruction is not the first instruction of a guarded block.";
+                        return false;
+                    }
+                    break;
+                case OpCode.exc:
+                    //must be the first instruction of a catch block
+                    isCorrect =
+                        source.TryCatchFinallyBlocks.Any(block => block.BeginCatch == address);
+                    if (!isCorrect)
+                    {
+                        reason =
+                            "exc instruction is not the first instruction of a catch clause.";
+                        return false;
+                    }
+                    break;
+                case OpCode.jump:
+                case OpCode.jump_t:
+                case OpCode.jump_f:
+                case OpCode.leave:
+                    if (seh.AssessJump(address, ins.Arguments) == BranchHandling.Invalid)
+                    {
+                        reason = "jumping instruction at " + address + " invalid for SEH";
+                        return false;
+                    }
+                    break;
+                case OpCode.ret_break:
+                case OpCode.ret_continue:
+                case OpCode.ret_exit:
+                case OpCode.ret_value:
+                    if (seh.AssessJump(address, source.Code.Count) == BranchHandling.Invalid)
+                    {
+                        reason = "return instruction at " + address + " invalid for SEH";
+                        return false;
+                    }
+                    break;
             }
+        }
 
-            if (cilExtensions.Count > 0)
+        if (cilExtensions.Count > 0)
+        {
+            var cilExtensionHint = new CilExtensionHint(cilExtensions);
+            SetCilHint(source, cilExtensionHint);
+        }
+
+        //Otherwise, qualification passed.
+        reason = null;
+        return true;
+    }
+
+    #endregion
+
+    #region Compile Function
+
+    private static void _compile
+    (PFunction source, ILGenerator il, Engine targetEngine, CompilerPass pass,
+        FunctionLinking linking)
+    {
+        var state = new CompilerState(source, targetEngine, il, pass, linking);
+
+        //Every cil implementation needs to instantiate a CilFunctionContext and assign PValue.Null to the result.
+        _emitCilImplementationHeader(state);
+
+        //Reads the functions metadata about parameters, local variables and shared variables.
+        //initializes shared variables.
+        _buildSymbolTable(state);
+
+        //CODE ANALYSIS
+        //  - determine number of temporary variables
+        //  - find variable references (alters the symbol table)
+        //  - determine stack size at all offsets
+        _analysisAndPreparation(state);
+
+        //Create and initialize local variables for parameters
+        _parseParameters(state);
+
+        //Shared variables and parameters have already been initialized
+        // this method initializes (PValue.Null) the rest.
+        _createAndInitializeRemainingLocals(state);
+
+        //Emits IL for the functions Prexonite byte code.
+        _emitInstructions(state);
+    }
+
+    private static void _emitCilImplementationHeader(CompilerState state)
+    {
+        //Create local cil function stack context
+        //  CilFunctionContext cfctx = CilFunctionContext.New(sctx, source);
+        state.SctxLocal = state.Il.DeclareLocal(typeof (CilFunctionContext));
+        state.EmitLoadArg(CompilerState.ParamSctxIndex);
+        state.EmitLoadArg(CompilerState.ParamSourceIndex);
+        state.Il.EmitCall(OpCodes.Call, CilFunctionContext.NewMethod, null);
+        state.EmitStoreLocal(state.SctxLocal.LocalIndex);
+
+        //Initialize result and assign default return mode
+        //  Result = null;
+        state._EmitAssignReturnMode(ReturnMode.Exit);
+        state.EmitLoadArg(CompilerState.ParamResultIndex);
+        state.EmitLoadNullAsPValue();
+        state.Il.Emit(OpCodes.Stind_Ref);
+    }
+
+    private static void _buildSymbolTable(CompilerState state)
+    {
+        //Create local ref variables for shared names
+        //  and populate them with the contents of the sharedVariables parameter
+        if (state.Source.Meta.ContainsKey(PFunction.SharedNamesKey))
+        {
+            var sharedNames = state.Source.Meta[PFunction.SharedNamesKey].List;
+            for (var i = 0; i < sharedNames.Length; i++)
             {
-                var cilExtensionHint = new CilExtensionHint(cilExtensions);
-                SetCilHint(source, cilExtensionHint);
-            }
-
-            //Otherwise, qualification passed.
-            reason = null;
-            return true;
-        }
-
-        #endregion
-
-        #region Compile Function
-
-        private static void _compile
-            (PFunction source, ILGenerator il, Engine targetEngine, CompilerPass pass,
-                FunctionLinking linking)
-        {
-            var state = new CompilerState(source, targetEngine, il, pass, linking);
-
-            //Every cil implementation needs to instantiate a CilFunctionContext and assign PValue.Null to the result.
-            _emitCilImplementationHeader(state);
-
-            //Reads the functions metadata about parameters, local variables and shared variables.
-            //initializes shared variables.
-            _buildSymbolTable(state);
-
-            //CODE ANALYSIS
-            //  - determine number of temporary variables
-            //  - find variable references (alters the symbol table)
-            //  - determine stack size at all offsets
-            _analysisAndPreparation(state);
-
-            //Create and initialize local variables for parameters
-            _parseParameters(state);
-
-            //Shared variables and parameters have already been initialized
-            // this method initializes (PValue.Null) the rest.
-            _createAndInitializeRemainingLocals(state);
-
-            //Emits IL for the functions Prexonite byte code.
-            _emitInstructions(state);
-        }
-
-        private static void _emitCilImplementationHeader(CompilerState state)
-        {
-            //Create local cil function stack context
-            //  CilFunctionContext cfctx = CilFunctionContext.New(sctx, source);
-            state.SctxLocal = state.Il.DeclareLocal(typeof (CilFunctionContext));
-            state.EmitLoadArg(CompilerState.ParamSctxIndex);
-            state.EmitLoadArg(CompilerState.ParamSourceIndex);
-            state.Il.EmitCall(OpCodes.Call, CilFunctionContext.NewMethod, null);
-            state.EmitStoreLocal(state.SctxLocal.LocalIndex);
-
-            //Initialize result and assign default return mode
-            //  Result = null;
-            state._EmitAssignReturnMode(ReturnMode.Exit);
-            state.EmitLoadArg(CompilerState.ParamResultIndex);
-            state.EmitLoadNullAsPValue();
-            state.Il.Emit(OpCodes.Stind_Ref);
-        }
-
-        private static void _buildSymbolTable(CompilerState state)
-        {
-            //Create local ref variables for shared names
-            //  and populate them with the contents of the sharedVariables parameter
-            if (state.Source.Meta.ContainsKey(PFunction.SharedNamesKey))
-            {
-                var sharedNames = state.Source.Meta[PFunction.SharedNamesKey].List;
-                for (var i = 0; i < sharedNames.Length; i++)
+                if (state.Source.Variables.Contains(sharedNames[i]))
+                    continue; //Arguments are redeclarations.
+                var sym = new CilSymbol(SymbolKind.LocalRef)
                 {
-                    if (state.Source.Variables.Contains(sharedNames[i]))
-                        continue; //Arguments are redeclarations.
-                    var sym = new CilSymbol(SymbolKind.LocalRef)
-                        {
-                            Local = state.Il.DeclareLocal(typeof (PVariable))
-                        };
-                    var id = sharedNames[i].Text;
+                    Local = state.Il.DeclareLocal(typeof (PVariable))
+                };
+                var id = sharedNames[i].Text;
 
-                    state.EmitLoadArg(CompilerState.ParamSharedVariablesIndex);
-                    state.Il.Emit(OpCodes.Ldc_I4, i);
-                    state.Il.Emit(OpCodes.Ldelem_Ref);
-                    state.EmitStoreLocal(sym.Local.LocalIndex);
+                state.EmitLoadArg(CompilerState.ParamSharedVariablesIndex);
+                state.Il.Emit(OpCodes.Ldc_I4, i);
+                state.Il.Emit(OpCodes.Ldelem_Ref);
+                state.EmitStoreLocal(sym.Local.LocalIndex);
 
-                    state.Symbols.Add(id, sym);
-                }
+                state.Symbols.Add(id, sym);
             }
-
-            //Create index -> id map
-            foreach (var mapping in state.Source.LocalVariableMapping)
-                state.IndexMap.Add(mapping.Value, mapping.Key);
-
-            //Add entries for paramters
-            foreach (var parameter in state.Source.Parameters)
-                if (!state.Symbols.ContainsKey(parameter))
-                    state.Symbols.Add(parameter, new CilSymbol(SymbolKind.Local));
-
-            //Add entries for enumerator variables
-            foreach (var hint in state._ForeachHints)
-            {
-                if (state.Symbols.ContainsKey(hint.EnumVar))
-                    throw new PrexoniteException(
-                        "Invalid foreach hint. Enumerator variable is shared.");
-                state.Symbols.Add(hint.EnumVar, new CilSymbol(SymbolKind.LocalEnum));
-            }
-
-            //Add entries for non-shared local variables
-            foreach (var variable in state.Source.Variables)
-                if (!state.Symbols.ContainsKey(variable))
-                    state.Symbols.Add(variable, new CilSymbol(SymbolKind.Local));
         }
 
-        private static void _analysisAndPreparation(CompilerState state)
+        //Create index -> id map
+        foreach (var mapping in state.Source.LocalVariableMapping)
+            state.IndexMap.Add(mapping.Value, mapping.Key);
+
+        //Add entries for paramters
+        foreach (var parameter in state.Source.Parameters)
+            if (!state.Symbols.ContainsKey(parameter))
+                state.Symbols.Add(parameter, new CilSymbol(SymbolKind.Local));
+
+        //Add entries for enumerator variables
+        foreach (var hint in state._ForeachHints)
         {
-            var tempMaxOrder = 1; // 
-            var needsSharedVariables = false;
-
-            foreach (var ins in state.Source.Code.InReverse())
-            {
-                string toConvert;
-                switch (ins.OpCode)
-                {
-                    case OpCode.ldr_loci:
-                        //see ldr_loc
-                        toConvert = state.IndexMap[ins.Arguments];
-                        goto Convert;
-                    case OpCode.ldr_loc:
-                        toConvert = ins.Id;
-                        Convert:
-
-                        //Normal local variables are implemented as CIL locals.
-                        // If the function uses variable references, they must be converted to reference variables.
-                        state.Symbols[toConvert].Kind = SymbolKind.LocalRef;
-                        break;
-                    case OpCode.rot:
-                        //Determine the maximum number of temporary variables for the implementation of rot[ate]
-                        var order = (int) ins.GenericArgument;
-                        if (order > tempMaxOrder)
-                            tempMaxOrder = order;
-                        break;
-                    case OpCode.newclo:
-                        MetaEntry[] entries;
-                        var func = state.Source.ParentApplication.Functions[ins.Id];
-                        MetaEntry entry;
-                        if (func.Meta.ContainsKey(PFunction.SharedNamesKey) &&
-                            (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
-                            entries = entry.List;
-                        else
-                            entries = Array.Empty<MetaEntry>();
-                        foreach (var t in entries)
-                        {
-                            var symbolName = t.Text;
-                            if (!state.Symbols.ContainsKey(symbolName))
-                                throw new PrexoniteException
-                                    (func + " does not contain a mapping for the symbol " +
-                                        symbolName);
-
-                            //In order for variables to be shared, they too, need to be converted to reference locals.
-                            state.Symbols[symbolName].Kind = SymbolKind.LocalRef;
-                        }
-
-                        //Notify the compiler of the presence of closures with shared variables
-                        needsSharedVariables = needsSharedVariables || entries.Length > 0;
-                        break;
-                }
-            }
-
-            //Create temporary variables for rotation
-            state.TempLocals = new LocalBuilder[tempMaxOrder];
-            for (var i = 0; i < tempMaxOrder; i++)
-            {
-                var rotTemp = state.Il.DeclareLocal(typeof (PValue));
-                state.TempLocals[i] = rotTemp;
-            }
-
-            //Create temporary variable for argv and sharedVariables
-            state.ArgvLocal = state.Il.DeclareLocal(typeof (PValue[]));
-            state.SharedLocal = needsSharedVariables
-                ? state.Il.DeclareLocal(typeof (PVariable[]))
-                : null;
-
-            //Create argc local variable and initialize it, if needed
-            if (state.Source.Parameters.Count > 0)
-            {
-                state.ArgcLocal = state.Il.DeclareLocal(typeof (int));
-                state.EmitLoadArg(CompilerState.ParamArgsIndex);
-                state.Il.Emit(OpCodes.Ldlen);
-                state.Il.Emit(OpCodes.Conv_I4);
-                state.EmitStoreLocal(state.ArgcLocal);
-            }
-
-            //Determine stack size at every instruction
-            _determineStackSize(state);
+            if (state.Symbols.ContainsKey(hint.EnumVar))
+                throw new PrexoniteException(
+                    "Invalid foreach hint. Enumerator variable is shared.");
+            state.Symbols.Add(hint.EnumVar, new CilSymbol(SymbolKind.LocalEnum));
         }
 
-        private static void _determineStackSize(CompilerState state)
+        //Add entries for non-shared local variables
+        foreach (var variable in state.Source.Variables)
+            if (!state.Symbols.ContainsKey(variable))
+                state.Symbols.Add(variable, new CilSymbol(SymbolKind.Local));
+    }
+
+    private static void _analysisAndPreparation(CompilerState state)
+    {
+        var tempMaxOrder = 1; // 
+        var needsSharedVariables = false;
+
+        foreach (var ins in state.Source.Code.InReverse())
         {
-            if (state.Source.Code.Count == 0)
-                return;
-
-            var stackSize = new int?[state.StackSize.Length];
-            // stack for abstract interpretation: (index, size-before)
-            var interpretationStack = new Stack<Tuple<int, int>>();
-            interpretationStack.Push(Tuple.Create(0, 0));
-
-            while (interpretationStack.Count > 0)
+            string toConvert;
+            switch (ins.OpCode)
             {
-                var t = interpretationStack.Pop();
-                var i = t.Item1;
-                var currentStackSize = t.Item2;
-                Debug.Assert(0 <= i && i < state.Source.Code.Count,
-                    "Instruction pointer out of range.",
-                    "During abstract interpretation to determine stack size, the instruction" +
-                        " pointer assumed an invalid value {0}. Acceptable values are between 0 and {1}. " +
-                            "The length of the stackSize array is {2}.",
-                    i, state.Source.Code.Count - 1, stackSize.Length);
-                var ins = state.Source.Code[i];
-                int newValue;
-                if (ins.IsFunctionExit)
-                {
-                    if (ins.OpCode == OpCode.ret_value && currentStackSize < 1)
-                        throw new PrexoniteInvalidStackException(
-                            $"Function {state.Source}: Stack underflow at return instruction {i}.");
-                    newValue = currentStackSize + ins.StackSizeDelta;
-                }
-                else
-                {
-                    newValue = currentStackSize + ins.StackSizeDelta;
-                }
+                case OpCode.ldr_loci:
+                    //see ldr_loc
+                    toConvert = state.IndexMap[ins.Arguments];
+                    goto Convert;
+                case OpCode.ldr_loc:
+                    toConvert = ins.Id;
+                    Convert:
 
-                var oldValue = stackSize[i];
-                if (newValue < 0)
+                    //Normal local variables are implemented as CIL locals.
+                    // If the function uses variable references, they must be converted to reference variables.
+                    state.Symbols[toConvert].Kind = SymbolKind.LocalRef;
+                    break;
+                case OpCode.rot:
+                    //Determine the maximum number of temporary variables for the implementation of rot[ate]
+                    var order = (int) ins.GenericArgument;
+                    if (order > tempMaxOrder)
+                        tempMaxOrder = order;
+                    break;
+                case OpCode.newclo:
+                    MetaEntry[] entries;
+                    var func = state.Source.ParentApplication.Functions[ins.Id];
+                    MetaEntry entry;
+                    if (func.Meta.ContainsKey(PFunction.SharedNamesKey) &&
+                        (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
+                        entries = entry.List;
+                    else
+                        entries = Array.Empty<MetaEntry>();
+                    foreach (var t in entries)
+                    {
+                        var symbolName = t.Text;
+                        if (!state.Symbols.ContainsKey(symbolName))
+                            throw new PrexoniteException
+                            (func + " does not contain a mapping for the symbol " +
+                                symbolName);
+
+                        //In order for variables to be shared, they too, need to be converted to reference locals.
+                        state.Symbols[symbolName].Kind = SymbolKind.LocalRef;
+                    }
+
+                    //Notify the compiler of the presence of closures with shared variables
+                    needsSharedVariables = needsSharedVariables || entries.Length > 0;
+                    break;
+            }
+        }
+
+        //Create temporary variables for rotation
+        state.TempLocals = new LocalBuilder[tempMaxOrder];
+        for (var i = 0; i < tempMaxOrder; i++)
+        {
+            var rotTemp = state.Il.DeclareLocal(typeof (PValue));
+            state.TempLocals[i] = rotTemp;
+        }
+
+        //Create temporary variable for argv and sharedVariables
+        state.ArgvLocal = state.Il.DeclareLocal(typeof (PValue[]));
+        state.SharedLocal = needsSharedVariables
+            ? state.Il.DeclareLocal(typeof (PVariable[]))
+            : null;
+
+        //Create argc local variable and initialize it, if needed
+        if (state.Source.Parameters.Count > 0)
+        {
+            state.ArgcLocal = state.Il.DeclareLocal(typeof (int));
+            state.EmitLoadArg(CompilerState.ParamArgsIndex);
+            state.Il.Emit(OpCodes.Ldlen);
+            state.Il.Emit(OpCodes.Conv_I4);
+            state.EmitStoreLocal(state.ArgcLocal);
+        }
+
+        //Determine stack size at every instruction
+        _determineStackSize(state);
+    }
+
+    private static void _determineStackSize(CompilerState state)
+    {
+        if (state.Source.Code.Count == 0)
+            return;
+
+        var stackSize = new int?[state.StackSize.Length];
+        // stack for abstract interpretation: (index, size-before)
+        var interpretationStack = new Stack<Tuple<int, int>>();
+        interpretationStack.Push(Tuple.Create(0, 0));
+
+        while (interpretationStack.Count > 0)
+        {
+            var t = interpretationStack.Pop();
+            var i = t.Item1;
+            var currentStackSize = t.Item2;
+            Debug.Assert(0 <= i && i < state.Source.Code.Count,
+                "Instruction pointer out of range.",
+                "During abstract interpretation to determine stack size, the instruction" +
+                " pointer assumed an invalid value {0}. Acceptable values are between 0 and {1}. " +
+                "The length of the stackSize array is {2}.",
+                i, state.Source.Code.Count - 1, stackSize.Length);
+            var ins = state.Source.Code[i];
+            int newValue;
+            if (ins.IsFunctionExit)
+            {
+                if (ins.OpCode == OpCode.ret_value && currentStackSize < 1)
                     throw new PrexoniteInvalidStackException(
-                        $"Function {state.Source}: Instruction {i}: {ins} causes stack underflow.");
-
-                if (oldValue.HasValue)
-                {
-                    //Debug.Assert(currentStackSize + delta == oldValue.Value);
-                    if (newValue != oldValue)
-                        throw new PrexoniteInvalidStackException(string.Format(
-                            "Function {3}: Instruction {0} reached with stack size {1} and {2}",
-                            i, oldValue.Value, newValue, state.Source));
-                }
-                else
-                {
-                    stackSize[i] = newValue;
-
-                    if ((ins.IsJump || ins.OpCode == OpCode.leave)
-                        && 0 <= ins.Arguments && ins.Arguments < stackSize.Length)
-                        interpretationStack.Push(Tuple.Create(ins.Arguments, newValue));
-
-                    if (i + 1 < stackSize.Length && !ins.IsUnconditionalJump &&
-                        ins.OpCode != OpCode.leave)
-                        interpretationStack.Push(Tuple.Create(i + 1, newValue));
-                }
+                        $"Function {state.Source}: Stack underflow at return instruction {i}.");
+                newValue = currentStackSize + ins.StackSizeDelta;
+            }
+            else
+            {
+                newValue = currentStackSize + ins.StackSizeDelta;
             }
 
-            for (var i = 0; i < stackSize.Length; i++)
-                state.StackSize[i] = stackSize[i] ?? 0;
-        }
+            var oldValue = stackSize[i];
+            if (newValue < 0)
+                throw new PrexoniteInvalidStackException(
+                    $"Function {state.Source}: Instruction {i}: {ins} causes stack underflow.");
 
-        private static void _parseParameters(CompilerState state)
-        {
-            for (var i = 0; i < state.Source.Parameters.Count; i++)
+            if (oldValue.HasValue)
             {
-                var id = state.Source.Parameters[i];
-                var sym = state.Symbols[id];
-                LocalBuilder local;
+                //Debug.Assert(currentStackSize + delta == oldValue.Value);
+                if (newValue != oldValue)
+                    throw new PrexoniteInvalidStackException(string.Format(
+                        "Function {3}: Instruction {0} reached with stack size {1} and {2}",
+                        i, oldValue.Value, newValue, state.Source));
+            }
+            else
+            {
+                stackSize[i] = newValue;
 
-                //Determine whether local variables for parameters have already been created and create them if necessary
-                switch (sym.Kind)
-                {
-                    case SymbolKind.Local:
-                        local = sym.Local ?? state.Il.DeclareLocal(typeof (PValue));
-                        break;
-                    case SymbolKind.LocalRef:
-                        if (sym.Local == null)
-                        {
-                            local = state.Il.DeclareLocal(typeof (PVariable));
-                            state.Il.Emit(OpCodes.Newobj, NewPVariableCtor);
-                            state.EmitStoreLocal(local);
-                            //PVariable objects already contain PValue.Null and need not be initialized if no
-                            //  argument has been passed.
-                        }
-                        else
-                        {
-                            local = sym.Local;
-                        }
-                        break;
-                    default:
-                        throw new PrexoniteException("Cannot create variable to represent symbol");
-                }
+                if ((ins.IsJump || ins.OpCode == OpCode.leave)
+                    && 0 <= ins.Arguments && ins.Arguments < stackSize.Length)
+                    interpretationStack.Push(Tuple.Create(ins.Arguments, newValue));
 
-                sym.Local = local;
-
-                var hasArg = state.Il.DefineLabel();
-                var end = state.Il.DefineLabel();
-
-                if (sym.Kind == SymbolKind.Local) // var = idx < len ? args[idx] : null;
-                {
-                    //The closure below is only accessed once. The capture is therefore transparent.
-                    // ReSharper disable AccessToModifiedClosure
-                    state.EmitStorePValue
-                        (
-                            sym,
-                            delegate
-                                {
-                                    //(idx < argc) ? args[idx] : null; 
-                                    state.EmitLdcI4(i);
-                                    state.EmitLoadLocal(state.ArgcLocal);
-                                    state.Il.Emit(OpCodes.Blt_S, hasArg);
-                                    state.EmitLoadNullAsPValue();
-                                    state.Il.Emit(OpCodes.Br_S, end);
-                                    state.Il.MarkLabel(hasArg);
-                                    state.EmitLoadArg(CompilerState.ParamArgsIndex);
-                                    state.EmitLdcI4(i);
-                                    state.Il.Emit(OpCodes.Ldelem_Ref);
-                                    state.Il.MarkLabel(end);
-                                }
-                        );
-                    // ReSharper restore AccessToModifiedClosure
-                }
-                else // if(idx < len) var = args[idx];
-                {
-                    state.EmitLdcI4(i);
-                    state.EmitLoadLocal(state.ArgcLocal);
-                    state.Il.Emit(OpCodes.Bge_S, end);
-
-                    //The following closure is only accessed once. The capture is therefore transparent.
-                    // ReSharper disable AccessToModifiedClosure
-                    state.EmitStorePValue
-                        (
-                            sym,
-                            delegate
-                                {
-                                    state.EmitLoadArg(CompilerState.ParamArgsIndex);
-                                    state.EmitLdcI4(i);
-                                    state.Il.Emit(OpCodes.Ldelem_Ref);
-                                });
-                    // ReSharper restore AccessToModifiedClosure
-                    state.Il.MarkLabel(end);
-                }
+                if (i + 1 < stackSize.Length && !ins.IsUnconditionalJump &&
+                    ins.OpCode != OpCode.leave)
+                    interpretationStack.Push(Tuple.Create(i + 1, newValue));
             }
         }
 
-        private static void _createAndInitializeRemainingLocals(CompilerState state)
+        for (var i = 0; i < stackSize.Length; i++)
+            state.StackSize[i] = stackSize[i] ?? 0;
+    }
+
+    private static void _parseParameters(CompilerState state)
+    {
+        for (var i = 0; i < state.Source.Parameters.Count; i++)
         {
-            var nullLocals = new List<LocalBuilder>();
+            var id = state.Source.Parameters[i];
+            var sym = state.Symbols[id];
+            LocalBuilder local;
 
-            //Create remaining local variables and initialize them
-            foreach (var pair in state.Symbols)
+            //Determine whether local variables for parameters have already been created and create them if necessary
+            switch (sym.Kind)
             {
-                var id = pair.Key;
-                var sym = pair.Value;
-                if (sym.Local != null)
-                    continue;
-
-                switch (sym.Kind)
-                {
-                    case SymbolKind.Local:
-                        {
-                            sym.Local = state.Il.DeclareLocal(typeof (PValue));
-                            var initVal = _getVariableInitialization(state, id, false);
-                            switch (initVal)
-                            {
-                                case VariableInitialization.ArgV:
-                                    _emitLoadArgV(state);
-                                    state.EmitStoreLocal(sym.Local);
-                                    break;
-                                case VariableInitialization.Null:
-                                    nullLocals.Add(sym.Local); //defer assignment
-                                    break;
-
-                                    // ReSharper disable RedundantCaseLabel
-                                case VariableInitialization.None:
-                                    // ReSharper restore RedundantCaseLabel
-                                default:
-                                    break;
-                            }
-                        }
-                        break;
-                    case SymbolKind.LocalRef:
-                        {
-                            sym.Local = state.Il.DeclareLocal(typeof (PVariable));
-                            var initVal = _getVariableInitialization(state, id, true);
-
-                            var idx = sym.Local.LocalIndex;
-
-                            state.Il.Emit(OpCodes.Newobj, NewPVariableCtor);
-
-                            if (initVal != VariableInitialization.None)
-                            {
-                                state.Il.Emit(OpCodes.Dup);
-                                state.EmitStoreLocal(idx);
-
-                                switch (initVal)
-                                {
-                                    case VariableInitialization.ArgV:
-                                        _emitLoadArgV(state);
-                                        break;
-                                    case VariableInitialization.Null:
-                                        state.EmitLoadNullAsPValue();
-                                        break;
-                                }
-                                state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                            }
-                            else
-                            {
-                                state.EmitStoreLocal(idx);
-                            }
-                        }
-                        break;
-                    case SymbolKind.LocalEnum:
-                        {
-                            sym.Local = state.Il.DeclareLocal(typeof (IEnumerator<PValue>));
-                            //No initialization needed.
-                        }
-                        break;
-                    default:
-                        throw new PrexoniteException("Cannot initialize unknown symbol kind.");
-                }
+                case SymbolKind.Local:
+                    local = sym.Local ?? state.Il.DeclareLocal(typeof (PValue));
+                    break;
+                case SymbolKind.LocalRef:
+                    if (sym.Local == null)
+                    {
+                        local = state.Il.DeclareLocal(typeof (PVariable));
+                        state.Il.Emit(OpCodes.Newobj, NewPVariableCtor);
+                        state.EmitStoreLocal(local);
+                        //PVariable objects already contain PValue.Null and need not be initialized if no
+                        //  argument has been passed.
+                    }
+                    else
+                    {
+                        local = sym.Local;
+                    }
+                    break;
+                default:
+                    throw new PrexoniteException("Cannot create variable to represent symbol");
             }
 
-            //Initialize null locals
-            var nullCount = nullLocals.Count;
-            if (nullCount > 0)
+            sym.Local = local;
+
+            var hasArg = state.Il.DefineLabel();
+            var end = state.Il.DefineLabel();
+
+            if (sym.Kind == SymbolKind.Local) // var = idx < len ? args[idx] : null;
             {
-                state.EmitLoadNullAsPValue();
-                for (var i = 0; i < nullCount; i++)
-                {
-                    var local = nullLocals[i];
-                    if (i + 1 != nullCount)
-                        state.Il.Emit(OpCodes.Dup);
-                    state.EmitStoreLocal(local);
-                }
-            }
-        }
-
-        private static void _emitInstructions(CompilerState state)
-        {
-            //Tables of foreach call hint hooks
-            var foreachCasts = new Dictionary<int, ForeachHint>();
-            var foreachGetCurrents = new Dictionary<int, ForeachHint>();
-            var foreachMoveNexts = new Dictionary<int, ForeachHint>();
-            var foreachDisposes = new Dictionary<int, ForeachHint>();
-
-            foreach (var hint in state._ForeachHints)
-            {
-                foreachCasts.Add(hint.CastAddress, hint);
-                foreachGetCurrents.Add(hint.GetCurrentAddress, hint);
-                foreachMoveNexts.Add(hint.MoveNextAddress, hint);
-                foreachDisposes.Add(hint.DisposeAddress, hint);
-            }
-
-            var sourceCode = state.Source.Code;
-
-            //CIL Extension
-            var cilExtensionMode = false;
-            List<CompileTimeValue> staticArgv = null;
-
-            for (var instructionIndex = 0; instructionIndex < sourceCode.Count; instructionIndex++)
-            {
-                #region Handling for try-finally-catch blocks
-
-                //Handle try-finally-catch blocks
-                //Push new blocks
-                foreach (var block in state.Seh.GetOpeningTryBlocks(instructionIndex))
-                {
-                    state.TryBlocks.Push(block);
-                    if (block.HasFinally)
-                        state.Il.BeginExceptionBlock();
-                    if (block.HasCatch)
-                        state.Il.BeginExceptionBlock();
-                }
-
-                //Handle active blocks
-                if (state.TryBlocks.Count > 0)
-                {
-                    CompiledTryCatchFinallyBlock block;
-                    do
+                //The closure below is only accessed once. The capture is therefore transparent.
+                // ReSharper disable AccessToModifiedClosure
+                state.EmitStorePValue
+                (
+                    sym,
+                    delegate
                     {
-                        block = state.TryBlocks.Peek();
-                        if (instructionIndex == block.BeginFinally)
-                        {
-                            if (block.SkipTry == instructionIndex)
-                            {
-                                //state.Il.MarkLabel(block.SkipTryLabel);
-                                state.Il.Emit(OpCodes.Nop);
-                            }
-                            state.Il.BeginFinallyBlock();
-                        }
-                        else if (instructionIndex == block.BeginCatch)
-                        {
-                            if (block.HasFinally)
-                                state.Il.EndExceptionBlock(); //end finally here
-                            state.Il.BeginCatchBlock(typeof (Exception));
-                            //parse the exception
-                            state.EmitLoadLocal(state.SctxLocal);
-                            state.Il.EmitCall(OpCodes.Call, Runtime.ParseExceptionMethod, null);
-                            //user code will store it in a local variable
-                        }
-                        else if (instructionIndex == block.EndTry)
-                        {
-                            if (block.HasFinally || block.HasCatch)
-                                state.Il.EndExceptionBlock();
-                            if (block.SkipTry == instructionIndex)
-                            {
-                                //state.Il.MarkLabel(block.SkipTryLabel);
-                                state.Il.Emit(OpCodes.Nop);
-                            }
-                            state.TryBlocks.Pop();
-                            block = null; //signal another loop iteration
-                        }
-                    } while (block == null && state.TryBlocks.Count > 0);
-                }
-
-                #endregion
-
-                state.MarkInstruction(instructionIndex);
-
-                var ins = sourceCode[instructionIndex];
-
-                #region CIL hints
-
-                // **** CIL hints ****
-                //  * CIL Extension *
-                {
-                    if (state._CilExtensionOffsets.Count > 0 &&
-                        state._CilExtensionOffsets.Peek() == instructionIndex)
-                    {
-                        state._CilExtensionOffsets.Dequeue();
-                        if (staticArgv == null)
-                            staticArgv = new List<CompileTimeValue>(8);
-                        else
-                            staticArgv.Clear();
-                        cilExtensionMode = true;
-                    }
-                    if (cilExtensionMode)
-                    {
-                        if (CompileTimeValue.TryParse(ins, state.IndexMap, state.Cache, state.Source.ParentApplication.Module.Name, out var compileTimeValue))
-                        {
-                            staticArgv.Add(compileTimeValue);
-                        }
-                        else
-                        {
-                            //found the actual invocation of the CIL extension
-                            cilExtensionMode = false;
-
-                            switch (ins.OpCode)
-                            {
-                                case OpCode.cmd:
-                                    ICilExtension extension;
-                                    if (
-                                        !state.TargetEngine.Commands.TryGetValue(ins.Id, out var command) ||
-                                            (extension = command as ICilExtension) == null)
-                                        goto default;
-
-                                    extension.Implement(state, ins, staticArgv.ToArray(),
-                                        ins.Arguments - staticArgv.Count);
-                                    break;
-                                default:
-                                    throw new PrexoniteException(
-                                        "The CIL compiler does not support CIL extensions for this opcode: " +
-                                            ins);
-                            }
-                        }
-                        continue;
-                    }
-                }
-                //  * Foreach *
-                {
-                    if (foreachCasts.TryGetValue(instructionIndex, out var hint))
-                    {
-                        //result of (expr).GetEnumerator on the stack
-                        //cast IEnumerator
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.ExtractEnumeratorMethod, null);
-                        instructionIndex++;
-                        //stloc enum
-                        state.EmitStoreLocal(state.Symbols[hint.EnumVar].Local);
-                        continue;
-                    }
-                    else if (foreachGetCurrents.TryGetValue(instructionIndex, out hint))
-                    {
-                        //ldloc enum
-                        state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
-                        instructionIndex++;
-                        //get.0 Current
-                        state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.GetCurrentMethod, null);
-                        //result will be stored by user code
-                        continue;
-                    }
-                    else if (foreachMoveNexts.TryGetValue(instructionIndex, out hint))
-                    {
-                        //ldloc enum
-                        state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
-                        instructionIndex++;
-                        //get.0 MoveNext
-                        state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.MoveNextMethod, null);
-                        instructionIndex++;
-                        //jump.t begin
-                        var target = sourceCode[instructionIndex].Arguments; //read from user code
-                        state.Il.Emit(OpCodes.Brtrue, state.InstructionLabels[target]);
-                        continue;
-                    }
-                    else if (foreachDisposes.TryGetValue(instructionIndex, out hint))
-                    {
-                        //ldloc enum
-                        state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
-                        instructionIndex++;
-                        //@cmd.1 dispose
-                        state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.DisposeMethod, null);
-                        continue;
-                    }
-                }
-
-                #endregion
-
-                //  * Normal code generation *
-                //Decode instruction
-                var argc = ins.Arguments;
-                var justEffect = ins.JustEffect;
-                var id = ins.Id;
-                int idx;
-                string methodId;
-                string typeExpr;
-                var moduleName = ins.ModuleName;
-
-                //Emit code for the instruction
-                switch (ins.OpCode)
-                {
-                        #region NOP
-
-                        //NOP
-                    case OpCode.nop:
-                        //Do nothing
-                        state.Il.Emit(OpCodes.Nop);
-                        break;
-
-                        #endregion
-
-                        #region LOAD
-
-                        #region LOAD CONSTANT
-
-                        //LOAD CONSTANT
-                    case OpCode.ldc_int:
-                        state.EmitLoadIntAsPValue(argc);
-                        break;
-                    case OpCode.ldc_real:
-                        state.EmitLoadRealAsPValue(ins);
-                        break;
-                    case OpCode.ldc_bool:
-                        state.EmitLoadBoolAsPValue(argc != 0);
-                        break;
-                    case OpCode.ldc_string:
-                        state.EmitLoadStringAsPValue(id);
-                        break;
-
-                    case OpCode.ldc_null:
+                        //(idx < argc) ? args[idx] : null; 
+                        state.EmitLdcI4(i);
+                        state.EmitLoadLocal(state.ArgcLocal);
+                        state.Il.Emit(OpCodes.Blt_S, hasArg);
                         state.EmitLoadNullAsPValue();
-                        break;
+                        state.Il.Emit(OpCodes.Br_S, end);
+                        state.Il.MarkLabel(hasArg);
+                        state.EmitLoadArg(CompilerState.ParamArgsIndex);
+                        state.EmitLdcI4(i);
+                        state.Il.Emit(OpCodes.Ldelem_Ref);
+                        state.Il.MarkLabel(end);
+                    }
+                );
+                // ReSharper restore AccessToModifiedClosure
+            }
+            else // if(idx < len) var = args[idx];
+            {
+                state.EmitLdcI4(i);
+                state.EmitLoadLocal(state.ArgcLocal);
+                state.Il.Emit(OpCodes.Bge_S, end);
 
-                        #endregion LOAD CONSTANT
+                //The following closure is only accessed once. The capture is therefore transparent.
+                // ReSharper disable AccessToModifiedClosure
+                state.EmitStorePValue
+                (
+                    sym,
+                    delegate
+                    {
+                        state.EmitLoadArg(CompilerState.ParamArgsIndex);
+                        state.EmitLdcI4(i);
+                        state.Il.Emit(OpCodes.Ldelem_Ref);
+                    });
+                // ReSharper restore AccessToModifiedClosure
+                state.Il.MarkLabel(end);
+            }
+        }
+    }
 
-                        #region LOAD REFERENCE
+    private static void _createAndInitializeRemainingLocals(CompilerState state)
+    {
+        var nullLocals = new List<LocalBuilder>();
 
-                        //LOAD REFERENCE
-                    case OpCode.ldr_loc:
-                        state.EmitLoadLocalRefAsPValue(id);
-                        break;
-                    case OpCode.ldr_loci:
-                        id = state.IndexMap[argc];
-                        goto case OpCode.ldr_loc;
-                    case OpCode.ldr_glob:
-                        state.EmitLoadGlobalRefAsPValue(id, moduleName);
-                        break;
-                    case OpCode.ldr_func:
-                        state.EmitLoadFuncRefAsPValue(id, moduleName);
-                        break;
-                    case OpCode.ldr_cmd:
-                        state.EmitLoadCmdRefAsPValue(id);
-                        break;
-                    case OpCode.ldr_app:
-                        CompilerState.EmitLoadAppRefAsPValue(state);
-                        break;
-                    case OpCode.ldr_eng:
-                        state.EmitLoadEngRefAsPValue();
-                        break;
-                    case OpCode.ldr_type:
-                        state.EmitPTypeAsPValue(id);
-                        break;
-                    case OpCode.ldr_mod:
-                        state.EmitModuleNameAsPValue(moduleName);
-                        break;
+        //Create remaining local variables and initialize them
+        foreach (var pair in state.Symbols)
+        {
+            var id = pair.Key;
+            var sym = pair.Value;
+            if (sym.Local != null)
+                continue;
 
-                        #endregion //LOAD REFERENCE
-
-                        #endregion //LOAD
-
-                        #region VARIABLES
-
-                        #region LOCAL
-
-                        //LOAD LOCAL VARIABLE
-                    case OpCode.ldloc:
-                        state.EmitLoadPValue(state.Symbols[id]);
-                        break;
-                    case OpCode.stloc:
-                        //Don't use EmitStorePValue here, because this is a more efficient solution
-                        var sym = state.Symbols[id];
-                        if (sym.Kind == SymbolKind.Local)
-                        {
-                            state.EmitStoreLocal(sym.Local.LocalIndex);
-                        }
-                        else if (sym.Kind == SymbolKind.LocalRef)
-                        {
-                            state.EmitStoreLocal(state.PrimaryTempLocal.LocalIndex);
-                            state.EmitLoadLocal(sym.Local.LocalIndex);
-                            state.EmitLoadLocal(state.PrimaryTempLocal.LocalIndex);
-                            state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                        }
-                        break;
-
-                    case OpCode.ldloci:
-                        id = state.IndexMap[argc];
-                        goto case OpCode.ldloc;
-
-                    case OpCode.stloci:
-                        id = state.IndexMap[argc];
-                        goto case OpCode.stloc;
-
-                        #endregion
-
-                        #region GLOBAL
-
-                        //LOAD GLOBAL VARIABLE
-                    case OpCode.ldglob:
-                        state.EmitLoadGlobalValue(id, moduleName);
-                        break;
-                    case OpCode.stglob:
-                        state.EmitStoreLocal(state.PrimaryTempLocal);
-                        state.EmitLoadGlobalReference(id,moduleName);
-                        state.EmitLoadLocal(state.PrimaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                        break;
-
-                        #endregion
-
-                        #endregion
-
-                        #region CONSTRUCTION
-
-                        //CONSTRUCTION
-                    case OpCode.newobj:
-                        state.EmitNewObj(id, argc);
-                        break;
-                    case OpCode.newtype:
-                        state.FillArgv(argc);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.ReadArgv(argc);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.NewTypeMethod, null);
-                        break;
-
-                    case OpCode.newclo:
-                        //Collect shared variables
-                        MetaEntry[] entries;
-                        var func = state.Source.ParentApplication.Functions[id];
-                        entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
-                            ? sharedNamesEntry.List 
-                            : Array.Empty<MetaEntry>();
-                        var hasSharedVariables = entries.Length > 0;
-                        if (hasSharedVariables)
-                        {
-                            state.EmitLdcI4(entries.Length);
-                            state.Il.Emit(OpCodes.Newarr, typeof (PVariable));
-                            state.EmitStoreLocal(state.SharedLocal);
-                            for (var i = 0; i < entries.Length; i++)
-                            {
-                                state.EmitLoadLocal(state.SharedLocal);
-                                state.EmitLdcI4(i);
-                                state.EmitLoadLocal(state.Symbols[entries[i].Text].Local);
-                                state.Il.Emit(OpCodes.Stelem_Ref);
-                            }
-                        }
-                        state.EmitLoadLocal(state.SctxLocal);
-                        if (hasSharedVariables)
-                            state.EmitLoadLocal(state.SharedLocal);
-                        else
-                            state.Il.Emit(OpCodes.Ldnull);
-
-                        state.EmitNewClo(id,moduleName);
-                        break;
-
-                    case OpCode.newcor:
-                        state.FillArgv(argc);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.ReadArgv(argc);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.NewCoroutineMethod, null);
-                        break;
-
-                        #endregion
-
-                        #region OPERATORS
-
-                        #region UNARY
-
-                        //UNARY OPERATORS
-                    case OpCode.incloc:
-                        sym = state.Symbols[id];
-                        if (sym.Kind == SymbolKind.Local)
-                        {
-                            state.EmitLoadLocal(sym.Local);
-                            state.EmitLoadLocal(state.SctxLocal);
-                            state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
+            switch (sym.Kind)
+            {
+                case SymbolKind.Local:
+                {
+                    sym.Local = state.Il.DeclareLocal(typeof (PValue));
+                    var initVal = _getVariableInitialization(state, id, false);
+                    switch (initVal)
+                    {
+                        case VariableInitialization.ArgV:
+                            _emitLoadArgV(state);
                             state.EmitStoreLocal(sym.Local);
-                        }
-                        else if (sym.Kind == SymbolKind.LocalRef)
+                            break;
+                        case VariableInitialization.Null:
+                            nullLocals.Add(sym.Local); //defer assignment
+                            break;
+
+                        // ReSharper disable RedundantCaseLabel
+                        case VariableInitialization.None:
+                        // ReSharper restore RedundantCaseLabel
+                        default:
+                            break;
+                    }
+                }
+                    break;
+                case SymbolKind.LocalRef:
+                {
+                    sym.Local = state.Il.DeclareLocal(typeof (PVariable));
+                    var initVal = _getVariableInitialization(state, id, true);
+
+                    var idx = sym.Local.LocalIndex;
+
+                    state.Il.Emit(OpCodes.Newobj, NewPVariableCtor);
+
+                    if (initVal != VariableInitialization.None)
+                    {
+                        state.Il.Emit(OpCodes.Dup);
+                        state.EmitStoreLocal(idx);
+
+                        switch (initVal)
                         {
-                            state.EmitLoadLocal(sym.Local);
-                            state.Il.Emit(OpCodes.Dup);
-                            state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
-                            state.EmitLoadLocal(state.SctxLocal);
-                            state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
-                            state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                            case VariableInitialization.ArgV:
+                                _emitLoadArgV(state);
+                                break;
+                            case VariableInitialization.Null:
+                                state.EmitLoadNullAsPValue();
+                                break;
                         }
-                        break;
+                        state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                    }
+                    else
+                    {
+                        state.EmitStoreLocal(idx);
+                    }
+                }
+                    break;
+                case SymbolKind.LocalEnum:
+                {
+                    sym.Local = state.Il.DeclareLocal(typeof (IEnumerator<PValue>));
+                    //No initialization needed.
+                }
+                    break;
+                default:
+                    throw new PrexoniteException("Cannot initialize unknown symbol kind.");
+            }
+        }
 
-                    case OpCode.incloci:
-                        id = state.IndexMap[argc];
-                        goto case OpCode.incloc;
+        //Initialize null locals
+        var nullCount = nullLocals.Count;
+        if (nullCount > 0)
+        {
+            state.EmitLoadNullAsPValue();
+            for (var i = 0; i < nullCount; i++)
+            {
+                var local = nullLocals[i];
+                if (i + 1 != nullCount)
+                    state.Il.Emit(OpCodes.Dup);
+                state.EmitStoreLocal(local);
+            }
+        }
+    }
 
-                    case OpCode.incglob:
-                        state.EmitLoadGlobalReference(id,moduleName);
+    private static void _emitInstructions(CompilerState state)
+    {
+        //Tables of foreach call hint hooks
+        var foreachCasts = new Dictionary<int, ForeachHint>();
+        var foreachGetCurrents = new Dictionary<int, ForeachHint>();
+        var foreachMoveNexts = new Dictionary<int, ForeachHint>();
+        var foreachDisposes = new Dictionary<int, ForeachHint>();
+
+        foreach (var hint in state._ForeachHints)
+        {
+            foreachCasts.Add(hint.CastAddress, hint);
+            foreachGetCurrents.Add(hint.GetCurrentAddress, hint);
+            foreachMoveNexts.Add(hint.MoveNextAddress, hint);
+            foreachDisposes.Add(hint.DisposeAddress, hint);
+        }
+
+        var sourceCode = state.Source.Code;
+
+        //CIL Extension
+        var cilExtensionMode = false;
+        List<CompileTimeValue> staticArgv = null;
+
+        for (var instructionIndex = 0; instructionIndex < sourceCode.Count; instructionIndex++)
+        {
+            #region Handling for try-finally-catch blocks
+
+            //Handle try-finally-catch blocks
+            //Push new blocks
+            foreach (var block in state.Seh.GetOpeningTryBlocks(instructionIndex))
+            {
+                state.TryBlocks.Push(block);
+                if (block.HasFinally)
+                    state.Il.BeginExceptionBlock();
+                if (block.HasCatch)
+                    state.Il.BeginExceptionBlock();
+            }
+
+            //Handle active blocks
+            if (state.TryBlocks.Count > 0)
+            {
+                CompiledTryCatchFinallyBlock block;
+                do
+                {
+                    block = state.TryBlocks.Peek();
+                    if (instructionIndex == block.BeginFinally)
+                    {
+                        if (block.SkipTry == instructionIndex)
+                        {
+                            //state.Il.MarkLabel(block.SkipTryLabel);
+                            state.Il.Emit(OpCodes.Nop);
+                        }
+                        state.Il.BeginFinallyBlock();
+                    }
+                    else if (instructionIndex == block.BeginCatch)
+                    {
+                        if (block.HasFinally)
+                            state.Il.EndExceptionBlock(); //end finally here
+                        state.Il.BeginCatchBlock(typeof (Exception));
+                        //parse the exception
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.Il.EmitCall(OpCodes.Call, Runtime.ParseExceptionMethod, null);
+                        //user code will store it in a local variable
+                    }
+                    else if (instructionIndex == block.EndTry)
+                    {
+                        if (block.HasFinally || block.HasCatch)
+                            state.Il.EndExceptionBlock();
+                        if (block.SkipTry == instructionIndex)
+                        {
+                            //state.Il.MarkLabel(block.SkipTryLabel);
+                            state.Il.Emit(OpCodes.Nop);
+                        }
+                        state.TryBlocks.Pop();
+                        block = null; //signal another loop iteration
+                    }
+                } while (block == null && state.TryBlocks.Count > 0);
+            }
+
+            #endregion
+
+            state.MarkInstruction(instructionIndex);
+
+            var ins = sourceCode[instructionIndex];
+
+            #region CIL hints
+
+            // **** CIL hints ****
+            //  * CIL Extension *
+            {
+                if (state._CilExtensionOffsets.Count > 0 &&
+                    state._CilExtensionOffsets.Peek() == instructionIndex)
+                {
+                    state._CilExtensionOffsets.Dequeue();
+                    if (staticArgv == null)
+                        staticArgv = new List<CompileTimeValue>(8);
+                    else
+                        staticArgv.Clear();
+                    cilExtensionMode = true;
+                }
+                if (cilExtensionMode)
+                {
+                    if (CompileTimeValue.TryParse(ins, state.IndexMap, state.Cache, state.Source.ParentApplication.Module.Name, out var compileTimeValue))
+                    {
+                        staticArgv.Add(compileTimeValue);
+                    }
+                    else
+                    {
+                        //found the actual invocation of the CIL extension
+                        cilExtensionMode = false;
+
+                        switch (ins.OpCode)
+                        {
+                            case OpCode.cmd:
+                                ICilExtension extension;
+                                if (
+                                    !state.TargetEngine.Commands.TryGetValue(ins.Id, out var command) ||
+                                    (extension = command as ICilExtension) == null)
+                                    goto default;
+
+                                extension.Implement(state, ins, staticArgv.ToArray(),
+                                    ins.Arguments - staticArgv.Count);
+                                break;
+                            default:
+                                throw new PrexoniteException(
+                                    "The CIL compiler does not support CIL extensions for this opcode: " +
+                                    ins);
+                        }
+                    }
+                    continue;
+                }
+            }
+            //  * Foreach *
+            {
+                if (foreachCasts.TryGetValue(instructionIndex, out var hint))
+                {
+                    //result of (expr).GetEnumerator on the stack
+                    //cast IEnumerator
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, Runtime.ExtractEnumeratorMethod, null);
+                    instructionIndex++;
+                    //stloc enum
+                    state.EmitStoreLocal(state.Symbols[hint.EnumVar].Local);
+                    continue;
+                }
+                else if (foreachGetCurrents.TryGetValue(instructionIndex, out hint))
+                {
+                    //ldloc enum
+                    state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
+                    instructionIndex++;
+                    //get.0 Current
+                    state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.GetCurrentMethod, null);
+                    //result will be stored by user code
+                    continue;
+                }
+                else if (foreachMoveNexts.TryGetValue(instructionIndex, out hint))
+                {
+                    //ldloc enum
+                    state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
+                    instructionIndex++;
+                    //get.0 MoveNext
+                    state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.MoveNextMethod, null);
+                    instructionIndex++;
+                    //jump.t begin
+                    var target = sourceCode[instructionIndex].Arguments; //read from user code
+                    state.Il.Emit(OpCodes.Brtrue, state.InstructionLabels[target]);
+                    continue;
+                }
+                else if (foreachDisposes.TryGetValue(instructionIndex, out hint))
+                {
+                    //ldloc enum
+                    state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
+                    instructionIndex++;
+                    //@cmd.1 dispose
+                    state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.DisposeMethod, null);
+                    continue;
+                }
+            }
+
+            #endregion
+
+            //  * Normal code generation *
+            //Decode instruction
+            var argc = ins.Arguments;
+            var justEffect = ins.JustEffect;
+            var id = ins.Id;
+            int idx;
+            string methodId;
+            string typeExpr;
+            var moduleName = ins.ModuleName;
+
+            //Emit code for the instruction
+            switch (ins.OpCode)
+            {
+                #region NOP
+
+                //NOP
+                case OpCode.nop:
+                    //Do nothing
+                    state.Il.Emit(OpCodes.Nop);
+                    break;
+
+                #endregion
+
+                #region LOAD
+
+                #region LOAD CONSTANT
+
+                //LOAD CONSTANT
+                case OpCode.ldc_int:
+                    state.EmitLoadIntAsPValue(argc);
+                    break;
+                case OpCode.ldc_real:
+                    state.EmitLoadRealAsPValue(ins);
+                    break;
+                case OpCode.ldc_bool:
+                    state.EmitLoadBoolAsPValue(argc != 0);
+                    break;
+                case OpCode.ldc_string:
+                    state.EmitLoadStringAsPValue(id);
+                    break;
+
+                case OpCode.ldc_null:
+                    state.EmitLoadNullAsPValue();
+                    break;
+
+                #endregion LOAD CONSTANT
+
+                #region LOAD REFERENCE
+
+                //LOAD REFERENCE
+                case OpCode.ldr_loc:
+                    state.EmitLoadLocalRefAsPValue(id);
+                    break;
+                case OpCode.ldr_loci:
+                    id = state.IndexMap[argc];
+                    goto case OpCode.ldr_loc;
+                case OpCode.ldr_glob:
+                    state.EmitLoadGlobalRefAsPValue(id, moduleName);
+                    break;
+                case OpCode.ldr_func:
+                    state.EmitLoadFuncRefAsPValue(id, moduleName);
+                    break;
+                case OpCode.ldr_cmd:
+                    state.EmitLoadCmdRefAsPValue(id);
+                    break;
+                case OpCode.ldr_app:
+                    CompilerState.EmitLoadAppRefAsPValue(state);
+                    break;
+                case OpCode.ldr_eng:
+                    state.EmitLoadEngRefAsPValue();
+                    break;
+                case OpCode.ldr_type:
+                    state.EmitPTypeAsPValue(id);
+                    break;
+                case OpCode.ldr_mod:
+                    state.EmitModuleNameAsPValue(moduleName);
+                    break;
+
+                #endregion //LOAD REFERENCE
+
+                #endregion //LOAD
+
+                #region VARIABLES
+
+                #region LOCAL
+
+                //LOAD LOCAL VARIABLE
+                case OpCode.ldloc:
+                    state.EmitLoadPValue(state.Symbols[id]);
+                    break;
+                case OpCode.stloc:
+                    //Don't use EmitStorePValue here, because this is a more efficient solution
+                    var sym = state.Symbols[id];
+                    if (sym.Kind == SymbolKind.Local)
+                    {
+                        state.EmitStoreLocal(sym.Local.LocalIndex);
+                    }
+                    else if (sym.Kind == SymbolKind.LocalRef)
+                    {
+                        state.EmitStoreLocal(state.PrimaryTempLocal.LocalIndex);
+                        state.EmitLoadLocal(sym.Local.LocalIndex);
+                        state.EmitLoadLocal(state.PrimaryTempLocal.LocalIndex);
+                        state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                    }
+                    break;
+
+                case OpCode.ldloci:
+                    id = state.IndexMap[argc];
+                    goto case OpCode.ldloc;
+
+                case OpCode.stloci:
+                    id = state.IndexMap[argc];
+                    goto case OpCode.stloc;
+
+                #endregion
+
+                #region GLOBAL
+
+                //LOAD GLOBAL VARIABLE
+                case OpCode.ldglob:
+                    state.EmitLoadGlobalValue(id, moduleName);
+                    break;
+                case OpCode.stglob:
+                    state.EmitStoreLocal(state.PrimaryTempLocal);
+                    state.EmitLoadGlobalReference(id,moduleName);
+                    state.EmitLoadLocal(state.PrimaryTempLocal);
+                    state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                    break;
+
+                #endregion
+
+                #endregion
+
+                #region CONSTRUCTION
+
+                //CONSTRUCTION
+                case OpCode.newobj:
+                    state.EmitNewObj(id, argc);
+                    break;
+                case OpCode.newtype:
+                    state.FillArgv(argc);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.ReadArgv(argc);
+                    state.Il.Emit(OpCodes.Ldstr, id);
+                    state.Il.EmitCall(OpCodes.Call, Runtime.NewTypeMethod, null);
+                    break;
+
+                case OpCode.newclo:
+                    //Collect shared variables
+                    MetaEntry[] entries;
+                    var func = state.Source.ParentApplication.Functions[id];
+                    entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
+                        ? sharedNamesEntry.List 
+                        : Array.Empty<MetaEntry>();
+                    var hasSharedVariables = entries.Length > 0;
+                    if (hasSharedVariables)
+                    {
+                        state.EmitLdcI4(entries.Length);
+                        state.Il.Emit(OpCodes.Newarr, typeof (PVariable));
+                        state.EmitStoreLocal(state.SharedLocal);
+                        for (var i = 0; i < entries.Length; i++)
+                        {
+                            state.EmitLoadLocal(state.SharedLocal);
+                            state.EmitLdcI4(i);
+                            state.EmitLoadLocal(state.Symbols[entries[i].Text].Local);
+                            state.Il.Emit(OpCodes.Stelem_Ref);
+                        }
+                    }
+                    state.EmitLoadLocal(state.SctxLocal);
+                    if (hasSharedVariables)
+                        state.EmitLoadLocal(state.SharedLocal);
+                    else
+                        state.Il.Emit(OpCodes.Ldnull);
+
+                    state.EmitNewClo(id,moduleName);
+                    break;
+
+                case OpCode.newcor:
+                    state.FillArgv(argc);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.ReadArgv(argc);
+                    state.Il.EmitCall(OpCodes.Call, Runtime.NewCoroutineMethod, null);
+                    break;
+
+                #endregion
+
+                #region OPERATORS
+
+                #region UNARY
+
+                //UNARY OPERATORS
+                case OpCode.incloc:
+                    sym = state.Symbols[id];
+                    if (sym.Kind == SymbolKind.Local)
+                    {
+                        state.EmitLoadLocal(sym.Local);
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
+                        state.EmitStoreLocal(sym.Local);
+                    }
+                    else if (sym.Kind == SymbolKind.LocalRef)
+                    {
+                        state.EmitLoadLocal(sym.Local);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                        break;
+                    }
+                    break;
 
-                    case OpCode.decloc:
-                        sym = state.Symbols[id];
-                        if (sym.Kind == SymbolKind.Local)
-                        {
-                            state.EmitLoadLocal(sym.Local);
-                            state.EmitLoadLocal(state.SctxLocal);
-                            state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
-                            state.EmitStoreLocal(sym.Local);
-                        }
-                        else if (sym.Kind == SymbolKind.LocalRef)
-                        {
-                            state.EmitLoadLocal(sym.Local);
-                            state.Il.Emit(OpCodes.Dup);
-                            state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
-                            state.EmitLoadLocal(state.SctxLocal);
-                            state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
-                            state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                        }
-                        break;
-                    case OpCode.decloci:
-                        id = state.IndexMap[argc];
-                        goto case OpCode.decloc;
+                case OpCode.incloci:
+                    id = state.IndexMap[argc];
+                    goto case OpCode.incloc;
 
-                    case OpCode.decglob:
-                        state.EmitLoadGlobalReference(id,moduleName);
+                case OpCode.incglob:
+                    state.EmitLoadGlobalReference(id,moduleName);
+                    state.Il.Emit(OpCodes.Dup);
+                    state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
+                    state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                    break;
+
+                case OpCode.decloc:
+                    sym = state.Symbols[id];
+                    if (sym.Kind == SymbolKind.Local)
+                    {
+                        state.EmitLoadLocal(sym.Local);
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
+                        state.EmitStoreLocal(sym.Local);
+                    }
+                    else if (sym.Kind == SymbolKind.LocalRef)
+                    {
+                        state.EmitLoadLocal(sym.Local);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                        break;
+                    }
+                    break;
+                case OpCode.decloci:
+                    id = state.IndexMap[argc];
+                    goto case OpCode.decloc;
 
-                        #endregion
+                case OpCode.decglob:
+                    state.EmitLoadGlobalReference(id,moduleName);
+                    state.Il.Emit(OpCodes.Dup);
+                    state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
+                    state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                    break;
 
-                        #region BINARY
+                #endregion
 
-                        // all binary operators are implemented as CIL extensions in
-                        //  Prexonite.Commands.Core.Operators
+                #region BINARY
 
-                        #endregion //OPERATORS
+                // all binary operators are implemented as CIL extensions in
+                //  Prexonite.Commands.Core.Operators
 
-                        #endregion
+                #endregion //OPERATORS
 
-                        #region TYPE OPERATIONS
+                #endregion
 
-                        #region TYPE CHECK
+                #region TYPE OPERATIONS
 
-                        //TYPE CHECK
-                    case OpCode.check_const:
-                        //Stack:
-                        //  Obj
-                        state.EmitLoadType(id);
-                        //Stack:
-                        //  Obj
-                        //  Type
-                        state.EmitCall(Runtime.CheckTypeConstMethod);
-                        break;
-                    case OpCode.check_arg:
-                        //Stack: 
-                        //  Obj
-                        //  Type
-                        state.Il.EmitCall(OpCodes.Call, Runtime.CheckTypeMethod, null);
-                        break;
+                #region TYPE CHECK
 
-                    case OpCode.check_null:
-                        state.Il.EmitCall(OpCodes.Call, PVIsNullMethod, null);
-                        state.Il.Emit(OpCodes.Box, typeof (bool));
-                        state.Il.EmitCall(OpCodes.Call, GetBoolPType, null);
-                        state.Il.Emit(OpCodes.Newobj, NewPValue);
-                        break;
+                //TYPE CHECK
+                case OpCode.check_const:
+                    //Stack:
+                    //  Obj
+                    state.EmitLoadType(id);
+                    //Stack:
+                    //  Obj
+                    //  Type
+                    state.EmitCall(Runtime.CheckTypeConstMethod);
+                    break;
+                case OpCode.check_arg:
+                    //Stack: 
+                    //  Obj
+                    //  Type
+                    state.Il.EmitCall(OpCodes.Call, Runtime.CheckTypeMethod, null);
+                    break;
 
-                        #endregion
+                case OpCode.check_null:
+                    state.Il.EmitCall(OpCodes.Call, PVIsNullMethod, null);
+                    state.Il.Emit(OpCodes.Box, typeof (bool));
+                    state.Il.EmitCall(OpCodes.Call, GetBoolPType, null);
+                    state.Il.Emit(OpCodes.Newobj, NewPValue);
+                    break;
 
-                        #region TYPE CAST
+                #endregion
 
-                    case OpCode.cast_const:
-                        //Stack:
-                        //  Obj
-                        state.EmitLoadType(id);
-                        //Stack:
-                        //  Obj
-                        //  Type
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitCall(Runtime.CastConstMethod);
+                #region TYPE CAST
 
-                        break;
-                    case OpCode.cast_arg:
-                        //Stack
-                        //  Obj
-                        //  Type
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.CastMethod, null);
-                        break;
+                case OpCode.cast_const:
+                    //Stack:
+                    //  Obj
+                    state.EmitLoadType(id);
+                    //Stack:
+                    //  Obj
+                    //  Type
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.EmitCall(Runtime.CastConstMethod);
 
-                        #endregion
+                    break;
+                case OpCode.cast_arg:
+                    //Stack
+                    //  Obj
+                    //  Type
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, Runtime.CastMethod, null);
+                    break;
 
-                        #endregion
+                #endregion
 
-                        #region OBJECT CALLS
+                #endregion
 
-                        #region DYNAMIC
+                #region OBJECT CALLS
 
-                    case OpCode.get:
-                        state.FillArgv(argc);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.ReadArgv(argc);
-                        state.EmitLdcI4((int) PCall.Get);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
-                        if (justEffect)
-                            state.Il.Emit(OpCodes.Pop);
-                        break;
+                #region DYNAMIC
 
-                    case OpCode.set:
-                        state.FillArgv(argc);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.ReadArgv(argc);
-                        state.EmitLdcI4((int) PCall.Set);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                case OpCode.get:
+                    state.FillArgv(argc);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.ReadArgv(argc);
+                    state.EmitLdcI4((int) PCall.Get);
+                    state.Il.Emit(OpCodes.Ldstr, id);
+                    state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                    if (justEffect)
                         state.Il.Emit(OpCodes.Pop);
-                        break;
+                    break;
 
-                        #endregion
+                case OpCode.set:
+                    state.FillArgv(argc);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.ReadArgv(argc);
+                    state.EmitLdcI4((int) PCall.Set);
+                    state.Il.Emit(OpCodes.Ldstr, id);
+                    state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                    state.Il.Emit(OpCodes.Pop);
+                    break;
 
-                        #region STATIC
+                #endregion
 
-                    case OpCode.sget:
-                        //Stack:
-                        //  arg
-                        //   .
-                        //   .
-                        //   .
-                        state.FillArgv(argc);
-                        idx = id.LastIndexOf("::", StringComparison.Ordinal);
-                        if (idx < 0)
-                            throw new PrexoniteException
-                                (
-                                "Invalid sget instruction. Does not specify a method.");
-                        methodId = id.Substring(idx + 2);
-                        typeExpr = id.Substring(0, idx);
-                        state.EmitLoadType(typeExpr);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.ReadArgv(argc);
-                        state.EmitLdcI4((int) PCall.Get);
-                        state.Il.Emit(OpCodes.Ldstr, methodId);
-                        state.EmitVirtualCall(Runtime.StaticCallMethod);
-                        if (justEffect)
-                            state.Il.Emit(OpCodes.Pop);
-                        break;
+                #region STATIC
 
-                    case OpCode.sset:
-                        state.FillArgv(argc);
-                        idx = id.LastIndexOf("::", StringComparison.Ordinal);
-                        if (idx < 0)
-                            throw new PrexoniteException
-                                (
-                                "Invalid sset instruction. Does not specify a method.");
-                        methodId = id.Substring(idx + 2);
-                        typeExpr = id.Substring(0, idx);
-                        state.EmitLoadType(typeExpr);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.ReadArgv(argc);
-                        state.EmitLdcI4((int) PCall.Set);
-                        state.Il.Emit(OpCodes.Ldstr, methodId);
-                        state.EmitVirtualCall(Runtime.StaticCallMethod);
+                case OpCode.sget:
+                    //Stack:
+                    //  arg
+                    //   .
+                    //   .
+                    //   .
+                    state.FillArgv(argc);
+                    idx = id.LastIndexOf("::", StringComparison.Ordinal);
+                    if (idx < 0)
+                        throw new PrexoniteException
+                        (
+                            "Invalid sget instruction. Does not specify a method.");
+                    methodId = id.Substring(idx + 2);
+                    typeExpr = id.Substring(0, idx);
+                    state.EmitLoadType(typeExpr);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.ReadArgv(argc);
+                    state.EmitLdcI4((int) PCall.Get);
+                    state.Il.Emit(OpCodes.Ldstr, methodId);
+                    state.EmitVirtualCall(Runtime.StaticCallMethod);
+                    if (justEffect)
                         state.Il.Emit(OpCodes.Pop);
-                        break;
+                    break;
 
-                        #endregion
+                case OpCode.sset:
+                    state.FillArgv(argc);
+                    idx = id.LastIndexOf("::", StringComparison.Ordinal);
+                    if (idx < 0)
+                        throw new PrexoniteException
+                        (
+                            "Invalid sset instruction. Does not specify a method.");
+                    methodId = id.Substring(idx + 2);
+                    typeExpr = id.Substring(0, idx);
+                    state.EmitLoadType(typeExpr);
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.ReadArgv(argc);
+                    state.EmitLdcI4((int) PCall.Set);
+                    state.Il.Emit(OpCodes.Ldstr, methodId);
+                    state.EmitVirtualCall(Runtime.StaticCallMethod);
+                    state.Il.Emit(OpCodes.Pop);
+                    break;
 
-                        #endregion
+                #endregion
 
-                        #region INDIRECT CALLS
+                #endregion
 
-                    case OpCode.indloc:
-                        sym = state.Symbols[id];
-                        if (sym == null)
-                            throw new PrexoniteException(
-                                "Internal CIL compiler error. Information about local entity " + id +
-                                    " missing.");
-                        state.FillArgv(argc);
-                        sym.EmitLoad(state);
-                        state.EmitIndirectCall(argc, justEffect);
-                        break;
+                #region INDIRECT CALLS
 
-                    case OpCode.indloci:
-                        idx = argc & ushort.MaxValue;
-                        argc = (argc & (ushort.MaxValue << 16)) >> 16;
-                        id = state.IndexMap[idx];
-                        goto case OpCode.indloc;
-
-                    case OpCode.indglob:
-                        state.FillArgv(argc);
-                        state.EmitLoadGlobalValue(id,moduleName);
-                        state.EmitIndirectCall(argc, justEffect);
-                        break;
-
-                    case OpCode.indarg:
-                        //Stack
-                        //  obj
-                        //  args
-                        state.FillArgv(argc);
-                        state.EmitIndirectCall(argc, justEffect);
-                        break;
-
-                    case OpCode.tail:
+                case OpCode.indloc:
+                    sym = state.Symbols[id];
+                    if (sym == null)
                         throw new PrexoniteException(
-                            "Cannot compile tail instruction to CIL. Qualification should have failed.");
+                            "Internal CIL compiler error. Information about local entity " + id +
+                            " missing.");
+                    state.FillArgv(argc);
+                    sym.EmitLoad(state);
+                    state.EmitIndirectCall(argc, justEffect);
+                    break;
 
-                        #endregion
+                case OpCode.indloci:
+                    idx = argc & ushort.MaxValue;
+                    argc = (argc & (ushort.MaxValue << 16)) >> 16;
+                    id = state.IndexMap[idx];
+                    goto case OpCode.indloc;
 
-                        #region ENGINE CALLS
+                case OpCode.indglob:
+                    state.FillArgv(argc);
+                    state.EmitLoadGlobalValue(id,moduleName);
+                    state.EmitIndirectCall(argc, justEffect);
+                    break;
 
-                    case OpCode.func:
-                        state.EmitFuncCall(argc, id, moduleName, justEffect);
-                        break;
-                    case OpCode.cmd:
-                        state.EmitCommandCall(ins);
-                        break;
+                case OpCode.indarg:
+                    //Stack
+                    //  obj
+                    //  args
+                    state.FillArgv(argc);
+                    state.EmitIndirectCall(argc, justEffect);
+                    break;
 
-                        #endregion
+                case OpCode.tail:
+                    throw new PrexoniteException(
+                        "Cannot compile tail instruction to CIL. Qualification should have failed.");
 
-                        #region FLOW CONTROL
+                #endregion
 
-                        //FLOW CONTROL
+                #region ENGINE CALLS
 
-                        #region JUMPS
+                case OpCode.func:
+                    state.EmitFuncCall(argc, id, moduleName, justEffect);
+                    break;
+                case OpCode.cmd:
+                    state.EmitCommandCall(ins);
+                    break;
 
-                    case OpCode.jump:
-                    case OpCode.jump_t:
-                    case OpCode.jump_f:
-                    case OpCode.ret_break:
-                    case OpCode.ret_continue:
-                        state.Seh.EmitJump(instructionIndex, ins);
-                        break;
+                #endregion
 
-                        #endregion
+                #region FLOW CONTROL
 
-                        #region RETURNS
+                //FLOW CONTROL
 
-                    case OpCode.ret_exit:
-                        goto case OpCode.jump;
+                #region JUMPS
 
-                    case OpCode.ret_value:
-                        //return value is assigned by SEH
-                        goto case OpCode.jump;
+                case OpCode.jump:
+                case OpCode.jump_t:
+                case OpCode.jump_f:
+                case OpCode.ret_break:
+                case OpCode.ret_continue:
+                    state.Seh.EmitJump(instructionIndex, ins);
+                    break;
 
-                    case OpCode.ret_set:
-                        state.EmitSetReturnValue();
-                        break;
+                #endregion
 
-                        #endregion
+                #region RETURNS
 
-                        #region THROW
+                case OpCode.ret_exit:
+                    goto case OpCode.jump;
 
-                    case OpCode.@throw:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.ThrowExceptionMethod, null);
-                        break;
+                case OpCode.ret_value:
+                    //return value is assigned by SEH
+                    goto case OpCode.jump;
 
-                        #endregion
+                case OpCode.ret_set:
+                    state.EmitSetReturnValue();
+                    break;
 
-                        #region LEAVE
+                #endregion
 
-                    case OpCode.@try:
-                        //Is done via analysis of TryCatchFinally objects associated with the function
-                        Debug.Assert(state.StackSize[instructionIndex] == 0,
-                            "The stack should be empty when entering a try-block.",
-                            "The stack is not empty when entering the try-block at instruction {0} in function {1}.",
-                            instructionIndex, state.Source);
-                        break;
+                #region THROW
 
-                    case OpCode.leave:
-                        //is handled by the CLR
+                case OpCode.@throw:
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, Runtime.ThrowExceptionMethod, null);
+                    break;
 
-                        #endregion
+                #endregion
 
-                        #region EXCEPTION
+                #region LEAVE
 
-                    case OpCode.exc:
-                        //is not implemented via Emit
-                        // The exception is stored when the exception block is entered.
-                        break;
+                case OpCode.@try:
+                    //Is done via analysis of TryCatchFinally objects associated with the function
+                    Debug.Assert(state.StackSize[instructionIndex] == 0,
+                        "The stack should be empty when entering a try-block.",
+                        "The stack is not empty when entering the try-block at instruction {0} in function {1}.",
+                        instructionIndex, state.Source);
+                    break;
 
-                        #endregion
+                case OpCode.leave:
+                //is handled by the CLR
 
-                        #endregion
+                #endregion
 
-                        #region STACK MANIPULATION
+                #region EXCEPTION
 
-                        //STACK MANIPULATION
-                    case OpCode.pop:
-                        for (var i = 0; i < argc; i++)
-                            state.Il.Emit(OpCodes.Pop);
-                        break;
-                    case OpCode.dup:
-                        for (var i = 0; i < argc; i++)
-                            state.Il.Emit(OpCodes.Dup);
-                        break;
-                    case OpCode.rot:
-                        var values = (int) ins.GenericArgument;
-                        var rotations = argc;
-                        for (var i = 0; i < values; i++)
-                            state.EmitStoreLocal
-                                (
-                                    state.TempLocals[(i + rotations)%values].LocalIndex);
-                        for (var i = values - 1; i >= 0; i--)
-                            state.EmitLoadLocal(state.TempLocals[i].LocalIndex);
-                        break;
+                case OpCode.exc:
+                    //is not implemented via Emit
+                    // The exception is stored when the exception block is entered.
+                    break;
 
-                        #endregion
-                } //end of switch over opcode
+                #endregion
 
-                //DON'T ADD ANY CODE HERE, A LOT OF CASES USE `CONTINUE`
-            } // end of loop over instructions
+                #endregion
 
-            //Close all pending try blocks, since the next instruction will never come
-            //  (other closing try blocks are handled by the emitting the instruction immediately following 
-            //  the try block)
-            foreach (var block in state.TryBlocks)
-            {
-                if (block.HasCatch || block.HasFinally)
-                    state.Il.EndExceptionBlock();
-            }
+                #region STACK MANIPULATION
 
-            //Implicit return
-            //Often instructions refer to a virtual instruction after the last real one.
-            state.MarkInstruction(sourceCode.Count);
-            state.Il.MarkLabel(state.ReturnLabel);
-            state.Il.Emit(OpCodes.Ret);
+                //STACK MANIPULATION
+                case OpCode.pop:
+                    for (var i = 0; i < argc; i++)
+                        state.Il.Emit(OpCodes.Pop);
+                    break;
+                case OpCode.dup:
+                    for (var i = 0; i < argc; i++)
+                        state.Il.Emit(OpCodes.Dup);
+                    break;
+                case OpCode.rot:
+                    var values = (int) ins.GenericArgument;
+                    var rotations = argc;
+                    for (var i = 0; i < values; i++)
+                        state.EmitStoreLocal
+                        (
+                            state.TempLocals[(i + rotations)%values].LocalIndex);
+                    for (var i = values - 1; i >= 0; i--)
+                        state.EmitLoadLocal(state.TempLocals[i].LocalIndex);
+                    break;
+
+                #endregion
+            } //end of switch over opcode
+
+            //DON'T ADD ANY CODE HERE, A LOT OF CASES USE `CONTINUE`
+        } // end of loop over instructions
+
+        //Close all pending try blocks, since the next instruction will never come
+        //  (other closing try blocks are handled by the emitting the instruction immediately following 
+        //  the try block)
+        foreach (var block in state.TryBlocks)
+        {
+            if (block.HasCatch || block.HasFinally)
+                state.Il.EndExceptionBlock();
         }
 
-        #region IL helper
+        //Implicit return
+        //Often instructions refer to a virtual instruction after the last real one.
+        state.MarkInstruction(sourceCode.Count);
+        state.Il.MarkLabel(state.ReturnLabel);
+        state.Il.Emit(OpCodes.Ret);
+    }
 
-        // ReSharper disable InconsistentNaming
+    #region IL helper
 
-        public static readonly MethodInfo CreateNativePValue =
-            typeof (CilFunctionContext).GetMethod("CreateNativePValue", new[] {typeof (object)});
+    // ReSharper disable InconsistentNaming
 
-        internal static readonly MethodInfo GetNullPType =
-            typeof(PType).GetProperty(nameof(PType.Null))!.GetGetMethod();
+    public static readonly MethodInfo CreateNativePValue =
+        typeof (CilFunctionContext).GetMethod("CreateNativePValue", new[] {typeof (object)});
 
-        internal static readonly MethodInfo GetObjectProxy =
-            typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod();
+    internal static readonly MethodInfo GetNullPType =
+        typeof(PType).GetProperty(nameof(PType.Null))!.GetGetMethod();
 
-
-        private static MethodInfo GetPTypeListMethod { get; } = typeof(PType).GetProperty(nameof(PType.List))!.GetGetMethod();
-
-        private static ConstructorInfo NewPValueListCtor { get; } = typeof (List<PValue>).GetConstructor(new[] {typeof (IEnumerable<PValue>)});
-
-        internal static MethodInfo getPTypeNull { get; } = typeof(PType).GetProperty(nameof(PType.Null))!.GetGetMethod();
-
-        internal static MethodInfo nullCreatePValue { get; } = typeof(NullPType).GetMethod(nameof(NullPType.CreatePValue), Array.Empty<Type>());
-
-        public static ConstructorInfo NewPVariableCtor { get; } = typeof (PVariable).GetConstructor(Array.Empty<Type>());
-
-        public static MethodInfo GetValueMethod { get; } = typeof(PVariable).GetProperty(nameof(PVariable.Value))!.GetGetMethod();
-
-        public static MethodInfo SetValueMethod { get; } = typeof(PVariable).GetProperty(nameof(PVariable.Value))!.GetSetMethod();
-
-        internal static MethodInfo GetIntPType { get; } = typeof(PType).GetProperty(nameof(PType.Int))!.GetGetMethod();
-
-        internal static MethodInfo GetRealPType { get; } = typeof(PType).GetProperty(nameof(PType.Real))!.GetGetMethod();
-
-        internal static MethodInfo GetBoolPType { get; } = typeof(PType).GetProperty(nameof(PType.Bool))!.GetGetMethod();
-
-        internal static MethodInfo GetStringPType { get; } = typeof(PType).GetProperty(nameof(PType.String))!.GetGetMethod();
-
-        internal static MethodInfo GetCharPType { get; } = typeof(PType).GetProperty(nameof(PType.Char))!.GetGetMethod();
-
-        public static MethodInfo GetObjectPTypeSelector { get; } = typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod();
-
-        public static MethodInfo CreatePValueAsObject { get; } = typeof (
-            PType.PrexoniteObjectTypeProxy).GetMethod
-            ("CreatePValue", new[] {typeof (object)});
+    internal static readonly MethodInfo GetObjectProxy =
+        typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod();
 
 
-        public static ConstructorInfo NewPValueKeyValuePair { get; } = typeof (PValueKeyValuePair).GetConstructor(new[] {typeof (PValue), typeof (PValue)});
+    private static MethodInfo GetPTypeListMethod { get; } = typeof(PType).GetProperty(nameof(PType.List))!.GetGetMethod();
 
-        //private readonly MethodInfo _CreateNativePValue = typeof(StackContext).GetMethod("CreateNativePValue");
-        //private MethodInfo CreateNativePValue
-        //{
-        //    get { return _CreateNativePValue; }
-        //}
+    private static ConstructorInfo NewPValueListCtor { get; } = typeof (List<PValue>).GetConstructor(new[] {typeof (IEnumerable<PValue>)});
 
-        internal static ConstructorInfo NewPValue { get; } = typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
+    internal static MethodInfo getPTypeNull { get; } = typeof(PType).GetProperty(nameof(PType.Null))!.GetGetMethod();
 
-        public static MethodInfo PVIncrementMethod { get; } = typeof (PValue).GetMethod("Increment", new[] {typeof (StackContext)});
+    internal static MethodInfo nullCreatePValue { get; } = typeof(NullPType).GetMethod(nameof(NullPType.CreatePValue), Array.Empty<Type>());
 
-        public static MethodInfo PVDecrementMethod { get; } = typeof (PValue).GetMethod("Decrement", new[] {typeof (StackContext)});
+    public static ConstructorInfo NewPVariableCtor { get; } = typeof (PVariable).GetConstructor(Array.Empty<Type>());
 
-        public static MethodInfo PVUnaryNegationMethod { get; } = typeof (PValue).GetMethod("UnaryNegation", new[] {typeof (StackContext)});
+    public static MethodInfo GetValueMethod { get; } = typeof(PVariable).GetProperty(nameof(PVariable.Value))!.GetGetMethod();
 
-        public static MethodInfo PVLogicalNotMethod { get; } = typeof (PValue).GetMethod("LogicalNot", new[] {typeof (StackContext)});
+    public static MethodInfo SetValueMethod { get; } = typeof(PVariable).GetProperty(nameof(PVariable.Value))!.GetSetMethod();
 
-        public static MethodInfo PVAdditionMethod { get; } = typeof (PValue).GetMethod("Addition", new[] {typeof (StackContext), typeof (PValue)});
+    internal static MethodInfo GetIntPType { get; } = typeof(PType).GetProperty(nameof(PType.Int))!.GetGetMethod();
 
-        public static MethodInfo PVSubtractionMethod { get; } = typeof (PValue).GetMethod
-        (
-            "Subtraction", new[] {typeof (StackContext), typeof (PValue)});
+    internal static MethodInfo GetRealPType { get; } = typeof(PType).GetProperty(nameof(PType.Real))!.GetGetMethod();
 
-        public static MethodInfo PVMultiplyMethod { get; } = typeof (PValue).GetMethod("Multiply", new[] {typeof (StackContext), typeof (PValue)});
+    internal static MethodInfo GetBoolPType { get; } = typeof(PType).GetProperty(nameof(PType.Bool))!.GetGetMethod();
 
-        public static MethodInfo PVDivisionMethod { get; } = typeof (PValue).GetMethod("Division", new[] {typeof (StackContext), typeof (PValue)});
+    internal static MethodInfo GetStringPType { get; } = typeof(PType).GetProperty(nameof(PType.String))!.GetGetMethod();
 
-        public static MethodInfo PVModulusMethod { get; } = typeof (PValue).GetMethod("Modulus", new[] {typeof (StackContext), typeof (PValue)});
+    internal static MethodInfo GetCharPType { get; } = typeof(PType).GetProperty(nameof(PType.Char))!.GetGetMethod();
 
-        public static MethodInfo PVBitwiseAndMethod { get; } = typeof (PValue).GetMethod
-        (
-            "BitwiseAnd", new[] {typeof (StackContext), typeof (PValue)});
+    public static MethodInfo GetObjectPTypeSelector { get; } = typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod();
 
-        public static MethodInfo PVBitwiseOrMethod { get; } = typeof (PValue).GetMethod("BitwiseOr", new[] {typeof (StackContext), typeof (PValue)});
+    public static MethodInfo CreatePValueAsObject { get; } = typeof (
+        PType.PrexoniteObjectTypeProxy).GetMethod
+        ("CreatePValue", new[] {typeof (object)});
 
-        public static MethodInfo PVExclusiveOrMethod { get; } = typeof (PValue).GetMethod
-        (
-            "ExclusiveOr", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVEqualityMethod { get; } = typeof (PValue).GetMethod("Equality", new[] {typeof (StackContext), typeof (PValue)});
+    public static ConstructorInfo NewPValueKeyValuePair { get; } = typeof (PValueKeyValuePair).GetConstructor(new[] {typeof (PValue), typeof (PValue)});
 
-        public static MethodInfo PVInequalityMethod { get; } = typeof (PValue).GetMethod
-        (
-            "Inequality", new[] {typeof (StackContext), typeof (PValue)});
+    //private readonly MethodInfo _CreateNativePValue = typeof(StackContext).GetMethod("CreateNativePValue");
+    //private MethodInfo CreateNativePValue
+    //{
+    //    get { return _CreateNativePValue; }
+    //}
 
-        public static MethodInfo PVGreaterThanMethod { get; } = typeof (PValue).GetMethod
-        (
-            "GreaterThan", new[] {typeof (StackContext), typeof (PValue)});
+    internal static ConstructorInfo NewPValue { get; } = typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
 
-        public static MethodInfo PVLessThanMethod { get; } = typeof (PValue).GetMethod("LessThan", new[] {typeof (StackContext), typeof (PValue)});
+    public static MethodInfo PVIncrementMethod { get; } = typeof (PValue).GetMethod("Increment", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVGreaterThanOrEqualMethod { get; } = typeof (PValue).GetMethod
-        (
-            "GreaterThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
+    public static MethodInfo PVDecrementMethod { get; } = typeof (PValue).GetMethod("Decrement", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVLessThanOrEqualMethod { get; } = typeof (PValue).GetMethod
-        (
-            "LessThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
+    public static MethodInfo PVUnaryNegationMethod { get; } = typeof (PValue).GetMethod("UnaryNegation", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVIsNullMethod { get; } = typeof(PValue).GetProperty(nameof(PValue.IsNull))!.GetGetMethod();
+    public static MethodInfo PVLogicalNotMethod { get; } = typeof (PValue).GetMethod("LogicalNot", new[] {typeof (StackContext)});
 
-        public static MethodInfo PVDynamicCallMethod { get; } = typeof (PValue).GetMethod("DynamicCall");
+    public static MethodInfo PVAdditionMethod { get; } = typeof (PValue).GetMethod("Addition", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVIndirectCallMethod { get; } = typeof (PValue).GetMethod("IndirectCall");
+    public static MethodInfo PVSubtractionMethod { get; } = typeof (PValue).GetMethod
+    (
+        "Subtraction", new[] {typeof (StackContext), typeof (PValue)});
 
-        public static MethodInfo PVOnesComplementMethod { get; } = typeof (PValue).GetMethod("OnesComplement",
-            new[]
-            {
-                typeof (
-                    StackContext)
-            });
+    public static MethodInfo PVMultiplyMethod { get; } = typeof (PValue).GetMethod("Multiply", new[] {typeof (StackContext), typeof (PValue)});
 
-        // ReSharper restore InconsistentNaming
+    public static MethodInfo PVDivisionMethod { get; } = typeof (PValue).GetMethod("Division", new[] {typeof (StackContext), typeof (PValue)});
 
-        private enum VariableInitialization
+    public static MethodInfo PVModulusMethod { get; } = typeof (PValue).GetMethod("Modulus", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVBitwiseAndMethod { get; } = typeof (PValue).GetMethod
+    (
+        "BitwiseAnd", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVBitwiseOrMethod { get; } = typeof (PValue).GetMethod("BitwiseOr", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVExclusiveOrMethod { get; } = typeof (PValue).GetMethod
+    (
+        "ExclusiveOr", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVEqualityMethod { get; } = typeof (PValue).GetMethod("Equality", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVInequalityMethod { get; } = typeof (PValue).GetMethod
+    (
+        "Inequality", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVGreaterThanMethod { get; } = typeof (PValue).GetMethod
+    (
+        "GreaterThan", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVLessThanMethod { get; } = typeof (PValue).GetMethod("LessThan", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVGreaterThanOrEqualMethod { get; } = typeof (PValue).GetMethod
+    (
+        "GreaterThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVLessThanOrEqualMethod { get; } = typeof (PValue).GetMethod
+    (
+        "LessThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
+
+    public static MethodInfo PVIsNullMethod { get; } = typeof(PValue).GetProperty(nameof(PValue.IsNull))!.GetGetMethod();
+
+    public static MethodInfo PVDynamicCallMethod { get; } = typeof (PValue).GetMethod("DynamicCall");
+
+    public static MethodInfo PVIndirectCallMethod { get; } = typeof (PValue).GetMethod("IndirectCall");
+
+    public static MethodInfo PVOnesComplementMethod { get; } = typeof (PValue).GetMethod("OnesComplement",
+        new[]
         {
-            None,
-            Null,
-            ArgV
+            typeof (
+                StackContext)
+        });
+
+    // ReSharper restore InconsistentNaming
+
+    private enum VariableInitialization
+    {
+        None,
+        Null,
+        ArgV
+    }
+
+    private static VariableInitialization _getVariableInitialization(CompilerState state,
+        string id, bool isRef)
+    {
+        if (Engine.StringsAreEqual(id, state.EffectiveArgumentsListId))
+        {
+            return VariableInitialization.ArgV;
         }
-
-        private static VariableInitialization _getVariableInitialization(CompilerState state,
-            string id, bool isRef)
+        else if (!isRef)
         {
-            if (Engine.StringsAreEqual(id, state.EffectiveArgumentsListId))
-            {
-                return VariableInitialization.ArgV;
-            }
-            else if (!isRef)
-            {
-                return VariableInitialization.Null;
-            }
-            else
-            {
-                return VariableInitialization.None;
-            }
+            return VariableInitialization.Null;
         }
-
-        private static void _emitLoadArgV(CompilerState state)
+        else
         {
-            state.EmitLoadArg(CompilerState.ParamArgsIndex);
-            state.Il.Emit(OpCodes.Newobj, NewPValueListCtor);
-            state.Il.EmitCall(OpCodes.Call, GetPTypeListMethod, null);
-            state.Il.Emit(OpCodes.Newobj, NewPValue);
+            return VariableInitialization.None;
         }
+    }
 
-        #endregion //IL Helper
+    private static void _emitLoadArgV(CompilerState state)
+    {
+        state.EmitLoadArg(CompilerState.ParamArgsIndex);
+        state.Il.Emit(OpCodes.Newobj, NewPValueListCtor);
+        state.Il.EmitCall(OpCodes.Call, GetPTypeListMethod, null);
+        state.Il.Emit(OpCodes.Newobj, NewPValue);
+    }
 
-        #endregion
+    #endregion //IL Helper
 
-        /// <summary>
-        ///     Sets the supplied CIL hint on the meta table. Replaces previous CIL hints of the same type.
-        /// </summary>
-        /// <param name = "target"></param>
-        /// <param name = "newHint"></param>
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-            MessageId = "Cil")]
-        public static void SetCilHint(IHasMetaTable target, ICilHint newHint)
+    #endregion
+
+    /// <summary>
+    ///     Sets the supplied CIL hint on the meta table. Replaces previous CIL hints of the same type.
+    /// </summary>
+    /// <param name = "target"></param>
+    /// <param name = "newHint"></param>
+    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil")]
+    public static void SetCilHint(IHasMetaTable target, ICilHint newHint)
+    {
+        if (target.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
         {
-            if (target.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
+            var hints = cilHints.List;
+            var replaced = false;
+            var excessHints = 0;
+            for (var i = 0; i < hints.Length; i++)
             {
-                var hints = cilHints.List;
-                var replaced = false;
-                var excessHints = 0;
-                for (var i = 0; i < hints.Length; i++)
+                var cilHint = hints[i].List;
+
+                //We're only interested in CIL hints that conflict with the new one.
+                if (!Engine.StringsAreEqual(cilHint[0].Text, newHint.CilKey))
+                    continue;
+
+
+                if (replaced)
                 {
-                    var cilHint = hints[i].List;
-
-                    //We're only interested in CIL hints that conflict with the new one.
-                    if (!Engine.StringsAreEqual(cilHint[0].Text, newHint.CilKey))
-                        continue;
-
-
-                    if (replaced)
-                    {
-                        hints[i] = null;
-                        excessHints++;
-                    }
-                    else
-                    {
-                        hints[i] = newHint.ToMetaEntry();
-                        replaced = true;
-                    }
-                }
-
-                if (excessHints == 0)
-                {
-                    if (!replaced)
-                        target.Meta.AddTo(Loader.CilHintsKey, newHint.ToMetaEntry());
-                    //otherwise the array has already been modified by ref.
+                    hints[i] = null;
+                    excessHints++;
                 }
                 else
                 {
-                    //need to resize array (and possibly add new CIL hint)
-                    var newHints = new MetaEntry[hints.Length - excessHints + (replaced ? 0 : 1)];
-                    int idxNew;
-                    int idxOld;
-                    for (idxNew = idxOld = 0; idxOld < hints.Length; idxOld++)
-                    {
-                        var oldHint = hints[idxOld];
-                        if (oldHint == null)
-                            continue;
-
-                        newHints[idxNew++] = oldHint;
-                    }
-                    if (!replaced)
-                        newHints[idxNew] = newHint.ToMetaEntry();
-
-                    target.Meta[Loader.CilHintsKey] = (MetaEntry) newHints;
+                    hints[i] = newHint.ToMetaEntry();
+                    replaced = true;
                 }
+            }
+
+            if (excessHints == 0)
+            {
+                if (!replaced)
+                    target.Meta.AddTo(Loader.CilHintsKey, newHint.ToMetaEntry());
+                //otherwise the array has already been modified by ref.
             }
             else
             {
-                target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {newHint.ToMetaEntry()};
+                //need to resize array (and possibly add new CIL hint)
+                var newHints = new MetaEntry[hints.Length - excessHints + (replaced ? 0 : 1)];
+                int idxNew;
+                int idxOld;
+                for (idxNew = idxOld = 0; idxOld < hints.Length; idxOld++)
+                {
+                    var oldHint = hints[idxOld];
+                    if (oldHint == null)
+                        continue;
+
+                    newHints[idxNew++] = oldHint;
+                }
+                if (!replaced)
+                    newHints[idxNew] = newHint.ToMetaEntry();
+
+                target.Meta[Loader.CilHintsKey] = (MetaEntry) newHints;
             }
         }
-
-        /// <summary>
-        ///     Adds the supplied CIL hint to the meta table. Does not touch existing hints, even of the same type.
-        /// </summary>
-        /// <param name = "target">The meta table to add the CIL hint to</param>
-        /// <param name = "hint">The CIL hint to add</param>
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-            MessageId = "Cil")]
-        public static void AddCilHint(IHasMetaTable target, ICilHint hint)
+        else
         {
-            if (target.Meta.ContainsKey(Loader.CilHintsKey))
-                target.Meta.AddTo(Loader.CilHintsKey, hint.ToMetaEntry());
-            else
-                target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {hint.ToMetaEntry()};
+            target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {newHint.ToMetaEntry()};
         }
+    }
+
+    /// <summary>
+    ///     Adds the supplied CIL hint to the meta table. Does not touch existing hints, even of the same type.
+    /// </summary>
+    /// <param name = "target">The meta table to add the CIL hint to</param>
+    /// <param name = "hint">The CIL hint to add</param>
+    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil")]
+    public static void AddCilHint(IHasMetaTable target, ICilHint hint)
+    {
+        if (target.Meta.ContainsKey(Loader.CilHintsKey))
+            target.Meta.AddTo(Loader.CilHintsKey, hint.ToMetaEntry());
+        else
+            target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {hint.ToMetaEntry()};
     }
 }

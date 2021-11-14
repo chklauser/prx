@@ -27,137 +27,136 @@ using System;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core
+namespace Prexonite.Commands.Core;
+
+public sealed class CallSubPerform : PCommand, ICilCompilerAware
 {
-    public sealed class CallSubPerform : PCommand, ICilCompilerAware
+    #region singleton pattern
+
+    public static CallSubPerform Instance { get; } = new();
+
+    private CallSubPerform()
     {
-        #region singleton pattern
+    }
 
-        public static CallSubPerform Instance { get; } = new();
+    #endregion
 
-        private CallSubPerform()
+    #region Overrides of PCommand
+
+    /// <summary>
+    ///     Executes the command.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to execut the command.</param>
+    /// <param name = "args">The arguments to be passed to the command.</param>
+    /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if (args.Length < 1)
+            throw new PrexoniteException(
+                "call\\sub\\perform needs at least one argument, the function to call.");
+        var fpv = args[0];
+
+        var iargs = Call.FlattenArguments(sctx, args, 1).ToArray();
+
+        return RunStatically(sctx, fpv, iargs);
+    }
+
+    public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs)
+    {
+        return RunStatically(sctx, fpv, iargs, false);
+    }
+
+    public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs,
+        bool useIndirectCallAsFallback)
+    {
+        IStackAware f;
+        IMaybeStackAware m;
+        CilClosure cilClosure;
+        PFunction func = null;
+        PVariable[] sharedVars = null;
+
+        PValue result;
+        ReturnMode returnMode;
+
+        if ((cilClosure = fpv.Value as CilClosure) != null)
         {
+            func = cilClosure.Function;
+            sharedVars = cilClosure.SharedVariables;
         }
 
-        #endregion
-
-        #region Overrides of PCommand
-
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
-        /// <param name = "args">The arguments to be passed to the command.</param>
-        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-        public override PValue Run(StackContext sctx, PValue[] args)
+        if ((func ??= fpv.Value as PFunction) != null && func.HasCilImplementation)
         {
-            return RunStatically(sctx, args);
+            func.CilImplementation.Invoke(
+                func, CilFunctionContext.New(sctx, func), iargs, sharedVars ?? Array.Empty<PVariable>(),
+                out result, out returnMode);
         }
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        else if ((f = fpv.Value as IStackAware) != null)
         {
-            if (args.Length < 1)
-                throw new PrexoniteException(
-                    "call\\sub\\perform needs at least one argument, the function to call.");
-            var fpv = args[0];
-
-            var iargs = Call.FlattenArguments(sctx, args, 1).ToArray();
-
-            return RunStatically(sctx, fpv, iargs);
+            //Create stack context, let the engine execute it
+            var subCtx = f.CreateStackContext(sctx, iargs);
+            sctx.ParentEngine.Process(subCtx);
+            result = subCtx.ReturnValue;
+            returnMode = subCtx.ReturnMode;
         }
-
-        public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs)
+        else if ((m = fpv.Value as IMaybeStackAware) != null)
         {
-            return RunStatically(sctx, fpv, iargs, false);
-        }
-
-        public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs,
-            bool useIndirectCallAsFallback)
-        {
-            IStackAware f;
-            IMaybeStackAware m;
-            CilClosure cilClosure;
-            PFunction func = null;
-            PVariable[] sharedVars = null;
-
-            PValue result;
-            ReturnMode returnMode;
-
-            if ((cilClosure = fpv.Value as CilClosure) != null)
+            if (m.TryDefer(sctx, iargs, out var subCtx, out result))
             {
-                func = cilClosure.Function;
-                sharedVars = cilClosure.SharedVariables;
-            }
-
-            if ((func ??= fpv.Value as PFunction) != null && func.HasCilImplementation)
-            {
-                func.CilImplementation.Invoke(
-                    func, CilFunctionContext.New(sctx, func), iargs, sharedVars ?? Array.Empty<PVariable>(),
-                    out result, out returnMode);
-            }
-            else if ((f = fpv.Value as IStackAware) != null)
-            {
-                //Create stack context, let the engine execute it
-                var subCtx = f.CreateStackContext(sctx, iargs);
                 sctx.ParentEngine.Process(subCtx);
                 result = subCtx.ReturnValue;
                 returnMode = subCtx.ReturnMode;
             }
-            else if ((m = fpv.Value as IMaybeStackAware) != null)
-            {
-                if (m.TryDefer(sctx, iargs, out var subCtx, out result))
-                {
-                    sctx.ParentEngine.Process(subCtx);
-                    result = subCtx.ReturnValue;
-                    returnMode = subCtx.ReturnMode;
-                }
-                else if (useIndirectCallAsFallback)
-                {
-                    returnMode = ReturnMode.Exit;
-                }
-                else
-                {
-                    throw new PrexoniteException(
-                        string.Format(
-                            "Invocation of {0} did not produce a valid return mode. " +
-                                "Only Prexonite functions have a return mode.",
-                            fpv.CallToString(sctx)));
-                }
-            }
             else if (useIndirectCallAsFallback)
             {
-                result = fpv.IndirectCall(sctx, iargs);
                 returnMode = ReturnMode.Exit;
             }
             else
             {
                 throw new PrexoniteException(
-                    "call\\sub\\perform requires its argument to be stack aware.");
+                    string.Format(
+                        "Invocation of {0} did not produce a valid return mode. " +
+                        "Only Prexonite functions have a return mode.",
+                        fpv.CallToString(sctx)));
             }
-
-            return new PValueKeyValuePair(sctx.CreateNativePValue(returnMode), result);
         }
-
-        #endregion
-
-        #region Implementation of ICilCompilerAware
-
-        /// <summary>
-        ///     Asses qualification and preferences for a certain instruction.
-        /// </summary>
-        /// <param name = "ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
-        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        else if (useIndirectCallAsFallback)
         {
-            return CompilationFlags.PrefersRunStatically;
+            result = fpv.IndirectCall(sctx, iargs);
+            returnMode = ReturnMode.Exit;
         }
-
-        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        else
         {
-            throw new NotSupportedException("The command " + GetType().Name +
-                " does not support CIL compilation via ICilCompilerAware.");
+            throw new PrexoniteException(
+                "call\\sub\\perform requires its argument to be stack aware.");
         }
 
-        #endregion
+        return new PValueKeyValuePair(sctx.CreateNativePValue(returnMode), result);
     }
+
+    #endregion
+
+    #region Implementation of ICilCompilerAware
+
+    /// <summary>
+    ///     Asses qualification and preferences for a certain instruction.
+    /// </summary>
+    /// <param name = "ins">The instruction that is about to be compiled.</param>
+    /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
+    CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException("The command " + GetType().Name +
+            " does not support CIL compilation via ICilCompilerAware.");
+    }
+
+    #endregion
 }

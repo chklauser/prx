@@ -25,59 +25,58 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+//[System.Diagnostics.DebuggerNonUserCode()]
+public class AstAsmInstruction : AstNode
 {
-    //[System.Diagnostics.DebuggerNonUserCode()]
-    public class AstAsmInstruction : AstNode
+    public Instruction Instruction;
+
+    public AstAsmInstruction(string file, int line, int column, Instruction instruction)
+        : base(file, line, column)
     {
-        public Instruction Instruction;
+        Instruction = instruction ?? throw new ArgumentNullException(nameof(instruction));
+    }
 
-        public AstAsmInstruction(string file, int line, int column, Instruction instruction)
-            : base(file, line, column)
+    internal AstAsmInstruction(Parser p, Instruction instruction)
+        : this(p.scanner.File, p.t.line, p.t.col, instruction)
+    {
+    }
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        //Jumps need special treatment for label resolution
+
+        if (Instruction.Arguments == -1)
         {
-            Instruction = instruction ?? throw new ArgumentNullException(nameof(instruction));
-        }
-
-        internal AstAsmInstruction(Parser p, Instruction instruction)
-            : this(p.scanner.File, p.t.line, p.t.col, instruction)
-        {
-        }
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            //Jumps need special treatment for label resolution
-
-            if (Instruction.Arguments == -1)
+            switch (Instruction.OpCode)
             {
-                switch (Instruction.OpCode)
-                {
-                    case OpCode.jump:
-                        target.EmitJump(Position, Instruction.Id);
-                        break;
-                    case OpCode.jump_t:
-                        target.EmitJumpIfTrue(Position, Instruction.Id);
-                        break;
-                    case OpCode.jump_f:
-                        target.EmitJumpIfFalse(Position, Instruction.Id);
-                        break;
-                    case OpCode.leave:
-                        target.EmitLeave(Position, Instruction.Id);
-                        break;
-                    default:
-                        goto emitNormally;
-                }
+                case OpCode.jump:
+                    target.EmitJump(Position, Instruction.Id);
+                    break;
+                case OpCode.jump_t:
+                    target.EmitJumpIfTrue(Position, Instruction.Id);
+                    break;
+                case OpCode.jump_f:
+                    target.EmitJumpIfFalse(Position, Instruction.Id);
+                    break;
+                case OpCode.leave:
+                    target.EmitLeave(Position, Instruction.Id);
+                    break;
+                default:
+                    goto emitNormally;
             }
-            else
-                goto emitNormally;
-
-            return;
-            emitNormally:
-            target.Emit(Position, Instruction);
         }
+        else
+            goto emitNormally;
 
-        public override string ToString()
-        {
-            return Instruction.ToString();
-        }
+        return;
+        emitNormally:
+        target.Emit(Position, Instruction);
+    }
+
+    public override string ToString()
+    {
+        return Instruction.ToString();
     }
 }

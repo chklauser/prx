@@ -29,63 +29,62 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Types;
 
-namespace PrexoniteTests.Tests
+namespace PrexoniteTests.Tests;
+
+public class MemberCallable : IObject
 {
-    public class MemberCallable : IObject
+    public class CallExpectation
     {
-        public class CallExpectation
-        {
-            public PCall ExpectedCall { get; set; }
-            public PValue[] ExpectedArguments { get; set; }
-            public PValue ReturnValue { get; set; }
-            public bool WasCalled { get; set; }
-        }
+        public PCall ExpectedCall { get; set; }
+        public PValue[] ExpectedArguments { get; set; }
+        public PValue ReturnValue { get; set; }
+        public bool WasCalled { get; set; }
+    }
 
-        public string Name { get; set; }
+    public string Name { get; set; }
 
-        public SymbolTable<CallExpectation> Expectations { [DebuggerStepThrough] get; } = new(8);
+    public SymbolTable<CallExpectation> Expectations { [DebuggerStepThrough] get; } = new(8);
 
-        #region Implementation of IObject
+    #region Implementation of IObject
 
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-            out PValue result)
-        {
-            Assert.IsTrue(Expectations.TryGetValue(id, out var expectation),
-                $"A call to member {id} on object {Name} is not expected.");
+    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
+        out PValue result)
+    {
+        Assert.IsTrue(Expectations.TryGetValue(id, out var expectation),
+            $"A call to member {id} on object {Name} is not expected.");
 
-            Assert.AreEqual(expectation.ExpectedCall, call, "Call type (get/set)");
-            Assert.AreEqual(expectation.ExpectedArguments.Length, args.Length,
-                "Number of arguments do not match. Called with " + args.ToEnumerationString());
-            for (var i = 0; i < expectation.ExpectedArguments.Length; i++)
-                Assert.AreEqual(expectation.ExpectedArguments[i], args[i],
-                    $"Arguments at position {i} don't match");
+        Assert.AreEqual(expectation.ExpectedCall, call, "Call type (get/set)");
+        Assert.AreEqual(expectation.ExpectedArguments.Length, args.Length,
+            "Number of arguments do not match. Called with " + args.ToEnumerationString());
+        for (var i = 0; i < expectation.ExpectedArguments.Length; i++)
+            Assert.AreEqual(expectation.ExpectedArguments[i], args[i],
+                $"Arguments at position {i} don't match");
 
-            result = expectation.ReturnValue ?? PType.Null;
-            expectation.WasCalled = true;
-            return true;
-        }
+        result = expectation.ReturnValue ?? PType.Null;
+        expectation.WasCalled = true;
+        return true;
+    }
 
-        #endregion
+    #endregion
 
-        public void Expect(string memberId, PValue[] args, PCall call = PCall.Get,
-            PValue returns = null)
-        {
-            Expectations.Add(
-                memberId,
-                new CallExpectation
-                    {
-                        ExpectedArguments = args,
-                        ExpectedCall = call,
-                        ReturnValue = returns
-                    });
-        }
+    public void Expect(string memberId, PValue[] args, PCall call = PCall.Get,
+        PValue returns = null)
+    {
+        Expectations.Add(
+            memberId,
+            new CallExpectation
+            {
+                ExpectedArguments = args,
+                ExpectedCall = call,
+                ReturnValue = returns
+            });
+    }
 
-        public void AssertCalledAll()
-        {
-            foreach (var expectation in Expectations)
-                Assert.IsTrue(
-                    expectation.Value.WasCalled,
-                    $"The member {expectation.Key} was not called.");
-        }
+    public void AssertCalledAll()
+    {
+        foreach (var expectation in Expectations)
+            Assert.IsTrue(
+                expectation.Value.WasCalled,
+                $"The member {expectation.Key} was not called.");
     }
 }

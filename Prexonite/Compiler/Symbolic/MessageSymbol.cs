@@ -27,72 +27,71 @@ using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+[DebuggerDisplay("{ToString()}")]
+public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
 {
-    [DebuggerDisplay("{ToString()}")]
-    public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
+    public override string ToString()
     {
-        public override string ToString()
+        return
+            $"{Enum.GetName(typeof(MessageSeverity), Message.Severity)}({Message.MessageClass}) {InnerSymbol}";
+    }
+
+    [NotNull]
+    internal static MessageSymbol _Create([NotNull] Message message, [NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
+    {
+        return new(position ?? inner.Position, message, inner);
+    }
+
+    private MessageSymbol([NotNull] ISourcePosition position, [NotNull] Message message, [NotNull] Symbol symbol)
+        : base(position, symbol)
+    {
+        Message = message;
+    }
+
+    [NotNull]
+    public Message Message { get; }
+
+    #region Equality members
+
+    public bool Equals(MessageSymbol other)
+    {
+        return base.Equals(other) && Message.Equals(other?.Message);
+    }
+
+    public override bool Equals(Symbol other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return other is MessageSymbol otherMessage && Equals(otherMessage);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
         {
-            return
-                $"{Enum.GetName(typeof(MessageSeverity), Message.Severity)}({Message.MessageClass}) {InnerSymbol}";
+            return (base.GetHashCode()*397) ^ Message.GetHashCode();
         }
+    }
 
-        [NotNull]
-        internal static MessageSymbol _Create([NotNull] Message message, [NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
-        {
-            return new(position ?? inner.Position, message, inner);
-        }
+    protected override int HashCodeXorFactor => 599;
 
-        private MessageSymbol([NotNull] ISourcePosition position, [NotNull] Message message, [NotNull] Symbol symbol)
-            : base(position, symbol)
-        {
-            Message = message;
-        }
+    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
+    {
+        return new MessageSymbol(newPosition ?? Position, Message,newInnerSymbol);
+    }
 
-        [NotNull]
-        public Message Message { get; }
+    #endregion
 
-        #region Equality members
+    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    {
+        return handler.HandleMessage(this, argument);
+    }
 
-        public bool Equals(MessageSymbol other)
-        {
-            return base.Equals(other) && Message.Equals(other?.Message);
-        }
-
-        public override bool Equals(Symbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return other is MessageSymbol otherMessage && Equals(otherMessage);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode()*397) ^ Message.GetHashCode();
-            }
-        }
-
-        protected override int HashCodeXorFactor => 599;
-
-        public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
-        {
-            return new MessageSymbol(newPosition ?? Position, Message,newInnerSymbol);
-        }
-
-        #endregion
-
-        public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
-        {
-            return handler.HandleMessage(this, argument);
-        }
-
-        public override bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
-        {
-            messageSymbol = this;
-            return true;
-        }
+    public override bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
+    {
+        messageSymbol = this;
+        return true;
     }
 }

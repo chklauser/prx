@@ -23,16 +23,15 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite
+namespace Prexonite;
+
+/// <summary>
+///     An object that is associated with meta information.
+/// </summary>
+public interface IHasMetaTable
 {
     /// <summary>
-    ///     An object that is associated with meta information.
+    ///     Returns a reference to the meta table associated with the object.
     /// </summary>
-    public interface IHasMetaTable
-    {
-        /// <summary>
-        ///     Returns a reference to the meta table associated with the object.
-        /// </summary>
-        MetaTable Meta { get; }
-    }
+    MetaTable Meta { get; }
 }

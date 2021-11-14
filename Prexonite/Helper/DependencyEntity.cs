@@ -28,66 +28,65 @@ using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.List;
 
-namespace Prexonite
+namespace Prexonite;
+
+public static class DependencyEntity<T>
 {
-    public static class DependencyEntity<T>
+    public static DependencyEntity<T, PValue> CreateDynamic(StackContext sctx, T name,
+        PValue value, PValue getDependencies)
     {
-        public static DependencyEntity<T, PValue> CreateDynamic(StackContext sctx, T name,
-            PValue value, PValue getDependencies)
-        {
-            return new(name, value,
-                _dynamicallyCallGetDependencies(sctx, getDependencies));
-        }
-
-        private static Func<PValue, IEnumerable<T>> _dynamicallyCallGetDependencies(
-            StackContext sctx, PValue getDependenciesPV)
-        {
-            if (getDependenciesPV == null)
-                return null;
-
-            return value =>
-                {
-                    var depsPV = getDependenciesPV.IndirectCall(sctx, new[] {value});
-
-                    var depsDynamic = Map._ToEnumerable(sctx, depsPV);
-                    if (depsDynamic == null)
-                        throw new PrexoniteException(
-                            "getDependencies function did not return enumerable.");
-
-                    return depsDynamic as IEnumerable<T>
-                        ?? (from pv in depsDynamic
-                            select pv.ConvertTo<T>(sctx, true));
-                };
-        }
+        return new(name, value,
+            _dynamicallyCallGetDependencies(sctx, getDependencies));
     }
 
-    public class DependencyEntity<TKey, TValue> : IDependent<TKey>
+    private static Func<PValue, IEnumerable<T>> _dynamicallyCallGetDependencies(
+        StackContext sctx, PValue getDependenciesPV)
     {
-        private readonly Func<TValue, IEnumerable<TKey>> _getDependencies;
+        if (getDependenciesPV == null)
+            return null;
 
-        public DependencyEntity(TKey name, TValue value,
-            Func<TValue, IEnumerable<TKey>> getDependencies)
+        return value =>
         {
-            Name = name;
-            _getDependencies = getDependencies ?? throw new NullReferenceException("getDependencies");
-            Value = value;
-        }
+            var depsPV = getDependenciesPV.IndirectCall(sctx, new[] {value});
 
-        #region Implementation of INamed<TKey>
+            var depsDynamic = Map._ToEnumerable(sctx, depsPV);
+            if (depsDynamic == null)
+                throw new PrexoniteException(
+                    "getDependencies function did not return enumerable.");
 
-        public TKey Name { get; }
-
-        #endregion
-
-        public TValue Value { get; }
-
-        #region Implementation of IDependent<TKey>
-
-        public IEnumerable<TKey> GetDependencies()
-        {
-            return _getDependencies(Value);
-        }
-
-        #endregion
+            return depsDynamic as IEnumerable<T>
+                ?? (from pv in depsDynamic
+                    select pv.ConvertTo<T>(sctx, true));
+        };
     }
+}
+
+public class DependencyEntity<TKey, TValue> : IDependent<TKey>
+{
+    private readonly Func<TValue, IEnumerable<TKey>> _getDependencies;
+
+    public DependencyEntity(TKey name, TValue value,
+        Func<TValue, IEnumerable<TKey>> getDependencies)
+    {
+        Name = name;
+        _getDependencies = getDependencies ?? throw new NullReferenceException("getDependencies");
+        Value = value;
+    }
+
+    #region Implementation of INamed<TKey>
+
+    public TKey Name { get; }
+
+    #endregion
+
+    public TValue Value { get; }
+
+    #region Implementation of IDependent<TKey>
+
+    public IEnumerable<TKey> GetDependencies()
+    {
+        return _getDependencies(Value);
+    }
+
+    #endregion
 }

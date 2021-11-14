@@ -30,40 +30,39 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Build
+namespace Prexonite.Compiler.Build;
+
+public interface IPlan
 {
-    public interface IPlan
+    /// <summary>
+    /// Set of build watchers that will get access to events raised during building.
+    /// </summary>
+    [NotNull]
+    ISet<IBuildWatcher> BuildWatchers
     {
-        /// <summary>
-        /// Set of build watchers that will get access to events raised during building.
-        /// </summary>
-        [NotNull]
-        ISet<IBuildWatcher> BuildWatchers
-        {
-            get;
-        }
-
-        [NotNull]
-        TargetDescriptionSet TargetDescriptions
-        {
-            get;
-        }
-
-        [NotNull]
-        IDictionary<ModuleName,Task<ITarget>> BuildAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
-
-        [NotNull]
-        Task<ITarget> BuildAsync([NotNull] ModuleName name, CancellationToken token) => 
-            BuildAsync(name.Singleton(), token)[name];
-
-        [NotNull]
-        Task<Tuple<Application, ITarget>> LoadAsync([NotNull] ModuleName name, CancellationToken token) => 
-            LoadAsync(name.Singleton(), token)[name];
-
-        [NotNull]
-        IDictionary<ModuleName, Task<Tuple<Application,ITarget>>> LoadAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
-
-        [CanBeNull]
-        LoaderOptions Options { get; set; }
+        get;
     }
+
+    [NotNull]
+    TargetDescriptionSet TargetDescriptions
+    {
+        get;
+    }
+
+    [NotNull]
+    IDictionary<ModuleName,Task<ITarget>> BuildAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
+
+    [NotNull]
+    Task<ITarget> BuildAsync([NotNull] ModuleName name, CancellationToken token) => 
+        BuildAsync(name.Singleton(), token)[name];
+
+    [NotNull]
+    Task<Tuple<Application, ITarget>> LoadAsync([NotNull] ModuleName name, CancellationToken token) => 
+        LoadAsync(name.Singleton(), token)[name];
+
+    [NotNull]
+    IDictionary<ModuleName, Task<Tuple<Application,ITarget>>> LoadAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
+
+    [CanBeNull]
+    LoaderOptions Options { get; set; }
 }

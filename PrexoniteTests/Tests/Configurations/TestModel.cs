@@ -24,18 +24,17 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace PrexoniteTests.Tests.Configurations
-{
-    class TestModel
-    {
-        public string TestSuiteScript { get; set; }
-        public TestDependency[] UnitsUnderTest { get; set; }
-        public TestDependency[] TestDependencies { get; set; }
-    }
+namespace PrexoniteTests.Tests.Configurations;
 
-    public class TestDependency
-    {
-        public string ScriptName { get; set; }
-        public string[] Dependencies { get; set; }
-    }
+class TestModel
+{
+    public string TestSuiteScript { get; set; }
+    public TestDependency[] UnitsUnderTest { get; set; }
+    public TestDependency[] TestDependencies { get; set; }
+}
+
+public class TestDependency
+{
+    public string ScriptName { get; set; }
+    public string[] Dependencies { get; set; }
 }

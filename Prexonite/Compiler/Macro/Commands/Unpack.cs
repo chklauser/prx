@@ -30,99 +30,98 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Types;
 
-namespace Prexonite.Compiler.Macro.Commands
+namespace Prexonite.Compiler.Macro.Commands;
+
+public class Unpack : MacroCommand
 {
-    public class Unpack : MacroCommand
+    public const string Alias = @"macro\unpack";
+
+    #region Singleton pattern
+
+    public static Unpack Instance { get; } = new();
+
+    private Unpack() : base(Alias)
     {
-        public const string Alias = @"macro\unpack";
+    }
+
+    public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands()
+    {
+        yield return
+            new KeyValuePair<string, PCommand>(Impl.Alias, Impl.Instance);
+    }
+
+    #endregion
+
+    #region Overrides of MacroCommand
+
+    protected override void DoExpand(MacroContext context)
+    {
+        if (context.Invocation.Arguments.Count < 1)
+        {
+            context.ReportMessage(
+                Message.Error(
+                    $"{Alias} requires at least one argument, the id of the object to unpack.",
+                    context.Invocation.Position, MessageClasses.UnpackUsage));
+            return;
+        }
+
+        context.EstablishMacroContext();
+
+        // [| macro\unpack\impl(context, $arg0) |]
+
+        var getContext =
+            context.CreateIndirectCall(context.CreateCall(EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)));
+
+        context.Block.Expression = context.CreateCall(EntityRef.Command.Create(Impl.Alias),
+            PCall.Get, getContext, context.Invocation.Arguments[0]);
+    }
+
+    #endregion
+
+    private class Impl : PCommand
+    {
+// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
+        public const string Alias = @"macro\unpack\impl";
+// ReSharper restore MemberHidesStaticFromOuterClass
 
         #region Singleton pattern
 
-        public static Unpack Instance { get; } = new();
-
-        private Unpack() : base(Alias)
-        {
-        }
-
-        public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands()
-        {
-            yield return
-                new KeyValuePair<string, PCommand>(Impl.Alias, Impl.Instance);
-        }
-
-        #endregion
-
-        #region Overrides of MacroCommand
-
-        protected override void DoExpand(MacroContext context)
-        {
-            if (context.Invocation.Arguments.Count < 1)
-            {
-                context.ReportMessage(
-                    Message.Error(
-                        $"{Alias} requires at least one argument, the id of the object to unpack.",
-                        context.Invocation.Position, MessageClasses.UnpackUsage));
-                return;
-            }
-
-            context.EstablishMacroContext();
-
-            // [| macro\unpack\impl(context, $arg0) |]
-
-            var getContext =
-                context.CreateIndirectCall(context.CreateCall(EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)));
-
-            context.Block.Expression = context.CreateCall(EntityRef.Command.Create(Impl.Alias),
-                                                          PCall.Get, getContext, context.Invocation.Arguments[0]);
-        }
-
-        #endregion
-
-        private class Impl : PCommand
-        {
-// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
-            public const string Alias = @"macro\unpack\impl";
-// ReSharper restore MemberHidesStaticFromOuterClass
-
-            #region Singleton pattern
-
 // ReSharper disable MemberHidesStaticFromOuterClass not an issue (singleton pattern)
 
-[NotNull]
-            public static Impl Instance { get; } = new();
+        [NotNull]
+        public static Impl Instance { get; } = new();
 
-            private Impl()
-            {
-            }
-
-            #endregion
-
-            #region Overrides of PCommand
-
-            public override PValue Run(StackContext sctx, PValue[] args)
-            {
-                MacroContext context;
-                if (args.Length < 2 || !(args[0].Type is ObjectPType) ||
-                    (context = args[0].Value as MacroContext) == null)
-                    throw new PrexoniteException(_getUsage());
-
-                if (args[1].TryConvertTo(sctx, true, out int id))
-                    return context.RetrieveFromTransport(id);
-
-                AstConstant constant;
-                if (!(args[1].Type is ObjectPType) ||
-                    (constant = args[1].Value as AstConstant) == null || !(constant.Constant is int))
-                    throw new PrexoniteException(_getUsage());
-
-                return context.RetrieveFromTransport((int) constant.Constant);
-            }
-
-            private static string _getUsage()
-            {
-                return $"usage {Alias}(context, id)";
-            }
-
-            #endregion
+        private Impl()
+        {
         }
+
+        #endregion
+
+        #region Overrides of PCommand
+
+        public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            MacroContext context;
+            if (args.Length < 2 || !(args[0].Type is ObjectPType) ||
+                (context = args[0].Value as MacroContext) == null)
+                throw new PrexoniteException(_getUsage());
+
+            if (args[1].TryConvertTo(sctx, true, out int id))
+                return context.RetrieveFromTransport(id);
+
+            AstConstant constant;
+            if (!(args[1].Type is ObjectPType) ||
+                (constant = args[1].Value as AstConstant) == null || !(constant.Constant is int))
+                throw new PrexoniteException(_getUsage());
+
+            return context.RetrieveFromTransport((int) constant.Constant);
+        }
+
+        private static string _getUsage()
+        {
+            return $"usage {Alias}(context, id)";
+        }
+
+        #endregion
     }
 }

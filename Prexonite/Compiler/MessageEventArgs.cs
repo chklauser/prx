@@ -25,15 +25,14 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
-namespace Prexonite.Compiler
-{
-    internal class MessageEventArgs : EventArgs
-    {
-        public Message Message { get; }
+namespace Prexonite.Compiler;
 
-        public MessageEventArgs(Message message)
-        {
-            Message = message ?? throw new ArgumentNullException(nameof(message));
-        }
+internal class MessageEventArgs : EventArgs
+{
+    public Message Message { get; }
+
+    public MessageEventArgs(Message message)
+    {
+        Message = message ?? throw new ArgumentNullException(nameof(message));
     }
 }

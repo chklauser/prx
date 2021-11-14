@@ -26,102 +26,101 @@
 using System;
 using Prexonite.Types;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstConditionalExpression : AstExpr,
+    IAstHasExpressions
 {
-    public class AstConditionalExpression : AstExpr,
-                                            IAstHasExpressions
+    public AstConditionalExpression(
+        string file, int line, int column, AstExpr condition, bool isNegative)
+        : base(file, line, column)
     {
-        public AstConditionalExpression(
-            string file, int line, int column, AstExpr condition, bool isNegative)
-            : base(file, line, column)
+        Condition = condition ?? throw new ArgumentNullException(nameof(condition));
+        IsNegative = isNegative;
+    }
+
+    public AstConditionalExpression(string file, int line, int column, AstExpr condition)
+        : this(file, line, column, condition, false)
+    {
+    }
+
+    internal AstConditionalExpression(Parser p, AstExpr condition, bool isNegative)
+        : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
+    {
+    }
+
+    internal AstConditionalExpression(Parser p, AstExpr condition)
+        : this(p, condition, false)
+    {
+    }
+
+    public AstExpr IfExpression;
+    public AstExpr ElseExpression;
+    public AstExpr Condition;
+    public bool IsNegative;
+    private static int _depth;
+
+    #region IAstHasExpressions Members
+
+    public AstExpr[] Expressions
+    {
+        get { return new[] {Condition, IfExpression, ElseExpression}; }
+    }
+
+    #endregion
+
+    #region AstExpr Members
+
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        //Optimize condition
+        _OptimizeNode(target, ref Condition);
+        // Invert condition when unary logical not
+        while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
         {
-            Condition = condition ?? throw new ArgumentNullException(nameof(condition));
-            IsNegative = isNegative;
+            Condition = unaryCond.Arguments[0];
+            IsNegative = !IsNegative;
         }
 
-        public AstConditionalExpression(string file, int line, int column, AstExpr condition)
-            : this(file, line, column, condition, false)
+        //Constant conditions
+        if (Condition is AstConstant constCond)
         {
+            if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
+                expr = null;
+            else if ((bool) condValue.Value ^ IsNegative)
+                expr = IfExpression;
+            else
+                expr = ElseExpression;
+            return expr != null;
         }
 
-        internal AstConditionalExpression(Parser p, AstExpr condition, bool isNegative)
-            : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
-        {
-        }
+        expr = null;
+        return false;
+    }
 
-        internal AstConditionalExpression(Parser p, AstExpr condition)
-            : this(p, condition, false)
-        {
-        }
+    #endregion
 
-        public AstExpr IfExpression;
-        public AstExpr ElseExpression;
-        public AstExpr Condition;
-        public bool IsNegative;
-        private static int _depth;
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        //Optimize condition
+        _OptimizeNode(target, ref Condition);
+        _OptimizeNode(target, ref IfExpression);
+        _OptimizeNode(target, ref ElseExpression);
 
-        #region IAstHasExpressions Members
+        var elseLabel = "elsei\\" + _depth + "\\assembler";
+        var endLabel = "endifi\\" + _depth + "\\assembler";
+        _depth++;
 
-        public AstExpr[] Expressions
-        {
-            get { return new[] {Condition, IfExpression, ElseExpression}; }
-        }
+        //Emit
+        //if => block / else => block
+        AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
+        IfExpression.EmitCode(target, stackSemantics);
+        target.EmitJump(Position, endLabel);
+        target.EmitLabel(Position, elseLabel);
+        ElseExpression.EmitCode(target, stackSemantics);
+        target.EmitLabel(Position, endLabel);
 
-        #endregion
-
-        #region AstExpr Members
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            //Optimize condition
-            _OptimizeNode(target, ref Condition);
-            // Invert condition when unary logical not
-            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
-            {
-                Condition = unaryCond.Arguments[0];
-                IsNegative = !IsNegative;
-            }
-
-            //Constant conditions
-            if (Condition is AstConstant constCond)
-            {
-                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
-                    expr = null;
-                else if ((bool) condValue.Value ^ IsNegative)
-                    expr = IfExpression;
-                else
-                    expr = ElseExpression;
-                return expr != null;
-            }
-
-            expr = null;
-            return false;
-        }
-
-        #endregion
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            //Optimize condition
-            _OptimizeNode(target, ref Condition);
-            _OptimizeNode(target, ref IfExpression);
-            _OptimizeNode(target, ref ElseExpression);
-
-            var elseLabel = "elsei\\" + _depth + "\\assembler";
-            var endLabel = "endifi\\" + _depth + "\\assembler";
-            _depth++;
-
-            //Emit
-            //if => block / else => block
-            AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
-            IfExpression.EmitCode(target, stackSemantics);
-            target.EmitJump(Position, endLabel);
-            target.EmitLabel(Position, elseLabel);
-            ElseExpression.EmitCode(target, stackSemantics);
-            target.EmitLabel(Position, endLabel);
-
-            target.FreeLabel(elseLabel);
-            target.FreeLabel(endLabel);
-        }
+        target.FreeLabel(elseLabel);
+        target.FreeLabel(endLabel);
     }
 }
