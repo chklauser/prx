@@ -74,7 +74,21 @@ public sealed class LoadAssembly : PCommand, ICilCompilerAware
                 throw new FileNotFoundException("Prexonite can't load assembly located in " +
                     path);
 
-            eng.RegisterAssembly(Assembly.LoadFile(asmFile.FullName));
+            Assembly assembly;
+            if (asmFile is FileSpec { FullName: var asmFilePath })
+            {
+                // Use file path based loading to give the CLR file system context.
+                assembly = Assembly.LoadFrom(asmFilePath);
+            }
+            else
+            {
+                using var stream = asmFile.OpenStream();
+                using var buf = new MemoryStream();
+                stream.CopyTo(buf);
+                assembly = Assembly.Load(buf.GetBuffer());
+            }
+
+            eng.RegisterAssembly(assembly);
         }
 
         return PType.Null.CreatePValue();

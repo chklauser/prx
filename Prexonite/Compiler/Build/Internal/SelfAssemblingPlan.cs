@@ -166,7 +166,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             {
                 refSpec.Source = new FileSource(refSpec.ResolvedPath, Encoding);
                 await Task.Yield(); // Need to yield at this point to keep
-                // the critical section of the cache short
+                // the critical section of the cache update short
                 return await _performPreflight(refSpec, actualToken);
             }, token);
     }
@@ -256,7 +256,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     }
 
     [NotNull]
-    private static readonly Regex _fileReferencePattern = new(@"^(\.|/|:)");
+    private static readonly Regex _fileReferencePattern = new(@"^([/.]|[a-zA-Z]:)");
 
     private static RefSpec _parseRefSpec(MetaEntry entry)
     {
