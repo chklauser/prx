@@ -28,10 +28,17 @@ jobs:
           Write-Host "::set-output name=version::$ver"
           Write-Host Version: $ver
       - uses: actions/checkout@v2
-      - name: Setup .NET Core SDK
+      - name: Setup .NET 6 SDK
         uses: actions/setup-dotnet@v1.7.2
         env:
-          NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          NUGET_AUTH_TOKEN: '${{secrets.GITHUB_TOKEN}}'
+        with:
+          dotnet-version: '6.0.x'
+          source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
+      - name: Setup .NET 5 SDK (for T4)
+        uses: actions/setup-dotnet@v1.7.2
+        env:
+          NUGET_AUTH_TOKEN: '${{secrets.GITHUB_TOKEN}}'
         with:
           dotnet-version: '5.0.x'
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
