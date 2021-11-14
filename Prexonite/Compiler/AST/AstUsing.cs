@@ -28,80 +28,79 @@ using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Types;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstUsing : AstScopedBlock,
+    IAstHasBlocks
 {
-    public class AstUsing : AstScopedBlock,
-                            IAstHasBlocks
+    private const string LabelPrefix = "using";
+
+    public AstUsing([NotNull] ISourcePosition p, 
+        [NotNull] AstBlock lexicalScope)
+        : base(p, lexicalScope)
     {
-        private const string LabelPrefix = "using";
+        Block = new AstScopedBlock(p, this,prefix:LabelPrefix);
+    }
 
-        public AstUsing([NotNull] ISourcePosition p, 
-            [NotNull] AstBlock lexicalScope)
-            : base(p, lexicalScope)
-        {
-            Block = new AstScopedBlock(p, this,prefix:LabelPrefix);
+    #region IAstHasBlocks Members
+
+    public AstBlock[] Blocks
+    {
+        get { return new AstBlock[] {Block}; }
+    }
+
+    #region IAstHasExpressions Members
+
+    public override AstExpr[] Expressions
+    {
+        get 
+        { 
+            var b = base.Expressions;
+            var r = new AstExpr[b.Length + 1];
+            b.CopyTo(r,0);
+            r[b.Length] = ResourceExpression;
+            return r;
         }
+    }
 
-        #region IAstHasBlocks Members
+    [PublicAPI]
+    public AstScopedBlock Block { get; }
 
-        public AstBlock[] Blocks
-        {
-            get { return new AstBlock[] {Block}; }
-        }
+    [PublicAPI]
+    public AstExpr ResourceExpression { get; set; }
 
-        #region IAstHasExpressions Members
+    #endregion
 
-        public override AstExpr[] Expressions
-        {
-            get 
-            { 
-                var b = base.Expressions;
-                var r = new AstExpr[b.Length + 1];
-                b.CopyTo(r,0);
-                r[b.Length] = ResourceExpression;
-                return r;
-            }
-        }
+    #endregion
 
-        [PublicAPI]
-        public AstScopedBlock Block { get; }
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        if(stackSemantics == StackSemantics.Value)
+            throw new NotSupportedException("Using blocks do not produce values and can thus not be used as expressions.");
 
-        [PublicAPI]
-        public AstExpr ResourceExpression { get; set; }
+        if (ResourceExpression == null)
+            throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
-        #endregion
+        var tryNode = new AstTryCatchFinally(Position, this);
+        var vContainer = Block.CreateLabel("container");
+        target.Function.Variables.Add(vContainer);
+        //Try block => Container = {Expression}; {Block};
+        var setCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer),PCall.Set);
+        setCont.Arguments.Add(ResourceExpression);
 
-        #endregion
+        var getCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer));
 
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            if(stackSemantics == StackSemantics.Value)
-                throw new NotSupportedException("Using blocks do not produce values and can thus not be used as expressions.");
+        var tryBlock = tryNode.TryBlock;
+        tryBlock.Add(setCont);
+        tryBlock.AddRange(Block);
 
-            if (ResourceExpression == null)
-                throw new PrexoniteException("AstUsing requires Expression to be initialized.");
+        //Finally block => dispose( Container );
+        var dispose = target.Factory.Call(Position, EntityRef.Command.Create(Engine.DisposeAlias));
+        dispose.Arguments.Add(getCont);
 
-            var tryNode = new AstTryCatchFinally(Position, this);
-            var vContainer = Block.CreateLabel("container");
-            target.Function.Variables.Add(vContainer);
-            //Try block => Container = {Expression}; {Block};
-            var setCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer),PCall.Set);
-            setCont.Arguments.Add(ResourceExpression);
+        tryNode.FinallyBlock.Add(dispose);
 
-            var getCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer));
-
-            var tryBlock = tryNode.TryBlock;
-            tryBlock.Add(setCont);
-            tryBlock.AddRange(Block);
-
-            //Finally block => dispose( Container );
-            var dispose = target.Factory.Call(Position, EntityRef.Command.Create(Engine.DisposeAlias));
-            dispose.Arguments.Add(getCont);
-
-            tryNode.FinallyBlock.Add(dispose);
-
-            //Emit code!
-            tryNode.EmitEffectCode(target);
-        }
+        //Emit code!
+        tryNode.EmitEffectCode(target);
     }
 }

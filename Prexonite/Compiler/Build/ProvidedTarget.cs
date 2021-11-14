@@ -34,114 +34,113 @@ using Prexonite.Compiler.Build.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Build
+namespace Prexonite.Compiler.Build;
+
+[DebuggerDisplay("{" + nameof(_debuggerDisplay) + "}")]
+public class ProvidedTarget : ITargetDescription, ITarget
 {
-    [DebuggerDisplay("{" + nameof(_debuggerDisplay) + "}")]
-    public class ProvidedTarget : ITargetDescription, ITarget
+    [NotNull]
+    private readonly DependencySet _dependencies;
+
+    [CanBeNull]
+    private readonly List<IResourceDescriptor> _resources;
+
+    [CanBeNull]
+    private readonly List<Message> _messages;
+
+    [CanBeNull]
+    private readonly IReadOnlyList<Message> _buildMessages;
+
+    private string _debuggerDisplay =>
+        $"ProvidedTarget({Name}) {(IsSuccessful ? "successful" : "errors detected")}";
+
+    public ProvidedTarget(Module module,
+        IEnumerable<ModuleName> dependencies = null,
+        IEnumerable<KeyValuePair<string, Symbol>> symbols = null,
+        IEnumerable<IResourceDescriptor> resources = null,
+        IEnumerable<Message> messages = null,
+        IEnumerable<Message> buildMessages = null,
+        Exception exception = null)
     {
-        [NotNull]
-        private readonly DependencySet _dependencies;
+        Module = module;
+        _dependencies = new DependencySet(module.Name);
+        if (dependencies != null)
+            _dependencies.AddRange(dependencies);
+        Symbols = SymbolStore.Create();
+        if (symbols != null)
+            foreach (var entry in symbols)
+                Symbols.Declare(entry.Key, entry.Value);
+        _resources = new List<IResourceDescriptor>();
+        if (resources != null)
+            _resources.AddRange(resources);
 
-        [CanBeNull]
-        private readonly List<IResourceDescriptor> _resources;
+        Exception = exception;
 
-        [CanBeNull]
-        private readonly List<Message> _messages;
+        if (messages != null)
+            _messages = new List<Message>(messages);
 
-        [CanBeNull]
-        private readonly IReadOnlyList<Message> _buildMessages;
-
-        private string _debuggerDisplay =>
-            $"ProvidedTarget({Name}) {(IsSuccessful ? "successful" : "errors detected")}";
-
-        public ProvidedTarget(Module module,
-            IEnumerable<ModuleName> dependencies = null,
-            IEnumerable<KeyValuePair<string, Symbol>> symbols = null,
-            IEnumerable<IResourceDescriptor> resources = null,
-            IEnumerable<Message> messages = null,
-            IEnumerable<Message> buildMessages = null,
-            Exception exception = null)
+        if (buildMessages != null)
         {
-            Module = module;
-            _dependencies = new DependencySet(module.Name);
-            if (dependencies != null)
-                _dependencies.AddRange(dependencies);
-            Symbols = SymbolStore.Create();
-            if (symbols != null)
-                foreach (var entry in symbols)
-                    Symbols.Declare(entry.Key, entry.Value);
-            _resources = new List<IResourceDescriptor>();
-            if (resources != null)
-                _resources.AddRange(resources);
+            _buildMessages = new List<Message>(buildMessages);
 
-            Exception = exception;
-
-            if (messages != null)
-                _messages = new List<Message>(messages);
-
-            if (buildMessages != null)
-            {
-                _buildMessages = new List<Message>(buildMessages);
-
-                if (_messages == null)
-                    _messages = new List<Message>(_buildMessages);
-                else
-                    _messages.AddRange(_buildMessages);
+            if (_messages == null)
+                _messages = new List<Message>(_buildMessages);
+            else
+                _messages.AddRange(_buildMessages);
                 
-            }
-
-            IsSuccessful = exception == null &&
-                            (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
         }
 
-        public ProvidedTarget(ITargetDescription description, ITarget result)
-            : this(result.Module, description.Dependencies, result.Symbols, result.Resources, result.Messages, description.BuildMessages, result.Exception)
-        {
-        }
-
-        #region Implementation of ITargetDescription
-
-        public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
-
-        [NotNull]
-        public Module Module { get; }
-
-        [CanBeNull]
-        public IReadOnlyCollection<IResourceDescriptor> Resources => _resources;
-
-        [CanBeNull]
-        public SymbolStore Symbols { get; }
-
-        public ModuleName Name => Module.Name;
-
-        public IReadOnlyList<Message> BuildMessages => _buildMessages ?? DefaultModuleTarget.NoMessages;
-
-        [NotNull]
-        public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
-        {
-            var tcs = new TaskCompletionSource<ITarget>();
-            tcs.SetResult(this);
-            Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Used provided target {0}.", this);
-            return tcs.Task;
-        }
-
-        #region Implementation of ITarget
-
-        [NotNull]
-        public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>)_messages ?? DefaultModuleTarget.NoMessages;
-
-        [CanBeNull]
-        public Exception Exception { get; }
-
-        public bool IsSuccessful { get; }
-
-        #endregion
-
-        public override string ToString()
-        {
-            return _debuggerDisplay;
-        }
-
-        #endregion
+        IsSuccessful = exception == null &&
+            (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
     }
+
+    public ProvidedTarget(ITargetDescription description, ITarget result)
+        : this(result.Module, description.Dependencies, result.Symbols, result.Resources, result.Messages, description.BuildMessages, result.Exception)
+    {
+    }
+
+    #region Implementation of ITargetDescription
+
+    public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
+
+    [NotNull]
+    public Module Module { get; }
+
+    [CanBeNull]
+    public IReadOnlyCollection<IResourceDescriptor> Resources => _resources;
+
+    [CanBeNull]
+    public SymbolStore Symbols { get; }
+
+    public ModuleName Name => Module.Name;
+
+    public IReadOnlyList<Message> BuildMessages => _buildMessages ?? DefaultModuleTarget.NoMessages;
+
+    [NotNull]
+    public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
+    {
+        var tcs = new TaskCompletionSource<ITarget>();
+        tcs.SetResult(this);
+        Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Used provided target {0}.", this);
+        return tcs.Task;
+    }
+
+    #region Implementation of ITarget
+
+    [NotNull]
+    public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>)_messages ?? DefaultModuleTarget.NoMessages;
+
+    [CanBeNull]
+    public Exception Exception { get; }
+
+    public bool IsSuccessful { get; }
+
+    #endregion
+
+    public override string ToString()
+    {
+        return _debuggerDisplay;
+    }
+
+    #endregion
 }

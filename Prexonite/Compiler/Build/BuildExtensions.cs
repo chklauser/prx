@@ -28,47 +28,46 @@ using System.Threading;
 using System.Threading.Tasks;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Build
+namespace Prexonite.Compiler.Build;
+
+public static class BuildExtensions
 {
-    public static class BuildExtensions
+    public static ITarget Build(this IPlan plan, ModuleName name)
     {
-        public static ITarget Build(this IPlan plan, ModuleName name)
-        {
-            return plan.BuildAsync(name).Result;
-        }
+        return plan.BuildAsync(name).Result;
+    }
 
-        public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name)
-        {
-            return plan.BuildAsync(name, CancellationToken.None);
-        }
+    public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name)
+    {
+        return plan.BuildAsync(name, CancellationToken.None);
+    }
 
-        public static Tuple<Application,ITarget> Load(this IPlan plan, ModuleName name)
-        {
-            var loadTask = plan.LoadAsync(name, CancellationToken.None);
-            return loadTask.Result;
-        }
+    public static Tuple<Application,ITarget> Load(this IPlan plan, ModuleName name)
+    {
+        var loadTask = plan.LoadAsync(name, CancellationToken.None);
+        return loadTask.Result;
+    }
 
-        public static Application LoadApplication(this IPlan plan, ModuleName name)
-        {
-            var desc = plan.TargetDescriptions[name];
-            var t = plan.LoadAsync(name, CancellationToken.None).Result;
-            t.Item2.ThrowIfFailed(desc);
-            return t.Item1;
-        }
+    public static Application LoadApplication(this IPlan plan, ModuleName name)
+    {
+        var desc = plan.TargetDescriptions[name];
+        var t = plan.LoadAsync(name, CancellationToken.None).Result;
+        t.Item2.ThrowIfFailed(desc);
+        return t.Item1;
+    }
 
-        public static Task<Application> LoadAsync(this IPlan plan, ModuleName name)
+    public static Task<Application> LoadAsync(this IPlan plan, ModuleName name)
+    {
+        return plan.LoadAsync(name, CancellationToken.None).ContinueWith(tt =>
         {
-            return plan.LoadAsync(name, CancellationToken.None).ContinueWith(tt =>
-                {
-                    var result = tt.Result;
-                    result.Item2.ThrowIfFailed(plan.TargetDescriptions[name]);
-                    return result.Item1;
-                });
-        }
+            var result = tt.Result;
+            result.Item2.ThrowIfFailed(plan.TargetDescriptions[name]);
+            return result.Item1;
+        });
+    }
 
-        public static ITargetDescription Assemble(this ISelfAssemblingPlan plan, ISource source)
-        {
-            return plan.AssembleAsync(source, CancellationToken.None).Result;
-        }
+    public static ITargetDescription Assemble(this ISelfAssemblingPlan plan, ISource source)
+    {
+        return plan.AssembleAsync(source, CancellationToken.None).Result;
     }
 }

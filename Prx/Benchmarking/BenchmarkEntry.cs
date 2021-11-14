@@ -28,148 +28,147 @@ using System.Collections.Generic;
 using System.Linq;
 using Prexonite;
 
-namespace Prx.Benchmarking
+namespace Prx.Benchmarking;
+
+public sealed class BenchmarkEntry
 {
-    public sealed class BenchmarkEntry
+    #region Features
+
+    public readonly PFunction Function;
+    public readonly string Title;
+    public readonly string Description;
+    public readonly bool UsesIteration;
+    public readonly string Overhead;
+    public readonly Benchmark Parent;
+
+    public List<Measurement> Measurements { get; } = new();
+
+    public long GetAverageRawMilliseconds()
     {
-        #region Features
+        var sum = Measurements.Aggregate<Measurement, ulong>(0,
+            (current, m) => current + (ulong) m.RawMilliseconds);
+        return
+            (long) Math.Round(sum/(double) Measurements.Count, MidpointRounding.AwayFromZero);
+    }
 
-        public readonly PFunction Function;
-        public readonly string Title;
-        public readonly string Description;
-        public readonly bool UsesIteration;
-        public readonly string Overhead;
-        public readonly Benchmark Parent;
+    internal BenchmarkEntry(Benchmark parent, PFunction function)
+    {
+        Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+        Function = function ?? throw new ArgumentNullException(nameof(function));
+        var m = function.Meta;
+        if (m.ContainsKey(Benchmark.TitleKey))
+            Title = m[Benchmark.TitleKey];
+        else
+            Title = function.Id;
 
-        public List<Measurement> Measurements { get; } = new();
+        if (m.ContainsKey(Benchmark.DescriptionKey))
+            Description = m[Benchmark.DescriptionKey];
+        else
+            Description = $"The benchmarked function {Title}";
 
-        public long GetAverageRawMilliseconds()
+        UsesIteration = m[Benchmark.UsesIterationKey];
+
+        if (m.ContainsKey(Benchmark.OverheadKey))
+            Overhead = m[Benchmark.OverheadKey];
+    }
+
+    #endregion
+
+    #region Equality
+
+    public override bool Equals(object obj)
+    {
+        if (obj == null)
+            return false;
+        var be = obj as BenchmarkEntry;
+        return be != null && Function.Equals(be.Function);
+    }
+
+    public override int GetHashCode()
+    {
+        return Function.GetHashCode() ^ 12;
+    }
+
+    public static bool operator ==(BenchmarkEntry be1, BenchmarkEntry be2)
+    {
+        if ((object) be1 == null && (object) be2 == null)
+            return true;
+        else if ((object) be1 == null || (object) be2 == null)
+            return false;
+        else
+            return be1.Equals(be2);
+    }
+
+    public static bool operator !=(BenchmarkEntry be1, BenchmarkEntry be2)
+    {
+        if ((object) be1 == null && (object) be2 == null)
+            return false;
+        else if ((object) be1 == null || (object) be2 == null)
+            return true;
+        else
+            return !be1.Equals(be2);
+    }
+
+    #endregion
+
+    #region Measurement
+
+    public Measurement Measure(bool verbose)
+    {
+        var iterations = Parent.Iterations;
+        var sw = Parent._Stopwatch;
+        if (verbose)
         {
-            var sum = Measurements.Aggregate<Measurement, ulong>(0,
-                (current, m) => current + (ulong) m.RawMilliseconds);
-            return
-                (long) Math.Round(sum/(double) Measurements.Count, MidpointRounding.AwayFromZero);
+            Console.WriteLine(
+                "--------------------------------------\n{0}\n {1}", Title, Description);
+            if (UsesIteration)
+                Console.WriteLine("\tIterations:\t{0}", iterations);
         }
 
-        internal BenchmarkEntry(Benchmark parent, PFunction function)
+        var argv = new PValue[] {iterations};
+        sw.Reset();
+        sw.Start();
+        Function.Run(Parent.Machine, argv);
+        sw.Stop();
+
+        var raw = sw.ElapsedMilliseconds;
+        long overhead = 0;
+        if (Overhead != null && Parent.Entries.Contains(Overhead))
+            overhead = Parent.Entries[Overhead].GetAverageRawMilliseconds();
+
+        var m = new Measurement(this, raw, overhead);
+
+        if (verbose)
         {
-            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            Function = function ?? throw new ArgumentNullException(nameof(function));
-            var m = function.Meta;
-            if (m.ContainsKey(Benchmark.TitleKey))
-                Title = m[Benchmark.TitleKey];
-            else
-                Title = function.Id;
-
-            if (m.ContainsKey(Benchmark.DescriptionKey))
-                Description = m[Benchmark.DescriptionKey];
-            else
-                Description = $"The benchmarked function {Title}";
-
-            UsesIteration = m[Benchmark.UsesIterationKey];
-
-            if (m.ContainsKey(Benchmark.OverheadKey))
-                Overhead = m[Benchmark.OverheadKey];
-        }
-
-        #endregion
-
-        #region Equality
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-                return false;
-            var be = obj as BenchmarkEntry;
-            return be != null && Function.Equals(be.Function);
-        }
-
-        public override int GetHashCode()
-        {
-            return Function.GetHashCode() ^ 12;
-        }
-
-        public static bool operator ==(BenchmarkEntry be1, BenchmarkEntry be2)
-        {
-            if ((object) be1 == null && (object) be2 == null)
-                return true;
-            else if ((object) be1 == null || (object) be2 == null)
-                return false;
-            else
-                return be1.Equals(be2);
-        }
-
-        public static bool operator !=(BenchmarkEntry be1, BenchmarkEntry be2)
-        {
-            if ((object) be1 == null && (object) be2 == null)
-                return false;
-            else if ((object) be1 == null || (object) be2 == null)
-                return true;
-            else
-                return !be1.Equals(be2);
-        }
-
-        #endregion
-
-        #region Measurement
-
-        public Measurement Measure(bool verbose)
-        {
-            var iterations = Parent.Iterations;
-            var sw = Parent._Stopwatch;
-            if (verbose)
-            {
+            Console.WriteLine(
+                "\tmeasured:\t{0} ms\n" +
+                "\t\t\t{1:0.00} s\n" +
+                "\tpass:\t\t{2:0.00} ms\n" +
+                "\t\t\t{3:0.00} micros",
+                m.RawMilliseconds,
+                m.RawSeconds,
+                m.PassMilliseconds,
+                m.PassMicroseconds);
+            if (overhead > 0)
                 Console.WriteLine(
-                    "--------------------------------------\n{0}\n {1}", Title, Description);
-                if (UsesIteration)
-                    Console.WriteLine("\tIterations:\t{0}", iterations);
-            }
-
-            var argv = new PValue[] {iterations};
-            sw.Reset();
-            sw.Start();
-            Function.Run(Parent.Machine, argv);
-            sw.Stop();
-
-            var raw = sw.ElapsedMilliseconds;
-            long overhead = 0;
-            if (Overhead != null && Parent.Entries.Contains(Overhead))
-                overhead = Parent.Entries[Overhead].GetAverageRawMilliseconds();
-
-            var m = new Measurement(this, raw, overhead);
-
-            if (verbose)
-            {
-                Console.WriteLine(
-                    "\tmeasured:\t{0} ms\n" +
-                        "\t\t\t{1:0.00} s\n" +
-                            "\tpass:\t\t{2:0.00} ms\n" +
-                                "\t\t\t{3:0.00} micros",
-                    m.RawMilliseconds,
-                    m.RawSeconds,
-                    m.PassMilliseconds,
-                    m.PassMicroseconds);
-                if (overhead > 0)
-                    Console.WriteLine(
-                        "\tcleared:\t{0:0.00} ms\n" +
-                            "\t\t\t{1:0.00} micros",
-                        m.ClearedPassMilliseconds,
-                        m.ClearedPassMicroseconds);
-            }
-
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
-
-            return m;
+                    "\tcleared:\t{0:0.00} ms\n" +
+                    "\t\t\t{1:0.00} micros",
+                    m.ClearedPassMilliseconds,
+                    m.ClearedPassMicroseconds);
         }
 
-        #endregion
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
 
-        public void WarmUp()
-        {
-            var fctx =
-                Function.CreateFunctionContext(
-                    Parent.Machine, new PValue[] {Benchmark.DefaultWarmUpIterations});
-            Parent.Machine.Process(fctx);
-        }
+        return m;
+    }
+
+    #endregion
+
+    public void WarmUp()
+    {
+        var fctx =
+            Function.CreateFunctionContext(
+                Parent.Machine, new PValue[] {Benchmark.DefaultWarmUpIterations});
+        Parent.Machine.Process(fctx);
     }
 }

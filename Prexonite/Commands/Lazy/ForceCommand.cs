@@ -28,70 +28,69 @@ using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Lazy
+namespace Prexonite.Commands.Lazy;
+
+public class ForceCommand : PCommand, ICilCompilerAware
 {
-    public class ForceCommand : PCommand, ICilCompilerAware
+    #region Singleton pattern
+
+    private ForceCommand()
     {
-        #region Singleton pattern
-
-        private ForceCommand()
-        {
-        }
-
-        public static ForceCommand Instance { get; } = new();
-
-        #endregion
-
-        #region Overrides of PCommand
-
-        [Obsolete]
-        public override bool IsPure => false;
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-            if (args.Length < 1)
-                throw new PrexoniteException("force requires an argument.");
-
-            var arg = args[0] ?? PType.Null;
-            if (arg.IsNull)
-                return PType.Null;
-
-            return Force(sctx, arg);
-        }
-
-        public static PValue Force(StackContext sctx, PValue arg)
-        {
-            var result = arg.Value is Thunk t ? t.Force(sctx) : arg;
-
-            Debug.Assert(!(result.Value is Thunk), "Force wanted to return an unevaluated thunk.");
-
-            return result;
-        }
-
-        #endregion
-
-        #region Implementation of ICilCompilerAware
-
-        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
-        {
-            return CompilationFlags.PrefersRunStatically;
-        }
-
-        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
-        {
-            throw new NotSupportedException("The command " + GetType().Name +
-                " does not support CIL compilation via ICilCompilerAware.");
-        }
-
-        #endregion
     }
+
+    public static ForceCommand Instance { get; } = new();
+
+    #endregion
+
+    #region Overrides of PCommand
+
+    [Obsolete]
+    public override bool IsPure => false;
+
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
+        if (args.Length < 1)
+            throw new PrexoniteException("force requires an argument.");
+
+        var arg = args[0] ?? PType.Null;
+        if (arg.IsNull)
+            return PType.Null;
+
+        return Force(sctx, arg);
+    }
+
+    public static PValue Force(StackContext sctx, PValue arg)
+    {
+        var result = arg.Value is Thunk t ? t.Force(sctx) : arg;
+
+        Debug.Assert(!(result.Value is Thunk), "Force wanted to return an unevaluated thunk.");
+
+        return result;
+    }
+
+    #endregion
+
+    #region Implementation of ICilCompilerAware
+
+    CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException("The command " + GetType().Name +
+            " does not support CIL compilation via ICilCompilerAware.");
+    }
+
+    #endregion
 }

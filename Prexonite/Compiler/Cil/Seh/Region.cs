@@ -27,165 +27,164 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Prexonite.Compiler.Cil.Seh
+namespace Prexonite.Compiler.Cil.Seh;
+
+internal static class RegionExtensions
 {
-    internal static class RegionExtensions
+    public static bool IsTryRegion(this Region region)
     {
-        public static bool IsTryRegion(this Region region)
-        {
-            if (region == null)
-                return false;
-            else
-                return region.Kind == RegionKind.Try;
-        }
-
-        public static bool IsCatchRegion(this Region region)
-        {
-            if (region == null)
-                return false;
-            else
-                return region.Kind == RegionKind.Catch;
-        }
-
-        public static bool IsFinallyRegion(this Region region)
-        {
-            if (region == null)
-                return false;
-            else
-                return region.Kind == RegionKind.Finally;
-        }
+        if (region == null)
+            return false;
+        else
+            return region.Kind == RegionKind.Try;
     }
 
-    [DebuggerDisplay("{Kind}-block from {Begin} to {End}")]
-    internal sealed class Region : IEquatable<Region>
+    public static bool IsCatchRegion(this Region region)
     {
-        public const RegionKind AnyRegionKind =
-            RegionKind.Try | RegionKind.Catch | RegionKind.Finally;
+        if (region == null)
+            return false;
+        else
+            return region.Kind == RegionKind.Catch;
+    }
 
-        public readonly CompiledTryCatchFinallyBlock Block;
-        public readonly RegionKind Kind;
+    public static bool IsFinallyRegion(this Region region)
+    {
+        if (region == null)
+            return false;
+        else
+            return region.Kind == RegionKind.Finally;
+    }
+}
 
+[DebuggerDisplay("{Kind}-block from {Begin} to {End}")]
+internal sealed class Region : IEquatable<Region>
+{
+    public const RegionKind AnyRegionKind =
+        RegionKind.Try | RegionKind.Catch | RegionKind.Finally;
+
+    public readonly CompiledTryCatchFinallyBlock Block;
+    public readonly RegionKind Kind;
+
+    [DebuggerStepThrough]
+    public Region(CompiledTryCatchFinallyBlock block, RegionKind kind)
+    {
+        Block = block;
+        Kind = kind;
+    }
+
+    public int Begin
+    {
         [DebuggerStepThrough]
-        public Region(CompiledTryCatchFinallyBlock block, RegionKind kind)
-        {
-            Block = block;
-            Kind = kind;
-        }
-
-        public int Begin
-        {
-            [DebuggerStepThrough]
-            get
-            {
-                return Kind switch
-                {
-                    RegionKind.Try => Block.BeginTry,
-                    RegionKind.Catch => Block.BeginCatch,
-                    RegionKind.Finally => Block.BeginFinally,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-            }
-        }
-
-        public int End
-        {
-            [DebuggerStepThrough]
-            get
-            {
-                switch (Kind)
-                {
-                    case RegionKind.Try:
-                        return Block.SkipTry - 1;
-                    case RegionKind.Catch:
-                        return Block.EndTry - 1;
-                    case RegionKind.Finally:
-                        if (Block.HasCatch)
-                            return Block.BeginCatch - 1;
-                        else
-                            return Block.EndTry - 1;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
-        [DebuggerStepThrough]
-        public bool Contains(int address)
+        get
         {
             return Kind switch
             {
-                RegionKind.Try => Block.IsInTryBlock(address),
-                RegionKind.Catch => Block.IsInCatchBlock(address),
-                RegionKind.Finally => Block.IsInFinallyBlock(address),
+                RegionKind.Try => Block.BeginTry,
+                RegionKind.Catch => Block.BeginCatch,
+                RegionKind.Finally => Block.BeginFinally,
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
+    }
 
+    public int End
+    {
         [DebuggerStepThrough]
-        public static IEnumerable<Region> FromBlock(CompiledTryCatchFinallyBlock block)
+        get
         {
-            yield return new Region(block, RegionKind.Try);
-            if (block.HasFinally)
-                yield return new Region(block, RegionKind.Finally);
-            if (block.HasCatch)
-                yield return new Region(block, RegionKind.Catch);
-        }
-
-        public static int CompareRegions(Region r1, Region r2)
-        {
-            if (ReferenceEquals(r1, r2))
-                return 0;
-
-            if (r1.StrictlyContains(r2)) //r2 is inside r1 <=> r2 is "smaller"
-                return 1;
-            else if (r2.StrictlyContains(r1)) //r1 is inside r2 <=> r1 is "smaller"
-                return -1;
-
-            //here, r1 and r2 must cover the same region
-            //   this can only be the case for try-blocks
-            Debug.Assert(r1.Kind == RegionKind.Try && r2.Kind == RegionKind.Try,
-                "Exactly overlapping finally/catch regions are illegal.");
-
-            //in this case, the total span of the block is the indicator
-            var cmp = r1.Block.Range.CompareTo(r2.Block.Range);
-            Debug.Assert(cmp != 0, "Two distinct regions with identical ranges are illegal.");
-            return cmp;
-        }
-
-        public bool StrictlyContains(Region r)
-        {
-            return Begin < r.Begin || End > r.End;
-        }
-
-        public bool IsIn(Region r)
-        {
-            if (!(Begin <= r.Begin && r.End <= End))
-                return false;
-
-            return CompareRegions(this, r) < 0;
-        }
-
-        public bool Equals(Region other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Equals(other.Block, Block) && Equals(other.Kind, Kind);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != typeof (Region)) return false;
-            return Equals((Region) obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
+            switch (Kind)
             {
-                return (Block.GetHashCode()*397) ^ Kind.GetHashCode();
+                case RegionKind.Try:
+                    return Block.SkipTry - 1;
+                case RegionKind.Catch:
+                    return Block.EndTry - 1;
+                case RegionKind.Finally:
+                    if (Block.HasCatch)
+                        return Block.BeginCatch - 1;
+                    else
+                        return Block.EndTry - 1;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
+        }
+    }
+
+    [DebuggerStepThrough]
+    public bool Contains(int address)
+    {
+        return Kind switch
+        {
+            RegionKind.Try => Block.IsInTryBlock(address),
+            RegionKind.Catch => Block.IsInCatchBlock(address),
+            RegionKind.Finally => Block.IsInFinallyBlock(address),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    [DebuggerStepThrough]
+    public static IEnumerable<Region> FromBlock(CompiledTryCatchFinallyBlock block)
+    {
+        yield return new Region(block, RegionKind.Try);
+        if (block.HasFinally)
+            yield return new Region(block, RegionKind.Finally);
+        if (block.HasCatch)
+            yield return new Region(block, RegionKind.Catch);
+    }
+
+    public static int CompareRegions(Region r1, Region r2)
+    {
+        if (ReferenceEquals(r1, r2))
+            return 0;
+
+        if (r1.StrictlyContains(r2)) //r2 is inside r1 <=> r2 is "smaller"
+            return 1;
+        else if (r2.StrictlyContains(r1)) //r1 is inside r2 <=> r1 is "smaller"
+            return -1;
+
+        //here, r1 and r2 must cover the same region
+        //   this can only be the case for try-blocks
+        Debug.Assert(r1.Kind == RegionKind.Try && r2.Kind == RegionKind.Try,
+            "Exactly overlapping finally/catch regions are illegal.");
+
+        //in this case, the total span of the block is the indicator
+        var cmp = r1.Block.Range.CompareTo(r2.Block.Range);
+        Debug.Assert(cmp != 0, "Two distinct regions with identical ranges are illegal.");
+        return cmp;
+    }
+
+    public bool StrictlyContains(Region r)
+    {
+        return Begin < r.Begin || End > r.End;
+    }
+
+    public bool IsIn(Region r)
+    {
+        if (!(Begin <= r.Begin && r.End <= End))
+            return false;
+
+        return CompareRegions(this, r) < 0;
+    }
+
+    public bool Equals(Region other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Equals(other.Block, Block) && Equals(other.Kind, Kind);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != typeof (Region)) return false;
+        return Equals((Region) obj);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            return (Block.GetHashCode()*397) ^ Kind.GetHashCode();
         }
     }
 }

@@ -27,64 +27,63 @@ using System;
 using System.Linq;
 using Prexonite.Compiler.Cil;
 
-namespace Prexonite.Commands.List
+namespace Prexonite.Commands.List;
+
+public class Contains : PCommand, ICilCompilerAware
 {
-    public class Contains : PCommand, ICilCompilerAware
+    public const string Alias = "contains";
+
+    #region Singleton pattern
+
+    public static Contains Instance { get; } = new();
+
+    private Contains()
     {
-        public const string Alias = "contains";
+    }
 
-        #region Singleton pattern
+    #endregion
 
-        public static Contains Instance { get; } = new();
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
 
-        private Contains()
-        {
-        }
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
 
-        #endregion
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-
-            PValue needle;
-            if (args.Length < 2)
-                return false;
-            else
-                needle = args[0];
-
-            foreach (var arg in args.Skip(1))
-            {
-                var set = Map._ToEnumerable(sctx, arg);
-                if (set != null)
-                    foreach (var value in set)
-                    {
-                        if (value.Equality(sctx, needle, out var result) &&
-                            result.TryConvertTo(sctx, true, out bool boolResult) && boolResult)
-                            return result;
-                    }
-            }
-
+        PValue needle;
+        if (args.Length < 2)
             return false;
+        else
+            needle = args[0];
+
+        foreach (var arg in args.Skip(1))
+        {
+            var set = Map._ToEnumerable(sctx, arg);
+            if (set != null)
+                foreach (var value in set)
+                {
+                    if (value.Equality(sctx, needle, out var result) &&
+                        result.TryConvertTo(sctx, true, out bool boolResult) && boolResult)
+                        return result;
+                }
         }
 
-        public CompilationFlags CheckQualification(Instruction ins)
-        {
-            return CompilationFlags.PrefersRunStatically;
-        }
+        return false;
+    }
 
-        public void ImplementInCil(CompilerState state, Instruction ins)
-        {
-            throw new NotSupportedException("The command " + GetType().Name +
-                " does not support CIL compilation via ICilCompilerAware.");
-        }
+    public CompilationFlags CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    public void ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException("The command " + GetType().Name +
+            " does not support CIL compilation via ICilCompilerAware.");
     }
 }

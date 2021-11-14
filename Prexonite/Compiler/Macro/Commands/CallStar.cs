@@ -30,166 +30,165 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Properties;
 
-namespace Prexonite.Compiler.Macro.Commands
+namespace Prexonite.Compiler.Macro.Commands;
+
+public class CallStar : PartialMacroCommand
 {
-    public class CallStar : PartialMacroCommand
+    #region Singleton pattern
+
+    public static CallStar Instance { get; } = new();
+
+    private CallStar()
+        : base(@"call\star")
     {
-        #region Singleton pattern
+    }
 
-        public static CallStar Instance { get; } = new();
+    #endregion
 
-        private CallStar()
-            : base(@"call\star")
+    #region Overrides of PartialMacroCommand
+
+    protected override bool DoExpandPartialApplication(MacroContext context)
+    {
+        if (context.Invocation.Arguments.Count < 1)
         {
-        }
-
-        #endregion
-
-        #region Overrides of PartialMacroCommand
-
-        protected override bool DoExpandPartialApplication(MacroContext context)
-        {
-            if (context.Invocation.Arguments.Count < 1)
-            {
-                context.ReportMessage(Message.Error(
-                    string.Format(Resources.CallStar_usage, Id), context.Invocation.Position, MessageClasses.CallStarUsage));
-                return true;
-            }
-
-            _determinePassThrough(context, out var passThrough, out var arguments);
-
-            _expandPartialApplication(context, passThrough, arguments);
-
+            context.ReportMessage(Message.Error(
+                string.Format(Resources.CallStar_usage, Id), context.Invocation.Position, MessageClasses.CallStarUsage));
             return true;
         }
 
-        private void _expandPartialApplication(MacroContext context, int passThrough,
-            List<AstExpr> arguments)
+        _determinePassThrough(context, out var passThrough, out var arguments);
+
+        _expandPartialApplication(context, passThrough, arguments);
+
+        return true;
+    }
+
+    private void _expandPartialApplication(MacroContext context, int passThrough,
+        List<AstExpr> arguments)
+    {
+        var flatArgs = new List<AstExpr>(arguments.Count);
+        var directives = new List<int>(arguments.Count);
+
+        //The call target is a "non-argument" in partial application terms. Do not include it in the
+        //  stream of directives.
+        flatArgs.Add(arguments[0]);
+
+        var opaqueSpan = 0;
+        for (var i = 1; i < arguments.Count; i++)
         {
-            var flatArgs = new List<AstExpr>(arguments.Count);
-            var directives = new List<int>(arguments.Count);
-
-            //The call target is a "non-argument" in partial application terms. Do not include it in the
-            //  stream of directives.
-            flatArgs.Add(arguments[0]);
-
-            var opaqueSpan = 0;
-            for (var i = 1; i < arguments.Count; i++)
+            var arg = arguments[i];
+            if (i < passThrough || !_isPartialList(arg, out var lit))
             {
-                var arg = arguments[i];
-                if (i < passThrough || !_isPartialList(arg, out var lit))
-                {
-                    flatArgs.Add(arg);
-                    opaqueSpan++;
-                }
-                else
-                {
-                    flatArgs.AddRange(lit.Elements);
-                    if (opaqueSpan > 0)
-                    {
-                        directives.Add(opaqueSpan);
-                        opaqueSpan = 0;
-                    }
-                    directives.Add(-lit.Elements.Count);
-                }
-            }
-
-            var ppArgv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(flatArgs);
-
-            var argc = ppArgv.Count;
-            var mappings8 = new int[argc + directives.Count + 1];
-            var closedArguments = new List<AstExpr>(argc);
-
-            AstPartiallyApplicable.GetMapping(ppArgv, mappings8, closedArguments);
-            _mergeDirectivesIntoMappings(directives, mappings8, argc);
-            var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
-
-            var implCall = context.Factory.Call(context.Invocation.Position,
-                                                EntityRef.Command.Create(PartialCallStarImplCommand.Alias), context.Call);
-            implCall.Arguments.AddRange(closedArguments);
-
-            implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));
-
-            context.Block.Expression = implCall;
-        }
-
-        private static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8,
-            int argc)
-        {
-            var mi = argc;
-            foreach (var directive in directives)
-            {
-                mappings8[mi++] = directive;
-            }
-
-            mappings8[^1] = directives.Count;
-        }
-
-        #endregion
-
-        #region Overrides of MacroCommand
-
-        private static bool _isPartialList(AstExpr expr)
-        {
-            return _isPartialList(expr, out _);
-        }
-
-        private static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
-        {
-            lit = expr as AstListLiteral;
-            return lit != null && lit.CheckForPlaceholders();
-        }
-
-        protected override void DoExpand(MacroContext context)
-        {
-            if (context.Invocation.Arguments.Count < 1)
-            {
-                context.ReportMessage(
-                    Message.Error(
-                        string.Format(Resources.CallStar_usage, Id), context.Invocation.Position,
-                        MessageClasses.CallStarUsage));
-                return;
-            }
-
-            _determinePassThrough(context, out var passThrough, out var arguments);
-
-            if (arguments.Skip(passThrough).Any(_isPartialList))
-            {
-                _expandPartialApplication(context, passThrough, arguments);
-                return;
-            }
-
-            // "Fallback" direct invocation
-            var ic = new AstIndirectCall(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, context.Invocation.Call, arguments[0]);
-            ic.Arguments.AddRange(arguments.Skip(1));
-            context.Block.Expression = ic;
-        }
-
-        private static void _determinePassThrough(MacroContext context, out int passThrough,
-            out List<AstExpr> arguments)
-        {
-            var arg0 = context.Invocation.Arguments[0];
-            var passThroughNode = arg0 as AstConstant;
-            if (passThroughNode?.Constant is int constant)
-            {
-                arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
-                passThrough = constant;
+                flatArgs.Add(arg);
+                opaqueSpan++;
             }
             else
             {
-                arguments = new List<AstExpr>(context.Invocation.Arguments);
-                passThrough = 1;
+                flatArgs.AddRange(lit.Elements);
+                if (opaqueSpan > 0)
+                {
+                    directives.Add(opaqueSpan);
+                    opaqueSpan = 0;
+                }
+                directives.Add(-lit.Elements.Count);
             }
-
-            if (passThrough < 1)
-                context.ReportMessage(
-                    Message.Error(
-                        string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
-                        passThroughNode?.Position ?? context.Invocation.Position,
-                        MessageClasses.CallStarPassThrough));
         }
 
-        #endregion
+        var ppArgv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(flatArgs);
+
+        var argc = ppArgv.Count;
+        var mappings8 = new int[argc + directives.Count + 1];
+        var closedArguments = new List<AstExpr>(argc);
+
+        AstPartiallyApplicable.GetMapping(ppArgv, mappings8, closedArguments);
+        _mergeDirectivesIntoMappings(directives, mappings8, argc);
+        var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
+
+        var implCall = context.Factory.Call(context.Invocation.Position,
+            EntityRef.Command.Create(PartialCallStarImplCommand.Alias), context.Call);
+        implCall.Arguments.AddRange(closedArguments);
+
+        implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));
+
+        context.Block.Expression = implCall;
     }
+
+    private static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8,
+        int argc)
+    {
+        var mi = argc;
+        foreach (var directive in directives)
+        {
+            mappings8[mi++] = directive;
+        }
+
+        mappings8[^1] = directives.Count;
+    }
+
+    #endregion
+
+    #region Overrides of MacroCommand
+
+    private static bool _isPartialList(AstExpr expr)
+    {
+        return _isPartialList(expr, out _);
+    }
+
+    private static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
+    {
+        lit = expr as AstListLiteral;
+        return lit != null && lit.CheckForPlaceholders();
+    }
+
+    protected override void DoExpand(MacroContext context)
+    {
+        if (context.Invocation.Arguments.Count < 1)
+        {
+            context.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.CallStar_usage, Id), context.Invocation.Position,
+                    MessageClasses.CallStarUsage));
+            return;
+        }
+
+        _determinePassThrough(context, out var passThrough, out var arguments);
+
+        if (arguments.Skip(passThrough).Any(_isPartialList))
+        {
+            _expandPartialApplication(context, passThrough, arguments);
+            return;
+        }
+
+        // "Fallback" direct invocation
+        var ic = new AstIndirectCall(context.Invocation.File, context.Invocation.Line,
+            context.Invocation.Column, context.Invocation.Call, arguments[0]);
+        ic.Arguments.AddRange(arguments.Skip(1));
+        context.Block.Expression = ic;
+    }
+
+    private static void _determinePassThrough(MacroContext context, out int passThrough,
+        out List<AstExpr> arguments)
+    {
+        var arg0 = context.Invocation.Arguments[0];
+        var passThroughNode = arg0 as AstConstant;
+        if (passThroughNode?.Constant is int constant)
+        {
+            arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
+            passThrough = constant;
+        }
+        else
+        {
+            arguments = new List<AstExpr>(context.Invocation.Arguments);
+            passThrough = 1;
+        }
+
+        if (passThrough < 1)
+            context.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
+                    passThroughNode?.Position ?? context.Invocation.Position,
+                    MessageClasses.CallStarPassThrough));
+    }
+
+    #endregion
 }

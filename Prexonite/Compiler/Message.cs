@@ -26,127 +26,126 @@
 using System;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+[Serializable]
+public class Message : IEquatable<Message>, IComparable<Message>
 {
-    [Serializable]
-    public class Message : IEquatable<Message>, IComparable<Message>
+    [NotNull]
+    public static Message Create(MessageSeverity severity, [NotNull, LocalizationRequired] string text, [NotNull] ISourcePosition position, string messageClass)
     {
-        [NotNull]
-        public static Message Create(MessageSeverity severity, [NotNull, LocalizationRequired] string text, [NotNull] ISourcePosition position, string messageClass)
-        {
-            return new(severity, text, position, messageClass);
-        }
-
-        private const string MessageFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
-
-        public string Text { get; }
-
-        public string MessageClass { get; }
-
-        public MessageSeverity Severity { get; }
-
-        public string File => Position.File;
-        public int Line => Position.Line;
-        public int Column => Position.Column;
-        public ISourcePosition Position { get; }
-
-        private Message(MessageSeverity severity, [NotNull] string text, [NotNull] ISourcePosition position,
-                        [CanBeNull]string messageClass = null)
-        {
-            Text = text ?? throw new ArgumentNullException();
-            Position = position;
-            Severity = severity;
-            MessageClass = messageClass;
-        }
-
-        [NotNull]
-        public static Message Error([NotNull, LocalizationRequired] string message, [NotNull] ISourcePosition position, [CanBeNull] string messageClass)
-        {
-            return Create(MessageSeverity.Error, message, position, messageClass);
-        }
-
-        [NotNull]
-        public static Message Warning([NotNull, LocalizationRequired] string message, [NotNull] ISourcePosition position, [CanBeNull] string messageClass)
-        {
-            return Create(MessageSeverity.Warning, message, position, messageClass);
-        }
-
-        [NotNull]
-        public static Message Info([NotNull, LocalizationRequired] string message, [NotNull] ISourcePosition position, [CanBeNull] string messageClass)
-        {
-            return Create(MessageSeverity.Info, message, position, messageClass);
-        }
-
-        public int CompareTo(Message other)
-        {
-            if (other == null)
-            {
-                return -1;
-            }
-
-            var r = string.Compare(File, other.File, StringComparison.Ordinal);
-            if (r != 0)
-                return r;
-            
-            r = Line.CompareTo(other.Line);
-            if (r != 0)
-                return r;
-
-            r = Column.CompareTo(other.Column);
-            if (r != 0)
-                return r;
-
-            r = Severity.CompareTo(other.Severity);
-            if (r != 0)
-                return r;
-
-            r = string.Compare(MessageClass, other.MessageClass, StringComparison.Ordinal);
-            if (r != 0)
-                return r;
-
-            return r;
-        }
-
-        public override string ToString()
-        {
-            return string.Format(MessageFormat, Line, Column, Text, File);
-        }
-
-        [NotNull]
-        public Message Repositioned([NotNull] ISourcePosition position)
-        {
-            if (position == null)
-                throw new ArgumentNullException(nameof(position));
-            return new Message(Severity,Text,position,MessageClass);
-        }
-
-        public bool Equals(Message other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return string.Equals(Text, other.Text) && Equals(Position, other.Position) && Severity == other.Severity && string.Equals(MessageClass, other.MessageClass);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((Message) obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = Text != null ? Text.GetHashCode() : 0;
-                hashCode = (hashCode*397) ^ (Position != null ? Position.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (int) Severity;
-                hashCode = (hashCode*397) ^ (MessageClass != null ? MessageClass.GetHashCode() : 0);
-                return hashCode;
-            }
-        }
-
-
+        return new(severity, text, position, messageClass);
     }
+
+    private const string MessageFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
+
+    public string Text { get; }
+
+    public string MessageClass { get; }
+
+    public MessageSeverity Severity { get; }
+
+    public string File => Position.File;
+    public int Line => Position.Line;
+    public int Column => Position.Column;
+    public ISourcePosition Position { get; }
+
+    private Message(MessageSeverity severity, [NotNull] string text, [NotNull] ISourcePosition position,
+        [CanBeNull]string messageClass = null)
+    {
+        Text = text ?? throw new ArgumentNullException();
+        Position = position;
+        Severity = severity;
+        MessageClass = messageClass;
+    }
+
+    [NotNull]
+    public static Message Error([NotNull, LocalizationRequired] string message, [NotNull] ISourcePosition position, [CanBeNull] string messageClass)
+    {
+        return Create(MessageSeverity.Error, message, position, messageClass);
+    }
+
+    [NotNull]
+    public static Message Warning([NotNull, LocalizationRequired] string message, [NotNull] ISourcePosition position, [CanBeNull] string messageClass)
+    {
+        return Create(MessageSeverity.Warning, message, position, messageClass);
+    }
+
+    [NotNull]
+    public static Message Info([NotNull, LocalizationRequired] string message, [NotNull] ISourcePosition position, [CanBeNull] string messageClass)
+    {
+        return Create(MessageSeverity.Info, message, position, messageClass);
+    }
+
+    public int CompareTo(Message other)
+    {
+        if (other == null)
+        {
+            return -1;
+        }
+
+        var r = string.Compare(File, other.File, StringComparison.Ordinal);
+        if (r != 0)
+            return r;
+            
+        r = Line.CompareTo(other.Line);
+        if (r != 0)
+            return r;
+
+        r = Column.CompareTo(other.Column);
+        if (r != 0)
+            return r;
+
+        r = Severity.CompareTo(other.Severity);
+        if (r != 0)
+            return r;
+
+        r = string.Compare(MessageClass, other.MessageClass, StringComparison.Ordinal);
+        if (r != 0)
+            return r;
+
+        return r;
+    }
+
+    public override string ToString()
+    {
+        return string.Format(MessageFormat, Line, Column, Text, File);
+    }
+
+    [NotNull]
+    public Message Repositioned([NotNull] ISourcePosition position)
+    {
+        if (position == null)
+            throw new ArgumentNullException(nameof(position));
+        return new Message(Severity,Text,position,MessageClass);
+    }
+
+    public bool Equals(Message other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return string.Equals(Text, other.Text) && Equals(Position, other.Position) && Severity == other.Severity && string.Equals(MessageClass, other.MessageClass);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != GetType()) return false;
+        return Equals((Message) obj);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            var hashCode = Text != null ? Text.GetHashCode() : 0;
+            hashCode = (hashCode*397) ^ (Position != null ? Position.GetHashCode() : 0);
+            hashCode = (hashCode*397) ^ (int) Severity;
+            hashCode = (hashCode*397) ^ (MessageClass != null ? MessageClass.GetHashCode() : 0);
+            return hashCode;
+        }
+    }
+
+
 }

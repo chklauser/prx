@@ -27,22 +27,21 @@ using System.Diagnostics;
 
 #nullable enable
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+[DebuggerDisplay("{Name}: ({Symbol}, {Origin})")]
+public sealed class SymbolInfo
 {
-    [DebuggerDisplay("{Name}: ({Symbol}, {Origin})")]
-    public sealed class SymbolInfo
+    public SymbolInfo(Symbol symbol, SymbolOrigin origin, string name)
     {
-        public SymbolInfo(Symbol symbol, SymbolOrigin origin, string name)
-        {
-            Symbol = symbol ?? throw new System.ArgumentNullException(nameof(symbol));
-            Origin = origin ?? throw new System.ArgumentNullException(nameof(origin));
-            Name = name ?? throw new System.ArgumentNullException(nameof(name));
-        }
-
-        public Symbol Symbol { get; }
-
-        public SymbolOrigin Origin { get; }
-
-        public string Name { get; }
+        Symbol = symbol ?? throw new System.ArgumentNullException(nameof(symbol));
+        Origin = origin ?? throw new System.ArgumentNullException(nameof(origin));
+        Name = name ?? throw new System.ArgumentNullException(nameof(name));
     }
+
+    public Symbol Symbol { get; }
+
+    public SymbolOrigin Origin { get; }
+
+    public string Name { get; }
 }

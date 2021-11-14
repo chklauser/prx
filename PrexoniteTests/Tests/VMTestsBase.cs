@@ -39,314 +39,313 @@ using Prexonite.Types;
 using Prx.Tests;
 using Compiler = Prexonite.Compiler.Cil.Compiler;
 
-namespace PrexoniteTests.Tests
+namespace PrexoniteTests.Tests;
+
+[Parallelizable(ParallelScope.Fixtures)]
+public class VMTestsBase
 {
-    [Parallelizable(ParallelScope.Fixtures)]
-    public class VMTestsBase
+    public const string StoreDebugImplementationKey = "store_debug_implementation";
+    protected Engine engine;
+    protected TestStackContext sctx;
+    protected Application target;
+    protected LoaderOptions options;
+
+    /// <summary>
+    /// Indicates whether to skip the <see cref="Loader.Store(System.Text.StringBuilder)"/> call on compilation.
+    /// </summary>
+    public bool SkipStore { get; set; }
+
+    public bool CompileToCil { get; set; }
+    protected FunctionLinking StaticLinking { get; set; }
+
+    public VMTestsBase()
     {
-        public const string StoreDebugImplementationKey = "store_debug_implementation";
-        protected Engine engine;
-        protected TestStackContext sctx;
-        protected Application target;
-        protected LoaderOptions options;
-
-        /// <summary>
-        /// Indicates whether to skip the <see cref="Loader.Store(System.Text.StringBuilder)"/> call on compilation.
-        /// </summary>
-        public bool SkipStore { get; set; }
-
-        public bool CompileToCil { get; set; }
-        protected FunctionLinking StaticLinking { get; set; }
-
-        public VMTestsBase()
-        {
 #if UseCil
-            CompileToCil = true;
+        CompileToCil = true;
 #else
             CompileToCil = false;
 #endif
-            StaticLinking = FunctionLinking.FullyStatic;
-        }
+        StaticLinking = FunctionLinking.FullyStatic;
+    }
 
-        [SetUp]
-        public virtual void SetupCompilerEngine()
-        {
-            engine = new Engine();
-            target = new Application("testApplication");
-            sctx = new TestStackContext(engine, target);
-            options = new LoaderOptions(engine, target);
-            SkipStore = false;
-        }
+    [SetUp]
+    public virtual void SetupCompilerEngine()
+    {
+        engine = new Engine();
+        target = new Application("testApplication");
+        sctx = new TestStackContext(engine, target);
+        options = new LoaderOptions(engine, target);
+        SkipStore = false;
+    }
 
-        [TearDown]
-        public void TeardownCompilerEngine()
-        {
-            engine = null;
-            sctx = null;
-            target = null;
-            options = null;
-        }
+    [TearDown]
+    public void TeardownCompilerEngine()
+    {
+        engine = null;
+        sctx = null;
+        target = null;
+        options = null;
+    }
 
-        protected static string GenerateRandomString(int length)
-        {
-            return GenerateRandomString().Substring(0, length);
-        }
+    protected static string GenerateRandomString(int length)
+    {
+        return GenerateRandomString().Substring(0, length);
+    }
 
-        protected static string GenerateRandomString()
-        {
-            return Guid.NewGuid().ToString("N");
-        }
+    protected static string GenerateRandomString()
+    {
+        return Guid.NewGuid().ToString("N");
+    }
 
-        protected void Compile(Loader ldr, string input)
-        {
-            _compile(ldr, input);
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
-        }
+    protected void Compile(Loader ldr, string input)
+    {
+        _compile(ldr, input);
+        Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
+    }
 
-        protected Loader CompileInvalid(string input, params string[] keywords)
-        {
-            var ldr = new Loader(options);
-            CompileInvalid(ldr, input, keywords);
-            return ldr;
-        }
+    protected Loader CompileInvalid(string input, params string[] keywords)
+    {
+        var ldr = new Loader(options);
+        CompileInvalid(ldr, input, keywords);
+        return ldr;
+    }
 
-        protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
+    protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
+    {
+        _compile(ldr, input);
+        Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == MessageSeverity.Error),
+            "Errors expected, but none were raised.");
+        foreach (var keyword in keywords)
         {
-            _compile(ldr, input);
-            Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == MessageSeverity.Error),
-                "Errors expected, but none were raised.");
-            foreach (var keyword in keywords)
+            var word = keyword;
+            Assert.IsTrue(ldr.Errors.Any(m => m.Text.Contains(word)),
+                "Expected keyword " + word + " in one of the error messages.");
+        }
+    }
+
+    private void _compile(Loader ldr, string input)
+    {
+        try
+        {
+            ldr.LoadFromString(input);
+            if (CompileToCil)
+                Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine, StaticLinking);
+        }
+        finally
+        {
+            foreach (var s in ldr.Errors)
+                TestContext.WriteLine("ERROR: " + s);
+            foreach (var s in ldr.Warnings)
+                TestContext.WriteLine("WARNING: " + s);
+            foreach (var s in ldr.Infos)
+                TestContext.WriteLine("INFO: " + s);
+
+            if(!SkipStore)
+                TestContext.WriteLine(ldr.StoreInString());
+        }
+    }
+
+    protected Loader Compile(string input)
+    {
+        var ldr = new Loader(options);
+        Compile(ldr, input);
+        return ldr;
+    }
+
+    protected Loader Store(Loader ldr)
+    {
+        var sb = new StringBuilder();
+        ldr.Store(sb);
+
+
+        //Create a new engine
+        SetupCompilerEngine();
+
+        ldr = new Loader(options);
+        try
+        {
+            ldr.LoadFromString(sb.ToString());
+        }
+        finally
+        {
+            foreach (var s in ldr.Errors)
             {
-                var word = keyword;
-                Assert.IsTrue(ldr.Errors.Any(m => m.Text.Contains(word)),
-                    "Expected keyword " + word + " in one of the error messages.");
+                TestContext.Error.WriteLine(s);
             }
         }
+        Assert.AreEqual(0, ldr.ErrorCount, "Errors detected while loading stored code.");
+        TestContext.WriteLine(ldr.StoreInString());
+        return ldr;
+    }
 
-        private void _compile(Loader ldr, string input)
+    protected Loader CompileStore(Loader loader, string input)
+    {
+        Compile(loader, input);
+        return Store(loader);
+    }
+
+    protected Loader CompileStore(string input)
+    {
+        return Store(Compile(input));
+    }
+
+    protected void Expect<T>(T expectedReturnValue, params PValue[] args)
+    {
+        ExpectReturnValue(target.Meta[Application.EntryKey], expectedReturnValue, args);
+    }
+
+    protected void Expect(Action<PValue> assertion, params PValue[] args)
+    {
+        ExpectReturnValue(target.Meta[Application.EntryKey], assertion, args);
+    }
+
+    protected void ExpectNamed<T>(string functionId, T expectedReturnValue, params PValue[] args)
+    {
+        ExpectReturnValue(functionId, expectedReturnValue, args);
+    }
+
+    protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
+    {
+        ExpectReturnValue(functionId, rv =>
         {
-            try
-            {
-                ldr.LoadFromString(input);
-                if (CompileToCil)
-                    Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine, StaticLinking);
-            }
-            finally
-            {
-                foreach (var s in ldr.Errors)
-                    TestContext.WriteLine("ERROR: " + s);
-                foreach (var s in ldr.Warnings)
-                    TestContext.WriteLine("WARNING: " + s);
-                foreach (var s in ldr.Infos)
-                    TestContext.WriteLine("INFO: " + s);
+            var expected = engine.CreateNativePValue(expectedReturnValue);
+            AssertPValuesAreEqual(expected, rv);
+        }, args);
+    }
 
-                if(!SkipStore)
-                    TestContext.WriteLine(ldr.StoreInString());
-            }
-        }
-
-        protected Loader Compile(string input)
-        {
-            var ldr = new Loader(options);
-            Compile(ldr, input);
-            return ldr;
-        }
-
-        protected Loader Store(Loader ldr)
-        {
-            var sb = new StringBuilder();
-            ldr.Store(sb);
-
-
-            //Create a new engine
-            SetupCompilerEngine();
-
-            ldr = new Loader(options);
-            try
-            {
-                ldr.LoadFromString(sb.ToString());
-            }
-            finally
-            {
-                foreach (var s in ldr.Errors)
-                {
-                    TestContext.Error.WriteLine(s);
-                }
-            }
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected while loading stored code.");
-            TestContext.WriteLine(ldr.StoreInString());
-            return ldr;
-        }
-
-        protected Loader CompileStore(Loader loader, string input)
-        {
-            Compile(loader, input);
-            return Store(loader);
-        }
-
-        protected Loader CompileStore(string input)
-        {
-            return Store(Compile(input));
-        }
-
-        protected void Expect<T>(T expectedReturnValue, params PValue[] args)
-        {
-            ExpectReturnValue(target.Meta[Application.EntryKey], expectedReturnValue, args);
-        }
-
-        protected void Expect(Action<PValue> assertion, params PValue[] args)
-        {
-            ExpectReturnValue(target.Meta[Application.EntryKey], assertion, args);
-        }
-
-        protected void ExpectNamed<T>(string functionId, T expectedReturnValue, params PValue[] args)
-        {
-            ExpectReturnValue(functionId, expectedReturnValue, args);
-        }
-
-        protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
-        {
-            ExpectReturnValue(functionId, rv =>
-                                                 {
-                                                     var expected = engine.CreateNativePValue(expectedReturnValue);
-                                                     AssertPValuesAreEqual(expected, rv);
-                                                 }, args);
-        }
-
-        protected void ExpectReturnValue(string functionId, Action<PValue> assertion, PValue[] args)
-        {
-            if (assertion == null)
-                throw new ArgumentNullException(nameof(assertion));
+    protected void ExpectReturnValue(string functionId, Action<PValue> assertion, PValue[] args)
+    {
+        if (assertion == null)
+            throw new ArgumentNullException(nameof(assertion));
            
-            if (args.Any(value => value == null))
-                throw new ArgumentException(
-                    "Arguments must not contain naked CLR null references. Use `PType.Null`.");
+        if (args.Any(value => value == null))
+            throw new ArgumentException(
+                "Arguments must not contain naked CLR null references. Use `PType.Null`.");
 
-            if (!target.Functions.Contains(functionId))
-                throw new PrexoniteException("Function " + functionId + " cannot be found.");
+        if (!target.Functions.Contains(functionId))
+            throw new PrexoniteException("Function " + functionId + " cannot be found.");
 
-            var func = target.Functions[functionId];
-            if (func.Meta[StoreDebugImplementationKey].Switch)
-                Compiler.StoreDebugImplementation(target, engine);
+        var func = target.Functions[functionId];
+        if (func.Meta[StoreDebugImplementationKey].Switch)
+            Compiler.StoreDebugImplementation(target, engine);
 
-            PValue rv;
-            try
-            {
-                rv = func.Run(engine, args);
-            }
-            catch (AccessViolationException)
-            {
-                TestContext.WriteLine(
-                    "Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
-                Compiler.StoreDebugImplementation(target, engine);
-                throw;
-            }
-            catch (InvalidProgramException)
-            {
-                TestContext.WriteLine(
-                    "Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
-                Compiler.StoreDebugImplementation(target, engine);
-                throw;
-            }
-
-            assertion(rv);
+        PValue rv;
+        try
+        {
+            rv = func.Run(engine, args);
+        }
+        catch (AccessViolationException)
+        {
+            TestContext.WriteLine(
+                "Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
+            Compiler.StoreDebugImplementation(target, engine);
+            throw;
+        }
+        catch (InvalidProgramException)
+        {
+            TestContext.WriteLine(
+                "Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
+            Compiler.StoreDebugImplementation(target, engine);
+            throw;
         }
 
-        public void AssertPValuesAreEqual(PValue expected, PValue rv)
+        assertion(rv);
+    }
+
+    public void AssertPValuesAreEqual(PValue expected, PValue rv)
+    {
+        Assert.AreEqual(
+            expected.Type,
+            rv.Type,
+            $"Return value is expected to be of type {expected.Type} and not {rv.Type}. Returned {rv}.");
+        if (expected.Type == PType.List)
+        {
+            var expectedL = (List<PValue>) expected.Value;
+            var rvL = (List<PValue>) rv.Value;
+            Assert.AreEqual(expectedL.Count, rvL.Count,
+                $"Returned list differs in length. Elements returned {rvL.ToEnumerationString()}");
+
+            for (var i = 0; i < expectedL.Count; i++)
+            {
+                var expectedLi = expectedL[i];
+                var rvLi = rvL[i];
+                AssertPValuesAreEqual(expectedLi, rvLi);
+            }
+        }
+        else
         {
             Assert.AreEqual(
-                expected.Type,
-                rv.Type,
-                $"Return value is expected to be of type {expected.Type} and not {rv.Type}. Returned {rv}.");
-            if (expected.Type == PType.List)
-            {
-                var expectedL = (List<PValue>) expected.Value;
-                var rvL = (List<PValue>) rv.Value;
-                Assert.AreEqual(expectedL.Count, rvL.Count,
-                    $"Returned list differs in length. Elements returned {rvL.ToEnumerationString()}");
-
-                for (var i = 0; i < expectedL.Count; i++)
-                {
-                    var expectedLi = expectedL[i];
-                    var rvLi = rvL[i];
-                    AssertPValuesAreEqual(expectedLi, rvLi);
-                }
-            }
-            else
-            {
-                Assert.AreEqual(
-                    expected.Value,
-                    rv.Value,
-                    "Return value is expected to be " + expected + " and not " +
-                        rv);
-            }
+                expected.Value,
+                rv.Value,
+                "Return value is expected to be " + expected + " and not " +
+                rv);
         }
+    }
 
-        protected void ExpectNull(params PValue[] args)
-        {
-            var functionId = target.Meta[Application.EntryKey];
-            ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
-        }
+    protected void ExpectNull(params PValue[] args)
+    {
+        var functionId = target.Meta[Application.EntryKey];
+        ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
+    }
 
-        protected void ExpectNull(string functionId, params PValue[] args)
-        {
-            ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
-        }
+    protected void ExpectNull(string functionId, params PValue[] args)
+    {
+        ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
+    }
 
-        private static Action<PValue> _buildIsNullAssertion(string functionId)
-        {
-            return v =>
-                Assert.That(v.IsNull, Is.True,
-                    $"Value returned from {functionId} is expected to be a null reference, was {v} instead.");
-        }
+    private static Action<PValue> _buildIsNullAssertion(string functionId)
+    {
+        return v =>
+            Assert.That(v.IsNull, Is.True,
+                $"Value returned from {functionId} is expected to be a null reference, was {v} instead.");
+    }
 
-        protected PValue GetReturnValueNamed(string functionId, params PValue[] args)
-        {
-            return GetReturnValueNamedExplicit(functionId, args);
-        }
+    protected PValue GetReturnValueNamed(string functionId, params PValue[] args)
+    {
+        return GetReturnValueNamedExplicit(functionId, args);
+    }
 
-        protected PValue GetReturnValueNamedExplicit(string functionId, PValue[] args)
-        {
-            if (!target.Functions.Contains(functionId))
-                throw new PrexoniteException("Function " + functionId + " cannot be found.");
-            var fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
-            engine.Stack.AddLast(fctx);
-            return engine.Process();
-        }
+    protected PValue GetReturnValueNamedExplicit(string functionId, PValue[] args)
+    {
+        if (!target.Functions.Contains(functionId))
+            throw new PrexoniteException("Function " + functionId + " cannot be found.");
+        var fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
+        engine.Stack.AddLast(fctx);
+        return engine.Process();
+    }
 
-        protected PValue GetReturnValue(params PValue[] args)
-        {
-            return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
-        }
+    protected PValue GetReturnValue(params PValue[] args)
+    {
+        return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
+    }
 
-        [NotNull]
-        protected Symbol LookupSymbolEntry([NotNull] ISymbolView<Symbol> store,[NotNull] string symbolicId)
-        {
-            Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
-                $"Expected to find symbol {symbolicId} but there is no such entry.");
-            return symbol;
-        }
+    [NotNull]
+    protected Symbol LookupSymbolEntry([NotNull] ISymbolView<Symbol> store,[NotNull] string symbolicId)
+    {
+        Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
+            $"Expected to find symbol {symbolicId} but there is no such entry.");
+        return symbol;
+    }
 
-        protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,
-            PValue pFalse)
-        {
-            Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
-            Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);
-            Expect(main(false, false, true, false), pFalse, pFalse, pTrue, pFalse);
-            Expect(main(false, false, true, true), pFalse, pFalse, pTrue, pTrue);
-            Expect(main(false, true, false, false), pFalse, pTrue, pFalse, pFalse);
-            Expect(main(false, true, false, true), pFalse, pTrue, pFalse, pTrue);
-            Expect(main(false, true, true, false), pFalse, pTrue, pTrue, pFalse);
-            Expect(main(false, true, true, true), pFalse, pTrue, pTrue, pTrue);
+    protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,
+        PValue pFalse)
+    {
+        Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
+        Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);
+        Expect(main(false, false, true, false), pFalse, pFalse, pTrue, pFalse);
+        Expect(main(false, false, true, true), pFalse, pFalse, pTrue, pTrue);
+        Expect(main(false, true, false, false), pFalse, pTrue, pFalse, pFalse);
+        Expect(main(false, true, false, true), pFalse, pTrue, pFalse, pTrue);
+        Expect(main(false, true, true, false), pFalse, pTrue, pTrue, pFalse);
+        Expect(main(false, true, true, true), pFalse, pTrue, pTrue, pTrue);
 
-            Expect(main(true, false, false, false), pTrue, pFalse, pFalse, pFalse);
-            Expect(main(true, false, false, true), pTrue, pFalse, pFalse, pTrue);
-            Expect(main(true, false, true, false), pTrue, pFalse, pTrue, pFalse);
-            Expect(main(true, false, true, true), pTrue, pFalse, pTrue, pTrue);
-            Expect(main(true, true, false, false), pTrue, pTrue, pFalse, pFalse);
-            Expect(main(true, true, false, true), pTrue, pTrue, pFalse, pTrue);
-            Expect(main(true, true, true, false), pTrue, pTrue, pTrue, pFalse);
-            Expect(main(true, true, true, true), pTrue, pTrue, pTrue, pTrue);
-        }
+        Expect(main(true, false, false, false), pTrue, pFalse, pFalse, pFalse);
+        Expect(main(true, false, false, true), pTrue, pFalse, pFalse, pTrue);
+        Expect(main(true, false, true, false), pTrue, pFalse, pTrue, pFalse);
+        Expect(main(true, false, true, true), pTrue, pFalse, pTrue, pTrue);
+        Expect(main(true, true, false, false), pTrue, pTrue, pFalse, pFalse);
+        Expect(main(true, true, false, true), pTrue, pTrue, pFalse, pTrue);
+        Expect(main(true, true, true, false), pTrue, pTrue, pTrue, pFalse);
+        Expect(main(true, true, true, true), pTrue, pTrue, pTrue, pTrue);
     }
 }

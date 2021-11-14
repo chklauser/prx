@@ -27,63 +27,62 @@ using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+[DebuggerDisplay("Nil")]
+public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
 {
-    [DebuggerDisplay("Nil")]
-    public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
+    #region Overrides of Symbol
+
+    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
     {
-        #region Overrides of Symbol
+        return handler.HandleNil(this,argument);
+    }
 
-        public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
-        {
-            return handler.HandleNil(this,argument);
-        }
+    public override bool TryGetNilSymbol(out NilSymbol nilSymbol)
+    {
+        nilSymbol = this;
+        return true;
+    }
 
-        public override bool TryGetNilSymbol(out NilSymbol nilSymbol)
-        {
-            nilSymbol = this;
-            return true;
-        }
+    public override bool Equals(Symbol other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return other is NilSymbol otherRef && Equals(otherRef);
+    }
 
-        public override bool Equals(Symbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return other is NilSymbol otherRef && Equals(otherRef);
-        }
+    public override ISourcePosition Position { get; }
 
-        public override ISourcePosition Position { get; }
+    #endregion
 
-        #endregion
+    private NilSymbol([NotNull] ISourcePosition position)
+    {
+        Position = position;
+    }
 
-        private NilSymbol([NotNull] ISourcePosition position)
-        {
-            Position = position;
-        }
+    [NotNull]
+    internal static NilSymbol _Create([NotNull] ISourcePosition position)
+    {
+        return new(position);
+    }
 
-        [NotNull]
-        internal static NilSymbol _Create([NotNull] ISourcePosition position)
-        {
-            return new(position);
-        }
+    public override string ToString()
+    {
+        return "Nil";
+    }
 
-        public override string ToString()
-        {
-            return "Nil";
-        }
+    public bool Equals(NilSymbol other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return true;
+    }
 
-        public bool Equals(NilSymbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return true;
-        }
+    private const int NilSymbolHashCode = 384950146;
 
-        private const int NilSymbolHashCode = 384950146;
-
-        public override int GetHashCode()
-        {
-            return NilSymbolHashCode;
-        }
+    public override int GetHashCode()
+    {
+        return NilSymbolHashCode;
     }
 }

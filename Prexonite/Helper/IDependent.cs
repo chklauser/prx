@@ -25,10 +25,9 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 
-namespace Prexonite
+namespace Prexonite;
+
+public interface IDependent<out T> : INamed<T>
 {
-    public interface IDependent<out T> : INamed<T>
-    {
-        IEnumerable<T> GetDependencies();
-    }
+    IEnumerable<T> GetDependencies();
 }

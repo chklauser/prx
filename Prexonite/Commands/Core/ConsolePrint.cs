@@ -28,165 +28,164 @@ using System.Linq;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 
-namespace Prexonite.Commands.Core
+namespace Prexonite.Commands.Core;
+
+public class ConsolePrint : PCommand, ICilCompilerAware, ICilExtension
 {
-    public class ConsolePrint : PCommand, ICilCompilerAware, ICilExtension
+    #region Singleton
+
+    private ConsolePrint()
     {
-        #region Singleton
+    }
 
-        private ConsolePrint()
+    public static ConsolePrint Instance { get; } = new();
+
+    #endregion
+
+    /// <summary>
+    ///     A flag indicating whether the command acts like a pure function.
+    /// </summary>
+    /// <remarks>
+    ///     Pure commands can be applied at compile time.
+    /// </remarks>
+    [Obsolete]
+    public override bool IsPure => false;
+
+    /// <summary>
+    ///     Executes the command.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to execut the command.</param>
+    /// <param name = "args">The arguments to be passed to the command.</param>
+    /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        var buffer = Concat.ConcatenateString(sctx, args);
+
+        Console.Write(buffer);
+
+        return buffer;
+    }
+
+    /// <summary>
+    ///     Executes the command.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to execut the command.</param>
+    /// <param name = "args">The arguments to be passed to the command.</param>
+    /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    #region ICilCompilerAware Members
+
+    /// <summary>
+    ///     Asses qualification and preferences for a certain instruction.
+    /// </summary>
+    /// <param name = "ins">The instruction that is about to be compiled.</param>
+    /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
+    CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+    {
+        switch (ins.Arguments)
         {
+            case 0:
+            case 1:
+                return CompilationFlags.PrefersCustomImplementation;
+            default:
+                return CompilationFlags.PrefersRunStatically;
         }
+    }
 
-        public static ConsolePrint Instance { get; } = new();
-
-        #endregion
-
-        /// <summary>
-        ///     A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>
-        ///     Pure commands can be applied at compile time.
-        /// </remarks>
-        [Obsolete]
-        public override bool IsPure => false;
-
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
-        /// <param name = "args">The arguments to be passed to the command.</param>
-        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
+    /// <summary>
+    ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+    /// </summary>
+    /// <param name = "state">The compiler state.</param>
+    /// <param name = "ins">The instruction to compile.</param>
+    void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+    {
+        switch (ins.Arguments)
         {
-            var buffer = Concat.ConcatenateString(sctx, args);
-
-            Console.Write(buffer);
-
-            return buffer;
-        }
-
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
-        /// <param name = "args">The arguments to be passed to the command.</param>
-        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        #region ICilCompilerAware Members
-
-        /// <summary>
-        ///     Asses qualification and preferences for a certain instruction.
-        /// </summary>
-        /// <param name = "ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
-        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
-        {
-            switch (ins.Arguments)
-            {
-                case 0:
-                case 1:
-                    return CompilationFlags.PrefersCustomImplementation;
-                default:
-                    return CompilationFlags.PrefersRunStatically;
-            }
-        }
-
-        /// <summary>
-        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
-        /// </summary>
-        /// <param name = "state">The compiler state.</param>
-        /// <param name = "ins">The instruction to compile.</param>
-        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
-        {
-            switch (ins.Arguments)
-            {
-                case 0:
-                    if (!ins.JustEffect)
-                    {
-                        state.Il.Emit(OpCodes.Ldstr, "");
-                        state.EmitWrapString();
-                    }
-                    break;
-                case 1:
-                    state.EmitLoadLocal(state.SctxLocal);
-                    state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.PValueCallToString, null);
-                    if (!ins.JustEffect)
-                    {
-                        state.Il.Emit(OpCodes.Dup);
-                        state.EmitWrapString();
-                        state.EmitStoreTemp(0);
-                    }
-                    state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.ConsoleWriteMethod, null);
-                    if (!ins.JustEffect)
-                    {
-                        state.EmitLoadTemp(0);
-                    }
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        #endregion
-
-        #region Implementation of ICilExtension
-
-        /// <summary>
-        ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
-        /// 
-        ///     <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see
-        ///       cref = "ICilCompilerAware" /> and finally the built-in mechanisms.</para>
-        ///     <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see
-        ///      cref = "ICilExtension.Implement" /> with the same set of arguments.</para>
-        /// </summary>
-        /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
-        /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
-        /// <returns>true if the extension can provide a CIL implementation for the set of arguments; false otherwise</returns>
-        public bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
-        {
-            return dynamicArgc <= 0 && staticArgv.All(ctv => !ctv.IsReference);
-        }
-
-        /// <summary>
-        ///     Implements the CIL extension in CIL for the supplied arguments. The CIL compiler guarantees to always first call <see
-        ///      cref = "ICilExtension.ValidateArguments" /> in order to establish whether the extension can actually implement a particular call.
-        ///     Thus, this method does not have to verify <paramref name = "staticArgv" /> and <paramref name = "dynamicArgc" />.
-        /// </summary>
-        /// <param name = "state">The CIL compiler state. This object is used to emit instructions.</param>
-        /// <param name = "ins">The instruction that "calls" the CIL extension. Usually a command call.</param>
-        /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
-        /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
-        public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-            int dynamicArgc)
-        {
-            var text = string.Concat(staticArgv.Select(StaticPrint._ToString));
-            if (text.Length == 0)
-            {
+            case 0:
                 if (!ins.JustEffect)
                 {
                     state.Il.Emit(OpCodes.Ldstr, "");
                     state.EmitWrapString();
                 }
-                return;
-            }
+                break;
+            case 1:
+                state.EmitLoadLocal(state.SctxLocal);
+                state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.PValueCallToString, null);
+                if (!ins.JustEffect)
+                {
+                    state.Il.Emit(OpCodes.Dup);
+                    state.EmitWrapString();
+                    state.EmitStoreTemp(0);
+                }
+                state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.ConsoleWriteMethod, null);
+                if (!ins.JustEffect)
+                {
+                    state.EmitLoadTemp(0);
+                }
+                break;
+            default:
+                throw new NotSupportedException();
+        }
+    }
 
-            state.Il.Emit(OpCodes.Ldstr, text);
+    #endregion
+
+    #region Implementation of ICilExtension
+
+    /// <summary>
+    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
+    /// 
+    ///     <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see
+    ///       cref = "ICilCompilerAware" /> and finally the built-in mechanisms.</para>
+    ///     <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see
+    ///      cref = "ICilExtension.Implement" /> with the same set of arguments.</para>
+    /// </summary>
+    /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
+    /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
+    /// <returns>true if the extension can provide a CIL implementation for the set of arguments; false otherwise</returns>
+    public bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+    {
+        return dynamicArgc <= 0 && staticArgv.All(ctv => !ctv.IsReference);
+    }
+
+    /// <summary>
+    ///     Implements the CIL extension in CIL for the supplied arguments. The CIL compiler guarantees to always first call <see
+    ///      cref = "ICilExtension.ValidateArguments" /> in order to establish whether the extension can actually implement a particular call.
+    ///     Thus, this method does not have to verify <paramref name = "staticArgv" /> and <paramref name = "dynamicArgc" />.
+    /// </summary>
+    /// <param name = "state">The CIL compiler state. This object is used to emit instructions.</param>
+    /// <param name = "ins">The instruction that "calls" the CIL extension. Usually a command call.</param>
+    /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
+    /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
+    public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
+        int dynamicArgc)
+    {
+        var text = string.Concat(staticArgv.Select(StaticPrint._ToString));
+        if (text.Length == 0)
+        {
             if (!ins.JustEffect)
             {
-                state.Il.Emit(OpCodes.Dup);
-            }
-            state.EmitCall(ConsolePrintLine.ConsoleWriteMethod);
-            if (!ins.JustEffect)
-            {
+                state.Il.Emit(OpCodes.Ldstr, "");
                 state.EmitWrapString();
             }
+            return;
         }
 
-        #endregion
+        state.Il.Emit(OpCodes.Ldstr, text);
+        if (!ins.JustEffect)
+        {
+            state.Il.Emit(OpCodes.Dup);
+        }
+        state.EmitCall(ConsolePrintLine.ConsoleWriteMethod);
+        if (!ins.JustEffect)
+        {
+            state.EmitWrapString();
+        }
     }
+
+    #endregion
 }

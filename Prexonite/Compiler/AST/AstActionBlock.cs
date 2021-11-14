@@ -25,28 +25,27 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public delegate void AstAction(CompilerTarget target);
+
+public class AstActionBlock : AstScopedBlock
 {
-    public delegate void AstAction(CompilerTarget target);
+    public AstAction Action;
 
-    public class AstActionBlock : AstScopedBlock
+    public AstActionBlock(ISourcePosition position, AstBlock parent, AstAction action)
+        : base(position,parent)
     {
-        public AstAction Action;
-
-        public AstActionBlock(ISourcePosition position, AstBlock parent, AstAction action)
-            : base(position,parent)
-        {
-            Action = action ?? throw new ArgumentNullException(nameof(action));
-        }
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            base.DoEmitCode(target,stackSemantics);
-            Action(target);
-        }
-
-        public override bool IsEmpty => false;
-
-        public override bool IsSingleStatement => false;
+        Action = action ?? throw new ArgumentNullException(nameof(action));
     }
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        base.DoEmitCode(target,stackSemantics);
+        Action(target);
+    }
+
+    public override bool IsEmpty => false;
+
+    public override bool IsSingleStatement => false;
 }

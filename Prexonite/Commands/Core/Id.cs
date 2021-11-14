@@ -26,51 +26,50 @@
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core
+namespace Prexonite.Commands.Core;
+
+public class Id : PCommand, ICilCompilerAware
 {
-    public class Id : PCommand, ICilCompilerAware
+    #region Singleton pattern
+
+    public static Id Instance { get; } = new();
+
+    private Id()
     {
-        #region Singleton pattern
+    }
 
-        public static Id Instance { get; } = new();
+    #endregion
 
-        private Id()
+    public const string Alias = "id";
+
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        return args.Length > 0 ? args[0] : PType.Null;
+    }
+
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    public CompilationFlags CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    public void ImplementInCil(CompilerState state, Instruction ins)
+    {
+        var argc = ins.Arguments;
+        if (argc == 0)
+            return;
+
+        if (ins.JustEffect)
         {
+            state.EmitIgnoreArguments(argc);
         }
-
-        #endregion
-
-        public const string Alias = "id";
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        else
         {
-            return args.Length > 0 ? args[0] : PType.Null;
-        }
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        public CompilationFlags CheckQualification(Instruction ins)
-        {
-            return CompilationFlags.PrefersRunStatically;
-        }
-
-        public void ImplementInCil(CompilerState state, Instruction ins)
-        {
-            var argc = ins.Arguments;
-            if (argc == 0)
-                return;
-
-            if (ins.JustEffect)
-            {
-                state.EmitIgnoreArguments(argc);
-            }
-            else
-            {
-                state.EmitIgnoreArguments(argc - 1);
-            }
+            state.EmitIgnoreArguments(argc - 1);
         }
     }
 }

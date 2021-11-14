@@ -28,94 +28,93 @@ using System.Reflection;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Math
+namespace Prexonite.Commands.Math;
+
+public class Floor : PCommand, ICilCompilerAware
 {
-    public class Floor : PCommand, ICilCompilerAware
+    #region Singleton
+
+    private Floor()
     {
-        #region Singleton
-
-        private Floor()
-        {
-        }
-
-        public static Floor Instance { get; } = new();
-
-        #endregion
-
-        /// <summary>
-        ///     A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>
-        ///     Pure commands can be applied at compile time.
-        /// </remarks>
-        [Obsolete]
-        public override bool IsPure => true;
-
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
-        /// <param name = "args">The arguments to be passed to the command.</param>
-        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
-        {
-            if (sctx == null)
-                throw new ArgumentNullException(nameof(sctx));
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-
-            if (args.Length < 1)
-                throw new PrexoniteException("Floor requires at least one argument.");
-
-            var arg0 = args[0];
-
-            return RunStatically(arg0, sctx);
-        }
-
-        public static PValue RunStatically(PValue arg0, StackContext sctx)
-        {
-            var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
-
-            return System.Math.Floor(x);
-        }
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        #region ICilCompilerAware Members
-
-        /// <summary>
-        ///     Asses qualification and preferences for a certain instruction.
-        /// </summary>
-        /// <param name = "ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
-        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
-        {
-            switch (ins.Arguments)
-            {
-                case 1:
-                    return CompilationFlags.PrefersCustomImplementation;
-                case 0:
-                default:
-                    return CompilationFlags.PrefersRunStatically;
-            }
-        }
-
-        private static readonly MethodInfo RunStaticallyMethod =
-            typeof (Floor).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
-
-        /// <summary>
-        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
-        /// </summary>
-        /// <param name = "state">The compiler state.</param>
-        /// <param name = "ins">The instruction to compile.</param>
-        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
-        {
-            Abs._CallStaticFunc1(state, ins, RunStaticallyMethod);
-        }
-
-        #endregion
     }
+
+    public static Floor Instance { get; } = new();
+
+    #endregion
+
+    /// <summary>
+    ///     A flag indicating whether the command acts like a pure function.
+    /// </summary>
+    /// <remarks>
+    ///     Pure commands can be applied at compile time.
+    /// </remarks>
+    [Obsolete]
+    public override bool IsPure => true;
+
+    /// <summary>
+    ///     Executes the command.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to execut the command.</param>
+    /// <param name = "args">The arguments to be passed to the command.</param>
+    /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
+
+        if (args.Length < 1)
+            throw new PrexoniteException("Floor requires at least one argument.");
+
+        var arg0 = args[0];
+
+        return RunStatically(arg0, sctx);
+    }
+
+    public static PValue RunStatically(PValue arg0, StackContext sctx)
+    {
+        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+
+        return System.Math.Floor(x);
+    }
+
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    #region ICilCompilerAware Members
+
+    /// <summary>
+    ///     Asses qualification and preferences for a certain instruction.
+    /// </summary>
+    /// <param name = "ins">The instruction that is about to be compiled.</param>
+    /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
+    CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+    {
+        switch (ins.Arguments)
+        {
+            case 1:
+                return CompilationFlags.PrefersCustomImplementation;
+            case 0:
+            default:
+                return CompilationFlags.PrefersRunStatically;
+        }
+    }
+
+    private static readonly MethodInfo RunStaticallyMethod =
+        typeof (Floor).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
+
+    /// <summary>
+    ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+    /// </summary>
+    /// <param name = "state">The compiler state.</param>
+    /// <param name = "ins">The instruction to compile.</param>
+    void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+    {
+        Abs._CallStaticFunc1(state, ins, RunStaticallyMethod);
+    }
+
+    #endregion
 }

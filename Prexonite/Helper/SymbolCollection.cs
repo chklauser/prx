@@ -29,83 +29,82 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
-namespace Prexonite
+namespace Prexonite;
+
+[DebuggerStepThrough]
+public class SymbolCollection : ICollection<string>
 {
-    [DebuggerStepThrough]
-    public class SymbolCollection : ICollection<string>
+    private readonly Hashtable _set;
+
+    public SymbolCollection()
     {
-        private readonly Hashtable _set;
-
-        public SymbolCollection()
-        {
-            _set = new Hashtable(StringComparer.OrdinalIgnoreCase);
-        }
-
-        public SymbolCollection(int capacity)
-        {
-            _set = new Hashtable(capacity, StringComparer.OrdinalIgnoreCase);
-        }
-
-        public SymbolCollection(IEnumerable<string> items)
-            : this()
-        {
-            foreach (var item in items)
-                Add(item);
-        }
-
-        #region ICollection<string> Members
-
-        public void Add(string item)
-        {
-            if (!_set.ContainsKey(item))
-                _set.Add(item, null);
-        }
-
-        public void Clear()
-        {
-            _set.Clear();
-        }
-
-        public bool Contains(string item)
-        {
-            return _set.ContainsKey(item);
-        }
-
-        public void CopyTo(string[] array, int arrayIndex)
-        {
-            _set.Keys.CopyTo(array, arrayIndex);
-        }
-
-        public int Count => _set.Count;
-
-        public bool IsReadOnly => _set.IsReadOnly;
-
-        public bool Remove(string item)
-        {
-            var cnt = _set.Count;
-            _set.Remove(item);
-            return cnt != _set.Count;
-        }
-
-        #endregion
-
-        #region IEnumerable<string> Members
-
-        public IEnumerator<string> GetEnumerator()
-        {
-            foreach (DictionaryEntry entry in _set)
-                yield return entry.Key as string;
-        }
-
-        #endregion
-
-        #region IEnumerable Members
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _set.GetEnumerator();
-        }
-
-        #endregion
+        _set = new Hashtable(StringComparer.OrdinalIgnoreCase);
     }
+
+    public SymbolCollection(int capacity)
+    {
+        _set = new Hashtable(capacity, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public SymbolCollection(IEnumerable<string> items)
+        : this()
+    {
+        foreach (var item in items)
+            Add(item);
+    }
+
+    #region ICollection<string> Members
+
+    public void Add(string item)
+    {
+        if (!_set.ContainsKey(item))
+            _set.Add(item, null);
+    }
+
+    public void Clear()
+    {
+        _set.Clear();
+    }
+
+    public bool Contains(string item)
+    {
+        return _set.ContainsKey(item);
+    }
+
+    public void CopyTo(string[] array, int arrayIndex)
+    {
+        _set.Keys.CopyTo(array, arrayIndex);
+    }
+
+    public int Count => _set.Count;
+
+    public bool IsReadOnly => _set.IsReadOnly;
+
+    public bool Remove(string item)
+    {
+        var cnt = _set.Count;
+        _set.Remove(item);
+        return cnt != _set.Count;
+    }
+
+    #endregion
+
+    #region IEnumerable<string> Members
+
+    public IEnumerator<string> GetEnumerator()
+    {
+        foreach (DictionaryEntry entry in _set)
+            yield return entry.Key as string;
+    }
+
+    #endregion
+
+    #region IEnumerable Members
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return _set.GetEnumerator();
+    }
+
+    #endregion
 }

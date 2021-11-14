@@ -25,14 +25,13 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 
-namespace Prexonite
+namespace Prexonite;
+
+/// <summary>
+///     Defines transformations of get and set requests to the associated meta table.
+/// </summary>
+public interface IMetaFilter
 {
-    /// <summary>
-    ///     Defines transformations of get and set requests to the associated meta table.
-    /// </summary>
-    public interface IMetaFilter
-    {
-        string GetTransform(string key);
-        KeyValuePair<string, MetaEntry>? SetTransform(KeyValuePair<string, MetaEntry> item);
-    }
+    string GetTransform(string key);
+    KeyValuePair<string, MetaEntry>? SetTransform(KeyValuePair<string, MetaEntry> item);
 }

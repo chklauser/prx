@@ -28,59 +28,58 @@ using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+public static class CompilerExtensions
 {
-    public static class CompilerExtensions
+    [ContractAnnotation("=>true,indirectCallNode:notnull,referenceNode:notnull;=>false,indirectCallNode:canbenull,referenceNode:canbenull")]
+    public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode,
+        out AstReference referenceNode)
     {
-        [ContractAnnotation("=>true,indirectCallNode:notnull,referenceNode:notnull;=>false,indirectCallNode:canbenull,referenceNode:canbenull")]
-        public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode,
-                                        out AstReference referenceNode)
-        {
-            return TryMatchCall(node, out indirectCallNode, out referenceNode, out _);
-        }
+        return TryMatchCall(node, out indirectCallNode, out referenceNode, out _);
+    }
 
-        [ContractAnnotation("=>true,indirectCallNode:notnull,entityRef:notnull;=>false,indirectCallNode:canbenull,entityRef:canbenull")]
-        public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode, out EntityRef entityRef)
-        {
-            return TryMatchCall(node, out indirectCallNode, out _, out entityRef);
-        }
+    [ContractAnnotation("=>true,indirectCallNode:notnull,entityRef:notnull;=>false,indirectCallNode:canbenull,entityRef:canbenull")]
+    public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode, out EntityRef entityRef)
+    {
+        return TryMatchCall(node, out indirectCallNode, out _, out entityRef);
+    }
 
-        [ContractAnnotation("=>true,entityRef:notnull;=>false,entityRef:canbenull")]
-        public static bool TryMatchCall(this AstNode node, out EntityRef entityRef)
-        {
-            return TryMatchCall(node, out _, out _, out entityRef);
-        }
+    [ContractAnnotation("=>true,entityRef:notnull;=>false,entityRef:canbenull")]
+    public static bool TryMatchCall(this AstNode node, out EntityRef entityRef)
+    {
+        return TryMatchCall(node, out _, out _, out entityRef);
+    }
 
-        [ContractAnnotation("=>true,referenceNode:notnull,entityRef:notnull;=>false,referenceNode:canbenull,entityRef:canbenull")]
-        public static bool TryMatchCall(this AstNode node,
-                                        out AstReference referenceNode, out EntityRef entityRef)
-        {
-            return TryMatchCall(node, out _, out referenceNode, out entityRef);
-        }
+    [ContractAnnotation("=>true,referenceNode:notnull,entityRef:notnull;=>false,referenceNode:canbenull,entityRef:canbenull")]
+    public static bool TryMatchCall(this AstNode node,
+        out AstReference referenceNode, out EntityRef entityRef)
+    {
+        return TryMatchCall(node, out _, out referenceNode, out entityRef);
+    }
 
-        [ContractAnnotation("=>true,indirectCallNode:notnull,referenceNode:notnull,entityRef:notnull;=>false,indirectCallNode:canbenull,referenceNode:canbenull,entityRef:canbenull")]
-        public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode,
-                                        out AstReference referenceNode, out EntityRef entityRef)
+    [ContractAnnotation("=>true,indirectCallNode:notnull,referenceNode:notnull,entityRef:notnull;=>false,indirectCallNode:canbenull,referenceNode:canbenull,entityRef:canbenull")]
+    public static bool TryMatchCall(this AstNode node, out AstIndirectCall indirectCallNode,
+        out AstReference referenceNode, out EntityRef entityRef)
+    {
+        if ((indirectCallNode = node as AstIndirectCall) != null
+            && (referenceNode = indirectCallNode.Subject as AstReference) != null)
         {
-            if ((indirectCallNode = node as AstIndirectCall) != null
-                && (referenceNode = indirectCallNode.Subject as AstReference) != null)
-            {
-                entityRef = referenceNode.Entity;
-                return true;
-            }
-            else
-            {
-                referenceNode = null;
-                entityRef = null;
-                return false;
-            }
+            entityRef = referenceNode.Entity;
+            return true;
         }
+        else
+        {
+            referenceNode = null;
+            entityRef = null;
+            return false;
+        }
+    }
 
-        [ContractAnnotation("=>true,indirectCallNode:notnull;=>false,indirectCallNode:canbenull")]
-        public static bool IsCommandCall(this AstNode node, string commandAlias, out AstIndirectCall indirectCallNode)
-        {
-            return node.TryMatchCall(out indirectCallNode, out EntityRef entityRef) && entityRef.TryGetCommand(out var cmd) &&
-                   Engine.StringsAreEqual(cmd.Id, commandAlias);
-        }
+    [ContractAnnotation("=>true,indirectCallNode:notnull;=>false,indirectCallNode:canbenull")]
+    public static bool IsCommandCall(this AstNode node, string commandAlias, out AstIndirectCall indirectCallNode)
+    {
+        return node.TryMatchCall(out indirectCallNode, out EntityRef entityRef) && entityRef.TryGetCommand(out var cmd) &&
+            Engine.StringsAreEqual(cmd.Id, commandAlias);
     }
 }

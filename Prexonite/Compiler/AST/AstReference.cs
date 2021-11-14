@@ -28,113 +28,112 @@ using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Properties;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public sealed class AstReference : AstExpr
 {
-    public sealed class AstReference : AstExpr
+    public AstReference(ISourcePosition position, [NotNull] EntityRef entity) : base(position)
     {
-        public AstReference(ISourcePosition position, [NotNull] EntityRef entity) : base(position)
+        Entity = entity ?? throw new ArgumentNullException(nameof(entity));
+    }
+
+    [NotNull]
+    public EntityRef Entity { get; }
+
+    #region Overrides of AstNode
+
+    private class EmitLoadReferenceHandler : IEntityRefMatcher<Tuple<AstReference, CompilerTarget>, object>
+    {
+        #region Implementation of IEntityRefMatcher<in Tuple<AstReference,CompilerTarget>,out object>
+
+        public object OnFunction(EntityRef.Function function, Tuple<AstReference, CompilerTarget> argument)
         {
-            Entity = entity ?? throw new ArgumentNullException(nameof(entity));
+            var refNode = argument.Item1;
+            var target = argument.Item2;
+            target.Emit(refNode.Position, OpCode.ldr_func, function.Id, function.ModuleName);
+            return null;
         }
 
-        [NotNull]
-        public EntityRef Entity { get; }
-
-        #region Overrides of AstNode
-
-        private class EmitLoadReferenceHandler : IEntityRefMatcher<Tuple<AstReference, CompilerTarget>, object>
+        public object OnCommand(EntityRef.Command command, Tuple<AstReference, CompilerTarget> argument)
         {
-            #region Implementation of IEntityRefMatcher<in Tuple<AstReference,CompilerTarget>,out object>
-
-            public object OnFunction(EntityRef.Function function, Tuple<AstReference, CompilerTarget> argument)
-            {
-                var refNode = argument.Item1;
-                var target = argument.Item2;
-                target.Emit(refNode.Position, OpCode.ldr_func, function.Id, function.ModuleName);
-                return null;
-            }
-
-            public object OnCommand(EntityRef.Command command, Tuple<AstReference, CompilerTarget> argument)
-            {
-                var target = argument.Item2;
-                var refNode = argument.Item1;
-                target.Emit(refNode.Position, OpCode.ldr_cmd, command.Id);
-                return null;
-            }
-
-            public object OnMacroCommand(EntityRef.MacroCommand macroCommand, Tuple<AstReference, CompilerTarget> argument)
-            {
-                // Currently illegal.
-                //  => Emit ldc.null instead
-                //  => Report error
-                var refNode = argument.Item1;
-                argument.Item2.EmitNull(refNode.Position);
-                argument.Item2.Loader.ReportMessage(_macroCommandErrorMessage(refNode.Position));
-                return null;
-            }
-
-            public object OnLocalVariable(EntityRef.Variable.Local variable, Tuple<AstReference, CompilerTarget> argument)
-            {
-                argument.Item2.Emit(argument.Item1.Position, OpCode.ldr_loc, variable.Id);
-                return null;
-            }
-
-            public object OnGlobalVariable(EntityRef.Variable.Global variable, Tuple<AstReference, CompilerTarget> argument)
-            {
-                argument.Item2.Emit(
-                    argument.Item1.Position, OpCode.ldr_glob, variable.Id, variable.ModuleName);
-                return null;
-            }
-
-            #endregion
+            var target = argument.Item2;
+            var refNode = argument.Item1;
+            target.Emit(refNode.Position, OpCode.ldr_cmd, command.Id);
+            return null;
         }
 
-        private static readonly EmitLoadReferenceHandler _emitLoadReference =
-            new();
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
+        public object OnMacroCommand(EntityRef.MacroCommand macroCommand, Tuple<AstReference, CompilerTarget> argument)
         {
-            switch (semantics)
-            {
-                case StackSemantics.Value:
-                    Entity.Match(_emitLoadReference, Tuple.Create(this, target));
-                    break;
-                case StackSemantics.Effect:
-                    // Even though no code would be generated, we still want to catch
-                    // references to macro commands.
-                    if(Entity.TryGetMacroCommand(out var mcmd))
-                    {
-                        target.Loader.ReportMessage(_macroCommandErrorMessage(Position));
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(semantics));
-            }
+            // Currently illegal.
+            //  => Emit ldc.null instead
+            //  => Report error
+            var refNode = argument.Item1;
+            argument.Item2.EmitNull(refNode.Position);
+            argument.Item2.Loader.ReportMessage(_macroCommandErrorMessage(refNode.Position));
+            return null;
+        }
+
+        public object OnLocalVariable(EntityRef.Variable.Local variable, Tuple<AstReference, CompilerTarget> argument)
+        {
+            argument.Item2.Emit(argument.Item1.Position, OpCode.ldr_loc, variable.Id);
+            return null;
+        }
+
+        public object OnGlobalVariable(EntityRef.Variable.Global variable, Tuple<AstReference, CompilerTarget> argument)
+        {
+            argument.Item2.Emit(
+                argument.Item1.Position, OpCode.ldr_glob, variable.Id, variable.ModuleName);
+            return null;
         }
 
         #endregion
+    }
 
-        #region Overrides of AstExpr
+    private static readonly EmitLoadReferenceHandler _emitLoadReference =
+        new();
 
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
+    {
+        switch (semantics)
         {
-            expr = null;
-            return false;
+            case StackSemantics.Value:
+                Entity.Match(_emitLoadReference, Tuple.Create(this, target));
+                break;
+            case StackSemantics.Effect:
+                // Even though no code would be generated, we still want to catch
+                // references to macro commands.
+                if(Entity.TryGetMacroCommand(out var mcmd))
+                {
+                    target.Loader.ReportMessage(_macroCommandErrorMessage(Position));
+                }
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(semantics));
         }
+    }
 
-        public override string ToString()
-        {
-            return $"->{Entity}";
-        }
+    #endregion
 
-        #endregion
+    #region Overrides of AstExpr
 
-        [NotNull]
-        private static Message _macroCommandErrorMessage([NotNull] ISourcePosition position)
-        {
-            return Message.Error(
-                Resources.AstReference_MacroCommandReferenceNotPossible, position,
-                MessageClasses.CannotCreateReference);
-        }
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        expr = null;
+        return false;
+    }
+
+    public override string ToString()
+    {
+        return $"->{Entity}";
+    }
+
+    #endregion
+
+    [NotNull]
+    private static Message _macroCommandErrorMessage([NotNull] ISourcePosition position)
+    {
+        return Message.Error(
+            Resources.AstReference_MacroCommandReferenceNotPossible, position,
+            MessageClasses.CannotCreateReference);
     }
 }

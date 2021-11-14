@@ -27,61 +27,60 @@
 using System;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstArgumentSplice : AstExpr, IAstHasExpressions
 {
-    public class AstArgumentSplice : AstExpr, IAstHasExpressions
+    [NotNull]
+    public AstExpr ArgumentList { get; private set; }
+
+    public bool IsSplicedPlaceholder => ArgumentList is AstPlaceholder;
+
+    public AstArgumentSplice(ISourcePosition position, [NotNull] AstExpr argumentList)
+        : base(position)
     {
-        [NotNull]
-        public AstExpr ArgumentList { get; private set; }
+        ArgumentList = argumentList ?? throw new ArgumentNullException(nameof(argumentList));
+    }
 
-        public bool IsSplicedPlaceholder => ArgumentList is AstPlaceholder;
 
-        public AstArgumentSplice(ISourcePosition position, [NotNull] AstExpr argumentList)
-                : base(position)
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
+    {
+        _throwSyntaxNotSupported();
+    }
+
+    private void _throwSyntaxNotSupported()
+    {
+        throw new PartialApplicationSyntaxNotSupportedException(
+            $"This syntax does not support argument slices (*some_expr). (Position {File}:{Line} col {Column})");
+    }
+
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        if (ArgumentList.TryOptimize(target, out var next))
         {
-            ArgumentList = argumentList ?? throw new ArgumentNullException(nameof(argumentList));
+            ArgumentList = next;
         }
+        expr = null;
+        return false;
+    }
 
+    public AstExpr[] Expressions => new[] {ArgumentList};
 
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
+    public bool IsPlaceholderSplice => ArgumentList is AstPlaceholder;
+
+    public static void ReportNotSupported(AstNode splice, CompilerTarget target, StackSemantics semantics)
+    {
+        target.Loader.ReportMessage(Message.Error(
+            // Resources.AstNode__argumentSpliceNotSupportedInThisPosition
+            "Argument splice not supported in this position.", splice.Position, MessageClasses.ArgumentSpliceNotSupported));
+        if (semantics == StackSemantics.Value)
         {
-            _throwSyntaxNotSupported();
+            target.Factory.Null(splice.Position).EmitValueCode(target);
         }
+    }
 
-        private void _throwSyntaxNotSupported()
-        {
-            throw new PartialApplicationSyntaxNotSupportedException(
-                $"This syntax does not support argument slices (*some_expr). (Position {File}:{Line} col {Column})");
-        }
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            if (ArgumentList.TryOptimize(target, out var next))
-            {
-                ArgumentList = next;
-            }
-            expr = null;
-            return false;
-        }
-
-        public AstExpr[] Expressions => new[] {ArgumentList};
-
-        public bool IsPlaceholderSplice => ArgumentList is AstPlaceholder;
-
-        public static void ReportNotSupported(AstNode splice, CompilerTarget target, StackSemantics semantics)
-        {
-            target.Loader.ReportMessage(Message.Error(
-                // Resources.AstNode__argumentSpliceNotSupportedInThisPosition
-                "Argument splice not supported in this position.", splice.Position, MessageClasses.ArgumentSpliceNotSupported));
-            if (semantics == StackSemantics.Value)
-            {
-                target.Factory.Null(splice.Position).EmitValueCode(target);
-            }
-        }
-
-        public override string ToString()
-        {
-            return $"*({ArgumentList})";
-        }
+    public override string ToString()
+    {
+        return $"*({ArgumentList})";
     }
 }

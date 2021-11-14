@@ -27,21 +27,21 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 
-namespace PrexoniteTests.Tests
+namespace PrexoniteTests.Tests;
+
+public abstract class Lazy : VMTestsBase
 {
-    public abstract class Lazy : VMTestsBase
+    public Lazy()
     {
-        public Lazy()
-        {
-            CompileToCil = false;
-        }
+        CompileToCil = false;
+    }
 
 
-        [Test]
-        public void SingularThunk()
-        {
-            Compile(
-                @"
+    [Test]
+    public void SingularThunk()
+    {
+        Compile(
+            @"
 function _idT xT = xT.force;
 
 function main(n)
@@ -50,15 +50,15 @@ function main(n)
     return t.force;
 }
 ");
-            const int n = 77;
-            Expect(n, n);
-        }
+        const int n = 77;
+        Expect(n, n);
+    }
 
-        [Test]
-        public void BasicThunk()
-        {
-            Compile(
-                @"
+    [Test]
+    public void BasicThunk()
+    {
+        Compile(
+            @"
 function _addT xT yT = xT.force + yT.force;
 function _mulT xT yT = xT.force * yT.force;
 
@@ -69,19 +69,19 @@ function main(x1,y1,x2,y2)
     return t.force;
 }
 ");
-            const int x1 = 15;
-            const int x2 = 17;
-            const int y1 = 5;
-            const int y2 = -8;
-            const int dot = x1*x2 + y1*y2;
-            Expect(dot, x1, y1, x2, y2);
-        }
+        const int x1 = 15;
+        const int x2 = 17;
+        const int y1 = 5;
+        const int y2 = -8;
+        const int dot = x1*x2 + y1*y2;
+        Expect(dot, x1, y1, x2, y2);
+    }
 
-        [Test]
-        public void NotExecuted()
-        {
-            Compile(
-                @"
+    [Test]
+    public void NotExecuted()
+    {
+        Compile(
+            @"
 function _divT xT yT = xT.force / yT.force;
 function _throwT = throw ""Invalid computation"";
 function _consT hT tT = [hT,tT];
@@ -98,14 +98,14 @@ function main(x1)
 }
 ");
 
-            Expect(15, 15);
-        }
+        Expect(15, 15);
+    }
 
-        [Test]
-        public void Repeat()
-        {
-            Compile(
-                @"
+    [Test]
+    public void Repeat()
+    {
+        Compile(
+            @"
 function _consT hT tT = [hT,tT];
 function _headT xsT = xsT.force[0];
 function _tailT xsT = xsT.force[1];
@@ -134,14 +134,14 @@ function main(x1)
 }
 ");
 
-            Expect(3*4, 4);
-        }
+        Expect(3*4, 4);
+    }
 
-        [Test]
-        public void ByValueCapture()
-        {
-            Compile(
-                @"
+    [Test]
+    public void ByValueCapture()
+    {
+        Compile(
+            @"
 function main(xs)
 {
     var ys = [];
@@ -153,15 +153,15 @@ function main(xs)
 }
 ");
 
-            var xs = new List<PValue> {1, 2, 3};
-            Expect("123", (PValue) xs);
-        }
+        var xs = new List<PValue> {1, 2, 3};
+        Expect("123", (PValue) xs);
+    }
 
-        [Test]
-        public void AppendLazyFunction()
-        {
-            Compile(
-                @"
+    [Test]
+    public void AppendLazyFunction()
+    {
+        Compile(
+            @"
 
 lazy function cons hdT tlT = hdT : tlT;
 lazy function head xsT = xsT.force.Key;
@@ -225,19 +225,19 @@ function main(xs, ys, seed)
 }
 ");
 
-            var xs = new List<PValue> {"a", "b", "c"};
-            var ys = new List<PValue> {1, 2, 3};
-            const string seed = ">>";
+        var xs = new List<PValue> {"a", "b", "c"};
+        var ys = new List<PValue> {1, 2, 3};
+        const string seed = ">>";
 
-            Expect(">>abc123", (PValue) xs, (PValue) ys, seed);
-        }
+        Expect(">>abc123", (PValue) xs, (PValue) ys, seed);
+    }
 
 
-        [Test]
-        public void SimpleLetBindingStmt()
-        {
-            Compile(
-                @"
+    [Test]
+    public void SimpleLetBindingStmt()
+    {
+        Compile(
+            @"
 lazy function cons x xs = x : xs;
 
 lazy function repeat x
@@ -265,14 +265,14 @@ function main(x,n)
 
 ");
 
-            Expect("<<xxx", "x", 3);
-        }
+        Expect("<<xxx", "x", 3);
+    }
 
-        [Test]
-        public void ArgumentLetBindingStmt()
-        {
-            Compile(
-                @"
+    [Test]
+    public void ArgumentLetBindingStmt()
+    {
+        Compile(
+            @"
 lazy function cons x xs = x : xs;
 
 coroutine to_seq xsT
@@ -300,14 +300,14 @@ function main(n)
 }
 ");
 
-            Expect("<<11235813", 7);
-        }
+        Expect("<<11235813", 7);
+    }
 
-        [Test]
-        public void OutOfOrder()
-        {
-            Compile(
-                @"
+    [Test]
+    public void OutOfOrder()
+    {
+        Compile(
+            @"
 function main(a)
 {
     let b;
@@ -320,14 +320,14 @@ function main(a)
 }
 ");
 
-            Expect(8, 3);
-        }
+        Expect(8, 3);
+    }
 
-        [Test]
-        public void MutuallyRecursive()
-        {
-            Compile(
-                @"
+    [Test]
+    public void MutuallyRecursive()
+    {
+        Compile(
+            @"
 function main(n)
 {
     let flip, flop,
@@ -337,7 +337,6 @@ function main(n)
 }
 ");
 
-            Expect("<<101010", 6);
-        }
+        Expect("<<101010", 6);
     }
 }

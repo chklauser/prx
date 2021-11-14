@@ -25,12 +25,11 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 
-namespace Prexonite.Compiler.Build
+namespace Prexonite.Compiler.Build;
+
+public interface ISource
 {
-    public interface ISource
-    {
-        bool CanOpen { get; }
-        bool IsSingleUse { get; }
-        bool TryOpen(out TextReader reader);
-    }
+    bool CanOpen { get; }
+    bool IsSingleUse { get; }
+    bool TryOpen(out TextReader reader);
 }

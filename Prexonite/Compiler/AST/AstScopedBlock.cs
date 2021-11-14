@@ -26,27 +26,26 @@
 using System.Diagnostics;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstScopedBlock : AstBlock
 {
-    public class AstScopedBlock : AstBlock
+    [NotNull]
+    private readonly AstBlock _lexicalScope;
+
+    public AstScopedBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
+        : base(p,lexicalScope, uid:uid, prefix:prefix)
     {
-        [NotNull]
-        private readonly AstBlock _lexicalScope;
+        _lexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
+    }
 
-        public AstScopedBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
-            : base(p,lexicalScope, uid:uid, prefix:prefix)
-        {
-            _lexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
-        }
-
-        /// <summary>
-        ///     The node this block is a part of. Can be null.
-        /// </summary>
-        [NotNull]
-        public AstNode LexicalScope
-        {
-            [DebuggerStepThrough]
-            get => _lexicalScope;
-        }
+    /// <summary>
+    ///     The node this block is a part of. Can be null.
+    /// </summary>
+    [NotNull]
+    public AstNode LexicalScope
+    {
+        [DebuggerStepThrough]
+        get => _lexicalScope;
     }
 }

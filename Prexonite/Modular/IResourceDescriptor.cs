@@ -27,12 +27,11 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Prexonite.Modular
+namespace Prexonite.Modular;
+
+public interface IResourceDescriptor
 {
-    public interface IResourceDescriptor
-    {
-        Stream Open();
-        Task ExtractAsync(string destinationPath);
-        void Extract(string destinationPath);
-    }
+    Stream Open();
+    Task ExtractAsync(string destinationPath);
+    void Extract(string destinationPath);
 }

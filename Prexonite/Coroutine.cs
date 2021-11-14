@@ -29,209 +29,208 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Prexonite.Types;
 
-namespace Prexonite
+namespace Prexonite;
+
+/// <summary>
+///     Makes a function (or any stack context) behave like a coroutine.
+/// </summary>
+/// <seealso cref = "PFunction" />
+/// <seealso cref = "FunctionContext" />
+[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = "Coroutine")]
+public class Coroutine : IEnumerable<PValue>,
+    IObject,
+    IIndirectCall
 {
+    #region Class
+
+    private StackContext _corctx;
+
     /// <summary>
-    ///     Makes a function (or any stack context) behave like a coroutine.
+    ///     Creates a new coroutine wrapper around the supplied stack context.
     /// </summary>
-    /// <seealso cref = "PFunction" />
-    /// <seealso cref = "FunctionContext" />
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
-    public class Coroutine : IEnumerable<PValue>,
-                             IObject,
-                             IIndirectCall
+    /// <param name = "corctx">The stack context to be treated like a coroutine.</param>
+    /// <exception cref = "ArgumentNullException"><paramref name = "corctx" /> is null.</exception>
+    public Coroutine(StackContext corctx)
     {
-        #region Class
+        _corctx = corctx ?? throw new ArgumentNullException(nameof(corctx));
+    }
 
-        private StackContext _corctx;
+    /// <summary>
+    ///     Returns a description of the underlying function context.
+    /// </summary>
+    /// <returns>A description of the underlying function context.</returns>
+    public override string ToString()
+    {
+        return "coroutine " + _corctx;
+    }
 
-        /// <summary>
-        ///     Creates a new coroutine wrapper around the supplied stack context.
-        /// </summary>
-        /// <param name = "corctx">The stack context to be treated like a coroutine.</param>
-        /// <exception cref = "ArgumentNullException"><paramref name = "corctx" /> is null.</exception>
-        public Coroutine(StackContext corctx)
+    #endregion
+
+    #region IEnumerable<PValue> Members
+
+    ///<summary>
+    ///    Returns an enumerator that iterates through the collection.
+    ///</summary>
+    ///<returns>
+    ///    A <see cref = "T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
+    ///</returns>
+    ///<filterpriority>1</filterpriority>
+    public IEnumerator<PValue> GetEnumerator()
+    {
+        return new PValueEnumeratorWrapper(_internalEnumerator());
+    }
+
+    private IEnumerator<PValue> _internalEnumerator()
+    {
+        while (IsValid)
         {
-            _corctx = corctx ?? throw new ArgumentNullException(nameof(corctx));
-        }
-
-        /// <summary>
-        ///     Returns a description of the underlying function context.
-        /// </summary>
-        /// <returns>A description of the underlying function context.</returns>
-        public override string ToString()
-        {
-            return "coroutine " + _corctx;
-        }
-
-        #endregion
-
-        #region IEnumerable<PValue> Members
-
-        ///<summary>
-        ///    Returns an enumerator that iterates through the collection.
-        ///</summary>
-        ///<returns>
-        ///    A <see cref = "T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
-        ///</returns>
-        ///<filterpriority>1</filterpriority>
-        public IEnumerator<PValue> GetEnumerator()
-        {
-            return new PValueEnumeratorWrapper(_internalEnumerator());
-        }
-
-        private IEnumerator<PValue> _internalEnumerator()
-        {
-            while (IsValid)
-            {
-                var result = Execute(_corctx.ParentEngine);
-                if (!IsValid)
-                    break;
-                yield return result;
-            }
-        }
-
-        #endregion
-
-        #region IEnumerable Members
-
-        ///<summary>
-        ///    Returns an enumerator that returns all results of the coroutine one by one.
-        ///</summary>
-        ///<returns>
-        ///    An <see cref = "T:System.Collections.IEnumerator"></see> object that can be used to iterate through the results of the coroutine.
-        ///</returns>
-        ///<filterpriority>2</filterpriority>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        #endregion
-
-        #region IObject Members
-
-        /// <summary>
-        ///     Tries to dispatch a dynamic (instance) call to a <see cref = "Coroutine" /> member.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to perform the call.</param>
-        /// <param name = "args">The arguments to be passed to the call.</param>
-        /// <param name = "call">Indicates whether the call is a get or a set call.</param>
-        /// <param name = "id">The id of the member to be called.</param>
-        /// <param name = "result">The result returned by the member call.</param>
-        /// <returns>True if a member has been called; false otherwise.</returns>
-        public bool TryDynamicCall(
-            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
-        {
-            switch (id.ToLower())
-            {
-                case "indirectcall":
-                case "execute":
-                case "run":
-                    result = Execute(sctx);
-                    break;
-                case "isvalid":
-                    result = IsValid;
-                    break;
-                case "getenumerator":
-                    result = PType.Object.CreatePValue(GetEnumerator());
-                    break;
-                case "all":
-                    result = PType.List.CreatePValue(All());
-                    break;
-                default:
-                    result = null;
-                    break;
-            }
-            return result != null;
-        }
-
-        #endregion
-
-        #region IIndirectCall Members
-
-        /// <summary>
-        ///     Hands the control over to the coroutine.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execute the coroutine.</param>
-        /// <param name = "args"><strong>Ignored</strong>. The current version of Prexonite does 
-        ///     not allow you to pass additional arguments to the coroutine once it is running.</param>
-        /// <returns>The PValue generated by the coroutine</returns>
-        /// <remarks>
-        ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is 
-        ///     no longer valid (<see cref = "IsValid" />).
-        /// </remarks>
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
-        {
-            return Execute(sctx);
-        }
-
-        #endregion
-
-        #region Execution
-
-        /// <summary>
-        ///     Indicates whether the coroutine reference is still valid.
-        /// </summary>
-        /// <remarks>
-        ///     A coroutine becomes invalid once the end of the 
-        ///     underlying routine or a <strong>break</strong> or <strong>return</strong> statement has been reached.
-        /// </remarks>
-        public bool IsValid => _corctx != null;
-
-        /// <summary>
-        ///     Hands the control over to the coroutine.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execute the coroutine.</param>
-        /// <returns>The PValue generated by the coroutine</returns>
-        /// <remarks>
-        ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is no longer valid (<see cref = "IsValid" />).
-        /// </remarks>
-        public PValue Execute(StackContext sctx)
-        {
-            return Execute(sctx.ParentEngine);
-        }
-
-        /// <summary>
-        ///     Hands the control over to the coroutine.
-        /// </summary>
-        /// <param name = "eng">The engine in which to execute the coroutine.</param>
-        /// <returns>The PValue generated by the coroutine</returns>
-        /// <remarks>
-        ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is no longer valid (<see cref = "IsValid" />).
-        /// </remarks>
-        public PValue Execute(Engine eng)
-        {
+            var result = Execute(_corctx.ParentEngine);
             if (!IsValid)
-                return PType.Null.CreatePValue();
-
-            var ret = eng.Process(_corctx);
-            if (_corctx.ReturnMode != ReturnMode.Continue)
-            {
-                _corctx = null;
-                return PType.Null.CreatePValue();
-            }
-            else
-            {
-                return ret;
-            }
+                break;
+            yield return result;
         }
+    }
 
-        #endregion
+    #endregion
 
-        /// <summary>
-        ///     The meta key used to mark designated coroutine functions.
-        /// </summary>
-        public const string IsCoroutineKey = @"_\iscoroutine";
+    #region IEnumerable Members
 
-        /// <summary>
-        ///     Returns a list with all results returned by the coroutine.
-        /// </summary>
-        /// <returns>Do not use with infinite lists!</returns>
-        public List<PValue> All()
+    ///<summary>
+    ///    Returns an enumerator that returns all results of the coroutine one by one.
+    ///</summary>
+    ///<returns>
+    ///    An <see cref = "T:System.Collections.IEnumerator"></see> object that can be used to iterate through the results of the coroutine.
+    ///</returns>
+    ///<filterpriority>2</filterpriority>
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    #endregion
+
+    #region IObject Members
+
+    /// <summary>
+    ///     Tries to dispatch a dynamic (instance) call to a <see cref = "Coroutine" /> member.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to perform the call.</param>
+    /// <param name = "args">The arguments to be passed to the call.</param>
+    /// <param name = "call">Indicates whether the call is a get or a set call.</param>
+    /// <param name = "id">The id of the member to be called.</param>
+    /// <param name = "result">The result returned by the member call.</param>
+    /// <returns>True if a member has been called; false otherwise.</returns>
+    public bool TryDynamicCall(
+        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    {
+        switch (id.ToLower())
         {
-            return new(this);
+            case "indirectcall":
+            case "execute":
+            case "run":
+                result = Execute(sctx);
+                break;
+            case "isvalid":
+                result = IsValid;
+                break;
+            case "getenumerator":
+                result = PType.Object.CreatePValue(GetEnumerator());
+                break;
+            case "all":
+                result = PType.List.CreatePValue(All());
+                break;
+            default:
+                result = null;
+                break;
         }
+        return result != null;
+    }
+
+    #endregion
+
+    #region IIndirectCall Members
+
+    /// <summary>
+    ///     Hands the control over to the coroutine.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to execute the coroutine.</param>
+    /// <param name = "args"><strong>Ignored</strong>. The current version of Prexonite does 
+    ///     not allow you to pass additional arguments to the coroutine once it is running.</param>
+    /// <returns>The PValue generated by the coroutine</returns>
+    /// <remarks>
+    ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is 
+    ///     no longer valid (<see cref = "IsValid" />).
+    /// </remarks>
+    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    {
+        return Execute(sctx);
+    }
+
+    #endregion
+
+    #region Execution
+
+    /// <summary>
+    ///     Indicates whether the coroutine reference is still valid.
+    /// </summary>
+    /// <remarks>
+    ///     A coroutine becomes invalid once the end of the 
+    ///     underlying routine or a <strong>break</strong> or <strong>return</strong> statement has been reached.
+    /// </remarks>
+    public bool IsValid => _corctx != null;
+
+    /// <summary>
+    ///     Hands the control over to the coroutine.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to execute the coroutine.</param>
+    /// <returns>The PValue generated by the coroutine</returns>
+    /// <remarks>
+    ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is no longer valid (<see cref = "IsValid" />).
+    /// </remarks>
+    public PValue Execute(StackContext sctx)
+    {
+        return Execute(sctx.ParentEngine);
+    }
+
+    /// <summary>
+    ///     Hands the control over to the coroutine.
+    /// </summary>
+    /// <param name = "eng">The engine in which to execute the coroutine.</param>
+    /// <returns>The PValue generated by the coroutine</returns>
+    /// <remarks>
+    ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is no longer valid (<see cref = "IsValid" />).
+    /// </remarks>
+    public PValue Execute(Engine eng)
+    {
+        if (!IsValid)
+            return PType.Null.CreatePValue();
+
+        var ret = eng.Process(_corctx);
+        if (_corctx.ReturnMode != ReturnMode.Continue)
+        {
+            _corctx = null;
+            return PType.Null.CreatePValue();
+        }
+        else
+        {
+            return ret;
+        }
+    }
+
+    #endregion
+
+    /// <summary>
+    ///     The meta key used to mark designated coroutine functions.
+    /// </summary>
+    public const string IsCoroutineKey = @"_\iscoroutine";
+
+    /// <summary>
+    ///     Returns a list with all results returned by the coroutine.
+    /// </summary>
+    /// <returns>Do not use with infinite lists!</returns>
+    public List<PValue> All()
+    {
+        return new(this);
     }
 }

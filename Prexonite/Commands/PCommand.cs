@@ -26,119 +26,118 @@
 using System;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands;
+
+/// <summary>
+///     The abstract base class for all commands (built-in functions)
+/// </summary>
+public abstract class PCommand : IIndirectCall
 {
     /// <summary>
-    ///     The abstract base class for all commands (built-in functions)
+    ///     Executes the command.
     /// </summary>
-    public abstract class PCommand : IIndirectCall
+    /// <param name = "sctx">The stack context in which to execut the command.</param>
+    /// <param name = "args">The arguments to be passed to the command.</param>
+    /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
+    public abstract PValue Run(StackContext sctx, PValue[] args);
+
+    [Obsolete(
+        "IsPure mechanism was abandoned in v1.2. Use ICilExtension to perform constant folding instead."
+    )]
+    // ReSharper disable UnusedMember.Global
+    // ReSharper disable VirtualMemberNeverOverriden.Global
+    public virtual bool IsPure
+        // ReSharper restore VirtualMemberNeverOverriden.Global
+        =>
+            false; // ReSharper restore UnusedMember.Global
+
+    #region Command groups
+
+    /// <summary>
+    ///     A bit fields that represents memberships in the <see cref = "PCommandGroups" />.
+    /// </summary>
+    public PCommandGroups Groups { get; private set; } = PCommandGroups.None;
+
+    /// <summary>
+    ///     Indicates whether the command belongs to a group.
+    /// </summary>
+    public bool BelongsToAGroup => Groups != PCommandGroups.None;
+
+    /// <summary>
+    ///     Determines whether the command is a member of a particular group.
+    /// </summary>
+    /// <param name = "groups">The group (or groups) to test the command for.</param>
+    /// <returns>True, if the command is a member of the supplied group (or all groups); false otherwise.</returns>
+    public bool IsInGroup(PCommandGroups groups)
     {
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to execut the command.</param>
-        /// <param name = "args">The arguments to be passed to the command.</param>
-        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-        public abstract PValue Run(StackContext sctx, PValue[] args);
-
-        [Obsolete(
-            "IsPure mechanism was abandoned in v1.2. Use ICilExtension to perform constant folding instead."
-            )]
-        // ReSharper disable UnusedMember.Global
-            // ReSharper disable VirtualMemberNeverOverriden.Global
-            public virtual bool IsPure
-            // ReSharper restore VirtualMemberNeverOverriden.Global
-            =>
-                false; // ReSharper restore UnusedMember.Global
-
-        #region Command groups
-
-        /// <summary>
-        ///     A bit fields that represents memberships in the <see cref = "PCommandGroups" />.
-        /// </summary>
-        public PCommandGroups Groups { get; private set; } = PCommandGroups.None;
-
-        /// <summary>
-        ///     Indicates whether the command belongs to a group.
-        /// </summary>
-        public bool BelongsToAGroup => Groups != PCommandGroups.None;
-
-        /// <summary>
-        ///     Determines whether the command is a member of a particular group.
-        /// </summary>
-        /// <param name = "groups">The group (or groups) to test the command for.</param>
-        /// <returns>True, if the command is a member of the supplied group (or all groups); false otherwise.</returns>
-        public bool IsInGroup(PCommandGroups groups)
-        {
-            return (Groups & groups) == Groups;
-            //If _groups contains groups, an AND operation won't alter it
-        }
-
-        /// <summary>
-        ///     Adds the command to the supplied group (or groups).
-        /// </summary>
-        /// <param name = "additionalGroups">The group (or groups) to which to add the command.</param>
-        public void AddToGroup(PCommandGroups additionalGroups)
-        {
-            Groups = Groups | additionalGroups;
-        }
-
-        /// <summary>
-        ///     Removes the command from the supplied group (or groups)
-        /// </summary>
-        /// <param name = "groups">The group (or groups) from which to remove the command.</param>
-        public void RemoveFromGroup(PCommandGroups groups)
-        {
-            Groups = Groups ^ (Groups & groups);
-        }
-
-        #endregion
-
-        #region IIndirectCall Members
-
-        /// <summary>
-        ///     Runs the command. (Calls <see cref = "Run" />)
-        /// </summary>
-        /// <param name = "sctx">The stack context in which to call the command.</param>
-        /// <param name = "args">The arguments to pass to the command.</param>
-        /// <returns>The value returned by the command.</returns>
-        PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
-        {
-            return Run(sctx, args) ?? PType.Null.CreatePValue();
-        }
-
-        #endregion
+        return (Groups & groups) == Groups;
+        //If _groups contains groups, an AND operation won't alter it
     }
 
     /// <summary>
-    ///     Defines command spaces (or groups).
+    ///     Adds the command to the supplied group (or groups).
     /// </summary>
-    [Flags]
-    public enum PCommandGroups
+    /// <param name = "additionalGroups">The group (or groups) to which to add the command.</param>
+    public void AddToGroup(PCommandGroups additionalGroups)
     {
-        /// <summary>
-        ///     No command group.
-        /// </summary>
-        None = 0,
-
-        /// <summary>
-        ///     The command group reserved for built-in commands. Supplied by the Prexonite VM.
-        /// </summary>
-        Engine = 1,
-
-        /// <summary>
-        ///     The command group for commands provided by the host application.
-        /// </summary>
-        Host = 2,
-
-        /// <summary>
-        ///     The command group for commands added by user code (script code).
-        /// </summary>
-        User = 4,
-
-        /// <summary>
-        ///     The command group for commands added by the compiler (for the build block).
-        /// </summary>
-        Compiler = 8
+        Groups = Groups | additionalGroups;
     }
+
+    /// <summary>
+    ///     Removes the command from the supplied group (or groups)
+    /// </summary>
+    /// <param name = "groups">The group (or groups) from which to remove the command.</param>
+    public void RemoveFromGroup(PCommandGroups groups)
+    {
+        Groups = Groups ^ (Groups & groups);
+    }
+
+    #endregion
+
+    #region IIndirectCall Members
+
+    /// <summary>
+    ///     Runs the command. (Calls <see cref = "Run" />)
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to call the command.</param>
+    /// <param name = "args">The arguments to pass to the command.</param>
+    /// <returns>The value returned by the command.</returns>
+    PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
+    {
+        return Run(sctx, args) ?? PType.Null.CreatePValue();
+    }
+
+    #endregion
+}
+
+/// <summary>
+///     Defines command spaces (or groups).
+/// </summary>
+[Flags]
+public enum PCommandGroups
+{
+    /// <summary>
+    ///     No command group.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    ///     The command group reserved for built-in commands. Supplied by the Prexonite VM.
+    /// </summary>
+    Engine = 1,
+
+    /// <summary>
+    ///     The command group for commands provided by the host application.
+    /// </summary>
+    Host = 2,
+
+    /// <summary>
+    ///     The command group for commands added by user code (script code).
+    /// </summary>
+    User = 4,
+
+    /// <summary>
+    ///     The command group for commands added by the compiler (for the build block).
+    /// </summary>
+    Compiler = 8
 }

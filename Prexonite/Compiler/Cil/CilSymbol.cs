@@ -31,43 +31,42 @@ using cop = System.Reflection.Emit.OpCodes;
 
 #endregion
 
-namespace Prexonite.Compiler.Cil
+namespace Prexonite.Compiler.Cil;
+
+public class CilSymbol
 {
-    public class CilSymbol
+    [DebuggerStepThrough]
+    public CilSymbol(SymbolKind kind)
     {
-        [DebuggerStepThrough]
-        public CilSymbol(SymbolKind kind)
-        {
-            Kind = kind;
-        }
+        Kind = kind;
+    }
 
-        public SymbolKind Kind { [DebuggerStepThrough]
+    public SymbolKind Kind { [DebuggerStepThrough]
         get; [DebuggerStepThrough]
         set; }
 
-        public LocalBuilder Local { [DebuggerStepThrough]
+    public LocalBuilder Local { [DebuggerStepThrough]
         get; [DebuggerStepThrough]
         set; }
 
-        public void EmitLoad(CompilerState state)
+    public void EmitLoad(CompilerState state)
+    {
+        switch (Kind)
         {
-            switch (Kind)
-            {
-                case SymbolKind.Local:
-                    state.EmitLoadLocal(Local.LocalIndex);
-                    break;
-                case SymbolKind.LocalRef:
-                    state.EmitLoadLocal(Local.LocalIndex);
-                    state.Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
-                    break;
-            }
+            case SymbolKind.Local:
+                state.EmitLoadLocal(Local.LocalIndex);
+                break;
+            case SymbolKind.LocalRef:
+                state.EmitLoadLocal(Local.LocalIndex);
+                state.Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
+                break;
         }
     }
+}
 
-    public enum SymbolKind
-    {
-        Local,
-        LocalRef,
-        LocalEnum
-    }
+public enum SymbolKind
+{
+    Local,
+    LocalRef,
+    LocalEnum
 }

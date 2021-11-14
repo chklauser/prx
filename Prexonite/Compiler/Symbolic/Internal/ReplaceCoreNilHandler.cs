@@ -24,23 +24,22 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace Prexonite.Compiler.Symbolic.Internal
+namespace Prexonite.Compiler.Symbolic.Internal;
+
+public class ReplaceCoreNilHandler : TransformHandler<Symbol>
 {
-    public class ReplaceCoreNilHandler : TransformHandler<Symbol>
+    #region Singleton Pattern
+
+    public static ReplaceCoreNilHandler Instance { get; } = new();
+
+    private ReplaceCoreNilHandler()
     {
-        #region Singleton Pattern
+    }
 
-        public static ReplaceCoreNilHandler Instance { get; } = new();
+    #endregion
 
-        private ReplaceCoreNilHandler()
-        {
-        }
-
-        #endregion
-
-        public override Symbol HandleNil(NilSymbol self, Symbol argument)
-        {
-            return argument;
-        }
+    public override Symbol HandleNil(NilSymbol self, Symbol argument)
+    {
+        return argument;
     }
 }

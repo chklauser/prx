@@ -32,314 +32,313 @@ using System.Diagnostics;
 using System.Linq;
 using Prexonite.Types;
 
-namespace Prexonite
+namespace Prexonite;
+
+/// <summary>
+/// </summary>
+/// <typeparam name = "TKey">Identifier for nodes.</typeparam>
+/// <typeparam name = "TValue">Nodes of the dependency graph.</typeparam>
+public class DependencyAnalysis<TKey, TValue> where
+    TValue : class, IDependent<TKey>
 {
+    private readonly Dictionary<TKey, Node> _nodes = new();
+
     /// <summary>
+    ///     Creates a new dependency analysis object from the supplied set of items.
     /// </summary>
-    /// <typeparam name = "TKey">Identifier for nodes.</typeparam>
-    /// <typeparam name = "TValue">Nodes of the dependency graph.</typeparam>
-    public class DependencyAnalysis<TKey, TValue> where
-                                                      TValue : class, IDependent<TKey>
+    /// <param name = "query">The set of (possibly) interdependent items.</param>
+    /// <exception cref = "ArgumentNullException">query is null</exception>
+    public DependencyAnalysis(IEnumerable<TValue> query) : this(query, true)
     {
-        private readonly Dictionary<TKey, Node> _nodes = new();
+    }
 
-        /// <summary>
-        ///     Creates a new dependency analysis object from the supplied set of items.
-        /// </summary>
-        /// <param name = "query">The set of (possibly) interdependent items.</param>
-        /// <exception cref = "ArgumentNullException">query is null</exception>
-        public DependencyAnalysis(IEnumerable<TValue> query) : this(query, true)
+    /// <summary>
+    ///     Creates a new dependency analysis object from the supplied set of items.
+    /// </summary>
+    /// <param name = "query">The set of (possibly) interdependent items.</param>
+    /// <param name = "ignoreUnknownDependencies">Indicates whether to ignore dependencies to items not included in the set. Enabled by default.</param>
+    /// <exception cref = "ArgumentNullException">query is null</exception>
+    /// <exception cref = "ArgumentException">Set contains dependency one element not in the set AND <paramref
+    ///      name = "ignoreUnknownDependencies" /> is false.</exception>
+    public DependencyAnalysis(IEnumerable<TValue> query, bool ignoreUnknownDependencies)
+    {
+        if (query == null) throw new ArgumentNullException(nameof(query));
+
+        //Add all items
+        foreach (var item in query)
+            _nodes.Add(item.Name, new Node(item));
+
+        //Find dependencies
+        foreach (var node in _nodes.Values)
         {
-        }
-
-        /// <summary>
-        ///     Creates a new dependency analysis object from the supplied set of items.
-        /// </summary>
-        /// <param name = "query">The set of (possibly) interdependent items.</param>
-        /// <param name = "ignoreUnknownDependencies">Indicates whether to ignore dependencies to items not included in the set. Enabled by default.</param>
-        /// <exception cref = "ArgumentNullException">query is null</exception>
-        /// <exception cref = "ArgumentException">Set contains dependency one element not in the set AND <paramref
-        ///      name = "ignoreUnknownDependencies" /> is false.</exception>
-        public DependencyAnalysis(IEnumerable<TValue> query, bool ignoreUnknownDependencies)
-        {
-            if (query == null) throw new ArgumentNullException(nameof(query));
-
-            //Add all items
-            foreach (var item in query)
-                _nodes.Add(item.Name, new Node(item));
-
-            //Find dependencies
-            foreach (var node in _nodes.Values)
+            var dependencies =
+                _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
+            foreach (var dependencyName in dependencies)
             {
-                var dependencies =
-                    _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
-                foreach (var dependencyName in dependencies)
+                if (_nodes.TryGetValue(dependencyName, out var dependency))
                 {
-                    if (_nodes.TryGetValue(dependencyName, out var dependency))
-                    {
-                        node.Dependencies.Add(dependency);
-                        dependency.Clients.Add(node);
-                    }
-                    else if (!ignoreUnknownDependencies)
-                        throw new ArgumentException("Cannot resolve dependency " + dependencyName +
-                            " of " + node.Subject + ".");
-                    //else ignore
+                    node.Dependencies.Add(dependency);
+                    dependency.Clients.Add(node);
                 }
+                else if (!ignoreUnknownDependencies)
+                    throw new ArgumentException("Cannot resolve dependency " + dependencyName +
+                        " of " + node.Subject + ".");
+                //else ignore
             }
         }
+    }
 
-        public DependencyAnalysis(IEnumerable<PValue> query)
-            : this(_acceptPValueSequence(query))
+    public DependencyAnalysis(IEnumerable<PValue> query)
+        : this(_acceptPValueSequence(query))
+    {
+    }
+
+    private static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
+    {
+        return from pv in query
+            select (TValue) pv.Value;
+    }
+
+    public DependencyAnalysis(IEnumerable<PValue> query, bool ignoreUnknownDependencies)
+        : this(_acceptPValueSequence(query), ignoreUnknownDependencies)
+    {
+    }
+
+    [DebuggerStepThrough]
+    internal class SearchEnv
+    {
+        public readonly Stack<Node> Unassigned = new();
+        public int CurrentDfbi;
+
+        public override string ToString()
+        {
+            return $"DFBI: {CurrentDfbi}; {Unassigned.Select(n => n.Name).ToEnumerationString()}";
+        }
+    }
+
+    public IEnumerable<Group> GetMutuallyRecursiveGroups()
+    {
+        var env = new SearchEnv();
+
+        //Search for groups from each node in turn to reach the whole graph
+        foreach (var node in _nodes.Values)
+        {
+            if (!node.HasBeenVisited)
+                foreach (var group in node._Search(env))
+                    yield return group;
+        }
+    }
+
+    #region Immutable group
+
+    [DebuggerStepThrough, DebuggerDisplay("{Extensions.ToEnumerationString(GetNames())}")]
+    public class Group : ExtendableObject, ICollection<Node>
+    {
+        private readonly LinkedList<Node> _list;
+
+        public Group(LinkedList<Node> list)
+        {
+            _list = list ?? throw new ArgumentNullException(nameof(list));
+        }
+
+        public Group(IEnumerable<Node> nodes) : this(nodes.ToLinkedList())
         {
         }
 
-        private static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
+        public void CopyTo(Node[] array, int arrayIndex)
         {
-            return from pv in query
-                   select (TValue) pv.Value;
+            _list.CopyTo(array, arrayIndex);
         }
 
-        public DependencyAnalysis(IEnumerable<PValue> query, bool ignoreUnknownDependencies)
-            : this(_acceptPValueSequence(query), ignoreUnknownDependencies)
+        bool ICollection<Node>.Remove(Node item)
         {
+            throw new NotSupportedException("Dependency analysis groups cannot be modified.");
         }
 
-        [DebuggerStepThrough]
-        internal class SearchEnv
-        {
-            public readonly Stack<Node> Unassigned = new();
-            public int CurrentDfbi;
+        public int Count => _list.Count;
 
-            public override string ToString()
-            {
-                return $"DFBI: {CurrentDfbi}; {Unassigned.Select(n => n.Name).ToEnumerationString()}";
-            }
+        public bool IsReadOnly => ((ICollection<Node>) _list).IsReadOnly;
+
+        public IEnumerator<Node> GetEnumerator()
+        {
+            return _list.GetEnumerator();
         }
 
-        public IEnumerable<Group> GetMutuallyRecursiveGroups()
+        public IEnumerable<TValue> GetValues()
         {
-            var env = new SearchEnv();
-
-            //Search for groups from each node in turn to reach the whole graph
-            foreach (var node in _nodes.Values)
-            {
-                if (!node.HasBeenVisited)
-                    foreach (var group in node._Search(env))
-                        yield return group;
-            }
+            return from node in _list
+                select node.Subject;
         }
 
-        #region Immutable group
-
-        [DebuggerStepThrough, DebuggerDisplay("{Extensions.ToEnumerationString(GetNames())}")]
-        public class Group : ExtendableObject, ICollection<Node>
+        public IEnumerable<TKey> GetNames()
         {
-            private readonly LinkedList<Node> _list;
-
-            public Group(LinkedList<Node> list)
-            {
-                _list = list ?? throw new ArgumentNullException(nameof(list));
-            }
-
-            public Group(IEnumerable<Node> nodes) : this(nodes.ToLinkedList())
-            {
-            }
-
-            public void CopyTo(Node[] array, int arrayIndex)
-            {
-                _list.CopyTo(array, arrayIndex);
-            }
-
-            bool ICollection<Node>.Remove(Node item)
-            {
-                throw new NotSupportedException("Dependency analysis groups cannot be modified.");
-            }
-
-            public int Count => _list.Count;
-
-            public bool IsReadOnly => ((ICollection<Node>) _list).IsReadOnly;
-
-            public IEnumerator<Node> GetEnumerator()
-            {
-                return _list.GetEnumerator();
-            }
-
-            public IEnumerable<TValue> GetValues()
-            {
-                return from node in _list
-                       select node.Subject;
-            }
-
-            public IEnumerable<TKey> GetNames()
-            {
-                return from node in _list
-                       select node.Name;
-            }
-
-            public TValue[] ToArray()
-            {
-                var a = new TValue[_list.Count];
-                var index = 0;
-                foreach (var node in _list)
-                    a[index++] = node.Subject;
-                return a;
-            }
-
-            void ICollection<Node>.Add(Node item)
-            {
-                Add(item);
-            }
-
-            protected void Add(Node item)
-            {
-                throw new NotSupportedException("Dependency analysis groups cannot be modified.");
-            }
-
-            void ICollection<Node>.Clear()
-            {
-                Clear();
-            }
-
-            protected void Clear()
-            {
-                throw new NotSupportedException("Dependency analysis groups cannot be modified.");
-            }
-
-            public bool Contains(Node item)
-            {
-                return _list.Contains(item);
-            }
-
-            #region Implementation of IEnumerable
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            #endregion
+            return from node in _list
+                select node.Name;
         }
 
-        #endregion
-
-        #region Node (nested class)
-
-        [DebuggerStepThrough, DebuggerDisplay("{Subject}")]
-        public class Node : ExtendableObject, IEquatable<Node>, INamed<TKey>
+        public TValue[] ToArray()
         {
-            private bool _assignmentPending;
-            private int _dfbi, _q;
+            var a = new TValue[_list.Count];
+            var index = 0;
+            foreach (var node in _list)
+                a[index++] = node.Subject;
+            return a;
+        }
 
-            public bool HasBeenVisited { [DebuggerStepThrough] get; private set; }
+        void ICollection<Node>.Add(Node item)
+        {
+            Add(item);
+        }
 
-            public Node(TValue subject)
-            {
-                Subject = subject ?? throw new ArgumentNullException(nameof(subject));
-            }
+        protected void Add(Node item)
+        {
+            throw new NotSupportedException("Dependency analysis groups cannot be modified.");
+        }
 
-            public bool IsDirectlyRecursive => Dependencies.Contains(this);
+        void ICollection<Node>.Clear()
+        {
+            Clear();
+        }
 
-            public HashSet<Node> Dependencies { [DebuggerStepThrough] get; } = new();
+        protected void Clear()
+        {
+            throw new NotSupportedException("Dependency analysis groups cannot be modified.");
+        }
 
-            public HashSet<Node> Clients { [DebuggerStepThrough] get; } = new();
+        public bool Contains(Node item)
+        {
+            return _list.Contains(item);
+        }
 
+        #region Implementation of IEnumerable
 
-            public TValue Subject { [DebuggerStepThrough] get; }
-
-            #region Class
-
-            /// <summary>
-            ///     Indicates whether the current object is equal to another object of the same type.
-            /// </summary>
-            /// <returns>
-            ///     true if the current object is equal to the <paramref name = "other" /> parameter; otherwise, false.
-            /// </returns>
-            /// <param name = "other">An object to compare with this object.</param>
-            public bool Equals(Node other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return Equals(Name, other.Name) && Equals(other.Subject, Subject);
-            }
-
-            /// <summary>
-            ///     Determines whether the specified <see cref = "object" /> is equal to the current <see cref = "object" />.
-            /// </summary>
-            /// <returns>
-            ///     true if the specified <see cref = "object" /> is equal to the current <see cref = "object" />; otherwise, false.
-            /// </returns>
-            /// <param name = "obj">The <see cref = "object" /> to compare with the current <see cref = "object" />. </param>
-            /// <exception cref = "NullReferenceException">The <paramref name = "obj" /> parameter is null.</exception>
-            /// <filterpriority>2</filterpriority>
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != typeof (Node)) return false;
-                return Equals((Node) obj);
-            }
-
-            /// <summary>
-            ///     Serves as a hash function for a particular type.
-            /// </summary>
-            /// <returns>
-            ///     A hash code for the current <see cref = "object" />.
-            /// </returns>
-            /// <filterpriority>2</filterpriority>
-            public override int GetHashCode()
-            {
-                return Subject.GetHashCode();
-            }
-
-            public static implicit operator TValue(Node node)
-            {
-                return node.Subject;
-            }
-
-            #endregion
-
-            internal IEnumerable<Group> _Search(SearchEnv env)
-            {
-                HasBeenVisited = true;
-                env.CurrentDfbi++;
-                _dfbi = env.CurrentDfbi;
-                _q = env.CurrentDfbi;
-                env.Unassigned.Push(this);
-                _assignmentPending = true;
-
-                foreach (var dep in Dependencies)
-                    if (!dep.HasBeenVisited)
-                    {
-                        foreach (var group in dep._Search(env))
-                            yield return group;
-                        _q = Math.Min(_q, dep._q);
-                    }
-                    else if (dep._assignmentPending && dep._dfbi < _dfbi)
-                    {
-                        _q = Math.Min(_q, dep._dfbi);
-                    }
-
-                if (_q == _dfbi)
-                {
-                    var group = new LinkedList<Node>();
-                    Node u;
-                    do
-                    {
-                        u = env.Unassigned.Pop();
-                        u._assignmentPending = false;
-                        group.AddLast(u);
-                    } while (u != this);
-                    yield return new Group(group);
-                }
-            }
-
-            #region Implementation of INamed
-
-            public TKey Name => Subject.Name;
-
-            #endregion
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         #endregion
     }
+
+    #endregion
+
+    #region Node (nested class)
+
+    [DebuggerStepThrough, DebuggerDisplay("{Subject}")]
+    public class Node : ExtendableObject, IEquatable<Node>, INamed<TKey>
+    {
+        private bool _assignmentPending;
+        private int _dfbi, _q;
+
+        public bool HasBeenVisited { [DebuggerStepThrough] get; private set; }
+
+        public Node(TValue subject)
+        {
+            Subject = subject ?? throw new ArgumentNullException(nameof(subject));
+        }
+
+        public bool IsDirectlyRecursive => Dependencies.Contains(this);
+
+        public HashSet<Node> Dependencies { [DebuggerStepThrough] get; } = new();
+
+        public HashSet<Node> Clients { [DebuggerStepThrough] get; } = new();
+
+
+        public TValue Subject { [DebuggerStepThrough] get; }
+
+        #region Class
+
+        /// <summary>
+        ///     Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <returns>
+        ///     true if the current object is equal to the <paramref name = "other" /> parameter; otherwise, false.
+        /// </returns>
+        /// <param name = "other">An object to compare with this object.</param>
+        public bool Equals(Node other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Equals(Name, other.Name) && Equals(other.Subject, Subject);
+        }
+
+        /// <summary>
+        ///     Determines whether the specified <see cref = "object" /> is equal to the current <see cref = "object" />.
+        /// </summary>
+        /// <returns>
+        ///     true if the specified <see cref = "object" /> is equal to the current <see cref = "object" />; otherwise, false.
+        /// </returns>
+        /// <param name = "obj">The <see cref = "object" /> to compare with the current <see cref = "object" />. </param>
+        /// <exception cref = "NullReferenceException">The <paramref name = "obj" /> parameter is null.</exception>
+        /// <filterpriority>2</filterpriority>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != typeof (Node)) return false;
+            return Equals((Node) obj);
+        }
+
+        /// <summary>
+        ///     Serves as a hash function for a particular type.
+        /// </summary>
+        /// <returns>
+        ///     A hash code for the current <see cref = "object" />.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return Subject.GetHashCode();
+        }
+
+        public static implicit operator TValue(Node node)
+        {
+            return node.Subject;
+        }
+
+        #endregion
+
+        internal IEnumerable<Group> _Search(SearchEnv env)
+        {
+            HasBeenVisited = true;
+            env.CurrentDfbi++;
+            _dfbi = env.CurrentDfbi;
+            _q = env.CurrentDfbi;
+            env.Unassigned.Push(this);
+            _assignmentPending = true;
+
+            foreach (var dep in Dependencies)
+                if (!dep.HasBeenVisited)
+                {
+                    foreach (var group in dep._Search(env))
+                        yield return group;
+                    _q = Math.Min(_q, dep._q);
+                }
+                else if (dep._assignmentPending && dep._dfbi < _dfbi)
+                {
+                    _q = Math.Min(_q, dep._dfbi);
+                }
+
+            if (_q == _dfbi)
+            {
+                var group = new LinkedList<Node>();
+                Node u;
+                do
+                {
+                    u = env.Unassigned.Pop();
+                    u._assignmentPending = false;
+                    group.AddLast(u);
+                } while (u != this);
+                yield return new Group(group);
+            }
+        }
+
+        #region Implementation of INamed
+
+        public TKey Name => Subject.Name;
+
+        #endregion
+    }
+
+    #endregion
 }

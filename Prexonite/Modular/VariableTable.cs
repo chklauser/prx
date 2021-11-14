@@ -24,31 +24,30 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace Prexonite.Modular
+namespace Prexonite.Modular;
+
+public class VariableTable : System.Collections.ObjectModel.KeyedCollection<string,VariableDeclaration>
 {
-    public class VariableTable : System.Collections.ObjectModel.KeyedCollection<string,VariableDeclaration>
+    protected override string GetKeyForItem(VariableDeclaration item)
     {
-        protected override string GetKeyForItem(VariableDeclaration item)
-        {
-            return item.Id;
-        }
+        return item.Id;
+    }
 
-        public VariableTable() : base(Engine.DefaultStringComparer)
-        {
-        }
+    public VariableTable() : base(Engine.DefaultStringComparer)
+    {
+    }
 
-        public bool TryGetVariable(string id, out VariableDeclaration variable)
+    public bool TryGetVariable(string id, out VariableDeclaration variable)
+    {
+        if (Contains(id))
         {
-            if (Contains(id))
-            {
-                variable = this[id];
-                return true;
-            }
-            else
-            {
-                variable = null;
-                return false;
-            }
+            variable = this[id];
+            return true;
+        }
+        else
+        {
+            variable = null;
+            return false;
         }
     }
 }

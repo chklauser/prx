@@ -26,129 +26,128 @@
 using System;
 using Prexonite.Types;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstGetSetMemberAccess : AstGetSetImplBase,
+    IAstPartiallyApplicable
 {
-    public class AstGetSetMemberAccess : AstGetSetImplBase,
-                                         IAstPartiallyApplicable
+    public string Id { get; set; }
+    public AstExpr Subject { get; set; }
+
+    public override AstExpr[] Expressions
     {
-        public string Id { get; set; }
-        public AstExpr Subject { get; set; }
-
-        public override AstExpr[] Expressions
+        get
         {
-            get
-            {
-                var len = Arguments.Count;
-                var ary = new AstExpr[len + 1];
-                Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
-                ary[0] = Subject;
-                return ary;
-            }
+            var len = Arguments.Count;
+            var ary = new AstExpr[len + 1];
+            Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
+            ary[0] = Subject;
+            return ary;
         }
-
-        public AstGetSetMemberAccess(
-            string file, int line, int column, PCall call, AstExpr subject, string id)
-            : base(file, line, column, call)
-        {
-            id ??= "";
-            Subject = subject ?? throw new ArgumentNullException(nameof(subject));
-            Id = id;
-        }
-
-        internal AstGetSetMemberAccess(Parser p, PCall call, AstExpr subject, string id)
-            : this(p.scanner.File, p.t.line, p.t.col, call, subject, id)
-        {
-        }
-
-        public AstGetSetMemberAccess(string file, int line, int column, PCall call, string id)
-            : this(file, line, column, call, null, id)
-        {
-        }
-
-        internal AstGetSetMemberAccess(Parser p, PCall call, string id)
-            : this(p, call, null, id)
-        {
-        }
-
-        public AstGetSetMemberAccess(string file, int line, int column, string id)
-            : this(file, line, column, PCall.Get, id)
-        {
-        }
-
-        internal AstGetSetMemberAccess(Parser p, string id)
-            : this(p.scanner.File, p.t.line, p.t.col, PCall.Get, id)
-        {
-        }
-
-        public AstGetSetMemberAccess(
-            string file, int line, int column, AstExpr subject, string id)
-            : this(file, line, column, PCall.Get, subject, id)
-        {
-        }
-
-        internal AstGetSetMemberAccess(Parser p, AstExpr subject, string id)
-            : this(p, PCall.Get, subject, id)
-        {
-        }
-
-        public override int DefaultAdditionalArguments => base.DefaultAdditionalArguments + 1;
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            Subject.EmitValueCode(target);
-            base.DoEmitCode(target, stackSemantics);
-        }
-
-        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            target.EmitGetCall(Position, Arguments.Count, Id, stackSemantics == StackSemantics.Effect);
-        }
-
-        protected override void EmitSetCode(CompilerTarget target)
-        {
-            target.EmitSetCall(Position, Arguments.Count, Id);
-        }
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            base.TryOptimize(target, out expr);
-            var subject = Subject;
-            _OptimizeNode(target, ref subject);
-            Subject = subject;
-            return false;
-        }
-
-        public override AstGetSet GetCopy()
-        {
-            var copy = new AstGetSetMemberAccess(File, Line, Column, Call, Subject, Id);
-            CopyBaseMembers(copy);
-            return copy;
-        }
-
-        public override string ToString()
-        {
-            var name = Enum.GetName(typeof (PCall), Call);
-            return $"{name?.ToLowerInvariant() ?? "-"}: ({Subject}).{Id}{ArgumentsToString()}";
-        }
-
-        #region Implementation of IAstPartiallyApplicable
-
-        public void DoEmitPartialApplicationCode(CompilerTarget target)
-        {
-            var argv =
-                AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton().Append(Arguments));
-            var ctorArgc = this.EmitConstructorArguments(target, argv);
-            target.EmitConstant(Position, (int) Call);
-            target.EmitConstant(Position, Id);
-            target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);
-        }
-
-        public override NodeApplicationState CheckNodeApplicationState()
-        {
-            var state = base.CheckNodeApplicationState();
-            return state.WithPlaceholders(state.HasPlaceholders || Subject.IsPlaceholder());
-        }
-
-        #endregion
     }
+
+    public AstGetSetMemberAccess(
+        string file, int line, int column, PCall call, AstExpr subject, string id)
+        : base(file, line, column, call)
+    {
+        id ??= "";
+        Subject = subject ?? throw new ArgumentNullException(nameof(subject));
+        Id = id;
+    }
+
+    internal AstGetSetMemberAccess(Parser p, PCall call, AstExpr subject, string id)
+        : this(p.scanner.File, p.t.line, p.t.col, call, subject, id)
+    {
+    }
+
+    public AstGetSetMemberAccess(string file, int line, int column, PCall call, string id)
+        : this(file, line, column, call, null, id)
+    {
+    }
+
+    internal AstGetSetMemberAccess(Parser p, PCall call, string id)
+        : this(p, call, null, id)
+    {
+    }
+
+    public AstGetSetMemberAccess(string file, int line, int column, string id)
+        : this(file, line, column, PCall.Get, id)
+    {
+    }
+
+    internal AstGetSetMemberAccess(Parser p, string id)
+        : this(p.scanner.File, p.t.line, p.t.col, PCall.Get, id)
+    {
+    }
+
+    public AstGetSetMemberAccess(
+        string file, int line, int column, AstExpr subject, string id)
+        : this(file, line, column, PCall.Get, subject, id)
+    {
+    }
+
+    internal AstGetSetMemberAccess(Parser p, AstExpr subject, string id)
+        : this(p, PCall.Get, subject, id)
+    {
+    }
+
+    public override int DefaultAdditionalArguments => base.DefaultAdditionalArguments + 1;
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        Subject.EmitValueCode(target);
+        base.DoEmitCode(target, stackSemantics);
+    }
+
+    protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        target.EmitGetCall(Position, Arguments.Count, Id, stackSemantics == StackSemantics.Effect);
+    }
+
+    protected override void EmitSetCode(CompilerTarget target)
+    {
+        target.EmitSetCall(Position, Arguments.Count, Id);
+    }
+
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        base.TryOptimize(target, out expr);
+        var subject = Subject;
+        _OptimizeNode(target, ref subject);
+        Subject = subject;
+        return false;
+    }
+
+    public override AstGetSet GetCopy()
+    {
+        var copy = new AstGetSetMemberAccess(File, Line, Column, Call, Subject, Id);
+        CopyBaseMembers(copy);
+        return copy;
+    }
+
+    public override string ToString()
+    {
+        var name = Enum.GetName(typeof (PCall), Call);
+        return $"{name?.ToLowerInvariant() ?? "-"}: ({Subject}).{Id}{ArgumentsToString()}";
+    }
+
+    #region Implementation of IAstPartiallyApplicable
+
+    public void DoEmitPartialApplicationCode(CompilerTarget target)
+    {
+        var argv =
+            AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton().Append(Arguments));
+        var ctorArgc = this.EmitConstructorArguments(target, argv);
+        target.EmitConstant(Position, (int) Call);
+        target.EmitConstant(Position, Id);
+        target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);
+    }
+
+    public override NodeApplicationState CheckNodeApplicationState()
+    {
+        var state = base.CheckNodeApplicationState();
+        return state.WithPlaceholders(state.HasPlaceholders || Subject.IsPlaceholder());
+    }
+
+    #endregion
 }

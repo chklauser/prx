@@ -30,155 +30,154 @@ using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Symbolic
-{
-    [DebuggerDisplay("SymbolOrigin({Description},{Position.File},{Position.Line},{Position.Column})")]
-    public abstract class SymbolOrigin
-    {
-        public abstract string Description { get; }
+namespace Prexonite.Compiler.Symbolic;
 
-        public abstract ISourcePosition Position { get; }
+[DebuggerDisplay("SymbolOrigin({Description},{Position.File},{Position.Line},{Position.Column})")]
+public abstract class SymbolOrigin
+{
+    public abstract string Description { get; }
+
+    public abstract ISourcePosition Position { get; }
+    public override string ToString()
+    {
+        return $"{Description} in {Position}";
+    }
+
+    public sealed class MergedScope : SymbolOrigin
+    {
+        public static SymbolOrigin CreateMerged(params SymbolOrigin[] origins)
+        {
+            if (origins == null)
+                throw new ArgumentNullException(nameof(origins));
+            if (origins.Length == 0)
+            {
+                throw new ArgumentException("Must have at least one symbol origin.");
+            }
+
+            // Flatten merged scopes
+            return new MergedScope(origins.SelectMany(x => 
+                x is MergedScope mergedScope ? mergedScope._origins : x.Singleton()).ToArray());
+        }
+
+        [NotNull]
+        private readonly SymbolOrigin[] _origins;
+
+        private MergedScope([NotNull] SymbolOrigin[] origins)
+        {
+            if (origins == null)
+                throw new ArgumentNullException(nameof(origins));
+                
+            if(origins.Length < 2)
+                throw new ArgumentException("Merged scope origin must be composed of at least two origins.");
+            _origins = origins;
+        }
+
+        public override string Description
+        {
+            get
+            {
+                return $"merged scope of {_origins.Select(x => x.Description).ToEnumerationString()}";
+            }
+        }
+
+        public override ISourcePosition Position => _origins[0].Position;
+    }
+
+    public sealed class NamespaceImport : SymbolOrigin
+    {
+        private readonly QualifiedId _namespaceId;
+
+        public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
+        {
+            _namespaceId = namespaceId;
+            Position = position ?? throw new ArgumentNullException(nameof(position));
+        }
+
+        public override string Description => $"import from namespace {NamespaceId}";
+
+        [NotNull]
+        public override ISourcePosition Position { get; }
+
+        public QualifiedId NamespaceId => _namespaceId;
+
+        private bool _equals(NamespaceImport other)
+        {
+            return _namespaceId.Equals(other._namespaceId);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj is NamespaceImport otherImport && _equals(otherImport);
+        }
+
+        public override int GetHashCode()
+        {
+            return _namespaceId.GetHashCode();
+        }
+    }
+
+    public sealed class ModuleTopLevel : SymbolOrigin
+    {
+        [DebuggerStepThrough]
+        public ModuleTopLevel([NotNull] ModuleName moduleName, [NotNull] ISourcePosition position)
+        {
+            if (moduleName == null)
+                throw new ArgumentNullException(nameof(moduleName));
+
+            ModuleName = moduleName;
+            Position = position ?? throw new ArgumentNullException(nameof(position));
+            Description = $"top-level declaration in module {moduleName}";
+        }
+
+        [NotNull]
+        public ModuleName ModuleName { [DebuggerStepThrough] get; }
+
+        [NotNull]
+        public override ISourcePosition Position { get; }
+
+        [NotNull]
+        public override string Description { [DebuggerStepThrough] get; }
+
         public override string ToString()
         {
-            return $"{Description} in {Position}";
+            return Description;
         }
 
-        public sealed class MergedScope : SymbolOrigin
+        private bool _equals(ModuleTopLevel other)
         {
-            public static SymbolOrigin CreateMerged(params SymbolOrigin[] origins)
-            {
-                if (origins == null)
-                    throw new ArgumentNullException(nameof(origins));
-                if (origins.Length == 0)
-                {
-                    throw new ArgumentException("Must have at least one symbol origin.");
-                }
-
-                // Flatten merged scopes
-                return new MergedScope(origins.SelectMany(x => 
-                    x is MergedScope mergedScope ? mergedScope._origins : x.Singleton()).ToArray());
-            }
-
-            [NotNull]
-            private readonly SymbolOrigin[] _origins;
-
-            private MergedScope([NotNull] SymbolOrigin[] origins)
-            {
-                if (origins == null)
-                    throw new ArgumentNullException(nameof(origins));
-                
-                if(origins.Length < 2)
-                    throw new ArgumentException("Merged scope origin must be composed of at least two origins.");
-                _origins = origins;
-            }
-
-            public override string Description
-            {
-                get
-                {
-                    return $"merged scope of {_origins.Select(x => x.Description).ToEnumerationString()}";
-                }
-            }
-
-            public override ISourcePosition Position => _origins[0].Position;
+            return Equals(ModuleName, other.ModuleName);
         }
 
-        public sealed class NamespaceImport : SymbolOrigin
+        public override bool Equals(object obj)
         {
-            private readonly QualifiedId _namespaceId;
-
-            public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
-            {
-                _namespaceId = namespaceId;
-                Position = position ?? throw new ArgumentNullException(nameof(position));
-            }
-
-            public override string Description => $"import from namespace {NamespaceId}";
-
-            [NotNull]
-            public override ISourcePosition Position { get; }
-
-            public QualifiedId NamespaceId => _namespaceId;
-
-            private bool _equals(NamespaceImport other)
-            {
-                return _namespaceId.Equals(other._namespaceId);
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                return obj is NamespaceImport otherImport && _equals(otherImport);
-            }
-
-            public override int GetHashCode()
-            {
-                return _namespaceId.GetHashCode();
-            }
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj is ModuleTopLevel otherTopLevel && _equals(otherTopLevel);
         }
 
-        public sealed class ModuleTopLevel : SymbolOrigin
+        public override int GetHashCode()
         {
-            [DebuggerStepThrough]
-            public ModuleTopLevel([NotNull] ModuleName moduleName, [NotNull] ISourcePosition position)
-            {
-                if (moduleName == null)
-                    throw new ArgumentNullException(nameof(moduleName));
-
-                ModuleName = moduleName;
-                Position = position ?? throw new ArgumentNullException(nameof(position));
-                Description = $"top-level declaration in module {moduleName}";
-            }
-
-            [NotNull]
-            public ModuleName ModuleName { [DebuggerStepThrough] get; }
-
-            [NotNull]
-            public override ISourcePosition Position { get; }
-
-            [NotNull]
-            public override string Description { [DebuggerStepThrough] get; }
-
-            public override string ToString()
-            {
-                return Description;
-            }
-
-            private bool _equals(ModuleTopLevel other)
-            {
-                return Equals(ModuleName, other.ModuleName);
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                return obj is ModuleTopLevel otherTopLevel && _equals(otherTopLevel);
-            }
-
-            public override int GetHashCode()
-            {
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                return ModuleName != null ? ModuleName.GetHashCode() : 0;
+            return ModuleName != null ? ModuleName.GetHashCode() : 0;
 // ReSharper restore ConditionIsAlwaysTrueOrFalse
-            }
         }
+    }
 
-        public sealed class NamespaceDeclarationScope : SymbolOrigin
+    public sealed class NamespaceDeclarationScope : SymbolOrigin
+    {
+        public QualifiedId NamespacePath { get; }
+
+        public NamespaceDeclarationScope([NotNull] ISourcePosition position, QualifiedId namespacePath)
         {
-            public QualifiedId NamespacePath { get; }
-
-            public NamespaceDeclarationScope([NotNull] ISourcePosition position, QualifiedId namespacePath)
-            {
-                Position = position ?? throw new ArgumentNullException(nameof(position));
-                NamespacePath = namespacePath;
-            }
-
-            public override string Description => $"private declaration in namespace {NamespacePath}.";
-
-            [NotNull]
-            public override ISourcePosition Position { get; }
+            Position = position ?? throw new ArgumentNullException(nameof(position));
+            NamespacePath = namespacePath;
         }
+
+        public override string Description => $"private declaration in namespace {NamespacePath}.";
+
+        [NotNull]
+        public override ISourcePosition Position { get; }
     }
 }

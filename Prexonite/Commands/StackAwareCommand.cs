@@ -23,16 +23,15 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Commands
-{
-    public abstract class StackAwareCommand : PCommand, IStackAware
-    {
-        public abstract StackContext CreateStackContext(StackContext sctx, PValue[] args);
+namespace Prexonite.Commands;
 
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            var rctx = CreateStackContext(sctx, args);
-            return sctx.ParentEngine.Process(rctx);
-        }
+public abstract class StackAwareCommand : PCommand, IStackAware
+{
+    public abstract StackContext CreateStackContext(StackContext sctx, PValue[] args);
+
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        var rctx = CreateStackContext(sctx, args);
+        return sctx.ParentEngine.Process(rctx);
     }
 }

@@ -28,65 +28,64 @@ using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+[DebuggerDisplay("{ToString()}")]
+public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
 {
-    [DebuggerDisplay("{ToString()}")]
-    public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
+    public override string ToString()
     {
-        public override string ToString()
-        {
-            return $"->{Entity}";
-        }
+        return $"->{Entity}";
+    }
 
-        [DebuggerStepThrough]
-        private ReferenceSymbol([NotNull] ISourcePosition position, [NotNull] EntityRef entity)
-        {
-            Entity = entity;
-            Position = position;
-        }
+    [DebuggerStepThrough]
+    private ReferenceSymbol([NotNull] ISourcePosition position, [NotNull] EntityRef entity)
+    {
+        Entity = entity;
+        Position = position;
+    }
 
-        [NotNull]
-        internal static ReferenceSymbol _Create([NotNull] EntityRef entity, [NotNull] ISourcePosition position)
-        {
-            return new(position, entity);
-        }
+    [NotNull]
+    internal static ReferenceSymbol _Create([NotNull] EntityRef entity, [NotNull] ISourcePosition position)
+    {
+        return new(position, entity);
+    }
 
-        public EntityRef Entity { get; }
+    public EntityRef Entity { get; }
 
-        public override ISourcePosition Position { get; }
+    public override ISourcePosition Position { get; }
 
-        #region Overrides of Symbol
+    #region Overrides of Symbol
 
-        public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
-        {
-            return handler.HandleReference(this, argument);
-        }
+    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    {
+        return handler.HandleReference(this, argument);
+    }
 
-        public override bool TryGetReferenceSymbol(out ReferenceSymbol referenceSymbol)
-        {
-            referenceSymbol = this;
-            return true;
-        }
+    public override bool TryGetReferenceSymbol(out ReferenceSymbol referenceSymbol)
+    {
+        referenceSymbol = this;
+        return true;
+    }
 
-        #endregion
+    #endregion
 
-        public bool Equals(ReferenceSymbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Equals(Entity, other.Entity);
-        }
+    public bool Equals(ReferenceSymbol other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Equals(Entity, other.Entity);
+    }
 
-        public override bool Equals(Symbol obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj is ReferenceSymbol && Equals((ReferenceSymbol)obj);
-        }
+    public override bool Equals(Symbol obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        return obj is ReferenceSymbol && Equals((ReferenceSymbol)obj);
+    }
 
-        public override int GetHashCode()
-        {
-            return Entity != null ? Entity.GetHashCode() : 0;
-        }
+    public override int GetHashCode()
+    {
+        return Entity != null ? Entity.GetHashCode() : 0;
     }
 }

@@ -26,67 +26,66 @@
 using System;
 using System.Collections.Generic;
 
-namespace Prexonite.Commands.List
+namespace Prexonite.Commands.List;
+
+public class Intersect : CoroutineCommand
 {
-    public class Intersect : CoroutineCommand
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
+        PValue[] args)
     {
-        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-            PValue[] args)
+        if (args == null)
+            throw new ArgumentNullException(nameof(args));
+        if (sctxCarrier == null)
+            throw new ArgumentNullException(nameof(sctxCarrier));
+
+        var sctx = sctxCarrier.StackContext;
+
+        var xss = new List<IEnumerable<PValue>>();
+        foreach (var arg in args)
         {
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-            if (sctxCarrier == null)
-                throw new ArgumentNullException(nameof(sctxCarrier));
+            var xs = Map._ToEnumerable(sctx, arg);
+            if (xs != null)
+                xss.Add(xs);
+        }
 
-            var sctx = sctxCarrier.StackContext;
+        var n = xss.Count;
+        if (n < 2)
+            throw new PrexoniteException("Intersect requires at least two sources.");
 
-            var xss = new List<IEnumerable<PValue>>();
-            foreach (var arg in args)
-            {
-                var xs = Map._ToEnumerable(sctx, arg);
-                if (xs != null)
-                    xss.Add(xs);
-            }
+        var t = new Dictionary<PValue, int>();
+        //All elements of the first source are considered candidates
+        foreach (var x in xss[0])
+            if (!t.ContainsKey(x))
+                t.Add(x, 1);
 
-            var n = xss.Count;
-            if (n < 2)
-                throw new PrexoniteException("Intersect requires at least two sources.");
-
-            var t = new Dictionary<PValue, int>();
-            //All elements of the first source are considered candidates
-            foreach (var x in xss[0])
-                if (!t.ContainsKey(x))
-                    t.Add(x, 1);
-
-            var d = new Dictionary<PValue, object>();
-            for (var i = 1; i < n - 1; i++)
-            {
-                foreach (var x in xss[i])
-                    if (!d.ContainsKey(x) && t.ContainsKey(x))
-                    {
-                        d.Add(x, null); //only current source
-                        t[x]++;
-                    }
-                d.Clear();
-            }
-
-            foreach (var x in xss[n - 1])
+        var d = new Dictionary<PValue, object>();
+        for (var i = 1; i < n - 1; i++)
+        {
+            foreach (var x in xss[i])
                 if (!d.ContainsKey(x) && t.ContainsKey(x))
                 {
                     d.Add(x, null); //only current source
-                    var k = t[x] + 1;
-                    if (k == n)
-                        yield return x;
+                    t[x]++;
                 }
+            d.Clear();
         }
 
-        /// <summary>
-        ///     A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>
-        ///     Pure commands can be applied at compile time.
-        /// </remarks>
-        [Obsolete]
-        public override bool IsPure => false;
+        foreach (var x in xss[n - 1])
+            if (!d.ContainsKey(x) && t.ContainsKey(x))
+            {
+                d.Add(x, null); //only current source
+                var k = t[x] + 1;
+                if (k == n)
+                    yield return x;
+            }
     }
+
+    /// <summary>
+    ///     A flag indicating whether the command acts like a pure function.
+    /// </summary>
+    /// <remarks>
+    ///     Pure commands can be applied at compile time.
+    /// </remarks>
+    [Obsolete]
+    public override bool IsPure => false;
 }

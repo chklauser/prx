@@ -23,31 +23,30 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstExplicitLabel : AstNode
 {
-    public class AstExplicitLabel : AstNode
+    public string Label;
+
+    public AstExplicitLabel(string file, int line, int column, string label)
+        : base(file, line, column)
     {
-        public string Label;
+        Label = label;
+    }
 
-        public AstExplicitLabel(string file, int line, int column, string label)
-            : base(file, line, column)
-        {
-            Label = label;
-        }
+    internal AstExplicitLabel(Parser p, string label)
+        : this(p.scanner.File, p.t.line, p.t.col, label)
+    {
+    }
 
-        internal AstExplicitLabel(Parser p, string label)
-            : this(p.scanner.File, p.t.line, p.t.col, label)
-        {
-        }
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        target.EmitLabel(Position, Label);
+    }
 
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            target.EmitLabel(Position, Label);
-        }
-
-        public override string ToString()
-        {
-            return "label " + Label;
-        }
+    public override string ToString()
+    {
+        return "label " + Label;
     }
 }

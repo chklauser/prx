@@ -25,28 +25,27 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler
+namespace Prexonite.Compiler;
+
+[PublicAPI]
+public sealed class NoSourcePosition : ISourcePosition
 {
-    [PublicAPI]
-    public sealed class NoSourcePosition : ISourcePosition
-    {
-        #region Singleton
+    #region Singleton
 
-        private static NoSourcePosition _instance;
-        public static ISourcePosition Instance => _instance ??= new NoSourcePosition();
+    private static NoSourcePosition _instance;
+    public static ISourcePosition Instance => _instance ??= new NoSourcePosition();
 
-        #endregion
+    #endregion
 
-        public const string MissingFileName = "-";
+    public const string MissingFileName = "-";
 
-        #region Implementation of ISourcePosition
+    #region Implementation of ISourcePosition
 
-        public string File => MissingFileName;
+    public string File => MissingFileName;
 
-        public int Line => -1;
+    public int Line => -1;
 
-        public int Column => -1;
+    public int Column => -1;
 
-        #endregion
-    }
+    #endregion
 }

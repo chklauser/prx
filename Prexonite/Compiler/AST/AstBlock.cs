@@ -32,347 +32,346 @@ using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public class AstBlock : AstExpr,
+    IList<AstNode>, IAstHasExpressions
 {
-    public class AstBlock : AstExpr,
-                            IList<AstNode>, IAstHasExpressions
+    #region Construction
+
+    protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string uid = null, string prefix = null)
+        : base(position)
     {
-        #region Construction
+        _prefix = (prefix ?? DefaultPrefix) + "\\";
+        BlockUid = string.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
+        Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
+    }
 
-        protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string uid = null, string prefix = null)
-            : base(position)
+    protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
+        : this(position, _deriveSymbolStore(lexicalScope),uid, prefix)
+    {   
+    }
+
+    private static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
+    {
+        return SymbolStore.Create(parentBlock.Symbols);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Symbol table for the scope of this block.
+    /// </summary>
+    [NotNull]
+    public SymbolStore Symbols { get; private set; }
+
+    /// <summary>
+    /// Replaces symbol store backing this scope. Does not affect existing nested scopes!
+    /// </summary>
+    /// <param name="newStore">The new symbol store.</param>
+    internal void _ReplaceSymbols([NotNull] SymbolStore newStore)
+    {
+        Symbols = newStore;
+    }
+
+    [NotNull]
+    private List<AstNode> _statements = new();
+
+    [NotNull]
+    public List<AstNode> Statements
+    {
+        get => _statements;
+        set => _statements = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        EmitCode(target, false, stackSemantics);
+    }
+
+    public void EmitCode(CompilerTarget target, bool isTopLevel, StackSemantics stackSemantics)
+    {
+        if (target == null)
+            throw new ArgumentNullException(nameof(target), "The compiler target cannot be null");
+
+        if (isTopLevel)
+            _tailCallOptimizeTopLevelBlock();
+
+        foreach (var node in _statements)
         {
-            _prefix = (prefix ?? DefaultPrefix) + "\\";
-            BlockUid = string.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
-            Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
+            var stmt = node;
+            if (stmt is AstExpr expr)
+                stmt = _GetOptimizedNode(target, expr);
+
+            stmt.EmitEffectCode(target);
         }
 
-        protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
-            : this(position, _deriveSymbolStore(lexicalScope),uid, prefix)
-        {   
-        }
+        Expression?.EmitCode(target, stackSemantics);
+    }
 
-        private static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
+    #region Tail call optimization
+
+    private static void tail_call_optimize_expressions_of_nested_block(
+        IAstHasExpressions hasExpressions)
+    {
+        foreach (var expression in hasExpressions.Expressions)
         {
-            return SymbolStore.Create(parentBlock.Symbols);
+            if (expression is AstBlock blockItself)
+                blockItself._tailCallOptimizeNestedBlock();
+            else if (expression is IAstHasExpressions hasExpressionsItself)
+                tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
+            else if (expression is IAstHasBlocks hasBlocksItself)
+                _tailCallOptimizeAllNestedBlocksOf(hasBlocksItself);
         }
+    }
 
-        #endregion
-
-        /// <summary>
-        /// Symbol table for the scope of this block.
-        /// </summary>
-        [NotNull]
-        public SymbolStore Symbols { get; private set; }
-
-        /// <summary>
-        /// Replaces symbol store backing this scope. Does not affect existing nested scopes!
-        /// </summary>
-        /// <param name="newStore">The new symbol store.</param>
-        internal void _ReplaceSymbols([NotNull] SymbolStore newStore)
+    private void _tailCallOptimizeNestedBlock()
+    {
+        int i;
+        for (i = 1; i < _statements.Count; i++)
         {
-            Symbols = newStore;
-        }
+            var stmt = _statements[i];
 
-        [NotNull]
-        private List<AstNode> _statements = new();
-
-        [NotNull]
-        public List<AstNode> Statements
-        {
-            get => _statements;
-            set => _statements = value ?? throw new ArgumentNullException(nameof(value));
-        }
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            EmitCode(target, false, stackSemantics);
-        }
-
-        public void EmitCode(CompilerTarget target, bool isTopLevel, StackSemantics stackSemantics)
-        {
-            if (target == null)
-                throw new ArgumentNullException(nameof(target), "The compiler target cannot be null");
-
-            if (isTopLevel)
-                _tailCallOptimizeTopLevelBlock();
-
-            foreach (var node in _statements)
+            switch (stmt)
             {
-                var stmt = node;
-                if (stmt is AstExpr expr)
-                    stmt = _GetOptimizedNode(target, expr);
+                case AstReturn {Expression: null} ret when (ret.ReturnVariant == ReturnVariant.Exit ||
+                    ret.ReturnVariant == ReturnVariant.Continue) && _statements[i - 1] is AstGetSet:
+                    //NOTE: Aggressive TCO disabled
 
-                stmt.EmitEffectCode(target);
-            }
-
-            Expression?.EmitCode(target, stackSemantics);
-        }
-
-        #region Tail call optimization
-
-        private static void tail_call_optimize_expressions_of_nested_block(
-            IAstHasExpressions hasExpressions)
-        {
-            foreach (var expression in hasExpressions.Expressions)
-            {
-                if (expression is AstBlock blockItself)
+                    //ret.Expression = getset;
+                    //Statements.RemoveAt(i--);
+                    break;
+                case AstBlock blockItself:
                     blockItself._tailCallOptimizeNestedBlock();
-                else if (expression is IAstHasExpressions hasExpressionsItself)
-                    tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
-                else if (expression is IAstHasBlocks hasBlocksItself)
-                    _tailCallOptimizeAllNestedBlocksOf(hasBlocksItself);
+                    break;
+                case IAstHasBlocks hasBlocks:
+                    _tailCallOptimizeAllNestedBlocksOf(hasBlocks);
+                    break;
+                case IAstHasExpressions hasExpressions:
+                    tail_call_optimize_expressions_of_nested_block(hasExpressions);
+                    break;
             }
         }
+    }
 
-        private void _tailCallOptimizeNestedBlock()
+    private static void _tailCallOptimizeAllNestedBlocksOf(IAstHasBlocks hasBlocks)
+    {
+        foreach (var block in hasBlocks.Blocks)
+            block._tailCallOptimizeNestedBlock();
+    }
+
+    private void _tailCallOptimizeTopLevelBlock()
+    {
+        // { GetSetComplex; return; } -> { return GetSetComplex; }
+
+        _tailCallOptimizeNestedBlock();
+        AstGetSet getset;
+
+        if (_statements.Count == 0)
+            return;
+        var lastStmt = _statements[^1];
+        AstCondition cond;
+
+        // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
+        if ((cond = lastStmt as AstCondition) != null)
         {
-            int i;
-            for (i = 1; i < _statements.Count; i++)
+            cond.IfBlock._tailCallOptimizeTopLevelBlock();
+            cond.ElseBlock._tailCallOptimizeTopLevelBlock();
+        }
+        // { ...; GetSet(); } -> { ...; return GetSet(); }
+        else if ((getset = lastStmt as AstGetSet) != null)
+        {
+            var ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit)
             {
-                var stmt = _statements[i];
-
-                switch (stmt)
-                {
-                    case AstReturn {Expression: null} ret when (ret.ReturnVariant == ReturnVariant.Exit ||
-                                                                ret.ReturnVariant == ReturnVariant.Continue) && _statements[i - 1] is AstGetSet:
-                        //NOTE: Aggressive TCO disabled
-
-                        //ret.Expression = getset;
-                        //Statements.RemoveAt(i--);
-                        break;
-                    case AstBlock blockItself:
-                        blockItself._tailCallOptimizeNestedBlock();
-                        break;
-                    case IAstHasBlocks hasBlocks:
-                        _tailCallOptimizeAllNestedBlocksOf(hasBlocks);
-                        break;
-                    case IAstHasExpressions hasExpressions:
-                        tail_call_optimize_expressions_of_nested_block(hasExpressions);
-                        break;
-                }
-            }
+                Expression = getset
+            };
+            _statements[^1] = ret;
         }
+    }
 
-        private static void _tailCallOptimizeAllNestedBlocksOf(IAstHasBlocks hasBlocks)
-        {
-            foreach (var block in hasBlocks.Blocks)
-                block._tailCallOptimizeNestedBlock();
-        }
+    #endregion
 
-        private void _tailCallOptimizeTopLevelBlock()
-        {
-            // { GetSetComplex; return; } -> { return GetSetComplex; }
+    public virtual bool IsEmpty => Count == 0;
 
-            _tailCallOptimizeNestedBlock();
-            AstGetSet getset;
+    public virtual bool IsSingleStatement => Count == 1;
 
-            if (_statements.Count == 0)
-                return;
-            var lastStmt = _statements[^1];
-            AstCondition cond;
+    #region IList<AstNode> Members
 
-            // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
-            if ((cond = lastStmt as AstCondition) != null)
-            {
-                cond.IfBlock._tailCallOptimizeTopLevelBlock();
-                cond.ElseBlock._tailCallOptimizeTopLevelBlock();
-            }
-                // { ...; GetSet(); } -> { ...; return GetSet(); }
-            else if ((getset = lastStmt as AstGetSet) != null)
-            {
-                var ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit)
-                    {
-                        Expression = getset
-                    };
-                _statements[^1] = ret;
-            }
-        }
+    [DebuggerStepThrough]
+    public int IndexOf(AstNode item)
+    {
+        return _statements.IndexOf(item);
+    }
 
-        #endregion
+    [DebuggerStepThrough]
+    public void Insert(int index, AstNode item)
+    {
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
+        _statements.Insert(index, item);
+    }
 
-        public virtual bool IsEmpty => Count == 0;
+    public void InsertRange(int index, IEnumerable<AstNode> items)
+    {
+        if (items == null)
+            throw new ArgumentNullException(nameof(items));
+        _statements.InsertRange(index, items);
+    }
 
-        public virtual bool IsSingleStatement => Count == 1;
+    [DebuggerStepThrough]
+    public void RemoveAt(int index)
+    {
+        _statements.RemoveAt(index);
+    }
 
-        #region IList<AstNode> Members
-
+    public AstNode this[int index]
+    {
         [DebuggerStepThrough]
-        public int IndexOf(AstNode item)
-        {
-            return _statements.IndexOf(item);
-        }
-
+        get => _statements[index];
         [DebuggerStepThrough]
-        public void Insert(int index, AstNode item)
-        {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            _statements.Insert(index, item);
-        }
+        set => _statements[index] = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
-        public void InsertRange(int index, IEnumerable<AstNode> items)
-        {
-            if (items == null)
-                throw new ArgumentNullException(nameof(items));
-            _statements.InsertRange(index, items);
-        }
+    #endregion
 
+    #region ICollection<AstNode> Members
+
+    [DebuggerStepThrough]
+    public void Add(AstNode item)
+    {
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
+        _statements.Add(item);
+    }
+
+    [DebuggerStepThrough]
+    public void AddRange(IEnumerable<AstNode> collection)
+    {
+        if (collection == null)
+            throw new ArgumentNullException(nameof(collection));
+        foreach (var node in collection)
+        {
+            if (node == null)
+                throw new ArgumentException(
+                    "AstNode collection may not contain null.", nameof(collection));
+        }
+        _statements.AddRange(collection);
+    }
+
+    [DebuggerStepThrough]
+    public void Clear()
+    {
+        _statements.Clear();
+    }
+
+    [DebuggerStepThrough]
+    public bool Contains(AstNode item)
+    {
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
+        return _statements.Contains(item);
+    }
+
+    [DebuggerStepThrough]
+    public void CopyTo(AstNode[] array, int arrayIndex)
+    {
+        _statements.CopyTo(array, arrayIndex);
+    }
+
+    public int Count
+    {
         [DebuggerStepThrough]
-        public void RemoveAt(int index)
-        {
-            _statements.RemoveAt(index);
-        }
+        get => _statements.Count;
+    }
 
-        public AstNode this[int index]
-        {
-            [DebuggerStepThrough]
-            get => _statements[index];
-            [DebuggerStepThrough]
-            set => _statements[index] = value ?? throw new ArgumentNullException(nameof(value));
-        }
-
-        #endregion
-
-        #region ICollection<AstNode> Members
-
+    public bool IsReadOnly
+    {
         [DebuggerStepThrough]
-        public void Add(AstNode item)
+        get => ((IList<AstNode>) _statements).IsReadOnly;
+    }
+
+    [DebuggerStepThrough]
+    public bool Remove(AstNode item)
+    {
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
+        return _statements.Remove(item);
+    }
+
+    #endregion
+
+    #region IEnumerable<AstNode> Members
+
+    [DebuggerStepThrough]
+    public IEnumerator<AstNode> GetEnumerator()
+    {
+        return _statements.GetEnumerator();
+    }
+
+    #endregion
+
+    #region IEnumerable Members
+
+    [DebuggerStepThrough]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return _statements.GetEnumerator();
+    }
+
+    #endregion
+
+    public override string ToString()
+    {
+        var buffer = new StringBuilder();
+        foreach (var node in _statements)
+            buffer.AppendFormat("{0}; ", node);
+        if (Expression != null)
+            buffer.AppendFormat(" (return {0})", Expression);
+        return buffer.ToString();
+    }
+
+    #region Block labels
+
+    private readonly string _prefix;
+    public AstExpr Expression;
+
+    public string Prefix => _prefix.Substring(0, _prefix.Length - 1);
+
+    public string BlockUid { get; }
+
+    public virtual AstExpr[] Expressions
+    {
+        get
         {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            _statements.Add(item);
+            if(Expression == null)
+                return new AstExpr[0];
+            else
+                return new[] {Expression};
         }
+    }
 
-        [DebuggerStepThrough]
-        public void AddRange(IEnumerable<AstNode> collection)
-        {
-            if (collection == null)
-                throw new ArgumentNullException(nameof(collection));
-            foreach (var node in collection)
-            {
-                if (node == null)
-                    throw new ArgumentException(
-                        "AstNode collection may not contain null.", nameof(collection));
-            }
-            _statements.AddRange(collection);
-        }
+    public const string DefaultPrefix = "_";
+    public const string RootBlockName = "root";
 
-        [DebuggerStepThrough]
-        public void Clear()
-        {
-            _statements.Clear();
-        }
+    public string CreateLabel(string verb)
+    {
+        return string.Concat(_prefix, verb, BlockUid);
+    }
 
-        [DebuggerStepThrough]
-        public bool Contains(AstNode item)
-        {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            return _statements.Contains(item);
-        }
+    #endregion
 
-        [DebuggerStepThrough]
-        public void CopyTo(AstNode[] array, int arrayIndex)
-        {
-            _statements.CopyTo(array, arrayIndex);
-        }
+    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    {
+        //Will be optimized after code generation, hopefully
+        if (Expression != null)
+            _OptimizeNode(target, ref Expression);
 
-        public int Count
-        {
-            [DebuggerStepThrough]
-            get => _statements.Count;
-        }
+        expr = null;
+        return false;
+    }
 
-        public bool IsReadOnly
-        {
-            [DebuggerStepThrough]
-            get => ((IList<AstNode>) _statements).IsReadOnly;
-        }
-
-        [DebuggerStepThrough]
-        public bool Remove(AstNode item)
-        {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-            return _statements.Remove(item);
-        }
-
-        #endregion
-
-        #region IEnumerable<AstNode> Members
-
-        [DebuggerStepThrough]
-        public IEnumerator<AstNode> GetEnumerator()
-        {
-            return _statements.GetEnumerator();
-        }
-
-        #endregion
-
-        #region IEnumerable Members
-
-        [DebuggerStepThrough]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _statements.GetEnumerator();
-        }
-
-        #endregion
-
-        public override string ToString()
-        {
-            var buffer = new StringBuilder();
-            foreach (var node in _statements)
-                buffer.AppendFormat("{0}; ", node);
-            if (Expression != null)
-                buffer.AppendFormat(" (return {0})", Expression);
-            return buffer.ToString();
-        }
-
-        #region Block labels
-
-        private readonly string _prefix;
-        public AstExpr Expression;
-
-        public string Prefix => _prefix.Substring(0, _prefix.Length - 1);
-
-        public string BlockUid { get; }
-
-        public virtual AstExpr[] Expressions
-        {
-            get
-            {
-                if(Expression == null)
-                    return new AstExpr[0];
-                else
-                    return new[] {Expression};
-            }
-        }
-
-        public const string DefaultPrefix = "_";
-        public const string RootBlockName = "root";
-
-        public string CreateLabel(string verb)
-        {
-            return string.Concat(_prefix, verb, BlockUid);
-        }
-
-        #endregion
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            //Will be optimized after code generation, hopefully
-            if (Expression != null)
-                _OptimizeNode(target, ref Expression);
-
-            expr = null;
-            return false;
-        }
-
-        public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
-        {
-            return new(position,symbols,uid, prefix);
-        }
+    public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
+    {
+        return new(position,symbols,uid, prefix);
     }
 }

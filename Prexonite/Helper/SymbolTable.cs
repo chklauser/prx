@@ -27,148 +27,147 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Prexonite
+namespace Prexonite;
+
+public interface ISymbolTable<TValue> : IDictionary<string, TValue>
 {
-    public interface ISymbolTable<TValue> : IDictionary<string, TValue>
+    TValue DefaultValue { get; set; }
+    TValue GetDefault(string key, TValue defaultValue);
+    void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries);
+}
+
+[DebuggerNonUserCode]
+public class SymbolTable<TValue> : ISymbolTable<TValue>
+{
+    private readonly Dictionary<string, TValue> _table;
+
+    public TValue DefaultValue { get; set; }
+
+    public SymbolTable()
     {
-        TValue DefaultValue { get; set; }
-        TValue GetDefault(string key, TValue defaultValue);
-        void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries);
+        _table = new Dictionary<string, TValue>(Engine.DefaultStringComparer);
     }
 
-    [DebuggerNonUserCode]
-    public class SymbolTable<TValue> : ISymbolTable<TValue>
+    public SymbolTable(int capacity)
     {
-        private readonly Dictionary<string, TValue> _table;
+        _table = new Dictionary<string, TValue>(capacity, Engine.DefaultStringComparer);
+    }
 
-        public TValue DefaultValue { get; set; }
+    #region IDictionary<string,TValue> Members
 
-        public SymbolTable()
+    public virtual void Add(string key, TValue value)
+    {
+        if(_table.TryGetValue(key, out var existingValue) && Equals(existingValue,value))
+            return;
+
+        _table.Add(key, value);
+    }
+
+    public virtual bool ContainsKey(string key)
+    {
+        return _table.ContainsKey(key);
+    }
+
+    public ICollection<string> Keys => _table.Keys;
+
+    public bool Remove(string key)
+    {
+        return _table.Remove(key);
+    }
+
+    public virtual bool TryGetValue(string key, out TValue value)
+    {
+        var cont = _table.TryGetValue(key, out value);
+        if (!cont)
+            value = DefaultValue;
+        return cont;
+    }
+
+    public TValue GetDefault(string key, TValue defaultValue)
+    {
+        if (_table.ContainsKey(key))
+            return _table[key];
+        else
+            return defaultValue;
+    }
+
+    public void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries)
+    {
+        _table.AddRange(entries);
+    }
+
+    public ICollection<TValue> Values => _table.Values;
+
+    public virtual TValue this[string key]
+    {
+        get => GetDefault(key, DefaultValue);
+        set
         {
-            _table = new Dictionary<string, TValue>(Engine.DefaultStringComparer);
-        }
-
-        public SymbolTable(int capacity)
-        {
-            _table = new Dictionary<string, TValue>(capacity, Engine.DefaultStringComparer);
-        }
-
-        #region IDictionary<string,TValue> Members
-
-        public virtual void Add(string key, TValue value)
-        {
-            if(_table.TryGetValue(key, out var existingValue) && Equals(existingValue,value))
-                return;
-
-            _table.Add(key, value);
-        }
-
-        public virtual bool ContainsKey(string key)
-        {
-            return _table.ContainsKey(key);
-        }
-
-        public ICollection<string> Keys => _table.Keys;
-
-        public bool Remove(string key)
-        {
-            return _table.Remove(key);
-        }
-
-        public virtual bool TryGetValue(string key, out TValue value)
-        {
-            var cont = _table.TryGetValue(key, out value);
-            if (!cont)
-                value = DefaultValue;
-            return cont;
-        }
-
-        public TValue GetDefault(string key, TValue defaultValue)
-        {
-            if (_table.ContainsKey(key))
-                return _table[key];
+            if (!_table.ContainsKey(key))
+                _table.Add(key, value);
             else
-                return defaultValue;
+                _table[key] = value;
         }
+    }
 
-        public void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries)
-        {
-            _table.AddRange(entries);
-        }
+    #endregion
 
-        public ICollection<TValue> Values => _table.Values;
+    #region ICollection<KeyValuePair<string,TValue>> Members
 
-        public virtual TValue this[string key]
-        {
-            get => GetDefault(key, DefaultValue);
-            set
-            {
-                if (!_table.ContainsKey(key))
-                    _table.Add(key, value);
-                else
-                    _table[key] = value;
-            }
-        }
+    public virtual void Add(KeyValuePair<string, TValue> item)
+    {
+        _table.Add(item.Key, item.Value);
+    }
 
-        #endregion
+    public void Clear()
+    {
+        _table.Clear();
+    }
 
-        #region ICollection<KeyValuePair<string,TValue>> Members
+    public bool Contains(KeyValuePair<string, TValue> item)
+    {
+        return ((ICollection<KeyValuePair<string, TValue>>) _table).Contains(item);
+    }
 
-        public virtual void Add(KeyValuePair<string, TValue> item)
-        {
-            _table.Add(item.Key, item.Value);
-        }
+    public void CopyTo(KeyValuePair<string, TValue>[] array, int arrayIndex)
+    {
+        ((ICollection<KeyValuePair<string, TValue>>) _table).CopyTo(array, arrayIndex);
+    }
 
-        public void Clear()
-        {
-            _table.Clear();
-        }
+    public int Count => _table.Count;
 
-        public bool Contains(KeyValuePair<string, TValue> item)
-        {
-            return ((ICollection<KeyValuePair<string, TValue>>) _table).Contains(item);
-        }
+    public bool IsReadOnly => ((ICollection<KeyValuePair<string, TValue>>) _table).IsReadOnly;
 
-        public void CopyTo(KeyValuePair<string, TValue>[] array, int arrayIndex)
-        {
-            ((ICollection<KeyValuePair<string, TValue>>) _table).CopyTo(array, arrayIndex);
-        }
+    public bool Remove(KeyValuePair<string, TValue> item)
+    {
+        return ((ICollection<KeyValuePair<string, TValue>>) _table).Remove(item);
+    }
 
-        public int Count => _table.Count;
+    #endregion
 
-        public bool IsReadOnly => ((ICollection<KeyValuePair<string, TValue>>) _table).IsReadOnly;
+    #region IEnumerable<KeyValuePair<string,TValue>> Members
 
-        public bool Remove(KeyValuePair<string, TValue> item)
-        {
-            return ((ICollection<KeyValuePair<string, TValue>>) _table).Remove(item);
-        }
+    public IEnumerator<KeyValuePair<string, TValue>> GetEnumerator()
+    {
+        return _table.GetEnumerator();
+    }
 
-        #endregion
+    #endregion
 
-        #region IEnumerable<KeyValuePair<string,TValue>> Members
+    #region IEnumerable Members
 
-        public IEnumerator<KeyValuePair<string, TValue>> GetEnumerator()
-        {
-            return _table.GetEnumerator();
-        }
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((ICollection<KeyValuePair<string, TValue>>) _table).GetEnumerator();
+    }
 
-        #endregion
+    #endregion
 
-        #region IEnumerable Members
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((ICollection<KeyValuePair<string, TValue>>) _table).GetEnumerator();
-        }
-
-        #endregion
-
-        protected void CloneFrom(SymbolTable<TValue> source)
-        {
-            Clear();
-            foreach (var pair in source)
-                Add(pair);
-            DefaultValue = source.DefaultValue;
-        }
+    protected void CloneFrom(SymbolTable<TValue> source)
+    {
+        Clear();
+        foreach (var pair in source)
+            Add(pair);
+        DefaultValue = source.DefaultValue;
     }
 }

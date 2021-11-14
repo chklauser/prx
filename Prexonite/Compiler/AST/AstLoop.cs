@@ -23,33 +23,32 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public abstract class AstLoop : AstNode,
+    IAstHasBlocks
+
 {
-    public abstract class AstLoop : AstNode,
-                                    IAstHasBlocks
-
+    internal AstLoop(ISourcePosition p, AstBlock parentBlock)
+        : base(p)
     {
-        internal AstLoop(ISourcePosition p, AstBlock parentBlock)
-            : base(p)
-        {
-            Block = new AstLoopBlock(p, parentBlock, prefix:"body");
-        }
-
-        #region IAstHasBlocks Members
-
-        public virtual AstBlock[] Blocks
-        {
-            get { return new AstBlock[] {Block}; }
-        }
-
-        #endregion
-
-        #region IAstHasExpressions Members
-
-        public abstract AstExpr[] Expressions { get; }
-
-        public AstLoopBlock Block { get; }
-
-        #endregion
+        Block = new AstLoopBlock(p, parentBlock, prefix:"body");
     }
+
+    #region IAstHasBlocks Members
+
+    public virtual AstBlock[] Blocks
+    {
+        get { return new AstBlock[] {Block}; }
+    }
+
+    #endregion
+
+    #region IAstHasExpressions Members
+
+    public abstract AstExpr[] Expressions { get; }
+
+    public AstLoopBlock Block { get; }
+
+    #endregion
 }

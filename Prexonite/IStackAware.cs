@@ -23,19 +23,18 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite
+namespace Prexonite;
+
+/// <summary>
+///     Marks objects that can create a representation/instance of themselves to be put on the stack.
+/// </summary>
+public interface IStackAware
 {
     /// <summary>
-    ///     Marks objects that can create a representation/instance of themselves to be put on the stack.
+    ///     Creates a stack context, that might later be pushed onto the stack.
     /// </summary>
-    public interface IStackAware
-    {
-        /// <summary>
-        ///     Creates a stack context, that might later be pushed onto the stack.
-        /// </summary>
-        /// <param name = "sctx">The engine for which the context is to be created.</param>
-        /// <param name = "args">The arguments passed to this instantiation.</param>
-        /// <returns>The created <see cref = "StackContext" /></returns>
-        StackContext CreateStackContext(StackContext sctx, PValue[] args);
-    }
+    /// <param name = "sctx">The engine for which the context is to be created.</param>
+    /// <param name = "args">The arguments passed to this instantiation.</param>
+    /// <returns>The created <see cref = "StackContext" /></returns>
+    StackContext CreateStackContext(StackContext sctx, PValue[] args);
 }

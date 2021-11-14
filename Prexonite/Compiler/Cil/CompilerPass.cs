@@ -33,253 +33,252 @@ using System.Reflection.Emit;
 
 #endregion
 
-namespace Prexonite.Compiler.Cil
+namespace Prexonite.Compiler.Cil;
+
+public class CompilerPass
 {
-    public class CompilerPass
+    private static int _numberOfPasses;
+
+    [DebuggerStepThrough]
+    private static string _createNextTypeName(string applicationId)
     {
-        private static int _numberOfPasses;
+        if (string.IsNullOrEmpty(applicationId))
+            applicationId = "cilimpl";
 
+        return applicationId + "_" + _numberOfPasses++ + "";
+    }
+
+    private readonly AssemblyBuilder _assemblyBuilder;
+
+    public AssemblyBuilder Assembly
+    {
         [DebuggerStepThrough]
-        private static string _createNextTypeName(string applicationId)
-        {
-            if (string.IsNullOrEmpty(applicationId))
-                applicationId = "cilimpl";
-
-            return applicationId + "_" + _numberOfPasses++ + "";
-        }
-
-        private readonly AssemblyBuilder _assemblyBuilder;
-
-        public AssemblyBuilder Assembly
-        {
-            [DebuggerStepThrough]
-            get
-            {
-                if (!MakeAvailableForLinking)
-                    throw new NotSupportedException
-                        ("The compiler pass is not configured to make implementations available for static linking.");
-                return _assemblyBuilder;
-            }
-        }
-
-        private readonly ModuleBuilder _moduleBuilder;
-
-        public ModuleBuilder Module
-        {
-            [DebuggerStepThrough]
-            get
-            {
-                if (!MakeAvailableForLinking)
-                    throw new NotSupportedException
-                        ("The compiler pass is not configured to make implementations available for static linking.");
-                return _moduleBuilder;
-            }
-        }
-
-        private readonly TypeBuilder _typeBuilder;
-
-        public TypeBuilder TargetType
-        {
-            [DebuggerStepThrough]
-            get
-            {
-                if (!MakeAvailableForLinking)
-                    throw new NotSupportedException
-                        ("The compiler pass is not configured to make implementations available for static linking.");
-                return _typeBuilder;
-            }
-        }
-
-        public CompilerPass(Application app, bool makeAvailableForLinking)
-        {
-            MakeAvailableForLinking = makeAvailableForLinking;
-            if (MakeAvailableForLinking)
-            {
-                var sequenceName = _createNextTypeName(app?.Id);
-                var asmName = new AssemblyName(sequenceName);
-                _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndCollect);
-                _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name);
-                _typeBuilder = _moduleBuilder.DefineType(sequenceName);
-            }
-        }
-
-        public MethodInfo DefineImplementationMethod(string id)
-        {
-            if (id == null)
-                throw new ArgumentNullException(nameof(id));
-
-            var parameterTypes = new[]
-                {
-                    typeof (PFunction),
-                    typeof (StackContext),
-                    typeof (PValue[]),
-                    typeof (PVariable[]),
-                    typeof (PValue).MakeByRefType(),
-                    typeof (ReturnMode).MakeByRefType(),
-                };
-
-            var makeAvailableForLinking = MakeAvailableForLinking;
-            if (makeAvailableForLinking)
-            {
-                //Create method stub
-
-                var dm = TargetType.DefineMethod
-                    (
-                        id,
-                        MethodAttributes.Static | MethodAttributes.Public,
-                        typeof (void),
-                        parameterTypes);
-                dm.DefineParameter(1, ParameterAttributes.In, "source");
-                dm.DefineParameter(2, ParameterAttributes.In, "sctx");
-                dm.DefineParameter(3, ParameterAttributes.In, "args");
-                dm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-                dm.DefineParameter(5, ParameterAttributes.Out, "result");
-                dm.DefineParameter(6, ParameterAttributes.Out, "returnMode");
-
-                Implementations.Add(id, dm);
-
-                //Create function field
-                var fb =
-                    TargetType.DefineField
-                        (_mkFieldName(id), typeof (PFunction),
-                            FieldAttributes.Public | FieldAttributes.Static);
-                FunctionFields.Add(id, fb);
-
-                return dm;
-            }
-
-            var cilm =
-                new DynamicMethod
-                    (
-                    id,
-                    typeof (void),
-                    parameterTypes,
-                    typeof (Runtime));
-
-            cilm.DefineParameter(1, ParameterAttributes.In, "source");
-            cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
-            cilm.DefineParameter(3, ParameterAttributes.In, "args");
-            cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-            cilm.DefineParameter(5, ParameterAttributes.Out, "result");
-
-            Implementations.Add(id, cilm);
-
-            return cilm;
-        }
-
-        private static string _mkFieldName(string id)
-        {
-            return id + "<field>";
-        }
-
-        private readonly SymbolTable<FieldInfo> _functionFieldTable = new();
-
-        public SymbolTable<FieldInfo> FunctionFields
-        {
-            get
-            {
-                if (!MakeAvailableForLinking)
-                    throw new NotSupportedException
-                        ("The compiler pass is not configured to make implementations available for static linking.");
-                return _functionFieldTable;
-            }
-        }
-
-        public SymbolTable<MethodInfo> Implementations { [DebuggerStepThrough] get; } = new();
-
-        public ILGenerator GetIlGenerator(string id)
-        {
-            if (id == null)
-                throw new ArgumentNullException(nameof(id));
-            if (!Implementations.TryGetValue(id, out var m))
-                throw new PrexoniteException("No implementation stub for a function named " + id +
-                    " exists.");
-
-            return GetIlGenerator(m);
-        }
-
-        public static ILGenerator GetIlGenerator(MethodInfo m)
-        {
-            DynamicMethod dm;
-            MethodBuilder mb;
-            if ((dm = m as DynamicMethod) != null)
-                return dm.GetILGenerator();
-            if ((mb = m as MethodBuilder) != null)
-                return mb.GetILGenerator();
-            throw new PrexoniteException
-                (
-                "CIL Implementation " + m.Name +
-                    " is neither a dynamic method nor a method builder but a " +
-                        m.GetType());
-        }
-
-        public bool MakeAvailableForLinking { get; }
-
-        public CompilerPass(FunctionLinking linking)
-            : this(null, linking)
-        {
-        }
-
-        public CompilerPass(bool makeAvailableForLinking)
-            : this(null, makeAvailableForLinking)
-        {
-        }
-
-        public CompilerPass(Application app, FunctionLinking linking)
-            : this(
-                app,
-                (linking & FunctionLinking.AvailableForLinking) ==
-                    FunctionLinking.AvailableForLinking)
-        {
-        }
-
-        private readonly Dictionary<MethodInfo, CilFunction> _delegateCache =
-            new();
-
-        private Type _cachedTypeReference;
-
-        public CilFunction GetDelegate(string id)
-        {
-            if (id == null)
-                throw new ArgumentNullException(nameof(id));
-            if (!Implementations.TryGetValue(id, out var m))
-                throw new PrexoniteException("No implementation for a function named " + id +
-                    " exists.");
-
-            return GetDelegate(m);
-        }
-
-        public CilFunction GetDelegate(MethodInfo m)
-        {
-            if (_delegateCache.ContainsKey(m))
-                return _delegateCache[m];
-
-            DynamicMethod dm;
-            if ((dm = m as DynamicMethod) != null)
-                return _delegateCache[m] = (CilFunction) dm.CreateDelegate(typeof (CilFunction));
-            return
-                _delegateCache[m] =
-                    (CilFunction)
-                        Delegate.CreateDelegate
-                            (
-                                typeof (CilFunction),
-                                _getRuntimeType().GetMethod(m.Name),
-                                true);
-        }
-
-        private Type _getRuntimeType()
-        {
-            return _cachedTypeReference ??= TargetType.CreateType();
-        }
-
-        public void LinkMetadata(PFunction func)
+        get
         {
             if (!MakeAvailableForLinking)
-                return;
-
-            var T = _getRuntimeType();
-
-            T.GetField(_mkFieldName(func.Id)).SetValue(null, func);
+                throw new NotSupportedException
+                    ("The compiler pass is not configured to make implementations available for static linking.");
+            return _assemblyBuilder;
         }
+    }
+
+    private readonly ModuleBuilder _moduleBuilder;
+
+    public ModuleBuilder Module
+    {
+        [DebuggerStepThrough]
+        get
+        {
+            if (!MakeAvailableForLinking)
+                throw new NotSupportedException
+                    ("The compiler pass is not configured to make implementations available for static linking.");
+            return _moduleBuilder;
+        }
+    }
+
+    private readonly TypeBuilder _typeBuilder;
+
+    public TypeBuilder TargetType
+    {
+        [DebuggerStepThrough]
+        get
+        {
+            if (!MakeAvailableForLinking)
+                throw new NotSupportedException
+                    ("The compiler pass is not configured to make implementations available for static linking.");
+            return _typeBuilder;
+        }
+    }
+
+    public CompilerPass(Application app, bool makeAvailableForLinking)
+    {
+        MakeAvailableForLinking = makeAvailableForLinking;
+        if (MakeAvailableForLinking)
+        {
+            var sequenceName = _createNextTypeName(app?.Id);
+            var asmName = new AssemblyName(sequenceName);
+            _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndCollect);
+            _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name);
+            _typeBuilder = _moduleBuilder.DefineType(sequenceName);
+        }
+    }
+
+    public MethodInfo DefineImplementationMethod(string id)
+    {
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+
+        var parameterTypes = new[]
+        {
+            typeof (PFunction),
+            typeof (StackContext),
+            typeof (PValue[]),
+            typeof (PVariable[]),
+            typeof (PValue).MakeByRefType(),
+            typeof (ReturnMode).MakeByRefType(),
+        };
+
+        var makeAvailableForLinking = MakeAvailableForLinking;
+        if (makeAvailableForLinking)
+        {
+            //Create method stub
+
+            var dm = TargetType.DefineMethod
+            (
+                id,
+                MethodAttributes.Static | MethodAttributes.Public,
+                typeof (void),
+                parameterTypes);
+            dm.DefineParameter(1, ParameterAttributes.In, "source");
+            dm.DefineParameter(2, ParameterAttributes.In, "sctx");
+            dm.DefineParameter(3, ParameterAttributes.In, "args");
+            dm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
+            dm.DefineParameter(5, ParameterAttributes.Out, "result");
+            dm.DefineParameter(6, ParameterAttributes.Out, "returnMode");
+
+            Implementations.Add(id, dm);
+
+            //Create function field
+            var fb =
+                TargetType.DefineField
+                (_mkFieldName(id), typeof (PFunction),
+                    FieldAttributes.Public | FieldAttributes.Static);
+            FunctionFields.Add(id, fb);
+
+            return dm;
+        }
+
+        var cilm =
+            new DynamicMethod
+            (
+                id,
+                typeof (void),
+                parameterTypes,
+                typeof (Runtime));
+
+        cilm.DefineParameter(1, ParameterAttributes.In, "source");
+        cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
+        cilm.DefineParameter(3, ParameterAttributes.In, "args");
+        cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
+        cilm.DefineParameter(5, ParameterAttributes.Out, "result");
+
+        Implementations.Add(id, cilm);
+
+        return cilm;
+    }
+
+    private static string _mkFieldName(string id)
+    {
+        return id + "<field>";
+    }
+
+    private readonly SymbolTable<FieldInfo> _functionFieldTable = new();
+
+    public SymbolTable<FieldInfo> FunctionFields
+    {
+        get
+        {
+            if (!MakeAvailableForLinking)
+                throw new NotSupportedException
+                    ("The compiler pass is not configured to make implementations available for static linking.");
+            return _functionFieldTable;
+        }
+    }
+
+    public SymbolTable<MethodInfo> Implementations { [DebuggerStepThrough] get; } = new();
+
+    public ILGenerator GetIlGenerator(string id)
+    {
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+        if (!Implementations.TryGetValue(id, out var m))
+            throw new PrexoniteException("No implementation stub for a function named " + id +
+                " exists.");
+
+        return GetIlGenerator(m);
+    }
+
+    public static ILGenerator GetIlGenerator(MethodInfo m)
+    {
+        DynamicMethod dm;
+        MethodBuilder mb;
+        if ((dm = m as DynamicMethod) != null)
+            return dm.GetILGenerator();
+        if ((mb = m as MethodBuilder) != null)
+            return mb.GetILGenerator();
+        throw new PrexoniteException
+        (
+            "CIL Implementation " + m.Name +
+            " is neither a dynamic method nor a method builder but a " +
+            m.GetType());
+    }
+
+    public bool MakeAvailableForLinking { get; }
+
+    public CompilerPass(FunctionLinking linking)
+        : this(null, linking)
+    {
+    }
+
+    public CompilerPass(bool makeAvailableForLinking)
+        : this(null, makeAvailableForLinking)
+    {
+    }
+
+    public CompilerPass(Application app, FunctionLinking linking)
+        : this(
+            app,
+            (linking & FunctionLinking.AvailableForLinking) ==
+            FunctionLinking.AvailableForLinking)
+    {
+    }
+
+    private readonly Dictionary<MethodInfo, CilFunction> _delegateCache =
+        new();
+
+    private Type _cachedTypeReference;
+
+    public CilFunction GetDelegate(string id)
+    {
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+        if (!Implementations.TryGetValue(id, out var m))
+            throw new PrexoniteException("No implementation for a function named " + id +
+                " exists.");
+
+        return GetDelegate(m);
+    }
+
+    public CilFunction GetDelegate(MethodInfo m)
+    {
+        if (_delegateCache.ContainsKey(m))
+            return _delegateCache[m];
+
+        DynamicMethod dm;
+        if ((dm = m as DynamicMethod) != null)
+            return _delegateCache[m] = (CilFunction) dm.CreateDelegate(typeof (CilFunction));
+        return
+            _delegateCache[m] =
+                (CilFunction)
+                Delegate.CreateDelegate
+                (
+                    typeof (CilFunction),
+                    _getRuntimeType().GetMethod(m.Name),
+                    true);
+    }
+
+    private Type _getRuntimeType()
+    {
+        return _cachedTypeReference ??= TargetType.CreateType();
+    }
+
+    public void LinkMetadata(PFunction func)
+    {
+        if (!MakeAvailableForLinking)
+            return;
+
+        var T = _getRuntimeType();
+
+        T.GetField(_mkFieldName(func.Id)).SetValue(null, func);
     }
 }

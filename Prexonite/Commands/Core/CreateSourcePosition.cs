@@ -28,67 +28,66 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core
+namespace Prexonite.Commands.Core;
+
+public class CreateSourcePosition : PCommand, ICilCompilerAware
 {
-    public class CreateSourcePosition : PCommand, ICilCompilerAware
+    #region Singleton
+
+    public static CreateSourcePosition Instance { get; } = new();
+
+    private CreateSourcePosition()
     {
-        #region Singleton
-
-        public static CreateSourcePosition Instance { get; } = new();
-
-        private CreateSourcePosition()
-        {
             
-        }
+    }
 
-        public const string Alias = "create_source_position";
+    public const string Alias = "create_source_position";
 
-        #endregion
+    #endregion
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
+
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if (args.Length == 0)
         {
-            return RunStatically(sctx, args);
+            return sctx.CreateNativePValue(NoSourcePosition.Instance);
         }
 
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        var file = args[0].CallToString(sctx);
+        int? line, column;
+
+        if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance,true,out var box))
         {
-            if (args.Length == 0)
-            {
-                return sctx.CreateNativePValue(NoSourcePosition.Instance);
-            }
-
-            var file = args[0].CallToString(sctx);
-            int? line, column;
-
-            if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance,true,out var box))
-            {
-                line = (int) box.Value;
-            }
-            else
-            {
-                line = null;
-            }
-
-            if (args.Length >= 3 && args[2].TryConvertTo(sctx, IntPType.Instance, true, out box))
-            {
-                column = (int) box.Value;
-            }
-            else
-            {
-                column = null;
-            }
-
-            return sctx.CreateNativePValue(new SourcePosition(file, line ?? -1, column ?? -1));
+            line = (int) box.Value;
         }
-
-        public CompilationFlags CheckQualification(Instruction ins)
+        else
         {
-           return CompilationFlags.PrefersRunStatically;
+            line = null;
         }
 
-        public void ImplementInCil(CompilerState state, Instruction ins)
+        if (args.Length >= 3 && args[2].TryConvertTo(sctx, IntPType.Instance, true, out box))
         {
-            throw new NotSupportedException("The command " + Alias + " does not provide a custom CIL implementation.");
+            column = (int) box.Value;
         }
+        else
+        {
+            column = null;
+        }
+
+        return sctx.CreateNativePValue(new SourcePosition(file, line ?? -1, column ?? -1));
+    }
+
+    public CompilationFlags CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    public void ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException("The command " + Alias + " does not provide a custom CIL implementation.");
     }
 }

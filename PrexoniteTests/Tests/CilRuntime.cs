@@ -29,46 +29,45 @@ using System.Reflection;
 using NUnit.Framework;
 using Prexonite.Compiler.Cil;
 
-namespace PrexoniteTests.Tests
+namespace PrexoniteTests.Tests;
+
+[Parallelizable(ParallelScope.Fixtures)]
+[TestFixture]
+public class CilRuntime
 {
-    [Parallelizable(ParallelScope.Fixtures)]
-    [TestFixture]
-    public class CilRuntime
+    [Test]
+    public void RuntimeMethodsLinked()
     {
-        [Test]
-        public void RuntimeMethodsLinked()
-        {
-            var rt = typeof (Runtime);
-            var cs = from m in rt.GetMembers(BindingFlags.Static | BindingFlags.Public)
-                     where m.Name.EndsWith("PrepareTargets") && m is PropertyInfo || m is FieldInfo
-                     let v = _invokeStatic(m) 
-                     select Tuple.Create(m,v);
+        var rt = typeof (Runtime);
+        var cs = from m in rt.GetMembers(BindingFlags.Static | BindingFlags.Public)
+            where m.Name.EndsWith("PrepareTargets") && m is PropertyInfo || m is FieldInfo
+            let v = _invokeStatic(m) 
+            select Tuple.Create(m,v);
 
-            foreach (var t in cs)
-                Assert.That(t.Item2, Is.Not.Null,
-                    $"The field/property Runtime.{t.Item1.Name} is null.");
+        foreach (var t in cs)
+            Assert.That(t.Item2, Is.Not.Null,
+                $"The field/property Runtime.{t.Item1.Name} is null.");
+    }
+
+    private object _invokeStatic(MemberInfo m)
+    {
+        if(m is PropertyInfo)
+        {
+            var p = (PropertyInfo) m;
+            return p.GetValue(null, new object[0]);
         }
-
-        private object _invokeStatic(MemberInfo m)
+        else if(m is FieldInfo)
         {
-            if(m is PropertyInfo)
-            {
-                var p = (PropertyInfo) m;
-                return p.GetValue(null, new object[0]);
-            }
-            else if(m is FieldInfo)
-            {
-                var f = (FieldInfo) m;
-                return f.GetValue(null);
-            }
-            else
-            {
-                var message = string.Format("The member {1}.{0} is not a property or field.", m.Name, m.DeclaringType);
-                Assert.Fail(message);
+            var f = (FieldInfo) m;
+            return f.GetValue(null);
+        }
+        else
+        {
+            var message = string.Format("The member {1}.{0} is not a property or field.", m.Name, m.DeclaringType);
+            Assert.Fail(message);
 // ReSharper disable HeuristicUnreachableCode
-                throw new Exception(message);
+            throw new Exception(message);
 // ReSharper restore HeuristicUnreachableCode
-            }
         }
     }
 }

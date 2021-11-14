@@ -25,133 +25,132 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 
-namespace Prexonite.Internal
+namespace Prexonite.Internal;
+
+///<summary>
+///    The Prexonite meta table is used to store information about <see cref = "Application" />s, 
+///    Functions (<see cref = "PFunction" />) and global variables (<see cref = "PVariable" />).
+///</summary>
+///[DebuggerStepThrough]
+internal class MetaTableImpl : MetaTable
 {
-    ///<summary>
-    ///    The Prexonite meta table is used to store information about <see cref = "Application" />s, 
-    ///    Functions (<see cref = "PFunction" />) and global variables (<see cref = "PVariable" />).
-    ///</summary>
-    ///[DebuggerStepThrough]
-    internal class MetaTableImpl : MetaTable
+    #region Constructors
+
+    /// <summary>
+    ///     Creates a new meta table.
+    /// </summary>
+    /// <param name = "filter">An object that filters requests to the meta table.</param>
+    internal MetaTableImpl(IMetaFilter filter) : this(filter, 7)
     {
-        #region Constructors
-
-        /// <summary>
-        ///     Creates a new meta table.
-        /// </summary>
-        /// <param name = "filter">An object that filters requests to the meta table.</param>
-        internal MetaTableImpl(IMetaFilter filter) : this(filter, 7)
-        {
-        }
-
-        /// <summary>
-        ///     Creates a new meta table.
-        /// </summary>
-        /// <param name = "filter">An object that filters request to the meta table.</param>
-        /// <param name = "capacity">The initial capacity for the underlying data structure.</param>
-        protected MetaTableImpl(IMetaFilter filter, int capacity)
-        {
-            _filter = filter;
-            _table = new SymbolTable<MetaEntry>(capacity);
-        }
-
-        #endregion
-
-        #region Filter
-
-        private IMetaFilter _filter;
-
-        /// <summary>
-        ///     Returns a reference to the object that filters requests to this meta table. Can be null.
-        /// </summary>
-        protected override IMetaFilter Filter => _filter;
-
-        protected override bool RemoveTransformed(string key)
-        {
-            return _table.Remove(key);
-        }
-
-        public override void Clear()
-        {
-            _table.Clear();
-        }
-
-        public override void CopyTo(KeyValuePair<string, MetaEntry>[] array, int arrayIndex)
-        {
-            _table.CopyTo(array, arrayIndex);
-        }
-
-        public override int Count => _table.Count;
-
-        public override bool IsReadOnly => false;
-
-        protected override void AddTransformed(string key, MetaEntry item)
-        {
-            _table.Add(key,item);
-        }
-
-        protected override bool ContainsTransformedKey(string key)
-        {
-            return _table.ContainsKey(key);
-        }
-
-        public override ICollection<string> Keys => _table.Keys;
-
-        public override ICollection<MetaEntry> Values => _table.Values;
-
-        protected override void SetTransformed(string key, MetaEntry entry)
-        {
-            _table[key] = entry;
-        }
-
-        protected override bool TryGetValueTransformed(string key, out MetaEntry entry)
-        {
-            return _table.TryGetValue(key, out entry);
-        }
-
-        #endregion
-
-        #region ICloneable Members
-
-        ///<summary>
-        ///    Creates a metatable that is a copy of the current instance.
-        ///</summary>
-        ///<returns>
-        ///    A new metatable that is a copy of this instance.
-        ///</returns>
-        ///<filterpriority>2</filterpriority>
-        public override MetaTable Clone()
-        {
-            var clone = new MetaTableImpl(Filter, Count);
-            clone.CloneFrom(this);
-            return clone;
-        }
-
-        public override IEnumerator<KeyValuePair<string, MetaEntry>> GetEnumerator()
-        {
-            return _table.GetEnumerator();
-        }
-
-        public override MetaEntry DefaultValue { get; set; }
-        public override void AddRange(IEnumerable<KeyValuePair<string, MetaEntry>> entries)
-        {
-            _table.AddRange(entries);
-        }
-
-        private static SymbolTable<MetaEntry> _createInternalStorage(int capacity)
-        {
-            return new(capacity);
-        }
-
-        private SymbolTable<MetaEntry> _table;
-
-        protected virtual void CloneFrom(MetaTableImpl metaTable)
-        {
-            _table = _createInternalStorage(metaTable.Count);
-            _table.AddRange(metaTable._table);
-            _filter = metaTable._filter;
-        }
-
-        #endregion
     }
+
+    /// <summary>
+    ///     Creates a new meta table.
+    /// </summary>
+    /// <param name = "filter">An object that filters request to the meta table.</param>
+    /// <param name = "capacity">The initial capacity for the underlying data structure.</param>
+    protected MetaTableImpl(IMetaFilter filter, int capacity)
+    {
+        _filter = filter;
+        _table = new SymbolTable<MetaEntry>(capacity);
+    }
+
+    #endregion
+
+    #region Filter
+
+    private IMetaFilter _filter;
+
+    /// <summary>
+    ///     Returns a reference to the object that filters requests to this meta table. Can be null.
+    /// </summary>
+    protected override IMetaFilter Filter => _filter;
+
+    protected override bool RemoveTransformed(string key)
+    {
+        return _table.Remove(key);
+    }
+
+    public override void Clear()
+    {
+        _table.Clear();
+    }
+
+    public override void CopyTo(KeyValuePair<string, MetaEntry>[] array, int arrayIndex)
+    {
+        _table.CopyTo(array, arrayIndex);
+    }
+
+    public override int Count => _table.Count;
+
+    public override bool IsReadOnly => false;
+
+    protected override void AddTransformed(string key, MetaEntry item)
+    {
+        _table.Add(key,item);
+    }
+
+    protected override bool ContainsTransformedKey(string key)
+    {
+        return _table.ContainsKey(key);
+    }
+
+    public override ICollection<string> Keys => _table.Keys;
+
+    public override ICollection<MetaEntry> Values => _table.Values;
+
+    protected override void SetTransformed(string key, MetaEntry entry)
+    {
+        _table[key] = entry;
+    }
+
+    protected override bool TryGetValueTransformed(string key, out MetaEntry entry)
+    {
+        return _table.TryGetValue(key, out entry);
+    }
+
+    #endregion
+
+    #region ICloneable Members
+
+    ///<summary>
+    ///    Creates a metatable that is a copy of the current instance.
+    ///</summary>
+    ///<returns>
+    ///    A new metatable that is a copy of this instance.
+    ///</returns>
+    ///<filterpriority>2</filterpriority>
+    public override MetaTable Clone()
+    {
+        var clone = new MetaTableImpl(Filter, Count);
+        clone.CloneFrom(this);
+        return clone;
+    }
+
+    public override IEnumerator<KeyValuePair<string, MetaEntry>> GetEnumerator()
+    {
+        return _table.GetEnumerator();
+    }
+
+    public override MetaEntry DefaultValue { get; set; }
+    public override void AddRange(IEnumerable<KeyValuePair<string, MetaEntry>> entries)
+    {
+        _table.AddRange(entries);
+    }
+
+    private static SymbolTable<MetaEntry> _createInternalStorage(int capacity)
+    {
+        return new(capacity);
+    }
+
+    private SymbolTable<MetaEntry> _table;
+
+    protected virtual void CloneFrom(MetaTableImpl metaTable)
+    {
+        _table = _createInternalStorage(metaTable.Count);
+        _table.AddRange(metaTable._table);
+        _filter = metaTable._filter;
+    }
+
+    #endregion
 }

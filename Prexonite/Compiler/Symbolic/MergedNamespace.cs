@@ -28,28 +28,27 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+public class MergedNamespace : Namespace
 {
-    public class MergedNamespace : Namespace
+    [NotNull]
+    private readonly SymbolStore _exportScope;
+
+    internal MergedNamespace([NotNull] SymbolStore scope)
     {
-        [NotNull]
-        private readonly SymbolStore _exportScope;
+        _exportScope = scope ?? throw new ArgumentNullException(nameof(scope));
+    }
 
-        internal MergedNamespace([NotNull] SymbolStore scope)
-        {
-            _exportScope = scope ?? throw new ArgumentNullException(nameof(scope));
-        }
+    public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
+    {
+        return _exportScope.GetEnumerator();
+    }
 
-        public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
-        {
-            return _exportScope.GetEnumerator();
-        }
+    public override bool IsEmpty => _exportScope.IsEmpty;
 
-        public override bool IsEmpty => _exportScope.IsEmpty;
-
-        public override bool TryGet(string id, out Symbol value)
-        {
-            return _exportScope.TryGet(id, out value);
-        }
+    public override bool TryGet(string id, out Symbol value)
+    {
+        return _exportScope.TryGet(id, out value);
     }
 }

@@ -26,71 +26,70 @@
 using System.Diagnostics;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler.Symbolic;
+
+[DebuggerDisplay("{ToString()}")]
+public sealed class DereferenceSymbol : WrappingSymbol
 {
-    [DebuggerDisplay("{ToString()}")]
-    public sealed class DereferenceSymbol : WrappingSymbol
+    public override string ToString()
     {
-        public override string ToString()
+        if (InnerSymbol is ReferenceSymbol rsym)
         {
-            if (InnerSymbol is ReferenceSymbol rsym)
-            {
-                return rsym.Entity.ToString();
-            }
-            else
-            {
-                return $"ref {InnerSymbol}";
-            }
+            return rsym.Entity.ToString();
         }
-
-        [NotNull]
-        internal static Symbol _Create([NotNull] Symbol symbol, [CanBeNull] ISourcePosition position)
+        else
         {
-            if (symbol == null)
-                throw new System.ArgumentNullException(nameof(symbol));
-            return new DereferenceSymbol(position ?? symbol.Position, symbol);
+            return $"ref {InnerSymbol}";
         }
-
-        private DereferenceSymbol([NotNull] ISourcePosition position, Symbol inner)
-            : base(position, inner)
-        {
-        }
-
-        #region Equality members
-
-        #region Overrides of WrappingSymbol
-
-        protected override int HashCodeXorFactor => 5557;
-
-        public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
-        {
-            return new DereferenceSymbol(newPosition ?? Position, newInnerSymbol);
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Overrides of Symbol
-
-        public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
-        {
-            return handler.HandleDereference(this, argument);
-        }
-
-        public override bool TryGetDereferenceSymbol(out DereferenceSymbol dereferenceSymbol)
-        {
-            dereferenceSymbol = this;
-            return true;
-        }
-
-        public override bool Equals(Symbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return other is DereferenceSymbol otherDeref && Equals(otherDeref);
-        }
-
-        #endregion
     }
+
+    [NotNull]
+    internal static Symbol _Create([NotNull] Symbol symbol, [CanBeNull] ISourcePosition position)
+    {
+        if (symbol == null)
+            throw new System.ArgumentNullException(nameof(symbol));
+        return new DereferenceSymbol(position ?? symbol.Position, symbol);
+    }
+
+    private DereferenceSymbol([NotNull] ISourcePosition position, Symbol inner)
+        : base(position, inner)
+    {
+    }
+
+    #region Equality members
+
+    #region Overrides of WrappingSymbol
+
+    protected override int HashCodeXorFactor => 5557;
+
+    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
+    {
+        return new DereferenceSymbol(newPosition ?? Position, newInnerSymbol);
+    }
+
+    #endregion
+
+    #endregion
+
+    #region Overrides of Symbol
+
+    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    {
+        return handler.HandleDereference(this, argument);
+    }
+
+    public override bool TryGetDereferenceSymbol(out DereferenceSymbol dereferenceSymbol)
+    {
+        dereferenceSymbol = this;
+        return true;
+    }
+
+    public override bool Equals(Symbol other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return other is DereferenceSymbol otherDeref && Equals(otherDeref);
+    }
+
+    #endregion
 }

@@ -25,35 +25,34 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
-namespace Prexonite.Commands.Core.PartialApplication
+namespace Prexonite.Commands.Core.PartialApplication;
+
+public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
 {
-    public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
+    #region Singleton pattern
+
+    public static PartialCallStarImplCommand Instance { get; } = new();
+
+    private PartialCallStarImplCommand()
     {
-        #region Singleton pattern
-
-        public static PartialCallStarImplCommand Instance { get; } = new();
-
-        private PartialCallStarImplCommand()
-        {
-        }
-
-        #endregion
-
-        public const string Alias = @"pa\call\star";
-
-        #region Overrides of PartialApplicationCommandBase<object>
-
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-            PValue[] closedArguments, object parameter)
-        {
-            return new PartialCallStar(mappings, closedArguments);
-        }
-
-        protected override Type GetPartialCallRepresentationType(object parameter)
-        {
-            return typeof (PartialCallStar);
-        }
-
-        #endregion
     }
+
+    #endregion
+
+    public const string Alias = @"pa\call\star";
+
+    #region Overrides of PartialApplicationCommandBase<object>
+
+    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
+        PValue[] closedArguments, object parameter)
+    {
+        return new PartialCallStar(mappings, closedArguments);
+    }
+
+    protected override Type GetPartialCallRepresentationType(object parameter)
+    {
+        return typeof (PartialCallStar);
+    }
+
+    #endregion
 }

@@ -28,83 +28,82 @@ using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Core
+namespace Prexonite.Commands.Core;
+
+public class CreateModuleName : PCommand, ICilCompilerAware
 {
-    public class CreateModuleName : PCommand, ICilCompilerAware
+
+    #region Singleton pattern
+
+    public static CreateModuleName Instance { get; } = new();
+
+    private CreateModuleName()
     {
+    }
 
-        #region Singleton pattern
+    #endregion
 
-        public static CreateModuleName Instance { get; } = new();
+    public const string Alias = "create_module_name";
 
-        private CreateModuleName()
-        {
-        }
+    public override PValue Run(StackContext sctx, PValue[] args)
+    {
+        return RunStatically(sctx, args);
+    }
 
-        #endregion
+    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    {
+        if(args.Length < 1)
+            throw new PrexoniteException(Alias + "(...) requires at least one argument.");
 
-        public const string Alias = "create_module_name";
-
-        public override PValue Run(StackContext sctx, PValue[] args)
-        {
-            return RunStatically(sctx, args);
-        }
-
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
-        {
-            if(args.Length < 1)
-                throw new PrexoniteException(Alias + "(...) requires at least one argument.");
-
-            PValue rawVersion;
+        PValue rawVersion;
             
-            if(args.Length == 1)
+        if(args.Length == 1)
+        {
+            if(args[0].Type == PType.Object[typeof(MetaEntry)])
             {
-                if(args[0].Type == PType.Object[typeof(MetaEntry)])
-                {
-                    var entry = (MetaEntry) args[0].Value;
-                    if (ModuleName.TryParse(entry, out var moduleName))
-                        return sctx.CreateNativePValue(sctx.Cache[moduleName]);
-                    else
-                        return PType.Null;
-                }
+                var entry = (MetaEntry) args[0].Value;
+                if (ModuleName.TryParse(entry, out var moduleName))
+                    return sctx.CreateNativePValue(sctx.Cache[moduleName]);
                 else
-                {
-                    var raw = args[0].CallToString(sctx);
-
-                    if (ModuleName.TryParse(raw, out var moduleName))
-                        return sctx.CreateNativePValue(sctx.Cache[moduleName]);
-                    else
-                        return PType.Null;
-                }
-            }
-            else if((rawVersion = args[1]).Type.Equals(PType.Object[typeof(Version)]))
-            {
-                var raw = args[0].CallToString(sctx);
-
-                return
-                    sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw,
-                        (Version) rawVersion.Value)]);
+                    return PType.Null;
             }
             else
             {
                 var raw = args[0].CallToString(sctx);
 
-                if (Version.TryParse(rawVersion.CallToString(sctx), out var version))
-                    return sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw, version)]);
+                if (ModuleName.TryParse(raw, out var moduleName))
+                    return sctx.CreateNativePValue(sctx.Cache[moduleName]);
                 else
                     return PType.Null;
             }
         }
-
-        public CompilationFlags CheckQualification(Instruction ins)
+        else if((rawVersion = args[1]).Type.Equals(PType.Object[typeof(Version)]))
         {
-            return CompilationFlags.PrefersRunStatically;
-        }
+            var raw = args[0].CallToString(sctx);
 
-        public void ImplementInCil(CompilerState state, Instruction ins)
-        {
-            throw new NotSupportedException("The command " + Alias +
-                " does provide a custom cil implementation. ");
+            return
+                sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw,
+                    (Version) rawVersion.Value)]);
         }
+        else
+        {
+            var raw = args[0].CallToString(sctx);
+
+            if (Version.TryParse(rawVersion.CallToString(sctx), out var version))
+                return sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw, version)]);
+            else
+                return PType.Null;
+        }
+    }
+
+    public CompilationFlags CheckQualification(Instruction ins)
+    {
+        return CompilationFlags.PrefersRunStatically;
+    }
+
+    public void ImplementInCil(CompilerState state, Instruction ins)
+    {
+        throw new NotSupportedException("The command " + Alias +
+            " does provide a custom cil implementation. ");
     }
 }

@@ -32,57 +32,56 @@ using System.Threading.Tasks;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Build
+namespace Prexonite.Compiler.Build;
+
+public static class Plan
 {
-    public static class Plan
+    public static readonly TraceSource Trace = new("Prexonite.Compiler.Build");
+
+    /// <summary>List of modules included in the Prexonite assembly. Does not include 'sys' itself.</summary>
+    private static readonly ISource[] _stdLibModules =
     {
-        public static readonly TraceSource Trace = new("Prexonite.Compiler.Build");
+        Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
+        Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
+        Source.FromEmbeddedResource("prxlib.sys.pxs"),
+        Source.FromEmbeddedResource("prxlib.prx.v1.pxs"),
+        Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs")
+    };
 
-        /// <summary>List of modules included in the Prexonite assembly. Does not include 'sys' itself.</summary>
-        private static readonly ISource[] _stdLibModules =
-        {
-            Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
-            Source.FromEmbeddedResource("prxlib.sys.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.v1.pxs"),
-            Source.FromEmbeddedResource("prxlib.prx.v1.prelude.pxs")
-        };
-
-        public static IPlan CreateDefault()
-        {
-            return new IncrementalPlan();
-        }
-
-        public static ISelfAssemblingPlan CreateSelfAssembling()
-        {
-            // ReSharper disable once IntroduceOptionalParameters.Global
-            return CreateSelfAssembling(StandardLibraryPreference.Default);
-        }
-
-        public static async Task<ISelfAssemblingPlan> CreateSelfAssemblingAsync(StandardLibraryPreference stdPreference,
-            CancellationToken token)
-        {
-            var plan = new SelfAssemblingPlan();
-            if (stdPreference == StandardLibraryPreference.Default)
-            {
-                // Provide modules that the standard library may be composed of. No dependency checking.
-                await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));
-
-                // Describe standard library. Dependencies must be satisfied
-                plan.StandardLibrary.Add(new ModuleName("sys", new Version(0, 0)));
-            }
-            return plan;
-        }
-
-        public static ISelfAssemblingPlan CreateSelfAssembling(StandardLibraryPreference stdPreference)
-        {
-            return CreateSelfAssemblingAsync(stdPreference, CancellationToken.None).Result;
-        }
+    public static IPlan CreateDefault()
+    {
+        return new IncrementalPlan();
     }
 
-    public enum StandardLibraryPreference
+    public static ISelfAssemblingPlan CreateSelfAssembling()
     {
-        Default = 0,
-        None
+        // ReSharper disable once IntroduceOptionalParameters.Global
+        return CreateSelfAssembling(StandardLibraryPreference.Default);
     }
+
+    public static async Task<ISelfAssemblingPlan> CreateSelfAssemblingAsync(StandardLibraryPreference stdPreference,
+        CancellationToken token)
+    {
+        var plan = new SelfAssemblingPlan();
+        if (stdPreference == StandardLibraryPreference.Default)
+        {
+            // Provide modules that the standard library may be composed of. No dependency checking.
+            await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));
+
+            // Describe standard library. Dependencies must be satisfied
+            plan.StandardLibrary.Add(new ModuleName("sys", new Version(0, 0)));
+        }
+        return plan;
+    }
+
+    public static ISelfAssemblingPlan CreateSelfAssembling(StandardLibraryPreference stdPreference)
+    {
+        return CreateSelfAssemblingAsync(stdPreference, CancellationToken.None).Result;
+    }
+}
+
+public enum StandardLibraryPreference
+{
+    Default = 0,
+    None
 }

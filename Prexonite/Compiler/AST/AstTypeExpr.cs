@@ -23,20 +23,19 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-namespace Prexonite.Compiler.Ast
+namespace Prexonite.Compiler.Ast;
+
+public abstract class AstTypeExpr : AstExpr
 {
-    public abstract class AstTypeExpr : AstExpr
+    protected AstTypeExpr(ISourcePosition position) : base(position)
     {
-        protected AstTypeExpr(ISourcePosition position) : base(position)
-        {
-        }
+    }
 
-        internal AstTypeExpr(Parser p) : base(p)
-        {
-        }
+    internal AstTypeExpr(Parser p) : base(p)
+    {
+    }
 
-        protected AstTypeExpr(string file, int line, int column) : base(file, line, column)
-        {
-        }
+    protected AstTypeExpr(string file, int line, int column) : base(file, line, column)
+    {
     }
 }
