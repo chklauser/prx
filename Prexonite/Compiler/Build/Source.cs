@@ -76,10 +76,16 @@ public static class Source
         return FromStream(new MemoryStream(data, false), encoding, false);
     }
 
-    public static ISource FromEmbeddedResource([NotNull] string name)
+    public static ISource FromEmbeddedPrexoniteResource([NotNull] string name)
     {
         if (name == null) throw new ArgumentNullException(nameof(name));
         return new EmbeddedResourceSource(Assembly.GetExecutingAssembly(), "Prexonite." + name);
+    }
+    
+    public static ISource FromEmbeddedResource([NotNull] Assembly assembly, [NotNull] string name)
+    {
+        if (name == null) throw new ArgumentNullException(nameof(name));
+        return new EmbeddedResourceSource(assembly, name);
     }
 
     [NotNull]

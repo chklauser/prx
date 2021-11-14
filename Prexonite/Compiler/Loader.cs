@@ -48,7 +48,6 @@ using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
-using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -255,7 +254,7 @@ public class Loader : StackContext, IMessageSink
 
         var target = new CompilerTarget(this, func,parentTarget,sourcePosition);
         if (_functionTargets.ContainsKey(func.Id) &&
-            (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
+            !ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch)
             throw new PrexoniteException(
                 $"The application {ParentApplication.Id} does not allow overriding of function {func.Id}.");
 
@@ -665,7 +664,7 @@ public class Loader : StackContext, IMessageSink
         if (filePath != null)
         {
             lex.File = filePath;
-            LoadedFiles.Add(Path.GetFullPath(filePath));
+            loadedFiles.Add(filePath);
         }
 
         _load(lex);
@@ -711,35 +710,36 @@ public class Loader : StackContext, IMessageSink
         _loadFromFile(file);
     }
 
-    private void _loadFromFile(FileInfo file)
+    private void _loadFromFile(ISourceSpec file)
     {
         if (file == null)
             throw new ArgumentNullException(nameof(file));
-        LoadedFiles.Add(file.FullName);
-        LoadPaths.Push(file.DirectoryName);
+        loadedFiles.Add(file.FullName);
+        if (file.LoadPath is { } loadPath)
+        {
+            LoadPaths.Push(loadPath);
+        }
+
         try
         {
-            using Stream str = new FileStream(
-                file.FullName,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                4 * 1024,
-                FileOptions.SequentialScan);
+            using var stream = file.OpenStream();
 #if DEBUG
                     var indent = new StringBuilder(_loadIndent);
                     indent.Append(' ', 2 * (_loadIndent++));
-                    Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
+                    Console.WriteLine(Properties.Resources.Loader__begin_compiling, file.ShortName, indent, file.FullName);
 #endif
-            _loadFromStream(str, file.Name);
+            _loadFromStream(stream, file.FullName);
 #if DEBUG
-                    Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
+                    Console.WriteLine(Properties.Resources.Loader__end_compiling, file.ShortName, indent);
                     _loadIndent--;
 #endif
         }
         finally
         {
-            LoadPaths.Pop();
+            if (file.LoadPath != null)
+            {
+                LoadPaths.Pop();
+            }
         }
     }
 
@@ -753,7 +753,7 @@ public class Loader : StackContext, IMessageSink
             return;
         }
 
-        if (LoadedFiles.Contains(file.FullName))
+        if (loadedFiles.Contains(file.FullName))
             return;
 
         _loadFromFile(file);
@@ -894,41 +894,68 @@ public class Loader : StackContext, IMessageSink
     }
         
     private static readonly string _imageLocation =
-        (new FileInfo(Assembly.GetExecutingAssembly().Location)).DirectoryName;
+        new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
 
-    public FileInfo ApplyLoadPaths(string pathSuffix)
+    /// <summary>
+    /// Tries to find the indicated source file by applying the current load paths.  
+    /// </summary>
+    /// <param name="pathSuffix">The file to search for.</param>
+    /// <returns>The source specification, if a source could be found; <c>null</c> otherwise.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="pathSuffix"/> is null</exception>
+    /// <exception cref="ArgumentException">An incorrectly formatted file name. This primarily applies to embedded <c>resource:</c> paths.</exception>
+    [CanBeNull]
+    public ISourceSpec ApplyLoadPaths(string pathSuffix)
     {
         if (pathSuffix == null)
             throw new ArgumentNullException(nameof(pathSuffix));
+        if (pathSuffix.StartsWith("resource:"))
+        {
+            var parts = pathSuffix.Split(":", 3);
+            if (parts.Length < 3)
+            {
+                throw new ArgumentException(
+                    $"A resource: file path needs to have the form `resource:{{assembly}}:{{name}}`. Got '{pathSuffix}' instead.");
+            }
+            var assembly = ParentEngine.TryResolveAssembly(parts[1]);
+            if (assembly == null)
+            {
+                Trace.WriteLine($"Could not resolve assembly by name '{parts[1]}'. Is it loaded?");
+                return null;
+            }
+
+            var spec = new ResourceSpec(assembly, parts[2]);
+            return spec.Exists() ? spec : null;
+        }
+
         var path = pathSuffix.Replace(DirectorySeparator, Path.DirectorySeparatorChar);
 
         //Try to find in process environment
         if (File.Exists(path))
-            return new FileInfo(path);
+            return new FileSpec(path);
 
         //Try to find in load paths
         foreach (var pathPrefix in LoadPaths)
-            if (File.Exists((path = Path.Combine(pathPrefix, pathSuffix))))
-                return new FileInfo(path);
+            if (File.Exists(path = Path.Combine(pathPrefix, pathSuffix)))
+                return new FileSpec(path);
 
         //Try to find in engine paths
         foreach (var pathPrefix in ParentEngine.Paths)
-            if (File.Exists((path = Path.Combine(pathPrefix, pathSuffix))))
-                return new FileInfo(path);
+            if (File.Exists(path = Path.Combine(pathPrefix, pathSuffix)))
+                return new FileSpec(path);
 
         //Try to find in current directory
-        if (File.Exists((path = Path.Combine(Environment.CurrentDirectory, pathSuffix))))
-            return new FileInfo(path);
+        if (File.Exists(path = Path.Combine(Environment.CurrentDirectory, pathSuffix)))
+            return new FileSpec(path);
 
         //Try to find next to image
-        if (File.Exists((path = Path.Combine(_imageLocation, pathSuffix))))
-            return new FileInfo(path);
+        if (File.Exists(path = Path.Combine(_imageLocation, pathSuffix)))
+            return new FileSpec(path);
 
         //Not found
         return null;
     }
 
-    public SymbolCollection LoadedFiles { get; } = new();
+    private PathSet loadedFiles { get; } = new();
 
     #endregion
 
@@ -1035,7 +1062,7 @@ public class Loader : StackContext, IMessageSink
                         _throwCannotFindScriptFile(path);
                         return PType.Null;
                     }
-                    if (LoadedFiles.Contains(file.FullName))
+                    if (loadedFiles.Contains(file.FullName))
                         allLoaded = false;
                     else
                         _loadFromFile(file);
@@ -1049,10 +1076,7 @@ public class Loader : StackContext, IMessageSink
             delegate
             {
                 var defaultFile = ApplyLoadPaths(DefaultScriptName);
-                if (defaultFile == null)
-                    return DefaultScriptName;
-                else
-                    return defaultFile.FullName;
+                return defaultFile?.FullName ?? DefaultScriptName;
             });
 
         BuildCommands.AddCompilerCommand(

@@ -63,6 +63,7 @@ public interface ITarget
     IReadOnlyCollection<Message> Messages { get; }
 
     [PublicAPI]
+    [CanBeNull]
     Exception Exception { get; }
 
     bool IsSuccessful { get; }

@@ -14,6 +14,7 @@ using Prexonite.Commands.Lazy;
 using Prexonite.Commands.List;
 using Prexonite.Commands.Math;
 using Prexonite.Commands.Text;
+using Prexonite.Compiler.Internal;
 using Prexonite.Types;
 using Char = Prexonite.Commands.Core.Char;
 using Debug = Prexonite.Commands.Core.Debug;
@@ -481,7 +482,7 @@ public partial class Engine
 
     #region Assembly management
 
-    private readonly List<Assembly> _registeredAssemblies;
+    private readonly AssemblyResolver _registeredAssemblies;
 
     /// <summary>
     ///     Determines whether an assembly is already registered for use by the Prexonite VM.
@@ -489,22 +490,14 @@ public partial class Engine
     /// <param name = "ass">An assembly reference.</param>
     /// <returns>True if the supplied assembly is registered; false otherwise.</returns>
     [DebuggerStepThrough]
-    public bool IsAssemblyRegistered(Assembly? ass)
-    {
-        if (ass == null)
-            return false;
-        return _registeredAssemblies.Contains(ass);
-    }
+    public bool IsAssemblyRegistered(Assembly? ass) => _registeredAssemblies.Contains(ass);
 
     /// <summary>
     ///     Gets a list of all registered assemblies.
     /// </summary>
     /// <returns>A copy of the list of registered assemblies.</returns>
     [DebuggerStepThrough]
-    public Assembly[] GetRegisteredAssemblies()
-    {
-        return _registeredAssemblies.ToArray();
-    }
+    public Assembly[] GetRegisteredAssemblies() => _registeredAssemblies.ToArray();
 
     /// <summary>
     ///     Registers a new assembly for use by the Prexonite VM.
@@ -512,13 +505,7 @@ public partial class Engine
     /// <param name = "ass">An assembly reference.</param>
     /// <exception cref = "ArgumentNullException"><paramref name = "ass" /> is null.</exception>
     [DebuggerStepThrough]
-    public void RegisterAssembly(Assembly? ass)
-    {
-        if (ass == null)
-            throw new ArgumentNullException(nameof(ass));
-        if (!_registeredAssemblies.Contains(ass))
-            _registeredAssemblies.Add(ass);
-    }
+    public void RegisterAssembly(Assembly ass) => _registeredAssemblies.Add(ass);
 
     /// <summary>
     ///     Removes an assembly from the list registered ones.
@@ -526,13 +513,24 @@ public partial class Engine
     /// <param name = "ass">The assembly to remove.</param>
     /// <exception cref = "ArgumentNullException"><paramref name = "ass" /> is null.</exception>
     [DebuggerStepThrough]
-    public void RemoveAssembly(Assembly? ass)
-    {
-        if (ass == null)
-            throw new ArgumentNullException(nameof(ass));
-        if (_registeredAssemblies.Contains(ass))
-            _registeredAssemblies.Remove(ass);
-    }
+    public void RemoveAssembly(Assembly ass) => _registeredAssemblies.Remove(ass);
+
+    /// <summary>
+    /// Tries to find a registered assembly with a matching name. Matches fully qualified assembly names, simple names
+    /// and <c>{name},{version}</c>.
+    /// </summary>
+    /// <param name="name">The name to find a matching assembly for.</param>
+    /// <returns>Either the matching assembly or <c>null</c> if no matching assembly cna be found.</returns>
+    public Assembly? TryResolveAssembly(string name) => _registeredAssemblies.TryResolve(name);
+
+    /// <summary>
+    /// Tries to find a registered assembly with a matching name. Matches fully qualified assembly names, simple names
+    /// and <c>{name},{version}</c>.
+    /// </summary>
+    /// <param name="name">The name to find a matching assembly for.</param>
+    /// <returns>Either the matching assembly.</returns>
+    /// <exception cref="PrexoniteVersion">If no matching assembly can be found.</exception>
+    public Assembly ResolveAssembly(string name) => _registeredAssemblies.Resolve(name);
 
     #endregion
 
@@ -620,7 +618,9 @@ public partial class Engine
         };
 
         //Assembly registry
-        _registeredAssemblies = new List<Assembly>();
+        _registeredAssemblies = new();
+        var prexoniteAssembly = Assembly.GetAssembly(typeof(Engine))!;
+        _registeredAssemblies.Add(prexoniteAssembly);
         foreach (
             var assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
             _registeredAssemblies.Add(Assembly.Load(assName.FullName));
@@ -821,7 +821,7 @@ public partial class Engine
         _pTypeRegistry = new SymbolTable<Type>(prototype._pTypeRegistry.Count);
         _pTypeRegistry.AddRange(prototype._pTypeRegistry);
         PTypeRegistry = new PTypeRegistryIterator(this);
-        _registeredAssemblies = new List<Assembly>(prototype._registeredAssemblies);
+        _registeredAssemblies = prototype._registeredAssemblies.Clone();
         Commands = new CommandTable();
         Commands.AddRange(prototype.Commands);
             

@@ -48,11 +48,11 @@ namespace Prx;
 
 internal static class Program
 {
-    public const string PrxScriptFileName = "prx.pxs";
+    public const string PrxScriptFileName = "prx_main.pxs";
 
     public static string GetPrxPath()
     {
-        return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        return AppContext.BaseDirectory;
     }
 
     public static void Main(string[] args)
@@ -224,7 +224,7 @@ internal static class Program
                 var node = e.Stack.Last;
                 do
                 {
-                    if (node.Value is FunctionContext ectx)
+                    if (node?.Value is FunctionContext ectx)
                     {
                         if (ReferenceEquals(ectx.Implementation, rctx.Implementation))
                         {
@@ -232,7 +232,7 @@ internal static class Program
                             break;
                         }
                     }
-                } while ((node = node.Previous) != null);
+                } while ((node = node?.Previous) != null);
 
                 return PType.Null.CreatePValue();
             });
@@ -288,13 +288,10 @@ internal static class Program
 
         #endregion
 
-        var bootstrapPath = Path.Combine(prxPath, PrxScriptFileName);
-        var (entryPath, deleteSrc) = _ensureSourceAvailable(bootstrapPath, prxPath);
-
         Tuple<Application, ITarget> result;
         try
         {
-            var entryDesc = plan.AssembleAsync(Source.FromFile(entryPath, Encoding.UTF8)).Result;
+            var entryDesc = plan.AssembleAsync(Source.FromEmbeddedResource(Assembly.GetAssembly(typeof(Program))!, PrxScriptFileName)).Result;
             result = plan.Load(entryDesc.Name);
         }
         catch (BuildFailureException e)
@@ -329,9 +326,6 @@ internal static class Program
 #endif
         }
 
-        if (deleteSrc)
-            Directory.Delete(Path.Combine(prxPath ,"src"), true);
-
         if (result == null)
         {
             return null;
@@ -344,64 +338,6 @@ internal static class Program
         app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName()!.Version!.ToString();
         return app;
 
-    }
-
-    private static (string entryPath, bool deleteSrc) _ensureSourceAvailable(string entryPath, string prxPath)
-    {
-        if (File.Exists(entryPath)) 
-            return (entryPath, false);
-
-        var srcDirPath = Path.Combine(prxPath, "src");
-        //Load default CLI app
-        entryPath = Path.Combine(srcDirPath, "prx_main.pxs");
-
-        if (File.Exists(entryPath)) 
-            return (entryPath, false);
-
-        bool deleteSrc;
-        if (!Directory.Exists(srcDirPath))
-        {
-            var di =
-                Directory.CreateDirectory(srcDirPath);
-            di.Attributes |= FileAttributes.Hidden;
-            deleteSrc = true;
-        }
-        else
-        {
-            deleteSrc = false;
-        }
-
-        //Unpack source
-        var prx = Assembly.GetExecutingAssembly();
-
-        async Task extractFile(string name)
-        {
-            var resourceName = $"Prx.src.{name}";
-            var stream = prx.GetManifestResourceStream(resourceName);
-            if (stream == null)
-            {
-                throw new ArgumentException($"Embedded resource '{resourceName}' is missing.",
-                    nameof(name));
-            }
-
-            await using (stream)
-            {
-                var filePath = Path.Combine(srcDirPath, name);
-
-                // We need the await here so that the state machine can close the streams afterwards
-                await using (var dest = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                    await stream.CopyToAsync(dest, (CancellationToken) default);
-            }
-        }
-
-
-        Task.WaitAll(
-            extractFile("prx_main.pxs"),
-            extractFile("prx_lib.pxs"),
-            extractFile("prx_interactive.pxs")
-        );
-
-        return (entryPath, deleteSrc);
     }
 
     private static bool _reportErrors(IEnumerable<Message> messages)

@@ -23,15 +23,34 @@
     <Product>Prexonite</Product>
     <Company>$(Product)</Company>
     <NeutralLanguage>en-US</NeutralLanguage>
+    
+    <!-- single file app -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Linux'))">linux-x64</RuntimeIdentifier>
+    <!-- Teady to run makes a HUGE difference in terms of startup time. 
+         Reduces startup time from ~820ms down to ~210ms.  -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- While compression can reduce the file size by about 50%, it also almost doubles the overhead for launching the
+         interpreter (210ms -> 350-450ms) to the point where the delay becomes much more noticable.
+     -->
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <!-- Can't use assembly trimming because the Prx interpreter heavily relies on reflection.
+         Interestingly, there is sufficient overlap to run  the basic prx application.
+         That means: if you are only interested in the compiler and a basic REPL, you can use a 19MB trimmed 
+         application.
+     -->
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="src\prx_interactive.pxs" />
     <None Remove="src\prx_lib.pxs" />
     <None Remove="src\prx_main.pxs" />
-    <EmbeddedResource Include="src\prx_interactive.pxs" />
-    <EmbeddedResource Include="src\prx_lib.pxs" />
-    <EmbeddedResource Include="src\prx_main.pxs" />
+    <EmbeddedResource Include="src\prx_interactive.pxs" LogicalName="prx_interactive.pxs" />
+    <EmbeddedResource Include="src\prx_lib.pxs" LogicalName="prx_lib.pxs" />
+    <EmbeddedResource Include="src\prx_main.pxs" LogicalName="prx_main.pxs" />
     <None Update="psr\_2\psr\prop.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
