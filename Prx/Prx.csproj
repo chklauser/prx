@@ -6,9 +6,9 @@
 
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AppConfig>config/app.$(Configuration).config</AppConfig>
-    <LangVersion>9</LangVersion>
+    <LangVersion>10</LangVersion>
     <Version>1.98</Version>
     <Title>Prexonite CLI</Title>
     <Description>Prexonite command line interpreter and compiler.</Description>
