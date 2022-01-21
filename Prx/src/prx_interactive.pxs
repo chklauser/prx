@@ -285,8 +285,11 @@ namespace prx.cli.repl
     executeStatement:
                 var printPrefix = shortened(raw) + " = ";
                 //First, try to compile the code as an expression
-                buffer.AppendFormat(" function {0}() = (\n{1}\n); ", 
-                    [funcId, raw]~Object<"System.Object[]">);
+                buffer.Append(" function ");
+                buffer.Append(funcId);
+                buffer.Append("() = (\n");
+                buffer.Append(raw);
+                buffer.Append("\n); ");
                 if(Not tryLoad)
                 {
                     //should that fail, try to compile the code as a statement
@@ -294,8 +297,11 @@ namespace prx.cli.repl
                     var evalCode = lastCode;
 
                     funcId = nextFuncId;
-                    buffer.AppendFormat(" function {0}() {{ \n{1}\n ; }} ", 
-                        [funcId, raw]~Object<"System.Object[]">);
+                    buffer.Append(" function ");
+                    buffer.Append(funcId);
+                    buffer.Append("() {\n");
+                    buffer.Append(raw);
+                    buffer.Append("\n ; }");
                     printPrefix = null;
 
                     if(Not tryLoad)
