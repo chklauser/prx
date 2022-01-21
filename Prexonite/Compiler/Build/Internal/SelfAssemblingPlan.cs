@@ -502,10 +502,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         catch (Exception ex)
         {
             candidate = null;
-            if (ex is ArgumentException ||
-                ex is UnauthorizedAccessException ||
-                ex is PathTooLongException ||
-                ex is NotSupportedException)
+            if (ex is ArgumentException or UnauthorizedAccessException or PathTooLongException or NotSupportedException)
             {
                 _trace.TraceEvent(TraceEventType.Error, 0,
                     "Error while handling file path \"{0}\". Treating file as non-existent instead of reporting exception: {1}",
