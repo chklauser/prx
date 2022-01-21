@@ -239,7 +239,16 @@ namespace prx.cli
         var plan = host.self_assembling_build_plan;
         var prx_path = host.prx_path;
         plan.SearchPaths.Add(System::IO::Path.Combine(prx_path, "psr", "_2"));
-        plan.SearchPaths.Add(System::Environment.CurrentDirectory);
+        if(sourceFiles.Count > 0) {
+            if( System::IO::File.Exists(var lastSourceFile = sourceFiles[sourceFiles.Count - 1])
+                    && (var dir = System::IO::Path.GetDirectoryName(lastSourceFile)) is not null) {
+                // translate to full path to force resolution as file (instead of ref-spec)
+                sourceFiles[sourceFiles.Count - 1] = System::IO::Path.GetFullPath(lastSourceFile);                           
+                plan.SearchPaths.Add(dir);
+            } else {
+                plan.SearchPaths.Add(System::Environment.CurrentDirectory);
+            }
+        }
         searchPaths >> each(plan.SearchPaths.Add(?));
 
         //Report
