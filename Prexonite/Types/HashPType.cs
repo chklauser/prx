@@ -323,11 +323,9 @@ public class HashPType : PType, ICilCompilerAware
                 result = new PValue(pvht, this);
                 break;
 
-            case "createFromArgs":
-                if (args.Length%2 != 0)
-                    break;
+            case "createfromargs":
                 pvht = new PValueHashtable(args.Length/2);
-                for (var i = 0; i < args.Length; i += 2)
+                for (var i = 0; i + 1 < args.Length; i += 2)
                     pvht.AddOverride(args[i], args[i + 1]);
                 result = new PValue(pvht, this);
                 break;
