@@ -138,7 +138,7 @@ public abstract class V2UnitTestContainer
             }
         }
 
-        private static readonly PValue[] Empty = new PValue[0];
+        private static readonly PValue[] Empty = Array.Empty<PValue>();
             
         private static (string Id, Application ParentApplication) extract(StackContext sctx, PValue funcValue)
         {

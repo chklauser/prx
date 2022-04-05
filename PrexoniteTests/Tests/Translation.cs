@@ -41,7 +41,7 @@ using Prexonite.Types;
 
 namespace PrexoniteTests.Tests;
 
-public class Translation : VMTestsBase
+public abstract class Translation : VMTestsBase
 {
     [Test]
     public void SimpleSwitchMetaEntry()
@@ -1598,6 +1598,23 @@ function main(x,y) {
 function main = println(?*);
 ");
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.IncompleteBinaryOperation), Is.Not.Empty);
+    }
+
+    [Test]
+    public void LhsInParentheses()
+    {
+        Compile(@"
+function f(x) = 2*x;
+function main(x,y) {
+    (var z) = x;
+    ((var u)) = y;
+    (x)++;
+    ((y))--;
+    var v = (z) >> f;
+    return ""x=$x y=$y z=$z u=$u v=$v""; 
+}
+");
+        Expect("x=6 y=8 z=5 u=9 v=10", 5, 9);
     }
 
     [ContractAnnotation("value:null=>halt")]

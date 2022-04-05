@@ -41,7 +41,7 @@ using Prexonite.Types;
 
 namespace PrexoniteTests.Tests;
 
-public class BuiltInTypeTests : VMTestsBase
+public abstract class BuiltInTypeTests : VMTestsBase
 {
     [Test]
     public void HashStaticMethodCreate()

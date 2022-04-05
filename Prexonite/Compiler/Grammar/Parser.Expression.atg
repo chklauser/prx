@@ -296,7 +296,6 @@ Primary<out AstExpr expr>
                                         .)
 =   IF(isLambdaExpression())
     LambdaExpression<out expr>
-|   lpar Expr<out expr> rpar
 |	HashLiteral<out expr>
 |   CoroutineCreation<out expr>
 |	LoopExpr<out expr>

@@ -171,6 +171,7 @@ GetInitiator<out AstExpr complex>
                                             List<AstExpr> args = new List<AstExpr>();
                                             string id;
                                             int placeholderIndex = -1;
+                                            bool missingArg = false;
                                         .)
 =
     //Actual value
@@ -180,7 +181,10 @@ GetInitiator<out AstExpr complex>
                                         (.  complex = actualComplex; .)
     |   StaticCall<out staticCall>
     |	lpar Expr<out expr>				(.	args.Add(expr); .)
-		{	comma Expr<out expr>		(.	args.Add(expr); .) //multiple expressions can only be used as arguments
+		{	WEAK comma                  (.  if(missingArg) SemErr("Missing expression (two consecutive commas)."); .)
+		    (   Expr<out expr>		    (.	args.Add(expr); .) //multiple expressions can only be used as arguments
+		    |                           (.  missingArg = true; .)
+		    )
 		}
 		rpar
 		(	GetSetExtension<expr, out member>
@@ -191,6 +195,10 @@ GetInitiator<out AstExpr complex>
 			GetCall<out actualComplex>  (.  _appendRight(args,actualComplex);
                                             complex = actualComplex;
 										.)
+		|                               (.  if(args.Count > 1) 
+		                                        SemErr("Expression in parentheses cannot have more than 1 value.");
+                                            complex = args[0]; 
+		                                .)
 		)
     )
                                         (.  complex =  

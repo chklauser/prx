@@ -102,7 +102,7 @@ public class Unpack : MacroCommand
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             MacroContext context;
-            if (args.Length < 2 || !(args[0].Type is ObjectPType) ||
+            if (args.Length < 2 || args[0].Type is not ObjectPType ||
                 (context = args[0].Value as MacroContext) == null)
                 throw new PrexoniteException(_getUsage());
 
@@ -110,8 +110,8 @@ public class Unpack : MacroCommand
                 return context.RetrieveFromTransport(id);
 
             AstConstant constant;
-            if (!(args[1].Type is ObjectPType) ||
-                (constant = args[1].Value as AstConstant) == null || !(constant.Constant is int))
+            if (args[1].Type is not ObjectPType ||
+                (constant = args[1].Value as AstConstant) == null || constant.Constant is not int)
                 throw new PrexoniteException(_getUsage());
 
             return context.RetrieveFromTransport((int) constant.Constant);
