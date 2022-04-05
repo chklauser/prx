@@ -26,7 +26,7 @@ jobs:
           - linux
         include: 
           - os: windows
-            build_platform: windows-2019
+            build_platform: windows-2022
           - os: linux
             build_platform: ubuntu-20.04
     name: Build & Test Prexonite on ${{ matrix.os }}
