@@ -7,8 +7,24 @@ on:
 
 jobs:
   build:
-    name: Release Prexonite
-    runs-on: windows-2019
+    strategy:
+      matrix:
+        os:
+          - windows
+          - linux
+        include:
+          - os: windows
+            build_platform: windows-2022
+            runtime_ident: win-x64
+          - os: linux
+            build_platform: ubuntu-20.04
+            runtime_ident: linux-x64
+    name: Release Prexonite on ${{ matrix.os }}
+    runs-on: ${{ matrix.build_platform }}
+    permissions:
+      contents: write # required for creating a release
+    env:
+      DOTNET_NOLOGO: true
 
     steps:
       - name: Determine version
@@ -25,19 +41,19 @@ jobs:
         shell: bash
       - uses: actions/checkout@v2
       - name: Setup .NET 6 SDK
-        uses: actions/setup-dotnet@v1.7.2
-        env:
-          NUGET_AUTH_TOKEN: '${{secrets.GITHUB_TOKEN}}'
+        uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: '6.0.x'
+          # dotnet 5.0 is still required for T4
+          dotnet-version: |
+            6.0.x
+            5.0.x
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
-      - name: Setup .NET 5 SDK (for T4)
-        uses: actions/setup-dotnet@v1.7.2
         env:
-          NUGET_AUTH_TOKEN: '${{secrets.GITHUB_TOKEN}}'
-        with:
-          dotnet-version: '5.0.x'
-          source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
+          NUGET_AUTH_TOKEN: '${{secrets.CICD_PAT}}'
+      - name: NuGet login for publishing    
+        run: |
+          dotnet nuget update source  --username chklauser --password '${{secrets.CICD_PAT}}' --store-password-in-clear-text chklauser
+        shell: bash
       - uses: actions/cache@v2
         with:
           path: ~/.nuget/packages
@@ -46,48 +62,48 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget
       - name: Install dependencies
-        run: dotnet restore --lock-file-path=./packages.lock.json --verbosity=normal
+        run: dotnet restore --runtime ${{ matrix.runtime_ident }} --lock-file-path=./packages.lock.json --verbosity=normal
       - name: Install tools
         run: dotnet tool restore --verbosity=normal 
       - name: Build
         run: dotnet build --configuration=Release --no-restore --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
       - name: Test
         run: dotnet test --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
-      - name: Pack
+      - name: Pack (windows-only)
+        if: matrix.os == 'windows'
         run: dotnet pack --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
       - name: Publish
-        run: dotnet publish --configuration=Release --no-restore --no-build --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
-#      - name: Prepare Binary ZIP
-#        run: |
-#          ver='${{steps.determine-version.outputs.version}}'
-#          cd Prx/bin/Release/net5.0/ && \
-#            mkdir zip-env && \
-#            mv publish "zip-env/prexonite-v$ver"
-#        shell: bash
-#      - name: Binary ZIP
-#        uses: thedoctor0/zip-release@0.4.1
-#        with:
-#          filename: prexonite-v${{steps.determine-version.outputs.version}}
-#          directory: Prx/bin/Release/net5.0/zip-env
-      - name: Push Prexonite Package
-        run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.nupkg
-      - name: Push Prexonite Symbols Package
-        run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.snupkg
-      - name: Push Prx Package
-        run: dotnet nuget push Prx/bin/Release/Prx.${{steps.determine-version.outputs.version}}.nupkg
-      - name: Push Prx Symbols Package
-        run: dotnet nuget push Prx/bin/Release/Prx.${{steps.determine-version.outputs.version}}.snupkg
-      - name: Create Release 
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet publish --configuration=Release --runtime ${{ matrix.runtime_ident }} --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
+      - name: Prepare Binary ZIP
+        run: |
+          ver='${{steps.determine-version.outputs.version}}'
+          cd Prx/bin/Release/net6.0/${{ matrix.runtime_ident }} && \
+            mkdir zip-env && \
+            mv publish "zip-env/prexonite-v$ver"
+        shell: bash
+      - name: Binary ZIP
+        uses: thedoctor0/zip-release@0.6.1
         with:
+          filename: prexonite-v${{steps.determine-version.outputs.version}}-${{ matrix.runtime_ident }}.zip
+          directory: Prx/bin/Release/net6.0/${{ matrix.runtime_ident }}/zip-env
+      - name: Push Prexonite Package (windows-only)
+        if: matrix.os == 'windows'
+        run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.nupkg
+      - name: Push Prexonite Symbols Package (windows-only)
+        if: matrix.os == 'windows'
+        run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.snupkg
+      - name: Push Prx Package (windows-only)
+        if: matrix.os == 'windows'
+        run: dotnet nuget push Prx/bin/Release/Prx.${{steps.determine-version.outputs.version}}.nupkg
+      - name: Push Prx Symbols Package (windows-only)
+        if: matrix.os == 'windows'
+        run: dotnet nuget push Prx/bin/Release/Prx.${{steps.determine-version.outputs.version}}.snupkg
+      - name: Create Release
+        uses: ncipollo/release-action@v1.10.0
+        with:
+          allowUpdates: true
+          artifacts: '**/Prexonite*.nupkg,**/Prexonite*.snupkg,**/Prx*.nupkg,**/Prx*.snupkg,**/prexonite-v*.zip'
           draft: true
-          name:  ${{steps.determine-version.outputs.version}}
-          fail_on_unmatched_files: true
-          files: |
-            **/Prexonite*.nupkg
-            **/Prexonite*.snupkg
-            **/Prx*.nupkg
-            **/Prx*.snupkg
-
+          generateReleaseNotes: true
+          omitBodyDuringUpdate: true
+          omitDraftDuringUpdate: true
