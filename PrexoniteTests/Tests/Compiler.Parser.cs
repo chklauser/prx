@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System.Linq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -3899,6 +3900,16 @@ function main = invalid;
         var message = loader.Errors[0];
         Assert.That(message.MessageClass,Is.EqualTo("T.example"));
         Assert.That(message.Text,Is.EqualTo("Zhee-Error-Message"));
+    }
+
+    [Test]
+    public void OneIsTrue()
+    {
+        var ldr = _justCompile(@"
+function main = 1 is true;
+");
+        Assert.That(ldr.Errors, Is.Not.Empty);
+        Assert.That(ldr.Errors.Select(m => m.MessageClass), Contains.Item(MessageClasses.TypeExpressionExpected));
     }
 
 }

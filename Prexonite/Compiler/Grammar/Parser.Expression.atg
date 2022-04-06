@@ -252,15 +252,22 @@ PostfixUnaryExpr<out AstExpr expr>
         [ not						    (.	isInverted = true; notPosition = GetPosition(); .) 
         ]
     	TypeExpr<out type, _typeCheckShift>         
-    		                            (.  type.Arguments.Add(expr);
-    		                                expr = isInverted 
-    		                                    ? (type.CheckForPlaceholders() 
-                                                    // Special handling of "? is not Y" as that's not the same thing
-                                                    // as "not (? is Y)" when placeholders are involved.
-    		                                        ? _createPartialInvertedTypeCheck(position, type)
-    		                                        : Create.UnaryOperation(position, UnaryOperator.LogicalNot, type)
-    		                                      )
-    		                                    : type;
+    		                            (.  if (type == null)
+                                            {
+                                            	var lastPos = GetPosition();
+                                                Loader.ReportMessage(Message.Error(Resources.TypeCheck_ExpectedTypeExpression, lastPos, MessageClasses.TypeExpressionExpected));
+                                                expr = Create.Constant(GetPosition(), false);
+                                            } else {
+                                                type.Arguments.Add(expr);
+                                                expr = isInverted 
+                                                    ? (type.CheckForPlaceholders() 
+                                                        // Special handling of "? is not Y" as that's not the same thing
+                                                        // as "not (? is Y)" when placeholders are involved.
+                                                        ? _createPartialInvertedTypeCheck(position, type)
+                                                        : Create.UnaryOperation(position, UnaryOperator.LogicalNot, type)
+                                                      )
+                                                    : type;
+                                            }
     									.)
     |   inc                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostIncrement, expr); .)
     |   dec                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostDecrement, expr); .)

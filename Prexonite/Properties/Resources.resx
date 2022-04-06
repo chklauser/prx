@@ -469,4 +469,7 @@
   <data name="Parser_NsTransferSpec_Import_has_no_effect_0" xml:space="preserve">
     <value>Import of symbol `{0}` has no effect. Did you mean `{0}(*)`?</value>
   </data>
+  <data name="TypeCheck_ExpectedTypeExpression" xml:space="preserve">
+    <value>Expected type expression after `is [not]`.</value>
+  </data>
 </root>
