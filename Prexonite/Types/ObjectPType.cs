@@ -570,7 +570,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 for (var i = 0; i < cargs.Length; i++)
                 {
                     var arg = sargs[i];
-                    if (!(arg.IsTypeLocked || arg.IsNull)) //Neither Type-locked nor null
+                    if (!(arg.IsNull)) //Neither Type-locked nor null
                     {
                         var P = parameters[i].ParameterType;
                         var A = arg.ClrType;
@@ -600,7 +600,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                     }
                     catch (TargetInvocationException exc)
                     {
-                        if (exc.InnerException is PrexoniteRuntimeException {InnerException: {} inner} innerRt)
+                        if (exc.InnerException is PrexoniteRuntimeException {InnerException: {} inner})
                             throw inner;
                         throw;
                     }
@@ -614,7 +614,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 else
                 {
                     var arg = cond.Args[0];
-                    if (!(arg.IsTypeLocked || arg.IsNull)) //Neither Type-locked nor null
+                    if (!(arg.IsNull)) //Neither Type-locked nor null
                     {
                         var paramTy = field.FieldType;
                         var argTy = arg.ClrType;
@@ -786,7 +786,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     private static bool _member_filter(MemberInfo candidate, object arg)
     {
         var cond = (call_conditions) arg;
-        //Criteria No.1: The members name (may be supressed)
+        //Criteria No.1: The members name (may be suppressed)
         if (
             !(cond.IgnoreId ||
                 candidate.Name.Equals(cond.Id, StringComparison.OrdinalIgnoreCase)))
@@ -796,79 +796,25 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         //Set = min 1 Argument
         if (cond.Call == PCall.Set && cond.Args.Length == 0)
             return false;
-        if (candidate is FieldInfo)
+        return candidate switch
         {
             //Get+Field = 0 Parameters, Set+Field = 1 Parameter
-            if (cond.Call == PCall.Get)
-            {
-                if (cond.Args.Length == 0)
-                    return true;
-                else
-                    return false;
-            }
-            else
-            {
-                if (cond.Args.Length == 1)
-                {
-                    //Ensure that type-locked values are acceptable
-                    if (cond.Args[0].IsTypeLocked)
-                    {
-                        var P = (candidate as FieldInfo).FieldType;
-                        var A = cond.Args[0].ClrType;
-                        if (!(P.Equals(A) || P.IsAssignableFrom(A)))
-                            //Neiter Equal nor assignable
-                            return false;
-                    }
-
-                    return true;
-                }
-                else
-                    return false;
-            }
-        }
-        else if (candidate is PropertyInfo)
-        {
-            var property = candidate as PropertyInfo;
-            if (cond.Call == PCall.Get)
-            {
-                if (!property.CanRead)
-                    return false;
-                else
-                    return _method_filter(property.GetGetMethod(), cond);
-            }
-            else //cond.Call == PCall.Set
-            {
-                if (!property.CanWrite)
-                    return false;
-                else
-                    return _method_filter(property.GetSetMethod(), cond);
-            }
-        }
-        else if (candidate is MethodInfo)
-        {
-            return _method_filter(candidate as MethodInfo, cond);
-        }
-        else if (candidate is EventInfo)
-        {
-            var info = candidate as EventInfo;
-            if (cond.Directive == "" ||
-                Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
-            {
-                return _method_filter(info.GetRaiseMethod(), cond);
-            }
-            else if (Engine.DefaultStringComparer.Compare(cond.Directive, "Add") == 0)
-            {
-                return _method_filter(info.GetAddMethod(), cond);
-            }
-            else if (Engine.DefaultStringComparer.Compare(cond.Directive, "Remove") == 0)
-            {
-                return _method_filter(info.GetRemoveMethod(), cond);
-            }
-            else
-                return false;
-        }
-        else //Do not support other members than fields, properties, methods and events
-            return false;
+            FieldInfo when cond.Call == PCall.Get => cond.Args.Length == 0,
+            FieldInfo => cond.Args.Length == 1,
+            PropertyInfo property when cond.Call == PCall.Get => 
+                property.CanRead && _method_filter(property.GetGetMethod(), cond),
+            //cond.Call == PCall.Set
+            PropertyInfo property => property.CanWrite && _method_filter(property.GetSetMethod(), cond),
+            MethodInfo method => _method_filter(method, cond),
+            EventInfo @event when cond.Directive == "" ||
+                Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0 =>
+                _method_filter(@event.GetRaiseMethod(), cond),
+            EventInfo @event when Engine.DefaultStringComparer.Compare(cond.Directive, "Add") == 0 => 
+                _method_filter( @event.GetAddMethod(), cond),
+            EventInfo @event when Engine.DefaultStringComparer.Compare(cond.Directive, "Remove") == 0 => 
+                _method_filter(@event.GetRemoveMethod(), cond),
+            _ => false
+        };
     }
 
     /// <summary>
@@ -906,24 +852,11 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         if (cond.Args.Length != parameters.Length)
             return false;
 
-        //Criteria No.2: All Type-Locked arguments must match without a conversion
-        for (var i = 0; i < parameters.Length; i++)
-        {
-            if (cond.Args[i].IsTypeLocked)
-            {
-                var P = parameters[i].ParameterType;
-                var A = cond.Args[i].ClrType;
-                if (!(P == A || P.IsAssignableFrom(A))) //Neither Equal nor assignable
-                    return false;
-            }
-        }
-
         //optional Criteria No.3: Return types must match
-        if (cond.returnType != null && method is MethodInfo)
+        if (cond.returnType != null && method is MethodInfo methodInfo)
         {
-            var methodEx = (MethodInfo) method;
-            if (!(methodEx.ReturnType == cond.returnType ||
-                    cond.returnType.IsAssignableFrom(methodEx.ReturnType)))
+            if (!(methodInfo.ReturnType == cond.returnType ||
+                    cond.returnType.IsAssignableFrom(methodInfo.ReturnType)))
             {
                 return false;
             }
