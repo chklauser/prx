@@ -7,29 +7,17 @@ References {
 
 namespace prx.core
 {
-  namespace seq
-  {
-
-  }
-  export(*),prx.prim(
+  namespace seq export(*), prx.prim(
       map,flat_map,foldl,foldr,sort,all => to_list, where => filter, skip,take,
       count,distinct,union,unique,frequency,groupby,intersect,each,exists,forall,
       takewhile,except,range, reverse, headtail, append, sum, contains,
       create_enumerator,seqconcat);
 
-  namespace nonstrict
-  {
-
-  }
-  export(*),prx.prim(thunk,asthunk => to_thunk,force,toseq => to_seq);
+  namespace nonstrict export(*),prx.prim(thunk,asthunk => to_thunk,force,toseq => to_seq);
 
   namespace rt
   {
-    namespace builtin
-    {
-    
-    }
-    export(*),prx.prim(
+    namespace builtin export(*),prx.prim(
       // constructor (new T)
       create_Bool,
       create_Char,
@@ -78,23 +66,12 @@ namespace prx.core
   }
   export(*),prx.prim(caller,LoadAssembly => load_assembly,debug, CompileToCil => compile_to_cil,boxed);
 
-  namespace text
-  {
+  namespace text export(*),prx.prim(setcenter,setleft,setright);
 
-  }
-  export(*),prx.prim(setcenter,setleft,setright);
+  namespace math export(*),prx.prim(abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan);
 
-  namespace math
-  {
-
-  }
-  export(*),prx.prim(abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan);
-
-  namespace ct
-  {
-
-  }
-  export(*),prx.prim(create_source_position, get_unscoped_ast_factory,
+  namespace ct export(*),prx.prim(
+    create_source_position, get_unscoped_ast_factory,
     macro\pack => pack, macro\unpack => unpack, macro\reference => macro_reference, call\macro,
     entityref_to);
 }
@@ -130,9 +107,5 @@ export(*), prx.prim(
 
 namespace prx.experimental
 {
-  namespace csp
-  {
-
-  }
-  export(*), prx.prim(chan,async_seq,call\async,select);
+  namespace csp export(*), prx.prim(chan,async_seq,call\async,select);
 }

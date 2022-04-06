@@ -14,4 +14,4 @@ import
     build does add("../../impl/struct.pxs");
 }
 
-namespace psr {} export psr.struct.v1.struct;
+namespace psr export psr.struct.v1.struct;

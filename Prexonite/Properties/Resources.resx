@@ -472,4 +472,7 @@
   <data name="TypeCheck_ExpectedTypeExpression" xml:space="preserve">
     <value>Expected type expression after `is [not]`.</value>
   </data>
+  <data name="Parser_SkeletonNamespaceRequiresSemicolon" xml:space="preserve">
+    <value>Semicolon `;` required after namespace without definitons.</value>
+  </data>
 </root>

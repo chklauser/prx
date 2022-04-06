@@ -1113,10 +1113,12 @@ semicolon                           (.  if(!illegal)
 
 NamespaceDeclaration                (.  QualifiedId? fullNsId = null;
                                         DeclarationScope scope = null;
-                                        ISourcePosition qualIdPos,exportPos;
+                                        ISourcePosition qualIdPos;
+                                        ISourcePosition exportPos = GetNextPosition(); // fallback for errors
                                         List<SymbolTransferDirective> directives;
                                         SymbolOrigin origin;
                                         var implicitSelfImport = true;
+                                        var hasBody = false;
                                     .)
 =                                   (.  .)
 namespace                           (.  qualIdPos = GetPosition(); .)
@@ -1167,10 +1169,14 @@ namespace                           (.  qualIdPos = GetPosition(); .)
                                         }
                                         Loader.PushScope(declBuilder.ToDeclarationScope()); 
                                     .)
-lbrace                              
-DeclarationLevel                    (.  exportPos = GetPosition(); // this position is used when there is no export-spec
+(
+    lbrace                              
+    DeclarationLevel                (.  exportPos = GetPosition(); // this position is used when there is no export-spec
+                                        hasBody = true;
                                     .)
-rbrace                              (.  scope = _popDeclScope();
+    rbrace                          
+|                                   (. exportPos = GetPosition(); .)
+)                                   (.  scope = _popDeclScope();
                                         var exportBuilder = SymbolStoreBuilder.Create(); .)
 (                                   (.  _pushLexerState(Lexer.Transfer); .)
     export
@@ -1204,5 +1210,14 @@ rbrace                              (.  scope = _popDeclScope();
                                             _indexExportedSymbols(scope.Store), 
                                             SymbolTransferDirective.CreateWildcard(exportPos).Singleton()); 
                                     .)
+    (   semicolon
+    |                               (. if(!hasBody) 
+                                            Loader.ReportMessage(Message.Error(
+                                                Resources.Parser_SkeletonNamespaceRequiresSemicolon, 
+                                                GetPosition(), 
+                                                MessageClasses.SkeletonNamespaceRequiresSemicolon)
+                                            );
+                                    .)
+    )                                    
 )                                   (.  _updateNamespace(scope, exportBuilder); .)
 .

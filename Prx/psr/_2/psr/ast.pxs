@@ -142,10 +142,7 @@ namespace psr.ast
         var no_location = Prexonite::Compiler::NoSourcePosition.Instance;
     }
 
-    namespace SI 
-    {
-    }
-    export(*), SI.ret(exit => ret\exit, set => ret\set, $continue => ret\continue, $break => ret\break);
+    namespace SI export(*), SI.ret(exit => ret\exit, set => ret\set, $continue => ret\continue, $break => ret\break);
 
 
     // Internal
@@ -243,8 +240,8 @@ namespace psr.ast
 
     namespace SI
     {
-        namespace e {} export EntityRef(*);
-        namespace s {} export Symbol(*);
+        namespace e export EntityRef(*);
+        namespace s export Symbol(*);
     }
 } 
 export(*), psr.ast.v1(

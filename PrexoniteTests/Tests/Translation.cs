@@ -1617,6 +1617,22 @@ function main(x,y) {
         Expect("x=6 y=8 z=5 u=9 v=10", 5, 9);
     }
 
+    [Test]
+    public void NamespaceReExportBracesOptional()
+    {
+        Compile(@"
+namespace source {
+    function f = ""f"";
+}
+
+namespace target export source(*);
+
+function main() = target.f;
+");
+        
+        Expect("f");
+    }
+
     [ContractAnnotation("value:null=>halt")]
     private static void _assumeNotNull(object value)
     {

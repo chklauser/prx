@@ -3912,4 +3912,27 @@ function main = 1 is true;
         Assert.That(ldr.Errors.Select(m => m.MessageClass), Contains.Item(MessageClasses.TypeExpressionExpected));
     }
 
+    [Test]
+    public void SkeletonNamespaceRequiresSemicolon()
+    {
+        var ldr = _justCompile(@"
+namespace target
+
+function main() = ""f"";
+");
+        
+        Assert.That(ldr.Errors, Is.Not.Empty);
+        Assert.That(ldr.Errors.Select(m => m.MessageClass), Contains.Item(MessageClasses.SkeletonNamespaceRequiresSemicolon));
+    }
+
+    [Test]
+    public void SkeletonNamespaceTolerated()
+    {
+        _compile(@"
+namespace target;
+
+function main() = ""f"";
+");
+    }
+
 }

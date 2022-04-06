@@ -67,6 +67,7 @@ public static class MessageClasses
     public const string IncompleteBinaryOperation = "P.IncompleteBinaryOperation";
     public const string ShiftedSymbolRequired = "P.ShiftedSymbolRequired";
     public const string TypeArgumentsNotSupported = "P.TypeArgumentsNotSupported";
+    public const string SkeletonNamespaceRequiresSemicolon = "P.SkeletonNamespaceRequiresSemicolon";
 
     #endregion
 
