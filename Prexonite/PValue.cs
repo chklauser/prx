@@ -1336,12 +1336,6 @@ public sealed class PValue : DynamicObject,
     #region Interaction
 
     /// <summary>
-    ///     Allows you to prevent the Prexonite VM from performing type conversions on the PValue object.
-    /// </summary>
-    /// <value>A boolean value that indicates whether the type lock is in action or not.</value>
-    public bool IsTypeLocked { get; set; }
-
-    /// <summary>
     ///     Indicates whether the PValue object contains a null reference or not.
     /// </summary>
     /// <value>True if <see cref = "Value" /> is null; false otherwise.</value>
