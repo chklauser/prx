@@ -48,6 +48,7 @@ using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -707,7 +708,20 @@ public class Loader : StackContext, IMessageSink
             _throwCannotFindScriptFile(path);
             return;
         }
-        _loadFromFile(file);
+
+        if (loadedFiles.Contains(file.FullName))
+        {
+            if (Options.EnforceDeterministicCodeOrder is true)
+            {
+                ReportMessage(Message.Error(
+                    string.Format(Resources.Loader_CannotAddFileRepeatedly, file.FullName),
+                    NoSourcePosition.Instance, MessageClasses.RepeatedFileTransclusion));
+            }
+        }
+        else
+        {
+            _loadFromFile(file);
+        }
     }
 
     private void _loadFromFile(ISourceSpec file)
@@ -1063,10 +1077,21 @@ public class Loader : StackContext, IMessageSink
                         return PType.Null;
                     }
                     if (loadedFiles.Contains(file.FullName))
+                    {
                         allLoaded = false;
+                        if (Options.EnforceDeterministicCodeOrder is true)
+                        {
+                            ReportMessage(Message.Error(
+                                string.Format(Resources.Loader_CannotRequireFileRepeatedly, file.FullName),
+                                NoSourcePosition.Instance, MessageClasses.RepeatedFileTransclusion));
+                        }
+                    }
                     else
+                    {
                         _loadFromFile(file);
+                    }
                 }
+                
                 return
                     PType.Bool.CreatePValue(allLoaded);
             });

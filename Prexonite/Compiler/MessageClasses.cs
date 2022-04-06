@@ -88,6 +88,7 @@ public static class MessageClasses
     public const string IncompleteBuiltinTypeCheck = "C.IncompleteBuiltinTypeCheck";
     public const string IncompleteBuiltinStaticCall = "C.IncompleteBuiltinStaticCall";
     public const string IncompleteBuiltinObjectCreation = "C.IncompleteBuiltinObjectCreation";
+    public const string RepeatedFileTransclusion = "C.RepeatedFileTransclusion";
 
     #endregion
 

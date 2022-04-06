@@ -475,4 +475,10 @@
   <data name="Parser_SkeletonNamespaceRequiresSemicolon" xml:space="preserve">
     <value>Semicolon `;` required after namespace without definitons.</value>
   </data>
+  <data name="Loader_CannotRequireFileRepeatedly" xml:space="preserve">
+    <value>Cannot require file '{0}' more than once. It makes the order in which code gets loaded fragile.</value>
+  </data>
+  <data name="Loader_CannotAddFileRepeatedly" xml:space="preserve">
+    <value>Cannot add file '{0}' more than once. It makes the order in which code gets loaded fragile.</value>
+  </data>
 </root>
