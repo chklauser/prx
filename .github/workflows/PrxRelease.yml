@@ -49,11 +49,8 @@ jobs:
             5.0.x
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
         env:
+          # Use a personal access token (publishing with the GITHUB_TOKEN is somehow not possible)
           NUGET_AUTH_TOKEN: '${{secrets.CICD_PAT}}'
-      - name: NuGet login for publishing    
-        run: |
-          dotnet nuget update source  --username chklauser --password '${{secrets.CICD_PAT}}' --store-password-in-clear-text chklauser
-        shell: bash
       - uses: actions/cache@v2
         with:
           path: ~/.nuget/packages
