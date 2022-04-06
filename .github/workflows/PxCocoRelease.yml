@@ -31,6 +31,7 @@ jobs:
       - name: Setup .NET 6 SDK
         uses: actions/setup-dotnet@v1.7.2
         env:
+          # Use a personal access token (publishing with the GITHUB_TOKEN is somehow not possible)
           NUGET_AUTH_TOKEN: '${{secrets.CICD_PAT}}'
         with:
           # version 5.0 used for T4
@@ -38,11 +39,6 @@ jobs:
             6.0.x
             5.0.x
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
-      - name: NuGet login for publishing
-        run: |
-          # Need to switch to a personal access token to publish. Doesn't work when done through actions/setup-dotnet
-          dotnet nuget update source  --username chklauser --password '${{secrets.CICD_PAT}}' --store-password-in-clear-text chklauser
-        shell: bash
       - name: Install dependencies (Win)
         run: dotnet restore PxCoco/PxCoco.csproj
       - name: Build (Win)
