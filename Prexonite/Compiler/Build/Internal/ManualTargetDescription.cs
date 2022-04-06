@@ -78,7 +78,10 @@ internal class ManualTargetDescription : ITargetDescription
         return Task.Factory.StartNew(
             () =>
             {
-                var ldr = build.CreateLoader(new LoaderOptions(null, null));
+                var ldr = build.CreateLoader(new(null, null)
+                {
+                    EnforceDeterministicCodeOrder = true
+                });
 
                 var aggregateMessages = dependencies.Values
                     .SelectMany(t => t.Result.Messages);

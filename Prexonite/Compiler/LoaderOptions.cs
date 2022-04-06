@@ -154,6 +154,13 @@ public class LoaderOptions
         get => _storeNewLine ?? "\n";
         set => _storeNewLine = value;
     }
+    
+    /// <summary>
+    /// If set, then `add` and `require` (transclusion) is only allowed once for each file. This ensures that
+    /// the order in which code is loaded into the module is deterministic.
+    /// </summary>
+    [PublicAPI]
+    public bool? EnforceDeterministicCodeOrder { get; set; }
 
     #endregion
 
@@ -171,5 +178,6 @@ public class LoaderOptions
         _preflightModeEnabled ??= options._preflightModeEnabled;
         _flagLiteralsEnabled ??= options._flagLiteralsEnabled;
         _storeNewLine ??= options._storeNewLine;
+        EnforceDeterministicCodeOrder ??= options.EnforceDeterministicCodeOrder;
     }
 }
