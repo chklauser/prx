@@ -72,11 +72,6 @@ public class LastAccessCache<T> : IObjectCache<T>
         return name;
     }
 
-    public int EstimateSize()
-    {
-        return _accessOrder.Count;
-    }
-
     private void _insert(T name)
     {
         if (_accessOrder.Count > Capacity*2)
@@ -105,9 +100,17 @@ public class LastAccessCache<T> : IObjectCache<T>
     protected IEnumerable<T> Contents()
     {
         lock (_pointerTable)
-            foreach (var item in _accessOrder.InReverse())
-                yield return item;
+            return _accessOrder.InReverse().ToList();
     }
 
-    protected int Count => _accessOrder.Count;
+    protected int Count
+    {
+        get
+        {
+            lock (_accessOrder)
+            {
+                return _accessOrder.Count;
+            }
+        }
+    }
 }

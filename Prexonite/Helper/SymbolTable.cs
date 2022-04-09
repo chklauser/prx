@@ -1,56 +1,30 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#nullable enable
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite;
 
 public interface ISymbolTable<TValue> : IDictionary<string, TValue>
 {
-    TValue DefaultValue { get; set; }
-    TValue GetDefault(string key, TValue defaultValue);
+    TValue? GetDefault(string key, TValue defaultValue);
     void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries);
 }
 
 [DebuggerNonUserCode]
-public class SymbolTable<TValue> : ISymbolTable<TValue>
+public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 {
     private readonly Dictionary<string, TValue> _table;
 
-    public TValue DefaultValue { get; set; }
-
     public SymbolTable()
     {
-        _table = new Dictionary<string, TValue>(Engine.DefaultStringComparer);
+        _table = new(Engine.DefaultStringComparer);
     }
 
     public SymbolTable(int capacity)
     {
-        _table = new Dictionary<string, TValue>(capacity, Engine.DefaultStringComparer);
+        _table = new(capacity, Engine.DefaultStringComparer);
     }
 
     #region IDictionary<string,TValue> Members
@@ -75,15 +49,15 @@ public class SymbolTable<TValue> : ISymbolTable<TValue>
         return _table.Remove(key);
     }
 
-    public virtual bool TryGetValue(string key, out TValue value)
+    public virtual bool TryGetValue(string key, [NotNullWhen(true)] out TValue? value)
     {
         var cont = _table.TryGetValue(key, out value);
         if (!cont)
-            value = DefaultValue;
+            value = default;
         return cont;
     }
 
-    public TValue GetDefault(string key, TValue defaultValue)
+    public TValue? GetDefault(string key, TValue? defaultValue)
     {
         if (_table.ContainsKey(key))
             return _table[key];
@@ -100,7 +74,8 @@ public class SymbolTable<TValue> : ISymbolTable<TValue>
 
     public virtual TValue this[string key]
     {
-        get => GetDefault(key, DefaultValue);
+        get => GetDefault(key, default) 
+            ?? throw new PrexoniteException($"Lookup of {key} in symbol table failed.");
         set
         {
             if (!_table.ContainsKey(key))
@@ -162,12 +137,4 @@ public class SymbolTable<TValue> : ISymbolTable<TValue>
     }
 
     #endregion
-
-    protected void CloneFrom(SymbolTable<TValue> source)
-    {
-        Clear();
-        foreach (var pair in source)
-            Add(pair);
-        DefaultValue = source.DefaultValue;
-    }
 }

@@ -42,9 +42,6 @@ public class Append : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    [Obsolete]
-    public override bool IsPure => false;
-
     protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
         PValue[] args)
     {

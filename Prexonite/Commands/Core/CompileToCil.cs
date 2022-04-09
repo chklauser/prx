@@ -44,9 +44,6 @@ public class CompileToCil : PCommand, ICilCompilerAware
 
     #endregion
 
-    [Obsolete]
-    public override bool IsPure => false;
-
     public static bool AlreadyCompiledStatically { get; private set; }
 
     #region ICilCompilerAware Members
@@ -139,35 +136,7 @@ public class CompileToCil : PCommand, ICilCompilerAware
                     goto default;
                 }
             default:
-                //Compile individual functions to CIL
-                foreach (var arg in args)
-                {
-                    var T = arg.Type;
-                    PFunction func;
-                    switch (T.ToBuiltIn())
-                    {
-                        case PType.BuiltIn.String:
-                            if (
-                                !sctx.ParentApplication.Functions.TryGetValue(
-                                    (string) arg.Value, out func))
-                                continue;
-                            break;
-                        case PType.BuiltIn.Object:
-                            func = arg.Value as PFunction;
-                            if (func == null)
-                                goto default;
-                            else
-                                break;
-                        default:
-                            if (!arg.TryConvertTo(sctx, out func))
-                                continue;
-                            break;
-                    }
-
-                    Compiler.Cil.Compiler.TryCompile(func, sctx.ParentEngine,
-                        FunctionLinking.FullyIsolated);
-                }
-                break;
+                throw new PrexoniteException("Expecting 0 or 1 argument.");
         }
 
         return PType.Null;

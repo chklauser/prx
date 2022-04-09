@@ -79,15 +79,6 @@ public class Except : PCommand, ICilCompilerAware
         return sctx.CreateNativePValue(t.Keys);
     }
 
-    /// <summary>
-    ///     A flag indicating whether the command acts like a pure function.
-    /// </summary>
-    /// <remarks>
-    ///     Pure commands can be applied at compile time.
-    /// </remarks>
-    [Obsolete]
-    public override bool IsPure => false;
-
     #region ICilCompilerAware Members
 
     /// <summary>

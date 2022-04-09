@@ -28,8 +28,8 @@ public class ManualPlan : IPlan
         public Engine Create() =>
             _inner.Options?.ParentEngine switch
             {
-                { } x => new Engine(x),
-                _ => new Engine()
+                { } x => new(x),
+                _ => new()
             };
 
         public bool Return(Engine obj) => true;
@@ -101,7 +101,7 @@ public class ManualPlan : IPlan
         return new(5, TargetDescriptions.Count);
     }
 
-    public IDictionary<ModuleName, Task<Tuple<Application, ITarget>>> LoadAsync(IEnumerable<ModuleName> names, CancellationToken token)
+    public IDictionary<ModuleName, Task<(Application Application, ITarget Target)>> LoadAsync(IEnumerable<ModuleName> names, CancellationToken token)
     {
         if (names == null)
             throw new ArgumentNullException(nameof(names));
@@ -114,7 +114,7 @@ public class ManualPlan : IPlan
                 var target = buildTask.Result;
                 var app = new Application(target.Module);
                 _linkDependencies(taskMap, app, description, token);
-                return Tuple.Create(app, target);
+                return (app, target);
             }, token);
         });
     }

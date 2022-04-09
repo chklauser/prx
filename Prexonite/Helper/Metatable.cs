@@ -231,7 +231,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
         key = GetTransform(key);
         if (TryGetValueTransformed(key, out value))
             return true;
-        value = DefaultValue;
+        value = default;
         return false;
     }
 

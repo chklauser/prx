@@ -998,15 +998,15 @@ public class Loader : StackContext, IMessageSink
     ///     Notifies the loader that a caller of <see cref = "RequestBuildCommands" /> no longer requires build commands.
     /// </summary>
     /// <param name = "token">The token returned from the corresponding call to <see cref = "RequestBuildCommands" /></param>
-// ReSharper disable UnusedParameter.Global // token is only used for ensuring correct usage of the API
     public void ReleaseBuildCommands(object token)
-// ReSharper restore UnusedParameter.Global
     {
         if (_buildCommandsRequests.Count <= 0 ||
             !ReferenceEquals(_buildCommandsRequests.Peek(), token))
             throw new InvalidOperationException(
                 "Cannot release build commands more often than they were requested.");
-        _buildCommandsRequests.Pop();
+        var expectedToken = _buildCommandsRequests.Pop();
+        Debug.Assert(token == expectedToken, 
+            "Token supplied to ReleaseBuildCommands does not match the token returned by RequestBuildCommands.");
 
         if (_buildCommandsRequests.Count == 0)
             _disableBuildBlockCommands();
@@ -1142,9 +1142,8 @@ public class Loader : StackContext, IMessageSink
 
     private void _enableBuildCommands()
     {
-        foreach (var pair in BuildCommands)
-            if (pair.Value.IsInGroup(PCommandGroups.Compiler) &&
-                ! ParentEngine.Commands.ContainsKey(pair.Key))
+        foreach (var pair in BuildCommands.CommandsInGroup(PCommandGroups.Compiler))
+            if (!ParentEngine.Commands.ContainsKey(pair.Key))
                 ParentEngine.Commands.AddCompilerCommand(pair.Key, pair.Value);
     }
 

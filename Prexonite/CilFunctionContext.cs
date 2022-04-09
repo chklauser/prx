@@ -39,24 +39,7 @@ public sealed class CilFunctionContext : StackContext
     {
         if (originalImplementation == null)
             throw new ArgumentNullException(nameof(originalImplementation));
-        return New(caller, originalImplementation.ImportedNamespaces);
-    }
-
-    public static CilFunctionContext New(StackContext caller,
-        SymbolCollection importedNamespaces)
-    {
-        if (caller == null)
-            throw new ArgumentNullException(nameof(caller));
-
-        importedNamespaces ??= new SymbolCollection();
-
-        return new CilFunctionContext(caller.ParentEngine, caller.ParentApplication,
-            importedNamespaces);
-    }
-
-    public static CilFunctionContext New(StackContext caller)
-    {
-        return New(caller, (SymbolCollection) null);
+        return new(caller.ParentEngine, originalImplementation.ParentApplication, originalImplementation.ImportedNamespaces);
     }
 
     internal static MethodInfo NewMethod { get; } = typeof (CilFunctionContext).GetMethod(

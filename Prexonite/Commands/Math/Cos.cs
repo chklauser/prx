@@ -43,15 +43,6 @@ public class Cos : PCommand, ICilCompilerAware
     #endregion
 
     /// <summary>
-    ///     A flag indicating whether the command acts like a pure function.
-    /// </summary>
-    /// <remarks>
-    ///     Pure commands can be applied at compile time.
-    /// </remarks>
-    [Obsolete]
-    public override bool IsPure => true;
-
-    /// <summary>
     ///     Executes the command.
     /// </summary>
     /// <param name = "sctx">The stack context in which to execut the command.</param>

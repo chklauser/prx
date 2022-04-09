@@ -1,8 +1,3 @@
-build
-{
-    require("resource:Prx:prx_lib.pxs");
-}
-
 Import { System, System::Text, Prexonite, Prexonite::Compiler };
 
 namespace prx.cli

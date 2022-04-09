@@ -57,11 +57,11 @@ public interface IPlan
         BuildAsync(name.Singleton(), token)[name];
 
     [NotNull]
-    Task<Tuple<Application, ITarget>> LoadAsync([NotNull] ModuleName name, CancellationToken token) => 
+    Task<(Application Application, ITarget Target)> LoadAsync([NotNull] ModuleName name, CancellationToken token) => 
         LoadAsync(name.Singleton(), token)[name];
 
     [NotNull]
-    IDictionary<ModuleName, Task<Tuple<Application,ITarget>>> LoadAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
+    IDictionary<ModuleName, Task<(Application Application, ITarget Target)>> LoadAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
 
     [CanBeNull]
     LoaderOptions Options { get; set; }

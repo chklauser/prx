@@ -1,30 +1,6 @@
-﻿// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+﻿#nullable enable
+
 using System;
-using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
@@ -33,42 +9,10 @@ using Prexonite.Compiler.Cil;
 
 namespace PrexoniteTests.Tests.Configurations;
 
-internal abstract class UnitTestConfiguration
+internal abstract class UnitTestConfiguration : IDisposable
 {
     public class InMemory : UnitTestConfiguration
     {
-    }
-
-    public class FromStored : UnitTestConfiguration
-    {
-        public FromStored()
-        {
-            throw new NotSupportedException("Store round-tripping is not currently implemented.");
-        }
-
-        internal override void Configure(TestModel model, ScriptedUnitTestContainer container)
-        {
-            // Rewire the units under test to point to stored representations
-            var originalUnits = model.UnitsUnderTest.ToList();
-            var storedNameMap = originalUnits.ToDictionary(td => td.ScriptName,
-                td =>
-                {
-                    var ext = Path.GetExtension(td.ScriptName);
-                    var extLen = ext?.Length ?? 0;
-                    var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
-                    return $"{baseName}~-stored{ext}";
-                });
-
-            model.UnitsUnderTest = model.UnitsUnderTest.Select(td => new TestDependency
-            {
-                ScriptName = storedNameMap[td.ScriptName],
-                Dependencies = td.Dependencies.Select(d => storedNameMap[d]).ToArray()
-            }).ToArray();
-
-            // Configure the test as per usual
-            base.Configure(model, container);
-        }
-
     }
 
     protected UnitTestConfiguration()
@@ -77,8 +21,23 @@ internal abstract class UnitTestConfiguration
         CompileToCil = false;
     }
 
-    public FunctionLinking Linking { get; set; }
-    public bool CompileToCil { get; set; }
+    public FunctionLinking Linking { get; init; }
+    public bool CompileToCil { get; init; }
+
+    private bool _configured;
+    private ModuleCache? _cache;
+
+    public ModuleCache Cache
+    {
+        get
+        {
+            if (!_configured)
+            {
+                throw new InvalidOperationException("Must call Configure before accessing the module cache.");
+            }
+            return _cache ??= ModuleCache.LeaseFor(CompileToCil, Linking);
+        }
+    }
 
     /// <summary>
     /// Executed as the last step of loading, immediately before the actual test methods are executed.
@@ -90,28 +49,31 @@ internal abstract class UnitTestConfiguration
             Compiler.Compile(runner.Application, runner.Engine, Linking);
     }
 
-    protected static void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
+    protected void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
     {
-        ModuleCache.Describe(container.Loader,new TestDependency
+        Cache.Describe(container.Loader,new TestDependency
         {
             ScriptName = ScriptedUnitTestContainer.PrexoniteUnitTestFramework
         });
     }
 
 // ReSharper disable InconsistentNaming
-    internal virtual void Configure(TestModel model, ScriptedUnitTestContainer container)
+    internal void Configure(TestModel model, ScriptedUnitTestContainer container)
 // ReSharper restore InconsistentNaming
     {
+        // We can be certain that CompileToCil and Linking are set
+        _configured = true;
+
         // describe units under test
         foreach (var unit in model.UnitsUnderTest)
-            ModuleCache.Describe(container.Loader, unit);
+            Cache.Describe(container.Loader, unit);
 
         // describe unit testing framework
         LoadUnitTestingFramework(container);
 
         // describe unit testing extensions
         foreach(var extension in model.TestDependencies)
-            ModuleCache.Describe(container.Loader, extension);
+            Cache.Describe(container.Loader, extension); 
 
         // describe test suite
         var suiteDependencies =
@@ -124,10 +86,10 @@ internal abstract class UnitTestConfiguration
         {
             ScriptName = model.TestSuiteScript, Dependencies = suiteDependencies
         };
-        ModuleCache.Describe(container.Loader, suiteDescription);
+        Cache.Describe(container.Loader, suiteDescription);
 
         // Finally instantiate the test suite application(s)
-        var (application, target) = ModuleCache.Load(model.TestSuiteScript);
+        var (application, target) = Cache.Load(model.TestSuiteScript);
         container.Application = application;
         container.PrintCompound();
 
@@ -150,5 +112,15 @@ internal abstract class UnitTestConfiguration
         }
 
         _prepareExecution(container);
+    }
+
+    public void Dispose()
+    {
+        if(!_configured)    
+            return;
+        if (_cache is { } cache)
+        {
+            ModuleCache.ReturnTo(CompileToCil, Linking, cache);
+        }
     }
 }

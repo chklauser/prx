@@ -58,13 +58,4 @@ public class Frequency : CoroutineCommand
         foreach (var pair in t)
             yield return new PValueKeyValuePair(pair.Key, pair.Value);
     }
-
-    /// <summary>
-    ///     A flag indicating whether the command acts like a pure function.
-    /// </summary>
-    /// <remarks>
-    ///     Pure commands can be applied at compile time.
-    /// </remarks>
-    [Obsolete]
-    public override bool IsPure => false;
 }

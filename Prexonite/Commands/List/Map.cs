@@ -194,15 +194,6 @@ public class Map : CoroutineCommand, ICilCompilerAware
         return sctx.CreateNativePValue(new Coroutine(corctx));
     }
 
-    /// <summary>
-    ///     A flag indicating whether the command acts like a pure function.
-    /// </summary>
-    /// <remarks>
-    ///     Pure commands can be applied at compile time.
-    /// </remarks>
-    [Obsolete]
-    public override bool IsPure => false;
-
     #region ICilCompilerAware Members
 
     /// <summary>

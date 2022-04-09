@@ -162,14 +162,6 @@ public class  PFunction : IHasMetaTable,
     }
 
     /// <summary>
-    ///     Updates the mapping of local names.
-    /// </summary>
-    internal void CreateLocalVariableMapping()
-    {
-        Declaration.CreateLocalVariableMapping();
-    }
-
-    /// <summary>
     ///     The table that maps indices to local names.
     /// </summary>
     public SymbolTable<int> LocalVariableMapping
@@ -178,7 +170,7 @@ public class  PFunction : IHasMetaTable,
         get => Declaration.LocalVariableMapping;
     }
 
-    public CilFunction CilImplementation => Declaration.CilImplementation;
+    public CilFunction? CilImplementation => Declaration.CilImplementation?.Implementation;
 
     public bool HasCilImplementation => Declaration.HasCilImplementation;
 
@@ -318,17 +310,17 @@ public class  PFunction : IHasMetaTable,
     [PublicAPI]
     public PValue Run(Engine engine, PValue[]? args, PVariable[]? sharedVariables)
     {
-        if (HasCilImplementation)
+        if (CilImplementation is {} cilImplementation)
         {
             //Fix #8
             ParentApplication.EnsureInitialization(engine);
-            CilImplementation
+            cilImplementation
             (
                 this,
                 new NullContext(engine, ParentApplication, ImportedNamespaces),
                 args,
                 sharedVariables,
-                out PValue result, out _);
+                out var result, out _);
             return result;
         }
         else
