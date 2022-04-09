@@ -926,9 +926,12 @@ public class FunctionContext : StackContext
                         _fetchReturnValue = !justEffect;
                         ParentEngine.Stack.AddLast(fctx);
 #else
-                    if (func.HasCilImplementation)
+                    if (func.CilImplementation is {} cilImplementation)
                     {
-                        func.CilImplementation(func, this, argv, null, out left, out var returnMode);
+                        var callCtx = ParentApplication == func.ParentApplication 
+                            ? this 
+                            : (StackContext) CilFunctionContext.New(this, func);
+                        cilImplementation(func, callCtx, argv, null, out left, out var returnMode);
                         ReturnMode = returnMode;
                         if (!justEffect)
                             Push(left);

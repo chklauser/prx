@@ -82,11 +82,14 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// <returns>The value returned by the function.</returns>
     public PValue IndirectCall(StackContext sctx, PValue[] args)
     {
-        if (!Function.HasCilImplementation)
+        if (Function.CilImplementation is not {} cilImplementation)
             throw new PrexoniteException("CilClosure cannot handle " + Function +
                 " because it has no cil implementation");
-        Function.CilImplementation(Function, sctx, args, SharedVariables, out var result,
-            out _);
+        
+        var callCtx = sctx.ParentApplication == Function.ParentApplication 
+            ? sctx 
+            : CilFunctionContext.New(sctx, Function);
+        cilImplementation(Function, callCtx, args, SharedVariables, out var result, out _);
         return result;
     }
 

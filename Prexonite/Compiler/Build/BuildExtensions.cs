@@ -34,7 +34,7 @@ public static class BuildExtensions
 {
     public static ITarget Build(this IPlan plan, ModuleName name)
     {
-        return plan.BuildAsync(name).Result;
+        return plan.BuildAsync(name).GetAwaiter().GetResult();
     }
 
     public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name)
@@ -42,10 +42,10 @@ public static class BuildExtensions
         return plan.BuildAsync(name, CancellationToken.None);
     }
 
-    public static Tuple<Application,ITarget> Load(this IPlan plan, ModuleName name)
+    public static (Application Application, ITarget Target) Load(this IPlan plan, ModuleName name)
     {
         var loadTask = plan.LoadAsync(name, CancellationToken.None);
-        return loadTask.Result;
+        return loadTask.GetAwaiter().GetResult();
     }
 
     public static Application LoadApplication(this IPlan plan, ModuleName name)
@@ -68,6 +68,6 @@ public static class BuildExtensions
 
     public static ITargetDescription Assemble(this ISelfAssemblingPlan plan, ISource source)
     {
-        return plan.AssembleAsync(source, CancellationToken.None).Result;
+        return plan.AssembleAsync(source, CancellationToken.None).GetAwaiter().GetResult();
     }
 }

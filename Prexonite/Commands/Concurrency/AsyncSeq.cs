@@ -48,9 +48,6 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
     #region Overrides of PCommand
 
-    [Obsolete]
-    public override bool IsPure => false;
-
     #endregion
 
     #region Overrides of CoroutineCommand

@@ -50,36 +50,6 @@ namespace PrexoniteTests.Tests.Configurations
         protected override UnitTestConfiguration Runner => _runner;
     }
 
-    [TestFixture]
-    [Explicit]
-    [GeneratedCode("VMTestConfiguration.tt","0.0")]
-    internal class <#=baseName#>_StoredInterpreted : <#=className#>
-    {
-        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner => _runner;
-    }
-
-    [TestFixture]
-    [Explicit]
-    [GeneratedCode("VMTestConfiguration.tt","0.0")]
-    internal class <#=baseName#>_StoredCilStatic : <#=className#>
-    {
-        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner => _runner;
-    }
-
-    
-    [TestFixture]
-    [Explicit]
-    [GeneratedCode("VMTestConfiguration.tt","0.0")]
-    internal class <#=baseName#>_StoredCilIsolated : <#=className#>
-    {
-        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
-            CompileToCil=true,
-            Linking = FunctionLinking.JustAvailableForLinking
-        };
-        protected override UnitTestConfiguration Runner => _runner;
-    }
 <# } #>
 
 <# foreach(var testFile in _getTestConfigurationV2()) {

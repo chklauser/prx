@@ -80,6 +80,6 @@ public static class ModuleCacheV2
             ? (await Compiler.CompileModulesAsync(plan, desc.Name.Singleton(), 
                 sharedEnginePrototype, FunctionLinking.FullyStatic, ct))[desc.Name]
             : await plan.LoadAsync(desc.Name, ct);
-        return loadedAppTask.ToValueTuple();
+        return loadedAppTask;
     }
 }

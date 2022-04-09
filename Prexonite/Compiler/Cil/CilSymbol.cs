@@ -41,13 +41,9 @@ public class CilSymbol
         Kind = kind;
     }
 
-    public SymbolKind Kind { [DebuggerStepThrough]
-        get; [DebuggerStepThrough]
-        set; }
+    public SymbolKind Kind { get; set; }
 
-    public LocalBuilder Local { [DebuggerStepThrough]
-        get; [DebuggerStepThrough]
-        set; }
+    public LocalBuilder Local { get; set; }
 
     public void EmitLoad(CompilerState state)
     {
@@ -60,6 +56,8 @@ public class CilSymbol
                 state.EmitLoadLocal(Local.LocalIndex);
                 state.Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
                 break;
+            default:
+                throw new PrexoniteException("Internal error: cannot emit load for enumeration variable.");
         }
     }
 }

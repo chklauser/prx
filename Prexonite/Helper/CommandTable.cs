@@ -1,38 +1,17 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#nullable enable
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Prexonite.Commands;
 
 namespace Prexonite;
 
 public class CommandTable : SymbolTable<PCommand>
 {
-    private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos =
-        new();
+    private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos = new();
+    private readonly SymbolTable<PCommandGroups> _commandGroups = new();
 
     /// <summary>
     ///     Returns information about the specified command's capabilities. The command might not be installed
@@ -41,7 +20,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// <param name = "id">The id of the command to get information about.</param>
     /// <param name = "commandInfo">Contains the command info on success. Undefined on failure.</param>
     /// <returns>True on success; false on failure.</returns>
-    public bool TryGetInfo(string id, out ICommandInfo commandInfo)
+    public bool TryGetInfo(string id, [NotNullWhen(true)] out ICommandInfo? commandInfo)
     {
         if (TryGetValue(id, out var command))
         {
@@ -92,11 +71,43 @@ public class CommandTable : SymbolTable<PCommand>
         return ContainsKey(name);
     }
 
-    public override void Add(string key, PCommand value)
+    private void addToGroup(string id, PCommandGroups group)
     {
-        if (value == null)
-            throw new ArgumentNullException(nameof(value));
-        base.Add(key, value);
+        if (_commandGroups.TryGetValue(id, out var existing))
+        {
+            _commandGroups[id] = existing | group;
+        }
+        else
+        {
+            _commandGroups[id] = group;
+        }
+    }
+
+    private (bool removed, PCommandGroups remaining) removeFromGroup(string id, PCommandGroups group)
+    {
+        if (_commandGroups.TryGetValue(id, out var existing))
+        {
+            var newValue = existing & ~group;
+            if (newValue == existing)
+            {
+                return (false, existing);
+            }
+
+            if (newValue == PCommandGroups.None)
+            {
+                _commandGroups.Remove(id);
+                return (true, PCommandGroups.None);
+            }
+            else
+            {
+                _commandGroups[id] = newValue;
+                return (true, newValue);
+            }
+        }
+        else
+        {
+            return (false, PCommandGroups.None);
+        }
     }
 
     /// <summary>
@@ -106,17 +117,13 @@ public class CommandTable : SymbolTable<PCommand>
     /// <returns>The command registered with the supplied name.</returns>
     public override PCommand this[string key]
     {
-        get
-        {
-            if (ContainsKey(key))
-                return base[key];
-            else
-                return null;
-        }
+        get => TryGetValue(key, out var cmd) 
+            ? cmd 
+            : throw new PrexoniteException($"Cannot find command {key}.");
         set
         {
-            if (value != null && !value.BelongsToAGroup)
-                value.AddToGroup(PCommandGroups.User);
+            if (value != null && !_commandGroups.ContainsKey(key))
+                addToGroup(key, PCommandGroups.User);
 
             if (ContainsKey(key))
             {
@@ -128,7 +135,7 @@ public class CommandTable : SymbolTable<PCommand>
             else if (value == null)
                 throw new ArgumentNullException(nameof(value));
             else
-                Add(key, value);
+                base.Add(key, value);
         }
     }
 
@@ -145,7 +152,7 @@ public class CommandTable : SymbolTable<PCommand>
             throw new ArgumentNullException(nameof(alias));
         if (command == null)
             throw new ArgumentNullException(nameof(command));
-        command.AddToGroup(PCommandGroups.User);
+        addToGroup(alias, PCommandGroups.User);
         this[alias] = command;
     }
 
@@ -187,7 +194,7 @@ public class CommandTable : SymbolTable<PCommand>
             throw new ArgumentNullException(nameof(alias));
         if (command == null)
             throw new ArgumentNullException(nameof(command));
-        command.AddToGroup(PCommandGroups.Engine);
+        addToGroup(alias, PCommandGroups.Engine);
         this[alias] = command;
     }
 
@@ -215,7 +222,7 @@ public class CommandTable : SymbolTable<PCommand>
             throw new ArgumentNullException(nameof(alias));
         if (command == null)
             throw new ArgumentNullException(nameof(command));
-        command.AddToGroup(PCommandGroups.Compiler);
+        addToGroup(alias, PCommandGroups.Compiler);
         this[alias] = command;
     }
 
@@ -250,7 +257,7 @@ public class CommandTable : SymbolTable<PCommand>
             throw new ArgumentNullException(nameof(alias));
         if (command == null)
             throw new ArgumentNullException(nameof(command));
-        command.AddToGroup(PCommandGroups.Host);
+        addToGroup(alias, PCommandGroups.Host);
         this[alias] = command;
     }
 
@@ -314,15 +321,21 @@ public class CommandTable : SymbolTable<PCommand>
 
     private void _remove_commands(PCommandGroups groups)
     {
-        var commands =
-            new KeyValuePair<string, PCommand>[Count];
+        var commands = new KeyValuePair<string, PCommand>[Count];
         CopyTo(commands, 0);
-        foreach (var kvp in commands)
+        foreach (var (alias, _) in commands)
         {
-            var cmd = kvp.Value;
-            cmd.RemoveFromGroup(groups);
-            if (!cmd.BelongsToAGroup)
-                Remove(kvp.Key);
+            if(removeFromGroup(alias, groups) is (true, PCommandGroups.None))
+                Remove(alias);
         }
+    }
+
+    public IEnumerable<KeyValuePair<string, PCommand>> CommandsInGroup(PCommandGroups group)
+    {
+        return _commandGroups
+            .Where(kvp => (kvp.Value & group) != 0)
+            .SelectMaybe(kvp => this[kvp.Key] is { } cmd 
+                ? (KeyValuePair<string, PCommand>?)new KeyValuePair<string, PCommand>(kvp.Key, cmd)
+                : null);
     }
 }

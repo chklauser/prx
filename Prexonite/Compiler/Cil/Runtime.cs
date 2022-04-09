@@ -1,28 +1,3 @@
-// Prexonite
-// 
-// Copyright (c) 2014, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -86,12 +61,9 @@ public static class Runtime
 
     public static MethodInfo NewTypeMethod { get; } = typeof (Runtime).GetMethod(nameof(NewType));
 
-    public static MethodInfo NewClosureMethodLateBound { get; } = typeof (Runtime).GetMethod(
-        "NewClosureInternal", new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
+    public static MethodInfo NewClosureMethodLateBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosureInternal), new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
 
-    public static MethodInfo NewClosureMethodStaticallyBound { get; } = typeof (Runtime).
-        GetMethod(
-            "NewClosure",
+    public static MethodInfo NewClosureMethodStaticallyBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosure),
             new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)});
 
     public static MethodInfo RaiseToPowerMethod { get; } = typeof (Runtime).GetMethod(nameof(RaiseToPower));
@@ -100,9 +72,7 @@ public static class Runtime
 
     public static MethodInfo CastMethod { get; } = typeof (Runtime).GetMethod(nameof(Cast));
 
-    public static MethodInfo StaticCallMethod { get; } = typeof (PType).GetMethod
-    (
-        "StaticCall",
+    public static MethodInfo StaticCallMethod { get; } = typeof(PType).GetMethod(nameof(PType.StaticCall),
         new[] {typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)});
 
     public static MethodInfo CallInternalFunctionMethod { get; } = typeof (Runtime).GetMethod(nameof(CallInternalFunction));
@@ -184,7 +154,8 @@ public static class Runtime
     public static PValue LoadFunctionReferenceInternal(StackContext sctx, string id)
     {
         if (!sctx.ParentApplication.Functions.TryGetValue(id, out var func))
-            throw new PrexoniteException("Cannot load reference to non existing internal function " + id);
+            throw new PrexoniteException(
+                $"Cannot load reference to non existing internal function {id} in module {sctx.ParentApplication.Module.Name}");
         return sctx.CreateNativePValue(func);
     }
 
@@ -307,9 +278,10 @@ public static class Runtime
     {
         if (!sctx.ParentApplication.Functions.TryGetValue(id, out var func))
             throw new PrexoniteException("Cannot call non existent function " + id);
-        if (func.HasCilImplementation)
+        if (func.CilImplementation is {} cilImplementation)
         {
-            func.CilImplementation(func, sctx, args, null, out var result, out _);
+            // Can keep the same stack context
+            cilImplementation(func, sctx, args, null, out var result, out _);
             return result;
         }
         else
@@ -326,9 +298,12 @@ public static class Runtime
 
         if (!application.Functions.TryGetValue(internalId, out var func))
             throw new PrexoniteException($"Cannot call non existent function {internalId} in module {moduleName}.");
-        if (func.HasCilImplementation)
+        if (func.CilImplementation is {} cilImplementation)
         {
-            func.CilImplementation(func, sctx, args, null, out var result, out _);
+            var callCtx = sctx.ParentApplication == func.ParentApplication 
+                ? sctx 
+                : CilFunctionContext.New(sctx, func);
+            cilImplementation(func, callCtx, args, null, out var result, out _);
             return result;
         }
         else

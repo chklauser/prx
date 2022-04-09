@@ -31,6 +31,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands.Core;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
 using Prexonite.Modular;
@@ -39,7 +40,7 @@ using Prexonite.Types;
 namespace PrexoniteTests.Tests.Configurations;
 
 [Parallelizable(ParallelScope.Fixtures)]
-internal abstract class ScriptedUnitTestContainer
+internal abstract class ScriptedUnitTestContainer : IDisposable
 {
     public Application Application { get; set; }
     public Engine Engine { get; set; }
@@ -59,7 +60,7 @@ internal abstract class ScriptedUnitTestContainer
     // NOTE: the RunUnitTest method relies on the fact that StringWriter.ToString() prints the contents.
     // If you change the TextWriter implementation, you need to account for that. 
     public TextWriter OneTimeSetupLog { get; } = new StringWriter();
-    private bool _oneTimeSetupPrinted = false;
+    private bool _oneTimeSetupPrinted;
 
     public void Initialize()
     {
@@ -68,7 +69,7 @@ internal abstract class ScriptedUnitTestContainer
         Loader = new Loader(Engine, Application);
 
         Dependencies = new List<string>();
-        Root = new NullContext(Engine, Application, new string[0]);
+        Root = new NullContext(Engine, Application, Array.Empty<string>());
 
         var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         while (slnPath != null && Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "prx.sln")))
@@ -103,6 +104,14 @@ internal abstract class ScriptedUnitTestContainer
 
         var tc = Application.Functions[testCaseId];
         Assert.That(tc, Is.Not.Null, "Test case " + testCaseId + " not found.");
+        if (Runner.CompileToCil)
+        {
+            Assert.That(tc.CilImplementation, Is.Not.Null, "Test case " + testCaseId + " should have a CIL implementation.");
+        }
+        else
+        {
+            Assert.That(tc.CilImplementation, Is.Null, "Test case " + testCaseId + " should not have a CIL implementation.");
+        }
 
         var rt = _findRunFunction();
         Assert.That(rt, Is.Not.Null,
@@ -137,7 +146,7 @@ internal abstract class ScriptedUnitTestContainer
         var tasks =
             Application.Compound.Where(app => app.Meta[DumpRequestFlag].Switch).Select(
                     app =>
-                        new KeyValuePair<ModuleName, Task<ITarget>>(app.Module.Name, ModuleCache.BuildAsync(app.Module.Name)))
+                        new KeyValuePair<ModuleName, Task<ITarget>>(app.Module.Name, Runner.Cache.BuildAsync(app.Module.Name)))
                 .ToDictionary(k => k.Key, k => k.Value);
         var printedRepresentation = false;
         foreach (var (name, targetTask) in tasks)
@@ -168,5 +177,10 @@ internal abstract class ScriptedUnitTestContainer
         {
             return app.Functions.TryGetValue(RunTestId, out var func) ? func : null;
         }).SingleOrDefault(f => f != null);
+    }
+
+    public void Dispose()
+    {
+        Runner?.Dispose();
     }
 }

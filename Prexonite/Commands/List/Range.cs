@@ -99,15 +99,6 @@ public class Range : CoroutineCommand, ICilCompilerAware
         return sctx.CreateNativePValue(new Coroutine(corctx));
     }
 
-    /// <summary>
-    ///     A flag indicating whether the command acts like a pure function.
-    /// </summary>
-    /// <remarks>
-    ///     Pure commands can be applied at compile time.
-    /// </remarks>
-    [Obsolete]
-    public override bool IsPure => false;
-
     public static Range Instance { get; } = new();
 
     #region ICilCompilerAware Members

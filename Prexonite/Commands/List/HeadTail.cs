@@ -42,9 +42,6 @@ public class HeadTail : PCommand, ICilCompilerAware
 
     #endregion
 
-    [Obsolete]
-    public override bool IsPure => false;
-
     public override PValue Run(StackContext sctx, PValue[] args)
     {
         return RunStatically(sctx, args);

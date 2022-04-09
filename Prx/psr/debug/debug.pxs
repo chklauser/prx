@@ -616,11 +616,7 @@ function as ensure_compiled_to_cil(f) [is debug\reqcil;]
     {
         if(not f.HasCilImplementation)
         {
-            call(CompileToCil(?), 
-                asm(ldr.app).Functions 
-                >> where(f => f.Meta[@"debug\reqcil"].Switch) 
-                >> all
-            );
+            CompileToCil;
         }
     }
     else if(f is ::Closure)

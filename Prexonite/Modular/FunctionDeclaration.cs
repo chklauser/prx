@@ -31,6 +31,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
@@ -151,7 +152,8 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Cil")]
-    public abstract CilFunction CilImplementation { get; protected internal set; }
+    [CanBeNull]
+    public abstract ICilImplementation CilImplementation { get; protected internal set; }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Cil")]
@@ -171,6 +173,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// The name this function was originally declared under. 
     /// Primarily a debugging help, has no meaning in the Prexonite VM.
     /// </summary>
+    [PublicAPI]
     public string LogicalId
     {
         [DebuggerStepThrough]
@@ -329,7 +332,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
 
         public sealed override SymbolTable<int> LocalVariableMapping { get; protected set; }
 
-        public override CilFunction CilImplementation { get; protected internal set; }
+        public override ICilImplementation CilImplementation { get; protected internal set; }
 
         public override ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks
         {

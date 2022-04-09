@@ -78,13 +78,4 @@ public class GroupBy : CoroutineCommand
         }
         // ReSharper restore LoopCanBeConvertedToQuery
     }
-
-    /// <summary>
-    ///     A flag indicating whether the command acts like a pure function.
-    /// </summary>
-    /// <remarks>
-    ///     Pure commands can be applied at compile time.
-    /// </remarks>
-    [Obsolete]
-    public override bool IsPure => false;
 }

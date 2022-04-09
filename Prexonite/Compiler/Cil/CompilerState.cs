@@ -32,6 +32,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
+using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -541,18 +542,20 @@ public sealed class CompilerState : StackContext
     /// <param name = "sym">The variable to load.</param>
     public void EmitLoadPValue(CilSymbol sym)
     {
-        if (sym.Kind == SymbolKind.Local)
+        switch (sym.Kind)
         {
-            EmitLoadLocal(sym.Local);
-        }
-        else if (sym.Kind == SymbolKind.LocalRef)
-        {
-            EmitLoadLocal(sym.Local);
-            Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
-        }
-        else
-        {
-            throw new PrexoniteException("Cannot emit code for CilSymbol");
+            case SymbolKind.Local:
+                EmitLoadLocal(sym.Local);
+                break;
+            case SymbolKind.LocalRef:
+                EmitLoadLocal(sym.Local);
+                Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
+                break;
+            case SymbolKind.LocalEnum:
+                // The enumeration variable will already have been loaded at this point
+                break;
+            default:
+                throw new PrexoniteException($"Cannot emit code for CilSymbol {sym.Kind}");
         }
     }
 
@@ -728,11 +731,11 @@ public sealed class CompilerState : StackContext
         Il.EmitCall(OpCodes.Call, Runtime.ConstructPTypeAsPValueMethod, null);
     }
 
-    public bool TryGetStaticallyLinkedFunction(string id, out MethodInfo targetMethod)
+    public bool TryGetStaticallyLinkedFunction([System.Diagnostics.CodeAnalysis.NotNull] ModuleName moduleName, string id, out MethodInfo targetMethod)
     {
         targetMethod = null;
         return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
-            Pass.Implementations.TryGetValue(id, out targetMethod);
+            Pass.Implementations.TryGetValue(moduleName, id, out targetMethod);
     }
 
     public void EmitCommandCall(Instruction ins)
@@ -760,8 +763,8 @@ public sealed class CompilerState : StackContext
             //Let the command handle the call
             aware.ImplementInCil(this, ins);
         }
-        else if ((flags & CompilationFlags.PrefersRunStatically)
-                 == CompilationFlags.PrefersRunStatically)
+        else if (cmd != null 
+                 && (flags & CompilationFlags.PrefersRunStatically) == CompilationFlags.PrefersRunStatically)
         {
             //Emit a static call to $commandType$.RunStatically
             EmitEarlyBoundCommandCall(cmd.GetType(), ins);
@@ -779,19 +782,20 @@ public sealed class CompilerState : StackContext
         }
     }
 
-    public void EmitFuncCall(int argc, string internalId, ModuleName moduleName, bool justEffect)
+    public void EmitFuncCall(int argc, string internalId, [CanBeNull] ModuleName moduleName, bool justEffect)
     {
         if (internalId == null)
             throw new ArgumentNullException(nameof(internalId));
 
+        var thisModule = Source.ParentApplication.Module.Name;
         var isInternal = moduleName == null ||
-            Equals(moduleName, Source.ParentApplication.Module.Name);
+            Equals(moduleName, thisModule);
 
-        if (isInternal && TryGetStaticallyLinkedFunction(internalId, out var staticTargetMethod))
+        if (TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out var staticTargetMethod))
         {
             //Link function statically
             FillArgv(argc);
-            Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
+            Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             EmitLoadLocal(SctxLocal);
             ReadArgv(argc);
             Il.Emit(OpCodes.Ldnull);
@@ -812,7 +816,6 @@ public sealed class CompilerState : StackContext
             if (justEffect)
                 Il.Emit(OpCodes.Pop);
         }
-        //TODO (Ticket #107) bind cross-module calls statically
         else
         {
             //Cross-Module-Link function dynamically
@@ -832,18 +835,18 @@ public sealed class CompilerState : StackContext
     /// </summary>
     /// <param name="internalId">The internal id of the function to create a closure for.</param>
     /// <param name="moduleName">If the function comes from another module, the module name is passed here.</param>
-    public void EmitNewClo(string internalId, ModuleName moduleName)
+    public void EmitNewClo(string internalId, [CanBeNull] ModuleName moduleName)
     {
         if (internalId == null)
             throw new ArgumentNullException(nameof(internalId));
 
-        var isInternal = moduleName == null ||
-            Equals(moduleName, Source.ParentApplication.Module.Name);
+        var thisModule = Source.ParentApplication.Module.Name;
+        var isInternal = moduleName == null || Equals(moduleName, thisModule);
 
         MethodInfo runtimeMethod;
-        if(isInternal && TryGetStaticallyLinkedFunction(internalId, out _))
+        if(TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out _))
         {
-            Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
+            Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             runtimeMethod = Runtime.NewClosureMethodStaticallyBound;
         }
         else if(isInternal)
@@ -851,7 +854,6 @@ public sealed class CompilerState : StackContext
             Il.Emit(OpCodes.Ldstr,internalId);
             runtimeMethod = Runtime.NewClosureMethodLateBound;
         }
-        //TODO (Ticket #107) bind cross-module calls statically
         else
         {
             Il.Emit(OpCodes.Ldstr,internalId);
@@ -883,20 +885,21 @@ public sealed class CompilerState : StackContext
         Il.EmitCall(OpCodes.Call, Runtime.LoadCommandReferenceMethod, null);
     }
 
-    public void EmitLoadFuncRefAsPValue(string internalId, ModuleName moduleName)
+    public void EmitLoadFuncRefAsPValue(string internalId, [CanBeNull] ModuleName moduleName)
     {
         EmitLoadLocal(SctxLocal);
+        var thisModule = Source.ParentApplication.Module.Name;
         var isInternal = moduleName == null ||
-            Equals(moduleName, Source.ParentApplication.Module.Name);
+            Equals(moduleName, thisModule);
 
-        if (!isInternal && TryGetStaticallyLinkedFunction(internalId, out var dummyMethodInfo))
+        if (TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out _))
         {
-            Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
+            Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             EmitVirtualCall(Compiler.CreateNativePValue);
         }
-        //TODO (Ticket #107) Statically linked Cross-Module ldr.func
         else  if(isInternal)
         {
+            // dynamically linked, same module
             Il.Emit(OpCodes.Ldstr, internalId);
             EmitCall(Runtime.LoadFunctionReferenceInternalMethod);
         }

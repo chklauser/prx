@@ -42,9 +42,6 @@ public class SetLeftCommand : PCommand, ICilCompilerAware
 
     #endregion
 
-    [Obsolete]
-    public override bool IsPure => true;
-
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
         // function setright(w,s,f)

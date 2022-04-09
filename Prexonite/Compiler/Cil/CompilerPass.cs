@@ -30,6 +30,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
+using Prexonite.Modular;
 
 #endregion
 
@@ -45,7 +47,7 @@ public class CompilerPass
         if (string.IsNullOrEmpty(applicationId))
             applicationId = "cilimpl";
 
-        return applicationId + "_" + _numberOfPasses++ + "";
+        return applicationId + "_" + Interlocked.Increment(ref _numberOfPasses) + "";
     }
 
     private readonly AssemblyBuilder _assemblyBuilder;
@@ -98,12 +100,12 @@ public class CompilerPass
             var sequenceName = _createNextTypeName(app?.Id);
             var asmName = new AssemblyName(sequenceName);
             _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndCollect);
-            _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name);
+            _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name!);
             _typeBuilder = _moduleBuilder.DefineType(sequenceName);
         }
     }
 
-    public MethodInfo DefineImplementationMethod(string id)
+    public MethodInfo DefineImplementationMethod(ModuleName moduleName, string id)
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
@@ -136,14 +138,14 @@ public class CompilerPass
             dm.DefineParameter(5, ParameterAttributes.Out, "result");
             dm.DefineParameter(6, ParameterAttributes.Out, "returnMode");
 
-            Implementations.Add(id, dm);
+            Implementations.Add(moduleName, id, dm);
 
             //Create function field
             var fb =
                 TargetType.DefineField
-                (_mkFieldName(id), typeof (PFunction),
+                (_mkFieldName(moduleName, id), typeof (PFunction),
                     FieldAttributes.Public | FieldAttributes.Static);
-            FunctionFields.Add(id, fb);
+            FunctionFields.Add(moduleName, id, fb);
 
             return dm;
         }
@@ -162,19 +164,19 @@ public class CompilerPass
         cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
         cilm.DefineParameter(5, ParameterAttributes.Out, "result");
 
-        Implementations.Add(id, cilm);
+        Implementations.Add(moduleName, id, cilm);
 
         return cilm;
     }
 
-    private static string _mkFieldName(string id)
+    private static string _mkFieldName(ModuleName moduleName, string id)
     {
-        return id + "<field>";
+        return $"{moduleName.Id}/{moduleName.Version}/{id}<src>";
     }
 
-    private readonly SymbolTable<FieldInfo> _functionFieldTable = new();
+    private readonly ModuleSymbolTable<FieldInfo> _functionFieldTable = new();
 
-    public SymbolTable<FieldInfo> FunctionFields
+    public IModuleSymbolTable<FieldInfo> FunctionFields
     {
         get
         {
@@ -185,13 +187,13 @@ public class CompilerPass
         }
     }
 
-    public SymbolTable<MethodInfo> Implementations { [DebuggerStepThrough] get; } = new();
+    public ModuleSymbolTable<MethodInfo> Implementations { [DebuggerStepThrough] get; } = new();
 
-    public ILGenerator GetIlGenerator(string id)
+    public ILGenerator GetIlGenerator(ModuleName moduleName, string id)
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
-        if (!Implementations.TryGetValue(id, out var m))
+        if (!Implementations.TryGetValue(moduleName, id, out var m))
             throw new PrexoniteException("No implementation stub for a function named " + id +
                 " exists.");
 
@@ -233,38 +235,39 @@ public class CompilerPass
     {
     }
 
-    private readonly Dictionary<MethodInfo, CilFunction> _delegateCache =
-        new();
+    private readonly Dictionary<MethodInfo, ICilImplementation> _delegateCache = new();
 
     private Type _cachedTypeReference;
 
-    public CilFunction GetDelegate(string id)
+    public ICilImplementation GetImplementation(ModuleName moduleName, string id)
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
-        if (!Implementations.TryGetValue(id, out var m))
-            throw new PrexoniteException("No implementation for a function named " + id +
-                " exists.");
+        if (!Implementations.TryGetValue(moduleName, id, out var m))
+            throw new PrexoniteException(
+                $"No implementation for a function named {id} in module {moduleName} exists.");
 
-        return GetDelegate(m);
+        return getDelegate(m);
     }
 
-    public CilFunction GetDelegate(MethodInfo m)
+    private record CilImplementation(MethodInfo Declaration, CilFunction Implementation) : ICilImplementation;
+
+    private ICilImplementation getDelegate(MethodInfo m)
     {
         if (_delegateCache.ContainsKey(m))
             return _delegateCache[m];
 
         DynamicMethod dm;
         if ((dm = m as DynamicMethod) != null)
-            return _delegateCache[m] = (CilFunction) dm.CreateDelegate(typeof (CilFunction));
+            return _delegateCache[m] = new CilImplementation(m, (CilFunction)dm.CreateDelegate(typeof(CilFunction)));
         return
-            _delegateCache[m] =
+            _delegateCache[m] = new CilImplementation(m, 
                 (CilFunction)
                 Delegate.CreateDelegate
                 (
                     typeof (CilFunction),
-                    _getRuntimeType().GetMethod(m.Name),
-                    true);
+                    _getRuntimeType().GetMethod(m.Name)!,
+                    true));
     }
 
     private Type _getRuntimeType()
@@ -279,6 +282,12 @@ public class CompilerPass
 
         var T = _getRuntimeType();
 
-        T.GetField(_mkFieldName(func.Id)).SetValue(null, func);
+        var functionField = T.GetField(_mkFieldName(func.ParentApplication.Module.Name, func.Id));
+        if (functionField == null)
+        {
+            throw new PrexoniteException("Internal error. Expected a generated field for function {func}.");
+        }
+
+        functionField.SetValue(null, func);
     }
 }

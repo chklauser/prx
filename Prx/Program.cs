@@ -283,12 +283,12 @@ internal static class Program
             
         #region Self-assembling build plan reference
 
-        engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, args) => sctx.CreateNativePValue(plan));
+        engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, _) => sctx.CreateNativePValue(plan));
         engine.Commands.AddHostCommand(@"host\prx_path", (sctx, args) => sctx.CreateNativePValue(prxPath));
 
         #endregion
 
-        Tuple<Application, ITarget> result;
+        (Application Application, ITarget Target)? result;
         try
         {
             var entryDesc = plan.AssembleAsync(Source.FromEmbeddedResource(Assembly.GetAssembly(typeof(Program))!, PrxScriptFileName)).Result;
@@ -331,10 +331,10 @@ internal static class Program
             return null;
         }
 
-        if (_reportErrors(result.Item2.Messages)) 
+        if (_reportErrors(result.Value.Target.Messages)) 
             return null;
             
-        var app = result.Item1;
+        var app = result.Value.Application;
         app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName()!.Version!.ToString();
         return app;
 

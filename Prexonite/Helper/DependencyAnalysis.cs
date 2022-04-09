@@ -29,6 +29,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Prexonite.Types;
 
@@ -116,6 +117,7 @@ public class DependencyAnalysis<TKey, TValue> where
         }
     }
 
+    [return: NotNull]
     public IEnumerable<Group> GetMutuallyRecursiveGroups()
     {
         var env = new SearchEnv();

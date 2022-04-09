@@ -41,59 +41,6 @@ public abstract class PCommand : IIndirectCall
     /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
     public abstract PValue Run(StackContext sctx, PValue[] args);
 
-    [Obsolete(
-        "IsPure mechanism was abandoned in v1.2. Use ICilExtension to perform constant folding instead."
-    )]
-    // ReSharper disable UnusedMember.Global
-    // ReSharper disable VirtualMemberNeverOverriden.Global
-    public virtual bool IsPure
-        // ReSharper restore VirtualMemberNeverOverriden.Global
-        =>
-            false; // ReSharper restore UnusedMember.Global
-
-    #region Command groups
-
-    /// <summary>
-    ///     A bit fields that represents memberships in the <see cref = "PCommandGroups" />.
-    /// </summary>
-    public PCommandGroups Groups { get; private set; } = PCommandGroups.None;
-
-    /// <summary>
-    ///     Indicates whether the command belongs to a group.
-    /// </summary>
-    public bool BelongsToAGroup => Groups != PCommandGroups.None;
-
-    /// <summary>
-    ///     Determines whether the command is a member of a particular group.
-    /// </summary>
-    /// <param name = "groups">The group (or groups) to test the command for.</param>
-    /// <returns>True, if the command is a member of the supplied group (or all groups); false otherwise.</returns>
-    public bool IsInGroup(PCommandGroups groups)
-    {
-        return (Groups & groups) == Groups;
-        //If _groups contains groups, an AND operation won't alter it
-    }
-
-    /// <summary>
-    ///     Adds the command to the supplied group (or groups).
-    /// </summary>
-    /// <param name = "additionalGroups">The group (or groups) to which to add the command.</param>
-    public void AddToGroup(PCommandGroups additionalGroups)
-    {
-        Groups = Groups | additionalGroups;
-    }
-
-    /// <summary>
-    ///     Removes the command from the supplied group (or groups)
-    /// </summary>
-    /// <param name = "groups">The group (or groups) from which to remove the command.</param>
-    public void RemoveFromGroup(PCommandGroups groups)
-    {
-        Groups = Groups ^ (Groups & groups);
-    }
-
-    #endregion
-
     #region IIndirectCall Members
 
     /// <summary>
