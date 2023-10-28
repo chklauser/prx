@@ -5,12 +5,12 @@ namespace Prexonite.Compiler.Ast;
 
 public abstract class AstExpr : AstNode
 {
-    protected AstExpr([JetBrains.Annotations.NotNull] ISourcePosition position)
+    protected AstExpr(ISourcePosition position)
         : base(position)
     {
     }
 
-    internal AstExpr([JetBrains.Annotations.NotNull] Parser p)
+    internal AstExpr(Parser p)
         : base(p)
     {
     }

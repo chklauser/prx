@@ -33,6 +33,5 @@ public interface IIndirectCall
     ///     </para>
     /// </remarks>
     /// <returns>The result of the call. Should <strong>never</strong> be null.</returns>
-    [NotNull]
-    PValue IndirectCall([NotNull] StackContext sctx, [NotNull] PValue[] args);
+    PValue IndirectCall(StackContext sctx, PValue[] args);
 }

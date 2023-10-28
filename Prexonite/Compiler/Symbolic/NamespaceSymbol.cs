@@ -17,7 +17,7 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return "namespace";
     }
 
-    NamespaceSymbol([NotNull] ISourcePosition position, [NotNull] Namespace @namespace)
+    NamespaceSymbol(ISourcePosition position, Namespace @namespace)
     {
         Position = position;
         Namespace = @namespace;
@@ -53,7 +53,7 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return Namespace.GetHashCode();
     }
 
-    internal static NamespaceSymbol _Create([NotNull] Namespace @namespace, [NotNull] ISourcePosition position)
+    internal static NamespaceSymbol _Create(Namespace @namespace, ISourcePosition position)
     {
         return new(position, @namespace);
     }
@@ -109,7 +109,7 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
     /// <param name="messageSink"></param>
     /// <param name="errors">If non-null, collects instead of reports errors (other messages are reported directly); Otherwise errors are reported too.</param>
     /// <returns>The namespace symbol or null if the symbol is not actually a namespace symbol (has already been reported as an error). If an error collection list (<paramref name="errors"/>) has been supplied, can be non-null when errors are present)</returns>
-    public static NamespaceSymbol? UnwrapNamespaceSymbol([NotNull] Symbol symbol, [NotNull] ISourcePosition symbolPosition,
+    public static NamespaceSymbol? UnwrapNamespaceSymbol(Symbol symbol, ISourcePosition symbolPosition,
         IMessageSink? messageSink, IList<Message>? errors = null)
     {
         if (symbol == null)

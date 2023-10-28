@@ -44,7 +44,7 @@ public class LoaderOptions
         ExternalSymbols = new EmptySymbolView<Symbol>();
     }
 
-    public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, ISymbolView<Symbol>? externalSymbols)
+    public LoaderOptions(Engine parentEngine, Application targetApplication, ISymbolView<Symbol>? externalSymbols)
     {
         ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
         TargetApplication = targetApplication ?? throw new ArgumentNullException(nameof(targetApplication));
@@ -59,7 +59,6 @@ public class LoaderOptions
 
     public Application? TargetApplication { get; }
 
-    [NotNull]
     public ISymbolView<Symbol> ExternalSymbols { get; }
 
     bool? _registerCommands;
@@ -140,7 +139,6 @@ public class LoaderOptions
         set => _flagLiteralsEnabled = value;
     }
 
-    [CanBeNull]
     string? _storeNewLine;
 
     /// <summary>
@@ -148,7 +146,6 @@ public class LoaderOptions
     /// </summary>
     /// <see cref="Loader.Store(System.Text.StringBuilder)"/>
     [PublicAPI]
-    [NotNull]
     public string StoreNewLine
     {
         get => _storeNewLine ?? "\n";
@@ -164,7 +161,7 @@ public class LoaderOptions
 
     #endregion
 
-    public void InheritFrom([NotNull] LoaderOptions options)
+    public void InheritFrom(LoaderOptions options)
     {
         if (options == null)
             throw new ArgumentNullException(nameof(options));
