@@ -52,7 +52,7 @@ public class AstBlock : AstExpr,
     {   
     }
 
-    private static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
+    static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
     {
         return SymbolStore.Create(parentBlock.Symbols);
     }
@@ -75,7 +75,7 @@ public class AstBlock : AstExpr,
     }
 
     [NotNull]
-    private List<AstNode> _statements = new();
+    List<AstNode> _statements = new();
 
     [NotNull]
     public List<AstNode> Statements
@@ -111,7 +111,7 @@ public class AstBlock : AstExpr,
 
     #region Tail call optimization
 
-    private static void tail_call_optimize_expressions_of_nested_block(
+    static void tail_call_optimize_expressions_of_nested_block(
         IAstHasExpressions hasExpressions)
     {
         foreach (var expression in hasExpressions.Expressions)
@@ -125,7 +125,7 @@ public class AstBlock : AstExpr,
         }
     }
 
-    private void _tailCallOptimizeNestedBlock()
+    void _tailCallOptimizeNestedBlock()
     {
         int i;
         for (i = 1; i < _statements.Count; i++)
@@ -154,13 +154,13 @@ public class AstBlock : AstExpr,
         }
     }
 
-    private static void _tailCallOptimizeAllNestedBlocksOf(IAstHasBlocks hasBlocks)
+    static void _tailCallOptimizeAllNestedBlocksOf(IAstHasBlocks hasBlocks)
     {
         foreach (var block in hasBlocks.Blocks)
             block._tailCallOptimizeNestedBlock();
     }
 
-    private void _tailCallOptimizeTopLevelBlock()
+    void _tailCallOptimizeTopLevelBlock()
     {
         // { GetSetComplex; return; } -> { return GetSetComplex; }
 
@@ -332,7 +332,7 @@ public class AstBlock : AstExpr,
 
     #region Block labels
 
-    private readonly string _prefix;
+    readonly string _prefix;
     public AstExpr Expression;
 
     public string Prefix => _prefix.Substring(0, _prefix.Length - 1);

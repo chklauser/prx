@@ -38,7 +38,7 @@ public class RandomAccessQueue<T> : IList<T>
 {
     #region Constructors
 
-    private const int DEFAULT_INITIAL_CAPACITY = 10;
+    const int DEFAULT_INITIAL_CAPACITY = 10;
 
     /// <summary>
     ///     Creates a new RandomAccessQueue
@@ -82,11 +82,11 @@ public class RandomAccessQueue<T> : IList<T>
 
     #region Core
 
-    private readonly List<T> _store;
-    private int _front;
-    private int _rear = -1;
+    readonly List<T> _store;
+    int _front;
+    int _rear = -1;
 
-    private void unwrap()
+    void unwrap()
     {
         var nstore = new T[_store.Count];
         var count = normalCount();
@@ -111,7 +111,7 @@ public class RandomAccessQueue<T> : IList<T>
         }
     }
 
-    private int normalCount()
+    int normalCount()
     {
         if (_rear < 0)
             return 0;
@@ -121,18 +121,18 @@ public class RandomAccessQueue<T> : IList<T>
             return _rear + 1 - _front;
     }
 
-    private int wrappedCount()
+    int wrappedCount()
     {
         return isWrapped() ? _rear + 1 - 0 : 0;
     }
 
     [DebuggerStepThrough]
-    private bool isWrapped()
+    bool isWrapped()
     {
         return _front > _rear;
     }
 
-    private int toIndex(int qidx)
+    int toIndex(int qidx)
     {
         var idx = _front + qidx;
         if (idx >= _store.Count)

@@ -23,7 +23,7 @@ public class ModuleCache
     public static void ReturnTo(bool compileToCil, FunctionLinking functionLinking, ModuleCache cache) =>
         poolFor(compileToCil, functionLinking).Return(cache);
 
-    private static ObjectPool<ModuleCache> poolFor(bool compileToCil, FunctionLinking functionLinking) =>
+    static ObjectPool<ModuleCache> poolFor(bool compileToCil, FunctionLinking functionLinking) =>
         (compileToCil, functionLinking) switch
         {
             (false, _) => InterpretedCache,
@@ -33,29 +33,29 @@ public class ModuleCache
                 $"Test scenario compileToCil={compileToCil}, functionLinking={functionLinking} is not supported.")
         };
 
-    private static readonly ObjectPool<ModuleCache> InterpretedCache = mkCachePool();
-    private static readonly ObjectPool<ModuleCache> IsolatedCilCache = mkCachePool();
-    private static readonly ObjectPool<ModuleCache> LinkedCilCache = mkCachePool();
+    static readonly ObjectPool<ModuleCache> InterpretedCache = mkCachePool();
+    static readonly ObjectPool<ModuleCache> IsolatedCilCache = mkCachePool();
+    static readonly ObjectPool<ModuleCache> LinkedCilCache = mkCachePool();
 
-    private static ObjectPool<ModuleCache> mkCachePool() => 
+    static ObjectPool<ModuleCache> mkCachePool() => 
         new DefaultObjectPool<ModuleCache>(
             new DefaultPooledObjectPolicy<ModuleCache>(), 
             Environment.ProcessorCount
             );
-    
-    private ITargetDescription? _legacySymbolsDescription;
 
-    private ITargetDescription? _stdlibDescription;
+    ITargetDescription? _legacySymbolsDescription;
 
-    private static readonly TraceSource _trace =
+    ITargetDescription? _stdlibDescription;
+
+    static readonly TraceSource _trace =
         new("PrexoniteTests.Tests.Configurations.ModuleCache");
 
     // ReSharper disable InconsistentNaming
-    private ManualPlan Cache { get; } = new IncrementalPlan();
+    ManualPlan Cache { get; } = new IncrementalPlan();
 
     // ReSharper disable InconsistentNaming
 
-    private ITargetDescription _loadLegacySymbols()
+    ITargetDescription _loadLegacySymbols()
     {
         var moduleName = new ModuleName("prx.v1", new Version(0, 0));
         var desc = Cache.CreateDescription(moduleName,
@@ -72,13 +72,13 @@ public class ModuleCache
     /// <summary>
     /// Description of the module containing legacy symbols.
     /// </summary>
-    private ITargetDescription LegacySymbolsDescription =>
+    ITargetDescription LegacySymbolsDescription =>
         _legacySymbolsDescription ??= _loadLegacySymbols();
     // ReSharper restore InconsistentNaming
 
-    private ITargetDescription stdlibDescription => _stdlibDescription ??= _loadStdlib();
+    ITargetDescription stdlibDescription => _stdlibDescription ??= _loadStdlib();
 
-    private ITargetDescription _loadStdlib()
+    ITargetDescription _loadStdlib()
     {
         try
         {
@@ -159,7 +159,7 @@ public class ModuleCache
         return result;
     }
 
-    private static ModuleName _toModuleName(string path)
+    static ModuleName _toModuleName(string path)
     {
         return new(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
     }

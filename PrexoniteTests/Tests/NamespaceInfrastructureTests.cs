@@ -420,7 +420,7 @@ public class NamespaceInfrastructureTests
     }
 
     // ReSharper disable once UnusedParameter.Local
-    private void _assertNotExists([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
+    void _assertNotExists([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
     {
         if(view.TryGet(id, out var dummy))
             Assert.Fail("Unexpected presence of symbol {0} in {1}", id, viewDesc ?? "scope");
@@ -428,7 +428,7 @@ public class NamespaceInfrastructureTests
 
     [NotNull]
     // ReSharper disable once UnusedParameter.Local
-    private Symbol _assertGetSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
+    Symbol _assertGetSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
     {
         if(!view.TryGet(id, out var symbol))
             Assert.Fail("Expected {0} in {1}", id, viewDesc ?? "scope");
@@ -436,7 +436,7 @@ public class NamespaceInfrastructureTests
     }
 
     // ReSharper disable once UnusedParameter.Local
-    private NamespaceSymbol _assertGetNamespaceSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
+    NamespaceSymbol _assertGetNamespaceSymbol([NotNull] ISymbolView<Symbol> view, [NotNull] string id, string viewDesc = null)
     {
         if (!view.TryGet(id, out var symbol))
             Assert.Fail("Expected {0} in {1}", id, viewDesc ?? "scope");
@@ -445,7 +445,7 @@ public class NamespaceInfrastructureTests
         return namespaceSymbol;
     }
 
-    private static Func<KeyValuePair<string, Symbol>, SymbolInfo> _exportFromModule(ModuleName refdMod)
+    static Func<KeyValuePair<string, Symbol>, SymbolInfo> _exportFromModule(ModuleName refdMod)
     {
         return entry =>
             new SymbolInfo(entry.Value,

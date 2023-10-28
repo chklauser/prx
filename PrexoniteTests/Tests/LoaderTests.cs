@@ -13,10 +13,10 @@ namespace PrexoniteTests.Tests;
 [TestFixture]
 public class LoaderTests
 {
-    private string _tempDirectory;
-    private Engine _eng;
-    private Application _app;
-    private Loader _ldr;
+    string _tempDirectory;
+    Engine _eng;
+    Application _app;
+    Loader _ldr;
 
     [OneTimeSetUp]
     public void SetUpFixture()
@@ -144,7 +144,7 @@ public class LoaderTests
         Assert.That(spec, Is.Null);
     }
 
-    private void _assertFindsFile(string logicalPath, params string[] physicalPathComponents)
+    void _assertFindsFile(string logicalPath, params string[] physicalPathComponents)
     {
         var effectivePathComponents = _tempDirectory.Singleton().Append(physicalPathComponents).ToArray();
         var fileInfo = new FileInfo(Path.Combine(effectivePathComponents));

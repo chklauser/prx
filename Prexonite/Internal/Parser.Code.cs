@@ -27,7 +27,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Internal;
 
-internal partial class Parser
+partial class Parser
 {
     internal Parser(IScanner scanner, StackContext sctx)
         : this(scanner)
@@ -37,7 +37,7 @@ internal partial class Parser
 
     public StackContext Sctx { get; }
 
-    private PType _lastType;
+    PType _lastType;
 
     public PType LastType => _lastType;
 }

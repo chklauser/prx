@@ -56,7 +56,7 @@ public abstract class SymbolStoreBuilder
 
     #region Internal data structures
 
-    private sealed class ImportStatement : List<SymbolTransferDirective>
+    sealed class ImportStatement : List<SymbolTransferDirective>
     {
         [JetBrains.Annotations.NotNull]
         public ISymbolView<Symbol> Source { get; }
@@ -71,7 +71,7 @@ public abstract class SymbolStoreBuilder
         }
     }
 
-    private sealed class ImportStatementSet :
+    sealed class ImportStatementSet :
         KeyedCollection<SymbolOrigin, ImportStatement>
     {
         protected override SymbolOrigin GetKeyForItem(ImportStatement item)
@@ -99,11 +99,12 @@ public abstract class SymbolStoreBuilder
 
     #region Implementation
 
-    private class Impl : SymbolStoreBuilder
+    class Impl : SymbolStoreBuilder
     {
         public override ISymbolView<Symbol>? ExistingNamespace { get; set; }
 
-        [JetBrains.Annotations.NotNull] private readonly ImportStatementSet _statements = new();
+        [JetBrains.Annotations.NotNull]
+        readonly ImportStatementSet _statements = new();
 
         public override void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source,
             IEnumerable<SymbolTransferDirective> directives)
@@ -119,7 +120,7 @@ public abstract class SymbolStoreBuilder
             return SymbolStore.Create(ExistingNamespace, _statements.SelectMany(_applyDirectives));
         }
 
-        private IEnumerable<SymbolInfo> _applyDirectives(ImportStatement import)
+        IEnumerable<SymbolInfo> _applyDirectives(ImportStatement import)
         {
             // Determine whether we are performing a wildcard or a selective import
             var isWildcard = false;
@@ -150,7 +151,7 @@ public abstract class SymbolStoreBuilder
                 : _applyDirectivesSelective(import, import.Source);
         }
 
-        private IEnumerable<SymbolInfo> _applyDirectivesSelective(ImportStatement import,
+        IEnumerable<SymbolInfo> _applyDirectivesSelective(ImportStatement import,
             ISymbolView<Symbol> symbolSource)
         {
             return import.SelectMaybe(SymbolTransferDirective.Matching<SymbolInfo?>(() => null, rename =>
@@ -169,7 +170,7 @@ public abstract class SymbolStoreBuilder
         }
 
         [JetBrains.Annotations.NotNull]
-        private static IEnumerable<SymbolInfo> _applyDirectivesWildcard(ImportStatement import,
+        static IEnumerable<SymbolInfo> _applyDirectivesWildcard(ImportStatement import,
             IEnumerable<KeyValuePair<string, Symbol>> symbolSource,
             HashSet<string> drops, Dictionary<string, List<string>> renames)
         {
@@ -193,7 +194,7 @@ public abstract class SymbolStoreBuilder
                 .Append(_missingErrorSymbols(import, renames, mentioned));
         }
 
-        private static IEnumerable<SymbolInfo> _missingErrorSymbols(ImportStatement import,
+        static IEnumerable<SymbolInfo> _missingErrorSymbols(ImportStatement import,
             Dictionary<string, List<string>> renames, HashSet<string> mentioned)
         {
             return renames
@@ -202,25 +203,25 @@ public abstract class SymbolStoreBuilder
                     .Select(dest => _createSymbolInfo(import, dest, _createSymbolNotFoundSymbol(import, kvp.Key))));
         }
 
-        private static Symbol _createSymbolNotFoundSymbol(ImportStatement import, string n)
+        static Symbol _createSymbolNotFoundSymbol(ImportStatement import, string n)
         {
             var offendingDirective = _findOffendingDirective(n, import);
             return SymbolStore._CreateSymbolNotFoundError(n, offendingDirective.Position);
         }
 
-        private static SymbolTransferDirective _findOffendingDirective(string name, ImportStatement import)
+        static SymbolTransferDirective _findOffendingDirective(string name, ImportStatement import)
         {
             // We should always find a matching name because it must have triggered this error path.
             return import.Find(directive => _matchingName(name, directive))!;
         }
 
-        private static bool _matchingName(string name, SymbolTransferDirective directive)
+        static bool _matchingName(string name, SymbolTransferDirective directive)
         {
             return directive.Match(() => false, r => Engine.StringsAreEqual(name, r.OriginalName),
                 d => Engine.StringsAreEqual(name, d.Name));
         }
 
-        private static SymbolInfo _createSymbolInfo(ImportStatement import, string name, Symbol symbol)
+        static SymbolInfo _createSymbolInfo(ImportStatement import, string name, Symbol symbol)
         {
             return new(symbol, import.Origin, name);
         }

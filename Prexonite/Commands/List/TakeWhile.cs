@@ -38,7 +38,7 @@ public class TakeWhile : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private TakeWhile()
+    TakeWhile()
     {
     }
 

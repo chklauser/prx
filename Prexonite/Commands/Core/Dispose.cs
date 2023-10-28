@@ -39,7 +39,7 @@ namespace Prexonite.Commands.Core;
 /// </remarks>
 public sealed class Dispose : PCommand, ICilCompilerAware
 {
-    private Dispose()
+    Dispose()
     {
     }
 

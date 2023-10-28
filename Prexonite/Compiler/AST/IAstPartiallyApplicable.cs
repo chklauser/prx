@@ -212,7 +212,7 @@ public static class AstPartiallyApplicable
         _removeRedundantPlaceholders(argv, argv.MapMaybe(n => n as AstPlaceholder));
     }
 
-    private static void _removeRedundantPlaceholders(List<AstExpr> argv,
+    static void _removeRedundantPlaceholders(List<AstExpr> argv,
         IEnumerable<AstPlaceholder> placeholders)
     {
         //Placeholders are redundant iff they map an open argument that would be supplied 

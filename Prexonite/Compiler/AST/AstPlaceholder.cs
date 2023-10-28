@@ -39,7 +39,7 @@ public class AstPlaceholder : AstGetSetImplBase
 {
     public const int MaxPlaceholderIndex = 127;
 
-    private int? _index;
+    int? _index;
 
     /// <summary>
     ///     The explicit argument index, if one is set. 0-based.
@@ -78,7 +78,7 @@ public class AstPlaceholder : AstGetSetImplBase
         _throwSyntaxNotSupported();
     }
 
-    private void _throwSyntaxNotSupported()
+    void _throwSyntaxNotSupported()
     {
         throw new PartialApplicationSyntaxNotSupportedException(
             $"This syntax does not support placeholders. (Position {File}:{Line} col {Column})");

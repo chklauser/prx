@@ -33,7 +33,7 @@ public class Boxed : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Boxed()
+    Boxed()
     {
     }
 

@@ -33,11 +33,11 @@ public class PartialConstructionCommand : PartialWithPTypeCommandBase<PTypeInfo>
 {
     #region Singleton pattern
 
-    private PartialConstructionCommand()
+    PartialConstructionCommand()
     {
     }
 
-    private ConstructorInfo _ptypeConstructCtor;
+    ConstructorInfo _ptypeConstructCtor;
 
     public static PartialConstructionCommand Instance { get; } = new();
 

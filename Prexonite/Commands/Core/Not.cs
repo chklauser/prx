@@ -6,7 +6,7 @@ public class Not : PCommand
 {
     public static Not Instance { get; } = new();
 
-    private Not()
+    Not()
     {
     }
 

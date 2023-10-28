@@ -43,7 +43,7 @@ namespace Prexonite.Compiler.Cil
     [DebuggerDisplay("SEH for {State}")]
     public sealed class StructuredExceptionHandling
     {
-        private readonly InstructionInfo[] _loci;
+        readonly InstructionInfo[] _loci;
 
         /// <summary>
         ///     Creates a new instance of structured exception handling.
@@ -94,7 +94,7 @@ namespace Prexonite.Compiler.Cil
             return decisions.Aggregate(_integrateBranchHandling);
         }
 
-        private static IEnumerable<Tuple<Region, Region>> _involvedRegions(List<Region> source,
+        static IEnumerable<Tuple<Region, Region>> _involvedRegions(List<Region> source,
             List<Region> target)
         {
             //Find common ancestor
@@ -143,7 +143,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static BranchHandling _integrateBranchHandling(BranchHandling h1, BranchHandling h2)
+        static BranchHandling _integrateBranchHandling(BranchHandling h1, BranchHandling h2)
         {
             if (h1 == h2)
                 return h1;
@@ -168,7 +168,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private BranchHandling _assesJumpForTwoRegions(Region sourceRegion, Region targetRegion,
+        BranchHandling _assesJumpForTwoRegions(Region sourceRegion, Region targetRegion,
             int sourceAddr, int targetAddr)
         {
             if (Equals(sourceRegion, targetRegion))
@@ -333,7 +333,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private void _emitEndFinally(int sourceAddr, Instruction ins)
+        void _emitEndFinally(int sourceAddr, Instruction ins)
         {
             Action endfinally = () => State.Il.Emit(OpCodes.Endfinally);
             switch (ins.OpCode)
@@ -353,7 +353,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private void _emitLeave(int sourceAddr, int targetAddr, Instruction ins)
+        void _emitLeave(int sourceAddr, int targetAddr, Instruction ins)
         {
             Action leave = () => State.Il.Emit(OpCodes.Leave, State.InstructionLabels[targetAddr]);
             switch (ins.OpCode)
@@ -384,7 +384,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private void _emitBranch(int sourceAddr, int targetAddr, Instruction ins)
+        void _emitBranch(int sourceAddr, int targetAddr, Instruction ins)
         {
             switch (ins.OpCode)
             {
@@ -417,13 +417,13 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private void _clearStack(int sourceAddress)
+        void _clearStack(int sourceAddress)
         {
             Debug.Assert(0 <= sourceAddress && sourceAddress <= State.StackSize.Length);
             State.EmitIgnoreArguments(State.StackSize[sourceAddress]);
         }
 
-        private void _emitSkipFalse(Action skippable)
+        void _emitSkipFalse(Action skippable)
         {
             _emitUnboxBool();
             var cont = State.Il.DefineLabel();
@@ -432,7 +432,7 @@ namespace Prexonite.Compiler.Cil
             State.Il.MarkLabel(cont);
         }
 
-        private void _emitSkipTrue(Action skippable)
+        void _emitSkipTrue(Action skippable)
         {
             _emitUnboxBool();
             var cont = State.Il.DefineLabel();
@@ -441,7 +441,7 @@ namespace Prexonite.Compiler.Cil
             State.Il.MarkLabel(cont);
         }
 
-        private void _emitUnboxBool()
+        void _emitUnboxBool()
         {
             State.EmitLoadLocal(State.SctxLocal);
             State.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
@@ -461,13 +461,13 @@ namespace Prexonite.Compiler.Cil
 
         [DebuggerDisplay(
             "{_address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnerMostRegion}]")]
-        private sealed class InstructionInfo
+        sealed class InstructionInfo
         {
-            private readonly int _address;
-            private readonly StructuredExceptionHandling _seh;
+            readonly int _address;
+            readonly StructuredExceptionHandling _seh;
             public readonly List<Region> Regions = new(8);
 
-            private bool _isInRegion
+            bool _isInRegion
             {
                 [DebuggerStepThrough]
                 get => Regions.Count > 0;

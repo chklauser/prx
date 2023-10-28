@@ -50,7 +50,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     [DebuggerStepThrough]
-    private IntPType()
+    IntPType()
     {
     }
 
@@ -136,7 +136,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         return clrint.TryDynamicCall(sctx, subject, args, call, id, out result);
     }
 
-    private static IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step,
+    static IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step,
         int upperLimit)
     {
         for (var i = lowerLimit; i <= upperLimit; i += step)
@@ -273,12 +273,12 @@ public sealed class IntPType : PType, ICilCompilerAware
 
     #region Operators
 
-    private static bool _tryConvertToInt(StackContext sctx, PValue operand, out int value)
+    static bool _tryConvertToInt(StackContext sctx, PValue operand, out int value)
     {
         return _tryConvertToInt(sctx, operand, out value, true);
     }
 
-    private static bool _tryConvertToInt(
+    static bool _tryConvertToInt(
         StackContext sctx, PValue operand, out int value, bool allowNull)
     {
         value = -1337; //should never surface as value is only used if the method returns true
@@ -536,7 +536,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         return otherType is IntPType;
     }
 
-    private const int _code = -408434186;
+    const int _code = -408434186;
 
     public override int GetHashCode()
     {

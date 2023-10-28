@@ -127,7 +127,7 @@ public class AstWhileLoop : AstLoop
         target.EndBlock();
     }
 
-    private void _emitCondition(CompilerTarget target)
+    void _emitCondition(CompilerTarget target)
     {
         target.EmitLabel(Position, Block.ContinueLabel);
         AstLazyLogical.EmitJumpCondition(target, Condition, Block.BeginLabel, IsPositive);

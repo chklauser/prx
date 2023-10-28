@@ -35,12 +35,12 @@ using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Internal;
 
-internal sealed class ConflictUnionFallbackStore : SymbolStore
+sealed class ConflictUnionFallbackStore : SymbolStore
 {
-    private ISymbolView<Symbol>? _parent;
-    private readonly SymbolTable<Symbol>? _union;
-    private SymbolTable<Symbol>? _local;
-    private readonly ReaderWriterLockSlim _lock = new();
+    ISymbolView<Symbol>? _parent;
+    readonly SymbolTable<Symbol>? _union;
+    SymbolTable<Symbol>? _local;
+    readonly ReaderWriterLockSlim _lock = new();
 
     internal ConflictUnionFallbackStore(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
     {
@@ -55,7 +55,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
         }
     }
 
-    private static KeyValuePair<string, Symbol> _unifySymbols(IGrouping<string, SymbolInfo> source)
+    static KeyValuePair<string, Symbol> _unifySymbols(IGrouping<string, SymbolInfo> source)
     {
         using var e = source.GetEnumerator();
         // ReSharper disable NotResolvedInText
@@ -85,7 +85,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
         return new KeyValuePair<string, Symbol>(unionInfo.Name, x.Symbol);
     }
 
-    private static KeyValuePair<string, Symbol> _unifySymbolsDualMode(SymbolInfo first, SymbolInfo second, IEnumerator<SymbolInfo> e)
+    static KeyValuePair<string, Symbol> _unifySymbolsDualMode(SymbolInfo first, SymbolInfo second, IEnumerator<SymbolInfo> e)
     {
         var x1 = first;
         var x2 = second;
@@ -124,7 +124,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
                 MessageClasses.SymbolConflict), x1.Symbol));
     }
 
-    private static KeyValuePair<string, Symbol> _unifySymbolsMultiMode(SymbolInfo first, SymbolInfo second, SymbolInfo third, IEnumerator<SymbolInfo> e)
+    static KeyValuePair<string, Symbol> _unifySymbolsMultiMode(SymbolInfo first, SymbolInfo second, SymbolInfo third, IEnumerator<SymbolInfo> e)
     {
         var symbols = new List<SymbolInfo> { first, second, third };
         var xs = new List<SymbolInfo> { first, second, third };
@@ -160,12 +160,12 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
                 MessageClasses.SymbolConflict), xs[0].Symbol));
     }
 
-    private static readonly ISymbolHandler<Message, bool> _containsMessage = new ContainsMessageHandler();
+    static readonly ISymbolHandler<Message, bool> _containsMessage = new ContainsMessageHandler();
 
     /// <summary>
     /// Determines whether a symbol contains a message or not.
     /// </summary>
-    private class ContainsMessageHandler : ISymbolHandler<Message, bool>
+    class ContainsMessageHandler : ISymbolHandler<Message, bool>
     {
         public bool HandleReference(ReferenceSymbol self, Message argument)
         {
@@ -201,14 +201,14 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
         }
     }
 
-    private static readonly ISymbolHandler<MergeContext, Symbol?> _mergeHandler = new MergeHandler();
+    static readonly ISymbolHandler<MergeContext, Symbol?> _mergeHandler = new MergeHandler();
 
-    private static Symbol? _merge(SymbolInfo thisSymbol, SymbolInfo otherSymbol)
+    static Symbol? _merge(SymbolInfo thisSymbol, SymbolInfo otherSymbol)
     {
         return new MergeContext(thisSymbol, otherSymbol).Merge();
     }
 
-    private sealed class MergeContext
+    sealed class MergeContext
     {
         public SymbolInfo ThisInfo { get; }
         public SymbolInfo OtherInfo { get; }
@@ -230,7 +230,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
         }
     }
 
-    private sealed class MergeHandler : ISymbolHandler<MergeContext, Symbol?>
+    sealed class MergeHandler : ISymbolHandler<MergeContext, Symbol?>
     {
         public Symbol? HandleReference(ReferenceSymbol thisSymbol, MergeContext mergeContext)
         {
@@ -252,7 +252,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
             return _handleSymbol(thisSymbol, mergeContext);
         }
 
-        private Symbol? _handleSymbol(Symbol thisSymbol, MergeContext mergeContext)
+        Symbol? _handleSymbol(Symbol thisSymbol, MergeContext mergeContext)
         {
             // In general, non-message symbols must be equal modulo messages.
             if (mergeContext.OtherInfo.Symbol is MessageSymbol messageSymbol)
@@ -304,23 +304,23 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
                 return null;
         }
 
-        private static IEnumerable<SymbolInfo> _exportedFrom(NamespaceSymbol nsSymbol, SymbolInfo nsInfo)
+        static IEnumerable<SymbolInfo> _exportedFrom(NamespaceSymbol nsSymbol, SymbolInfo nsInfo)
         {
             return nsSymbol.Namespace.Select(entry => new SymbolInfo(entry.Value,nsInfo.Origin,entry.Key));
         }
     }
 
-    private bool _notInUnion(KeyValuePair<string, Symbol> entry)
+    bool _notInUnion(KeyValuePair<string, Symbol> entry)
     {
         return !_union!.ContainsKey(entry.Key);
     }
 
-    private bool _notInLocal(KeyValuePair<string, Symbol> entry)
+    bool _notInLocal(KeyValuePair<string, Symbol> entry)
     {
         return !_local!.ContainsKey(entry.Key);
     }
 
-    private bool _notInLocalAndUnion(KeyValuePair<string, Symbol> entry)
+    bool _notInLocalAndUnion(KeyValuePair<string, Symbol> entry)
     {
         var key = entry.Key;
         return !_union!.ContainsKey(key) && !_local!.ContainsKey(key);
@@ -351,7 +351,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
         };
     }
 
-    private IEnumerator<KeyValuePair<string, Symbol>> _readLockEnumerable(IEnumerable<KeyValuePair<string, Symbol>> sequence)
+    IEnumerator<KeyValuePair<string, Symbol>> _readLockEnumerable(IEnumerable<KeyValuePair<string, Symbol>> sequence)
     {
         _lock.EnterReadLock();
         try
@@ -365,7 +365,7 @@ internal sealed class ConflictUnionFallbackStore : SymbolStore
         }
     }
 
-    private IEnumerable<KeyValuePair<string, Symbol>> _assembleEnumerator(IEnumerable<KeyValuePair<string, Symbol>> local, IEnumerable<KeyValuePair<string, Symbol>>? parentOpt)
+    IEnumerable<KeyValuePair<string, Symbol>> _assembleEnumerator(IEnumerable<KeyValuePair<string, Symbol>> local, IEnumerable<KeyValuePair<string, Symbol>>? parentOpt)
     {
         return (_union, parentOpt) switch
         {

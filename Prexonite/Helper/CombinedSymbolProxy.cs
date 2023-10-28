@@ -30,7 +30,7 @@ namespace Prexonite;
 
 public class CombinedSymbolProxy<T>
 {
-    private CombinedSymbolProxy(ISymbolTable<T>[] tables)
+    CombinedSymbolProxy(ISymbolTable<T>[] tables)
     {
         Contract.Requires<ArgumentNullException>(tables != null);
         Contract.Requires(tables.Length > 0,"A CombinedSymbolProxy needs to be backed by at least one SymbolTable. (Array was empty)");
@@ -45,6 +45,6 @@ public class CombinedSymbolProxy<T>
         return new(tableHierarchy);
     }
 
-    private readonly ISymbolTable<T>[] _tables;
+    readonly ISymbolTable<T>[] _tables;
     protected ISymbolTable<T> TargetTable => _tables[^1];
 }

@@ -49,7 +49,7 @@ namespace Prexonite.Compiler;
 
 public class CompilerTarget : IHasMetaTable
 {
-    private readonly LinkedList<AddressChangeHook> _addressChangeHooks =
+    readonly LinkedList<AddressChangeHook> _addressChangeHooks =
         new();
 
     public ICollection<AddressChangeHook> AddressChangeHooks => _addressChangeHooks;
@@ -79,8 +79,8 @@ public class CompilerTarget : IHasMetaTable
 
     #region Fields
 
-    private MacroSession _macroSession;
-    private int _macroSessionReferenceCounter;
+    MacroSession _macroSession;
+    int _macroSessionReferenceCounter;
 
     /// <summary>
     ///     Returns the current macro session, or creates one if necessary. Must always be paired with a call to <see
@@ -122,7 +122,7 @@ public class CompilerTarget : IHasMetaTable
 
     public CompilerTarget ParentTarget { [DebuggerStepThrough] get; }
 
-    private int _nestedIdCounter;
+    int _nestedIdCounter;
 
     #endregion
 
@@ -195,9 +195,9 @@ public class CompilerTarget : IHasMetaTable
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Metakey")] public const string CompilerMetakey = "compiler";
 
-    private class ProvidedValue : IIndirectCall
+    class ProvidedValue : IIndirectCall
     {
-        private readonly PValue _value;
+        readonly PValue _value;
 
         public ProvidedValue(PValue value)
         {
@@ -214,9 +214,9 @@ public class CompilerTarget : IHasMetaTable
         #endregion
     }
 
-    private class ProvidedFunction : IIndirectCall
+    class ProvidedFunction : IIndirectCall
     {
-        private readonly Func<StackContext, PValue[], PValue> _func;
+        readonly Func<StackContext, PValue[], PValue> _func;
 
         public ProvidedFunction(Func<StackContext, PValue[], PValue> func)
         {
@@ -247,8 +247,8 @@ public class CompilerTarget : IHasMetaTable
 
     #region Temporary variables
 
-    private readonly Stack<string> _freeTemporaryVariables = new(5);
-    private readonly SymbolCollection _usedTemporaryVariables = new(5);
+    readonly Stack<string> _freeTemporaryVariables = new(5);
+    readonly SymbolCollection _usedTemporaryVariables = new(5);
 
     public string RequestTemporaryVariable()
     {
@@ -316,7 +316,7 @@ public class CompilerTarget : IHasMetaTable
 
     public AstBlock Ast { [DebuggerStepThrough] get; }
 
-    private CompilerTargetAstFactory _factory;
+    CompilerTargetAstFactory _factory;
 
     [NN]
     public IAstFactory Factory
@@ -334,9 +334,10 @@ public class CompilerTarget : IHasMetaTable
         }
     }
 
-    private class CompilerTargetAstFactory : AstFactoryBase
+    class CompilerTargetAstFactory : AstFactoryBase
     {
-        [NN] private readonly CompilerTarget _target;
+        [NN]
+        readonly CompilerTarget _target;
 
         public CompilerTargetAstFactory(CompilerTarget target)
         {
@@ -384,7 +385,7 @@ public class CompilerTarget : IHasMetaTable
 
     #region Scope Block Stack
 
-    private readonly Stack<AstScopedBlock> _scopeBlocks = new();
+    readonly Stack<AstScopedBlock> _scopeBlocks = new();
 
     public IEnumerable<AstBlock> ScopeBlocks => _scopeBlocks;
 
@@ -906,7 +907,7 @@ public class CompilerTarget : IHasMetaTable
 
     #region Jumps and Labels
 
-    private readonly HashSet<int> _unresolvedInstructions = new();
+    readonly HashSet<int> _unresolvedInstructions = new();
 
     public void EmitLeave(ISourcePosition position, int address)
     {
@@ -1020,7 +1021,7 @@ public class CompilerTarget : IHasMetaTable
         }
     }
 
-    private readonly SymbolTable<int> _labels = new(); 
+    readonly SymbolTable<int> _labels = new(); 
 
     public bool TryResolveLabel(string label, out int address)
     {
@@ -1161,7 +1162,7 @@ public class CompilerTarget : IHasMetaTable
             SourceMapping.Store(Function);
     }
 
-    private void _useInternalIdsWherePossible()
+    void _useInternalIdsWherePossible()
     {
         // This method looks at instructions that refer to entities using a module-qualified name.
         //  If the module the target entity resides in is the same module as the one that contains
@@ -1203,7 +1204,7 @@ public class CompilerTarget : IHasMetaTable
 
     #region Check unresolved Instructions
 
-    private void _checkUnresolvedInstructions()
+    void _checkUnresolvedInstructions()
     {
         //Check for unresolved instructions
         if (_unresolvedInstructions.Count > 0)
@@ -1220,7 +1221,7 @@ public class CompilerTarget : IHasMetaTable
     /// <summary>
     ///     Searches for jumps targeting unconditional jumps and propagates the final target back to the initial jump.
     /// </summary>
-    private void _unconditionalJumpTargetPropagation()
+    void _unconditionalJumpTargetPropagation()
     {
         //Unconditional jump target propagation
         var code = Code;
@@ -1259,19 +1260,19 @@ public class CompilerTarget : IHasMetaTable
         }
     }
 
-    private static void _reset(bool[] addresses)
+    static void _reset(bool[] addresses)
     {
         for (var i = 0; i < addresses.Length; i++)
             addresses[i] = false;
     }
 
-    private static bool _targetIsInRange(Instruction jump, int count)
+    static bool _targetIsInRange(Instruction jump, int count)
     {
         return jump.Arguments >= 0
             && jump.Arguments < count;
     }
 
-    private static bool _isValidJump(Instruction jump, int count)
+    static bool _isValidJump(Instruction jump, int count)
     {
         return
             (jump.OpCode == OpCode.jump ||
@@ -1281,7 +1282,7 @@ public class CompilerTarget : IHasMetaTable
             && _targetIsInRange(jump, count);
     }
 
-    private static bool _isValidUnconditionalJump(Instruction jump, int count)
+    static bool _isValidUnconditionalJump(Instruction jump, int count)
     {
         return
             jump.OpCode == OpCode.jump
@@ -1318,7 +1319,7 @@ public class CompilerTarget : IHasMetaTable
     ///         ...
     ///     </code>
     /// </remarks>
-    private void _removeUnconditionalJumpSequences()
+    void _removeUnconditionalJumpSequences()
     {
         var code = Code;
         for (var i = 0; i < code.Count; i++)
@@ -1353,7 +1354,7 @@ public class CompilerTarget : IHasMetaTable
     ///                                 ...
     ///                             </code>
     /// </remarks>
-    private void _removeJumpsToNextInstruction()
+    void _removeJumpsToNextInstruction()
     {
         var code = Code;
         for (var i = 0; i < code.Count; i++)
@@ -1398,7 +1399,7 @@ public class CompilerTarget : IHasMetaTable
     ///         jump.t  somewhere
     ///     </code>
     /// </remarks>
-    private void _jumpReInversion()
+    void _jumpReInversion()
     {
         var code = Code;
         for (var i = 0; i < code.Count - 1; i++)

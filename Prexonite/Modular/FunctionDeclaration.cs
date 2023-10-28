@@ -292,7 +292,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
         return new Impl(id,module);
     }
 
-    private sealed class Impl : FunctionDeclaration
+    sealed class Impl : FunctionDeclaration
     {
         public Impl(string id, Module module)
         {
@@ -308,11 +308,11 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             LocalVariableMapping = new SymbolTable<int>();
         }
 
-        private List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
+        List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
 
         public override event EventHandler<FunctionIdChangingEventArgs> IdChanging;
 
-        private void _onIdChanging(string newId)
+        void _onIdChanging(string newId)
         {
             var idChangingHandler = IdChanging;
             idChangingHandler?.Invoke(this, new FunctionIdChangingEventArgs(newId));
@@ -344,7 +344,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             }
         }
 
-        private List<TryCatchFinallyBlock> _parseTryCatchFinallyBlocks()
+        List<TryCatchFinallyBlock> _parseTryCatchFinallyBlocks()
         {
             var tryCatchFinallyBlocks = new List<TryCatchFinallyBlock>();
             if (Meta.TryGetValue(TryCatchFinallyBlock.MetaKey, out var tcfe))
@@ -502,7 +502,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             }
         }
 
-        private static void _appendAddress(StringBuilder buffer, int address, int digits)
+        static void _appendAddress(StringBuilder buffer, int address, int digits)
         {
             buffer.Append("/* ");
             buffer.Append(address.ToString(CultureInfo.InvariantCulture).PadLeft(digits, '0'));

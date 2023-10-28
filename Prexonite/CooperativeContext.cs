@@ -52,7 +52,7 @@ public class CooperativeContext : StackContext, IDisposable
         ImportedNamespaces = sctx.ImportedNamespaces;
     }
 
-    private IEnumerator<bool> _method
+    IEnumerator<bool> _method
     {
         [DebuggerStepThrough]
         get
@@ -70,10 +70,10 @@ public class CooperativeContext : StackContext, IDisposable
         }
     }
 
-    private Func<Action<PValue>, IEnumerable<bool>> _methodCtor;
-    private IEnumerator<bool> _existingMethod;
+    Func<Action<PValue>, IEnumerable<bool>> _methodCtor;
+    IEnumerator<bool> _existingMethod;
 
-    private PValue _returnValue;
+    PValue _returnValue;
 
     /// <summary>
     ///     Represents the engine this context is part of.
@@ -120,7 +120,7 @@ public class CooperativeContext : StackContext, IDisposable
 
     #region IDisposable
 
-    private bool _disposed;
+    bool _disposed;
 
     public void Dispose()
     {
@@ -128,7 +128,7 @@ public class CooperativeContext : StackContext, IDisposable
         _dispose(true);
     }
 
-    private void _dispose(bool disposing)
+    void _dispose(bool disposing)
     {
         if (!_disposed)
         {

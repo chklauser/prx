@@ -39,10 +39,10 @@ namespace Prexonite.Compiler.Cil;
 
 public class CompilerPass
 {
-    private static int _numberOfPasses;
+    static int _numberOfPasses;
 
     [DebuggerStepThrough]
-    private static string _createNextTypeName(string applicationId)
+    static string _createNextTypeName(string applicationId)
     {
         if (string.IsNullOrEmpty(applicationId))
             applicationId = "cilimpl";
@@ -50,7 +50,7 @@ public class CompilerPass
         return applicationId + "_" + Interlocked.Increment(ref _numberOfPasses) + "";
     }
 
-    private readonly AssemblyBuilder _assemblyBuilder;
+    readonly AssemblyBuilder _assemblyBuilder;
 
     public AssemblyBuilder Assembly
     {
@@ -64,7 +64,7 @@ public class CompilerPass
         }
     }
 
-    private readonly ModuleBuilder _moduleBuilder;
+    readonly ModuleBuilder _moduleBuilder;
 
     public ModuleBuilder Module
     {
@@ -78,7 +78,7 @@ public class CompilerPass
         }
     }
 
-    private readonly TypeBuilder _typeBuilder;
+    readonly TypeBuilder _typeBuilder;
 
     public TypeBuilder TargetType
     {
@@ -169,12 +169,12 @@ public class CompilerPass
         return cilm;
     }
 
-    private static string _mkFieldName(ModuleName moduleName, string id)
+    static string _mkFieldName(ModuleName moduleName, string id)
     {
         return $"{moduleName.Id}/{moduleName.Version}/{id}<src>";
     }
 
-    private readonly ModuleSymbolTable<FieldInfo> _functionFieldTable = new();
+    readonly ModuleSymbolTable<FieldInfo> _functionFieldTable = new();
 
     public IModuleSymbolTable<FieldInfo> FunctionFields
     {
@@ -235,9 +235,9 @@ public class CompilerPass
     {
     }
 
-    private readonly Dictionary<MethodInfo, ICilImplementation> _delegateCache = new();
+    readonly Dictionary<MethodInfo, ICilImplementation> _delegateCache = new();
 
-    private Type _cachedTypeReference;
+    Type _cachedTypeReference;
 
     public ICilImplementation GetImplementation(ModuleName moduleName, string id)
     {
@@ -250,9 +250,9 @@ public class CompilerPass
         return getDelegate(m);
     }
 
-    private record CilImplementation(MethodInfo Declaration, CilFunction Implementation) : ICilImplementation;
+    record CilImplementation(MethodInfo Declaration, CilFunction Implementation) : ICilImplementation;
 
-    private ICilImplementation getDelegate(MethodInfo m)
+    ICilImplementation getDelegate(MethodInfo m)
     {
         if (_delegateCache.ContainsKey(m))
             return _delegateCache[m];
@@ -270,7 +270,7 @@ public class CompilerPass
                     true));
     }
 
-    private Type _getRuntimeType()
+    Type _getRuntimeType()
     {
         return _cachedTypeReference ??= TargetType.CreateType();
     }

@@ -36,8 +36,8 @@ namespace PrexoniteTests.Tests;
 [TestFixture(Description = "General type system checks")]
 public class TypeSystem
 {
-    private Engine engine;
-    private StackContext sctx;
+    Engine engine;
+    StackContext sctx;
 
     [OneTimeSetUp]
     public void SetupTypeSystemEngine()

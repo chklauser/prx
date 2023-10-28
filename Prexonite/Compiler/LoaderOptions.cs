@@ -62,28 +62,28 @@ public class LoaderOptions
     [NotNull]
     public ISymbolView<Symbol> ExternalSymbols { get; }
 
-    private bool? _registerCommands;
+    bool? _registerCommands;
     public bool RegisterCommands
     {
         get => _registerCommands ?? true;
         set => _registerCommands = value;
     }
 
-    private bool? _reconstructSymbols;
+    bool? _reconstructSymbols;
     public bool ReconstructSymbols
     {
         get => _reconstructSymbols ?? true;
         set => _reconstructSymbols = value;
     }
 
-    private bool? _storeSymbols;
+    bool? _storeSymbols;
     public bool StoreSymbols
     {
         get => _storeSymbols ?? true;
         set => _storeSymbols = value;
     }
 
-    private bool? _dumpExternalSymbols;
+    bool? _dumpExternalSymbols;
 
     /// <summary>
     /// Indicates whether the loader will include external symbols when storing a representation of the application.
@@ -99,21 +99,21 @@ public class LoaderOptions
         set => _dumpExternalSymbols = value;
     }
 
-    private bool? _useIndicesLocally;
+    bool? _useIndicesLocally;
     public bool UseIndicesLocally
     {
         get => _useIndicesLocally ?? true;
         set => _useIndicesLocally = value;
     }
 
-    private bool? _storeSourceInformation;
+    bool? _storeSourceInformation;
     public bool StoreSourceInformation
     {
         get => _storeSourceInformation ?? false;
         set => _storeSourceInformation = value;
     }
 
-    private bool? _preflightModeEnabled;
+    bool? _preflightModeEnabled;
 
     /// <summary>
     /// Preflight mode causes the parser to abort at the 
@@ -127,7 +127,7 @@ public class LoaderOptions
         set => _preflightModeEnabled = value;
     }
 
-    private bool? _flagLiteralsEnabled;
+    bool? _flagLiteralsEnabled;
 
     ///<summary>
     /// Determines whether flag literals (-f, --query, --option=value) are parsed globally. Not backwards compatible
@@ -141,7 +141,7 @@ public class LoaderOptions
     }
 
     [CanBeNull]
-    private string? _storeNewLine;
+    string? _storeNewLine;
 
     /// <summary>
     /// The line separator to use when storing a compiled Prexonite program. 

@@ -31,11 +31,11 @@ using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Build.Internal;
 
-internal class StreamSource : ISource, IDisposable
+class StreamSource : ISource, IDisposable
 {
-    private readonly Encoding _encoding;
-    private readonly bool _forceSingleUse;
-    private Stream _stream;
+    readonly Encoding _encoding;
+    readonly bool _forceSingleUse;
+    Stream _stream;
 
     public StreamSource([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
     {

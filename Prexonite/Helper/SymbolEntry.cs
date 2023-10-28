@@ -39,7 +39,7 @@ public class SymbolEntry : IEquatable<SymbolEntry>
     /// 
     ///     Label - Address of jump target (if known)
     /// </summary>
-    private readonly int? _argument;
+    readonly int? _argument;
 
     #endregion
 
@@ -55,7 +55,7 @@ public class SymbolEntry : IEquatable<SymbolEntry>
     {
     }
 
-    private SymbolEntry(SymbolInterpretations interpretation, string id, int? argument, ModuleName module)
+    SymbolEntry(SymbolInterpretations interpretation, string id, int? argument, ModuleName module)
     {
         if (id != null && id.Length <= 0)
             id = null;

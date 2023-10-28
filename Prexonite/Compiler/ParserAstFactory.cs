@@ -29,9 +29,9 @@ using Prexonite.Properties;
 
 namespace Prexonite.Compiler;
 
-internal class ParserAstFactory : AstFactoryBase
+class ParserAstFactory : AstFactoryBase
 {
-    private readonly Parser _parser;
+    readonly Parser _parser;
 
     protected override AstBlock CurrentBlock => _parser.CurrentBlock;
 

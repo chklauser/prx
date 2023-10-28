@@ -8,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite.Compiler.Symbolic.Internal;
 
-internal class ModuleLevelView : SymbolStore
+class ModuleLevelView : SymbolStore
 {
     /// <summary>
     /// The scope that this filter wraps.
@@ -21,9 +21,9 @@ internal class ModuleLevelView : SymbolStore
     /// <remarks>
     /// This dictionary is shared between all child-<see cref="ModuleLevelView"/>s. 
     /// </remarks>
-    private readonly ConcurrentDictionary<Namespace, LocalNamespaceImpl> _localProxies;
+    readonly ConcurrentDictionary<Namespace, LocalNamespaceImpl> _localProxies;
 
-    private ModuleLevelView(SymbolStore backingStore, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+    ModuleLevelView(SymbolStore backingStore, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
     {
         BackingStore = backingStore ?? throw new ArgumentNullException(nameof(backingStore));
         _localProxies = localProxies ?? throw new ArgumentNullException(nameof(localProxies));
@@ -39,12 +39,12 @@ internal class ModuleLevelView : SymbolStore
         /// <summary>
         /// Wrapper around the symbols of this namespace coming from external sources.
         /// </summary>
-        private readonly ModuleLevelView _localView;
+        readonly ModuleLevelView _localView;
 
         /// <summary>
         /// Holds module-local exports. Uses <see cref="_localView"/> as its external scope.
         /// </summary>
-        private readonly SymbolStore _exportScope;
+        readonly SymbolStore _exportScope;
 
         /// <summary>
         /// Physical name prefix used for functions, variables etc. defined inside the namespace.
@@ -56,7 +56,7 @@ internal class ModuleLevelView : SymbolStore
         /// This information is transient. It will not be serialized to disk.
         /// </para>
         /// </remarks>
-        private string? _prefix;
+        string? _prefix;
 
         internal LocalNamespaceImpl(ISymbolView<Symbol> externalScope, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
@@ -121,7 +121,7 @@ internal class ModuleLevelView : SymbolStore
         public override bool IsEmpty => _localView.IsEmpty;
     }
 
-    private Symbol _filterSymbol(Symbol symbol)
+    Symbol _filterSymbol(Symbol symbol)
     {
         if (symbol.TryGetNamespaceSymbol(out var nsSymbol))
         {

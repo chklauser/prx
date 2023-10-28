@@ -34,9 +34,12 @@ namespace Prexonite.Compiler.Internal;
 
 public class SymbolMExprParser
 {
-    [NotNull] private readonly ISymbolView<Symbol> _symbols;
-    [NotNull] private readonly ISymbolView<Symbol> _topLevelSymbols;
-    [NotNull] private readonly IMessageSink _messageSink;
+    [NotNull]
+    readonly ISymbolView<Symbol> _symbols;
+    [NotNull]
+    readonly ISymbolView<Symbol> _topLevelSymbols;
+    [NotNull]
+    readonly IMessageSink _messageSink;
 
     public SymbolMExprParser([NotNull] ISymbolView<Symbol> symbols,[NotNull] IMessageSink messageSink, [NotNull]ISymbolView<Symbol> topLevelSymbols = null)
     {
@@ -49,7 +52,7 @@ public class SymbolMExprParser
 
     public const string AbsoluteModifierHead = "absolute";
 
-    private bool _tryParseCrossReference(MExpr expr, [NotNull] ISymbolView<Symbol> symbols, out Symbol symbol)
+    bool _tryParseCrossReference(MExpr expr, [NotNull] ISymbolView<Symbol> symbols, out Symbol symbol)
     {
         symbol = null;
 
@@ -145,7 +148,7 @@ public class SymbolMExprParser
     }
 
     [NotNull]
-    private Symbol _parseMessage(MessageSeverity severity,
+    Symbol _parseMessage(MessageSeverity severity,
         [NotNull] MExpr expr, [NotNull] List<MExpr> elements)
     {
         Debug.Assert(elements[0] != null);
@@ -168,7 +171,7 @@ public class SymbolMExprParser
     }
 
     [NotNull]
-    private static ISourcePosition _parsePosition([NotNull] MExpr expr)
+    static ISourcePosition _parsePosition([NotNull] MExpr expr)
     {
         if (expr.TryMatchHead(SymbolMExprSerializer.SourcePositionHead, out var fileExpr, out var lineExpr,
                 out var columnExpr)

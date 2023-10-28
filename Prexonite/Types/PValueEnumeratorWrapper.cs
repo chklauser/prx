@@ -40,7 +40,7 @@ public sealed class PValueEnumeratorWrapper : PValueEnumerator
 {
     #region Class
 
-    private readonly IEnumerator<PValue> _baseEnumerator;
+    readonly IEnumerator<PValue> _baseEnumerator;
 
     /// <summary>
     ///     Creates a new proxy for the IEnumerator of the supplied <paramref name = "enumerable" />.

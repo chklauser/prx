@@ -47,10 +47,10 @@ public static class Meta
             new ContainsKeyConstraint(key).And.Matches(new ExactEqualityConstraint(key, value));
     }
 
-    private class ExactEqualityConstraint : Constraint
+    class ExactEqualityConstraint : Constraint
     {
-        private readonly string _key;
-        private readonly MetaEntry _expectedEntry;
+        readonly string _key;
+        readonly MetaEntry _expectedEntry;
 
         public ExactEqualityConstraint(string key, MetaEntry expectedEntry) : base(key, expectedEntry)
         {
@@ -69,7 +69,7 @@ public static class Meta
             return new ConstraintResult(this, actualObj, _matches(actualObj));
         }
 
-        private bool _matches(object actual)
+        bool _matches(object actual)
         {
             if (!(actual is IHasMetaTable ihmt))
             {
@@ -84,9 +84,9 @@ public static class Meta
         #endregion
     }
 
-    private class ContainsKeyConstraint : Constraint
+    class ContainsKeyConstraint : Constraint
     {
-        private readonly string _key;
+        readonly string _key;
 
         public ContainsKeyConstraint(string key) : base(key)
         {
@@ -101,7 +101,7 @@ public static class Meta
             return new ConstraintResult(this, actualValue, _matches(actualValue));
         }
 
-        private bool _matches(object actual)
+        bool _matches(object actual)
         {
             IHasMetaTable ihmt;
             MetaTable mt;

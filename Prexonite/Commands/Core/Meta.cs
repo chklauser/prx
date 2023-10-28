@@ -33,7 +33,7 @@ public class Meta : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Meta()
+    Meta()
     {
     }
 

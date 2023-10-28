@@ -15,15 +15,15 @@ namespace PrexoniteTests.Tests.Configurations;
 
 public static class ModuleCacheV2
 {
-    [ThreadStatic] 
-    private static ISelfAssemblingPlan? _sharedPlan;
+    [ThreadStatic]
+    static ISelfAssemblingPlan? _sharedPlan;
 
     [ThreadStatic]
-    private static Engine? _sharedEnginePrototype;
+    static Engine? _sharedEnginePrototype;
 
-    private static readonly TraceSource _trace = new("PrexoniteTests.Tests.Configurations.ModuleCacheV2");
-        
-    private static readonly Lazy<string> _slnPath = new(() =>
+    static readonly TraceSource _trace = new("PrexoniteTests.Tests.Configurations.ModuleCacheV2");
+
+    static readonly Lazy<string> _slnPath = new(() =>
     {
         _trace.TraceEvent(TraceEventType.Information, 0, "Infer sln path");
         var slnCandidate = AppContext.BaseDirectory;
@@ -42,7 +42,7 @@ public static class ModuleCacheV2
 
     public static string SolutionPath => _slnPath.Value;
 
-    private static ISelfAssemblingPlan sharedPlan
+    static ISelfAssemblingPlan sharedPlan
     {
         get
         {
@@ -66,12 +66,12 @@ public static class ModuleCacheV2
 
     public static Engine CreateEngine() => new(sharedEnginePrototype);
 
-    private static Engine sharedEnginePrototype => _sharedEnginePrototype ??= new Engine();
+    static Engine sharedEnginePrototype => _sharedEnginePrototype ??= new Engine();
 
     public static (Application, ITarget) Load(string path, bool compileToCil) => 
         loadAsync(path, compileToCil, sharedPlan).Result;
 
-    private static async Task<(Application, ITarget)> loadAsync(string path, bool compileToCil, ISelfAssemblingPlan plan,
+    static async Task<(Application, ITarget)> loadAsync(string path, bool compileToCil, ISelfAssemblingPlan plan,
         CancellationToken ct = default)
     {
         var source = new FileSource(new FileInfo(path), Encoding.UTF8);

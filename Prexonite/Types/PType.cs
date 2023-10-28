@@ -232,23 +232,23 @@ public abstract class PType : IObject
     /// </summary>
     public class PrexoniteObjectTypeProxy
     {
-        private readonly ObjectPType _charObj = new(typeof (char));
-        private readonly ObjectPType _byteObj = new(typeof (byte));
-        private readonly ObjectPType _sByteObj = new(typeof (sbyte));
-        private readonly ObjectPType _int16Obj = new(typeof (short));
-        private readonly ObjectPType _uInt16Obj = new(typeof (ushort));
-        private readonly ObjectPType _int32Obj = new(typeof (int));
-        private readonly ObjectPType _uInt32Obj = new(typeof (uint));
-        private readonly ObjectPType _int64Obj = new(typeof (long));
-        private readonly ObjectPType _uInt64Obj = new(typeof (ulong));
-        private readonly ObjectPType _booleanObj = new(typeof (bool));
-        private readonly ObjectPType _singleObj = new(typeof (float));
-        private readonly ObjectPType _doubleObj = new(typeof (double));
-        private readonly ObjectPType _stringObj = new(typeof (string));
-        private readonly ObjectPType _decimalObj = new(typeof (decimal));
-        private readonly ObjectPType _dateTimeObj = new(typeof (DateTime));
-        private readonly ObjectPType _timeSpanObj = new(typeof (TimeSpan));
-        private readonly ObjectPType _listOfPTypeObj = new(typeof (List<PValue>));
+        readonly ObjectPType _charObj = new(typeof (char));
+        readonly ObjectPType _byteObj = new(typeof (byte));
+        readonly ObjectPType _sByteObj = new(typeof (sbyte));
+        readonly ObjectPType _int16Obj = new(typeof (short));
+        readonly ObjectPType _uInt16Obj = new(typeof (ushort));
+        readonly ObjectPType _int32Obj = new(typeof (int));
+        readonly ObjectPType _uInt32Obj = new(typeof (uint));
+        readonly ObjectPType _int64Obj = new(typeof (long));
+        readonly ObjectPType _uInt64Obj = new(typeof (ulong));
+        readonly ObjectPType _booleanObj = new(typeof (bool));
+        readonly ObjectPType _singleObj = new(typeof (float));
+        readonly ObjectPType _doubleObj = new(typeof (double));
+        readonly ObjectPType _stringObj = new(typeof (string));
+        readonly ObjectPType _decimalObj = new(typeof (decimal));
+        readonly ObjectPType _dateTimeObj = new(typeof (DateTime));
+        readonly ObjectPType _timeSpanObj = new(typeof (TimeSpan));
+        readonly ObjectPType _listOfPTypeObj = new(typeof (List<PValue>));
 
         internal PrexoniteObjectTypeProxy()
         {
@@ -279,13 +279,13 @@ public abstract class PType : IObject
             }
         }
 
-        private static readonly MethodInfo _getPValueHashTableObjectType =
+        static readonly MethodInfo _getPValueHashTableObjectType =
             typeof (PValueHashtable).GetProperty("ObjectType").GetGetMethod();
 
-        private static readonly MethodInfo _getPValueKeyValuePairObjectType =
+        static readonly MethodInfo _getPValueKeyValuePairObjectType =
             typeof (PValueKeyValuePair).GetProperty("ObjectType").GetGetMethod();
 
-        private static readonly MethodInfo _getAnyObjectType =
+        static readonly MethodInfo _getAnyObjectType =
             typeof (PrexoniteObjectTypeProxy).GetProperty("Item", new[] {typeof (Type)}).
                 GetGetMethod();
 

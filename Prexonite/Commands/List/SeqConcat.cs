@@ -36,7 +36,7 @@ public class SeqConcat : CoroutineCommand, ICilCompilerAware
 
     public static SeqConcat Instance { get; } = new();
 
-    private SeqConcat()
+    SeqConcat()
     {
     }
 

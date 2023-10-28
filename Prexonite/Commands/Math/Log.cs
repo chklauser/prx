@@ -34,7 +34,7 @@ public class Log : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Log()
+    Log()
     {
     }
 
@@ -103,10 +103,10 @@ public class Log : PCommand, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    private static readonly MethodInfo RunStaticallyNaturalMethod =
+    static readonly MethodInfo RunStaticallyNaturalMethod =
         typeof (Log).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
-    private static readonly MethodInfo RunStaticallyAnyMethod =
+    static readonly MethodInfo RunStaticallyAnyMethod =
         typeof (Log).GetMethod("RunStatically",
             new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 

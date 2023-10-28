@@ -17,7 +17,7 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return "namespace";
     }
 
-    private NamespaceSymbol([NotNull] ISourcePosition position, [NotNull] Namespace @namespace)
+    NamespaceSymbol([NotNull] ISourcePosition position, [NotNull] Namespace @namespace)
     {
         Position = position;
         Namespace = @namespace;
@@ -43,7 +43,7 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return !ReferenceEquals(other, null) && _equalsNonNull(other);
     }
 
-    private bool _equalsNonNull(NamespaceSymbol other)
+    bool _equalsNonNull(NamespaceSymbol other)
     {
         return Namespace.Equals(other.Namespace);
     }
@@ -64,8 +64,9 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return true;
     }
 
-    private static readonly UnwrapHandler _unwrapHandler = new();
-    private class UnwrapHandler : SymbolHandler<(IMessageSink? sink,ISourcePosition position,IList<Message>? errors), NamespaceSymbol?>
+    static readonly UnwrapHandler _unwrapHandler = new();
+
+    class UnwrapHandler : SymbolHandler<(IMessageSink? sink,ISourcePosition position,IList<Message>? errors), NamespaceSymbol?>
     {
         public override NamespaceSymbol? HandleMessage(MessageSymbol self, (IMessageSink? sink,ISourcePosition position,IList<Message>? errors) argument)
         {

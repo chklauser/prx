@@ -34,8 +34,8 @@ namespace Prexonite.Commands.Core.PartialApplication;
 /// </summary>
 public class FlippedFunctionalPartialCall : IMaybeStackAware
 {
-    private readonly PValue _subject;
-    private readonly PValue[] _closedArguments;
+    readonly PValue _subject;
+    readonly PValue[] _closedArguments;
 
     /// <summary>
     ///     Creates a new flipped, functional partial call, implementing a partial call to <code><paramref name = "subject" />.(?,<paramref
@@ -54,7 +54,7 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
         return _subject.IndirectCall(sctx, _getEffectiveArgs(args));
     }
 
-    private PValue[] _getEffectiveArgs(PValue[] args)
+    PValue[] _getEffectiveArgs(PValue[] args)
     {
         var effectiveArgs =
             new PValue[System.Math.Max(args.Length, 1) + _closedArguments.Length];

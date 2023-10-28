@@ -49,7 +49,7 @@ namespace Prexonite.Commands.Core;
 /// <seealso cref = "IIndirectCall" />
 public sealed class Call : StackAwareCommand, ICilCompilerAware
 {
-    private Call()
+    Call()
     {
     }
 
@@ -207,7 +207,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
 
     #region Macro for partial application
 
-    private readonly PartialCallWrapper _partialCall = new(Engine.CallAlias,
+    readonly PartialCallWrapper _partialCall = new(Engine.CallAlias,
         EntityRef.Command.Create(Alias));
 
     public PartialMacroCommand Partial => _partialCall;

@@ -35,7 +35,7 @@ public class ToSeqCommand : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private ToSeqCommand()
+    ToSeqCommand()
     {
     }
 

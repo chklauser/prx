@@ -43,13 +43,13 @@ namespace Prexonite.Compiler.Build.Internal;
 
 public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
 {
-    private static readonly TraceSource _trace = Plan.Trace;
+    static readonly TraceSource _trace = Plan.Trace;
 
     [NotNull]
-    private readonly AdHocTaskCache<string, PreflightResult> _preflightCache = new();
+    readonly AdHocTaskCache<string, PreflightResult> _preflightCache = new();
 
     [NotNull]
-    private readonly AdHocTaskCache<string, ITargetDescription> _targetCreationCache = new();
+    readonly AdHocTaskCache<string, ITargetDescription> _targetCreationCache = new();
 
     public IList<string> SearchPaths { get; } = new ThreadSafeList<string>();
 
@@ -102,7 +102,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         return _assembleAsync(source, token, SelfAssemblyMode.RegisterOnly);
     }
 
-    private async Task<ITargetDescription> _assembleAsync(ISource source, CancellationToken token, SelfAssemblyMode mode)
+    async Task<ITargetDescription> _assembleAsync(ISource source, CancellationToken token, SelfAssemblyMode mode)
     {
         token.ThrowIfCancellationRequested();
 
@@ -125,7 +125,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         }
     }
 
-    private ITargetDescription _wrapErrorInTargetDescription(string message, ModuleName? moduleName)
+    ITargetDescription _wrapErrorInTargetDescription(string message, ModuleName? moduleName)
     {
         var errorMessage = Message.Error(message, NoSourcePosition.Instance,
             MessageClasses.SelfAssembly);
@@ -144,18 +144,18 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         }
     }
 
-    private enum SelfAssemblyMode
+    enum SelfAssemblyMode
     {
         RecurseIntoFileSystem = 0,
         RegisterOnly
     }
 
-    private readonly HashSet<ModuleName> _standardLibrary = new();
+    readonly HashSet<ModuleName> _standardLibrary = new();
     public ISet<ModuleName> StandardLibrary => _standardLibrary;
 
 
     [NotNull]
-    private Task<PreflightResult> _orderPreflight(RefSpec refSpec, CancellationToken token)
+    Task<PreflightResult> _orderPreflight(RefSpec refSpec, CancellationToken token)
     {
         if (refSpec.ResolvedPath == null)
             throw new ArgumentException(Resources.SelfAssemblingPlan_RefSepcMustHaveResolvedPathForPreflightOrder,
@@ -172,7 +172,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     }
 
     [NotNull]
-    private async Task<PreflightResult> _performPreflight(RefSpec refSpec, CancellationToken token)
+    async Task<PreflightResult> _performPreflight(RefSpec refSpec, CancellationToken token)
         // requires refSpec.Source != null
         // ensures result != null
     {
@@ -235,7 +235,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         return result;
     }
 
-    private Engine _createPreflightEngine()
+    Engine _createPreflightEngine()
     {
         var compilationEngine = LeaseBuildEngine();
         try
@@ -250,15 +250,15 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         }
     }
 
-    private static FileInfo? _getPath([NotNull] ISource source)
+    static FileInfo? _getPath([NotNull] ISource source)
     {
         return source is FileSource fileSource ? fileSource.File : null;
     }
 
     [NotNull]
-    private static readonly Regex _fileReferencePattern = new(@"^([/.]|[a-zA-Z]:)");
+    static readonly Regex _fileReferencePattern = new(@"^([/.]|[a-zA-Z]:)");
 
-    private static RefSpec _parseRefSpec(MetaEntry entry)
+    static RefSpec _parseRefSpec(MetaEntry entry)
     {
         string? text = null;
         if (entry.IsText && _fileReferencePattern.IsMatch(text = entry.Text))
@@ -283,7 +283,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     }
 
     [NotNull]
-    private async Task<RefSpec> _resolveRefSpec([NotNull] RefSpec refSpec, CancellationToken token, SelfAssemblyMode mode)
+    async Task<RefSpec> _resolveRefSpec([NotNull] RefSpec refSpec, CancellationToken token, SelfAssemblyMode mode)
         // requires refSpec.ModuleName != null || refSpec.Source != null || refSpec.rawPath != null || refSpec.ResolvedPath != null
         // ensures result == refSpec && (TargetDescriptions.Contains(result) || refSpec.ErrorMessage != null)
     {
@@ -351,7 +351,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         return refSpec;
     }
 
-    private Task<ITargetDescription> _orderTargetDescription(PreflightResult result, FileInfo candidate, CancellationToken token, SelfAssemblyMode mode)
+    Task<ITargetDescription> _orderTargetDescription(PreflightResult result, FileInfo candidate, CancellationToken token, SelfAssemblyMode mode)
     {
         if (candidate == null)
             throw new ArgumentNullException(nameof(candidate));
@@ -363,8 +363,8 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
                 return await _performCreateTargetDescription(result, src, actualToken, mode);
             }, token);
     }
-        
-    private async Task<ITargetDescription> _performCreateTargetDescription(PreflightResult result, ISource source, CancellationToken token, SelfAssemblyMode mode)
+
+    async Task<ITargetDescription> _performCreateTargetDescription(PreflightResult result, ISource source, CancellationToken token, SelfAssemblyMode mode)
     {
         Debug.Assert(result.IsValid, "TargetDescription ordered despite the preflight result (or its dependencies) containing errors.", "PreflightResult {0} is not valid.", result.RenderDebugState());
 
@@ -419,7 +419,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             mn => CreateDescription(mn, source, reportedFileName, deps, buildMessages));
     }
 
-    private RefSpec _forbidFileRefSpec(RefSpec refSpec)
+    RefSpec _forbidFileRefSpec(RefSpec refSpec)
     {
         if (refSpec.ModuleName == null)
             Interlocked.CompareExchange(ref refSpec.ErrorMessage, 
@@ -427,7 +427,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         return refSpec;
     }
 
-    private IEnumerable<FileInfo> _pathCandidates(RefSpec refSpec)
+    IEnumerable<FileInfo> _pathCandidates(RefSpec refSpec)
     {
         var resolvedPath = refSpec.ResolvedPath;
         if (resolvedPath != null)
@@ -484,12 +484,12 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         }
     }
 
-    private static IEnumerable<FileInfo> _combineWithSearchPaths(IEnumerable<string> prefixes, string rawPath)
+    static IEnumerable<FileInfo> _combineWithSearchPaths(IEnumerable<string> prefixes, string rawPath)
     {
         return prefixes.SelectMaybe(prefix => _safelyCreateFileInfo(Path.Combine(prefix, rawPath)));
     }
 
-    private static FileInfo? _safelyCreateFileInfo(string path)
+    static FileInfo? _safelyCreateFileInfo(string path)
     {
         FileInfo? candidate;
         try
@@ -522,7 +522,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     }
 }
 
-internal class PreflightResult
+class PreflightResult
 {
     public volatile ModuleName? ModuleName;
 
@@ -544,7 +544,7 @@ internal class PreflightResult
         return sb.ToString();
     }
 
-    private void _renderDebugState(StringBuilder builder)
+    void _renderDebugState(StringBuilder builder)
     {
         builder.Append(ModuleName);
         builder.Append('(');
@@ -576,7 +576,7 @@ internal class PreflightResult
     }
 }
 
-internal class RefSpec
+class RefSpec
 {
     public volatile ModuleName? ModuleName;
 

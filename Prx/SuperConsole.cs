@@ -82,13 +82,13 @@ public abstract class SuperConsole
     /// <summary>
     ///     Class managing the command history.
     /// </summary>
-    private class History
+    class History
     {
-        private ArrayList list = new();
-        private int current;
-        private bool increment; // increment on Next()
+        ArrayList list = new();
+        int current;
+        bool increment; // increment on Next()
 
-        private string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
+        string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
 
         public void Add(string line, bool setCurrentAsLast)
         {
@@ -134,14 +134,14 @@ public abstract class SuperConsole
     /// <summary>
     ///     List of available options
     /// </summary>
-    private class SuperConsoleOptions
+    class SuperConsoleOptions
     {
-        private ArrayList list = new();
-        private int current;
+        ArrayList list = new();
+        int current;
 
         public int Count => list.Count;
 
-        private string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
+        string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
 
         public void Clear()
         {
@@ -181,7 +181,7 @@ public abstract class SuperConsole
     /// <summary>
     ///     Cursor position management
     /// </summary>
-    private struct Cursor
+    struct Cursor
     {
         /// <summary>
         ///     Beginning position of the cursor - top coordinate.
@@ -229,19 +229,19 @@ public abstract class SuperConsole
     /// <summary>
     ///     The console input buffer.
     /// </summary>
-    private StringBuilder input = new();
+    StringBuilder input = new();
 
     /// <summary>
     ///     Current position - index into the input buffer
     /// </summary>
-    private int current;
+    int current;
 
     //removed autoIndentSize  (-P)
 
     /// <summary>
     ///     Length of the output currently rendered on screen.
     /// </summary>
-    private int rendered;
+    int rendered;
 
     //private bool changed = true;
     /// <summary>
@@ -250,22 +250,22 @@ public abstract class SuperConsole
     /// <summary>
     ///     Command history
     /// </summary>
-    private History history = new();
+    History history = new();
 
     /// <summary>
     ///     Tab options available in current context
     /// </summary>
-    private SuperConsoleOptions options = new();
+    SuperConsoleOptions options = new();
 
     /// <summary>
     ///     Cursort anchor - position of cursor when the routine was called
     /// </summary>
-    private Cursor cursor;
+    Cursor cursor;
 
     //Removed "PythonEngine engine" an all references/assignments to it. (-P)
 
-    private AutoResetEvent ctrlCEvent;
-    private Thread MainEngineThread = Thread.CurrentThread;
+    AutoResetEvent ctrlCEvent;
+    Thread MainEngineThread = Thread.CurrentThread;
 
     public SuperConsole(bool colorfulConsole)
     {
@@ -275,7 +275,7 @@ public abstract class SuperConsole
             SetupColors();
     }
 
-    private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+    void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
     {
         if (e.SpecialKey == ConsoleSpecialKey.ControlC)
         {
@@ -287,7 +287,7 @@ public abstract class SuperConsole
 
     public abstract bool IsPartOfIdentifier(char c);
 
-    private bool GetOptions()
+    bool GetOptions()
     {
         options.Clear();
 
@@ -360,7 +360,7 @@ public abstract class SuperConsole
     public abstract IEnumerable<string> OnTab(
         string attr, string pref, string root);
 
-    private void SetInput(string line)
+    void SetInput(string line)
     {
         input.Length = 0;
         input.Append(line);
@@ -370,7 +370,7 @@ public abstract class SuperConsole
         Render();
     }
 
-    private void Initialize()
+    void Initialize()
     {
         cursor.Anchor();
         input.Length = 0;
@@ -381,7 +381,7 @@ public abstract class SuperConsole
 
     //Removed special backspace handling for autoindention  (-P)
 
-    private void Backspace()
+    void Backspace()
     {
         if (input.Length > 0 && current > 0)
         {
@@ -391,7 +391,7 @@ public abstract class SuperConsole
         }
     }
 
-    private void Delete()
+    void Delete()
     {
         if (input.Length > 0 && current < input.Length)
         {
@@ -400,7 +400,7 @@ public abstract class SuperConsole
         }
     }
 
-    private void Insert(ConsoleKeyInfo key)
+    void Insert(ConsoleKeyInfo key)
     {
         if (key.Key == ConsoleKey.F6)
         {
@@ -417,7 +417,7 @@ public abstract class SuperConsole
         }
     }
 
-    private void Insert(char c)
+    void Insert(char c)
     {
         if (current == input.Length)
         {
@@ -447,7 +447,7 @@ public abstract class SuperConsole
 
     //Made the following two methods static  (-P)
 
-    private static string MapCharacter(char c)
+    static string MapCharacter(char c)
     {
         if (c == 13)
             return "\r\n";
@@ -458,7 +458,7 @@ public abstract class SuperConsole
         //return c.ToString();
     }
 
-    private static int GetCharacterSize(char c)
+    static int GetCharacterSize(char c)
     {
         if (char.IsControl(c))
         {
@@ -470,7 +470,7 @@ public abstract class SuperConsole
         }
     }
 
-    private void Render()
+    void Render()
     {
         cursor.Reset();
         var output = new StringBuilder();
@@ -508,7 +508,7 @@ public abstract class SuperConsole
         cursor.Place(position);
     }
 
-    private void MoveLeft(ConsoleModifiers keyModifiers)
+    void MoveLeft(ConsoleModifiers keyModifiers)
     {
         if ((keyModifiers & ConsoleModifiers.Control) != 0)
         {
@@ -541,12 +541,12 @@ public abstract class SuperConsole
 
     //Made IsSeperator static  (-P)
 
-    private static bool IsSeperator(char ch)
+    static bool IsSeperator(char ch)
     {
         return !char.IsLetter(ch);
     }
 
-    private void MoveRight(ConsoleModifiers keyModifiers)
+    void MoveRight(ConsoleModifiers keyModifiers)
     {
         if ((keyModifiers & ConsoleModifiers.Control) != 0)
         {
@@ -576,7 +576,7 @@ public abstract class SuperConsole
         }
     }
 
-    private void MoveRight()
+    void MoveRight()
     {
         if (current < input.Length)
         {
@@ -586,7 +586,7 @@ public abstract class SuperConsole
         }
     }
 
-    private void MoveLeft()
+    void MoveLeft()
     {
         if (current > 0 && current - 1 < input.Length)
         {
@@ -596,9 +596,9 @@ public abstract class SuperConsole
         }
     }
 
-    private const int TabSize = 4;
+    const int TabSize = 4;
 
-    private void InsertTab()
+    void InsertTab()
     {
         for (var i = TabSize - current%TabSize; i > 0; i--)
         {
@@ -606,13 +606,13 @@ public abstract class SuperConsole
         }
     }
 
-    private void MoveHome()
+    void MoveHome()
     {
         current = 0;
         cursor.Reset();
     }
 
-    private void MoveEnd()
+    void MoveEnd()
     {
         current = input.Length;
         cursor.Place(rendered);
@@ -843,7 +843,7 @@ public abstract class SuperConsole
 
     //Made FinalLineText static  (-P)
 
-    private static string FinalLineText => Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
+    static string FinalLineText => Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
 
     public void Write(string text, Style style)
     {
@@ -866,7 +866,7 @@ public abstract class SuperConsole
         Write(text + Environment.NewLine, style);
     }
 
-    private static void WriteColor(string s, ConsoleColor c)
+    static void WriteColor(string s, ConsoleColor c)
     {
         var origColor = Console.ForegroundColor;
         Console.ForegroundColor = c;

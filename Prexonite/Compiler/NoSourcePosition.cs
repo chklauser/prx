@@ -32,7 +32,7 @@ public sealed class NoSourcePosition : ISourcePosition
 {
     #region Singleton
 
-    private static NoSourcePosition _instance;
+    static NoSourcePosition _instance;
     public static ISourcePosition Instance => _instance ??= new NoSourcePosition();
 
     #endregion

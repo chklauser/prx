@@ -55,7 +55,7 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     [DebuggerStepThrough]
-    private StringPType()
+    StringPType()
     {
     }
 
@@ -302,9 +302,9 @@ public class StringPType : PType, ICilCompilerAware
 
     #region IdOrLiteral
 
-    private static readonly Regex IdLetters = new( @"^[\w\\][\w\d\\']{0,}$");
+    static readonly Regex IdLetters = new( @"^[\w\\][\w\d\\']{0,}$");
 
-    private const int AnArbitraryIdLengthLimit = 255;
+    const int AnArbitraryIdLengthLimit = 255;
 
     public static string ToIdOrLiteral(string raw)
     {
@@ -551,7 +551,7 @@ public class StringPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    private static List<PValue> _wrap_strings(ICollection<string> xs)
+    static List<PValue> _wrap_strings(ICollection<string> xs)
     {
         var lst = new List<PValue>(xs.Count);
         foreach (var x in xs)
@@ -559,7 +559,7 @@ public class StringPType : PType, ICilCompilerAware
         return lst;
     }
 
-    private static void _resolve_params(
+    static void _resolve_params(
         StackContext sctx,
         IEnumerable<PValue> args,
         ref bool isParams,
@@ -840,7 +840,7 @@ public class StringPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    private static List<PValue> _toPCharList(string s)
+    static List<PValue> _toPCharList(string s)
     {
         var lst = new List<PValue>(s.Length);
         foreach (var c in s)
@@ -882,7 +882,7 @@ public class StringPType : PType, ICilCompilerAware
         return Literal;
     }
 
-    private const int _code = -631020829;
+    const int _code = -631020829;
 
     public override int GetHashCode()
     {

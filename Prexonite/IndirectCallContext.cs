@@ -31,7 +31,7 @@ namespace Prexonite;
 
 public class IndirectCallContext : StackContext
 {
-    private readonly StackContext _originalStackContext;
+    readonly StackContext _originalStackContext;
 
     public IndirectCallContext(StackContext parent, IIndirectCall callable, PValue[] args)
         : this(
@@ -72,7 +72,7 @@ public class IndirectCallContext : StackContext
 
     public PValue[] Arguments { get; }
 
-    private PValue _returnValue = PType.Null;
+    PValue _returnValue = PType.Null;
 
     /// <summary>
     ///     Represents the engine this context is part of.

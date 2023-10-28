@@ -34,7 +34,7 @@ public class SetRightCommand : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private SetRightCommand()
+    SetRightCommand()
     {
     }
 

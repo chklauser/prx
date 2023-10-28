@@ -30,8 +30,8 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class FunctionalPartialCall : IMaybeStackAware
 {
-    private readonly PValue _subject;
-    private readonly PValue[] _closedArguments;
+    readonly PValue _subject;
+    readonly PValue[] _closedArguments;
 
     public FunctionalPartialCall(PValue subject, PValue[] closedArguments)
     {
@@ -72,7 +72,7 @@ public class FunctionalPartialCall : IMaybeStackAware
         return false;
     }
 
-    private PValue[] _getEffectiveArgs(PValue[] args)
+    PValue[] _getEffectiveArgs(PValue[] args)
     {
         var effectiveArgs = new PValue[args.Length + _closedArguments.Length];
         Array.Copy(_closedArguments, effectiveArgs, _closedArguments.Length);

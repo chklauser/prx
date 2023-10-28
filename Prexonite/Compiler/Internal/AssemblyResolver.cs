@@ -7,10 +7,10 @@ using System.Reflection;
 
 namespace Prexonite.Compiler.Internal;
 
-internal sealed class AssemblyResolver : ICloneable
+sealed class AssemblyResolver : ICloneable
 {
-    private readonly ConcurrentDictionary<AssemblyName, Assembly> _assemblies = new();
-    private readonly ConcurrentDictionary<string, Assembly> _cache = new();
+    readonly ConcurrentDictionary<AssemblyName, Assembly> _assemblies = new();
+    readonly ConcurrentDictionary<string, Assembly> _cache = new();
 
     public Assembly Resolve(string name) => TryResolve(name) ??
         throw new PrexoniteException($"Could not resolve assembly by name '{name}'. Is it loaded?");

@@ -42,14 +42,14 @@ public class MacroContext : IMessageSink
     #region Representation
 
     [NotNull]
-    private readonly MacroSession _session;
+    readonly MacroSession _session;
 
     /// <summary>
     /// In order to ensure that the macro doesn't pop too many blocks, 
     /// we need to remember the current block when the context was created.
     /// That block can not be popped via the context.
     /// </summary>
-    private readonly AstBlock _sentinelBlock;
+    readonly AstBlock _sentinelBlock;
 
     #endregion
 

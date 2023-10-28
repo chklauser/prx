@@ -33,7 +33,7 @@ public class BuildFailureException : BuildException
 {
     public List<Message> Messages { get; } = new();
 
-    private static string _makeErrorMessage(IEnumerable<Message> messages, string messageFormat)
+    static string _makeErrorMessage(IEnumerable<Message> messages, string messageFormat)
     {
         var e = 0;
         foreach (var message in messages)

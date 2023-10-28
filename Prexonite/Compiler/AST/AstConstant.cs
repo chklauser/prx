@@ -61,7 +61,7 @@ public class AstConstant : AstExpr
         return true;
     }
 
-    private static bool _isModuleName(PValue value)
+    static bool _isModuleName(PValue value)
     {
         ObjectPType objectType;
         return (object)(objectType = value.Type as ObjectPType) != null && typeof(ModuleName).IsAssignableFrom(objectType.ClrType);

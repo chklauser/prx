@@ -40,7 +40,7 @@ using Prexonite.Types;
 namespace PrexoniteTests.Tests.Configurations;
 
 [Parallelizable(ParallelScope.Fixtures)]
-internal abstract class ScriptedUnitTestContainer : IDisposable
+abstract class ScriptedUnitTestContainer : IDisposable
 {
     public Application Application { get; set; }
     public Engine Engine { get; set; }
@@ -60,7 +60,7 @@ internal abstract class ScriptedUnitTestContainer : IDisposable
     // NOTE: the RunUnitTest method relies on the fact that StringWriter.ToString() prints the contents.
     // If you change the TextWriter implementation, you need to account for that. 
     public TextWriter OneTimeSetupLog { get; } = new StringWriter();
-    private bool _oneTimeSetupPrinted;
+    bool _oneTimeSetupPrinted;
 
     public void Initialize()
     {
@@ -171,7 +171,7 @@ internal abstract class ScriptedUnitTestContainer : IDisposable
         }
     }
 
-    private PFunction _findRunFunction()
+    PFunction _findRunFunction()
     {
         return Application.Compound.Select(app =>
         {

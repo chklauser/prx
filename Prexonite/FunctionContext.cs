@@ -126,7 +126,7 @@ public class FunctionContext : StackContext
     {
     }
 
-    private void _bindArguments(PValue[] args)
+    void _bindArguments(PValue[] args)
     {
         //Create args variable
         const string argVId = PFunction.ArgumentListId;
@@ -155,7 +155,7 @@ public class FunctionContext : StackContext
         }
     }
 
-    private void _createLocalVariables()
+    void _createLocalVariables()
     {
         //Create local variables
         foreach (var local in Implementation.Variables)
@@ -167,7 +167,7 @@ public class FunctionContext : StackContext
 
     #region Interface
 
-    private PValue _returnValue;
+    PValue _returnValue;
 
     public override PValue ReturnValue
     {
@@ -176,7 +176,7 @@ public class FunctionContext : StackContext
         //Returns PValue(null) instead of just null.
     }
 
-    private readonly Engine _parentEngine;
+    readonly Engine _parentEngine;
 
     public override Engine ParentEngine
     {
@@ -199,7 +199,7 @@ public class FunctionContext : StackContext
 
     #region Local variables
 
-    private readonly PVariable[] _localVariableArray;
+    readonly PVariable[] _localVariableArray;
 
     public SymbolTable<PVariable> LocalVariables { [DebuggerStepThrough] get; } = new();
 
@@ -221,7 +221,7 @@ public class FunctionContext : StackContext
 
     public int Pointer { [DebuggerStepThrough] get; [DebuggerStepThrough] set; }
 
-    private readonly Stack<PValue> _stack = new();
+    readonly Stack<PValue> _stack = new();
 
     [DebuggerStepThrough]
     public void Push(PValue val)
@@ -253,7 +253,7 @@ public class FunctionContext : StackContext
         get => _stack.Count;
     }
 
-    private void _throwInvalidStackException(int argc)
+    void _throwInvalidStackException(int argc)
     {
         throw new PrexoniteInvalidStackException
         (
@@ -262,7 +262,7 @@ public class FunctionContext : StackContext
     }
 
     [DebuggerNonUserCode]
-    private void _fillArgs(int argc, out PValue[] argv)
+    void _fillArgs(int argc, out PValue[] argv)
     {
         argv = new PValue[argc];
         if (_stack.Count < argc)
@@ -271,7 +271,7 @@ public class FunctionContext : StackContext
             argv[i] = Pop();
     }
 
-    private bool _fetchReturnValue;
+    bool _fetchReturnValue;
 
     protected override bool PerformNextCycle(StackContext lastContext)
     {
@@ -291,7 +291,7 @@ public class FunctionContext : StackContext
     /// <summary>
     ///     <see cref = "_UseVirtualMachineStackInstead" />
     /// </summary>
-    private bool _useVirtualStackInstead;
+    bool _useVirtualStackInstead;
 
     /// <summary>
     ///     When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this 
@@ -309,7 +309,7 @@ public class FunctionContext : StackContext
     /// <param name = "lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
     /// <param name = "needToReturn">Indicates whether to return after executing one instruction, even if more instructions could be combined into the cycle.</param>
     /// <returns>True if the context is not done yet, i.e., is to be kept on the VM stack; False if it is done, has produced a return value and should be removed from the VM stack.</returns>
-    private bool _performNextCylce(StackContext lastContext, bool needToReturn)
+    bool _performNextCylce(StackContext lastContext, bool needToReturn)
     {
         //Indicates whether or not control needs to be returned to the VM.
         //  as long as no operation is performed on the stack, 
@@ -1190,12 +1190,12 @@ public class FunctionContext : StackContext
         return Pointer < codeLength;
     }
 
-    private PrexoniteRuntimeException PhysicalFunctionNotFoundException(string id, ModuleName moduleName)
+    PrexoniteRuntimeException PhysicalFunctionNotFoundException(string id, ModuleName moduleName)
     {
         return PrexoniteRuntimeException.CreateRuntimeException(this, "No function with the physical name " + id + (moduleName == null ? " exists." : $" exists in module {moduleName}."));
     }
 
-    private Application _getTargetApplication(ModuleName moduleName)
+    Application _getTargetApplication(ModuleName moduleName)
     {
         Application targetApplication;
         if (moduleName == null)
@@ -1209,14 +1209,14 @@ public class FunctionContext : StackContext
         return targetApplication;
     }
 
-    private Exception _moduleNotFoundException(ModuleName moduleName)
+    Exception _moduleNotFoundException(ModuleName moduleName)
     {
         return
             new PrexoniteException(
                 $"Cannot find an instance of the module {moduleName} in compound with module {ParentApplication.Module.Name}.");
     }
 
-    private PrexoniteException _globalVariableDoesNotExistException(string id)
+    PrexoniteException _globalVariableDoesNotExistException(string id)
     {
         return new(
             "The global variable " + id + " does not exist.");
@@ -1224,9 +1224,9 @@ public class FunctionContext : StackContext
 
     #region Exception Handling
 
-    private Exception _currentException;
+    Exception _currentException;
 
-    private readonly Stack<bool> _isHandlingException = new();
+    readonly Stack<bool> _isHandlingException = new();
 
     /// <summary>
     ///     Indicates whether the function context is currently handling an exception or not.
@@ -1235,7 +1235,7 @@ public class FunctionContext : StackContext
     ///     False, if the function runs normally.</value>
     public bool IsHandlingException => _isHandlingException.Peek();
 
-    private TryCatchFinallyBlock _currentTry;
+    TryCatchFinallyBlock _currentTry;
 
     public override bool TryHandleException(Exception exc)
     {

@@ -42,7 +42,7 @@ namespace Prexonite;
 public class DependencyAnalysis<TKey, TValue> where
     TValue : class, IDependent<TKey>
 {
-    private readonly Dictionary<TKey, Node> _nodes = new();
+    readonly Dictionary<TKey, Node> _nodes = new();
 
     /// <summary>
     ///     Creates a new dependency analysis object from the supplied set of items.
@@ -94,7 +94,7 @@ public class DependencyAnalysis<TKey, TValue> where
     {
     }
 
-    private static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
+    static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
     {
         return from pv in query
             select (TValue) pv.Value;
@@ -136,7 +136,7 @@ public class DependencyAnalysis<TKey, TValue> where
     [DebuggerStepThrough, DebuggerDisplay("{Extensions.ToEnumerationString(GetNames())}")]
     public class Group : ExtendableObject, ICollection<Node>
     {
-        private readonly LinkedList<Node> _list;
+        readonly LinkedList<Node> _list;
 
         public Group(LinkedList<Node> list)
         {
@@ -229,8 +229,8 @@ public class DependencyAnalysis<TKey, TValue> where
     [DebuggerStepThrough, DebuggerDisplay("{Subject}")]
     public class Node : ExtendableObject, IEquatable<Node>, INamed<TKey>
     {
-        private bool _assignmentPending;
-        private int _dfbi, _q;
+        bool _assignmentPending;
+        int _dfbi, _q;
 
         public bool HasBeenVisited { [DebuggerStepThrough] get; private set; }
 

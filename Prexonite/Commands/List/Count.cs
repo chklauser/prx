@@ -32,7 +32,7 @@ public class Count : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Count()
+    Count()
     {
     }
 

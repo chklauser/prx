@@ -33,7 +33,7 @@ public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
 
     public static PartialCallStarImplCommand Instance { get; } = new();
 
-    private PartialCallStarImplCommand()
+    PartialCallStarImplCommand()
     {
     }
 

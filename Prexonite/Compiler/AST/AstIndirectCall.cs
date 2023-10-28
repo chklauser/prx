@@ -100,7 +100,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    private class EntityIndirectCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
+    class EntityIndirectCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
     {
         public static readonly EntityIndirectCallMatcher Instance = new();
 
@@ -124,7 +124,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    private class EntityCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
+    class EntityCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
     {
         public static readonly EntityCallMatcher Instance = new();
 
@@ -200,7 +200,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
     }
 
     [CanBeNull]
-    private Action<CompilerTarget, AstIndirectCall, PCall, bool> _getDirectCallAction()
+    Action<CompilerTarget, AstIndirectCall, PCall, bool> _getDirectCallAction()
     {
         // This method will be called at least twice per node. Once to indicate whether a direct call is available
         //  and then a second time to actually use the direct call implementation.
@@ -236,7 +236,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    private AstGetSet _toSliceForm(CompilerTarget target)
+    AstGetSet _toSliceForm(CompilerTarget target)
     {
         // Convert R.(A_1, A_2, *S_3, A_4, *S_5) into
         //   call(R, [A_1, A_2], S_3, [A_4], S_5)
@@ -332,7 +332,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    private void _emitNonSplicedPartialApplication(CompilerTarget target)
+    void _emitNonSplicedPartialApplication(CompilerTarget target)
     {
         var argv =
             AstPartiallyApplicable.PreprocessPartialApplicationArguments(

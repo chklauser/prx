@@ -5,7 +5,7 @@ namespace Prexonite.Compiler.Symbolic;
 
 public abstract class SymbolTransferDirective : IEquatable<SymbolTransferDirective>
 {
-    private SymbolTransferDirective([NotNull] ISourcePosition position)
+    SymbolTransferDirective([NotNull] ISourcePosition position)
     {
         Position = position ?? throw new ArgumentNullException(nameof(position));
     }

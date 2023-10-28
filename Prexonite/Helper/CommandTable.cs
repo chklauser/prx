@@ -10,8 +10,8 @@ namespace Prexonite;
 
 public class CommandTable : SymbolTable<PCommand>
 {
-    private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos = new();
-    private readonly SymbolTable<PCommandGroups> _commandGroups = new();
+    readonly SymbolTable<ICommandInfo> _fallbackCommandInfos = new();
+    readonly SymbolTable<PCommandGroups> _commandGroups = new();
 
     /// <summary>
     ///     Returns information about the specified command's capabilities. The command might not be installed
@@ -71,7 +71,7 @@ public class CommandTable : SymbolTable<PCommand>
         return ContainsKey(name);
     }
 
-    private void addToGroup(string id, PCommandGroups group)
+    void addToGroup(string id, PCommandGroups group)
     {
         if (_commandGroups.TryGetValue(id, out var existing))
         {
@@ -83,7 +83,7 @@ public class CommandTable : SymbolTable<PCommand>
         }
     }
 
-    private (bool removed, PCommandGroups remaining) removeFromGroup(string id, PCommandGroups group)
+    (bool removed, PCommandGroups remaining) removeFromGroup(string id, PCommandGroups group)
     {
         if (_commandGroups.TryGetValue(id, out var existing))
         {
@@ -319,7 +319,7 @@ public class CommandTable : SymbolTable<PCommand>
         _remove_commands(PCommandGroups.Engine);
     }
 
-    private void _remove_commands(PCommandGroups groups)
+    void _remove_commands(PCommandGroups groups)
     {
         var commands = new KeyValuePair<string, PCommand>[Count];
         CopyTo(commands, 0);

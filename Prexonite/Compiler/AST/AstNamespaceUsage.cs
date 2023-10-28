@@ -47,7 +47,7 @@ namespace Prexonite.Compiler.Ast;
 public class AstNamespaceUsage : AstGetSetImplBase
 {
     [CanBeNull]
-    private QualifiedId? _referencePath;
+    QualifiedId? _referencePath;
 
     public AstNamespaceUsage(ISourcePosition position, PCall call, [NotNull] Namespace @namespace) : base(position, call)
     {

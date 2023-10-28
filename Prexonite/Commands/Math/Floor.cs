@@ -34,7 +34,7 @@ public class Floor : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Floor()
+    Floor()
     {
     }
 
@@ -94,7 +94,7 @@ public class Floor : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Floor).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

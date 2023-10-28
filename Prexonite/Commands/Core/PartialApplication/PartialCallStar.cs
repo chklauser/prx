@@ -30,17 +30,17 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialCallStar : PartialApplicationBase
 {
-    private readonly ArraySegment<int> _wrappingDirectives;
+    readonly ArraySegment<int> _wrappingDirectives;
 
     /// <summary>
     ///     The number of arguments that remain, when all wrapping directives have been applied.
     /// </summary>
-    private readonly int _directedArgc;
+    readonly int _directedArgc;
 
     /// <summary>
     ///     The number of arguments that have wrapping directions.
     /// </summary>
-    private readonly int _undirectedArgc;
+    readonly int _undirectedArgc;
 
     public PartialCallStar(int[] mappings, PValue[] closedArguments)
         : this(new ArraySegment<int>(mappings), closedArguments)
@@ -61,7 +61,7 @@ public class PartialCallStar : PartialApplicationBase
     /// </summary>
     /// <param name = "rawMapping">[In] The combined mapping (unpacked); [Out] The list wrapping directives</param>
     /// <returns>The actual argument mapping. <see cref = "PartialApplicationBase.Mappings" />.</returns>
-    private static ArraySegment<int> _splitOffWrappingDirectives(
+    static ArraySegment<int> _splitOffWrappingDirectives(
         ref ArraySegment<int> rawMapping)
     {
         var dirCount = rawMapping.Array[rawMapping.Offset + rawMapping.Count - 1];
@@ -113,13 +113,13 @@ public class PartialCallStar : PartialApplicationBase
         return nonArguments[0].IndirectCall(sctx, effectiveArguments);
     }
 
-    private int _getEffectiveArgc(int actualArgc)
+    int _getEffectiveArgc(int actualArgc)
     {
         System.Diagnostics.Debug.Assert(actualArgc >= _directedArgc);
         return _directedArgc + (actualArgc - _undirectedArgc);
     }
 
-    private void _getDirectedArgc(out int directedArgc, out int undirectedArgc)
+    void _getDirectedArgc(out int directedArgc, out int undirectedArgc)
     {
         directedArgc = 0;
         undirectedArgc = 0;

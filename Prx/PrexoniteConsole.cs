@@ -92,7 +92,7 @@ public class PrexoniteConsole : SuperConsole,
 
     #region IObject Members
 
-    private StackContext _sctx;
+    StackContext _sctx;
 
     public bool TryDynamicCall(
         StackContext sctx, PValue[] args, PCall call, string id, out PValue result)

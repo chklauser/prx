@@ -15,7 +15,7 @@ public interface ISymbolTable<TValue> : IDictionary<string, TValue>
 [DebuggerNonUserCode]
 public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 {
-    private readonly Dictionary<string, TValue> _table;
+    readonly Dictionary<string, TValue> _table;
 
     public SymbolTable()
     {

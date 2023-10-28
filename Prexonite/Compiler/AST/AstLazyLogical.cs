@@ -342,7 +342,7 @@ public abstract class AstLazyLogical : AstExpr,
         conditional.EmitValueCode(target);
     }
 
-    private void _reportInvalidPlaceholders(CompilerTarget target)
+    void _reportInvalidPlaceholders(CompilerTarget target)
     {
         target.Loader.ReportMessage(
             Message.Error(

@@ -8,9 +8,12 @@ namespace Prexonite.Compiler.Build.Internal;
 
 public class EmbeddedResourceSource : ISource
 {
-    [NotNull] private readonly Assembly _assembly;
-    [NotNull] private readonly string _name;
-    [NotNull] private readonly Encoding _encoding;
+    [NotNull]
+    readonly Assembly _assembly;
+    [NotNull]
+    readonly string _name;
+    [NotNull]
+    readonly Encoding _encoding;
 
     public EmbeddedResourceSource([NotNull] Assembly assembly, [NotNull] string name, [CanBeNull] Encoding encoding = null)
     {

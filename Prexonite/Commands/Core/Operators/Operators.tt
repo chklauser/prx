@@ -129,12 +129,12 @@ namespace Prexonite.Commands.Core.Operators{
 }
  
 <#+
-    private void _generateClasses()
+	void _generateClasses()
 	{
 		
 	}
-	
-	private static readonly OpInfo[] _operators = new[]{
+
+	static readonly OpInfo[] _operators = new[]{
 		new OpInfo{Literal = "(+)", PrxName = "Addition", Arity = Arity.Binary},
 		new OpInfo{Literal = "(-)", PrxName = "Subtraction", Arity = Arity.Binary},
 		new OpInfo{Literal = "(*)", PrxName = "Multiplication", EnumName="Multiply", Arity = Arity.Binary},
@@ -156,23 +156,24 @@ namespace Prexonite.Commands.Core.Operators{
 		new OpInfo{Literal = null, PrxName = "LogicalNot", Arity = Arity.Unary},
 	};
 
-	private enum Arity
+	enum Arity
 	{
 		Unary,
 		Binary
 	}
-	
-	private class OpInfo
+
+	class OpInfo
 	{
 		public string PrxName;
 		public string Literal;
-		private string _customEnumName;
+		string _customEnumName;
 		public string EnumName
 		{
 			get => _customEnumName ?? PrxName;
 		    set => _customEnumName = value;
 		}
-		private string _customMethodName;
+
+		string _customMethodName;
 		public string MethodName
 		{
 			get => _customMethodName ?? $"Compiler.Cil.Compiler.PV{EnumName}Method";

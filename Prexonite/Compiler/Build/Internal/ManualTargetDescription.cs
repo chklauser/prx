@@ -36,20 +36,20 @@ using Prexonite.Modular;
 namespace Prexonite.Compiler.Build.Internal;
 
 [DebuggerDisplay("ManualTargetDescription({Name} from {_fileName})")]
-internal class ManualTargetDescription : ITargetDescription
+class ManualTargetDescription : ITargetDescription
 {
     [NotNull]
-    private readonly ISource _source;
+    readonly ISource _source;
     /// <summary>
     /// The file name for symbols derived from the supplied reader. Can be null.
     /// </summary>
     [CanBeNull]
-    private readonly string _fileName;
+    readonly string _fileName;
     [NotNull]
-    private readonly DependencySet _dependencies;
+    readonly DependencySet _dependencies;
 
     [CanBeNull]
-    private readonly List<Message> _buildMessages;
+    readonly List<Message> _buildMessages;
 
     internal ManualTargetDescription([NotNull] ModuleName moduleName, [NotNull] ISource source, [CanBeNull] string fileName, [NotNull] IEnumerable<ModuleName> dependencies, [CanBeNull] IEnumerable<Message> buildMessages = null)
     {

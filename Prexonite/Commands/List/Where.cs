@@ -45,7 +45,7 @@ public class Where : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Where()
+    Where()
     {
     }
 

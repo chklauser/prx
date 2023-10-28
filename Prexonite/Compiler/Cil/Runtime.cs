@@ -457,8 +457,8 @@ public static class Runtime
     {
         #region Class
 
-        private readonly IEnumerator _enumerator;
-        private readonly StackContext _sctx;
+        readonly IEnumerator _enumerator;
+        readonly StackContext _sctx;
 
         public EnumeratorWrapper(IEnumerator enumerator, StackContext sctx)
         {

@@ -36,7 +36,7 @@ public class BoolPType : PType, ICilCompilerAware
 {
     #region Singleton
 
-    private BoolPType()
+    BoolPType()
     {
     }
 
@@ -164,7 +164,7 @@ public class BoolPType : PType, ICilCompilerAware
 
     #region Operators
 
-    private static bool _tryConvertToBool(StackContext sctx, PValue operand, out bool value)
+    static bool _tryConvertToBool(StackContext sctx, PValue operand, out bool value)
     {
         value = false;
 
@@ -269,7 +269,7 @@ public class BoolPType : PType, ICilCompilerAware
 
     public const string Literal = "Bool";
 
-    private const int _code = -1181897690;
+    const int _code = -1181897690;
 
     public override int GetHashCode()
     {

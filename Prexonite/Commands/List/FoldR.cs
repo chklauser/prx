@@ -48,7 +48,7 @@ public class FoldR : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private FoldR()
+    FoldR()
     {
     }
 

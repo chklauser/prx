@@ -34,7 +34,7 @@ public class Id : PCommand, ICilCompilerAware
 
     public static Id Instance { get; } = new();
 
-    private Id()
+    Id()
     {
     }
 

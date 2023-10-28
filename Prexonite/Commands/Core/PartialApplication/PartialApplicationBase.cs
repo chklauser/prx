@@ -42,9 +42,9 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     ///     <para>Mappings from effective argument position to closed and open arguments. </para>
     ///     <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
     /// </summary>
-    private readonly ArraySegment<int> _mappings;
+    readonly ArraySegment<int> _mappings;
 
-    private readonly PValue[] _closedArguments;
+    readonly PValue[] _closedArguments;
 
     /// <summary>
     ///     <para>Copy of the mappings from effective argument position to closed and open arguments. </para>
@@ -105,7 +105,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     /// <remarks>
     ///     <para>It is assumed, that each of the closed arguments is mapped exactly once.</para>
     /// </remarks>
-    private int _computeCountOpenArgumentsMapped(int argc)
+    int _computeCountOpenArgumentsMapped(int argc)
     {
         var mapped = new bool[argc];
         var count = 0;
@@ -130,7 +130,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     #region Implementation of IIndirectCall
 
     [Conditional("DEBUG")]
-    private void _assertMappingsNonZero()
+    void _assertMappingsNonZero()
     {
         foreach (var mapping in Mappings)
             System.Diagnostics.Debug.Assert(mapping != 0);
@@ -143,7 +143,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         return Invoke(sctx, nonArguments, effectiveArguments);
     }
 
-    private void _combineArguments(PValue[] args, out PValue[] nonArguments,
+    void _combineArguments(PValue[] args, out PValue[] nonArguments,
         out PValue[] effectiveArguments)
     {
         System.Diagnostics.Debug.Assert(args.All(value => value != null),
@@ -243,7 +243,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         return false;
     }
 
-    private static PValue[] _determineArgumentList(out int relativeIndex, int nonArgumentPrefix,
+    static PValue[] _determineArgumentList(out int relativeIndex, int nonArgumentPrefix,
         int absoluteIndex, PValue[] nonArguments, PValue[] effectiveArguments)
     {
         PValue[] argumentList;

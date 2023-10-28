@@ -34,7 +34,7 @@ public class Ceiling : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Ceiling()
+    Ceiling()
     {
     }
 
@@ -94,7 +94,7 @@ public class Ceiling : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Ceiling).GetMethod("RunStatically",
             new[] {typeof (PValue), typeof (StackContext)});
 

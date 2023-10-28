@@ -31,7 +31,7 @@ namespace Prexonite.Compiler.Ast;
 public class AstScopedBlock : AstBlock
 {
     [NotNull]
-    private readonly AstBlock _lexicalScope;
+    readonly AstBlock _lexicalScope;
 
     public AstScopedBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
         : base(p,lexicalScope, uid:uid, prefix:prefix)

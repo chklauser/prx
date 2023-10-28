@@ -39,7 +39,7 @@ public class PFunctionTableImpl : PFunctionTable
 {
     #region table
 
-    private readonly SymbolTable<PFunction> _table;
+    readonly SymbolTable<PFunction> _table;
 
     public PFunctionTableImpl()
     {
@@ -79,10 +79,10 @@ public class PFunctionTableImpl : PFunctionTable
 
     #region ICollection<PFunction> Members
 
-    private readonly EventHandler<FunctionIdChangingEventArgs> _idChangingHandler;
+    readonly EventHandler<FunctionIdChangingEventArgs> _idChangingHandler;
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    private void _onIdChanging(object o, FunctionIdChangingEventArgs args)
+    void _onIdChanging(object o, FunctionIdChangingEventArgs args)
     {
         var sender = (FunctionDeclaration)o;
         if(TryGetValue(sender.Id,out var func))

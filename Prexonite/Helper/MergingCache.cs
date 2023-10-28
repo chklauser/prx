@@ -48,7 +48,7 @@ public abstract class CentralCache
 // ReSharper restore InconsistentNaming
     protected abstract int EstimateSize();
 
-    private CentralCache()
+    CentralCache()
     {
     }
 
@@ -57,22 +57,22 @@ public abstract class CentralCache
         return new Impl();
     }
 
-    private class Impl : CentralCache
+    class Impl : CentralCache
     {
-        private MergingCache<EntityRef> _entityRefCache;
+        MergingCache<EntityRef> _entityRefCache;
 
-        private MergingCache<ModuleName> _moduleNameCache;
+        MergingCache<ModuleName> _moduleNameCache;
 
         public override IObjectCache<EntityRef> EntityRefs => _entityRefCache ??= _createEntityRefCache();
 
-        private static MergingCache<EntityRef> _createEntityRefCache()
+        static MergingCache<EntityRef> _createEntityRefCache()
         {
             return MergingCache<EntityRef>.Create(1000);
         }
 
         public override IObjectCache<ModuleName> ModuleNames => _moduleNameCache ??= _createModuleNameCache();
 
-        private static MergingCache<ModuleName> _createModuleNameCache()
+        static MergingCache<ModuleName> _createModuleNameCache()
         {
             return MergingCache<ModuleName>.Create();
         }
@@ -107,7 +107,7 @@ public abstract class CentralCache
             }
         }
 
-        private CentralCache _linkInto(Impl targetCache)
+        CentralCache _linkInto(Impl targetCache)
         {
             if (ReferenceEquals(targetCache, this))
                 return this;
@@ -146,7 +146,7 @@ public abstract class CentralCache
 
 public abstract class MergingCache<T> : IObjectCache<T>
 {
-    private MergingCache()
+    MergingCache()
     {
     }
 
@@ -159,7 +159,7 @@ public abstract class MergingCache<T> : IObjectCache<T>
 
     public abstract void LinkWith(MergingCache<T> cache);
 
-    private class Cache : LastAccessCache<T>
+    class Cache : LastAccessCache<T>
     {
         public Cache(int capacity) : base(capacity)
         {
@@ -173,9 +173,9 @@ public abstract class MergingCache<T> : IObjectCache<T>
         public new int Count => base.Count;
     }
 
-    private class Impl : MergingCache<T>
+    class Impl : MergingCache<T>
     {
-        private Cache _cache;
+        Cache _cache;
 
         public Impl(int capacity)
         {
@@ -232,7 +232,7 @@ public abstract class MergingCache<T> : IObjectCache<T>
             }
         }
 
-        private static bool _trySwap(Impl victim, Cache victimCache, Cache targetCache)
+        static bool _trySwap(Impl victim, Cache victimCache, Cache targetCache)
         {
             return ReferenceEquals(Interlocked.CompareExchange(
                 ref victim._cache, targetCache, victimCache),victimCache);

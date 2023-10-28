@@ -74,15 +74,15 @@ public class Channel : IObject, IDisposable
 
     #region State
 
-    private PValue _datum;
+    PValue _datum;
 
     #endregion
 
     #region Synchornization
 
-    private readonly object _syncRoot = new();
-    private readonly ManualResetEvent _dataAvailable = new(false);
-    private readonly ManualResetEvent _channelEmpty = new(true);
+    readonly object _syncRoot = new();
+    readonly ManualResetEvent _dataAvailable = new(false);
+    readonly ManualResetEvent _channelEmpty = new(true);
 
     public WaitHandle DataAvailable
     {
@@ -167,7 +167,7 @@ public class Channel : IObject, IDisposable
 
     #region Implementation of IDisposable
 
-    private bool _disposed;
+    bool _disposed;
 
     public void Dispose()
     {

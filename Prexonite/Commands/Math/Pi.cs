@@ -33,7 +33,7 @@ public class Pi : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Pi()
+    Pi()
     {
     }
 

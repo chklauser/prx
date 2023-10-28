@@ -45,7 +45,7 @@ public class AstCondition : AstNode,
     public AstScopedBlock ElseBlock;
     public AstExpr Condition;
     public bool IsNegative;
-    private static int _depth;
+    static int _depth;
 
     #region IAstHasBlocks Members
 

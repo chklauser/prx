@@ -34,17 +34,17 @@ using Parser = Prexonite.Compiler.Parser;
 
 // ReSharper disable InconsistentNaming
 // ReSharper disable CheckNamespace
-internal partial class Lexer
+partial class Lexer
 // ReSharper restore CheckNamespace
 {
-    private readonly StringBuilder buffer = new();
+    readonly StringBuilder buffer = new();
 
-    private Token tok(int kind)
+    Token tok(int kind)
     {
         return tok(kind, yytext());
     }
 
-    private Token tok(int kind, string val)
+    Token tok(int kind, string val)
     {
         var t = new Token
             {
@@ -58,7 +58,7 @@ internal partial class Lexer
         return t;
     }
 
-    private readonly Stack<int> yystates = new();
+    readonly Stack<int> yystates = new();
 
     public void PushState(int state)
     {
@@ -66,7 +66,7 @@ internal partial class Lexer
         yybegin(state);
     }
 
-    private int _surroundingLocalState
+    int _surroundingLocalState
     {
         get
         {
@@ -99,13 +99,13 @@ internal partial class Lexer
 
     #region fake reference to Lexer.zzAtBOL (too lazy to hack into scanner generator)
 
-    private void _fake1()
+    void _fake1()
     {
         if (!zzAtBOL)
             _fake2();
     }
 
-    private void _fake2()
+    void _fake2()
     {
         if (zzAtBOL)
             _fake1();
@@ -113,10 +113,10 @@ internal partial class Lexer
 
     #endregion
 
-    private readonly RandomAccessQueue<Token> _tokenBuffer = new();
-    private int _peekIndex = NO_PEEK;
+    readonly RandomAccessQueue<Token> _tokenBuffer = new();
+    int _peekIndex = NO_PEEK;
 
-    private const int NO_PEEK = -1;
+    const int NO_PEEK = -1;
 
 
     internal void _InjectToken(Token c)
@@ -127,7 +127,7 @@ internal partial class Lexer
             _tokenBuffer.Insert(0, c);
     }
 
-    private Token multiple(params Token[] tokens)
+    Token multiple(params Token[] tokens)
     {
         if (tokens == null)
             throw new ArgumentNullException(nameof(tokens));
@@ -141,12 +141,12 @@ internal partial class Lexer
         return null;
     }
 
-    private void ret(params Token[] tokens)
+    void ret(params Token[] tokens)
     {
         multiple(tokens);
     }
 
-    private void scanNextToken()
+    void scanNextToken()
     {
         var count = _tokenBuffer.Count;
         var next = Scan();
@@ -315,7 +315,7 @@ internal partial class Lexer
         return Parser._id;
     }
 
-    private string _unescapeChar(string sequence)
+    string _unescapeChar(string sequence)
     {
         var kind = sequence.Substring(1, 1);
         sequence = sequence.Substring(2);
@@ -347,7 +347,7 @@ internal partial class Lexer
     /// <param name = "rawIdentifier">a $identifier as it was recognized by the lexer (including the $).</param>
     /// <param name = "clipped">The part that was clipped off, excluding the \&</param>
     /// <returns>The actual identifier, ready to be used.</returns>
-    private string _pruneSmartStringIdentifier(string rawIdentifier, out string clipped)
+    string _pruneSmartStringIdentifier(string rawIdentifier, out string clipped)
     {
         if (rawIdentifier.EndsWith("\\&"))
         {

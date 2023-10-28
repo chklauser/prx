@@ -40,7 +40,7 @@ public class Unpack : MacroCommand
 
     public static Unpack Instance { get; } = new();
 
-    private Unpack() : base(Alias)
+    Unpack() : base(Alias)
     {
     }
 
@@ -78,7 +78,7 @@ public class Unpack : MacroCommand
 
     #endregion
 
-    private class Impl : PCommand
+    class Impl : PCommand
     {
 // ReSharper disable MemberHidesStaticFromOuterClass // not an issue
         public const string Alias = @"macro\unpack\impl";
@@ -91,7 +91,7 @@ public class Unpack : MacroCommand
         [NotNull]
         public static Impl Instance { get; } = new();
 
-        private Impl()
+        Impl()
         {
         }
 
@@ -117,7 +117,7 @@ public class Unpack : MacroCommand
             return context.RetrieveFromTransport((int) constant.Constant);
         }
 
-        private static string _getUsage()
+        static string _getUsage()
         {
             return $"usage {Alias}(context, id)";
         }

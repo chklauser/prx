@@ -151,7 +151,7 @@ public static class Compiler
         }
     }
 
-    private static AdHocModuleDependencyInfo listModuleReferences(IGrouping<ModuleName, PFunction> group) =>
+    static AdHocModuleDependencyInfo listModuleReferences(IGrouping<ModuleName, PFunction> group) =>
         new AdHocModuleDependencyInfo(group.Key, group
             .SelectMany(f => f.Code)
             .Select(i => i.ModuleName)
@@ -160,7 +160,7 @@ public static class Compiler
             .ToImmutableHashSet(), 
             group.ToList());
 
-    private record AdHocModuleDependencyInfo
+    record AdHocModuleDependencyInfo
         (ModuleName Name, ICollection<ModuleName> Dependencies, ICollection<PFunction> Functions) : IDependent<ModuleName>
     {
         public IEnumerable<ModuleName> GetDependencies() => Dependencies;
@@ -216,7 +216,7 @@ public static class Compiler
         StoreDebugImplementation(app, sctx.ParentEngine);
     }
 
-    private static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
+    static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
         new(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
 
     public static void StoreDebugImplementation(Application app, Engine targetEngine)
@@ -275,7 +275,7 @@ public static class Compiler
 
     #region Check Qualification
 
-    private static void _registerCheckResults(IHasMetaTable source, bool qualifies,
+    static void _registerCheckResults(IHasMetaTable source, bool qualifies,
         string? reason)
     {
         if (!qualifies && source.Meta[PFunction.DeficiencyKey].Text == "" && reason != null)
@@ -289,7 +289,7 @@ public static class Compiler
     }
 
     /// <summary>Check qualifications (whether a function can be compiled by the CIL compiler)</summary>
-    private static void _checkQualification(IEnumerable<PFunction> functions,
+    static void _checkQualification(IEnumerable<PFunction> functions,
         Engine targetEngine)
     {
         
@@ -300,7 +300,7 @@ public static class Compiler
         }
     }
 
-    private static bool _rangeInSet(int offset, int count, IReadOnlySet<int> hashSet)
+    static bool _rangeInSet(int offset, int count, IReadOnlySet<int> hashSet)
     {
         for (var i = offset; i < offset + count; i++)
             if (hashSet.Contains(i))
@@ -308,7 +308,7 @@ public static class Compiler
         return false;
     }
 
-    private static bool _check(PFunction source, Engine targetEngine, out string? reason)
+    static bool _check(PFunction source, Engine targetEngine, out string? reason)
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
@@ -466,7 +466,7 @@ public static class Compiler
 
     #region Compile Function
 
-    private static void _compile
+    static void _compile
     (PFunction source, ILGenerator il, Engine targetEngine, CompilerPass pass,
         FunctionLinking linking)
     {
@@ -496,7 +496,7 @@ public static class Compiler
         _emitInstructions(state);
     }
 
-    private static void _emitCilImplementationHeader(CompilerState state)
+    static void _emitCilImplementationHeader(CompilerState state)
     {
         //Create local cil function stack context
         //  CilFunctionContext cfctx = CilFunctionContext.New(sctx, source);
@@ -514,7 +514,7 @@ public static class Compiler
         state.Il.Emit(OpCodes.Stind_Ref);
     }
 
-    private static void _buildSymbolTable(CompilerState state)
+    static void _buildSymbolTable(CompilerState state)
     {
         //Create local ref variables for shared names
         //  and populate them with the contents of the sharedVariables parameter
@@ -564,7 +564,7 @@ public static class Compiler
                 state.Symbols.Add(variable, new CilSymbol(SymbolKind.Local));
     }
 
-    private static void _analysisAndPreparation(CompilerState state)
+    static void _analysisAndPreparation(CompilerState state)
     {
         var tempMaxOrder = 1; // 
         var needsSharedVariables = false;
@@ -647,7 +647,7 @@ public static class Compiler
         _determineStackSize(state);
     }
 
-    private static void _determineStackSize(CompilerState state)
+    static void _determineStackSize(CompilerState state)
     {
         if (state.Source.Code.Count == 0)
             return;
@@ -713,7 +713,7 @@ public static class Compiler
             state.StackSize[i] = stackSize[i] ?? 0;
     }
 
-    private static void _parseParameters(CompilerState state)
+    static void _parseParameters(CompilerState state)
     {
         for (var i = 0; i < state.Source.Parameters.Count; i++)
         {
@@ -797,7 +797,7 @@ public static class Compiler
         }
     }
 
-    private static void _createAndInitializeRemainingLocals(CompilerState state)
+    static void _createAndInitializeRemainingLocals(CompilerState state)
     {
         var nullLocals = new List<LocalBuilder>();
 
@@ -890,7 +890,7 @@ public static class Compiler
         }
     }
 
-    private static void _emitInstructions(CompilerState state)
+    static void _emitInstructions(CompilerState state)
     {
         //Tables of foreach call hint hooks
         var foreachCasts = new Dictionary<int, ForeachHint>();
@@ -1641,11 +1641,11 @@ public static class Compiler
         typeof(PType).GetProperty(nameof(PType.Object))!.GetGetMethod()
         ?? throw new PrexoniteException("Cannot find property getter for PType.Object.");
 
-    private static MethodInfo GetPTypeListMethod { get; } =
+    static MethodInfo GetPTypeListMethod { get; } =
         typeof(PType).GetProperty(nameof(PType.List))!.GetGetMethod()
         ?? throw new PrexoniteException("Cannot find property getter for PType.List.");
 
-    private static ConstructorInfo NewPValueListCtor { get; } =
+    static ConstructorInfo NewPValueListCtor { get; } =
         typeof(List<PValue>).GetConstructor(new[] { typeof(IEnumerable<PValue>) })
         ?? throw new PrexoniteException("Cannot find constructor for List<PValue>(IEnumerable<PValue>).");
 
@@ -1795,14 +1795,14 @@ public static class Compiler
 
     // ReSharper restore InconsistentNaming
 
-    private enum VariableInitialization
+    enum VariableInitialization
     {
         None,
         Null,
         ArgV
     }
 
-    private static VariableInitialization _getVariableInitialization(CompilerState state,
+    static VariableInitialization _getVariableInitialization(CompilerState state,
         string id, bool isRef)
     {
         if (Engine.StringsAreEqual(id, state.EffectiveArgumentsListId))
@@ -1819,7 +1819,7 @@ public static class Compiler
         }
     }
 
-    private static void _emitLoadArgV(CompilerState state)
+    static void _emitLoadArgV(CompilerState state)
     {
         state.EmitLoadArg(CompilerState.ParamArgsIndex);
         state.Il.Emit(OpCodes.Newobj, NewPValueListCtor);

@@ -55,7 +55,7 @@ public class AstUnresolved : AstGetSetImplBase
         target.EmitNull(Position);
     }
 
-    private void _reportUnresolved(CompilerTarget target)
+    void _reportUnresolved(CompilerTarget target)
     {
         target.Loader.ReportMessage(
             Message.Error(

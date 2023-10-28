@@ -58,7 +58,7 @@ public class AstConditionalExpression : AstExpr,
     public AstExpr ElseExpression;
     public AstExpr Condition;
     public bool IsNegative;
-    private static int _depth;
+    static int _depth;
 
     #region IAstHasExpressions Members
 

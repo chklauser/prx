@@ -34,7 +34,7 @@ public class Append : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Append()
+    Append()
     {
     }
 

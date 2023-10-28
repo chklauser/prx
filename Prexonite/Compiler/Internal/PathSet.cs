@@ -10,9 +10,9 @@ namespace Prexonite.Compiler.Internal;
 /// </summary>
 /// <remarks>
 /// This class is aware of <see cref="ResourceSpec"/>.</remarks>
-internal sealed class PathSet : ICollection<string>
+sealed class PathSet : ICollection<string>
 {
-    private readonly HashSet<string> _paths = new();
+    readonly HashSet<string> _paths = new();
     public IEnumerator<string> GetEnumerator()
     {
         return _paths.GetEnumerator();
@@ -43,7 +43,7 @@ internal sealed class PathSet : ICollection<string>
 
     bool ICollection<string>.IsReadOnly => ((ICollection<string>)_paths).IsReadOnly;
 
-    private static string canonical(string path)
+    static string canonical(string path)
     {
         if (!path.StartsWith(ResourceSpec.Prefix))
         {

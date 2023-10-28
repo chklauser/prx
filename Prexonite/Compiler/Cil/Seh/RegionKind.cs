@@ -28,14 +28,14 @@ using System;
 namespace Prexonite.Compiler.Cil.Seh;
 
 [Flags]
-internal enum RegionKind
+enum RegionKind
 {
     Try = 1,
     Catch = 2,
     Finally = 4
 }
 
-internal static class RegionKindExtensions
+static class RegionKindExtensions
 {
     public static bool IsIn(this RegionKind subject, RegionKind mask) => (subject & mask) == subject;
 

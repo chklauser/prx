@@ -37,7 +37,7 @@ public class ThunkCommand : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private ThunkCommand()
+    ThunkCommand()
     {
     }
 
@@ -91,13 +91,13 @@ public class ThunkCommand : PCommand, ICilCompilerAware
 
 public class Thunk : IIndirectCall, IObject
 {
-    private struct BlackHole
+    struct BlackHole
     {
-        private readonly bool _isActive;
-        private readonly int _threadId;
-        private readonly ManualResetEvent _evaluationDone;
+        readonly bool _isActive;
+        readonly int _threadId;
+        readonly ManualResetEvent _evaluationDone;
 
-        private BlackHole(int threadId)
+        BlackHole(int threadId)
         {
             _isActive = true;
             _threadId = threadId;
@@ -115,7 +115,7 @@ public class Thunk : IIndirectCall, IObject
             return _inactive();
         }
 
-        private static BlackHole _inactive()
+        static BlackHole _inactive()
         {
             return new();
         }
@@ -138,22 +138,22 @@ public class Thunk : IIndirectCall, IObject
         }
     }
 
-    private BlackHole _blackHole;
+    BlackHole _blackHole;
 
-    private PValue _expr;
-    private PValue[] _parameters;
-    private PValue _value;
-    private Exception _exception;
+    PValue _expr;
+    PValue[] _parameters;
+    PValue _value;
+    Exception _exception;
 
     #region Construction
 
-    private Thunk(PValue expr, PValue[] parameters)
+    Thunk(PValue expr, PValue[] parameters)
     {
         _expr = expr ?? throw new ArgumentNullException(nameof(expr));
         _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
     }
 
-    private Thunk(PValue value)
+    Thunk(PValue value)
     {
         _value = value ?? throw new ArgumentNullException(nameof(value));
     }
@@ -199,7 +199,7 @@ public class Thunk : IIndirectCall, IObject
 
     #endregion
 
-    private IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
+    IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

@@ -40,7 +40,7 @@ public class EmbeddedPrxLibTests
         _checkEmbeddedResource("prxlib.sys.pxs");
     }
 
-    private static void _checkEmbeddedResource(string name)
+    static void _checkEmbeddedResource(string name)
     {
         Assert.True(Source.FromEmbeddedPrexoniteResource(name).TryOpen(out var reader), $"Cannot open {name}");
         var contents = reader.ReadToEnd();

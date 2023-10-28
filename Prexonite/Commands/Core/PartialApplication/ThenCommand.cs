@@ -33,7 +33,7 @@ public class ThenCommand : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private ThenCommand()
+    ThenCommand()
     {
     }
 

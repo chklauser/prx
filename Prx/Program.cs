@@ -46,7 +46,7 @@ using Prx.Benchmarking;
 
 namespace Prx;
 
-internal static class Program
+static class Program
 {
     public const string PrxScriptFileName = "prx_main.pxs";
 
@@ -94,17 +94,17 @@ internal static class Program
     }
 
     // ReSharper disable once UnusedParameter.Local
-    private static void _dummyUsageOf(object any)
+    static void _dummyUsageOf(object any)
     {
     }
 
-    private static void _runApplication(Engine engine, Application app, IEnumerable<string> args)
+    static void _runApplication(Engine engine, Application app, IEnumerable<string> args)
     {
         app.Run(engine, args.Select(engine.CreateNativePValue).ToArray());
     }
 
     [CanBeNull]
-    private static Application _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole)
+    static Application _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole)
     {
         var plan = Plan.CreateSelfAssembling();
         var opts = new LoaderOptions(engine, null);
@@ -340,7 +340,7 @@ internal static class Program
 
     }
 
-    private static bool _reportErrors(IEnumerable<Message> messages)
+    static bool _reportErrors(IEnumerable<Message> messages)
     {
         var originalColor = Console.ForegroundColor;
         var msgBySev = messages.ToGroupedDictionary<MessageSeverity, Message, List<Message>>(m => m.Severity);
@@ -368,7 +368,7 @@ internal static class Program
         }
     }
 
-    private static void _reportWarnings(IDictionary<MessageSeverity, List<Message>> messages, ConsoleColor originalColor)
+    static void _reportWarnings(IDictionary<MessageSeverity, List<Message>> messages, ConsoleColor originalColor)
     {
         try
         {

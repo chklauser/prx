@@ -40,7 +40,7 @@ namespace Prexonite.Types;
 [PTypeLiteral("List")]
 public class ListPType : PType, ICilCompilerAware
 {
-    private ListPType()
+    ListPType()
     {
     }
 
@@ -317,7 +317,7 @@ public class ListPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    private static string _getStringRepresentation(IEnumerable<PValue> lst, StackContext sctx)
+    static string _getStringRepresentation(IEnumerable<PValue> lst, StackContext sctx)
     {
         var sb = new StringBuilder("[ ");
         foreach (var v in lst)
@@ -553,7 +553,7 @@ public class ListPType : PType, ICilCompilerAware
         return Literal;
     }
 
-    private const int _code = 86312339;
+    const int _code = 86312339;
 
     public override int GetHashCode()
     {
@@ -572,7 +572,7 @@ public class ListPType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    private static readonly MethodInfo GetListPType =
+    static readonly MethodInfo GetListPType =
         typeof(PType).GetProperty("List").GetGetMethod();
 
     /// <summary>

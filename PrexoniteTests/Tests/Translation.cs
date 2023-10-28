@@ -1634,7 +1634,7 @@ function main() = target.f;
     }
 
     [ContractAnnotation("value:null=>halt")]
-    private static void _assumeNotNull(object value)
+    static void _assumeNotNull(object value)
     {
         Assert.That(value,Is.Not.Null);
     }
@@ -1644,10 +1644,10 @@ function main() = target.f;
     /// that a loader exposes in build blocks.
     /// Needs to be initialized first.
     /// </summary>
-    private class InternalLoadCommand : PCommand
+    class InternalLoadCommand : PCommand
     {
         [NotNull]
-        private readonly Loader _loaderReference;
+        readonly Loader _loaderReference;
 
         public InternalLoadCommand([NotNull] Loader loaderReference)
         {

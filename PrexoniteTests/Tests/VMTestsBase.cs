@@ -123,7 +123,7 @@ public class VMTestsBase
         }
     }
 
-    private void _compile(Loader ldr, string input)
+    void _compile(Loader ldr, string input)
     {
         try
         {
@@ -293,7 +293,7 @@ public class VMTestsBase
         ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
     }
 
-    private static Action<PValue> _buildIsNullAssertion(string functionId)
+    static Action<PValue> _buildIsNullAssertion(string functionId)
     {
         return v =>
             Assert.That(v.IsNull, Is.True,

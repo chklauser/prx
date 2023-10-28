@@ -41,7 +41,7 @@ public class Sort : PCommand
     /// </summary>
     public static Sort Instance { get; } = new();
 
-    private Sort()
+    Sort()
     {
     }
 

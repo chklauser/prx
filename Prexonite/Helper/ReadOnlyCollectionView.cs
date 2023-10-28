@@ -31,7 +31,7 @@ namespace Prexonite;
 
 public class ReadOnlyCollectionView<T> : ICollection<T>
 {
-    private readonly ICollection<T> _list;
+    readonly ICollection<T> _list;
 
     public ReadOnlyCollectionView(ICollection<T> list)
     {

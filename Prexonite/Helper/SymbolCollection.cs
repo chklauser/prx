@@ -34,7 +34,7 @@ namespace Prexonite;
 [DebuggerStepThrough]
 public class SymbolCollection : ICollection<string>
 {
-    private readonly Hashtable _set;
+    readonly Hashtable _set;
 
     public SymbolCollection()
     {

@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Internal;
 
 public abstract class MExpr
 {
-    private MExpr([NotNull] ISourcePosition position)
+    MExpr([NotNull] ISourcePosition position)
     {
         Position = position;
     }
@@ -260,9 +260,9 @@ public abstract class MExpr
     public sealed class MList : MExpr, IEquatable<MList>
     {
         [NotNull]
-        private readonly string _head;
+        readonly string _head;
         [NotNull]
-        private readonly List<MExpr> _args;
+        readonly List<MExpr> _args;
 
         public MList([NotNull] ISourcePosition position, [NotNull] string head, [NotNull] IEnumerable<MExpr> args) : base(position)
         {

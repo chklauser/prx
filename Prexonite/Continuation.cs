@@ -50,7 +50,7 @@ public class Continuation : Closure
         _populateStack(fctx);
     }
 
-    private void _populateStack(FunctionContext fctx)
+    void _populateStack(FunctionContext fctx)
     {
         for (var i = Stack.Length - 1; i >= 0; i--)
         {
@@ -58,7 +58,7 @@ public class Continuation : Closure
         }
     }
 
-    private static PVariable[] _getSharedVariables(FunctionContext fctx)
+    static PVariable[] _getSharedVariables(FunctionContext fctx)
     {
         var metaTable = fctx.Implementation.Meta;
         if (!(metaTable.TryGetValue(PFunction.SharedNamesKey, out var entry) && entry.IsList))

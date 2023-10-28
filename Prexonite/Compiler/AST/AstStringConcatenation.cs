@@ -43,14 +43,15 @@ public class AstStringConcatenation : AstExpr,
     IAstHasExpressions
 {
     [NotNull]
-    private readonly AstGetSet _simpleConcatPrototype;
+    readonly AstGetSet _simpleConcatPrototype;
     [NotNull]
-    private readonly AstGetSet _multiConcatPrototype;
+    readonly AstGetSet _multiConcatPrototype;
 
     /// <summary>
     ///     The list of arguments for the string concatenation.
     /// </summary>
-    [NotNull] private readonly List<AstExpr> _arguments = new();
+    [NotNull]
+    readonly List<AstExpr> _arguments = new();
 
     /// <summary>
     ///     Creates a new AstStringConcatenation AST node.

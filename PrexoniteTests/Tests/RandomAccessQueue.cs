@@ -212,12 +212,12 @@ public class RandomAccessQueue
             Assert.AreEqual(d[i], raq[i]);
     }
 
-    private static int[] generateData()
+    static int[] generateData()
     {
         return generateData(20);
     }
 
-    private static int[] generateData(int k)
+    static int[] generateData(int k)
     {
         var d = new int[k];
         for (var i = 0; i < k; i++)

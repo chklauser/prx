@@ -99,7 +99,7 @@ public class AstReturn : AstNode,
         }
     }
 
-    private void _warnInCoroutines(CompilerTarget target, ref bool warned)
+    void _warnInCoroutines(CompilerTarget target, ref bool warned)
     {
         if (!warned && _isInProtectedBlock(target))
         {
@@ -110,7 +110,7 @@ public class AstReturn : AstNode,
         }
     }
 
-    private static bool _isInProtectedBlock(CompilerTarget target)
+    static bool _isInProtectedBlock(CompilerTarget target)
     {
         return
             target.ScopeBlocks.OfType<AstScopedBlock>().Any(
@@ -118,7 +118,7 @@ public class AstReturn : AstNode,
                     sb.LexicalScope is AstTryCatchFinally || sb.LexicalScope is AstUsing);
     }
 
-    private void _emitTailCallExit(CompilerTarget target)
+    void _emitTailCallExit(CompilerTarget target)
     {
         if (_optimizeConditionalReturnExpression(target))
             return;
@@ -137,7 +137,7 @@ public class AstReturn : AstNode,
         }
     }
 
-    private void _emitRecursiveTailCall(CompilerTarget target, ArgumentsProxy symbolArgs)
+    void _emitRecursiveTailCall(CompilerTarget target, ArgumentsProxy symbolArgs)
     {
         var symbolParams = target.Function.Parameters;
         var nullNode = new AstNull(File, Line, Column);
@@ -159,13 +159,13 @@ public class AstReturn : AstNode,
         target.EmitJump(Position, 0);
     }
 
-    private void _emitOrdinaryValueReturn(CompilerTarget target)
+    void _emitOrdinaryValueReturn(CompilerTarget target)
     {
         Expression.EmitValueCode(target);
         target.Emit(Position, OpCode.ret_value);
     }
 
-    private static bool _isStacklessRecursionPossible(CompilerTarget target,
+    static bool _isStacklessRecursionPossible(CompilerTarget target,
         AstIndirectCall symbol)
     {
         if (!(symbol.Subject is AstReference refNode))
@@ -185,7 +185,7 @@ public class AstReturn : AstNode,
         return true;
     }
 
-    private bool _optimizeConditionalReturnExpression(CompilerTarget target)
+    bool _optimizeConditionalReturnExpression(CompilerTarget target)
     {
         if (!(Expression is AstConditionalExpression cond))
             return false;

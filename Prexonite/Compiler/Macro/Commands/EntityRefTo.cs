@@ -84,9 +84,9 @@ public class EntityRefTo : MacroCommand
         context.Block.Expression = ToExpr(context.Factory, context.Invocation.Position, entityRef);
     }
 
-    private class Lifter : IEntityRefMatcher<Tuple<IAstFactory,ISourcePosition>,AstExpr>
+    class Lifter : IEntityRefMatcher<Tuple<IAstFactory,ISourcePosition>,AstExpr>
     {
-        private static AstExpr _lift<T>(Tuple<IAstFactory, ISourcePosition> argument, params object[] callArgs) where T : EntityRef
+        static AstExpr _lift<T>(Tuple<IAstFactory, ISourcePosition> argument, params object[] callArgs) where T : EntityRef
         {
             var create = argument.Item1;
             var pos = argument.Item2;
@@ -121,7 +121,8 @@ public class EntityRefTo : MacroCommand
             return _lift<EntityRef.Variable.Global>(argument, variable.Id, variable.ModuleName);
         }
     }
-    private static readonly Lifter _lifter = new();
+
+    static readonly Lifter _lifter = new();
 
     [NotNull]
     public static AstExpr ToExpr([NotNull] IAstFactory factory, [NotNull] ISourcePosition position, [NotNull] EntityRef entityRef)

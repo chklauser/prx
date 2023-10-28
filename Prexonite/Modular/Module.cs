@@ -117,10 +117,10 @@ public class FunctionTable : System.Collections.ObjectModel.KeyedCollection<stri
         return item.Id;
     }
 
-    private readonly EventHandler<FunctionIdChangingEventArgs> _idChangingHandler;
+    readonly EventHandler<FunctionIdChangingEventArgs> _idChangingHandler;
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    private void _onIdChanging(object o, FunctionIdChangingEventArgs args)
+    void _onIdChanging(object o, FunctionIdChangingEventArgs args)
     {
         var sender = (FunctionDeclaration) o;
         if (Contains(sender))
@@ -189,7 +189,7 @@ public class FunctionTable : System.Collections.ObjectModel.KeyedCollection<stri
 
 class ModuleImpl : Module
 {
-    private CentralCache _cache = CentralCache.Create();
+    CentralCache _cache = CentralCache.Create();
 
     public ModuleImpl(ModuleName name)
     {
@@ -212,8 +212,8 @@ class ModuleImpl : Module
         internal set => _cache = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    private readonly FunctionTable _functions = new();
-    private readonly MetaTable _meta; // must be assigned in the constructor
+    readonly FunctionTable _functions = new();
+    readonly MetaTable _meta; // must be assigned in the constructor
 
     public override ModuleName Name { get; }
 

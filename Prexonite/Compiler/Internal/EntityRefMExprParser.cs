@@ -5,7 +5,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Internal;
 
-internal static class EntityRefMExprParser
+static class EntityRefMExprParser
 {
     [NotNull]
     public static EntityRef Parse([NotNull] MExpr expr)

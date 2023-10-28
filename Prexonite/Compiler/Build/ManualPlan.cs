@@ -15,10 +15,11 @@ namespace Prexonite.Compiler.Build;
 
 public class ManualPlan : IPlan
 {
-    private readonly DefaultObjectPool<Engine> _enginePool;
-    private class EnginePoolPolicy : IPooledObjectPolicy<Engine>
+    readonly DefaultObjectPool<Engine> _enginePool;
+
+    class EnginePoolPolicy : IPooledObjectPolicy<Engine>
     {
-        private readonly ManualPlan _inner;
+        readonly ManualPlan _inner;
 
         public EnginePoolPolicy(ManualPlan inner)
         {
@@ -89,7 +90,7 @@ public class ManualPlan : IPlan
                 .ToDictionary(name => name, name => BuildWithMapAsync(_prepareBuild(name), taskMap, token));
     }
 
-    private ITargetDescription _prepareBuild(ModuleName name)
+    ITargetDescription _prepareBuild(ModuleName name)
     {
         var description = TargetDescriptions[name];
         EnsureIsResolved(description);
@@ -129,7 +130,7 @@ public class ManualPlan : IPlan
     internal Engine LeaseBuildEngine() => _enginePool.Get();
     internal void ReturnBuildEngine(Engine buildEngine) => _enginePool.Return(buildEngine);
 
-    private void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
+    void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
     {
         _LinkDependenciesImpl(this, taskMap, instance, instanceDescription, token);
     }
@@ -189,7 +190,7 @@ public class ManualPlan : IPlan
             });
     }
 
-    private Task<ITarget> _buildTaskImpl(ITargetDescription targetDescription, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token,
+    Task<ITarget> _buildTaskImpl(ITargetDescription targetDescription, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token,
         ModuleName name)
     {
         var desc = TargetDescriptions[name];

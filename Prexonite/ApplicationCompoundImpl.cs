@@ -31,11 +31,11 @@ using Prexonite.Modular;
 
 namespace Prexonite;
 
-internal class ApplicationCompoundImpl : ApplicationCompound
+class ApplicationCompoundImpl : ApplicationCompound
 {
-    private readonly KeyedCollection<ModuleName, Application> _table = new AppTable();
+    readonly KeyedCollection<ModuleName, Application> _table = new AppTable();
 
-    private CentralCache _cache = CentralCache.Create();
+    CentralCache _cache = CentralCache.Create();
 
     public override CentralCache Cache
     {
@@ -110,7 +110,7 @@ internal class ApplicationCompoundImpl : ApplicationCompound
 
     #region Nested type: AppTable
 
-    private class AppTable : KeyedCollection<ModuleName, Application>
+    class AppTable : KeyedCollection<ModuleName, Application>
     {
         protected override ModuleName GetKeyForItem(Application item)
         {

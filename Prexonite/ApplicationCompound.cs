@@ -9,7 +9,7 @@ namespace Prexonite;
 
 public abstract class ApplicationCompound : ICollection<Application>, IObject
 {
-    private static readonly ObjectPType _compoundType =
+    static readonly ObjectPType _compoundType =
         PType.Object[typeof (ApplicationCompound)];
 
     public abstract CentralCache Cache { get; internal set; }

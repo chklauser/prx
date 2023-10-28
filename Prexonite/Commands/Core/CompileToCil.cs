@@ -36,7 +36,7 @@ public class CompileToCil : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private CompileToCil()
+    CompileToCil()
     {
     }
 

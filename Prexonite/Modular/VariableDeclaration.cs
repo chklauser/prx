@@ -71,7 +71,7 @@ public abstract class VariableDeclaration : IHasMetaTable, IMetaFilter
     /// Declaration of a Prexonite (global) variable.
     /// </summary>
     [System.Diagnostics.DebuggerDisplay("var {Id}")]
-    private sealed class Impl : VariableDeclaration
+    sealed class Impl : VariableDeclaration
     {
         /// <summary>
         /// Creates a new global variable declaration.

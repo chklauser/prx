@@ -33,7 +33,7 @@ public class Each : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Each()
+    Each()
     {
     }
 

@@ -34,14 +34,14 @@ using Prexonite.Modular;
 namespace Prexonite.Compiler.Build.Internal;
 
 [DebuggerDisplay("Target({Name}) success={IsSuccessful}")]
-internal class DefaultModuleTarget : ITarget
+class DefaultModuleTarget : ITarget
 {
     [NotNull]
-    private static readonly IReadOnlyCollection<IResourceDescriptor> _emptyResourceCollection =
+    static readonly IReadOnlyCollection<IResourceDescriptor> _emptyResourceCollection =
         Array.Empty<IResourceDescriptor>();
 
     [CanBeNull]
-    private readonly List<Message> _messages;
+    readonly List<Message> _messages;
 
     public DefaultModuleTarget(Module module, SymbolStore symbols, IEnumerable<Message> messages = null, Exception exception = null)
     {
@@ -54,7 +54,7 @@ internal class DefaultModuleTarget : ITarget
     }
 
     [CanBeNull]
-    private static Exception _createAggregateException(Exception[] aggregateExceptions)
+    static Exception _createAggregateException(Exception[] aggregateExceptions)
     {
         Exception aggregateException;
         if (aggregateExceptions.Length == 1)

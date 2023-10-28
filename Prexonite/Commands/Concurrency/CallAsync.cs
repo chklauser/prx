@@ -39,7 +39,7 @@ public class CallAsync : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private CallAsync()
+    CallAsync()
     {
     }
 

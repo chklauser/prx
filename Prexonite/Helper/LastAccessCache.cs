@@ -38,12 +38,12 @@ public interface IObjectCache<T>
 
 public class LastAccessCache<T> : IObjectCache<T>
 {
-    private readonly LinkedList<T> _accessOrder = new();
+    readonly LinkedList<T> _accessOrder = new();
 
     /// <summary>
     /// Also acts as a synch root.
     /// </summary>
-    private readonly Dictionary<T, LinkedListNode<T>> _pointerTable =
+    readonly Dictionary<T, LinkedListNode<T>> _pointerTable =
         new();
 
     public LastAccessCache(int capacity)
@@ -72,7 +72,7 @@ public class LastAccessCache<T> : IObjectCache<T>
         return name;
     }
 
-    private void _insert(T name)
+    void _insert(T name)
     {
         if (_accessOrder.Count > Capacity*2)
             _truncate();
@@ -80,7 +80,7 @@ public class LastAccessCache<T> : IObjectCache<T>
         _pointerTable.Add(name,node);
     }
 
-    private void _truncate()
+    void _truncate()
     {
         Debug.Assert(_accessOrder.Count >= Capacity,
             "Access order linked list of last access cache should be truncated but has less than $Capacity entries.");

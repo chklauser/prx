@@ -37,8 +37,8 @@ namespace Prexonite.Compiler.Ast;
 [DebuggerNonUserCode]
 public class ArgumentsProxy : IList<AstExpr>, IObject
 {
-    private List<AstExpr> _arguments;
-    private readonly List<AstExpr> _rightAppends = new();
+    List<AstExpr> _arguments;
+    readonly List<AstExpr> _rightAppends = new();
 
     internal ArgumentsProxy(List<AstExpr> arguments)
     {
@@ -79,7 +79,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
         _rightAppends.Clear();
     }
 
-    private int _getEffectiveRightAppendPosition()
+    int _getEffectiveRightAppendPosition()
     {
         return RightAppendPosition < 0 ? _arguments.Count : RightAppendPosition;
     }
@@ -370,13 +370,13 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
         return sb.ToString(0, Math.Max(0, sb.Length - 2));
     }
 
-    private void _writeRightAppends(StringBuilder sb)
+    void _writeRightAppends(StringBuilder sb)
     {
         foreach (var rightExpr in _rightAppends)
             _writeArgument(sb, rightExpr);
     }
 
-    private static void _writeArgument(StringBuilder sb, AstExpr expr)
+    static void _writeArgument(StringBuilder sb, AstExpr expr)
     {
         sb.AppendFormat("{0}, ", expr);
     }

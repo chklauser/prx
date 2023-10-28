@@ -27,7 +27,7 @@ using System;
 
 namespace Prexonite.Compiler;
 
-internal class MessageEventArgs : EventArgs
+class MessageEventArgs : EventArgs
 {
     public Message Message { get; }
 

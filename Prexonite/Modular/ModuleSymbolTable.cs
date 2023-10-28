@@ -15,7 +15,7 @@ public interface IModuleSymbolTable<T> : IDictionary<(ModuleName ModuleName, str
 
 public class ModuleSymbolTable<T> : IModuleSymbolTable<T>
 {
-    private readonly Dictionary<(ModuleName ModuleName, string Id), T> _inner;
+    readonly Dictionary<(ModuleName ModuleName, string Id), T> _inner;
 
     public ModuleSymbolTable()
     {
@@ -27,7 +27,7 @@ public class ModuleSymbolTable<T> : IModuleSymbolTable<T>
         _inner = new(capacity, new ModuleSymbolTableEqualityComparer());
     }
 
-    private class ModuleSymbolTableEqualityComparer : IEqualityComparer<(ModuleName ModuleName, string Id)>
+    class ModuleSymbolTableEqualityComparer : IEqualityComparer<(ModuleName ModuleName, string Id)>
     {
         public bool Equals((ModuleName ModuleName, string Id) x, (ModuleName ModuleName, string Id) y)
         {

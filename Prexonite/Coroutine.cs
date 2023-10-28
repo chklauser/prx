@@ -44,7 +44,7 @@ public class Coroutine : IEnumerable<PValue>,
 {
     #region Class
 
-    private StackContext _corctx;
+    StackContext _corctx;
 
     /// <summary>
     ///     Creates a new coroutine wrapper around the supplied stack context.
@@ -81,7 +81,7 @@ public class Coroutine : IEnumerable<PValue>,
         return new PValueEnumeratorWrapper(_internalEnumerator());
     }
 
-    private IEnumerator<PValue> _internalEnumerator()
+    IEnumerator<PValue> _internalEnumerator()
     {
         while (IsValid)
         {

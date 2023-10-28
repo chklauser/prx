@@ -29,9 +29,9 @@ using System.Threading;
 
 namespace Prexonite.Compiler.Build.Internal;
 
-internal class ReaderSource : ISource, IDisposable
+class ReaderSource : ISource, IDisposable
 {
-    private TextReader _reader;
+    TextReader _reader;
 
     public ReaderSource(TextReader reader)
     {

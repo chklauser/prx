@@ -44,7 +44,7 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
         return new(position ?? inner.Position, message, inner);
     }
 
-    private MessageSymbol([NotNull] ISourcePosition position, [NotNull] Message message, [NotNull] Symbol symbol)
+    MessageSymbol([NotNull] ISourcePosition position, [NotNull] Message message, [NotNull] Symbol symbol)
         : base(position, symbol)
     {
         Message = message;

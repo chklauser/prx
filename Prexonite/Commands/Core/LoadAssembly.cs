@@ -37,7 +37,7 @@ namespace Prexonite.Commands.Core;
 /// </summary>
 public sealed class LoadAssembly : PCommand, ICilCompilerAware
 {
-    private LoadAssembly()
+    LoadAssembly()
     {
     }
 

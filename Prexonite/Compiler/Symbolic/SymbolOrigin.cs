@@ -60,9 +60,9 @@ public abstract class SymbolOrigin
         }
 
         [NotNull]
-        private readonly SymbolOrigin[] _origins;
+        readonly SymbolOrigin[] _origins;
 
-        private MergedScope([NotNull] SymbolOrigin[] origins)
+        MergedScope([NotNull] SymbolOrigin[] origins)
         {
             if (origins == null)
                 throw new ArgumentNullException(nameof(origins));
@@ -85,7 +85,7 @@ public abstract class SymbolOrigin
 
     public sealed class NamespaceImport : SymbolOrigin
     {
-        private readonly QualifiedId _namespaceId;
+        readonly QualifiedId _namespaceId;
 
         public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
         {
@@ -100,7 +100,7 @@ public abstract class SymbolOrigin
 
         public QualifiedId NamespaceId => _namespaceId;
 
-        private bool _equals(NamespaceImport other)
+        bool _equals(NamespaceImport other)
         {
             return _namespaceId.Equals(other._namespaceId);
         }
@@ -145,7 +145,7 @@ public abstract class SymbolOrigin
             return Description;
         }
 
-        private bool _equals(ModuleTopLevel other)
+        bool _equals(ModuleTopLevel other)
         {
             return Equals(ModuleName, other.ModuleName);
         }

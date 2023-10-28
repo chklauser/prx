@@ -42,7 +42,7 @@ public sealed class ExpandSymbol : WrappingSymbol
         return new(position ?? inner.Position, inner);
     }
 
-    private ExpandSymbol([NotNull] ISourcePosition position, [NotNull] Symbol inner) : base(position, inner)
+    ExpandSymbol([NotNull] ISourcePosition position, [NotNull] Symbol inner) : base(position, inner)
     {
     }
 

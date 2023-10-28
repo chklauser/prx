@@ -15,12 +15,12 @@ namespace PrexoniteTests.Tests.Configurations;
 [NonParallelizable]
 public abstract class V2UnitTestContainer
 {
-    private const string RunTestMetaEntryId = "psr.test.run_test";
+    const string RunTestMetaEntryId = "psr.test.run_test";
 
-    private static readonly ModuleName TestFrameworkModuleName =
+    static readonly ModuleName TestFrameworkModuleName =
         new("psr.test", new Version(0, 0));
 
-    private (Application app, ITarget target, PFunction runTestsFunction, Engine engine)? _testSuite;
+    (Application app, ITarget target, PFunction runTestsFunction, Engine engine)? _testSuite;
 
     [PublicAPI] public string TestSuitePath { get; }
     public bool CompileToCil { get; }
@@ -138,9 +138,9 @@ public abstract class V2UnitTestContainer
             }
         }
 
-        private static readonly PValue[] Empty = Array.Empty<PValue>();
-            
-        private static (string Id, Application ParentApplication) extract(StackContext sctx, PValue funcValue)
+        static readonly PValue[] Empty = Array.Empty<PValue>();
+
+        static (string Id, Application ParentApplication) extract(StackContext sctx, PValue funcValue)
         {
             if (funcValue.Value is PFunction f)
             {

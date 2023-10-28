@@ -45,23 +45,24 @@ namespace Prexonite.Internal;
 /// </remarks>
 public class AdHocTaskCache<TKey,TResult>
 {
-
-    private class TaskInfo
+    class TaskInfo
     {
-        private const int Cancelled = -7171;
+        const int Cancelled = -7171;
 
 
         [NotNull]
         public readonly Task<TResult> Task;
 
-        [NotNull] private readonly CancellationTokenSource _cancelSource = new();
-
-        [NotNull] private readonly TKey _key;
+        [NotNull]
+        readonly CancellationTokenSource _cancelSource = new();
 
         [NotNull]
-        private readonly ConcurrentDictionary<TKey, TaskInfo> _cache; 
+        readonly TKey _key;
 
-        private volatile int _liveTokens;
+        [NotNull]
+        readonly ConcurrentDictionary<TKey, TaskInfo> _cache;
+
+        volatile int _liveTokens;
 
         public TaskInfo([NotNull] ConcurrentDictionary<TKey, TaskInfo> cache, TKey key, [NotNull] Func<CancellationToken, Task<TResult>> taskImplementation)
         {
@@ -100,7 +101,7 @@ public class AdHocTaskCache<TKey,TResult>
             return true;
         }
 
-        private void _onCancel()
+        void _onCancel()
         {
             int oldLiveCount;
             int newLiveCount;
@@ -141,7 +142,7 @@ public class AdHocTaskCache<TKey,TResult>
     }
 #pragma warning restore 420
 
-    private readonly ConcurrentDictionary<TKey, TaskInfo> _cache = new();
+    readonly ConcurrentDictionary<TKey, TaskInfo> _cache = new();
 
     /// <summary>
     /// 

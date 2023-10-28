@@ -42,7 +42,7 @@ public class SelfAssemblingPlanTests
 {
     protected static readonly TraceSource Trace = new("PrexoniteTests.Tests.SelfAssemblingPlan");
 
-    private string _basePath;
+    string _basePath;
 
     protected ISelfAssemblingPlan Sam;
 
@@ -59,7 +59,7 @@ public class SelfAssemblingPlanTests
         return handle;
     }
 
-    private class MockFileHandle : IDisposable
+    class MockFileHandle : IDisposable
     {
         [NotNull]
         public FileInfo File { get; }
@@ -88,7 +88,7 @@ public class SelfAssemblingPlanTests
             _tryDelete();
         }
 
-        private void _tryDelete()
+        void _tryDelete()
         {
             try
             {
@@ -106,7 +106,7 @@ public class SelfAssemblingPlanTests
         }
     }
 
-    private string _prototypePath;
+    string _prototypePath;
 
     [OneTimeSetUp]
     public void Init()
@@ -127,7 +127,7 @@ public class SelfAssemblingPlanTests
         Sam.SearchPaths.Add(_basePath);
     }
 
-    private void _tryTearDown()
+    void _tryTearDown()
     {
         try
         {

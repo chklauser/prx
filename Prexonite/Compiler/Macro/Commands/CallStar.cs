@@ -38,7 +38,7 @@ public class CallStar : PartialMacroCommand
 
     public static CallStar Instance { get; } = new();
 
-    private CallStar()
+    CallStar()
         : base(@"call\star")
     {
     }
@@ -63,7 +63,7 @@ public class CallStar : PartialMacroCommand
         return true;
     }
 
-    private void _expandPartialApplication(MacroContext context, int passThrough,
+    void _expandPartialApplication(MacroContext context, int passThrough,
         List<AstExpr> arguments)
     {
         var flatArgs = new List<AstExpr>(arguments.Count);
@@ -113,7 +113,7 @@ public class CallStar : PartialMacroCommand
         context.Block.Expression = implCall;
     }
 
-    private static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8,
+    static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8,
         int argc)
     {
         var mi = argc;
@@ -129,12 +129,12 @@ public class CallStar : PartialMacroCommand
 
     #region Overrides of MacroCommand
 
-    private static bool _isPartialList(AstExpr expr)
+    static bool _isPartialList(AstExpr expr)
     {
         return _isPartialList(expr, out _);
     }
 
-    private static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
+    static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
     {
         lit = expr as AstListLiteral;
         return lit != null && lit.CheckForPlaceholders();
@@ -166,7 +166,7 @@ public class CallStar : PartialMacroCommand
         context.Block.Expression = ic;
     }
 
-    private static void _determinePassThrough(MacroContext context, out int passThrough,
+    static void _determinePassThrough(MacroContext context, out int passThrough,
         out List<AstExpr> arguments)
     {
         var arg0 = context.Invocation.Arguments[0];

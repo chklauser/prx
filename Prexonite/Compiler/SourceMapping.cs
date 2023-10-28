@@ -35,7 +35,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
 {
     #region Representation
 
-    private readonly List<ISourcePosition> _positionTable = new();
+    readonly List<ISourcePosition> _positionTable = new();
 
     #endregion
 

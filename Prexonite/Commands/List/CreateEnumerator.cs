@@ -36,7 +36,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
 
     public static CreateEnumerator Instance { get; } = new();
 
-    private CreateEnumerator()
+    CreateEnumerator()
     {
     }
 
@@ -68,13 +68,13 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         return sctx.CreateNativePValue(new EnumeratorProxy(sctx, args[0], args[1], args[2]));
     }
 
-    private sealed class EnumeratorProxy : PValueEnumerator
+    sealed class EnumeratorProxy : PValueEnumerator
     {
-        private readonly PValue _moveNext;
-        private readonly PValue _current;
-        private readonly PValue _dispose;
-        private readonly StackContext _sctx;
-        private bool _disposed;
+        readonly PValue _moveNext;
+        readonly PValue _current;
+        readonly PValue _dispose;
+        readonly StackContext _sctx;
+        bool _disposed;
 
         public EnumeratorProxy(StackContext sctx, PValue moveNext, PValue current,
             PValue dispose)

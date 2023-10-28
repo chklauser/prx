@@ -118,9 +118,8 @@ namespace PrexoniteTests.Tests.Configurations
 
 <#@ include file="LoadConfiguration.t4" #>
 
-<#+ 
-
-private IEnumerable<string> _getVMTestClasses()
+<#+
+    IEnumerable<string> _getVMTestClasses()
 {
     return new []{
         "Prx.Tests.VMTests",

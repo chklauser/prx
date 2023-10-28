@@ -13,11 +13,11 @@ namespace Prexonite.Compiler.Build.Internal;
 
 class DefaultBuildEnvironment : IBuildEnvironment
 {
-    private readonly CancellationToken _token;
-    private readonly TaskMap<ModuleName, ITarget> _taskMap;
-    private readonly ManualPlan _plan;
-    private readonly ITargetDescription _description;
-    private readonly Engine _compilationEngine;
+    readonly CancellationToken _token;
+    readonly TaskMap<ModuleName, ITarget> _taskMap;
+    readonly ManualPlan _plan;
+    readonly ITargetDescription _description;
+    readonly Engine _compilationEngine;
 
     public bool TryGetModule(ModuleName moduleName, [NotNullWhen(true)] out Module? module)
     {

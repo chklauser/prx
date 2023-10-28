@@ -63,7 +63,7 @@ function (.|>) {}
         _assertFunctionExists(OperatorNames.Prexonite.UnaryDeltaRightPost);
     }
 
-    private void _assertFunctionExists(string name)
+    void _assertFunctionExists(string name)
     {
         var f = target.Functions[name];
         Assert.That(f, Is.Not.Null, $"Function {name} should exist");
@@ -445,7 +445,7 @@ function main(){
         Expect(":abc", "a", "b", "c");
     }
 
-    private PValue _list(params object[] elements)
+    PValue _list(params object[] elements)
     {
         var lst = new List<PValue>(elements.Length);
         lst.AddRange(elements.Select(element => engine.CreateNativePValue(element)));

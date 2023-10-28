@@ -36,7 +36,7 @@ namespace PrexoniteTests.Tests;
 [TestFixture]
 public class Storage : Compiler
 {
-    private const string _storedShouldBeEqual =
+    const string _storedShouldBeEqual =
         "Since the in-memory and the restored application are the same, they should" +
         " result in the same serialized form.";
 

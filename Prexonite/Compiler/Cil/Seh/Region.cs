@@ -29,7 +29,7 @@ using System.Diagnostics;
 
 namespace Prexonite.Compiler.Cil.Seh;
 
-internal static class RegionExtensions
+static class RegionExtensions
 {
     public static bool IsTryRegion(this Region region)
     {
@@ -57,7 +57,7 @@ internal static class RegionExtensions
 }
 
 [DebuggerDisplay("{Kind}-block from {Begin} to {End}")]
-internal sealed class Region : IEquatable<Region>
+sealed class Region : IEquatable<Region>
 {
     public const RegionKind AnyRegionKind =
         RegionKind.Try | RegionKind.Catch | RegionKind.Finally;

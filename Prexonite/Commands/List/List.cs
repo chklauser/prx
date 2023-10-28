@@ -35,7 +35,7 @@ public class List : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private List()
+    List()
     {
     }
 

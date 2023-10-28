@@ -18,8 +18,8 @@ public delegate AstExpr? ResolveSymbol(CompilerTarget t, AstUnresolved unresolve
 /// </summary>
 public sealed class CustomResolver
 {
-    private readonly ResolveSymbol? _managed;
-    private readonly PValue? _interpreted;
+    readonly ResolveSymbol? _managed;
+    readonly PValue? _interpreted;
 
     /// <summary>
     ///     Creates a new CustomResolver from managed code.
