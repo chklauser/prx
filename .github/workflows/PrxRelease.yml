@@ -40,13 +40,11 @@ jobs:
           echo "::set-output name=version::$ver"
         shell: bash
       - uses: actions/checkout@v2
-      - name: Setup .NET 6 SDK
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v2
         with:
-          # dotnet 5.0 is still required for T4
           dotnet-version: |
-            6.0.x
-            5.0.x
+            8.0.x
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
         env:
           # Use a personal access token (publishing with the GITHUB_TOKEN is somehow not possible)

@@ -36,7 +36,7 @@ jobs:
         with:
           # version 5.0 used for T4
           dotnet-version: |
-            6.0.x
+            8.0.x
             5.0.x
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
       - name: Install dependencies (Win)

@@ -96,7 +96,7 @@
   <!-- PType Expression Parser Target -->
   <Target Name="PTypeExpressionParser" BeforeTargets="BeforeBuild">
     <Message Text="Building type expression parser." />
-    <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)">
+    <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)\Internal">
       <Output TaskParameter="OutputFiles" ItemName="PTypeExpressionParserFiles" />
     </PxCoco>
     <Copy SourceFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" DestinationFolder="$(ProjectDir)Internal" />
@@ -106,7 +106,7 @@
   <!-- Prexonite Parser Target -->
   <Target Name="PrexoniteParser" DependsOnTargets="PrexoniteGrammar" BeforeTargets="BeforeBuild">
     <Message Text="Building prexonite parser." />
-    <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)">
+    <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)\Compiler">
       <Output TaskParameter="OutputFiles" ItemName="PrexoniteParserFiles" />
     </PxCoco>
     <!-- We use the CSFlex-generated scanner instead. -->
@@ -117,7 +117,7 @@
   <!-- Prexonite Grammar Merging Target -->
   <Target Name="PrexoniteGrammar" Outputs="$(ProjectDir)Prexonite__gen.atg" Inputs="@(GrammarFragment->'%(FullPath)')">
     <Message Text="Merging Prexonite Grammar fragments." />
-    <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg" RelativePathRoot="$(ProjectDir)">
+    <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg" RelativePathRoot="$(ProjectDir)\Compiler">
     </Merge>
     <Message Text="$(PrexoniteGrammarDefinition) is now ready." />
   </Target>
@@ -161,9 +161,9 @@
 
   <!-- NUGET References -->
   <ItemGroup>
-    <PackageReference Include="Lokad.ILPack" Version="0.1.3" />
+    <PackageReference Include="Lokad.ILPack" Version="0.2.0" />
     <PackageReference Include="PxCoco" Version="1.98.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="3.1.10" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.13" />
   </ItemGroup>
 </Project>
