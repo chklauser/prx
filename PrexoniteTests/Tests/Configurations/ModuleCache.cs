@@ -38,10 +38,10 @@ public class ModuleCache
     private static readonly ObjectPool<ModuleCache> LinkedCilCache = mkCachePool();
 
     private static ObjectPool<ModuleCache> mkCachePool() => 
-        new LeakTrackingObjectPool<ModuleCache>(new DefaultObjectPool<ModuleCache>(
+        new DefaultObjectPool<ModuleCache>(
             new DefaultPooledObjectPolicy<ModuleCache>(), 
             Environment.ProcessorCount
-            ));
+            );
     
     private ITargetDescription? _legacySymbolsDescription;
 
