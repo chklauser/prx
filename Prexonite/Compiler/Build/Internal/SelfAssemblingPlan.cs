@@ -45,10 +45,8 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
 {
     static readonly TraceSource _trace = Plan.Trace;
 
-    [NotNull]
     readonly AdHocTaskCache<string, PreflightResult> _preflightCache = new();
 
-    [NotNull]
     readonly AdHocTaskCache<string, ITargetDescription> _targetCreationCache = new();
 
     public IList<string> SearchPaths { get; } = new ThreadSafeList<string>();
@@ -154,7 +152,6 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     public ISet<ModuleName> StandardLibrary => _standardLibrary;
 
 
-    [NotNull]
     Task<PreflightResult> _orderPreflight(RefSpec refSpec, CancellationToken token)
     {
         if (refSpec.ResolvedPath == null)
@@ -171,7 +168,6 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             }, token);
     }
 
-    [NotNull]
     async Task<PreflightResult> _performPreflight(RefSpec refSpec, CancellationToken token)
         // requires refSpec.Source != null
         // ensures result != null
@@ -250,12 +246,11 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         }
     }
 
-    static FileInfo? _getPath([NotNull] ISource source)
+    static FileInfo? _getPath(ISource source)
     {
         return source is FileSource fileSource ? fileSource.File : null;
     }
 
-    [NotNull]
     static readonly Regex _fileReferencePattern = new(@"^([/.]|[a-zA-Z]:)");
 
     static RefSpec _parseRefSpec(MetaEntry entry)
@@ -282,8 +277,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         }
     }
 
-    [NotNull]
-    async Task<RefSpec> _resolveRefSpec([NotNull] RefSpec refSpec, CancellationToken token, SelfAssemblyMode mode)
+    async Task<RefSpec> _resolveRefSpec(RefSpec refSpec, CancellationToken token, SelfAssemblyMode mode)
         // requires refSpec.ModuleName != null || refSpec.Source != null || refSpec.rawPath != null || refSpec.ResolvedPath != null
         // ensures result == refSpec && (TargetDescriptions.Contains(result) || refSpec.ErrorMessage != null)
     {
@@ -526,7 +520,6 @@ class PreflightResult
 {
     public volatile ModuleName? ModuleName;
 
-    [NotNull]
     public readonly List<RefSpec> References = new();
 
     public volatile string? ErrorMessage;

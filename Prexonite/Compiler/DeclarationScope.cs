@@ -11,10 +11,8 @@ namespace Prexonite.Compiler;
 [DebuggerDisplay("declaration scope {ToString()}")]
 public class DeclarationScope
 {
-    [NotNull]
     public Namespace Namespace => _LocalNamespace;
 
-    [NotNull]
     internal LocalNamespace _LocalNamespace { get; }
 
     public QualifiedId PathPrefix { get; }
@@ -22,10 +20,9 @@ public class DeclarationScope
     /// <summary>
     /// Symbol store for symbols local to the scope (private, not necessarily exported)
     /// </summary>
-    [NotNull]
     public SymbolStore Store { get; }
 
-    internal DeclarationScope([NotNull] LocalNamespace ns, QualifiedId pathPrefix, [NotNull] SymbolStore store)
+    internal DeclarationScope(LocalNamespace ns, QualifiedId pathPrefix, SymbolStore store)
     {
         _LocalNamespace = ns ?? throw new ArgumentNullException(nameof(ns));
         PathPrefix = pathPrefix;

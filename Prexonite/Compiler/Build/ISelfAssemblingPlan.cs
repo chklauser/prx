@@ -21,7 +21,7 @@ public interface ISelfAssemblingPlan : IPlan
     /// </summary>
     /// <para>Behavior is not defined if the search path is being modified while this build plan is
     /// assembling modules.</para>
-    [NotNull, PublicAPI]
+    [PublicAPI]
     IList<string> SearchPaths { get; }
 
     /// <summary>
@@ -33,13 +33,13 @@ public interface ISelfAssemblingPlan : IPlan
     /// instructions</param>
     /// <param name="token">The cancellation token for this asynchronous operation.</param>
     /// <returns>A task that represents the build plan assembly in progress.</returns>
-    [NotNull, PublicAPI]
+    [PublicAPI]
     Task<ITargetDescription> AssembleAsync(ISource source, CancellationToken token = default);
 
     /// <summary>
     /// The set of standard library modules to implicitly link against. Can be suppressed on a per-module basis via the <see cref="Module.NoStandardLibraryKey"/> tag.
     /// </summary>
-    [NotNull, PublicAPI]
+    [PublicAPI]
     ISet<ModuleName> StandardLibrary { get; }
 
     /// <summary>
@@ -50,6 +50,5 @@ public interface ISelfAssemblingPlan : IPlan
     /// <param name="source">The source text to read. Must be a module.</param>
     /// <param name="token"></param>
     /// <returns>A description of the supplied module. Its dependencies might not be satisfied at this point.</returns>
-    [NotNull]
     Task<ITargetDescription> RegisterModule(ISource source, CancellationToken token = default);
 }

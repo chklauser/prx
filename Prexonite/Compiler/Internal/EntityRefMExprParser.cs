@@ -7,8 +7,7 @@ namespace Prexonite.Compiler.Internal;
 
 static class EntityRefMExprParser
 {
-    [NotNull]
-    public static EntityRef Parse([NotNull] MExpr expr)
+    public static EntityRef Parse(MExpr expr)
     {
         // ReSharper disable TooWideLocalVariableScope
         string internalId;

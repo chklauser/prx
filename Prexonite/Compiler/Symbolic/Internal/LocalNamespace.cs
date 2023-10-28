@@ -32,8 +32,7 @@ public abstract class LocalNamespace : Namespace
     /// <param name="logicalName">The logical name to derive a physical name from.</param>
     /// <returns>A physical name, related to the logical name provided.</returns>
     /// <exception cref="InvalidOperationException"><see cref="Prefix"/> has not been assigned yet.</exception>
-    [NotNull]
-    public string DerivePhysicalName([NotNull] string logicalName)
+    public string DerivePhysicalName(string logicalName)
     {
         if (logicalName == null)
             throw new ArgumentNullException(nameof(logicalName));
@@ -54,7 +53,6 @@ public abstract class LocalNamespace : Namespace
     /// <remarks>
     /// <para>Use the <see cref="Namespace"/> interface to list all symbols included in this namespace, not just the ones defined in this module.</para>
     /// </remarks>
-    [NotNull]
     public abstract IEnumerable<KeyValuePair<string, Symbol>> Exports { get; }
 
     /// <summary>
@@ -71,7 +69,7 @@ public abstract class LocalNamespace : Namespace
     /// Adds a set of declarations to the exports of this namespace. Will replace conflicting symbols instead of merging with them.
     /// </summary>
     /// <param name="exportScope">The set of symbols to export.</param>
-    public abstract void DeclareExports([NotNull] IEnumerable<KeyValuePair<string, Symbol>> exportScope);
+    public abstract void DeclareExports(IEnumerable<KeyValuePair<string, Symbol>> exportScope);
 
     #endregion
 

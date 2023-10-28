@@ -37,16 +37,14 @@ namespace Prexonite.Compiler.Symbolic;
 
 public abstract class SymbolStoreBuilder
 {
-    public abstract void Forward(SymbolOrigin sourceDescription, [JetBrains.Annotations.NotNull] ISymbolView<Symbol> source, [JetBrains.Annotations.NotNull] IEnumerable<SymbolTransferDirective> directives);
+    public abstract void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source, IEnumerable<SymbolTransferDirective> directives);
     public abstract SymbolStore ToSymbolStore();
 
-    [JetBrains.Annotations.NotNull]
     public static SymbolStoreBuilder Create(ISymbolView<Symbol>? existingNamespace)
     {
         return new Impl{ ExistingNamespace = existingNamespace };
     }
 
-    [JetBrains.Annotations.NotNull]
     public static SymbolStoreBuilder Create()
     {
         return new Impl();
@@ -58,13 +56,11 @@ public abstract class SymbolStoreBuilder
 
     sealed class ImportStatement : List<SymbolTransferDirective>
     {
-        [JetBrains.Annotations.NotNull]
         public ISymbolView<Symbol> Source { get; }
 
-        [JetBrains.Annotations.NotNull]
         public SymbolOrigin Origin { get; }
 
-        public ImportStatement([JetBrains.Annotations.NotNull] ISymbolView<Symbol> source, [JetBrains.Annotations.NotNull] SymbolOrigin origin)
+        public ImportStatement(ISymbolView<Symbol> source, SymbolOrigin origin)
         {
             Source = source ?? throw new ArgumentNullException(nameof(source));
             Origin = origin ?? throw new ArgumentNullException(nameof(origin));
@@ -103,7 +99,6 @@ public abstract class SymbolStoreBuilder
     {
         public override ISymbolView<Symbol>? ExistingNamespace { get; set; }
 
-        [JetBrains.Annotations.NotNull]
         readonly ImportStatementSet _statements = new();
 
         public override void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source,
@@ -169,7 +164,6 @@ public abstract class SymbolStoreBuilder
             // ReSharper restore ImplicitlyCapturedClosure
         }
 
-        [JetBrains.Annotations.NotNull]
         static IEnumerable<SymbolInfo> _applyDirectivesWildcard(ImportStatement import,
             IEnumerable<KeyValuePair<string, Symbol>> symbolSource,
             HashSet<string> drops, Dictionary<string, List<string>> renames)

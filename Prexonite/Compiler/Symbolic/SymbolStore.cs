@@ -77,7 +77,6 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     /// <param name="conflictUnionSource">A sequence of symbols, possibly from multiple stores, that the newly created store should provide a unified view of.</param>
     /// <returns>A new symbol store.</returns>
     [PublicAPI]
-    [JetBrains.Annotations.NotNull]
     public static SymbolStore Create(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
     {
         return new ConflictUnionFallbackStore(parent,conflictUnionSource);
@@ -116,7 +115,6 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     /// <summary>
     /// Provides access to all local declarations of a symbol store (symbols that were declared via <see cref="Declare"/>).
     /// </summary>
-    [JetBrains.Annotations.NotNull]
     public abstract IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations { get; }
 
     //TODO (Ticket #108) Find a good place for the method CreateSymbolNotFoundError
