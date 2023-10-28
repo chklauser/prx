@@ -60,7 +60,7 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
     }
 
     [CanBeNull]
-    private MExpr _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
+    MExpr _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
     {
         if (existingSymbols.TryGetValue(symbol, out var symbolName))
         {

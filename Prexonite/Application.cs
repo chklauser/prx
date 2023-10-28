@@ -215,7 +215,7 @@ public class Application : IMetaFilter,
 
     #region Initialization
 
-    private int _initializationOffset;
+    int _initializationOffset;
 
     /// <summary>
     ///     Provides readonly access to the application's <see cref = "ApplicationInitializationState">initialization state</see>.
@@ -547,7 +547,7 @@ public class Application : IMetaFilter,
 
     #region Application Compound Linking
 
-    private ApplicationCompound _compound;
+    ApplicationCompound _compound;
 
     public ApplicationCompound Compound => _compound ??= new SingletonCompound(this);
 
@@ -619,9 +619,9 @@ public class Application : IMetaFilter,
         else
             return IsLinked && _compound.Contains(name);
     }
-        
 
-    private void _linkInto(ApplicationCompound targetCompound)
+
+    void _linkInto(ApplicationCompound targetCompound)
     {
         var oldCompound = _compound;
         if(IsLinked)
@@ -663,10 +663,10 @@ public class Application : IMetaFilter,
 
     #region SingletonCompound class
 
-    private class SingletonCompound : ApplicationCompound
+    class SingletonCompound : ApplicationCompound
     {
-        private Application _application;
-        private CentralCache _cache;
+        Application _application;
+        CentralCache _cache;
 
         public override CentralCache Cache
         {

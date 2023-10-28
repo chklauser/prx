@@ -32,7 +32,7 @@ namespace Prexonite.Internal;
 ///    Functions (<see cref = "PFunction" />) and global variables (<see cref = "PVariable" />).
 ///</summary>
 ///[DebuggerStepThrough]
-internal class MetaTableImpl : MetaTable
+class MetaTableImpl : MetaTable
 {
     #region Constructors
 
@@ -59,7 +59,7 @@ internal class MetaTableImpl : MetaTable
 
     #region Filter
 
-    private IMetaFilter _filter;
+    IMetaFilter _filter;
 
     /// <summary>
     ///     Returns a reference to the object that filters requests to this meta table. Can be null.
@@ -138,12 +138,12 @@ internal class MetaTableImpl : MetaTable
         _table.AddRange(entries);
     }
 
-    private static SymbolTable<MetaEntry> _createInternalStorage(int capacity)
+    static SymbolTable<MetaEntry> _createInternalStorage(int capacity)
     {
         return new(capacity);
     }
 
-    private SymbolTable<MetaEntry> _table;
+    SymbolTable<MetaEntry> _table;
 
     protected virtual void CloneFrom(MetaTableImpl metaTable)
     {

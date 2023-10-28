@@ -118,7 +118,7 @@ function main() {
             "original contains elements not in deserialized");
     }
 
-    private static MetaEntry[] _getCilHints(IHasMetaTable table, bool keyMustExist)
+    static MetaEntry[] _getCilHints(IHasMetaTable table, bool keyMustExist)
     {
         if (table.Meta.TryGetValue(Loader.CilHintsKey, out var cilHintsEntry))
         {
@@ -223,7 +223,7 @@ function main()
         Expect("tfce");
     }
 
-    private void _expectCil(string functionId = "main")
+    void _expectCil(string functionId = "main")
     {
         var func = target.Functions[functionId];
         Assert.IsNotNull(func, "Function " + functionId + " must exist");
@@ -613,12 +613,12 @@ function main(x) //[store_debug_implementation enabled;]
         Expect("kf", true);
     }
 
-    private void _expectSehDeficiency(string name = "main")
+    void _expectSehDeficiency(string name = "main")
     {
         _expectSehDeficiency(target.Functions[name]);
     }
 
-    private static void _expectSehDeficiency(PFunction function)
+    static void _expectSehDeficiency(PFunction function)
     {
         Assert.IsNotNull(function, "function not found");
         Assert.IsTrue(function.Meta[PFunction.VolatileKey].Switch,

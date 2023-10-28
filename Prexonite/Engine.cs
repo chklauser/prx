@@ -90,7 +90,7 @@ public partial class Engine
 
     #region PType map
 
-    private readonly Dictionary<Type, PType> _pTypeMap;
+    readonly Dictionary<Type, PType> _pTypeMap;
 
     /// <summary>
     ///     Provides access to the PType to CLR <see cref = "System.Type">Type</see> mapping.
@@ -108,7 +108,7 @@ public partial class Engine
     [DebuggerStepThrough]
     public class PTypeMapIterator
     {
-        private readonly Engine _outer;
+        readonly Engine _outer;
 
         internal PTypeMapIterator(Engine outer)
         {
@@ -194,7 +194,7 @@ public partial class Engine
 
     #region PType registry
 
-    private readonly SymbolTable<Type> _pTypeRegistry;
+    readonly SymbolTable<Type> _pTypeRegistry;
 
     /// <summary>
     ///     Provides access to the dictionary of <see cref = "PType">PTypes</see> registered 
@@ -210,7 +210,7 @@ public partial class Engine
     [DebuggerStepThrough]
     public class PTypeRegistryIterator
     {
-        private readonly Engine _outer;
+        readonly Engine _outer;
 
         internal PTypeRegistryIterator(Engine outer)
         {
@@ -482,7 +482,7 @@ public partial class Engine
 
     #region Assembly management
 
-    private readonly AssemblyResolver _registeredAssemblies;
+    readonly AssemblyResolver _registeredAssemblies;
 
     /// <summary>
     ///     Determines whether an assembly is already registered for use by the Prexonite VM.
@@ -554,7 +554,7 @@ public partial class Engine
 
     #region Class
 
-    private readonly LocalDataStoreSlot _stackSlot;
+    readonly LocalDataStoreSlot _stackSlot;
 
     /// <summary>
     ///     Creates a new Prexonite virtual machine.

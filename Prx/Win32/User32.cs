@@ -61,7 +61,7 @@ namespace Prx.Win32;
 
 public static class User32
 {
-    private const uint
+    const uint
         VK_SHIFT = 0x10,
         VK_CONTROL = 0x11,
         VK_ALT = 0x12,
@@ -103,9 +103,9 @@ public static class User32
             throw new Exception("Invalid key (" + key + ")");
     }
 
-    private const byte HighBit = 0x80;
+    const byte HighBit = 0x80;
 
-    private static byte[] GetKeyState(ConsoleModifiers modifiers)
+    static byte[] GetKeyState(ConsoleModifiers modifiers)
     {
         var keyState = new byte[256];
 
@@ -122,16 +122,16 @@ public static class User32
     }
 
     [DllImport("user32.dll", EntryPoint = "GetKeyState")]
-    private static extern short _queryKeyState(uint nVirtKey);
+    static extern short _queryKeyState(uint nVirtKey);
 
     [DllImport("user32.dll")]
-    private static extern int ToAscii(uint uVirtKey, uint uScanCode,
+    static extern int ToAscii(uint uVirtKey, uint uScanCode,
         byte[] lpKeyState,
         [Out] StringBuilder lpChar,
         uint uFlags);
 
     [DllImport("user32.dll")]
-    private static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpKeyState,
+    static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpKeyState,
         [Out, MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)] StringBuilder pwszBuff,
         int cchBuff,
         uint wFlags);

@@ -114,7 +114,7 @@ public class AstTypecast : AstExpr,
         return false;
     }
 
-    private bool _tryOptimizeConstCast(CompilerTarget target, AstConstant constSubject,
+    bool _tryOptimizeConstCast(CompilerTarget target, AstConstant constSubject,
         AstConstantTypeExpression constType, out AstExpr expr)
     {
         expr = null;

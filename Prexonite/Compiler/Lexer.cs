@@ -50,7 +50,7 @@ class Lexer: Prexonite.Internal.IScanner {
   public const int YYEOF = -1;
 
   /** initial size of the lookahead buffer */
-  private const int ZZ_BUFFERSIZE = 16384;
+  const int ZZ_BUFFERSIZE = 16384;
   /**
    * This is used in 'if' statements to eliminate dead code
    * warnings for 'break;' after the end of a user action
@@ -92,7 +92,7 @@ class Lexer: Prexonite.Internal.IScanner {
   /** 
    * Translates characters to character classes
    */
-  private static readonly ushort[] ZZ_CMAP_PACKED = new ushort[] {
+  static readonly ushort[] ZZ_CMAP_PACKED = new ushort[] {
     9, 9, 1, 12, 1, 10, 3, 10, 14, 9, 4, 0, 1, 12, 1, 20, 1, 13, 1, 19,
     1, 14, 1, 0, 1, 41, 1, 3, 1, 24, 1, 25, 1, 16, 1, 5, 1, 50, 1, 6,
     1, 27, 1, 15, 1, 28, 9, 1, 1, 36, 1, 49, 1, 44, 1, 26, 1, 43, 1, 48,
@@ -177,14 +177,14 @@ class Lexer: Prexonite.Internal.IScanner {
   /** 
    * Translates characters to character classes
    */
-  private static readonly char[] ZZ_CMAP;
+  static readonly char[] ZZ_CMAP;
 
   /** 
    * Translates DFA states to action switch labels.
    */
-  private static readonly int [] ZZ_ACTION;
+  static readonly int [] ZZ_ACTION;
 
-  private static readonly ushort[] ZZ_ACTION_PACKED_0 = new ushort[] {
+  static readonly ushort[] ZZ_ACTION_PACKED_0 = new ushort[] {
     10, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7,
     1, 3, 1, 8, 1, 9, 1, 3, 1, 1, 1, 10, 1, 3, 1, 11,
     1, 12, 1, 13, 1, 14, 1, 15, 1, 2, 3, 3, 1, 16, 1, 17,
@@ -211,14 +211,14 @@ class Lexer: Prexonite.Internal.IScanner {
     1, 131, 1, 132, 1, 109, 1, 0, 1, 110, 2, 0, 2, 109, 2, 110,
     1, 125, 6, 0, 0 };
 
-  private static int [] zzUnpackAction() {
+  static int [] zzUnpackAction() {
     int [] result = new int[243];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
   }
 
-  private static int zzUnpackAction(ushort[] packed, int offset, int [] result) {
+  static int zzUnpackAction(ushort[] packed, int offset, int [] result) {
     int i = 0;       /* index in packed string  */
     int j = offset;  /* index in unpacked array */
     int l = packed.Length;
@@ -234,9 +234,9 @@ class Lexer: Prexonite.Internal.IScanner {
   /** 
    * Translates a state to a row index in the transition table
    */
-  private static readonly int [] ZZ_ROWMAP;
+  static readonly int [] ZZ_ROWMAP;
 
-  private static readonly ushort[] ZZ_ROWMAP_PACKED_0 = new ushort[] {
+  static readonly ushort[] ZZ_ROWMAP_PACKED_0 = new ushort[] {
     0, 0, 0, 53, 0, 106, 0, 159, 0, 212, 0, 0x0109, 0, 0x013e, 0, 0x0173,
     0, 0x01a8, 0, 0x01dd, 0, 0x0212, 0, 0x0247, 0, 0x027c, 0, 0x02b1, 0, 0x02e6, 0, 0x031b,
     0, 0x0212, 0, 0x0350, 0, 0x0385, 0, 0x0212, 0, 0x03ba, 0, 0x03ef, 0, 0x0424, 0, 0x0459,
@@ -269,14 +269,14 @@ class Lexer: Prexonite.Internal.IScanner {
     0, 0x0212, 0, 0x1a16, 0, 0x0212, 0, 0x1a4b, 0, 0x1a80, 0, 0x1ab5, 0, 0x1aea, 0, 0x1b1f,
     0, 0x1b54, 0, 0x190d, 0, 0x1977, 0 };
 
-  private static int [] zzUnpackRowMap() {
+  static int [] zzUnpackRowMap() {
     int [] result = new int[243];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
   }
 
-  private static int zzUnpackRowMap(ushort[] packed, int offset, int [] result) {
+  static int zzUnpackRowMap(ushort[] packed, int offset, int [] result) {
     int i = 0;  /* index in packed string  */
     int j = offset;  /* index in unpacked array */
     int l = packed.Length;
@@ -290,9 +290,9 @@ class Lexer: Prexonite.Internal.IScanner {
   /** 
    * The transition table of the DFA
    */
-  private static readonly int [] ZZ_TRANS;
+  static readonly int [] ZZ_TRANS;
 
-  private static readonly ushort[] ZZ_TRANS_PACKED_0 = new ushort[] {
+  static readonly ushort[] ZZ_TRANS_PACKED_0 = new ushort[] {
     1, 11, 1, 12, 1, 13, 1, 11, 1, 13, 1, 14, 1, 15, 2, 13,
     1, 11, 3, 16, 1, 17, 1, 18, 1, 19, 1, 20, 1, 21, 1, 13,
     1, 22, 1, 23, 1, 24, 1, 13, 1, 25, 1, 26, 1, 27, 1, 28,
@@ -466,14 +466,14 @@ class Lexer: Prexonite.Internal.IScanner {
     17, 0, 1, 242, 2, 0, 2, 243, 1, 0, 1, 243, 16, 0, 1, 243,
     6, 0, 1, 243, 3, 0, 2, 243, 17, 0, 1, 243, 1, 0, 0 };
 
-  private static int [] zzUnpackTrans() {
+  static int [] zzUnpackTrans() {
     int [] result = new int[7049];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
   }
 
-  private static int zzUnpackTrans(ushort[] packed, int offset, int [] result) {
+  static int zzUnpackTrans(ushort[] packed, int offset, int [] result) {
     int i = 0;       /* index in packed string  */
     int j = offset;  /* index in unpacked array */
     int l = packed.Length;
@@ -488,12 +488,12 @@ class Lexer: Prexonite.Internal.IScanner {
 
 
   /* error codes */
-  private const int ZZ_UNKNOWN_ERROR = 0;
-  private const int ZZ_NO_MATCH = 1;
-  private const int ZZ_PUSHBACK_2BIG = 2;
+  const int ZZ_UNKNOWN_ERROR = 0;
+  const int ZZ_NO_MATCH = 1;
+  const int ZZ_PUSHBACK_2BIG = 2;
 
   /* error messages for the codes above */
-  private static readonly String[] ZZ_ERROR_MSG = new string[] {
+  static readonly String[] ZZ_ERROR_MSG = new string[] {
     "Unkown internal scanner error",
     "Error: could not match input",
     "Error: pushback value was too large"
@@ -502,9 +502,9 @@ class Lexer: Prexonite.Internal.IScanner {
   /**
    * ZZ_ATTRIBUTE[aState] contains the attributes of state <code>aState</code>
    */
-  private static readonly int [] ZZ_ATTRIBUTE;
+  static readonly int [] ZZ_ATTRIBUTE;
 
-  private static readonly ushort[] ZZ_ATTRIBUTE_PACKED_0 = new ushort[] {
+  static readonly ushort[] ZZ_ATTRIBUTE_PACKED_0 = new ushort[] {
     10, 0, 1, 9, 5, 1, 1, 9, 2, 1, 1, 9, 6, 1, 1, 9,
     1, 1, 1, 9, 5, 1, 3, 9, 4, 1, 3, 9, 1, 1, 2, 9,
     2, 1, 3, 9, 2, 1, 2, 9, 1, 1, 1, 9, 1, 1, 2, 9,
@@ -519,14 +519,14 @@ class Lexer: Prexonite.Internal.IScanner {
     1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 6, 9, 2, 1,
     1, 0, 1, 1, 2, 0, 1, 9, 1, 1, 1, 9, 2, 1, 6, 0, 0 };
 
-  private static int [] zzUnpackAttribute() {
+  static int [] zzUnpackAttribute() {
     int [] result = new int[243];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
   }
 
-  private static int zzUnpackAttribute(ushort[] packed, int offset, int [] result) {
+  static int zzUnpackAttribute(ushort[] packed, int offset, int [] result) {
     int i = 0;       /* index in packed string  */
     int j = offset;  /* index in unpacked array */
     int l = packed.Length;
@@ -539,63 +539,63 @@ class Lexer: Prexonite.Internal.IScanner {
   }
 
   /** the input device */
-  private System.IO.TextReader zzReader;
+  System.IO.TextReader zzReader;
 
   /** the current state of the DFA */
-  private int zzState;
+  int zzState;
 
   /** the current lexical state */
-  private int zzLexicalState = YYINITIAL;
+  int zzLexicalState = YYINITIAL;
 
   /** this buffer contains the current text to be matched and is
       the source of the yytext() string */
-  private char[] zzBuffer = new char[ZZ_BUFFERSIZE];
+  char[] zzBuffer = new char[ZZ_BUFFERSIZE];
 
   /** the textposition at the last accepting state */
-  private int zzMarkedPos;
+  int zzMarkedPos;
 
   /** the textposition at the last state to be included in yytext */
-  private int zzPushbackPos;
+  int zzPushbackPos;
 
   /** the current text position in the buffer */
-  private int zzCurrentPos;
+  int zzCurrentPos;
 
   /** startRead marks the beginning of the yytext() string in the buffer */
-  private int zzStartRead;
+  int zzStartRead;
 
   /** endRead marks the last character in the buffer, that has been read
       from input */
-  private int zzEndRead;
+  int zzEndRead;
 
   /** number of newlines encountered up to the start of the matched text */
-  private int yyline;
+  int yyline;
 
   /** the number of characters up to the start of the matched text */
-  private int yychar;
+  int yychar;
 
   /**
    * the number of characters from the last newline up to the start of the 
    * matched text
    */
-  private int yycolumn;
+  int yycolumn;
 
   /** 
    * zzAtBOL == true <=> the scanner is currently at the beginning of a line
    */
-  private bool zzAtBOL = true;
+  bool zzAtBOL = true;
 
   /** zzAtEOF == true <=> the scanner is at the EOF */
-  private bool zzAtEOF;
+  bool zzAtEOF;
 
 
   /** the stack of open (nested) input streams to read from */
-  private System.Collections.Stack zzStreams = new System.Collections.Stack();
+  System.Collections.Stack zzStreams = new System.Collections.Stack();
 
   /**
    * inner class used to store info for nested
    * input streams
    */
-  private sealed class ZzFlexStreamInfo {
+  sealed class ZzFlexStreamInfo {
     public System.IO.TextReader zzReader;
     public int zzEndRead;
     public int zzStartRead;
@@ -651,7 +651,7 @@ class Lexer: Prexonite.Internal.IScanner {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(ushort[] packed) {
+  static char [] zzUnpackCMap(ushort[] packed) {
     char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
@@ -671,7 +671,7 @@ class Lexer: Prexonite.Internal.IScanner {
    * 
    * @exception   System.IO.IOException  if any I/O-Error occurs
    */
-  private bool zzRefill() {
+  bool zzRefill() {
 
     /* first: make room (if you can) */
     if (zzStartRead > 0) {
@@ -873,7 +873,7 @@ class Lexer: Prexonite.Internal.IScanner {
    *
    * @param   errorCode  the code of the errormessage to display
    */
-  private void zzScanError(int errorCode) {
+  void zzScanError(int errorCode) {
     String message;
     try {
       message = ZZ_ERROR_MSG[errorCode];

@@ -30,10 +30,10 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal;
 
-internal class DependencySet : System.Collections.ObjectModel.KeyedCollection<string,ModuleName>, ISet<ModuleName>
+class DependencySet : System.Collections.ObjectModel.KeyedCollection<string,ModuleName>, ISet<ModuleName>
 {
-    private readonly HashSet<ModuleName> _nameSet = new();
-    private readonly ModuleName _correspondingModule;
+    readonly HashSet<ModuleName> _nameSet = new();
+    readonly ModuleName _correspondingModule;
 
     protected override void InsertItem(int index, ModuleName item)
     {
@@ -68,7 +68,7 @@ internal class DependencySet : System.Collections.ObjectModel.KeyedCollection<st
         return item.Id;
     }
 
-    private void _throwConflict(ModuleName newModule, ModuleName existingModule)
+    void _throwConflict(ModuleName newModule, ModuleName existingModule)
     {
         throw new VersionConflictException(existingModule, newModule, _correspondingModule);
     }

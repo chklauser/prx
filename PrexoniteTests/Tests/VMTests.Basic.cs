@@ -362,7 +362,7 @@ function fib(n) does asm
     }
 
     [DebuggerNonUserCode]
-    private static int _fibonacci(int n)
+    static int _fibonacci(int n)
     {
         return
             n <= 2
@@ -638,7 +638,7 @@ function main(a,b,c) = work(a,b,c).ToString;
             _input = input;
         }
 
-        private readonly string _input;
+        readonly string _input;
 
         #region IEnumerable<string> Members
 

@@ -33,7 +33,7 @@ namespace PrexoniteTests.Tests.Internal;
 
 public class DependingOnConstraint : Constraint
 {
-    private readonly ModuleName _dependency;
+    readonly ModuleName _dependency;
 
     public DependingOnConstraint(ModuleName dependency) : base(dependency)
     {
@@ -54,7 +54,7 @@ public class DependingOnConstraint : Constraint
         return new  ConstraintResult(this, actualValue, _matches(actualValue));
     }
 
-    private bool _matches(object actualValue)
+    bool _matches(object actualValue)
     {
         return actualValue is ITargetDescription desc && desc.Dependencies.Any(n => n.Equals(_dependency));
     }

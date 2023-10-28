@@ -171,7 +171,7 @@ namespace Prexonite
         /// </summary>
         public string PrexoniteStackTrace { get; }
 
-        private PrexoniteRuntimeException(
+        PrexoniteRuntimeException(
             string message, Exception innerException, string prexoniteStackTrace)
             : base(message, innerException)
         {
@@ -328,7 +328,7 @@ namespace Prexonite
                 lowestRuntimeException.PrexoniteStackTrace);
         }
 
-        private static void _unpack(PrexoniteRuntimeException originalException,
+        static void _unpack(PrexoniteRuntimeException originalException,
             out Exception lowestException, out PrexoniteRuntimeException lowestRuntimeException)
         {
             Exception exc = originalException;

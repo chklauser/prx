@@ -12,7 +12,7 @@ namespace Prexonite;
 [DebuggerNonUserCode]
 public class PValueComparer : IComparer<PValue>
 {
-    private readonly StackContext _sctx;
+    readonly StackContext _sctx;
 
     public PValueComparer(StackContext sctx)
     {

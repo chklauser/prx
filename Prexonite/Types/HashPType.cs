@@ -41,7 +41,7 @@ public class HashPType : PType, ICilCompilerAware
 {
     #region Singleton
 
-    private HashPType()
+    HashPType()
     {
     }
 
@@ -51,7 +51,7 @@ public class HashPType : PType, ICilCompilerAware
 
     #region PType Interface
 
-    private static bool _tryConvertToPair(
+    static bool _tryConvertToPair(
         StackContext sctx, PValue inpv, out PValueKeyValuePair result)
     {
         result = null;
@@ -503,7 +503,7 @@ public class HashPType : PType, ICilCompilerAware
         return otherType is HashPType;
     }
 
-    private const int _code = 912499480;
+    const int _code = 912499480;
 
     public override int GetHashCode()
     {
@@ -531,7 +531,7 @@ public class HashPType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    private static readonly MethodInfo GetHashPType =
+    static readonly MethodInfo GetHashPType =
         typeof (PType).GetProperty("Hash").GetGetMethod();
 
     /// <summary>

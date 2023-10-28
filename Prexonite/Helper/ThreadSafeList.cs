@@ -9,15 +9,15 @@ namespace Prexonite;
 
 public sealed class ThreadSafeList<T> : IList<T>
 {
-    private readonly IList<T> _inner = new List<T>();
-    private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
+    readonly IList<T> _inner = new List<T>();
+    readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
         
     public IEnumerator<T> GetEnumerator()
     {
         return asWeaklyConsistentEnumerable().GetEnumerator();
     }
 
-    private IEnumerable<T> asWeaklyConsistentEnumerable()
+    IEnumerable<T> asWeaklyConsistentEnumerable()
     {
         var enumerator = WithReadLock(inner => inner.GetEnumerator());
         while (true)

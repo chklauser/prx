@@ -111,9 +111,9 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return false;
     }
 
-    private static readonly Assembly _prexoniteAssembly = Assembly.GetAssembly(typeof(PValue));
+    static readonly Assembly _prexoniteAssembly = Assembly.GetAssembly(typeof(PValue));
 
-    private static Type _getTypeForNamespace(string clrTypeName,
+    static Type _getTypeForNamespace(string clrTypeName,
         IEnumerable<Assembly> assemblies)
     {
         // TODO: drop 'mscorlib' special-casing https://github.com/dotnet/corefx/issues/25968
@@ -343,7 +343,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return ret;
     }
 
-    private bool _try_call_conversion_operator(
+    bool _try_call_conversion_operator(
         StackContext sctx,
         PValue[] args,
         PCall call,
@@ -440,7 +440,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name="cond">The details of the call.</param>
     /// <returns>The actual member to consider or <c>null</c> if this kind of member is not applicable after all.</returns>
     [ContractAnnotation("candidate:null => null ; candidate:notnull => canbenull")]
-    private static MemberInfo _discover(MemberInfo candidate, [NN] call_conditions cond)
+    static MemberInfo _discover(MemberInfo candidate, [NN] call_conditions cond)
     {
         if (candidate == null)
         {
@@ -488,7 +488,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name="candidate">The member candidate to rate.</param>
     /// <param name="cond">The circumstances of the call.</param>
     /// <returns>The score for this member. (Lower indicates better match)</returns>
-    private static Score _rate(MemberInfo candidate, call_conditions cond)
+    static Score _rate(MemberInfo candidate, call_conditions cond)
     {
         switch (candidate.MemberType)
         {
@@ -544,7 +544,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         }
     }
 
-    private static bool _try_execute_single(MemberInfo candidate, call_conditions cond, PValue subject,
+    static bool _try_execute_single(MemberInfo candidate, call_conditions cond, PValue subject,
         out PValue ret)
     {
         object result;
@@ -649,7 +649,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return true;
     }
 
-    private static bool _try_execute(
+    static bool _try_execute(
         IEnumerable<MemberInfo> candidates,
         call_conditions cond,
         PValue subject,
@@ -712,7 +712,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     [DebuggerStepThrough]
-    private class call_conditions
+    class call_conditions
     {
         public readonly StackContext Sctx;
         public readonly PValue[] Args;
@@ -743,7 +743,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         }
     }
 
-    private static bool _default_member_filter(MemberInfo candidate, object arg)
+    static bool _default_member_filter(MemberInfo candidate, object arg)
     {
         var property = candidate as PropertyInfo;
         var method = candidate as MethodInfo;
@@ -783,7 +783,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 candidate.GetType() + ".");
     }
 
-    private static bool _member_filter(MemberInfo candidate, object arg)
+    static bool _member_filter(MemberInfo candidate, object arg)
     {
         var cond = (call_conditions) arg;
         //Criteria No.1: The members name (may be suppressed)
@@ -823,7 +823,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name = "parameters">The parameters array to check.</param>
     /// <param name = "cond">The call_condition object for the current call.</param>
     /// <returns>True if the the hack can be applied, otherwise false.</returns>
-    private static bool _sctx_hack(ParameterInfo[] parameters, call_conditions cond)
+    static bool _sctx_hack(ParameterInfo[] parameters, call_conditions cond)
     {
         //StackContext Hack
         //NOTE: This might be the source of strange problems!
@@ -836,7 +836,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType);
     }
 
-    private static bool _method_filter(MethodBase method, call_conditions cond)
+    static bool _method_filter(MethodBase method, call_conditions cond)
     {
         var parameters = method.GetParameters();
 
@@ -974,7 +974,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return ret;
     }
 
-    private static IEnumerable<MemberInfo> _overloadResolution(IEnumerable<MemberInfo> candidates, call_conditions cond) => 
+    static IEnumerable<MemberInfo> _overloadResolution(IEnumerable<MemberInfo> candidates, call_conditions cond) => 
         candidates
             .Select(c =>
             {
@@ -1512,7 +1512,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             return false;
     }
 
-    private bool _try_clr_convert_to(
+    bool _try_clr_convert_to(
         StackContext sctx,
         PValue subject,
         Type target,
@@ -1556,7 +1556,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
     public const string Literal = "Object";
 
-    private const int _code = -410320954;
+    const int _code = -410320954;
 
     public override string ToString()
     {

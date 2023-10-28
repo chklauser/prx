@@ -40,7 +40,7 @@ public class NullPType : PType, ICilCompilerAware
 {
     #region Singleton
 
-    private NullPType()
+    NullPType()
     {
     }
 
@@ -54,7 +54,7 @@ public class NullPType : PType, ICilCompilerAware
     #region Static
 
 #if SINGLE_NULL
-    private static readonly PValue _single_null = new(null, Instance);
+    static readonly PValue _single_null = new(null, Instance);
 #endif
 
     /// <summary>
@@ -158,7 +158,7 @@ public class NullPType : PType, ICilCompilerAware
         return otherType is NullPType;
     }
 
-    private const int _code = 1357155649;
+    const int _code = 1357155649;
 
     public override int GetHashCode()
     {
@@ -200,7 +200,7 @@ public class NullPType : PType, ICilCompilerAware
 
     //BINARY
 
-    private static bool _coalesce(PValue leftOperand, PValue rightOperand, out PValue result)
+    static bool _coalesce(PValue leftOperand, PValue rightOperand, out PValue result)
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;

@@ -48,7 +48,7 @@ public class AstArgumentSplice : AstExpr, IAstHasExpressions
         _throwSyntaxNotSupported();
     }
 
-    private void _throwSyntaxNotSupported()
+    void _throwSyntaxNotSupported()
     {
         throw new PartialApplicationSyntaxNotSupportedException(
             $"This syntax does not support argument slices (*some_expr). (Position {File}:{Line} col {Column})");

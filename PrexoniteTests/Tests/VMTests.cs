@@ -738,7 +738,7 @@ function main(a)
             Expect("ham", "ham");
         }
 
-        private static int _fac(int n)
+        static int _fac(int n)
         {
             var r = 1;
             while (n > 1)
@@ -1014,9 +1014,9 @@ function main(x,y,z) = (x : y : z).Key;
             Expect(1, 1, 2, 3);
         }
 
-        private class Callable : IIndirectCall
+        class Callable : IIndirectCall
         {
-            private readonly Func<StackContext, PValue[], PValue> _impl;
+            readonly Func<StackContext, PValue[], PValue> _impl;
 
             public Callable(Func<StackContext, PValue[], PValue> impl)
             {
@@ -1065,7 +1065,7 @@ function ret_break()
             _testReturnMode("ret_break", ReturnMode.Break, PType.Null);
         }
 
-        private void _testReturnMode(string id, ReturnMode mode, PValue retVal)
+        void _testReturnMode(string id, ReturnMode mode, PValue retVal)
         {
             var fctx = target.Functions[id].CreateFunctionContext(engine);
             engine.Process(fctx);
@@ -1535,7 +1535,7 @@ function main(s)
             _expectRoundtrip("AäE0", "A\\u00E4E0");
         }
 
-        private void _expectRoundtrip(string text, string escaped)
+        void _expectRoundtrip(string text, string escaped)
         {
             Expect(string.Format("{0}:{0}:{1}", text, escaped), text);
         }

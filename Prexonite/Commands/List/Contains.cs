@@ -37,7 +37,7 @@ public class Contains : PCommand, ICilCompilerAware
 
     public static Contains Instance { get; } = new();
 
-    private Contains()
+    Contains()
     {
     }
 

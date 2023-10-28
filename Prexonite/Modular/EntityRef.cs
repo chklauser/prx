@@ -242,7 +242,7 @@ public abstract class EntityRef
             return !Equals(left, right);
         }
 
-        private Function([NotNull] string id, [NotNull] ModuleName moduleName)
+        Function([NotNull] string id, [NotNull] ModuleName moduleName)
         {
             if(moduleName == null)
                 throw new ArgumentNullException(nameof(moduleName));
@@ -352,7 +352,7 @@ public abstract class EntityRef
             return !Equals(left, right);
         }
 
-        private Command(string id)
+        Command(string id)
         {
             Id = id;
         }
@@ -425,7 +425,7 @@ public abstract class EntityRef
 
     public abstract class Variable : EntityRef, IRunTime, IEquatable<Variable>
     {
-        private Variable()
+        Variable()
         {
         }
 
@@ -453,7 +453,7 @@ public abstract class EntityRef
         [DebuggerDisplay("global var {Id}/{ModuleName}")]
         public sealed class Global : Variable, IEquatable<Global>
         {
-            private Global([NotNull] string id, [NotNull] ModuleName moduleName)
+            Global([NotNull] string id, [NotNull] ModuleName moduleName)
             {
                 if (moduleName == null)
                     throw new ArgumentNullException(nameof(moduleName));
@@ -581,7 +581,7 @@ public abstract class EntityRef
         [DebuggerDisplay("local var {Id}")]
         public sealed class Local : Variable, IEquatable<Local>
         {
-            private Local(string id, int? index = null)
+            Local(string id, int? index = null)
             {
                 Id = id;
                 Index = index;
@@ -705,7 +705,7 @@ public abstract class EntityRef
     [DebuggerDisplay("macro command {Id}")]
     public class MacroCommand : EntityRef, IMacro, IEquatable<MacroCommand>
     {
-        private MacroCommand(string id)
+        MacroCommand(string id)
         {
             Id = id;
         }
@@ -771,7 +771,7 @@ public abstract class EntityRef
             return _tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.Last, out foundEntity, out entity) && foundEntity;
         }
 
-        private bool _tryMcmdFromStack(StackContext sctx, LinkedListNode<StackContext> node, out bool foundEntity, out PValue entity)
+        bool _tryMcmdFromStack(StackContext sctx, LinkedListNode<StackContext> node, out bool foundEntity, out PValue entity)
         {
             Loader ldr;
             while (node != null)
@@ -790,7 +790,7 @@ public abstract class EntityRef
             return false;
         }
 
-        private bool _tryMcmdFromLoader(StackContext sctx, Loader ldr, out PValue entity)
+        bool _tryMcmdFromLoader(StackContext sctx, Loader ldr, out PValue entity)
         {
             if (ldr.MacroCommands.TryGetValue(Id, out var mcmd))
             {

@@ -36,7 +36,7 @@ namespace PrexoniteTests.Tests;
 [TestFixture]
 public class AstTests
 {
-    private static AstPlaceholder _createPlaceholder(int? index = null)
+    static AstPlaceholder _createPlaceholder(int? index = null)
     {
         return new("-file", -1, -2) {Index = index};
     }
@@ -121,7 +121,7 @@ public class AstTests
             Assert.AreSame(originalArgv[i], argv[i]);
     }
 
-    private static void _placeholderArgvProcessing(List<AstExpr> argv)
+    static void _placeholderArgvProcessing(List<AstExpr> argv)
     {
         TestContext.WriteLine("ARGV implicit:");
         foreach (var expr in argv)

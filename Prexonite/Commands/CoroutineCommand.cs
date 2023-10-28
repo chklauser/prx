@@ -68,7 +68,7 @@ public abstract class CoroutineCommand : PCommand
             _stackContext = sctx;
         }
 
-        private StackContext _stackContext;
+        StackContext _stackContext;
 
         public StackContext StackContext
         {

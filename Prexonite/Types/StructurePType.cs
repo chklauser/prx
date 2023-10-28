@@ -115,7 +115,7 @@ public class StructurePType : PType, ICilCompilerAware
         #endregion
     }
 
-    private StructurePType()
+    StructurePType()
     {
     }
 
@@ -133,7 +133,7 @@ public class StructurePType : PType, ICilCompilerAware
         return argst;
     }
 
-    private static PValue[] _addThisAndId(string id, PValue[] args)
+    static PValue[] _addThisAndId(string id, PValue[] args)
     {
         var argst = new PValue[args.Length + 1];
         argst[0] = args[0]; //subject
@@ -429,7 +429,7 @@ public class StructurePType : PType, ICilCompilerAware
         return otherType is StructurePType;
     }
 
-    private const int _code = 1558687994;
+    const int _code = 1558687994;
 
     /// <summary>
     ///     returns a constant hash code.
@@ -463,7 +463,7 @@ public class StructurePType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    private static readonly MethodInfo GetStructurePType =
+    static readonly MethodInfo GetStructurePType =
         typeof (PType).GetProperty("Structure").GetGetMethod();
 
     /// <summary>

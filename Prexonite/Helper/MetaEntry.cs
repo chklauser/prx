@@ -29,19 +29,19 @@ public sealed class MetaEntry
     /// <summary>
     ///     Holds a list in case the meta entry is a list entry
     /// </summary>
-    private readonly MetaEntry[]? _list;
+    readonly MetaEntry[]? _list;
 
     /// <summary>
     ///     Holds a switch in case the meta entry is a switch entry
     /// </summary>
-    private readonly bool _switch;
+    readonly bool _switch;
 
     /// <summary>
     ///     Holds text in case the meta entry is a text entry
     /// </summary>
-    private readonly string? _text;
+    readonly string? _text;
 
-    private static readonly MetaEntry[] EmptyList = Array.Empty<MetaEntry>();
+    static readonly MetaEntry[] EmptyList = Array.Empty<MetaEntry>();
 
     #endregion
 
@@ -326,7 +326,7 @@ public sealed class MetaEntry
         return (MetaEntry) newList;
     }
 
-    private MetaEntry[] _asList()
+    MetaEntry[] _asList()
     {
         //Change type to list
         return EntryType switch
@@ -473,9 +473,9 @@ public sealed class MetaEntry
         }
     }
 
-    private const int LengthOfInt32MaxValue = 10 + 1; //sign allowed
+    const int LengthOfInt32MaxValue = 10 + 1; //sign allowed
 
-    private static bool _looksLikeNumberOrVersion(string text)
+    static bool _looksLikeNumberOrVersion(string text)
     {
         var end = Math.Min(text.Length, LengthOfInt32MaxValue);
         var remainingDotsAllowed = 4;

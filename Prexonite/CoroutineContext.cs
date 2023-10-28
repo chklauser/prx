@@ -59,9 +59,9 @@ public class CoroutineContext : StackContext, IDisposable
     {
     }
 
-    private readonly IEnumerator<PValue> _coroutine;
+    readonly IEnumerator<PValue> _coroutine;
 
-    private PValue _returnValue;
+    PValue _returnValue;
 
     /// <summary>
     ///     Represents the engine this context is part of.
@@ -114,7 +114,7 @@ public class CoroutineContext : StackContext, IDisposable
 
     #region IDisposable
 
-    private bool _disposed;
+    bool _disposed;
 
     public void Dispose()
     {
@@ -122,7 +122,7 @@ public class CoroutineContext : StackContext, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void Dispose(bool disposing)
+    void Dispose(bool disposing)
     {
         if (!_disposed)
         {

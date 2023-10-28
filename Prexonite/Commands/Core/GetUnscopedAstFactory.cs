@@ -36,7 +36,7 @@ namespace Prexonite.Commands.Core;
 
 public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
 {
-    private class UnscopedFactory : AstFactoryBase
+    class UnscopedFactory : AstFactoryBase
     {
         public UnscopedFactory(ModuleName compartment)
         {
@@ -75,7 +75,7 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
 
     public static GetUnscopedAstFactory Instance { get; } = new();
 
-    private GetUnscopedAstFactory()
+    GetUnscopedAstFactory()
     {
     }
 
@@ -88,7 +88,7 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
         return RunStatically(sctx, args);
     }
 
-    private static readonly ConcurrentDictionary<ModuleName,UnscopedFactory> _unscopedFactories = new();
+    static readonly ConcurrentDictionary<ModuleName,UnscopedFactory> _unscopedFactories = new();
 
     [PublicAPI]
     public static PValue RunStatically(StackContext sctx, PValue[] args)

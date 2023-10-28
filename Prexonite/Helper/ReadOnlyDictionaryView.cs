@@ -36,7 +36,7 @@ namespace Prexonite;
 /// <typeparam name="TKey">The type of keys used to access values in the table. </typeparam>
 public class ReadOnlyDictionaryView<TKey, TValue> : IDictionary<TKey, TValue>
 {
-    private readonly IDictionary<TKey, TValue> _table;
+    readonly IDictionary<TKey, TValue> _table;
 
     public ReadOnlyDictionaryView(IDictionary<TKey, TValue> table)
     {
@@ -55,7 +55,7 @@ public class ReadOnlyDictionaryView<TKey, TValue> : IDictionary<TKey, TValue>
         throw _notSupportedException();
     }
 
-    private static NotSupportedException _notSupportedException()
+    static NotSupportedException _notSupportedException()
     {
         return new("Cannot modify read-only symbol view.");
     }

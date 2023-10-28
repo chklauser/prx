@@ -50,7 +50,7 @@ public sealed class CompilerState : StackContext
     public const int ParamSourceIndex = 0;
     public const int ParamReturnModeIndex = 5;
 
-    private string _effectiveArgumentsListId;
+    string _effectiveArgumentsListId;
 
     /// <summary>
     ///     The name of the arguments list variable.
@@ -181,7 +181,7 @@ public sealed class CompilerState : StackContext
     /// </summary>
     internal Queue<int> _CilExtensionOffsets { [DebuggerStepThrough] get; }
 
-    private LocalBuilder _partialApplicationMapping;
+    LocalBuilder _partialApplicationMapping;
 
     /// <summary>
     ///     <para>Local <code>System.Int32[]</code> variable. Used for temporarily holding arguments for partial application constructors.</para>
@@ -648,7 +648,7 @@ public sealed class CompilerState : StackContext
         EmitVirtualCall(_pTypeConstructMethod);
     }
 
-    private static readonly MethodInfo _pTypeConstructMethod =
+    static readonly MethodInfo _pTypeConstructMethod =
         typeof (PType).GetMethod("Construct", new[] {typeof (StackContext), typeof (PValue[])});
 
     public void EmitLoadClrType(Type T)
@@ -657,7 +657,7 @@ public sealed class CompilerState : StackContext
         EmitCall(_typeGetTypeFromHandle);
     }
 
-    private static readonly MethodInfo _typeGetTypeFromHandle =
+    static readonly MethodInfo _typeGetTypeFromHandle =
         typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
 
     #region Early bound command call
@@ -982,7 +982,7 @@ public sealed class CompilerState : StackContext
         Il.Emit(OpCodes.Stind_Ref);
     }
 
-    private static readonly Lazy<ConstructorInfo[]> _versionCtors = new(() =>
+    static readonly Lazy<ConstructorInfo[]> _versionCtors = new(() =>
     {
         var cs = new ConstructorInfo[3];
         cs[0] = 

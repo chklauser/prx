@@ -25,7 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Prexonite.Compiler.Symbolic.Internal;
 
-internal abstract class WrapTransparentlyHandler : ISymbolHandler<object,Symbol>
+abstract class WrapTransparentlyHandler : ISymbolHandler<object,Symbol>
 {
     #region Implementation of ISymbolHandler<in object,out Symbol>
 

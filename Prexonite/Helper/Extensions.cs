@@ -488,9 +488,9 @@ public static class Extensions
 
     #region Nested type: SingletonEnum
 
-    private class SingletonEnum<T> : IEnumerable<T>
+    class SingletonEnum<T> : IEnumerable<T>
     {
-        private readonly T _element;
+        readonly T _element;
 
         public SingletonEnum(T element)
         {
@@ -513,9 +513,9 @@ public static class Extensions
 
         #region Nested type: SingletonEnumerator
 
-        private class SingletonEnumerator : IEnumerator<T>
+        class SingletonEnumerator : IEnumerator<T>
         {
-            private bool _hasNext = true;
+            bool _hasNext = true;
 
             public SingletonEnumerator(T element)
             {

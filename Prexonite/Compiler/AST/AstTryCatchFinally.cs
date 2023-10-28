@@ -135,7 +135,7 @@ public class AstTryCatchFinally : AstScopedBlock,
         target.Function.InvalidateTryCatchFinallyBlocks();
     }
 
-    private static int _getAddress(CompilerTarget target, string label)
+    static int _getAddress(CompilerTarget target, string label)
     {
         if (target.TryResolveLabel(label, out var address))
             return address;

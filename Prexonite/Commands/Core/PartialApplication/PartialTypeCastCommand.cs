@@ -31,13 +31,13 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
 {
-    private PartialTypecastCommand()
+    PartialTypecastCommand()
     {
     }
 
     public static PartialTypecastCommand Instance { get; } = new();
 
-    private ConstructorInfo _partialTypeCastCtor;
+    ConstructorInfo _partialTypeCastCtor;
 
     protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
         PValue[] closedArguments, PTypeInfo parameter)

@@ -49,7 +49,7 @@ public class CilRuntime
                 $"The field/property Runtime.{t.Item1.Name} is null.");
     }
 
-    private object _invokeStatic(MemberInfo m)
+    object _invokeStatic(MemberInfo m)
     {
         if(m is PropertyInfo)
         {

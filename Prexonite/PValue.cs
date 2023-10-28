@@ -1704,7 +1704,7 @@ public sealed class PValue : DynamicObject,
 
     #region DLR (dynamic) interface
 
-    private static bool _tryParseCall(object[] args, out StackContext sctx, out PValue[] icargs)
+    static bool _tryParseCall(object[] args, out StackContext sctx, out PValue[] icargs)
     {
         if (args.Length > 0 && (sctx = args[0] as StackContext) != null)
         {

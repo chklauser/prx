@@ -35,7 +35,7 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
 
     public static CallSubPerform Instance { get; } = new();
 
-    private CallSubPerform()
+    CallSubPerform()
     {
     }
 

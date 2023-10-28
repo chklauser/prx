@@ -35,7 +35,7 @@ public class Sum : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Sum()
+    Sum()
     {
     }
 

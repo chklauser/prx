@@ -49,7 +49,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Map()
+    Map()
     {
     }
 
@@ -88,7 +88,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
             return _wrapDynamicIEnumerable(sctx, psource);
     }
 
-    private static IEnumerable<PValue> _wrapDynamicIEnumerable(StackContext sctx, PValue psource)
+    static IEnumerable<PValue> _wrapDynamicIEnumerable(StackContext sctx, PValue psource)
     {
         var pvEnumerator =
             psource.DynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "GetEnumerator").
@@ -179,7 +179,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         }
     }
 
-    private static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx,
+    static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx,
         IEnumerable nonGeneric)
     {
         foreach (var obj in nonGeneric)

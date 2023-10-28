@@ -40,9 +40,9 @@ namespace Prexonite.Compiler.Ast;
 /// </summary>
 public sealed class AstGetSetNewDecl : AstGetSet
 {
-    private PCall _fallbackCall;
+    PCall _fallbackCall;
     [CanBeNull]
-    private readonly ArgumentsProxy _arguments;
+    readonly ArgumentsProxy _arguments;
 
     public AstGetSetNewDecl([NotNull] ISourcePosition position, [NotNull] string id, [CanBeNull] AstGetSet expression)
         : base(position)
@@ -67,7 +67,7 @@ public sealed class AstGetSetNewDecl : AstGetSet
     ///     Emits code responsible for changing the variables identity.
     /// </summary>
     /// <param name = "target">The target to compile to</param>
-    private void _emitNewDeclareCode(CompilerTarget target)
+    void _emitNewDeclareCode(CompilerTarget target)
     {
         _ensureValid();
         //create command call
@@ -103,7 +103,7 @@ public sealed class AstGetSetNewDecl : AstGetSet
         _emitCode(target, StackSemantics.Effect);
     }
 
-    private void _emitCode(CompilerTarget target, StackSemantics stackSemantics)
+    void _emitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
         _emitNewDeclareCode(target);
         if (Expression != null)
@@ -191,7 +191,7 @@ public sealed class AstGetSetNewDecl : AstGetSet
     [NotNull]
     public string Id { get; }
 
-    private void _ensureValid()
+    void _ensureValid()
     {
         if (Id == null)
             throw new InvalidOperationException("NewDecl node must have a non-null id");

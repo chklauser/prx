@@ -42,21 +42,21 @@ namespace Prexonite.Compiler.Macro;
 public class MacroSession : IDisposable
 {
     [CanBeNull]
-    private LoaderOptions _options;
+    LoaderOptions _options;
 
     [NotNull]
-    private readonly SymbolCollection _releaseList = new();
+    readonly SymbolCollection _releaseList = new();
     [NotNull]
-    private readonly SymbolCollection _allocationList = new();
+    readonly SymbolCollection _allocationList = new();
 
     [NotNull]
-    private readonly HashSet<AstGetSet> _invocations = new();
+    readonly HashSet<AstGetSet> _invocations = new();
 
     [NotNull]
-    private readonly object _buildCommandToken;
+    readonly object _buildCommandToken;
 
     [NotNull]
-    private readonly List<PValue> _transportStore = new();
+    readonly List<PValue> _transportStore = new();
 
     /// <summary>
     ///     Creates a new macro expansion session for the specified compiler target.
@@ -171,7 +171,7 @@ public class MacroSession : IDisposable
         }
     }
 
-    private interface IMacroExpander
+    interface IMacroExpander
     {
         void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect);
         string HumanId { get; }
@@ -181,7 +181,7 @@ public class MacroSession : IDisposable
 
     #region Command Expander
 
-    private abstract class MacroCommandExpanderBase : IMacroExpander
+    abstract class MacroCommandExpanderBase : IMacroExpander
     {
         protected MacroCommand MacroCommand;
         public string HumanId { get; protected set; }
@@ -200,7 +200,7 @@ public class MacroSession : IDisposable
         }
     }
 
-    private class MacroCommandExpander : MacroCommandExpanderBase
+    class MacroCommandExpander : MacroCommandExpanderBase
     {
         public override void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect)
         {
@@ -232,7 +232,7 @@ public class MacroSession : IDisposable
 
     #region Function Expander
 
-    private abstract class MacroFunctionExpanderBase : IMacroExpander
+    abstract class MacroFunctionExpanderBase : IMacroExpander
     {
         protected PFunction MacroFunction;
 
@@ -328,7 +328,7 @@ public class MacroSession : IDisposable
             return (bool) successRaw.Value;
         }
 
-        private void _implementMergeRules(MacroContext context, AstExpr ce,
+        void _implementMergeRules(MacroContext context, AstExpr ce,
             IEnumerable<AstNode> fs, AstExpr fe)
         {
             var contextBlock = context.Block;
@@ -391,7 +391,7 @@ public class MacroSession : IDisposable
                 contextBlock.Expression = null; //macro session will cover this case
         }
 
-        private PValue _invokeMacroFunction(CompilerTarget target, MacroContext context)
+        PValue _invokeMacroFunction(CompilerTarget target, MacroContext context)
         {
             var macro = PrepareMacroImplementation(target.Loader, MacroFunction, context);
 
@@ -414,7 +414,7 @@ public class MacroSession : IDisposable
         }
     }
 
-    private class MacroFunctionExpander : MacroFunctionExpanderBase
+    class MacroFunctionExpander : MacroFunctionExpanderBase
     {
         public override void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect)
         {
@@ -540,7 +540,7 @@ public class MacroSession : IDisposable
         return node;
     }
 
-    private static void _reportException(MacroContext context, IMacroExpander expander,
+    static void _reportException(MacroContext context, IMacroExpander expander,
         Exception e)
     {
         context.ReportMessage(Message.Create(MessageSeverity.Error,
@@ -553,7 +553,7 @@ public class MacroSession : IDisposable
 #endif
     }
 
-    private static void _setupDefaultExpression(MacroContext context)
+    static void _setupDefaultExpression(MacroContext context)
     {
         context.Block.Clear();
         context.Block.Expression = CreateNeutralExpression(context.Invocation);
@@ -571,7 +571,7 @@ public class MacroSession : IDisposable
         return call;
     }
 
-    private IMacroExpander _getExpander(AstGetSet macroNode, CompilerTarget target)
+    IMacroExpander _getExpander(AstGetSet macroNode, CompilerTarget target)
     {
         IMacroExpander expander = null;
         if (macroNode is AstExpand expansion)
@@ -590,7 +590,7 @@ public class MacroSession : IDisposable
         return expander;
     }
 
-    private static void _reportMacroNodeNotMacro(CompilerTarget target, string implName, AstGetSet invocation)
+    static void _reportMacroNodeNotMacro(CompilerTarget target, string implName, AstGetSet invocation)
     {
         target.Loader.ReportMessage(
             Message.Create(MessageSeverity.Error,

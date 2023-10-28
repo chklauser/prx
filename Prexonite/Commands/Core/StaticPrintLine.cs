@@ -36,7 +36,7 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
 {
     #region Singleton
 
-    private StaticPrintLine()
+    StaticPrintLine()
     {
     }
 
@@ -131,7 +131,7 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
         }
     }
 
-    private static readonly MethodInfo _textWriterWriteLineMethod = typeof (TextWriter).
+    static readonly MethodInfo _textWriterWriteLineMethod = typeof (TextWriter).
         GetMethod(
             "WriteLine", new[] {typeof (string)});
 

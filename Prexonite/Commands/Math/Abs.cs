@@ -35,7 +35,7 @@ public sealed class Abs : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Abs()
+    Abs()
     {
     }
 
@@ -116,7 +116,7 @@ public sealed class Abs : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Abs).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

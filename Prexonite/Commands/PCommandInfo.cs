@@ -54,7 +54,7 @@ public interface ICommandInfo
 
 public static class CommandInfo
 {
-    private static ICommandInfo _toCommandInfo(object obj)
+    static ICommandInfo _toCommandInfo(object obj)
     {
         return new CachedCommandInfo(obj as ICilCompilerAware, obj as ICilExtension);
     }
@@ -83,10 +83,10 @@ public static class CommandInfo
             return _toCommandInfo(cilCompilerAware);
     }
 
-    private sealed class CachedCommandInfo : ICommandInfo
+    sealed class CachedCommandInfo : ICommandInfo
     {
-        private readonly ICilCompilerAware _cilCompilerAware;
-        private readonly ICilExtension _cilExtension;
+        readonly ICilCompilerAware _cilCompilerAware;
+        readonly ICilExtension _cilExtension;
 
         public CachedCommandInfo(ICilCompilerAware cilCompilerAware, ICilExtension cilExtension)
         {

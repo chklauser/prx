@@ -36,7 +36,7 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
 
     public static FunctionalPartialCallCommand Instance { get; } = new();
 
-    private FunctionalPartialCallCommand()
+    FunctionalPartialCallCommand()
     {
     }
 
@@ -59,9 +59,9 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
         return true;
     }
 
-    private ConstructorInfo _functionPartialCallCtorCache;
+    ConstructorInfo _functionPartialCallCtorCache;
 
-    private ConstructorInfo _functionPartialCallCtor
+    ConstructorInfo _functionPartialCallCtor
     {
         get
         {

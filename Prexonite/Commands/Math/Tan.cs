@@ -34,7 +34,7 @@ public class Tan : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Tan()
+    Tan()
     {
     }
 
@@ -94,7 +94,7 @@ public class Tan : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Tan).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

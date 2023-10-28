@@ -54,7 +54,7 @@ public class ModuleConflictException : Exception
     {
     }
 
-    private  static string _appendModules(string message, Module m1, Module m2)
+    static string _appendModules(string message, Module m1, Module m2)
     {
         if(m1 == null && m2 == null)
             return message;

@@ -40,7 +40,7 @@ namespace Prexonite.Types;
 [DebuggerNonUserCode]
 public class ExtendableObject : IObject, IIndirectCall
 {
-    private ExtensionTable _et;
+    ExtensionTable _et;
 
     protected void InitializeExtensionTable()
     {
@@ -218,7 +218,7 @@ public class ExtendableObject : IObject, IIndirectCall
         _et.Remove(id);
     }
 
-    private bool _tryDynamicExtensionCall(
+    bool _tryDynamicExtensionCall(
         StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
         out PValue result)
     {
@@ -277,12 +277,12 @@ public class ExtendableObject : IObject, IIndirectCall
         return result != null;
     }
 
-    private PValue _dynamicCall(StackContext sctx, PValue[] args, PCall call, string id)
+    PValue _dynamicCall(StackContext sctx, PValue[] args, PCall call, string id)
     {
         return _dynamicCall(sctx, sctx.CreateNativePValue(this), args, call, id);
     }
 
-    private PValue _dynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call,
+    PValue _dynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call,
         string id)
     {
         if (!_tryDynamicExtensionCall(sctx, subject, args, call, id, out var result))
@@ -330,7 +330,7 @@ public class ExtendableObject : IObject, IIndirectCall
 }
 
 [DebuggerNonUserCode]
-internal class ExtensionMember
+class ExtensionMember
 {
     internal ExtensionMember(string id)
         : this(id, false, null)
@@ -398,7 +398,7 @@ internal class ExtensionMember
 }
 
 [DebuggerNonUserCode]
-internal class ExtensionTable : KeyedCollection<string, ExtensionMember>
+class ExtensionTable : KeyedCollection<string, ExtensionMember>
 {
     internal ExtensionTable()
         : base(StringComparer.CurrentCultureIgnoreCase)

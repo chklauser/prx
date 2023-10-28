@@ -23,7 +23,8 @@ public sealed class ModuleName : IEquatable<ModuleName>
 
     [PublicAPI]
     public static readonly PType PType = PType.Object[typeof(ModuleName)];
-    private static readonly Version ZeroVersion = new();
+
+    static readonly Version ZeroVersion = new();
 
     /// <summary>
     /// The version of the named module. Consists of four 32bit integers (signed, but non-negative).
@@ -103,7 +104,7 @@ public sealed class ModuleName : IEquatable<ModuleName>
         return !Equals(left, right);
     }
 
-    private static bool _isText(MetaEntry entry)
+    static bool _isText(MetaEntry entry)
     {
         return entry.IsText;
     }

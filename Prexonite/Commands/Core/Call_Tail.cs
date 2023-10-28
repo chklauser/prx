@@ -38,7 +38,7 @@ public sealed class Call_Tail : StackAwareCommand
 {
     #region Singleton
 
-    private Call_Tail()
+    Call_Tail()
     {
     }
 
@@ -81,7 +81,7 @@ public sealed class Call_Tail : StackAwareCommand
         return Call.CreateStackContext(sctx, args[0], iargs.ToArray());
     }
 
-    private static List<PValue> make_tailcall(StackContext sctx, PValue[] args)
+    static List<PValue> make_tailcall(StackContext sctx, PValue[] args)
     {
         var iargs = Call.FlattenArguments(sctx, args, 1);
 
@@ -121,7 +121,7 @@ public sealed class Call_Tail : StackAwareCommand
             base.DoExpand(context);
         }
 
-        private static void _specifyDeficiency(MacroContext context)
+        static void _specifyDeficiency(MacroContext context)
         {
             context.Function.Meta[PFunction.VolatileKey] = true;
             if (!context.Function.Meta.TryGetValue(PFunction.DeficiencyKey, out var deficiency) ||

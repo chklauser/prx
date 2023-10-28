@@ -32,7 +32,7 @@ public class ReplaceCoreNilHandler : TransformHandler<Symbol>
 
     public static ReplaceCoreNilHandler Instance { get; } = new();
 
-    private ReplaceCoreNilHandler()
+    ReplaceCoreNilHandler()
     {
     }
 

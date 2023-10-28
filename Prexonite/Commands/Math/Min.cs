@@ -35,7 +35,7 @@ public class Min : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Min()
+    Min()
     {
     }
 
@@ -116,7 +116,7 @@ public class Min : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Min).GetMethod("RunStatically",
             new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 

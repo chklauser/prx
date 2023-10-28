@@ -69,7 +69,7 @@ public class PartialCallWrapper : PartialMacroCommand
 
     #region Overrides of MacroCommand
 
-    private static bool _hasPlaceholder(AstExpr expr)
+    static bool _hasPlaceholder(AstExpr expr)
     {
         return expr.IsPlaceholder() || expr is AstListLiteral lit && lit.CheckForPlaceholders();
     }

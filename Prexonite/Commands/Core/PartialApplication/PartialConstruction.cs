@@ -32,7 +32,7 @@ namespace Prexonite.Commands.Core.PartialApplication;
 /// </summary>
 public class PartialConstruction : PartialApplicationBase
 {
-    private readonly PType _type;
+    readonly PType _type;
 
     /// <summary>
     ///     Creates a new partial construction instance.

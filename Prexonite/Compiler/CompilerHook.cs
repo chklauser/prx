@@ -41,8 +41,8 @@ public delegate void AstTransformation(CompilerTarget target);
 [DebuggerNonUserCode]
 public sealed class CompilerHook
 {
-    private readonly AstTransformation _managed;
-    private readonly PValue _interpreted;
+    readonly AstTransformation _managed;
+    readonly PValue _interpreted;
 
     /// <summary>
     ///     Creates a new compiler hook, that executes a managed method.

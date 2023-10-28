@@ -12,7 +12,7 @@ public class FlatMap : CoroutineCommand, ICilCompilerAware
 
     public static FlatMap Instance { get; } = new();
 
-    private FlatMap()
+    FlatMap()
     {
     }
 

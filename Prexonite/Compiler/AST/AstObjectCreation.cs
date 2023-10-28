@@ -46,7 +46,7 @@ public class AstObjectCreation : AstExpr,
 
     #endregion
 
-    private readonly List<AstExpr> _arguments = new();
+    readonly List<AstExpr> _arguments = new();
 
     public AstObjectCreation(ISourcePosition position, AstTypeExpr type)
         : base(position)

@@ -29,9 +29,9 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialStaticCall : PartialApplicationBase
 {
-    private readonly PType _ptype;
-    private readonly string _memberId;
-    private readonly PCall _call;
+    readonly PType _ptype;
+    readonly string _memberId;
+    readonly PCall _call;
 
     public PartialStaticCall(int[] mappings, PValue[] closedArguments, PCall call,
         string memberId, PType ptype) : base(mappings, closedArguments, 0)

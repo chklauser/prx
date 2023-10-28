@@ -34,7 +34,7 @@ public class Sin : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Sin()
+    Sin()
     {
     }
 
@@ -94,7 +94,7 @@ public class Sin : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Sin).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

@@ -35,7 +35,7 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
 {
     #region Singleton
 
-    private ConsolePrintLine()
+    ConsolePrintLine()
     {
     }
 

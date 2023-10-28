@@ -35,7 +35,7 @@ public class Limit : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Limit()
+    Limit()
     {
     }
 

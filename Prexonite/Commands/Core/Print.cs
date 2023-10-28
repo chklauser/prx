@@ -33,7 +33,7 @@ namespace Prexonite.Commands.Core;
 /// </summary>
 public class DynamicPrint : PCommand
 {
-    private readonly TextWriter _writer;
+    readonly TextWriter _writer;
 
     /// <summary>
     ///     Creates a new <c>println</c> command, that prints to the supplied <see cref = "TextWriter" />.

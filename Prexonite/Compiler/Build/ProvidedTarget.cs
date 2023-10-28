@@ -40,18 +40,18 @@ namespace Prexonite.Compiler.Build;
 public class ProvidedTarget : ITargetDescription, ITarget
 {
     [NotNull]
-    private readonly DependencySet _dependencies;
+    readonly DependencySet _dependencies;
 
     [CanBeNull]
-    private readonly List<IResourceDescriptor> _resources;
+    readonly List<IResourceDescriptor> _resources;
 
     [CanBeNull]
-    private readonly List<Message> _messages;
+    readonly List<Message> _messages;
 
     [CanBeNull]
-    private readonly IReadOnlyList<Message> _buildMessages;
+    readonly IReadOnlyList<Message> _buildMessages;
 
-    private string _debuggerDisplay =>
+    string _debuggerDisplay =>
         $"ProvidedTarget({Name}) {(IsSuccessful ? "successful" : "errors detected")}";
 
     public ProvidedTarget(Module module,

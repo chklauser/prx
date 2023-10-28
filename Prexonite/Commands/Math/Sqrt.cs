@@ -34,7 +34,7 @@ public class Sqrt : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Sqrt()
+    Sqrt()
     {
     }
 
@@ -94,7 +94,7 @@ public class Sqrt : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Sqrt).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

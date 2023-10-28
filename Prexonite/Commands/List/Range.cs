@@ -36,7 +36,7 @@ namespace Prexonite.Commands.List;
 /// </summary>
 public class Range : CoroutineCommand, ICilCompilerAware
 {
-    private Range()
+    Range()
     {
     }
 
@@ -47,7 +47,7 @@ public class Range : CoroutineCommand, ICilCompilerAware
     }
 
     //function range(index, count, xs) = xs >> skip(index) >> limit(count);
-    private static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
+    static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
         PValue[] args)
     {
         if (sctxCarrier == null)

@@ -109,7 +109,7 @@ public class Compiler
         return ldr;
     }
 
-    private void _writeErrorsWarnings(Loader ldr)
+    void _writeErrorsWarnings(Loader ldr)
     {
         foreach (var line in ldr.Errors)
             TestContext.Error.WriteLine(line);

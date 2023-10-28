@@ -34,7 +34,7 @@ public class ForceCommand : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private ForceCommand()
+    ForceCommand()
     {
     }
 

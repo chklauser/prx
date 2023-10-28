@@ -45,7 +45,7 @@ public class FoldL : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private FoldL()
+    FoldL()
     {
     }
 

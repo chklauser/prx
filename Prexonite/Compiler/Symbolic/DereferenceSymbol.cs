@@ -51,7 +51,7 @@ public sealed class DereferenceSymbol : WrappingSymbol
         return new DereferenceSymbol(position ?? symbol.Position, symbol);
     }
 
-    private DereferenceSymbol([NotNull] ISourcePosition position, Symbol inner)
+    DereferenceSymbol([NotNull] ISourcePosition position, Symbol inner)
         : base(position, inner)
     {
     }

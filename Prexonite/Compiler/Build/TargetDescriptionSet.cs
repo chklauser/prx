@@ -36,9 +36,9 @@ public sealed class TargetDescriptionSet
     : ICollection<ITargetDescription>
 {
     [NotNull]
-    private readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new();
+    readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new();
 
-    private TargetDescriptionSet()
+    TargetDescriptionSet()
     {
     }
 

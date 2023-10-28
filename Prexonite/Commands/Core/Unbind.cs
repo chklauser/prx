@@ -69,7 +69,7 @@ namespace Prexonite.Commands.Core;
 /// </remarks>
 public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
 {
-    private Unbind()
+    Unbind()
     {
     }
 

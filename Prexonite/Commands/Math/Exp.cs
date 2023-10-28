@@ -34,7 +34,7 @@ public class Exp : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Exp()
+    Exp()
     {
     }
 
@@ -94,7 +94,7 @@ public class Exp : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Exp).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

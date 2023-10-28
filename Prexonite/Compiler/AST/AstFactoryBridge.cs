@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast;
 /// </summary>
 public class AstFactoryBridge : IObject, IIndirectCall
 {
-    private readonly IAstFactory _base;
+    readonly IAstFactory _base;
 
     public AstFactoryBridge(IAstFactory @base)
     {
@@ -51,7 +51,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         return TryDynamicCall(sctx, args, call, id, out result, out _);
     }
 
-    private static bool _require(PValue[] args, ref int index, out PValue rawValue)
+    static bool _require(PValue[] args, ref int index, out PValue rawValue)
     {
         if (index < args.Length)
         {
@@ -67,7 +67,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    private static bool _require(StackContext sctx, PValue[] args, ref int index, out IEnumerable<AstExpr> argSeq)
+    static bool _require(StackContext sctx, PValue[] args, ref int index, out IEnumerable<AstExpr> argSeq)
     {
         if(_require(args, ref index, out var raw))
         {
@@ -82,7 +82,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    private static bool _require<T>(StackContext sctx, PValue[] args, ref int index, out T value)
+    static bool _require<T>(StackContext sctx, PValue[] args, ref int index, out T value)
     {
         if (index < args.Length && args[index].TryConvertTo(sctx, false, out value))
         {
@@ -97,7 +97,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    private static bool _takeOptional<T>(StackContext sctx, PValue[]  args, ref int index, out T value, T defaultValue = default)
+    static bool _takeOptional<T>(StackContext sctx, PValue[]  args, ref int index, out T value, T defaultValue = default)
     {
         if(index < args.Length && args[index].TryConvertTo(sctx, false,out value))
         {
@@ -112,7 +112,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    private static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue defaultValue = null)
+    static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue defaultValue = null)
     {
         if(index < args.Length)
         {
@@ -127,7 +127,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    private static bool _takeOptionalList(StackContext sctx, PValue[] args, ref int  index, out IEnumerable<AstExpr> expressions)
+    static bool _takeOptionalList(StackContext sctx, PValue[] args, ref int  index, out IEnumerable<AstExpr> expressions)
     {
         if(_takeOptional(args, ref index, out var raw))
         {
@@ -641,7 +641,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         return node != null;
     }
 
-    private static AstGetSet _takeOptionalArguments(StackContext sctx, PValue[] args, int i, AstGetSet complex)
+    static AstGetSet _takeOptionalArguments(StackContext sctx, PValue[] args, int i, AstGetSet complex)
     {
         if (_takeOptionalList(sctx, args, ref i, out var nodeArgs))
             complex.Arguments.AddRange(nodeArgs);
@@ -666,7 +666,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    private static void _throwInvalidCall(IEnumerable<PValue> args, string errorFormat, string detailedError)
+    static void _throwInvalidCall(IEnumerable<PValue> args, string errorFormat, string detailedError)
     {
         throw new PrexoniteException(string.Format(errorFormat, detailedError,
             args.Select(x => x.Type.ToString()).ToListString()));

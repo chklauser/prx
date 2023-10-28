@@ -46,9 +46,9 @@ namespace Prexonite;
 public sealed class PVariable : IHasMetaTable,
     IIndirectCall
 {
-    private PValue _value = PType.Null;
+    PValue _value = PType.Null;
     //Variable metatables are only created when requested.
-    private VariableDeclaration _declaration;
+    VariableDeclaration _declaration;
 
     /// <summary>
     /// Returns the id of this variable. For local variables, this id might be different from the

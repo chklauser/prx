@@ -37,15 +37,15 @@ namespace Prexonite.Compiler.Symbolic.Internal;
 /// and only at the end, adding the actual core symbol.
 /// </summary>
 [Obsolete("SymbolBuilder is not capable of building most legal symbols.")]
-internal sealed class SymbolBuilder : ICloneable
+sealed class SymbolBuilder : ICloneable
 {
     public EntityRef Entity { get; set; }
 
     public bool AutoDereferenceEnabled { get; set; } = true;
 
-    private Symbol _prefix = Symbol.CreateNil(NoSourcePosition.Instance);
-    private int _dereferenceCount;
-    private readonly Queue<Message> _messages = new();
+    Symbol _prefix = Symbol.CreateNil(NoSourcePosition.Instance);
+    int _dereferenceCount;
+    readonly Queue<Message> _messages = new();
 
     public SymbolBuilder Dereference()
     {
@@ -77,7 +77,7 @@ internal sealed class SymbolBuilder : ICloneable
         return this;
     }
 
-    private void _materializePrefix()
+    void _materializePrefix()
     {
         while (_dereferenceCount > 0)
         {

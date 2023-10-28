@@ -45,7 +45,7 @@ public class RealPType : PType, ICilCompilerAware
         Instance = new RealPType();
     }
 
-    private RealPType()
+    RealPType()
     {
     }
 
@@ -210,12 +210,12 @@ public class RealPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    private static bool _tryConvertToReal(StackContext sctx, PValue operand, out double value)
+    static bool _tryConvertToReal(StackContext sctx, PValue operand, out double value)
     {
         return _tryConvertToReal(sctx, operand, out value, true);
     }
 
-    private static bool _tryConvertToReal(
+    static bool _tryConvertToReal(
         StackContext sctx, PValue operand, out double value, bool allowNull)
     {
         value = -133.7; //should never surface as value is only used if the method returns true
@@ -419,7 +419,7 @@ public class RealPType : PType, ICilCompilerAware
         return otherType is RealPType;
     }
 
-    private const int _code = -2035946599;
+    const int _code = -2035946599;
 
     public override int GetHashCode()
     {

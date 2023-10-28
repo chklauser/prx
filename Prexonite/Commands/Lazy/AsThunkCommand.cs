@@ -36,7 +36,7 @@ public class AsThunkCommand : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private AsThunkCommand()
+    AsThunkCommand()
     {
     }
 

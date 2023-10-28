@@ -36,7 +36,7 @@ public class Chan : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Chan()
+    Chan()
     {
     }
 
@@ -60,10 +60,10 @@ public class Chan : PCommand, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    private static readonly ConstructorInfo _channelCtor =
+    static readonly ConstructorInfo _channelCtor =
         typeof (Channel).GetConstructor(Array.Empty<Type>());
 
-    private static readonly ConstructorInfo _newPValue =
+    static readonly ConstructorInfo _newPValue =
         typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)

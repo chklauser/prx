@@ -36,7 +36,7 @@ public class CallSub : MacroCommand
 
     public static CallSub Instance { get; } = new();
 
-    private CallSub() : base(Alias)
+    CallSub() : base(Alias)
     {
     }
 

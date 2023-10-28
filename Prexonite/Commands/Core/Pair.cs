@@ -40,7 +40,7 @@ namespace Prexonite.Commands.Core;
 /// </remarks>
 public sealed class Pair : PCommand, ICilCompilerAware
 {
-    private Pair()
+    Pair()
     {
     }
 

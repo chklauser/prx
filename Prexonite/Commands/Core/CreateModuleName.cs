@@ -37,7 +37,7 @@ public class CreateModuleName : PCommand, ICilCompilerAware
 
     public static CreateModuleName Instance { get; } = new();
 
-    private CreateModuleName()
+    CreateModuleName()
     {
     }
 

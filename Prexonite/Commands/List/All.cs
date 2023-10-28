@@ -36,7 +36,7 @@ public sealed class All : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private All()
+    All()
     {
     }
 

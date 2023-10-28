@@ -48,7 +48,7 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     [NoDebug]
-    private CharPType()
+    CharPType()
     {
     }
 
@@ -328,7 +328,7 @@ public class CharPType : PType, ICilCompilerAware
         return otherType is CharPType;
     }
 
-    private const int _hashcode = 361633961;
+    const int _hashcode = 361633961;
     public const string Literal = "Char";
 
     public override int GetHashCode()
@@ -350,7 +350,7 @@ public class CharPType : PType, ICilCompilerAware
         return Convert.ToChar(value);
     }
 
-    private bool _tryConvert(StackContext sctx, PValue pv, out char c)
+    bool _tryConvert(StackContext sctx, PValue pv, out char c)
     {
         c = '\0';
         switch (pv.Type.ToBuiltIn())
@@ -435,7 +435,7 @@ public class CharPType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    private static readonly MethodInfo _getCharPType =
+    static readonly MethodInfo _getCharPType =
         typeof (PType).GetProperty("Char").GetGetMethod();
 
     /// <summary>

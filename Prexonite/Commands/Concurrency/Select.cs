@@ -39,7 +39,7 @@ public class Select : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Select()
+    Select()
     {
     }
 
@@ -116,7 +116,7 @@ public class Select : PCommand, ICilCompilerAware
         }
     }
 
-    private static PValue _invokeHandler(StackContext sctx, PValue handler, PValue datum,
+    static PValue _invokeHandler(StackContext sctx, PValue handler, PValue datum,
         bool performSubCall)
     {
         var handlerArgv = datum != null ? new[] {datum} : Array.Empty<PValue>();
@@ -126,9 +126,9 @@ public class Select : PCommand, ICilCompilerAware
             : handler.IndirectCall(sctx, handlerArgv);
     }
 
-    private static readonly PType _chanType = PType.Object[typeof (Channel)];
+    static readonly PType _chanType = PType.Object[typeof (Channel)];
 
-    private static PValue _isApplicable(StackContext sctx, PValue selectCase)
+    static PValue _isApplicable(StackContext sctx, PValue selectCase)
     {
         if (selectCase.Type == PValueKeyValuePair.ObjectType)
         {
@@ -158,7 +158,7 @@ public class Select : PCommand, ICilCompilerAware
         }
     }
 
-    private static KeyValuePair<Channel, PValue> _extract(PValue c)
+    static KeyValuePair<Channel, PValue> _extract(PValue c)
     {
         if (c.Type == PValueKeyValuePair.ObjectType)
         {
@@ -192,7 +192,7 @@ public class Select : PCommand, ICilCompilerAware
         }
     }
 
-    private static void _split(IEnumerable<KeyValuePair<Channel, PValue>> cases,
+    static void _split(IEnumerable<KeyValuePair<Channel, PValue>> cases,
         out Channel[] channels, out PValue[] handlers)
     {
         var chanCases = cases.Where(kvp => kvp.Key != null).ToArray();

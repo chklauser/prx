@@ -9,7 +9,7 @@ using Prexonite.Compiler.Cil;
 
 namespace PrexoniteTests.Tests.Configurations;
 
-internal abstract class UnitTestConfiguration : IDisposable
+abstract class UnitTestConfiguration : IDisposable
 {
     public class InMemory : UnitTestConfiguration
     {
@@ -24,8 +24,8 @@ internal abstract class UnitTestConfiguration : IDisposable
     public FunctionLinking Linking { get; init; }
     public bool CompileToCil { get; init; }
 
-    private bool _configured;
-    private ModuleCache? _cache;
+    bool _configured;
+    ModuleCache? _cache;
 
     public ModuleCache Cache
     {
@@ -43,7 +43,7 @@ internal abstract class UnitTestConfiguration : IDisposable
     /// Executed as the last step of loading, immediately before the actual test methods are executed.
     /// </summary>
     /// <param name="runner">The container under which the test is being executed.</param>
-    private void _prepareExecution(ScriptedUnitTestContainer runner)
+    void _prepareExecution(ScriptedUnitTestContainer runner)
     {
         if (CompileToCil)
             Compiler.Compile(runner.Application, runner.Engine, Linking);

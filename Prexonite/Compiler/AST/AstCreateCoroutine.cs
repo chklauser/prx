@@ -43,7 +43,7 @@ public class AstCreateCoroutine : AstExpr,
 
     #endregion
 
-    private List<AstExpr> _arguments = new();
+    List<AstExpr> _arguments = new();
 
     public AstCreateCoroutine(string file, int line, int col)
         : base(file, line, col)

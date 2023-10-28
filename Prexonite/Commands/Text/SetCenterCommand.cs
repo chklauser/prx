@@ -34,7 +34,7 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private SetCenterCommand()
+    SetCenterCommand()
     {
     }
 

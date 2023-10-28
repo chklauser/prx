@@ -38,7 +38,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private AsyncSeq()
+    AsyncSeq()
     {
     }
 
@@ -76,10 +76,10 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     }
 
     //Contains all the logic for spawing the background worker
-    private class ChannelEnumerable : IEnumerable<PValue>
+    class ChannelEnumerable : IEnumerable<PValue>
     {
-        private readonly ContextCarrier _sctxCarrier;
-        private readonly PValue _arg;
+        readonly ContextCarrier _sctxCarrier;
+        readonly PValue _arg;
 
 
         public ChannelEnumerable(ContextCarrier sctxCarrier, PValue arg)
@@ -185,7 +185,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
     //The channel enumerator is a proxy that translates method calls into messages
     //  to our producer
-    private class ChannelEnumerator : IEnumerator<PValue>
+    class ChannelEnumerator : IEnumerator<PValue>
     {
         public ChannelEnumerator(Channel peek,
             Channel data,
@@ -205,12 +205,12 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
             //  with this thread via 4 channels, one for each method
         }
 
-        private readonly Channel _peek;
-        private readonly Channel _data;
-        private readonly Channel _rset;
-        private readonly Channel _disp;
-        private readonly Func<PValue> _produce;
-        private readonly ContextCarrier _sctxCarrier;
+        readonly Channel _peek;
+        readonly Channel _data;
+        readonly Channel _rset;
+        readonly Channel _disp;
+        readonly Func<PValue> _produce;
+        readonly ContextCarrier _sctxCarrier;
 
         #region Implementation of IDisposable
 
@@ -265,9 +265,9 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     }
 
     //Makes working with select from managed code easier
-    private class PFunc : IIndirectCall
+    class PFunc : IIndirectCall
     {
-        private readonly Func<StackContext, PValue[], PValue> _f;
+        readonly Func<StackContext, PValue[], PValue> _f;
 
         public PFunc(Func<StackContext, PValue[], PValue> f)
         {
@@ -289,7 +289,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
         }
     }
 
-    private static PValue pfunc(Func<StackContext, PValue[], PValue> f)
+    static PValue pfunc(Func<StackContext, PValue[], PValue> f)
     {
         return new PFunc(f);
     }

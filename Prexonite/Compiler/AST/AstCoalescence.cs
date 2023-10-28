@@ -94,7 +94,7 @@ public class AstCoalescence : AstExpr,
         }
     }
 
-    private static bool _exprIsNotNull(AstExpr iexpr)
+    static bool _exprIsNotNull(AstExpr iexpr)
     {
         return !(iexpr is AstNull ||
             iexpr is AstConstant && ((AstConstant) iexpr).Constant == null);
@@ -102,8 +102,8 @@ public class AstCoalescence : AstExpr,
 
     #endregion
 
-    private static int _count = -1;
-    private static readonly object _labelCountLock = new();
+    static int _count = -1;
+    static readonly object _labelCountLock = new();
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
@@ -113,7 +113,7 @@ public class AstCoalescence : AstExpr,
         target.EmitLabel(Position, endLabel);
     }
 
-    private void _emitCode(CompilerTarget target, string endLabel, StackSemantics stackSemantics)
+    void _emitCode(CompilerTarget target, string endLabel, StackSemantics stackSemantics)
     {
         for (var i = 0; i < Expressions.Count; i++)
         {
@@ -151,7 +151,7 @@ public class AstCoalescence : AstExpr,
         }
     }
 
-    private static string _generateEndLabel()
+    static string _generateEndLabel()
     {
         lock (_labelCountLock)
         {
@@ -245,7 +245,7 @@ public class AstCoalescence : AstExpr,
         }
     }
 
-    private void _reportInvalidPlaceholders(CompilerTarget target)
+    void _reportInvalidPlaceholders(CompilerTarget target)
     {
         target.Loader.ReportMessage(
             Message.Error(

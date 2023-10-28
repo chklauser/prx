@@ -43,7 +43,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler;
 
-internal partial class Parser
+partial class Parser
 {
     [DebuggerStepThrough]
     internal Parser(IScanner scanner, Loader loader)
@@ -98,7 +98,7 @@ internal partial class Parser
         get => target?.CurrentBlock.Symbols ?? Loader.Symbols;
     }
 
-    private DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
+    DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
     {
         if(relativeNsId.Count < 1)
             throw new ArgumentOutOfRangeException(nameof(relativeNsId),Resources.Parser_relativeNsId_empty);
@@ -176,7 +176,7 @@ internal partial class Parser
     }
 
     [CanBeNull]
-    private LocalNamespace _tryGetLocalNamespace([NotNull] ISymbolView<Symbol> currentSurrounding, [NotNull] string superNsId, [NotNull] ISourcePosition idPosition)
+    LocalNamespace _tryGetLocalNamespace([NotNull] ISymbolView<Symbol> currentSurrounding, [NotNull] string superNsId, [NotNull] ISourcePosition idPosition)
     {
         LocalNamespace localNs = null;
         if (currentSurrounding.TryGet(superNsId, out var sym))
@@ -211,7 +211,7 @@ internal partial class Parser
     /// <param name="idPosition">Position of the name that caused this declaration (position of the namespace name)</param>
     /// <param name="localNs">The namespace to declare</param>
     /// <param name="nextPrefix">Namespaces prefix to use for physical names in declared namespace. Or null if the namespace already has a prefix assigned.</param>
-    private static void _declareNamespaceAsExported(
+    static void _declareNamespaceAsExported(
         LocalNamespace surroundingNamespace, 
         SymbolStore outer, 
         string superNsId, 
@@ -248,7 +248,7 @@ internal partial class Parser
     }
 
     [CanBeNull]
-    private ISymbolView<Symbol> _resolveNamespace(ISymbolView<Symbol> scope, [NotNull] ISourcePosition qualifiedIdPosition, QualifiedId qualifiedId)
+    ISymbolView<Symbol> _resolveNamespace(ISymbolView<Symbol> scope, [NotNull] ISourcePosition qualifiedIdPosition, QualifiedId qualifiedId)
     {
         while (qualifiedId.Count > 0)
         {
@@ -270,17 +270,17 @@ internal partial class Parser
         return scope;
     }
 
-    private void _updateNamespace(DeclarationScope scope, SymbolStoreBuilder builder)
+    void _updateNamespace(DeclarationScope scope, SymbolStoreBuilder builder)
     {
         scope._LocalNamespace.DeclareExports(builder.ToSymbolStore());
     }
 
-    private SymbolOrigin _privateDeclarationOrigin(ISourcePosition position, DeclarationScope scope)
+    SymbolOrigin _privateDeclarationOrigin(ISourcePosition position, DeclarationScope scope)
     {
         return new SymbolOrigin.NamespaceDeclarationScope(position, scope.PathPrefix);
     }
 
-    private DeclarationScope _popDeclScope()
+    DeclarationScope _popDeclScope()
     {
         // The symbol for this namespace should already have been declared by the push operation
         return Loader.PopScope();
@@ -293,7 +293,7 @@ internal partial class Parser
     /// </summary>
     /// <param name="declStore">The store to extract the exported symbols from.</param>
     /// <returns>A static view (shallow copy) of the exported symbols of <paramref name="declStore"/>.</returns>
-    private ISymbolView<Symbol> _indexExportedSymbols(SymbolStore declStore)
+    ISymbolView<Symbol> _indexExportedSymbols(SymbolStore declStore)
     {
         var index = SymbolStore.Create();
         foreach (var symbol in declStore.LocalDeclarations)
@@ -301,18 +301,18 @@ internal partial class Parser
         return index;
     }
 
-    private string _assignPhysicalFunctionSlot([CanBeNull] string primaryId)
+    string _assignPhysicalFunctionSlot([CanBeNull] string primaryId)
     {
         return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("f"));
     }
 
-    private string _assignPhysicalSlot(string id)
+    string _assignPhysicalSlot(string id)
     {
         var scope = Loader.CurrentScope;
         return scope == null ? id : scope._LocalNamespace.DerivePhysicalName(id);
     }
 
-    private string _assignPhysicalGlobalVariableSlot([CanBeNull] string primaryId)
+    string _assignPhysicalGlobalVariableSlot([CanBeNull] string primaryId)
     {
         return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("v"));
     }
@@ -328,7 +328,7 @@ internal partial class Parser
     [DebuggerStepThrough]
     public class AstProxy
     {
-        private readonly Parser outer;
+        readonly Parser outer;
 
         internal AstProxy(Parser outer)
         {
@@ -388,7 +388,7 @@ internal partial class Parser
 
     #region General
 
-    private static string _removeSingleQuotes(string s)
+    static string _removeSingleQuotes(string s)
     {
         return s.Replace("'", "");
     }
@@ -426,14 +426,14 @@ internal partial class Parser
         errors.SemErr(tok.line, tok.col, s);
     }
 
-    private void _pushLexerState(int state)
+    void _pushLexerState(int state)
     {
         if (!(scanner is Lexer lex))
             throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
         lex.PushState(state);
     }
 
-    private void _popLexerState()
+    void _popLexerState()
     {
         if (!(scanner is Lexer lex))
             throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
@@ -443,7 +443,7 @@ internal partial class Parser
             la.kind = lex.checkKeyword(la.val);
     }
 
-    private void _inject(Token c)
+    void _inject(Token c)
     {
         if (!(scanner is Lexer lex))
             throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
@@ -454,7 +454,7 @@ internal partial class Parser
         lex._InjectToken(c);
     }
 
-    private void _inject(int kind, string val)
+    void _inject(int kind, string val)
     {
         if (val == null)
             throw new ArgumentNullException(nameof(val));
@@ -466,7 +466,7 @@ internal partial class Parser
         _inject(c);
     }
 
-    private void _inject(int kind)
+    void _inject(int kind)
     {
         _inject(kind, string.Empty);
     }
@@ -490,7 +490,7 @@ internal partial class Parser
         }
     }
 
-    private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
+    void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
     {
         if (errors.count > 0)
         {
@@ -529,7 +529,7 @@ internal partial class Parser
         }
     }
 
-    private bool _suppressPrimarySymbol(IHasMetaTable ihmt)
+    bool _suppressPrimarySymbol(IHasMetaTable ihmt)
     {
         return ihmt.Meta[Loader.SuppressPrimarySymbol].Switch;
     }
@@ -546,7 +546,7 @@ internal partial class Parser
         return new AstIndirectCall(position, PCall.Get, n);
     }
 
-    private readonly Stack<object> _scopeStack = new();
+    readonly Stack<object> _scopeStack = new();
 
     internal void _PushScope(AstScopedBlock block)
     {
@@ -672,13 +672,13 @@ internal partial class Parser
 
     }
 
-    private bool isFollowedByStatementBlock()
+    bool isFollowedByStatementBlock()
     {
         scanner.ResetPeek();
         return scanner.Peek().kind == _lbrace;
     }
 
-    private bool isLambdaExpression() //LL(*)
+    bool isLambdaExpression() //LL(*)
     {
         scanner.ResetPeek();
 
@@ -767,7 +767,7 @@ internal partial class Parser
     //LL(*)
 
     [DebuggerStepThrough]
-    private bool isIndirectCall() //LL(2)
+    bool isIndirectCall() //LL(2)
     {
         scanner.ResetPeek();
         var c = la;
@@ -777,7 +777,7 @@ internal partial class Parser
     }
 
     // used to distinguish asm{...} and asm(...) 
-    private bool isAsmBlock() //LL(2)
+    bool isAsmBlock() //LL(2)
     {
         var asm = la;
         if (asm.kind != _asm)
@@ -790,17 +790,17 @@ internal partial class Parser
     }
         
     [DebuggerStepThrough]
-    private bool isOuterVariable(string id) //context
+    bool isOuterVariable(string id) //context
     {
         return target._IsOuterVariable(id);
     }
 
-    private string generateLocalId(string prefix = "")
+    string generateLocalId(string prefix = "")
     {
         return target.GenerateLocalId(prefix);
     }
 
-    private Symbol _ensureDefinedLocal(string localAlias, string physicalId, bool isAutodereferenced, ISourcePosition declPos, bool isOverrideDecl)
+    Symbol _ensureDefinedLocal(string localAlias, string physicalId, bool isAutodereferenced, ISourcePosition declPos, bool isOverrideDecl)
     {
         var refSym =
             Symbol.CreateDereference(Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), declPos),
@@ -831,7 +831,7 @@ internal partial class Parser
     /// <param name="position">The position to use for error messages.</param>
     /// <returns>The expression that this symbol resolves to.</returns>
     [NotNull]
-    private AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] string id, [NotNull] ISourcePosition position)
+    AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] string id, [NotNull] ISourcePosition position)
     {
         var expr = scope.TryGet(id, out var sym)
             ? Create.ExprFor(position, sym)
@@ -862,7 +862,7 @@ internal partial class Parser
     /// <param name="position">The position to use for error messages.</param>
     /// <returns>The expression that this symbol resolves to.</returns>
     [NotNull]
-    private AstGetSet _useSymbolFromNamespace([NotNull] AstNamespaceUsage ns, [NotNull] string id, [NotNull] ISourcePosition position)
+    AstGetSet _useSymbolFromNamespace([NotNull] AstNamespaceUsage ns, [NotNull] string id, [NotNull] ISourcePosition position)
     {
         var expr = _useSymbol(ns.Namespace, id, position);
         // write down qualified path
@@ -874,7 +874,7 @@ internal partial class Parser
         return expr;
     }
 
-    private Symbol _parseSymbol(MExpr expr)
+    Symbol _parseSymbol(MExpr expr)
     {
         try
         {
@@ -889,7 +889,7 @@ internal partial class Parser
     }
 
     [DebuggerStepThrough]
-    private static bool isId(Token c)
+    static bool isId(Token c)
     {
         if (isGlobalId(c))
             return true;
@@ -906,12 +906,12 @@ internal partial class Parser
     }
 
     [DebuggerStepThrough]
-    private static bool isGlobalId(Token c)
+    static bool isGlobalId(Token c)
     {
         return c.kind is _id or _anyId;
     }
 
-    private bool _isNotNewDecl()
+    bool _isNotNewDecl()
     {
         if (la.kind != _new)
             return false;
@@ -922,7 +922,7 @@ internal partial class Parser
         return varTok.kind != _var && varTok.kind != _ref;
     }
 
-    private static IEnumerable<string> let_bindings(CompilerTarget ft)
+    static IEnumerable<string> let_bindings(CompilerTarget ft)
     {
         var lets = new HashSet<string>(Engine.DefaultStringComparer);
         for (var ct = ft; ct != null; ct = ct.ParentTarget)
@@ -930,7 +930,7 @@ internal partial class Parser
         return lets;
     }
 
-    private static void mark_as_let(PFunction f, string local)
+    static void mark_as_let(PFunction f, string local)
     {
         f.Meta[PFunction.LetKey] = (MetaEntry)
             f.Meta[PFunction.LetKey].List
@@ -940,10 +940,10 @@ internal partial class Parser
 
     #region Assemble Invocation of Symbol
 
-    private class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
+    class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
     {
         [NotNull]
-        private readonly Parser _parser;
+        readonly Parser _parser;
 
         public ReferenceTransformer([NotNull] Parser parser)
         {
@@ -1010,9 +1010,9 @@ internal partial class Parser
     }
 
     [NotNull]
-    private readonly ReferenceTransformer _referenceTransformer;
+    readonly ReferenceTransformer _referenceTransformer;
 
-    private AstExpr _assembleReference(string id, int ptrCount)
+    AstExpr _assembleReference(string id, int ptrCount)
     {
         Debug.Assert(id != null);
         Debug.Assert(ptrCount > 0);
@@ -1055,10 +1055,10 @@ internal partial class Parser
         }
     }
 
-    private static readonly SymbolShift _objectCreationShift = static id => Compiler.Loader.ObjectCreationPrefix + id;
-    private static readonly SymbolShift _conversionShift =  static id => Compiler.Loader.ConversionPrefix + id;
-    private static readonly SymbolShift _typeCheckShift =  static id => Compiler.Loader.TypeCheckPrefix + id;
-    private static readonly SymbolShift _staticCallShift =  static id => Compiler.Loader.StaticCallPrefix + id;
+    static readonly SymbolShift _objectCreationShift = static id => Compiler.Loader.ObjectCreationPrefix + id;
+    static readonly SymbolShift _conversionShift =  static id => Compiler.Loader.ConversionPrefix + id;
+    static readonly SymbolShift _typeCheckShift =  static id => Compiler.Loader.TypeCheckPrefix + id;
+    static readonly SymbolShift _staticCallShift =  static id => Compiler.Loader.StaticCallPrefix + id;
 
     /// <summary>
     /// Given the partial application of a type check <c>(? is T)</c>, this method will construct the
@@ -1069,7 +1069,7 @@ internal partial class Parser
     /// <param name="check">The (non-inverted) type check.</param>
     /// <returns>The partial application of an inverted type check.</returns>
     [NotNull]
-    private AstExpr _createPartialInvertedTypeCheck([NotNull] ISourcePosition position, [NotNull] AstExpr check)
+    AstExpr _createPartialInvertedTypeCheck([NotNull] ISourcePosition position, [NotNull] AstExpr check)
     {
         // Special handling of "? is not Y" as that's not the same thing as "not (? is Y)"
         // when placeholders are involved.
@@ -1099,22 +1099,22 @@ internal partial class Parser
         return thenCmd;
     }
 
-    private AstExpr _createUnknownExpr()
+    AstExpr _createUnknownExpr()
     {
         return _createUnknownGetSet();
     }
 
-    private AstGetSet _createUnknownGetSet()
+    AstGetSet _createUnknownGetSet()
     {
         return new AstIndirectCall(this, new AstNull(this));
     }
 
-    private void _appendRight(AstExpr lhs, AstGetSet rhs)
+    void _appendRight(AstExpr lhs, AstGetSet rhs)
     {
         _appendRight(lhs.Singleton(), rhs);
     }
 
-    private void _appendRight(IEnumerable<AstExpr> lhs, AstGetSet rhs)
+    void _appendRight(IEnumerable<AstExpr> lhs, AstGetSet rhs)
     {
         rhs.Arguments.RightAppend(lhs);
         rhs.Arguments.ReleaseRightAppend();
@@ -1162,7 +1162,7 @@ internal partial class Parser
     }
 
     [DebuggerStepThrough]
-    private bool isAsmInstruction(string insBase, string detail) //LL(4)
+    bool isAsmInstruction(string insBase, string detail) //LL(4)
     {
         scanner.ResetPeek();
         var la1 = la.kind == _at ? scanner.Peek() : la;
@@ -1171,7 +1171,7 @@ internal partial class Parser
         return checkAsmInstruction(la1, la2, la3, insBase, detail);
     }
 
-    private static bool checkAsmInstruction(
+    static bool checkAsmInstruction(
         Token la1, Token la2, Token la3, string insBase, string detail)
     {
         return
@@ -1184,54 +1184,54 @@ internal partial class Parser
     }
 
     [DebuggerStepThrough]
-    private bool isInIntegerGroup()
+    bool isInIntegerGroup()
     {
         return peekIsOneOf(asmIntegerGroup);
     }
 
     [DebuggerStepThrough]
-    private bool isInJumpGroup()
+    bool isInJumpGroup()
     {
         return peekIsOneOf(asmJumpGroup);
     }
 
-    private bool isInOpAliasGroup()
+    bool isInOpAliasGroup()
     {
         return peekIsOneOf(asmOpAliasGroup);
     }
 
     [DebuggerStepThrough]
-    private bool isInNullGroup()
+    bool isInNullGroup()
     {
         return peekIsOneOf(asmNullGroup);
     }
 
     [DebuggerStepThrough]
-    private bool isInIdGroup()
+    bool isInIdGroup()
     {
         return peekIsOneOf(asmIdGroup);
     }
 
     [DebuggerStepThrough]
-    private bool isInIdArgGroup()
+    bool isInIdArgGroup()
     {
         return peekIsOneOf(asmIdArgGroup);
     }
 
     [DebuggerStepThrough]
-    private bool isInArgGroup()
+    bool isInArgGroup()
     {
         return peekIsOneOf(asmArgGroup);
     }
 
     [DebuggerStepThrough]
-    private bool isInQualidArgGroup()
+    bool isInQualidArgGroup()
     {
         return peekIsOneOf(asmQualidArgGroup);
     }
 
     //[NoDebug()]
-    private bool peekIsOneOf(string[,] table)
+    bool peekIsOneOf(string[,] table)
     {
         scanner.ResetPeek();
         var la1 = la.kind == _at ? scanner.Peek() : la;
@@ -1243,13 +1243,13 @@ internal partial class Parser
         return false;
     }
 
-    private readonly SymbolTable<OpCode> _instructionNameTable = new(60);
+    readonly SymbolTable<OpCode> _instructionNameTable = new(60);
 
-    private readonly SymbolTable<Tuple<string, int>> _opAliasTable =
+    readonly SymbolTable<Tuple<string, int>> _opAliasTable =
         new(32);
 
     [DebuggerStepThrough]
-    private void _createTableOfInstructions()
+    void _createTableOfInstructions()
     {
         var tab = _instructionNameTable;
         //Add original names
@@ -1299,7 +1299,7 @@ internal partial class Parser
     }
 
     //[DebuggerStepThrough]
-    private string getOpAlias(string insBase, string detail, out int argc)
+    string getOpAlias(string insBase, string detail, out int argc)
     {
         var combined = insBase + (detail == null ? "" : "." + detail);
         var entry = _opAliasTable.GetDefault(combined, null);
@@ -1316,7 +1316,7 @@ internal partial class Parser
     }
 
     //[DebuggerStepThrough]
-    private OpCode getOpCode(string insBase, string detail)
+    OpCode getOpCode(string insBase, string detail)
     {
         var combined = insBase + (detail == null ? "" : "." + detail);
         return _instructionNameTable.GetDefault(combined, OpCode.invalid);
@@ -1324,7 +1324,7 @@ internal partial class Parser
 
     #region Instruction tables
 
-    private readonly string[,] asmIntegerGroup =
+    readonly string[,] asmIntegerGroup =
     {
         {"ldc", "int"},
         {"pop", null},
@@ -1337,7 +1337,7 @@ internal partial class Parser
         {"ldr", "loci"}
     };
 
-    private readonly string[,] asmJumpGroup =
+    readonly string[,] asmJumpGroup =
     {
         {"jump", null},
         {"jump", "t"},
@@ -1347,7 +1347,7 @@ internal partial class Parser
         {"leave", null}
     };
 
-    private readonly string[,] asmNullGroup =
+    readonly string[,] asmNullGroup =
     {
         {"ldc", "null"},
         {"ldnull", null},
@@ -1373,7 +1373,7 @@ internal partial class Parser
         {"exception", null}
     };
 
-    private readonly string[,] asmOpAliasGroup =
+    readonly string[,] asmOpAliasGroup =
     {
         {"neg", null},
         {"not", null},
@@ -1394,7 +1394,7 @@ internal partial class Parser
         {"xor", null}
     };
 
-    private readonly string[,] asmIdGroup =
+    readonly string[,] asmIdGroup =
     {
         {"inc", null},
         {"incloc", null},
@@ -1419,7 +1419,7 @@ internal partial class Parser
         {"newclo", null}
     };
 
-    private readonly string[,] asmIdArgGroup =
+    readonly string[,] asmIdArgGroup =
     {
         {"newtype", null},
         {"get", null},
@@ -1430,7 +1430,7 @@ internal partial class Parser
         {"indglob", null}
     };
 
-    private readonly string[,] asmArgGroup =
+    readonly string[,] asmArgGroup =
     {
         {"indarg", null},
         {"inda", null},
@@ -1439,7 +1439,7 @@ internal partial class Parser
         {"tail", null}
     };
 
-    private readonly string[,] asmQualidArgGroup =
+    readonly string[,] asmQualidArgGroup =
     {
         {"sget", null},
         {"sset", null},

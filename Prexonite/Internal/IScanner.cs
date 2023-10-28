@@ -27,7 +27,7 @@ using Prexonite.Compiler;
 
 namespace Prexonite.Internal;
 
-internal interface IScanner
+interface IScanner
 {
     Token Scan();
     Token Peek();

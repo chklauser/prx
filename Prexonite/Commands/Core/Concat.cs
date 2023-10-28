@@ -36,7 +36,7 @@ public sealed class Concat : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    private Concat()
+    Concat()
     {
     }
 

@@ -35,7 +35,7 @@ public class Round : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Round()
+    Round()
     {
     }
 
@@ -110,7 +110,7 @@ public class Round : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Round).GetMethod("RunStatically",
             new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 

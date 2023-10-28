@@ -31,7 +31,7 @@ namespace Prexonite.Commands.Core;
 
 public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
 {
-    private Char()
+    Char()
     {
     }
 

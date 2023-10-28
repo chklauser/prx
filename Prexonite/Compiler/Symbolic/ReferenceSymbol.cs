@@ -39,7 +39,7 @@ public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
     }
 
     [DebuggerStepThrough]
-    private ReferenceSymbol([NotNull] ISourcePosition position, [NotNull] EntityRef entity)
+    ReferenceSymbol([NotNull] ISourcePosition position, [NotNull] EntityRef entity)
     {
         Entity = entity;
         Position = position;

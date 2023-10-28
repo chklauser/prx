@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Ast;
 public class AstUsing : AstScopedBlock,
     IAstHasBlocks
 {
-    private const string LabelPrefix = "using";
+    const string LabelPrefix = "using";
 
     public AstUsing([NotNull] ISourcePosition p, 
         [NotNull] AstBlock lexicalScope)

@@ -52,7 +52,7 @@ public class AstForLoop : AstLoop
     /// <param name="position">The source position for this node and all block nodes.</param>
     /// <param name="nextBlock">The block reserved for the "next iteration" code. 
     /// It's parent block must be the initialization block.</param>
-    private AstForLoop(ISourcePosition position, AstScopedBlock nextBlock)
+    AstForLoop(ISourcePosition position, AstScopedBlock nextBlock)
         : base(position, nextBlock)
     {
         Initialize = (AstScopedBlock)nextBlock.LexicalScope;

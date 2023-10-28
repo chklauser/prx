@@ -54,7 +54,7 @@ public static class DebugHook
         _replaceDebug(t, t.Ast, debugging);
     }
 
-    private static readonly CompilerHook _hook = new(Hook);
+    static readonly CompilerHook _hook = new(Hook);
 
     /// <summary>
     ///     Installs the hook in the supplied <see cref = "Loader" />.
@@ -93,7 +93,7 @@ public static class DebugHook
             return function.ParentApplication.Meta[DebuggingMetaKey].Switch;
     }
 
-    private static void _replaceDebug(CompilerTarget t, IList<AstNode> block, bool debugging)
+    static void _replaceDebug(CompilerTarget t, IList<AstNode> block, bool debugging)
     {
         for (var i = 0; i < block.Count; i++)
         {
@@ -154,7 +154,7 @@ public static class DebugHook
     }
 
     [ContractAnnotation("=>true,stmt:notnull;=>false,stmt:canbenull")]
-    private static bool _isDebugCall([CanBeNull] AstGetSet stmt)
+    static bool _isDebugCall([CanBeNull] AstGetSet stmt)
     {
         return stmt.TryMatchCall(out var entityRef) && entityRef.TryGetCommand(out var cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
     }

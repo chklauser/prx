@@ -56,7 +56,7 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
 
     #endregion
 
-    private NilSymbol([NotNull] ISourcePosition position)
+    NilSymbol([NotNull] ISourcePosition position)
     {
         Position = position;
     }
@@ -79,7 +79,7 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
         return true;
     }
 
-    private const int NilSymbolHashCode = 384950146;
+    const int NilSymbolHashCode = 384950146;
 
     public override int GetHashCode()
     {

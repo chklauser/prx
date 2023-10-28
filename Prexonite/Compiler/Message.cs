@@ -37,7 +37,7 @@ public class Message : IEquatable<Message>, IComparable<Message>
         return new(severity, text, position, messageClass);
     }
 
-    private const string MessageFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
+    const string MessageFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
 
     public string Text { get; }
 
@@ -50,7 +50,7 @@ public class Message : IEquatable<Message>, IComparable<Message>
     public int Column => Position.Column;
     public ISourcePosition Position { get; }
 
-    private Message(MessageSeverity severity, [NotNull] string text, [NotNull] ISourcePosition position,
+    Message(MessageSeverity severity, [NotNull] string text, [NotNull] ISourcePosition position,
         [CanBeNull]string messageClass = null)
     {
         Text = text ?? throw new ArgumentNullException();

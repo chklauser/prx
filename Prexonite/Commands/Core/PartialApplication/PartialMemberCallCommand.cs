@@ -37,7 +37,7 @@ public class PartialMemberCallCommand :
 {
     #region Singleton pattern
 
-    private PartialMemberCallCommand()
+    PartialMemberCallCommand()
     {
     }
 
@@ -115,7 +115,7 @@ public class PartialMemberCallCommand :
         return true;
     }
 
-    private ConstructorInfo _partialMemberCallCtor;
+    ConstructorInfo _partialMemberCallCtor;
 
     protected override void EmitConstructorCall(CompilerState state, MemberCallInfo parameter)
     {

@@ -100,7 +100,7 @@ public class Loader : StackContext, IMessageSink
         _imprintCommandInfo();
     }
 
-    private void _imprintCommandInfo()
+    void _imprintCommandInfo()
     {
         foreach (var (alias, command) in BuildCommands)
             ParentEngine.Commands.ProvideFallbackInfo(alias, command.ToCommandInfo());
@@ -122,7 +122,7 @@ public class Loader : StackContext, IMessageSink
 
     #region Global Symbol Table
 
-    private readonly Stack<DeclarationScope> _declarationScopes = new();
+    readonly Stack<DeclarationScope> _declarationScopes = new();
         
     // For the top-level (outside of all namespaces and functions), we use a stack of symbol stores. 
     // From "outside" to "inside", the stack looks as follows:
@@ -135,9 +135,9 @@ public class Loader : StackContext, IMessageSink
     // 
     // NOTE: "topLevelSymbols" refers to the symbol store within the _topLevelView. 
 
-    private readonly SymbolStore _commandSymbols;
-    private SymbolStore _topLevelImports;
-    private readonly ModuleLevelView _topLevelView;
+    readonly SymbolStore _commandSymbols;
+    SymbolStore _topLevelImports;
+    readonly ModuleLevelView _topLevelView;
 
     [CanBeNull]
     public DeclarationScope CurrentScope => _declarationScopes.Count > 0 ? _declarationScopes.Peek() : null;
@@ -191,14 +191,14 @@ public class Loader : StackContext, IMessageSink
 
     #region Function Symbol Tables
 
-    private readonly SymbolTable<CompilerTarget> _functionTargets;
+    readonly SymbolTable<CompilerTarget> _functionTargets;
 
     public FunctionTargetsIterator FunctionTargets { [DebuggerStepThrough] get; }
 
     [DebuggerStepThrough]
     public sealed class FunctionTargetsIterator : IEnumerable<CompilerTarget>
     {
-        private readonly Loader _outer;
+        readonly Loader _outer;
 
         internal FunctionTargetsIterator(Loader outer)
         {
@@ -270,12 +270,12 @@ public class Loader : StackContext, IMessageSink
 
     public CompilerHooksIterator CompilerHooks { [DebuggerStepThrough] get; }
 
-    private readonly List<CompilerHook> _compilerHooks = new();
+    readonly List<CompilerHook> _compilerHooks = new();
 
     [DebuggerStepThrough]
     public class CompilerHooksIterator : ICollection<CompilerHook>
     {
-        private readonly List<CompilerHook> _lst;
+        readonly List<CompilerHook> _lst;
 
         internal CompilerHooksIterator(Loader outer)
         {
@@ -431,13 +431,13 @@ public class Loader : StackContext, IMessageSink
 
     #region Custom symbol resolving
 
-    private readonly List<CustomResolver> _customResolvers = new();
+    readonly List<CustomResolver> _customResolvers = new();
 
     public CustomResolversIterator CustomResolvers { get; }
 
     public class CustomResolversIterator : ICollection<CustomResolver>
     {
-        private readonly List<CustomResolver> _resolvers;
+        readonly List<CustomResolver> _resolvers;
 
         internal CustomResolversIterator(List<CustomResolver> outer)
         {
@@ -567,7 +567,7 @@ public class Loader : StackContext, IMessageSink
     /// </summary>
     public MacroCommandTable MacroCommands { [DebuggerStepThrough] get; } = new();
 
-    private void _initializeMacroCommands()
+    void _initializeMacroCommands()
     {
         _addMacroCommand(CallSub.Instance);
         _addMacroCommand(CallSubInterpret.Instance);
@@ -596,7 +596,7 @@ public class Loader : StackContext, IMessageSink
         }
     }
 
-    private void _addCallMacro()
+    void _addCallMacro()
     {
         _addMacroCommand(CallMacro.Instance);
         var callMacroHelper = CallMacro.GetHelperCommands(this);
@@ -604,13 +604,13 @@ public class Loader : StackContext, IMessageSink
         _addMacroCommand(callMacroHelper.Value.Partial);
     }
 
-    private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)
+    void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)
     {
         foreach (var helperCommand in helpers)
             BuildCommands.AddCompilerCommand(helperCommand.Key, helperCommand.Value);
     }
 
-    private void _addMacroCommand(MacroCommand macroCommand)
+    void _addMacroCommand(MacroCommand macroCommand)
     {
         MacroCommands.Add(macroCommand);
         if (Options.RegisterCommands)
@@ -627,7 +627,7 @@ public class Loader : StackContext, IMessageSink
     #region Compilation
 
     [DebuggerStepThrough]
-    private void _loadFromStream(Stream str, string filePath)
+    void _loadFromStream(Stream str, string filePath)
     {
 #if Compression
             if(!str.CanSeek)
@@ -659,7 +659,7 @@ public class Loader : StackContext, IMessageSink
         _loadFromReader(reader, filePath);
     }
 
-    private void _loadFromReader(TextReader reader, string filePath)
+    void _loadFromReader(TextReader reader, string filePath)
     {
         var lex = new Lexer(reader);
         if (filePath != null)
@@ -695,7 +695,7 @@ public class Loader : StackContext, IMessageSink
     }
 
 #if DEBUG
-        private int _loadIndent;
+    int _loadIndent;
 #endif
 
     [PublicAPI]
@@ -724,7 +724,7 @@ public class Loader : StackContext, IMessageSink
         }
     }
 
-    private void _loadFromFile(ISourceSpec file)
+    void _loadFromFile(ISourceSpec file)
     {
         if (file == null)
             throw new ArgumentNullException(nameof(file));
@@ -773,7 +773,7 @@ public class Loader : StackContext, IMessageSink
         _loadFromFile(file);
     }
 
-    private static void _throwCannotFindScriptFile(string path)
+    static void _throwCannotFindScriptFile(string path)
     {
         throw new FileNotFoundException(
             "Cannot find script file \"" + path + "\".", path);
@@ -785,7 +785,7 @@ public class Loader : StackContext, IMessageSink
         _load(new Lexer(new StringReader(code)));
     }
 
-    private Action<int, int, string> _reportSemError;
+    Action<int, int, string> _reportSemError;
 
     /// <summary>
     ///     Reports a semantic error to the current parsers error stream. 
@@ -805,7 +805,7 @@ public class Loader : StackContext, IMessageSink
         _reportSemError(line, column, message);
     }
 
-    private void _messageHook(object sender, MessageEventArgs e)
+    void _messageHook(object sender, MessageEventArgs e)
     {
         ReportMessage(e.Message);
     }
@@ -829,14 +829,14 @@ public class Loader : StackContext, IMessageSink
         }
     }
 
-    private EventHandler<MessageEventArgs> _messageHandler;
+    EventHandler<MessageEventArgs> _messageHandler;
 
-    private EventHandler<MessageEventArgs> _getMessageHandler()
+    EventHandler<MessageEventArgs> _getMessageHandler()
     {
         return _messageHandler ??= _messageHook;
     }
 
-    private void _load(IScanner lexer)
+    void _load(IScanner lexer)
     {
         var parser = new Parser(lexer, this);
 
@@ -906,8 +906,8 @@ public class Loader : StackContext, IMessageSink
             return '/';
         }
     }
-        
-    private static readonly string _imageLocation =
+
+    static readonly string _imageLocation =
         new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
 
     /// <summary>
@@ -969,13 +969,13 @@ public class Loader : StackContext, IMessageSink
         return null;
     }
 
-    private PathSet loadedFiles { get; } = new();
+    PathSet loadedFiles { get; } = new();
 
     #endregion
 
     #region Build Block Commands
 
-    private readonly Stack<object> _buildCommandsRequests = new();
+    readonly Stack<object> _buildCommandsRequests = new();
 
     public CommandTable BuildCommands { get; } = new();
 
@@ -1047,7 +1047,7 @@ public class Loader : StackContext, IMessageSink
     /// </summary>
     public const string DefaultScriptName = "_default.pxs";
 
-    private void _initializeBuildCommands()
+    void _initializeBuildCommands()
     {
         BuildCommands.Clear();
         BuildCommands.AddCompilerCommand(
@@ -1140,14 +1140,14 @@ public class Loader : StackContext, IMessageSink
     }
 
 
-    private void _enableBuildCommands()
+    void _enableBuildCommands()
     {
         foreach (var pair in BuildCommands.CommandsInGroup(PCommandGroups.Compiler))
             if (!ParentEngine.Commands.ContainsKey(pair.Key))
                 ParentEngine.Commands.AddCompilerCommand(pair.Key, pair.Value);
     }
 
-    private void _disableBuildBlockCommands()
+    void _disableBuildBlockCommands()
     {
         ParentEngine.Commands.RemoveCompilerCommands();
     }
@@ -1268,13 +1268,13 @@ public class Loader : StackContext, IMessageSink
             StoreSymbols(writer);
     }
 
-    private class SymbolSerializationPartitioner : SymbolHandler<string, object>
+    class SymbolSerializationPartitioner : SymbolHandler<string, object>
     {
         [NN]
-        private readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new();
+        readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new();
 
         [NN]
-        private readonly IDictionary<Symbol,QualifiedId> _previousSymbols;
+        readonly IDictionary<Symbol,QualifiedId> _previousSymbols;
 
         public SymbolSerializationPartitioner([NN] IDictionary<Symbol, QualifiedId> previousSymbols)
         {
@@ -1323,7 +1323,7 @@ public class Loader : StackContext, IMessageSink
         _storeScope(writer, scope, previousSymbols, currentPrefix);
     }
 
-    private void _storeScope(TextWriter writer, IEnumerable<KeyValuePair<string,Symbol>> scope, IDictionary<Symbol, QualifiedId> previousSymbols,
+    void _storeScope(TextWriter writer, IEnumerable<KeyValuePair<string,Symbol>> scope, IDictionary<Symbol, QualifiedId> previousSymbols,
         QualifiedId currentPrefix)
     {
         var partition = new SymbolSerializationPartitioner(previousSymbols);
@@ -1358,7 +1358,7 @@ public class Loader : StackContext, IMessageSink
         writer.WriteLine(");");
     }
 
-    private static QualifiedId _recordSymbol(IDictionary<Symbol, QualifiedId> previousSymbols, QualifiedId currentPrefix, string name, Symbol symbol)
+    static QualifiedId _recordSymbol(IDictionary<Symbol, QualifiedId> previousSymbols, QualifiedId currentPrefix, string name, Symbol symbol)
     {
         var nestedPrefix = currentPrefix.ExtendedWith(name);
         if(!previousSymbols.ContainsKey(symbol))
@@ -1415,7 +1415,7 @@ public class Loader : StackContext, IMessageSink
 
     #region String Caching
 
-    private readonly Dictionary<string, string> _stringCache = new();
+    readonly Dictionary<string, string> _stringCache = new();
 
     /// <summary>
     ///     Caches strings encountered while loading code.
@@ -1449,5 +1449,5 @@ public class Loader : StackContext, IMessageSink
     public const string ConversionPrefix = "to_";
     public const string TypeCheckPrefix = "is_";
     public const string StaticCallPrefix = "static_call_";
-    private const string DirectorySeparatorKey = @"\directory_separator";
+    const string DirectorySeparatorKey = @"\directory_separator";
 }

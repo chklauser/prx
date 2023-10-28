@@ -29,7 +29,7 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialTypeCheck : PartialApplicationBase
 {
-    private readonly PType _ptype;
+    readonly PType _ptype;
 
     public PartialTypeCheck(int[] mappings, PValue[] closedArguments, PType ptype)
         : base(mappings, closedArguments, 1)

@@ -45,7 +45,7 @@
 	}
 	
     // Normalize directory separator for cross-platform testing
-    private static string _normalizePath(string path) => path
+    static string _normalizePath(string path) => path
         .Replace('/', System.IO.Path.DirectorySeparatorChar)
         .Replace('\\', System.IO.Path.DirectorySeparatorChar);
         

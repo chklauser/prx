@@ -34,7 +34,7 @@ public class HeadTail : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private HeadTail()
+    HeadTail()
     {
     }
 
@@ -92,7 +92,7 @@ public class HeadTail : PCommand, ICilCompilerAware
             };
     }
 
-    private static IEnumerable<PValue> _tail(StackContext sctx, IEnumerator<PValue> current,
+    static IEnumerable<PValue> _tail(StackContext sctx, IEnumerator<PValue> current,
         IEnumerator<PValue> remaining)
     {
         using (current)

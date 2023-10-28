@@ -39,7 +39,7 @@ public static class DependencyEntity<T>
             _dynamicallyCallGetDependencies(sctx, getDependencies));
     }
 
-    private static Func<PValue, IEnumerable<T>> _dynamicallyCallGetDependencies(
+    static Func<PValue, IEnumerable<T>> _dynamicallyCallGetDependencies(
         StackContext sctx, PValue getDependenciesPV)
     {
         if (getDependenciesPV == null)
@@ -63,7 +63,7 @@ public static class DependencyEntity<T>
 
 public class DependencyEntity<TKey, TValue> : IDependent<TKey>
 {
-    private readonly Func<TValue, IEnumerable<TKey>> _getDependencies;
+    readonly Func<TValue, IEnumerable<TKey>> _getDependencies;
 
     public DependencyEntity(TKey name, TValue value,
         Func<TValue, IEnumerable<TKey>> getDependencies)

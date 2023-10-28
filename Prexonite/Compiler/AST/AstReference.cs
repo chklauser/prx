@@ -42,7 +42,7 @@ public sealed class AstReference : AstExpr
 
     #region Overrides of AstNode
 
-    private class EmitLoadReferenceHandler : IEntityRefMatcher<Tuple<AstReference, CompilerTarget>, object>
+    class EmitLoadReferenceHandler : IEntityRefMatcher<Tuple<AstReference, CompilerTarget>, object>
     {
         #region Implementation of IEntityRefMatcher<in Tuple<AstReference,CompilerTarget>,out object>
 
@@ -89,7 +89,7 @@ public sealed class AstReference : AstExpr
         #endregion
     }
 
-    private static readonly EmitLoadReferenceHandler _emitLoadReference =
+    static readonly EmitLoadReferenceHandler _emitLoadReference =
         new();
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
@@ -130,7 +130,7 @@ public sealed class AstReference : AstExpr
     #endregion
 
     [NotNull]
-    private static Message _macroCommandErrorMessage([NotNull] ISourcePosition position)
+    static Message _macroCommandErrorMessage([NotNull] ISourcePosition position)
     {
         return Message.Error(
             Resources.AstReference_MacroCommandReferenceNotPossible, position,

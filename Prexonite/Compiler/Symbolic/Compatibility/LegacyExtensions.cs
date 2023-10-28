@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Symbolic.Compatibility;
 [Obsolete("Use EntityRef API instead")]
 public static class LegacyExtensions
 {
-    private class SymbolEntryConversion : ISymbolHandler<object, SymbolEntry>
+    class SymbolEntryConversion : ISymbolHandler<object, SymbolEntry>
     {
         public SymbolEntry HandleReference(ReferenceSymbol self, object argument)
         {
@@ -97,7 +97,8 @@ public static class LegacyExtensions
                 self);
         }
     }
-    private static readonly SymbolEntryConversion _convertSymbol = new();
+
+    static readonly SymbolEntryConversion _convertSymbol = new();
 
 
     public static SymbolEntry ToSymbolEntry(this Symbol symbol)

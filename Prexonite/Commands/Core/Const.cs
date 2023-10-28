@@ -35,7 +35,7 @@ public class Const : PCommand, ICilCompilerAware
 
     public static Const Instance { get; } = new();
 
-    private Const()
+    Const()
     {
     }
 
@@ -54,9 +54,9 @@ public class Const : PCommand, ICilCompilerAware
         return CreateConstFunction(constant, sctx);
     }
 
-    private class Impl : IIndirectCall
+    class Impl : IIndirectCall
     {
-        private readonly PValue _value;
+        readonly PValue _value;
 
         public Impl(PValue value)
         {
@@ -69,9 +69,9 @@ public class Const : PCommand, ICilCompilerAware
         }
     }
 
-    private MethodInfo _createConstFunctionInfoCache;
+    MethodInfo _createConstFunctionInfoCache;
 
-    private MethodInfo _createConstFunction
+    MethodInfo _createConstFunction
     {
         get
         {

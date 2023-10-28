@@ -35,7 +35,7 @@ public class Max : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Max()
+    Max()
     {
     }
 
@@ -117,7 +117,7 @@ public class Max : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Max).GetMethod("RunStatically",
             new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 

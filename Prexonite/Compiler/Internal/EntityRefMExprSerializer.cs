@@ -29,7 +29,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Internal;
 
-internal class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
+class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
 {
     #region Singleton
 
@@ -51,7 +51,7 @@ internal class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExp
     public const string MacroCommandModifierHead = "macro";
 
     [NotNull]
-    private MExpr _serializeRefWithModule([NotNull] ISourcePosition position, [NotNull] string head,
+    MExpr _serializeRefWithModule([NotNull] ISourcePosition position, [NotNull] string head,
         [NotNull] string id, [NotNull] ModuleName moduleName)
     {
         return new MExpr.MList(position, head,
@@ -64,7 +64,7 @@ internal class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExp
     }
 
     [NotNull]
-    private MExpr _serializeRef(ISourcePosition position, string head, string id)
+    MExpr _serializeRef(ISourcePosition position, string head, string id)
     {
         return new MExpr.MList(position, head,new []{new MExpr.MAtom(position,id) });
     }

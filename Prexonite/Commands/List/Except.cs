@@ -35,7 +35,7 @@ public class Except : PCommand, ICilCompilerAware
 
     public static Except Instance { get; } = new();
 
-    private Except()
+    Except()
     {
     }
 

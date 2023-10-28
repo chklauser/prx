@@ -27,9 +27,9 @@ using System.IO;
 
 namespace Prexonite.Compiler.Build.Internal;
 
-internal class StringSource : ISource
+class StringSource : ISource
 {
-    private readonly string _source;
+    readonly string _source;
 
     public StringSource(string source)
     {

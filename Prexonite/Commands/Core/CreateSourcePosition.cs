@@ -36,7 +36,7 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
 
     public static CreateSourcePosition Instance { get; } = new();
 
-    private CreateSourcePosition()
+    CreateSourcePosition()
     {
             
     }

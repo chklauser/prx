@@ -28,7 +28,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
 
-internal sealed class VersionConflictException : Exception
+sealed class VersionConflictException : Exception
 {
     public VersionConflictException(ModuleName existingModule, ModuleName newModule, ModuleName offendingModule)
     {

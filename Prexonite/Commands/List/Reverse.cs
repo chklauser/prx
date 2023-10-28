@@ -35,7 +35,7 @@ public class Reverse : CoroutineCommand, ICilCompilerAware
 
     public static Reverse Instance { get; } = new();
 
-    private Reverse()
+    Reverse()
     {
     }
 
@@ -47,7 +47,7 @@ public class Reverse : CoroutineCommand, ICilCompilerAware
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    private static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
+    static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
         IEnumerable<PValue> args)
     {
         if (args == null)

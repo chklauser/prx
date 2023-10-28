@@ -87,7 +87,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         }
     }
 
-    private int _beginTry = -1;
+    int _beginTry = -1;
 
     /// <summary>
     ///     The address of the first instruction inside the finally-block.
@@ -113,7 +113,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         }
     }
 
-    private int _beginFinally = -1;
+    int _beginFinally = -1;
 
     /// <summary>
     ///     The address of the first instruction inside the catch-block.
@@ -139,7 +139,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         }
     }
 
-    private int _beginCatch = -1;
+    int _beginCatch = -1;
 
     /// <summary>
     ///     The address of the first instruction after the try-catch-finally construct.
@@ -164,7 +164,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         }
     }
 
-    private int _endTry = -1;
+    int _endTry = -1;
 
     public bool UsesException { get; set; }
 

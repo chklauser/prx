@@ -37,7 +37,7 @@ public class FlippedFunctionalPartialCallCommand : PCommand, ICilExtension
 
     public static FlippedFunctionalPartialCallCommand Instance { get; } = new();
 
-    private FlippedFunctionalPartialCallCommand()
+    FlippedFunctionalPartialCallCommand()
     {
     }
 
@@ -60,9 +60,9 @@ public class FlippedFunctionalPartialCallCommand : PCommand, ICilExtension
         return true;
     }
 
-    private ConstructorInfo _functionPartialCallCtorCache;
+    ConstructorInfo _functionPartialCallCtorCache;
 
-    private ConstructorInfo _functionPartialCallCtor
+    ConstructorInfo _functionPartialCallCtor
     {
         get
         {

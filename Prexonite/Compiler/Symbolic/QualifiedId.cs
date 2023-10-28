@@ -64,7 +64,7 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
     }
 
     [CanBeNull]
-    private readonly string[] _elements;
+    readonly string[] _elements;
 
     public QualifiedId(params string[] elements) : this()
     {

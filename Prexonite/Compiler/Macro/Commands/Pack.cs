@@ -37,7 +37,7 @@ public class Pack : MacroCommand
 
     public static Pack Instance { get; } = new();
 
-    private Pack() : base(Alias)
+    Pack() : base(Alias)
     {
     }
 

@@ -37,7 +37,7 @@ namespace Prexonite.Commands.Core;
 /// </summary>
 public sealed class Caller : PCommand, ICilCompilerAware
 {
-    private Caller()
+    Caller()
     {
     }
 
@@ -87,7 +87,7 @@ public sealed class Caller : PCommand, ICilCompilerAware
             return sctx.CreateNativePValue(stack.Last.Value);
     }
 
-    private static readonly MethodInfo GetCallerFromCilFunctionMethod =
+    static readonly MethodInfo GetCallerFromCilFunctionMethod =
         typeof (Caller).GetMethod("GetCallerFromCilFunction", new[] {typeof (StackContext)});
 
     #region ICilCompilerAware Members

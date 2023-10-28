@@ -33,13 +33,13 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallInfo>
 {
-    private PartialStaticCallCommand()
+    PartialStaticCallCommand()
     {
     }
 
     public static PartialStaticCallCommand Instance { get; } = new();
 
-    private ConstructorInfo _partialStaticCallCtor;
+    ConstructorInfo _partialStaticCallCtor;
 
     protected override ConstructorInfo GetConstructorCtor(StaticCallInfo parameter)
     {

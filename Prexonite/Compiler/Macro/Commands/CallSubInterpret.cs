@@ -40,7 +40,7 @@ public class CallSubInterpret : MacroCommand
 
     public static CallSubInterpret Instance { get; } = new();
 
-    private CallSubInterpret() : base(Alias)
+    CallSubInterpret() : base(Alias)
     {
     }
 
@@ -99,7 +99,7 @@ public class CallSubInterpret : MacroCommand
         context.FreeTemporaryVariable(resultV);
     }
 
-    private static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSet> retVar,
+    static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSet> retVar,
         AstNode contStmt, AstNode breakStmt)
     {
         var inv = context.Invocation;
@@ -125,7 +125,7 @@ public class CallSubInterpret : MacroCommand
         context.Block.Add(checkCont);
     }
 
-    private static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSet> retValue,
+    static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSet> retValue,
         out AstNode contStmt, out AstNode breakStmt)
     {
         var inv = context.Invocation;
@@ -144,7 +144,7 @@ public class CallSubInterpret : MacroCommand
         }
     }
 
-    private static void _extractReturnValue(MacroContext context, string resultV,
+    static void _extractReturnValue(MacroContext context, string resultV,
         string retValueV)
     {
         var getRetValue =
@@ -154,7 +154,7 @@ public class CallSubInterpret : MacroCommand
         context.Block.Add(setRetValue);
     }
 
-    private static void _extractReturnVariant(MacroContext context, string resultV,
+    static void _extractReturnVariant(MacroContext context, string resultV,
         string retVarV)
     {
         var inv = context.Invocation;
@@ -168,7 +168,7 @@ public class CallSubInterpret : MacroCommand
         context.Block.Add(setRetVar);
     }
 
-    private static void _storeResult(MacroContext context, string resultV)
+    static void _storeResult(MacroContext context, string resultV)
     {
         var computeKvp = context.Invocation.Arguments[0];
         var setResult = context.CreateCall(EntityRef.Variable.Local.Create(resultV), PCall.Set, computeKvp);
@@ -177,7 +177,7 @@ public class CallSubInterpret : MacroCommand
 
     #endregion
 
-    private static AstExpr _genCompare(MacroContext context, AstExpr retVar,
+    static AstExpr _genCompare(MacroContext context, AstExpr retVar,
         ReturnVariant expected)
     {
         var inv = context.Invocation;

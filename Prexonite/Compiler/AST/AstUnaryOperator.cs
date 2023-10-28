@@ -136,7 +136,7 @@ public class AstUnaryOperator : AstExpr,
 
     #endregion
 
-    private void _emitIncrementDecrementCode(CompilerTarget target, StackSemantics value)
+    void _emitIncrementDecrementCode(CompilerTarget target, StackSemantics value)
     {
         if (Operand.IsArgumentSplice())
         {
@@ -232,7 +232,7 @@ public class AstUnaryOperator : AstExpr,
         }
     }
 
-    private void _emitValueCode(CompilerTarget target)
+    void _emitValueCode(CompilerTarget target)
     {
         switch (Operator)
         {

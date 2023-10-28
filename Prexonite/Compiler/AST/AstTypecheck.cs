@@ -32,7 +32,7 @@ public class AstTypecheck : AstExpr,
     IAstHasExpressions,
     IAstPartiallyApplicable
 {
-    private AstExpr _subject;
+    AstExpr _subject;
 
     public AstTypecheck(
         ISourcePosition position, AstExpr subject, AstTypeExpr type)

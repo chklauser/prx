@@ -44,7 +44,7 @@ public sealed class Call_Member : PCommand
 {
     #region Singleton
 
-    private Call_Member()
+    Call_Member()
     {
     }
 
@@ -175,7 +175,7 @@ public sealed class Call_Member : PCommand
                 Extensions.Append(argv.Take(1), _getIsSetExpr(context)).Append(argv.Skip(1));
         }
 
-        private static AstExpr _getIsSetExpr(MacroContext context)
+        static AstExpr _getIsSetExpr(MacroContext context)
         {
             return context.CreateConstant(context.Invocation.Call == PCall.Set);
         }

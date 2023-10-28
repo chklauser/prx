@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Symbolic;
 public class MergedNamespace : Namespace
 {
     [NotNull]
-    private readonly SymbolStore _exportScope;
+    readonly SymbolStore _exportScope;
 
     internal MergedNamespace([NotNull] SymbolStore scope)
     {

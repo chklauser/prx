@@ -37,13 +37,13 @@ namespace PrexoniteTests.Tests;
 [TestFixture]
 public class MExprTests
 {
-    private ISourcePosition _position;
-    private ISourcePosition _otherPosition;
-    private SymbolStore _symbols;
-    private IDictionary<Symbol, QualifiedId> _existing;
-    private SymbolMExprParser _symbolParser;
+    ISourcePosition _position;
+    ISourcePosition _otherPosition;
+    SymbolStore _symbols;
+    IDictionary<Symbol, QualifiedId> _existing;
+    SymbolMExprParser _symbolParser;
 
-    private class ConsoleSink : IMessageSink
+    class ConsoleSink : IMessageSink
     {
         #region Singleton
 
@@ -262,7 +262,7 @@ public class MExprTests
         Assert.That(s2.InnerSymbol.InnerSymbol,Is.SameAs(s0));
     }
 
-    private MExpr.MList _createCrossReference(string alias)
+    MExpr.MList _createCrossReference(string alias)
     {
         return new(_position, SymbolMExprSerializer.CrossReferenceHead,
             new[] {new MExpr.MAtom(_position, alias)});

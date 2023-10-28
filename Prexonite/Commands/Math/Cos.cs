@@ -34,7 +34,7 @@ public class Cos : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Cos()
+    Cos()
     {
     }
 
@@ -94,7 +94,7 @@ public class Cos : PCommand, ICilCompilerAware
         }
     }
 
-    private static readonly MethodInfo RunStaticallyMethod =
+    static readonly MethodInfo RunStaticallyMethod =
         typeof (Cos).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
     /// <summary>

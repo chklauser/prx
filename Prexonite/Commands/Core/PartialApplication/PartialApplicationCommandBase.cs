@@ -54,7 +54,7 @@ public abstract class PartialApplicationCommandBase : PCommand
     ///     Little-Endian 32-bit union
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    private struct ExplicitInt32
+    struct ExplicitInt32
     {
         [FieldOffset(0)] public int Int;
 

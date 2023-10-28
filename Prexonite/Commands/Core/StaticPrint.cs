@@ -36,13 +36,13 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
 {
     #region Singleton
 
-    private StaticPrint()
+    StaticPrint()
     {
     }
 
     public static StaticPrint Instance { get; } = new();
 
-    private static TextWriter _writer = Console.Out;
+    static TextWriter _writer = Console.Out;
 
     public static TextWriter Writer
     {
@@ -161,7 +161,7 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
     internal static readonly MethodInfo _StaticPrintTextWriterGetMethod =
         typeof (StaticPrint).GetProperty("Writer").GetGetMethod();
 
-    private static readonly MethodInfo _textWriterWriteMethod = typeof (TextWriter).GetMethod(
+    static readonly MethodInfo _textWriterWriteMethod = typeof (TextWriter).GetMethod(
         "Write", new[] {typeof (string)});
 
     internal static string _ToString(CompileTimeValue value)

@@ -27,7 +27,7 @@ using System;
 
 namespace Prexonite.Compiler;
 
-internal class Token
+class Token
 {
     internal int kind;
     internal string val;

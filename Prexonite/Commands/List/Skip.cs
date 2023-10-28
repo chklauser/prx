@@ -35,7 +35,7 @@ public class Skip : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    private Skip()
+    Skip()
     {
     }
 
