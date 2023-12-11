@@ -23,9 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -42,9 +39,9 @@ public class NullContext : StackContext
         if (importedNamespaces == null)
             throw new ArgumentNullException(nameof(importedNamespaces));
 
-        this.ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-        this.ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-        this.ImportedNamespaces = importedNamespaces as SymbolCollection ??
+        ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
+        ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+        ImportedNamespaces = importedNamespaces as SymbolCollection ??
             new SymbolCollection(importedNamespaces);
     }
 
@@ -64,7 +61,7 @@ public class NullContext : StackContext
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
         return false;
     }

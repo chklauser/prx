@@ -23,14 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 using System.Globalization;
 using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -41,9 +39,10 @@ public class AstForeachLoop : AstLoop
     {
     }
 
-    public AstExpr List;
-    public AstGetSet Element;
+    public AstExpr? List;
+    public AstGetSet? Element;
 
+    [MemberNotNullWhen(true, nameof(List), nameof(Element))]
     public bool IsInitialized
     {
         [DebuggerStepThrough]
@@ -54,7 +53,7 @@ public class AstForeachLoop : AstLoop
 
     public override AstExpr[] Expressions
     {
-        get { return new[] {List}; }
+        get { return List != null ? new[] {List} : Array.Empty<AstExpr>(); }
     }
 
     #endregion
@@ -162,8 +161,8 @@ public class AstForeachLoop : AstLoop
             Action<int, int> mkHook =
                 (index, original) =>
                 {
-                    AddressChangeHook hook = null;
-                    hook = new AddressChangeHook(
+                    AddressChangeHook? hook = null;
+                    hook = new(
                         original,
                         newAddr =>
                         {
@@ -178,7 +177,7 @@ public class AstForeachLoop : AstLoop
                                     // AddressChangeHook.ctor can be trusted not to call the closure.
                                     // ReSharper disable PossibleNullReferenceException
                                     // ReSharper disable AccessToModifiedClosure
-                                    hook.InstructionIndex = newAddr;
+                                    hook!.InstructionIndex = newAddr;
                                     // ReSharper restore AccessToModifiedClosure
                                     // ReSharper restore PossibleNullReferenceException
                                     original = newAddr;

@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -39,13 +38,13 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
         return handler.HandleNil(this,argument);
     }
 
-    public override bool TryGetNilSymbol(out NilSymbol nilSymbol)
+    public override bool TryGetNilSymbol([NotNullWhen(true)] out NilSymbol? nilSymbol)
     {
         nilSymbol = this;
         return true;
     }
 
-    public override bool Equals(Symbol other)
+    public override bool Equals(Symbol? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -56,13 +55,12 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
 
     #endregion
 
-    NilSymbol([NotNull] ISourcePosition position)
+    NilSymbol(ISourcePosition position)
     {
         Position = position;
     }
 
-    [NotNull]
-    internal static NilSymbol _Create([NotNull] ISourcePosition position)
+    internal static NilSymbol _Create(ISourcePosition position)
     {
         return new(position);
     }
@@ -72,7 +70,7 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
         return "Nil";
     }
 
-    public bool Equals(NilSymbol other)
+    public bool Equals(NilSymbol? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;

@@ -109,7 +109,6 @@ namespace Prexonite.Commands.Core.Operators{
 				{
 <# foreach(var op in _operators)
 {
-	var className = op.PrxName;
 	var literal = op.Literal;
 	if(literal != null)
 		literal = $"\"{literal}\"";
@@ -121,7 +120,7 @@ namespace Prexonite.Commands.Core.Operators{
 }
 #>
 				}, System.Threading.LazyThreadSafetyMode.PublicationOnly);
-		public static bool TryGetLiteral(string id, out string literal)
+		public static bool TryGetLiteral(string id, [NotNullWhen(true)] out string? literal)
 		{
 			return _reverseLiteralMap.Value.TryGetValue(id, out literal);
 		}
@@ -134,7 +133,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 	}
 
-	static readonly OpInfo[] _operators = new[]{
+	static readonly OpInfo[] _operators = {
 		new OpInfo{Literal = "(+)", PrxName = "Addition", Arity = Arity.Binary},
 		new OpInfo{Literal = "(-)", PrxName = "Subtraction", Arity = Arity.Binary},
 		new OpInfo{Literal = "(*)", PrxName = "Multiplication", EnumName="Multiply", Arity = Arity.Binary},
@@ -159,7 +158,7 @@ namespace Prexonite.Commands.Core.Operators{
 	enum Arity
 	{
 		Unary,
-		Binary
+		Binary,
 	}
 
 	class OpInfo

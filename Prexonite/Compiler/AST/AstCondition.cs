@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
+
+using Prexonite.Commands.Core.Operators;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -35,8 +35,8 @@ public class AstCondition : AstNode,
     public AstCondition(ISourcePosition p, AstBlock parentBlock, AstExpr condition, bool isNegative = false)
         : base(p)
     {
-        IfBlock = new AstScopedBlock(p,parentBlock,prefix: "if");
-        ElseBlock = new AstScopedBlock(p,parentBlock,prefix:"else");
+        IfBlock = new(p,parentBlock,prefix: "if");
+        ElseBlock = new(p,parentBlock,prefix:"else");
         Condition = condition ?? throw new ArgumentNullException(nameof(condition));
         IsNegative = isNegative;
     }
@@ -71,7 +71,7 @@ public class AstCondition : AstNode,
         _OptimizeNode(target, ref Condition);
 
         // Invert condition when unary logical not
-        while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
+        while (Condition.IsCommandCall(LogicalNot.DefaultAlias, out var unaryCond))
         {
             Condition = unaryCond.Arguments[0];
             IsNegative = !IsNegative;
@@ -82,7 +82,7 @@ public class AstCondition : AstNode,
         {
             if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
                 goto continueFull;
-            else if ((bool) condValue.Value ^ IsNegative)
+            else if ((bool) condValue.Value! ^ IsNegative)
                 IfBlock.EmitEffectCode(target);
             else
                 ElseBlock.EmitEffectCode(target);
@@ -117,12 +117,8 @@ public class AstCondition : AstNode,
         var elseGoto = ElseBlock.IsSingleStatement
             ? ElseBlock[0] as AstExplicitGoTo
             : null;
-        ;
 
-        var ifIsGoto = ifGoto != null;
-        var elseIsGoto = elseGoto != null;
-
-        if (ifIsGoto && elseIsGoto)
+        if (ifGoto != null && elseGoto != null)
         {
             //only jumps
             AstLazyLogical.EmitJumpCondition(
@@ -132,13 +128,13 @@ public class AstCondition : AstNode,
                 elseGoto.Destination,
                 !IsNegative);
         }
-        else if (ifIsGoto)
+        else if (ifGoto != null)
         {
             //if => jump / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, ifGoto.Destination, !IsNegative);
             ElseBlock.EmitEffectCode(target);
         }
-        else if (elseIsGoto)
+        else if (elseGoto != null)
         {
             //if => block / else => jump
             AstLazyLogical.EmitJumpCondition(

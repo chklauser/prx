@@ -23,12 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -41,15 +37,14 @@ namespace Prexonite.Compiler.Ast;
 public sealed class AstGetSetNewDecl : AstGetSet
 {
     PCall _fallbackCall;
-    [CanBeNull]
-    readonly ArgumentsProxy _arguments;
+    readonly ArgumentsProxy? _arguments;
 
-    public AstGetSetNewDecl([NotNull] ISourcePosition position, [NotNull] string id, [CanBeNull] AstGetSet expression)
+    public AstGetSetNewDecl(ISourcePosition position, string id, AstGetSet? expression)
         : base(position)
     {
         Expression = expression;
         Id = id ?? throw new ArgumentNullException(nameof(id));
-        _arguments = Expression == null ? new ArgumentsProxy(new List<AstExpr>()) : null;
+        _arguments = Expression == null ? new ArgumentsProxy(new()) : null;
     }
 
     #region Overrides of AstGetSet
@@ -118,9 +113,9 @@ public sealed class AstGetSetNewDecl : AstGetSet
         }
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
-        var wrappedExpr = (AstExpr) Expression;
+        var wrappedExpr = (AstExpr?) Expression;
         if (wrappedExpr != null)
         {
             _OptimizeNode(target, ref wrappedExpr);
@@ -149,8 +144,7 @@ public sealed class AstGetSetNewDecl : AstGetSet
     ///     <para>The expression wrapped by the new decl.</para>
     ///     <para>Other expressions are possible as well, though they make little sense wrapped by a new-declaration.</para>
     /// </summary>
-    [CanBeNull]
-    public AstGetSet Expression { get; }
+    public AstGetSet? Expression { get; }
 
     public override ArgumentsProxy Arguments
     {
@@ -188,7 +182,6 @@ public sealed class AstGetSetNewDecl : AstGetSet
     /// <summary>
     ///     The physical id of the local variable to be new-declared.
     /// </summary>
-    [NotNull]
     public string Id { get; }
 
     void _ensureValid()

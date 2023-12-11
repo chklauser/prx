@@ -23,13 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using Prexonite.Commands.Core;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Modular;
-using Prexonite.Types;
+using Prexonite.Properties;
 using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast;
@@ -90,7 +88,7 @@ public struct NodeApplicationState : IEquatable<NodeApplicationState>
         return HasPlaceholders == other.HasPlaceholders && HasArgumentSplices == other.HasArgumentSplices;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         return obj is NodeApplicationState && Equals((NodeApplicationState) obj);
@@ -169,7 +167,7 @@ public static class AstPartiallyApplicable
         for (var i = 0; i < arguments.Count; i++)
         {
             var arg = arguments[i];
-            AstPlaceholder placeholder;
+            AstPlaceholder? placeholder;
             if ((placeholder = arg as AstPlaceholder) != null)
             {
                 //Insert mapping to open argument
@@ -212,6 +210,7 @@ public static class AstPartiallyApplicable
         _removeRedundantPlaceholders(argv, argv.MapMaybe(n => n as AstPlaceholder));
     }
 
+    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     static void _removeRedundantPlaceholders(List<AstExpr> argv,
         IEnumerable<AstPlaceholder> placeholders)
     {
@@ -306,12 +305,12 @@ public static class AstPartiallyApplicable
         return constCmd;
     }
 
-    public static AstExpr ConstFunc(this AstExpr expr, object constantValue)
+    public static AstExpr ConstFunc(this AstExpr expr, object? constantValue)
     {
         return expr.Position.ConstFunc(constantValue);
     }
 
-    public static AstExpr ConstFunc(this ISourcePosition position, object constantValue)
+    public static AstExpr ConstFunc(this ISourcePosition position, object? constantValue)
     {
         if (constantValue != null)
             return
@@ -329,7 +328,7 @@ public static class AstPartiallyApplicable
     public static AstExpr IdFunc(this AstPlaceholder placeholder)
     {
         if (!placeholder.Index.HasValue)
-            throw new ArgumentException("Placeholder must have its index assigned.",
+            throw new ArgumentException(Resources.AstPartiallyApplicable_IdFunc_Placeholder_must_have_its_index_assigned_,
                 nameof(placeholder));
 
         var call = new AstIndirectCall(placeholder.Position, PCall.Get,

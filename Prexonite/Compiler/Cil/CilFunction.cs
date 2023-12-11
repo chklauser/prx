@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite.Compiler.Cil;
 
@@ -37,7 +36,7 @@ namespace Prexonite.Compiler.Cil;
 /// <param name = "returnValue">Will hold the value returned by the function. Will never be a null reference.</param>
 /// <param name = "returnMode">Will hold the return mode chosen by the function.</param>
 [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Cil")]
+    MessageId = nameof(Cil))]
 public delegate void CilFunction(
-    PFunction source, StackContext sctx, PValue[] args, PVariable[] sharedVariables,
+    PFunction source, StackContext sctx, PValue[] args, PVariable[]? sharedVariables,
     out PValue returnValue, out ReturnMode returnMode);

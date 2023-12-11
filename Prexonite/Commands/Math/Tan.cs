@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Math;
 
@@ -65,7 +64,7 @@ public class Tan : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(PValue arg0, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
 
         return System.Math.Tan(x);
     }
@@ -95,7 +94,7 @@ public class Tan : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyMethod =
-        typeof (Tan).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
+        typeof (Tan).GetMethod(nameof(RunStatically), new[] {typeof (PValue), typeof (StackContext)})!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

@@ -23,14 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -39,7 +36,7 @@ public class AstBlock : AstExpr,
 {
     #region Construction
 
-    protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string uid = null, string prefix = null)
+    protected AstBlock(ISourcePosition position, SymbolStore symbols, string? uid = null, string? prefix = null)
         : base(position)
     {
         _prefix = (prefix ?? DefaultPrefix) + "\\";
@@ -47,7 +44,7 @@ public class AstBlock : AstExpr,
         Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
     }
 
-    protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
+    protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string? prefix = null, string? uid = null)
         : this(position, _deriveSymbolStore(lexicalScope),uid, prefix)
     {   
     }
@@ -62,22 +59,19 @@ public class AstBlock : AstExpr,
     /// <summary>
     /// Symbol table for the scope of this block.
     /// </summary>
-    [NotNull]
     public SymbolStore Symbols { get; private set; }
 
     /// <summary>
     /// Replaces symbol store backing this scope. Does not affect existing nested scopes!
     /// </summary>
     /// <param name="newStore">The new symbol store.</param>
-    internal void _ReplaceSymbols([NotNull] SymbolStore newStore)
+    internal void _ReplaceSymbols(SymbolStore newStore)
     {
         Symbols = newStore;
     }
 
-    [NotNull]
     List<AstNode> _statements = new();
 
-    [NotNull]
     public List<AstNode> Statements
     {
         get => _statements;
@@ -92,7 +86,7 @@ public class AstBlock : AstExpr,
     public void EmitCode(CompilerTarget target, bool isTopLevel, StackSemantics stackSemantics)
     {
         if (target == null)
-            throw new ArgumentNullException(nameof(target), "The compiler target cannot be null");
+            throw new ArgumentNullException(nameof(target));
 
         if (isTopLevel)
             _tailCallOptimizeTopLevelBlock();
@@ -165,12 +159,12 @@ public class AstBlock : AstExpr,
         // { GetSetComplex; return; } -> { return GetSetComplex; }
 
         _tailCallOptimizeNestedBlock();
-        AstGetSet getset;
+        AstGetSet? getset;
 
         if (_statements.Count == 0)
             return;
         var lastStmt = _statements[^1];
-        AstCondition cond;
+        AstCondition? cond;
 
         // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
         if ((cond = lastStmt as AstCondition) != null)
@@ -183,7 +177,7 @@ public class AstBlock : AstExpr,
         {
             var ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit)
             {
-                Expression = getset
+                Expression = getset,
             };
             _statements[^1] = ret;
         }
@@ -204,7 +198,7 @@ public class AstBlock : AstExpr,
     }
 
     [DebuggerStepThrough]
-    public void Insert(int index, AstNode item)
+    public void Insert(int index, AstNode? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -237,7 +231,7 @@ public class AstBlock : AstExpr,
     #region ICollection<AstNode> Members
 
     [DebuggerStepThrough]
-    public void Add(AstNode item)
+    public void Add(AstNode? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -249,12 +243,7 @@ public class AstBlock : AstExpr,
     {
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
-        foreach (var node in collection)
-        {
-            if (node == null)
-                throw new ArgumentException(
-                    "AstNode collection may not contain null.", nameof(collection));
-        }
+        
         _statements.AddRange(collection);
     }
 
@@ -265,7 +254,7 @@ public class AstBlock : AstExpr,
     }
 
     [DebuggerStepThrough]
-    public bool Contains(AstNode item)
+    public bool Contains(AstNode? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -291,7 +280,7 @@ public class AstBlock : AstExpr,
     }
 
     [DebuggerStepThrough]
-    public bool Remove(AstNode item)
+    public bool Remove(AstNode? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -333,9 +322,7 @@ public class AstBlock : AstExpr,
     #region Block labels
 
     readonly string _prefix;
-    public AstExpr Expression;
-
-    public string Prefix => _prefix.Substring(0, _prefix.Length - 1);
+    public AstExpr? Expression;
 
     public string BlockUid { get; }
 
@@ -344,7 +331,7 @@ public class AstBlock : AstExpr,
         get
         {
             if(Expression == null)
-                return new AstExpr[0];
+                return Array.Empty<AstExpr>();
             else
                 return new[] {Expression};
         }
@@ -360,7 +347,7 @@ public class AstBlock : AstExpr,
 
     #endregion
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         //Will be optimized after code generation, hopefully
         if (Expression != null)

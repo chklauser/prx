@@ -25,10 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region Namespace Imports
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 #endregion
 
 namespace Prexonite;
@@ -250,7 +246,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <param name = "address">The address where the excpetion has been caught.</param>
     /// <param name = "blocks">An collection of try-catch-finally candidates.</param>
     /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-    public static TryCatchFinallyBlock Closest
+    public static TryCatchFinallyBlock? Closest
     (
         int address, IEnumerable<TryCatchFinallyBlock> blocks)
     {
@@ -261,7 +257,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
 
         return blocks
             .Where(block => block.Handles(address))
-            .Aggregate<TryCatchFinallyBlock, TryCatchFinallyBlock>(null,
+            .Aggregate<TryCatchFinallyBlock, TryCatchFinallyBlock?>(null,
                 (current, block) =>
                     Closer(address, current, block));
     }
@@ -270,10 +266,10 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     ///     Determines which of the supplied try-catch-finally blocks
     ///     is supposed to handle an exception at the supplied address.
     /// </summary>
-    /// <param name = "address">The address where the excpetion has been caught.</param>
+    /// <param name = "address">The address where the exception has been caught.</param>
     /// <param name = "blocks">An array of try-catch-finally candidates.</param>
     /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-    public static TryCatchFinallyBlock Closest
+    public static TryCatchFinallyBlock? Closest
     (
         int address, params TryCatchFinallyBlock[] blocks)
     {
@@ -288,9 +284,9 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <param name = "b">A try-catch-finally block that handles the address.</param>
     /// <returns>The try-catch-finally block that is closer to the address.
     ///     If neither <paramref name = "a" /> nor <paramref name = "b" /> handle the supplied address, null is returned.</returns>
-    public static TryCatchFinallyBlock Closer
+    public static TryCatchFinallyBlock? Closer
     (
-        int address, TryCatchFinallyBlock a, TryCatchFinallyBlock b)
+        int address, TryCatchFinallyBlock? a, TryCatchFinallyBlock? b)
     {
         if (address < 0)
             throw new ArgumentOutOfRangeException(nameof(address), "address must be positive.");
@@ -352,11 +348,11 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
             BeginFinally.ToString(),
             BeginCatch.ToString(),
             EndTry.ToString(),
-            UsesException
+            UsesException,
         };
     }
 
-    public static implicit operator MetaEntry(TryCatchFinallyBlock block)
+    public static implicit operator MetaEntry(TryCatchFinallyBlock? block)
     {
         if (block == null)
             return (MetaEntry)Array.Empty<MetaEntry>();
@@ -366,7 +362,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
 
     #region Comparison
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;
@@ -387,7 +383,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         }
     }
 
-    public bool Equals(TryCatchFinallyBlock other)
+    public bool Equals(TryCatchFinallyBlock? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -396,17 +392,17 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
             other.UsesException.Equals(UsesException);
     }
 
-    public static bool operator ==(TryCatchFinallyBlock a, TryCatchFinallyBlock b)
+    public static bool operator ==(TryCatchFinallyBlock? a, TryCatchFinallyBlock? b)
     {
-        if ((object) a == null && (object) b == null)
+        if ((object?) a == null && (object?) b == null)
             return true;
-        else if ((object) a == null || (object) b == null)
+        else if ((object?) a == null || (object?) b == null)
             return false;
         else
             return a.Equals(b);
     }
 
-    public static bool operator !=(TryCatchFinallyBlock a, TryCatchFinallyBlock b)
+    public static bool operator !=(TryCatchFinallyBlock? a, TryCatchFinallyBlock? b)
     {
         return !(a == b);
     }

@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic;
@@ -39,14 +38,13 @@ public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
     }
 
     [DebuggerStepThrough]
-    ReferenceSymbol([NotNull] ISourcePosition position, [NotNull] EntityRef entity)
+    ReferenceSymbol(ISourcePosition position, EntityRef entity)
     {
         Entity = entity;
         Position = position;
     }
 
-    [NotNull]
-    internal static ReferenceSymbol _Create([NotNull] EntityRef entity, [NotNull] ISourcePosition position)
+    internal static ReferenceSymbol _Create(EntityRef entity, ISourcePosition position)
     {
         return new(position, entity);
     }
@@ -62,7 +60,7 @@ public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
         return handler.HandleReference(this, argument);
     }
 
-    public override bool TryGetReferenceSymbol(out ReferenceSymbol referenceSymbol)
+    public override bool TryGetReferenceSymbol([NotNullWhen(true)] out ReferenceSymbol? referenceSymbol)
     {
         referenceSymbol = this;
         return true;
@@ -70,14 +68,14 @@ public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
 
     #endregion
 
-    public bool Equals(ReferenceSymbol other)
+    public bool Equals(ReferenceSymbol? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
         return Equals(Entity, other.Entity);
     }
 
-    public override bool Equals(Symbol obj)
+    public override bool Equals(Symbol? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;

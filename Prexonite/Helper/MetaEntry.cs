@@ -1,13 +1,8 @@
-#nullable enable
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -23,7 +18,7 @@ public sealed class MetaEntry
     {
         Text = 0,
         List = 2,
-        Switch = 3
+        Switch = 3,
     }
 
     /// <summary>
@@ -87,7 +82,7 @@ public sealed class MetaEntry
                 Type.List => _list ?? EmptyList,
                 Type.Switch => new MetaEntry[] {_switch},
                 Type.Text => string.IsNullOrEmpty(_text) ? EmptyList : new MetaEntry[] {_text ?? ""},
-                _ => throw new PrexoniteException("Unknown type in meta entry")
+                _ => throw new PrexoniteException("Unknown type in meta entry"),
             };
         }
     }
@@ -102,7 +97,7 @@ public sealed class MetaEntry
                 Type.Text => bool.TryParse(_text, out var sw) && sw,
                 Type.Switch => _switch,
                 Type.List => List.Length > 0,
-                _ => throw new PrexoniteException("Unknown type in meta entry")
+                _ => throw new PrexoniteException("Unknown type in meta entry"),
             };
         }
     }
@@ -123,18 +118,10 @@ public sealed class MetaEntry
     [DebuggerNonUserCode]
     public MetaEntry(MetaEntry[] list)
     {
-        //Check sanity
-        if (list == null)
-            throw new ArgumentNullException(nameof(list));
-        if (list.Any(entry => entry == null))
-        {
-            throw new ArgumentException(
-                "A MetaEntry list must not contain null references.", nameof(list));
-        }
         EntryType = Type.List;
         _text = null;
         _switch = false;
-        _list = list;
+        _list = list ?? throw new ArgumentNullException(nameof(list));
     }
 
     [PublicAPI]
@@ -205,7 +192,7 @@ public sealed class MetaEntry
         if (item == null)
             throw new ArgumentNullException(nameof(item),
                 "A null reference cannot be implicitly converted to a meta entry.");
-        return new MetaEntry(item);
+        return new(item);
     }
 
     [DebuggerNonUserCode]
@@ -214,7 +201,7 @@ public sealed class MetaEntry
         if (item == null)
             throw new ArgumentNullException(nameof(item),
                 "A null reference cannot be explicitly converted to a meta entry.");
-        return new MetaEntry(item);
+        return new(item);
     }
 
     public static implicit operator PValue(MetaEntry item)
@@ -225,20 +212,20 @@ public sealed class MetaEntry
         switch (item.EntryType)
         {
             case Type.Text:
-                return PType.String.CreatePValue(item._text);
+                return PType.String.CreatePValue(item._text!);
             case Type.Switch:
                 return PType.Bool.CreatePValue(item._switch);
             case Type.List:
                 List<PValue> lst;
                 if (item._list != null)
                 {
-                    lst = new List<PValue>(item._list.Length);
+                    lst = new(item._list.Length);
                     foreach (var entry in item._list)
                         lst.Add(entry);
                 }
                 else
                 {
-                    lst = new List<PValue>(0);
+                    lst = new(0);
                 }
                 return PType.List.CreatePValue(lst);
             default:
@@ -308,7 +295,7 @@ public sealed class MetaEntry
             Type.List => _list?.GetHashCode() ?? 0,
             Type.Switch => _switch.GetHashCode(),
             Type.Text => _text?.GetHashCode() ?? 0,
-            _ => -1
+            _ => -1,
         } ^ (EntryType.GetHashCode() + 23);
     }
 
@@ -334,7 +321,7 @@ public sealed class MetaEntry
             Type.Switch => new MetaEntry[] {_switch},
             Type.Text => string.IsNullOrEmpty(_text) ? EmptyList : new MetaEntry[] {_text},
             Type.List => _list ?? EmptyList,
-            _ => throw new PrexoniteException("Invalid meta entry.")
+            _ => throw new PrexoniteException("Invalid meta entry."),
         };
     }
 
@@ -371,14 +358,14 @@ public sealed class MetaEntry
         foreach (var pv in elements)
         {
             if (pv.TryConvertTo(sctx, typeof (MetaEntry), out var pvEntry))
-                proto.Add((MetaEntry) pvEntry.Value);
+                proto.Add((MetaEntry) pvEntry.Value!);
             else switch (pv.Type)
             {
                 case ListPType _:
-                    proto.Add((MetaEntry) CreateArray(sctx, (List<PValue>) pv.Value));
+                    proto.Add((MetaEntry) CreateArray(sctx, (List<PValue>) pv.Value!));
                     break;
                 case BoolPType _:
-                    proto.Add((bool) pv.Value);
+                    proto.Add((bool) pv.Value!);
                     break;
                 default:
                     proto.Add(pv.CallToString(sctx));
@@ -408,8 +395,6 @@ public sealed class MetaEntry
                 buffer.Append('{');
                 foreach (var entry in _list)
                 {
-                    if (entry == null)
-                        continue;
                     entry.ToString(buffer);
                     buffer.Append(',');
                 }

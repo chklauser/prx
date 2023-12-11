@@ -23,7 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using Prexonite.Types;
+
+using Prexonite.Compiler;
 
 namespace Prexonite.Internal;
 
@@ -35,9 +36,23 @@ partial class Parser
         Sctx = sctx;
     }
 
-    public StackContext Sctx { get; }
+    public StackContext Sctx { get; } = null!; // initialized in the only externally accessible constructor
 
-    PType _lastType;
+    PType? _lastType;
 
-    public PType LastType => _lastType;
+    public PType? LastType => _lastType;
+
+    // ReSharper disable once InconsistentNaming
+    void SemErr(string message, string messageClass, ISourcePosition? position = null)
+    {
+        errors.Add(Message.Error(message, position ?? GetPosition(), messageClass));
+    }
+}
+
+partial class Errors
+{
+    internal void Add(Message message) {
+        AddLast(message);
+        OnMessageReceived(message);
+    }
 }

@@ -25,9 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region Namespace Imports
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 
 #endregion
@@ -104,12 +102,18 @@ public class ForeachHint : ICilHint
     #region Methodinfos
 
     internal static readonly MethodInfo MoveNextMethod =
-        typeof (IEnumerator).GetMethod("MoveNext");
+        typeof(IEnumerator).GetMethod("MoveNext")
+        ?? throw new InvalidOperationException(
+            $"{nameof(IEnumerator)}.{nameof(IEnumerator.MoveNext)} method not found.");
 
     internal static readonly MethodInfo GetCurrentMethod =
-        typeof(IEnumerator<PValue>).GetProperty(nameof(IEnumerator<PValue>.Current))!.GetGetMethod();
+        typeof(IEnumerator<PValue>).GetProperty(nameof(IEnumerator<PValue>.Current))!.GetGetMethod()
+        ?? throw new InvalidOperationException(
+            $"{nameof(IEnumerator)}.{nameof(IEnumerator.Current)} property getter not found.");
 
-    internal static readonly MethodInfo DisposeMethod = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose));
+    internal static readonly MethodInfo DisposeMethod = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose))
+        ?? throw new InvalidOperationException(
+            $"{nameof(IDisposable)}.{nameof(IDisposable.Dispose)} method not found.");
 
     #endregion
 }

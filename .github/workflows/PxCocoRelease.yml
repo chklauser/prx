@@ -28,7 +28,7 @@ jobs:
           Write-Host "::set-output name=version::$ver"
           Write-Host Version: $ver
       - uses: actions/checkout@v2
-      - name: Setup .NET 6 SDK
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v1.7.2
         env:
           # Use a personal access token (publishing with the GITHUB_TOKEN is somehow not possible)

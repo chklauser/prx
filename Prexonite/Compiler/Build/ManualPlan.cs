@@ -1,11 +1,4 @@
-#nullable enable
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.ObjectPool;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
@@ -30,7 +23,7 @@ public class ManualPlan : IPlan
             _inner.Options?.ParentEngine switch
             {
                 { } x => new(x),
-                _ => new()
+                _ => new(),
             };
 
         public bool Return(Engine obj) => true;
@@ -122,7 +115,7 @@ public class ManualPlan : IPlan
 
     protected ManualPlan()
     {
-        _enginePool = new DefaultObjectPool<Engine>(new EnginePoolPolicy(this), Environment.ProcessorCount);
+        _enginePool = new(new EnginePoolPolicy(this), Environment.ProcessorCount);
     }
 
     public LoaderOptions? Options { get; set; }

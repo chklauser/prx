@@ -23,6 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -44,7 +46,7 @@ function main() {
         println(x);
 }");
 
-        var main = target.Functions["main"];
+        var main = target.Functions["main"] ?? throw new InvalidOperationException("main missing");
 
         var cilExt1 = new CilExtensionHint(new List<int> {1, 5, 9});
         var existingHints = _getCilHints(main, true);
@@ -128,11 +130,11 @@ function main() {
         else if (keyMustExist)
         {
             Assert.Fail("Meta table of {0} does not contain cil hints.", table);
-            return null;
+            return null!;
         }
         else
         {
-            table.Meta[Loader.CilHintsKey] = (MetaEntry) new MetaEntry[0];
+            table.Meta[Loader.CilHintsKey] = (MetaEntry)Array.Empty<MetaEntry>();
             return _getCilHints(table, true);
         }
     }
@@ -189,7 +191,7 @@ label L_endif   ldc.string ""-branch""
                 ret
 }}
 ");
-        Assert.AreEqual(1, _getCilHints(target.Functions["main"], true).Length);
+        Assert.AreEqual(1, _getCilHints(target.Functions["main"]!, true).Length);
         _expectCil();
         Expect("IF-branch", 4);
         Expect("ELSE-branch", 3);
@@ -227,7 +229,7 @@ function main()
     {
         var func = target.Functions[functionId];
         Assert.IsNotNull(func, "Function " + functionId + " must exist");
-        Assert.IsFalse(func.Meta[PFunction.VolatileKey].Switch,
+        Assert.IsFalse(func!.Meta[PFunction.VolatileKey].Switch,
             functionId + " must not be volatile.");
     }
 
@@ -615,7 +617,7 @@ function main(x) //[store_debug_implementation enabled;]
 
     void _expectSehDeficiency(string name = "main")
     {
-        _expectSehDeficiency(target.Functions[name]);
+        _expectSehDeficiency(target.Functions[name]!);
     }
 
     static void _expectSehDeficiency(PFunction function)

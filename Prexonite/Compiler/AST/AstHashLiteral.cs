@@ -24,8 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstHashLiteral : AstExpr,
@@ -51,15 +49,15 @@ public class AstHashLiteral : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         AstExpr oArg;
         foreach (var arg in Elements.ToArray())
         {
-            if (arg == null)
+            if ((AstExpr?)arg == null)
                 throw new PrexoniteException(
                     "Invalid (null) argument in HashLiteral node (" + ToString() +
-                    ") detected at position " + Elements.IndexOf(arg) + ".");
+                    ") detected at position " + Elements.IndexOf(null!) + ".");
             oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
             {

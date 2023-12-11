@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast;
@@ -38,7 +38,6 @@ public class AstCreateClosure : AstExpr
         Implementation = implementation;
     }
 
-    [NotNull]
     public EntityRef.Function Implementation { get; }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -57,7 +56,7 @@ public class AstCreateClosure : AstExpr
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         return false;

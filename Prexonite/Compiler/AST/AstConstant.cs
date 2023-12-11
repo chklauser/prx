@@ -23,23 +23,21 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Text;
+
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
 public class AstConstant : AstExpr
 {
-    public readonly object Constant;
+    public readonly object? Constant;
 
-    internal AstConstant(Parser p, object constant)
+    internal AstConstant(Parser p, object? constant)
         : this(p.scanner.File, p.t.line, p.t.col, constant)
     {
     }
 
-    public AstConstant(string file, int line, int column, object constant)
+    public AstConstant(string file, int line, int column, object? constant)
         : base(file, line, column)
     {
         Constant = constant;
@@ -49,11 +47,11 @@ public class AstConstant : AstExpr
         CompilerTarget target,
         ISourcePosition position,
         PValue value,
-        out AstExpr expr)
+        [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         if (value.Type is ObjectPType)
-            target.Loader.Options.ParentEngine.CreateNativePValue(value.Value);
+            target.Loader.ParentEngine.CreateNativePValue(value.Value);
         if (value.Type is IntPType or RealPType or BoolPType or StringPType or NullPType || _isModuleName(value))
             expr = new AstConstant(position.File, position.Line, position.Column, value.Value);
         else //Cannot represent value in a constant instruction
@@ -63,13 +61,13 @@ public class AstConstant : AstExpr
 
     static bool _isModuleName(PValue value)
     {
-        ObjectPType objectType;
-        return (object)(objectType = value.Type as ObjectPType) != null && typeof(ModuleName).IsAssignableFrom(objectType.ClrType);
+        ObjectPType? objectType;
+        return (object?)(objectType = value.Type as ObjectPType) != null && typeof(ModuleName).IsAssignableFrom(objectType.ClrType);
     }
 
     public PValue ToPValue(CompilerTarget target)
     {
-        return target.Loader.Options.ParentEngine.CreateNativePValue(Constant);
+        return target.Loader.ParentEngine.CreateNativePValue(Constant);
     }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -116,7 +114,7 @@ public class AstConstant : AstExpr
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         return false;
@@ -124,9 +122,9 @@ public class AstConstant : AstExpr
 
     #endregion
 
-    public override string ToString()
+    public override string? ToString()
     {
-        string str;
+        string? str;
         if (Constant != null)
             if ((str = Constant as string) != null)
                 return string.Concat("\"", StringPType.Escape(str), "\"");

@@ -23,13 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using Prexonite.Commands.Core;
-using Prexonite.Types;
 
+using System.Diagnostics;
+using JetBrains.Annotations;
+using Prexonite.Commands.Core;
 #if Verbose
 
 #endif
@@ -54,8 +51,8 @@ namespace Prexonite
             [DebuggerStepThrough]
             get
             {
-                if (!(Thread.GetData(_stackSlot) is LinkedList<StackContext> stack))
-                    Thread.SetData(_stackSlot, stack = new LinkedList<StackContext>());
+                if (Thread.GetData(_stackSlot) is not LinkedList<StackContext> stack)
+                    Thread.SetData(_stackSlot, stack = new());
                 return stack;
             }
         }
@@ -90,12 +87,12 @@ namespace Prexonite
                 throw new PrexoniteException(
                     "The VM stack is empty. Return value cannot be computed.");
 
-            PrexoniteRuntimeException currentException = null;
-            StackContext lastContext = null;
+            PrexoniteRuntimeException? currentException = null;
+            StackContext? lastContext = null;
 
             while (localStack.Count >= level)
             {
-                var sctx = localStack.Last.Value;
+                var sctx = localStack.Last!.Value;
 
                 var keepOnStack = false;
                 if (currentException == null)
@@ -103,7 +100,7 @@ namespace Prexonite
                     //Execute code
                     try
                     {
-                        keepOnStack = sctx._NextCylce(lastContext);
+                        keepOnStack = sctx._NextCycle(lastContext);
                         lastContext = sctx;
                     }
                     catch (PrexoniteRuntimeException exc)
@@ -188,15 +185,17 @@ namespace Prexonite
         ///     If you enabled caching and replace a function at runtime, instructions that 
         ///     maintain a cached reference will still call the original function.
         /// </remarks>
+        [PublicAPI]
         public bool CacheFunctions { get; set; }
 
         /// <summary>
-        ///     Controls wether command references are cached to skip the string comparison based lookup.
+        ///     Controls whether command references are cached to skip the string comparison based lookup.
         /// </summary>
         /// <remarks>
         ///     If you enabled caching and replace a commanc at runtime, instructions that 
         ///     maintain a cached reference will still call the original command.
         /// </remarks>
+        [PublicAPI]
         public bool CacheCommands { get; set; }
 
         /// <summary>
@@ -220,6 +219,7 @@ namespace Prexonite
         ///     Indicates whether the <see cref = "CompileToCil" /> command is allowed to link statically. 
         ///     This setting overrides any arguments passed to CompileToCil.
         /// </summary>
+        [PublicAPI]
         public bool StaticLinkingAllowed { get; set; }
 
         #endregion

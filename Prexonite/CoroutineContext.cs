@@ -23,10 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -34,8 +30,8 @@ namespace Prexonite;
 ///     Integrates suspendable .NET managed code into the Prexonite stack via the IEnumerator interface.
 /// </summary>
 [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Coroutine")]
-public class CoroutineContext : StackContext, IDisposable
+    MessageId = nameof(Coroutine))]
+public sealed class CoroutineContext : StackContext, IDisposable
 {
     public override string ToString()
     {
@@ -61,7 +57,7 @@ public class CoroutineContext : StackContext, IDisposable
 
     readonly IEnumerator<PValue> _coroutine;
 
-    PValue _returnValue;
+    PValue _returnValue = PType.Null;
 
     /// <summary>
     ///     Represents the engine this context is part of.
@@ -79,13 +75,12 @@ public class CoroutineContext : StackContext, IDisposable
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
         var moved = _coroutine.MoveNext();
         if (moved)
         {
-            if (_coroutine.Current != null)
-                _returnValue = _coroutine.Current;
+            _returnValue = _coroutine.Current;
             ReturnMode = ReturnMode.Continue;
         }
         else
@@ -110,7 +105,7 @@ public class CoroutineContext : StackContext, IDisposable
     ///     Just providing a value here does not mean that it gets consumed by the caller.
     ///     If the context does not provide a return value, this property should return null (not NullPType).
     /// </summary>
-    public override PValue ReturnValue => _returnValue ?? PType.Null.CreatePValue();
+    public override PValue ReturnValue => _returnValue;
 
     #region IDisposable
 
@@ -118,25 +113,11 @@ public class CoroutineContext : StackContext, IDisposable
 
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    void Dispose(bool disposing)
-    {
         if (!_disposed)
         {
-            if (disposing)
-            {
-                _coroutine?.Dispose();
-            }
+            _coroutine.Dispose();
+            _disposed = true;
         }
-        _disposed = true;
-    }
-
-    ~CoroutineContext()
-    {
-        Dispose(false);
     }
 
     #endregion

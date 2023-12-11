@@ -1,21 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Build.Internal;
 
 public class EmbeddedResourceSource : ISource
 {
-    [NotNull]
     readonly Assembly _assembly;
-    [NotNull]
     readonly string _name;
-    [NotNull]
     readonly Encoding _encoding;
 
-    public EmbeddedResourceSource([NotNull] Assembly assembly, [NotNull] string name, [CanBeNull] Encoding encoding = null)
+    public EmbeddedResourceSource(Assembly assembly, string name, Encoding? encoding = null)
     {
         _assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
         _name = name ?? throw new ArgumentNullException(nameof(name));
@@ -24,7 +18,7 @@ public class EmbeddedResourceSource : ISource
 
     public bool CanOpen => true;
     public bool IsSingleUse => false;
-    public bool TryOpen(out TextReader reader)
+    public bool TryOpen([NotNullWhen(true)] out TextReader? reader)
     {
         var stream = _assembly.GetManifestResourceStream(_name);
         if(stream == null)

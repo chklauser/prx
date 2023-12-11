@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -35,15 +32,11 @@ public class FlatMap : CoroutineCommand, ICilCompilerAware
         var sctx = sctxCarrier.StackContext;
             
         //Get f
-        IIndirectCall f = args.Length < 1 ? null : args[0];
+        IIndirectCall? f = args.Length < 1 ? null : args[0];
 
         foreach (var arg in args.Skip(1))
         {
-            if (arg == null)
-                continue;
             var xs = Map._ToEnumerable(sctx, arg);
-            if (xs == null)
-                continue;
             foreach (var x in xs)
             {
                 var rawYs = f != null ? f.IndirectCall(sctx, new[] {x}) : x;

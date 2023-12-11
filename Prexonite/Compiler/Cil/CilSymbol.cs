@@ -27,7 +27,6 @@
 
 using System.Diagnostics;
 using System.Reflection.Emit;
-using cop = System.Reflection.Emit.OpCodes;
 
 #endregion
 
@@ -43,10 +42,15 @@ public class CilSymbol
 
     public SymbolKind Kind { get; set; }
 
-    public LocalBuilder Local { get; set; }
+    public LocalBuilder? Local { get; set; }
 
     public void EmitLoad(CompilerState state)
     {
+        if (Local == null)
+        {
+            throw new PrexoniteException("Internal error: CilSymbol is not bound to a variable.");
+        }
+        
         switch (Kind)
         {
             case SymbolKind.Local:
@@ -66,5 +70,5 @@ public enum SymbolKind
 {
     Local,
     LocalRef,
-    LocalEnum
+    LocalEnum,
 }

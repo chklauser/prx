@@ -23,9 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
 
@@ -52,7 +50,7 @@ public class IncrementalPlan : ManualPlan
                             
                     var providedTarget = new ProvidedTarget(description, actualTarget);
                     TargetDescriptions.Replace(description, providedTarget);
-                    return (ITarget) providedTarget;
+                    return providedTarget;
                 }, token,
                 TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Current);

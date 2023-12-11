@@ -57,6 +57,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 using Prx.Win32;
@@ -66,6 +67,7 @@ using Prx.Win32;
 namespace Prx;
 
 //made class abstract
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public abstract class SuperConsole
 {
     public ConsoleColor PromptColor = Console.ForegroundColor;
@@ -84,13 +86,13 @@ public abstract class SuperConsole
     /// </summary>
     class History
     {
-        ArrayList list = new();
+        List<string> list = new();
         int current;
         bool increment; // increment on Next()
 
-        string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
+        string Current => current >= 0 && current < list.Count ? list[current] : string.Empty;
 
-        public void Add(string line, bool setCurrentAsLast)
+        public void Add(string? line, bool setCurrentAsLast)
         {
             if (line != null && line.Length > 0)
             {
@@ -141,7 +143,7 @@ public abstract class SuperConsole
 
         public int Count => list.Count;
 
-        string Current => current >= 0 && current < list.Count ? (string) list[current] : string.Empty;
+        string? Current => current >= 0 && current < list.Count ? (string?) list[current] : string.Empty;
 
         public void Clear()
         {
@@ -149,7 +151,7 @@ public abstract class SuperConsole
             current = -1;
         }
 
-        public void Add(string line)
+        public void Add(string? line)
         {
             if (line != null && line.Length > 0)
             {
@@ -157,7 +159,7 @@ public abstract class SuperConsole
             }
         }
 
-        public string Previous()
+        public string? Previous()
         {
             if (list.Count > 0)
             {
@@ -166,7 +168,7 @@ public abstract class SuperConsole
             return Current;
         }
 
-        public string Next()
+        public string? Next()
         {
             if (list.Count > 0)
             {
@@ -175,7 +177,7 @@ public abstract class SuperConsole
             return Current;
         }
 
-        public string Root { get; set; }
+        public string Root { get; set; } = "";
     }
 
     /// <summary>
@@ -224,7 +226,7 @@ public abstract class SuperConsole
             Console.CursorLeft = position%Console.BufferWidth;
             Console.CursorTop = position/Console.BufferWidth;
         }
-    };
+    }
 
     /// <summary>
     ///     The console input buffer.
@@ -265,17 +267,16 @@ public abstract class SuperConsole
     //Removed "PythonEngine engine" an all references/assignments to it. (-P)
 
     AutoResetEvent ctrlCEvent;
-    Thread MainEngineThread = Thread.CurrentThread;
 
     public SuperConsole(bool colorfulConsole)
     {
         Console.CancelKeyPress += Console_CancelKeyPress;
-        ctrlCEvent = new AutoResetEvent(false);
+        ctrlCEvent = new(false);
         if (colorfulConsole)
             SetupColors();
     }
 
-    void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+    void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
     {
         if (e.SpecialKey == ConsoleSpecialKey.ControlC)
         {
@@ -297,7 +298,6 @@ public abstract class SuperConsole
             var c = input[len - 1];
             if (IsPartOfIdentifier(c))
             {
-                continue;
             }
             else
             {
@@ -320,8 +320,8 @@ public abstract class SuperConsole
             }
             else
             {
-                attr = name.Substring(0, lastDot);
-                pref = name.Substring(lastDot + 1);
+                attr = name[..lastDot];
+                pref = name[(lastDot + 1)..];
                 root = input.ToString(0, len + lastDot + 1);
             }
 
@@ -622,7 +622,7 @@ public abstract class SuperConsole
 
     //Removed autoIndentSizeInput parameter and usages (-P)
 
-    public string ReadLine()
+    public string? ReadLine()
     {
         Initialize();
 
@@ -671,12 +671,7 @@ public abstract class SuperConsole
                     }
                     else
                     {
-                        if (prefix)
-                        {
-                            if (DoBeep)
-                                Console.Beep();
-                        }
-                        else
+                        if (!prefix)
                         {
                             InsertTab();
                         }
@@ -730,7 +725,7 @@ public abstract class SuperConsole
         }
     }
 
-    public string ReadLineInteractive()
+    public string? ReadLineInteractive()
     {
         Initialize();
 
@@ -781,14 +776,12 @@ public abstract class SuperConsole
                     }
                     else
                     {
-                        if (prefix)
+                        if (!prefix)
                         {
-                            if (DoBeep)
-                                Console.Beep();
+                            InsertTab();
                         }
                         else
                         {
-                            InsertTab();
                         }
                     }
                     inputChanged = true;
@@ -879,5 +872,5 @@ public enum Style
 {
     Prompt,
     Out,
-    Error
+    Error,
 }

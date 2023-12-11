@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -36,15 +36,15 @@ public class AstLoopBlock : AstScopedBlock, ILoopBlock
 
     [DebuggerStepThrough]
     public AstLoopBlock(string file, int line, int column, AstBlock parentBlock, 
-        string uid = null,
-        string prefix = null)
+        string? uid = null,
+        string? prefix = null)
         : this (new SourcePosition(file,line,column), parentBlock, uid, prefix)
     {
             
     }
 
     [DebuggerStepThrough]
-    internal AstLoopBlock(ISourcePosition p, [NotNull] AstBlock parentNode = null, string uid = null, string prefix = null)
+    internal AstLoopBlock(ISourcePosition p, AstBlock parentNode, string? uid = null, string? prefix = null)
         : base(p, parentNode, uid: uid, prefix: prefix)
     {
         //See other ctor!

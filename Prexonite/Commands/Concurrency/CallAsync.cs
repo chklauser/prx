@@ -23,15 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using System.Threading;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Concurrency;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Concurrency;
 
@@ -56,7 +54,7 @@ public class CallAsync : PCommand, ICilCompilerAware
         return RunStatically(sctx, args);
     }
 
-    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    public static PValue RunStatically(StackContext sctx, PValue[]? args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -80,7 +78,7 @@ public class CallAsync : PCommand, ICilCompilerAware
             retChan.Send(result);
         })
         {
-            IsBackground = true
+            IsBackground = true,
         };
         T.Start();
         return PType.Object.CreatePValue(retChan);
@@ -91,7 +89,7 @@ public class CallAsync : PCommand, ICilCompilerAware
         var retChan = new Channel();
         var T = new Thread(() => retChan.Send(comp()))
         {
-            IsBackground = true
+            IsBackground = true,
         };
         T.Start();
         return retChan;

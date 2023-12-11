@@ -25,24 +25,18 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
-using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Compiler.Cil;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
 
 namespace Prexonite.Types;
 
-[PTypeLiteral("Object")]
+[PTypeLiteral(nameof(Object))]
 public sealed class ObjectPType : PType, ICilCompilerAware
 {
     #region Construction
@@ -51,9 +45,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     [DebuggerStepThrough]
     public ObjectPType(Type clrType)
     {
-        if (clrType == null)
-            throw new ArgumentNullException(nameof(clrType));
-        ClrType = clrType;
+        ClrType = clrType ?? throw new ArgumentNullException(nameof(clrType));
     }
 
     public ObjectPType(StackContext sctx, PValue[] args)
@@ -68,10 +60,10 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         var oT = arg.Type as ObjectPType;
         if (arg.IsNull)
             ClrType = typeof (object);
-        else if ((object) oT != null && typeof (Type).IsAssignableFrom(oT.ClrType))
-            ClrType = (Type) arg.Value;
+        else if ((object?) oT != null && typeof (Type).IsAssignableFrom(oT.ClrType))
+            ClrType = (Type) arg.Value!;
         else if (arg.TryConvertTo(sctx, String, false, out var sarg))
-            ClrType = GetType(sctx, (string) sarg.Value);
+            ClrType = GetType(sctx, (string) sarg.Value!);
         else
             throw new PrexoniteException(
                 "The supplied argument (" + arg +
@@ -85,13 +77,13 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
     public static Type GetType(StackContext sctx, string clrTypeName)
     {
-        if (TryGetType(sctx, clrTypeName, out var result))
+        if (tryGetType(sctx, clrTypeName, out var result))
             return result;
         else
             throw new PrexoniteException("Cannot resolve ClrType name \"" + clrTypeName + "\".");
     }
 
-    public static bool TryGetType(StackContext sctx, string clrTypeName, out Type result)
+    static bool tryGetType(StackContext sctx, string clrTypeName, [NotNullWhen(true)] out Type? result)
     {
         if (clrTypeName == null)
             throw new ArgumentNullException(nameof(clrTypeName));
@@ -111,9 +103,9 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return false;
     }
 
-    static readonly Assembly _prexoniteAssembly = Assembly.GetAssembly(typeof(PValue));
+    static readonly Assembly _prexoniteAssembly = Assembly.GetAssembly(typeof(PValue))!;
 
-    static Type _getTypeForNamespace(string clrTypeName,
+    static Type? _getTypeForNamespace(string clrTypeName,
         IEnumerable<Assembly> assemblies)
     {
         // TODO: drop 'mscorlib' special-casing https://github.com/dotnet/corefx/issues/25968
@@ -161,19 +153,20 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall(sctx, subject, args, call, id, out result, out var dummy);
+        return tryDynamicCall(sctx, subject, args, call, id, out result, out var dummy);
     }
 
-    public bool TryDynamicCall(
+    bool tryDynamicCall(
         StackContext sctx,
         PValue subject,
         PValue[] args,
         PCall call,
         string id,
-        out PValue result,
-        out MemberInfo resolvedMember)
+        [NotNullWhen(true)] out PValue? result,
+        out MemberInfo? resolvedMember)
     {
         return TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember,
             false);
@@ -184,16 +177,16 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PValue subject,
         PValue[] args,
         PCall call,
-        string id,
-        out PValue result,
-        out MemberInfo resolvedMember,
-        bool suppressIObject)
+        string? id,
+        [NotNullWhen(true)] out PValue? result,
+        out MemberInfo? resolvedMember,
+        bool suppressIObject
+    )
     {
         result = null;
         resolvedMember = null;
 
-        if (id == null)
-            id = "";
+        id ??= "";
 
         if (!suppressIObject && subject.Value is IObject iobj &&
             iobj.TryDynamicCall(sctx, args, call, id, out result))
@@ -205,10 +198,10 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             case @"\implements":
                 foreach (var arg in args)
                 {
-                    Type T;
-                    if (arg.Type is ObjectPType &&
-                        typeof (Type).IsAssignableFrom(((ObjectPType) arg.Type).ClrType))
-                        T = (Type) arg.Value;
+                    Type? T;
+                    if (arg.Type is ObjectPType objTy &&
+                        typeof (Type).IsAssignableFrom(objTy.ClrType))
+                        T = (Type) arg.Value!;
                     else
                         T = GetType(sctx, arg.CallToString(sctx));
 
@@ -225,7 +218,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 return true;
         }
 
-        var cond = new call_conditions(sctx, args, call, id);
+        var cond = new CallConditions(sctx, args, call, id);
         MemberTypes mtypes;
         MemberFilter filter;
         if (id.Length != 0)
@@ -241,17 +234,17 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         {
             filter = _default_member_filter;
             mtypes = MemberTypes.Property | MemberTypes.Method;
-            cond.memberRestriction = new List<MemberInfo>(ClrType.GetDefaultMembers());
+            cond.MemberRestriction = new(ClrType.GetDefaultMembers());
             cond.IgnoreId = true;
             if (subject.Value is Array)
             {
-                cond.memberRestriction.AddRange(
+                cond.MemberRestriction.AddRange(
                     ClrType.FindMembers(
                         MemberTypes.Method,
                         BindingFlags.Public | BindingFlags.Instance,
                         Type.FilterName,
                         cond.Call == PCall.Get ? "GetValue" : "SetValue"));
-                cond.memberRestriction.AddRange(
+                cond.MemberRestriction.AddRange(
                     ClrType.FindMembers(
                         MemberTypes.Method,
                         BindingFlags.Public | BindingFlags.Instance,
@@ -285,26 +278,26 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
-        return TryStaticCall(sctx, args, call, id, out result, out var dummy);
+        return tryStaticCall(sctx, args, call, id, out result, out var dummy);
     }
 
-    public bool TryStaticCall(
+    bool tryStaticCall(
         StackContext sctx,
         PValue[] args,
         PCall call,
         string id,
-        out PValue result,
-        out MemberInfo resolvedMember)
+        [NotNullWhen(true)] out PValue? result,
+        out MemberInfo? resolvedMember)
     {
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+        
         result = null;
         resolvedMember = null;
 
-        if (id == null)
-            id = "";
-
-        var cond = new call_conditions(sctx, args, call, id);
+        var cond = new CallConditions(sctx, args, call, id);
         MemberTypes mtypes;
         MemberFilter filter;
         if (id.Length != 0)
@@ -319,7 +312,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         {
             filter = _default_member_filter;
             mtypes = MemberTypes.Property | MemberTypes.Method;
-            cond.memberRestriction = new List<MemberInfo>(ClrType.GetDefaultMembers());
+            cond.MemberRestriction = new(ClrType.GetDefaultMembers());
             cond.IgnoreId = true;
         }
 
@@ -349,16 +342,16 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PCall call,
         string id,
         Type targetType,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
         if (string.IsNullOrEmpty(id))
             throw new ArgumentException("id may not be null or empty.");
 
-        var cond = new call_conditions(sctx, args, call, id)
+        var cond = new CallConditions(sctx, args, call, id)
         {
-            returnType = targetType
+            ReturnType = targetType,
         };
 
         //Get member candidates            
@@ -375,22 +368,20 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-    internal readonly struct Score : IComparable<Score>, IComparable
+    internal readonly struct Score(
+            int numUpcasts = default,
+            int numConversions = default,
+            bool usesSctxHack = default,
+            bool rejected = default
+        )
+        : IComparable<Score>, IComparable
     {
-        public int NumUpcasts { get; }
-        public int NumConversions { get; }
+        public int NumUpcasts { get; } = numUpcasts;
+        public int NumConversions { get; } = numConversions;
 
-        public bool UsesSctxHack { get; }
+        public bool UsesSctxHack { get; } = usesSctxHack;
 
-        public bool Rejected { get; }
-
-        public Score(int numUpcasts = default, int numConversions = default, bool usesSctxHack = default, bool rejected = default)
-        {
-            this.NumUpcasts = numUpcasts;
-            this.NumConversions = numConversions;
-            this.UsesSctxHack = usesSctxHack;
-            this.Rejected = rejected;
-        }
+        public bool Rejected { get; } = rejected;
 
         public int CompareTo(Score other)
         {
@@ -406,7 +397,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             return NumUpcasts.CompareTo(other.NumUpcasts);
         }
 
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             if (ReferenceEquals(null, obj)) return 1;
             return obj is Score other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(Score)}");
@@ -440,7 +431,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name="cond">The details of the call.</param>
     /// <returns>The actual member to consider or <c>null</c> if this kind of member is not applicable after all.</returns>
     [ContractAnnotation("candidate:null => null ; candidate:notnull => canbenull")]
-    static MemberInfo _discover(MemberInfo candidate, [NN] call_conditions cond)
+    static MemberInfo? _discover(MemberInfo? candidate, CallConditions cond)
     {
         if (candidate == null)
         {
@@ -488,7 +479,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name="candidate">The member candidate to rate.</param>
     /// <param name="cond">The circumstances of the call.</param>
     /// <returns>The score for this member. (Lower indicates better match)</returns>
-    static Score _rate(MemberInfo candidate, call_conditions cond)
+    static Score _rate(MemberInfo candidate, CallConditions cond)
     {
         switch (candidate.MemberType)
         {
@@ -496,7 +487,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 // It doesn't get much better than a field (there should not be any conflicting overloads).
                 // It *is* possible to still have a conflict if the type is defined in a case-sensitive language.
                 // We are not going to worry about that corner case. CLS-best-practices are pretty clear abou
-                return new Score();
+                return new();
             case MemberTypes.Constructor:
             case MemberTypes.Method:
                 var method = (MethodBase) candidate;
@@ -536,18 +527,18 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                     numConversions += 1;
                 }
 
-                return new Score(numUpcasts, numConversions, sctxHackOffset != 0);
+                return new(numUpcasts, numConversions, sctxHackOffset != 0);
             default:
                 // Not really sure what we got ourselves here. 
                 // Note that some higher-level members (events, properties) should have been de-sugared by _discover
-                return new Score(rejected: true);
+                return new(rejected: true);
         }
     }
 
-    static bool _try_execute_single(MemberInfo candidate, call_conditions cond, PValue subject,
-        out PValue ret)
+    static bool _try_execute_single(MemberInfo candidate, CallConditions cond, PValue? subject,
+        [NotNullWhen(true)] out PValue? ret)
     {
-        object result;
+        object? result;
         switch (candidate.MemberType)
         {
             case MemberTypes.Method:
@@ -555,7 +546,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 //Try to execute the method
                 var method = (MethodBase)candidate;
                 var parameters = method.GetParameters();
-                var cargs = new object[parameters.Length];
+                var cargs = new object?[parameters.Length];
                 //The Sctx hack needs to modify the supplied arguments, so we need a copy of the original reference
                 var sargs = cond.Args;
 
@@ -570,13 +561,13 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 for (var i = 0; i < cargs.Length; i++)
                 {
                     var arg = sargs[i];
-                    if (!(arg.IsNull)) //Neither Type-locked nor null
+                    if (!arg.IsNull) //Neither Type-locked nor null
                     {
-                        var P = parameters[i].ParameterType;
-                        var A = arg.ClrType;
-                        if (!(P == A || P.IsAssignableFrom(A))) //Is conversion needed?
+                        var pTy = parameters[i].ParameterType;
+                        var aTy = arg.ClrType;
+                        if (!(pTy == aTy || pTy.IsAssignableFrom(aTy))) //Is conversion needed?
                         {
-                            if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
+                            if (!arg.TryConvertTo(cond.Sctx, pTy, false, out arg))
                             {
                                 //Try to convert
                                 ret = null;
@@ -644,16 +635,16 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         }
         else
         {
-            ret = null;
+            ret = Null;
         }
         return true;
     }
 
     static bool _try_execute(
         IEnumerable<MemberInfo> candidates,
-        call_conditions cond,
-        PValue subject,
-        out PValue ret)
+        CallConditions cond,
+        PValue? subject,
+        [NotNullWhen(true)] out PValue? ret)
     {
         ret = null;
         foreach(var candidate in candidates)
@@ -679,7 +670,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name="args">The arguments to this invocation.</param>
     /// <param name="call">call type (get/set)</param>
     /// <param name="id">The name used to make the call.</param>
-    /// <param name="subject">The <c>this</c> pointer.</param>
+    /// <param name="subject">The <c>this</c> pointer or <c>null</c> for static method calls.</param>
     /// <returns></returns>
     internal static PValue _execute(
         StackContext sctx,
@@ -687,10 +678,10 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        PValue subject)
+        PValue? subject)
     {
         if (_try_execute(candidate.Singleton(),
-                new call_conditions(sctx, args, call, id), subject, out var ret)) 
+                new(sctx, args, call, id), subject, out var ret)) 
             return ret;
 
         // Something went wrong, report as a runtime error.
@@ -698,7 +689,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         sb.Append("Cannot call '");
         sb.Append(candidate);
         sb.Append("' on object of Type ");
-        sb.Append(subject.IsNull ? "null" : subject.ClrType.FullName);
+        sb.Append(subject?.IsNull ?? true ? "null" : subject.ClrType!.FullName);
         sb.Append(" with (");
         foreach (var arg in args)
         {
@@ -712,47 +703,50 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     [DebuggerStepThrough]
-    class call_conditions
+    class CallConditions
     {
         public readonly StackContext Sctx;
         public readonly PValue[] Args;
         public readonly PCall Call;
         public readonly string Id;
         public bool IgnoreId;
-        public readonly string Directive;
-        public Type returnType;
-        public List<MemberInfo> memberRestriction;
+        public readonly string? Directive;
+        public Type? ReturnType;
+        public List<MemberInfo>? MemberRestriction;
 
-        public call_conditions(StackContext sctx, PValue[] args, PCall call, string id)
+        public CallConditions(StackContext sctx, PValue[]? args, PCall call, string id)
         {
             Sctx = sctx ?? throw new ArgumentNullException(nameof(sctx));
             Args = args ?? Array.Empty<PValue>();
             Call = call;
             Id = id;
             Directive = null;
-            returnType = null;
-            memberRestriction = null;
+            ReturnType = null;
+            MemberRestriction = null;
 
             //look for special calling directives
             var idx = id.LastIndexOf('\\');
             if (idx > 0) //calling directive found
             {
-                Id = id.Substring(0, idx);
-                Directive = id.Substring(idx + 1);
+                Id = id[..idx];
+                Directive = id[(idx + 1)..];
             }
         }
     }
 
-    static bool _default_member_filter(MemberInfo candidate, object arg)
+    static bool _default_member_filter(MemberInfo candidate, object? arg)
     {
+        if (arg == null)
+            throw new ArgumentNullException(nameof(arg));
+        
         var property = candidate as PropertyInfo;
         var method = candidate as MethodInfo;
-        var cond = (call_conditions) arg;
+        var cond = (CallConditions) arg;
 
         //Criteria No.1: Default indices are called "Item" by convention
         if (!(
                 //Is default member or...
-                cond.memberRestriction != null && cond.memberRestriction.Contains(candidate) ||
+                cond.MemberRestriction != null && cond.MemberRestriction.Contains(candidate) ||
                 //is called "item"
                 candidate.Name.Equals("Item", StringComparison.OrdinalIgnoreCase)
             ))
@@ -764,13 +758,13 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             {
                 if (!property.CanRead)
                     return false;
-                return _method_filter(property.GetGetMethod(), cond);
+                return _method_filter(property.GetGetMethod()!, cond);
             }
             else //cond.Call == PCall.Set
             {
                 if (!property.CanWrite)
                     return false;
-                return _method_filter(property.GetSetMethod(), cond);
+                return _method_filter(property.GetSetMethod()!, cond);
             }
         }
         else if (method != null)
@@ -783,9 +777,12 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 candidate.GetType() + ".");
     }
 
-    static bool _member_filter(MemberInfo candidate, object arg)
+    static bool _member_filter(MemberInfo candidate, object? arg)
     {
-        var cond = (call_conditions) arg;
+        if (arg == null)
+            throw new ArgumentNullException(nameof(arg));
+        
+        var cond = (CallConditions) arg;
         //Criteria No.1: The members name (may be suppressed)
         if (
             !(cond.IgnoreId ||
@@ -802,18 +799,18 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             FieldInfo when cond.Call == PCall.Get => cond.Args.Length == 0,
             FieldInfo => cond.Args.Length == 1,
             PropertyInfo property when cond.Call == PCall.Get => 
-                property.CanRead && _method_filter(property.GetGetMethod(), cond),
+                property.CanRead && _method_filter(property.GetGetMethod()!, cond),
             //cond.Call == PCall.Set
-            PropertyInfo property => property.CanWrite && _method_filter(property.GetSetMethod(), cond),
+            PropertyInfo property => property.CanWrite && _method_filter(property.GetSetMethod()!, cond),
             MethodInfo method => _method_filter(method, cond),
             EventInfo @event when cond.Directive == "" ||
                 Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0 =>
-                _method_filter(@event.GetRaiseMethod(), cond),
+                _method_filter(@event.GetRaiseMethod()!, cond),
             EventInfo @event when Engine.DefaultStringComparer.Compare(cond.Directive, "Add") == 0 => 
-                _method_filter( @event.GetAddMethod(), cond),
+                _method_filter( @event.GetAddMethod()!, cond),
             EventInfo @event when Engine.DefaultStringComparer.Compare(cond.Directive, "Remove") == 0 => 
-                _method_filter(@event.GetRemoveMethod(), cond),
-            _ => false
+                _method_filter(@event.GetRemoveMethod()!, cond),
+            _ => false,
         };
     }
 
@@ -823,7 +820,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     /// <param name = "parameters">The parameters array to check.</param>
     /// <param name = "cond">The call_condition object for the current call.</param>
     /// <returns>True if the the hack can be applied, otherwise false.</returns>
-    static bool _sctx_hack(ParameterInfo[] parameters, call_conditions cond)
+    static bool _sctx_hack(ParameterInfo[] parameters, CallConditions cond)
     {
         //StackContext Hack
         //NOTE: This might be the source of strange problems!
@@ -836,7 +833,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType);
     }
 
-    static bool _method_filter(MethodBase method, call_conditions cond)
+    static bool _method_filter(MethodBase method, CallConditions cond)
     {
         var parameters = method.GetParameters();
 
@@ -853,10 +850,10 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             return false;
 
         //optional Criteria No.3: Return types must match
-        if (cond.returnType != null && method is MethodInfo methodInfo)
+        if (cond.ReturnType != null && method is MethodInfo methodInfo)
         {
-            if (!(methodInfo.ReturnType == cond.returnType ||
-                    cond.returnType.IsAssignableFrom(methodInfo.ReturnType)))
+            if (!(methodInfo.ReturnType == cond.ReturnType ||
+                    cond.ReturnType.IsAssignableFrom(methodInfo.ReturnType)))
             {
                 return false;
             }
@@ -867,7 +864,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (subject.Value is IIndirectCall icall)
@@ -880,21 +877,21 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
     #region Calls
 
-    public PValue DynamicCall(
+    PValue dynamicCall(
         StackContext sctx,
         PValue subject,
         PValue[] args,
         PCall call,
         string id,
-        out MemberInfo resolvedMember)
+        out MemberInfo? resolvedMember)
     {
-        if (!TryDynamicCall(sctx, subject, args, call, id, out var result, out resolvedMember))
+        if (!tryDynamicCall(sctx, subject, args, call, id, out var result, out resolvedMember))
         {
             var sb = new StringBuilder();
             sb.Append("Cannot resolve call '");
             sb.Append(id);
             sb.Append("' on object of type ");
-            sb.Append(subject.IsNull ? "null" : subject.ClrType.FullName);
+            sb.Append(subject.IsNull ? "null" : subject.ClrType!.FullName);
             sb.Append(" with (");
             foreach (var arg in args)
             {
@@ -912,13 +909,13 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     public override PValue DynamicCall(
         StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
     {
-        return DynamicCall(sctx, subject, args, call, id, out var dummy);
+        return dynamicCall(sctx, subject, args, call, id, out var dummy);
     }
 
     public PValue StaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out MemberInfo resolvedMember)
+        StackContext sctx, PValue[] args, PCall call, string id, out MemberInfo? resolvedMember)
     {
-        if (!TryStaticCall(sctx, args, call, id, out var result, out resolvedMember))
+        if (!tryStaticCall(sctx, args, call, id, out var result, out resolvedMember))
         {
             var sb = new StringBuilder();
             sb.Append("Cannot resolve static call '");
@@ -944,17 +941,17 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return StaticCall(sctx, args, call, id, out var dummy);
     }
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
-        return TryContruct(sctx, args, out result, out var dummy);
+        return tryConstruct(sctx, args, out result);
     }
 
-    public bool TryContruct(
-        StackContext sctx, PValue[] args, out PValue result, out MemberInfo resolvedMember)
+    bool tryConstruct(
+        StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
-        var cond = new call_conditions(sctx, args, PCall.Get, "")
+        var cond = new CallConditions(sctx, args, PCall.Get, "")
         {
-            IgnoreId = true
+            IgnoreId = true,
         };
 
         //Get member candidates            
@@ -963,20 +960,21 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                     .Where(c => _method_filter(c, cond)), cond)
             .ToImmutableArray();
 
-        resolvedMember = null;
         if (candidates.Length == 1)
-            resolvedMember = candidates[0];
+        {
+        }
 
         var ret = _try_execute(candidates, cond, null, out result);
         if (!ret)
-            resolvedMember = null;
+        {
+        }
 
         return ret;
     }
 
-    static IEnumerable<MemberInfo> _overloadResolution(IEnumerable<MemberInfo> candidates, call_conditions cond) => 
+    static IEnumerable<MemberInfo> _overloadResolution(IEnumerable<MemberInfo> candidates, CallConditions cond) => 
         candidates
-            .Select(c =>
+            .Select<MemberInfo, (MemberInfo? effectiveCandidate, Score score)>(c =>
             {
                 var effectiveCandidate = _discover(c, cond);
                 if (effectiveCandidate == null)
@@ -994,7 +992,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             })
             .Where(pair => pair.effectiveCandidate != null)
             .OrderBy(pair => pair.score)
-            .Select(pair => pair.effectiveCandidate);
+            .Select(pair => pair.effectiveCandidate!);
      
 
     #endregion
@@ -1002,7 +1000,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     #region Operators
 
     public override bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall
@@ -1030,7 +1028,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool Subtraction(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1056,7 +1054,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1082,7 +1080,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool Division(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1108,7 +1106,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool Modulus(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1134,7 +1132,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseAnd(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1160,7 +1158,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1186,7 +1184,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool ExclusiveOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1212,7 +1210,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         if (base.Equality(sctx, leftOperand, rightOperand, out result))
             return true;
@@ -1241,7 +1239,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         if (base.Inequality(sctx, leftOperand, rightOperand, out result))
             return true;
@@ -1270,7 +1268,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1299,7 +1297,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1325,7 +1323,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool LessThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1354,7 +1352,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1379,7 +1377,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 out result);
     }
 
-    public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
+    public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall
@@ -1390,13 +1388,13 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 OperatorNames.Prexonite.UnaryNegation, out result);
     }
 
-    public override bool LogicalNot(StackContext sctx, PValue operand, out PValue result)
+    public override bool LogicalNot(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_LogicalNot", out result);
     }
 
-    public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
+    public override bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(
@@ -1406,7 +1404,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 OperatorNames.Prexonite.OnesComplement, out result);
     }
 
-    public override bool Increment(StackContext sctx, PValue operand, out PValue result)
+    public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Increment", out result) ||
@@ -1415,7 +1413,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 OperatorNames.Prexonite.Increment, out result);
     }
 
-    public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
+    public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return
             TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Decrement", out result) ||
@@ -1433,7 +1431,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         var arg = new[] {subject};
         var objT = target as ObjectPType;
@@ -1484,18 +1482,29 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         else if (target is BoolPType)
         {
             // ::op_True > ::op_Implicit > ::op_Explicit
-            if (!TryStaticCall(sctx, arg, PCall.Get, "op_True", out var res))
-                if (!_try_clr_convert_to(sctx, subject, typeof (bool), useExplicit, out res))
-                    //An object is true by default
-                    result = new PValue(true, Bool);
-                else if (res?.Value is bool value)
-                    result = new PValue(value, Bool);
-                else
-                    result = new PValue(res != null, Bool);
+            if (TryStaticCall(sctx,
+                arg,
+                PCall.Get,
+                "op_True",
+                out var res))
+            {
+                result = res;
+            }
+            else if (!_try_clr_convert_to(sctx,
+                    subject,
+                    typeof(bool),
+                    useExplicit,
+                    out res))
+                //An object is true by default
+                result = new(true, Bool);
+            else if (res.Value is bool value)
+                result = new(value, Bool);
+            else
+                result = new(subject.Value != null, Bool);
 
             return true;
         }
-        else if ((object) objT != null)
+        else if ((object?) objT != null)
         {
             if (subject.Value == null)
                 return false;
@@ -1503,7 +1512,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             if (objT.ClrType.IsInstanceOfType(subject.Value))
             {
                 result = objT.CreatePValue(subject.Value);
-                return result != null;
+                return true;
             }
             else
                 return _try_clr_convert_to(sctx, subject, objT.ClrType, useExplicit, out result);
@@ -1517,7 +1526,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         PValue subject,
         Type target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         var arg = new[] {subject};
         if (
@@ -1535,7 +1544,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return _try_clr_convert_to(sctx, subject, ClrType, useExplicit, out result);
     }
@@ -1551,16 +1560,14 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
     public override int GetHashCode()
     {
-        return _code ^ ClrType.GetHashCode();
+        return -410320954 ^ ClrType.GetHashCode();
     }
 
-    public const string Literal = "Object";
-
-    const int _code = -410320954;
+    public const string Literal = nameof(Object);
 
     public override string ToString()
     {
-        return Literal + "(\"" + StringPType.Escape(ClrType.FullName) + "\")";
+        return Literal + "(\"" + StringPType.Escape(ClrType.FullName!) + "\")";
     }
 
     #endregion

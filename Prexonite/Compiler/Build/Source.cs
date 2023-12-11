@@ -23,73 +23,63 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.IO;
+
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Build.Internal;
 
 namespace Prexonite.Compiler.Build;
 
 public static class Source
 {
-    [NotNull]
-    public static ISource FromReader([NotNull] TextReader reader)
+    public static ISource FromReader(TextReader reader)
     {
         return new ReaderSource(reader);
     }
 
-    [NotNull]
-    public static ISource FromString([NotNull] string source)
+    public static ISource FromString(string source)
     {
         return new StringSource(source);
     }
 
-    [NotNull]
-    public static ISource FromStream([NotNull] Stream stream, [NotNull] Encoding encoding)
+    public static ISource FromStream(Stream stream, Encoding encoding)
     {
         return FromStream(stream, encoding, true);
     }
 
-    [NotNull]
-    public static ISource FromStream([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
+    public static ISource FromStream(Stream stream, Encoding encoding, bool forceSingleUse)
     {
         return new StreamSource(stream, encoding, forceSingleUse);
     }
 
-    [NotNull]
-    public static ISource FromFile([NotNull] FileInfo file, [NotNull] Encoding encoding)
+    public static ISource FromFile(FileInfo file, Encoding encoding)
     {
         return new FileSource(file, encoding);
     }
 
-    [NotNull]
-    public static ISource FromFile([NotNull] string path, [NotNull] Encoding encoding)
+    public static ISource FromFile(string path, Encoding encoding)
     {
         return FromFile(new FileInfo(path), encoding);
     }
 
-    public static ISource FromBytes([NotNull] byte[] data, [NotNull] Encoding encoding)
+    public static ISource FromBytes(byte[] data, Encoding encoding)
     {
         return FromStream(new MemoryStream(data, false), encoding, false);
     }
 
-    public static ISource FromEmbeddedPrexoniteResource([NotNull] string name)
+    public static ISource FromEmbeddedPrexoniteResource(string name)
     {
         if (name == null) throw new ArgumentNullException(nameof(name));
         return new EmbeddedResourceSource(Assembly.GetExecutingAssembly(), "Prexonite." + name);
     }
     
-    public static ISource FromEmbeddedResource([NotNull] Assembly assembly, [NotNull] string name)
+    public static ISource FromEmbeddedResource(Assembly assembly, string name)
     {
         if (name == null) throw new ArgumentNullException(nameof(name));
         return new EmbeddedResourceSource(assembly, name);
     }
 
-    [NotNull]
-    public static async Task<ISource> CacheInMemoryAsync([NotNull] this ISource source)
+    public static async Task<ISource> CacheInMemoryAsync(this ISource source)
     {
         if(!source.TryOpen(out var reader))
             throw new InvalidOperationException("Unable to open source " + source + " for reading.");

@@ -30,12 +30,11 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
-using Prx.Tests;
 
 namespace PrexoniteTests.Tests;
 
 [TestFixture]
-public class CompilerParser : Compiler
+public class CompilerTestBaseParser : CompilerTestBase
 {
     [Test]
     public void VariableDeclarations()
@@ -70,13 +69,13 @@ function func0
 
         // We allow up to two instructions (`return sobj1`) to accomodate the
         //  relaxed treatment of variable declarations in Prexonite 2
-        Assert.That(ldr.FunctionTargets["func0"].Code.Count, Is.LessThanOrEqualTo(2));
+        Assert.That(ldr.FunctionTargets["func0"]!.Code.Count, Is.LessThanOrEqualTo(2));
 
         var tar = ldr.FunctionTargets["func0"];
 
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0", null),
-            LookupSymbolEntry(tar.Symbols, "obj0"));
+            LookupSymbolEntry(tar!.Symbols, "obj0"));
         Assert.IsTrue(tar.Function.Variables.Contains("obj0"));
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1", null),
@@ -107,7 +106,7 @@ function func0
             tar.Function.Variables.Contains("gobj0"),
             "\"declare var <id>;\" only declares a global variable.");
         Assert.IsFalse(
-            ldr.Options.TargetApplication.Variables.ContainsKey("gobj0"),
+            ldr.Options.TargetApplication!.Variables.ContainsKey("gobj0"),
             "\"global <id>;\" only declares a global variable.");
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1", target.Module.Name),
@@ -157,7 +156,7 @@ function instruction {}
         Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
         //Check AST
-        var block = ldr.FunctionTargets["func0"].Ast;
+        var block = ldr.FunctionTargets["func0"]!.Ast;
 
         //label begin
         var i = 0;
@@ -266,7 +265,7 @@ function main
     x += 0 + y * 1;
 }";
 
-        _compile(@input1);
+        _compile(input1);
 
         Expect(
             @"
@@ -353,7 +352,7 @@ function func0
 }");
 
 
-        var actual = target.Functions["func0"].Code;
+        var actual = target.Functions["func0"]!.Code;
         var expected =
             GetInstructions(
                 @"
@@ -1223,7 +1222,7 @@ function main
     foreach(buffer.Append in lst.ToArray);
 }
 ");
-        var code = target.Functions["main"].Code;
+        var code = target.Functions["main"]!.Code;
         Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
         var enum1 = code[3].Id ?? "No_ID_at_3";
         var enum2 = code[24].Id ?? "No_ID_at_23";
@@ -1455,7 +1454,7 @@ ldloc   a
 add
 ret.value
 ");
-        var func = target.Functions[@"main\0"];
+        var func = target.Functions[@"main\0"]!;
         Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
         Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
 
@@ -1465,7 +1464,7 @@ ldnull
 ret.val
 ");
         func = target.Functions[@"main\1"];
-        Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
+        Assert.AreEqual(1, func!.Meta[PFunction.SharedNamesKey].List.Length);
         Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
     }
 
@@ -2380,7 +2379,7 @@ function main
 }
 ");
 
-        var code = target.Functions["main"].Code;
+        var code = target.Functions["main"]!.Code;
         Assert.IsTrue(code.Count > 6, "Resulting must be longer than 6 instructions");
         var using1 = code[6].Id ?? "No_ID_at_6";
 
@@ -3422,7 +3421,7 @@ label continueForeach   ldloc   {0}
                         @cmd.1  dispose
                         leave   end
 label   end             nop //this nop ensures compatibility with CIL
-", target.Functions["main"].Code[3].Id));
+", target.Functions["main"]!.Code[3].Id));
     }
 
     [Test]
@@ -3521,35 +3520,35 @@ function as alias3, alias4{}
         var entryF = LookupSymbolEntry(ldr.Symbols, "F");
         Assert.IsNotNull(entryF,"No symbol table entry for `f` exists");
         Assert.IsTrue(entryF.Interpretation == SymbolInterpretations.Function,"Symbol f is not declared as a function");
-        Assert.IsTrue(target.Functions.Contains(entryF.InternalId));
+        Assert.IsTrue(target.Functions.Contains(entryF.InternalId!));
 
         var alias1 = LookupSymbolEntry(ldr.Symbols, "alias1");
         Assert.IsNotNull(alias1, "No symbol table entry for `alias1` exists");
         Assert.IsTrue(alias1.Interpretation == SymbolInterpretations.Function, "Symbol alias1 is not declared as a function");
-        Assert.IsTrue(target.Functions.Contains(alias1.InternalId));
-        Assert.AreSame(target.Functions[entryF.InternalId], target.Functions[alias1.InternalId]);
-        Assert.IsFalse(target.Functions.Contains("alias1"));
+        Assert.IsTrue(target.Functions.Contains(alias1.InternalId!));
+        Assert.AreSame(target.Functions[entryF.InternalId!], target.Functions[alias1.InternalId!]);
+        Assert.IsFalse(target.Functions.Contains(nameof(alias1)));
 
         var alias2 = LookupSymbolEntry(ldr.Symbols, "alias2");
         Assert.IsNotNull(alias2, "No symbol table entry for `alias2` exists");
         Assert.IsTrue(alias2.Interpretation == SymbolInterpretations.Function, "Symbol alias2 is not declared as a function");
-        Assert.IsTrue(target.Functions.Contains(alias2.InternalId));
-        Assert.AreSame(target.Functions[entryF.InternalId], target.Functions[alias2.InternalId]);
-        Assert.IsFalse(target.Functions.Contains("alias2"));
+        Assert.IsTrue(target.Functions.Contains(alias2.InternalId!));
+        Assert.AreSame(target.Functions[entryF.InternalId!], target.Functions[alias2.InternalId!]);
+        Assert.IsFalse(target.Functions.Contains(nameof(alias2)));
 
         var alias3 = LookupSymbolEntry(ldr.Symbols, "alias3");
         Assert.IsNotNull(alias3, "No symbol table entry for `alias3` exists");
         Assert.IsTrue(alias3.Interpretation == SymbolInterpretations.Function, "Symbol alias3 is not declared as a function");
-        Assert.IsTrue(target.Functions.Contains(alias3.InternalId));
-        Assert.IsFalse(target.Functions.Contains("alias3"));
+        Assert.IsTrue(target.Functions.Contains(alias3.InternalId!));
+        Assert.IsFalse(target.Functions.Contains(nameof(alias3)));
 
         var alias4 = LookupSymbolEntry(ldr.Symbols, "alias4");
         Assert.IsNotNull(alias4, "No symbol table entry for `alias4` exists");
         Assert.IsTrue(alias4.Interpretation == SymbolInterpretations.Function, "Symbol alias4 is not declared as a function");
-        Assert.IsTrue(target.Functions.Contains(alias4.InternalId));
-        Assert.IsFalse(target.Functions.Contains("alias4"));
+        Assert.IsTrue(target.Functions.Contains(alias4.InternalId!));
+        Assert.IsFalse(target.Functions.Contains(nameof(alias4)));
 
-        Assert.AreSame(target.Functions[alias3.InternalId], target.Functions[alias4.InternalId]);
+        Assert.AreSame(target.Functions[alias3.InternalId!], target.Functions[alias4.InternalId!]);
     }
 
     [Test]
@@ -3565,14 +3564,14 @@ function main()
         var maint = ldr.FunctionTargets["main"];
         var main = target.Functions["main"];
 
-        Assert.IsTrue(main.Variables.Contains("f"), "Variable f must be physically present.");
+        Assert.IsTrue(main!.Variables.Contains("f"), "Variable f must be physically present.");
         Assert.IsFalse(main.Variables.Contains("alias1"), "There must be no variable named alias1");
         Assert.IsFalse(main.Variables.Contains("alias2"), "There must be no variable named alias2");
         Assert.IsFalse(main.Variables.Contains("alias3"), "There must be no variable named alias3");
         Assert.IsFalse(main.Variables.Contains("alias4"), "There must be no variable named alias4");
 
         // `f`
-        Assert.IsTrue(maint.Symbols.Contains("f"));
+        Assert.IsTrue(maint!.Symbols.Contains("f"));
         var f = LookupSymbolEntry(maint.Symbols, "f");
         Assert.AreEqual(f.Interpretation, SymbolInterpretations.LocalReferenceVariable);
 

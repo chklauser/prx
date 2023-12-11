@@ -23,12 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
-using JetBrains.Annotations;
+
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands;
 
@@ -47,7 +45,7 @@ public class Unpack : MacroCommand
     public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands()
     {
         yield return
-            new KeyValuePair<string, PCommand>(Impl.Alias, Impl.Instance);
+            new(Impl.Alias, Impl.Instance);
     }
 
     #endregion
@@ -88,7 +86,6 @@ public class Unpack : MacroCommand
 
 // ReSharper disable MemberHidesStaticFromOuterClass not an issue (singleton pattern)
 
-        [NotNull]
         public static Impl Instance { get; } = new();
 
         Impl()
@@ -101,7 +98,7 @@ public class Unpack : MacroCommand
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            MacroContext context;
+            MacroContext? context;
             if (args.Length < 2 || args[0].Type is not ObjectPType ||
                 (context = args[0].Value as MacroContext) == null)
                 throw new PrexoniteException(_getUsage());
@@ -109,7 +106,7 @@ public class Unpack : MacroCommand
             if (args[1].TryConvertTo(sctx, true, out int id))
                 return context.RetrieveFromTransport(id);
 
-            AstConstant constant;
+            AstConstant? constant;
             if (args[1].Type is not ObjectPType ||
                 (constant = args[1].Value as AstConstant) == null || constant.Constant is not int)
                 throw new PrexoniteException(_getUsage());

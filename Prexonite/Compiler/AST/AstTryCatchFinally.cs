@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -34,14 +32,14 @@ public class AstTryCatchFinally : AstScopedBlock,
     public AstScopedBlock TryBlock { get; set; }
     public AstScopedBlock CatchBlock { get; set; }
     public AstScopedBlock FinallyBlock { get; set; }
-    public AstGetSet ExceptionVar { get; set; }
+    public AstGetSet? ExceptionVar { get; set; }
 
     public AstTryCatchFinally(ISourcePosition p, AstBlock lexicalScope)
         : base(p, lexicalScope)
     {
-        TryBlock = new AstScopedBlock(p, this);
-        CatchBlock = new AstScopedBlock(p, TryBlock);
-        FinallyBlock = new AstScopedBlock(p, TryBlock);
+        TryBlock = new(p, this);
+        CatchBlock = new(p, TryBlock);
+        FinallyBlock = new(p, TryBlock);
     }
 
     #region IAstHasBlocks Members
@@ -91,10 +89,9 @@ public class AstTryCatchFinally : AstScopedBlock,
 
         //Emit catch block
         target.EmitLabel(CatchBlock.Position, beginCatchLabel);
-        var usesException = ExceptionVar != null;
-        var justRethrow = CatchBlock.IsEmpty && !usesException;
+        var justRethrow = CatchBlock.IsEmpty && ExceptionVar == null;
 
-        if (usesException)
+        if (ExceptionVar != null)
         {
             //Assign exception
             ExceptionVar = _GetOptimizedNode(target, ExceptionVar) as AstGetSet ?? ExceptionVar;
@@ -127,7 +124,7 @@ public class AstTryCatchFinally : AstScopedBlock,
                 BeginFinally =
                     !FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1,
                 BeginCatch = !justRethrow ? _getAddress(target, beginCatchLabel) : -1,
-                UsesException = usesException
+                UsesException = ExceptionVar != null,
             };
 
         //Register try-catch-finally block

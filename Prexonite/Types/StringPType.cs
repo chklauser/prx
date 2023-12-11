@@ -25,24 +25,18 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Cil;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
-using UInt8 = System.Byte;
 
 #endregion
 
 namespace Prexonite.Types;
 
-[PTypeLiteral("String")]
+[PTypeLiteral(nameof(String))]
 public class StringPType : PType, ICilCompilerAware
 {
     #region Singleton Pattern
@@ -51,7 +45,7 @@ public class StringPType : PType, ICilCompilerAware
 
     static StringPType()
     {
-        Instance = new StringPType();
+        Instance = new();
     }
 
     [DebuggerStepThrough]
@@ -66,9 +60,7 @@ public class StringPType : PType, ICilCompilerAware
     [DebuggerStepThrough]
     public override PValue CreatePValue(object value)
     {
-        if (value == null)
-            value = "";
-        return new PValue(value.ToString(), Instance);
+        return new(value.ToString(), Instance);
     }
 
     #region Escape/Unescape
@@ -222,7 +214,7 @@ public class StringPType : PType, ICilCompilerAware
                         if (i + 2 >= esc.Length)
                             goto add; //Ignore this sequence
                         i++;
-                        hex = new StringBuilder();
+                        hex = new();
                         for (var j = 0; i < esc.Length && j < 3; i++, j++)
                         {
                             var curr = esc[i];
@@ -244,13 +236,13 @@ public class StringPType : PType, ICilCompilerAware
                                 out utf32))
                             throw new ArgumentException(
                                 "Invalid escape character sequence. (\"\\x" +
-                                hex.ToString().Substring(2) + "\")");
+                                hex.ToString()[2..] + "\")");
                         buffer.Append(char.ConvertFromUtf32(utf32));
                         break;
                     case 'u':
                         if (i + 4 >= esc.Length)
                             goto add; //Ignore this sequence
-                        hex = new StringBuilder();
+                        hex = new();
                         i++;
                         for (var j = 0; i < esc.Length && j < 4; i++, j++)
                             hex.Append(esc[i]);
@@ -262,14 +254,14 @@ public class StringPType : PType, ICilCompilerAware
                                 out utf32))
                             throw new ArgumentException(
                                 "Invalid escape character sequence. (\"\\u" +
-                                hex.ToString().Substring(2) + "\")");
+                                hex.ToString()[2..] + "\")");
                         buffer.Append(char.ConvertFromUtf32(utf32));
                         i--; //i will be incremented by the for-loop
                         break;
                     case 'U':
                         if (i + 8 >= esc.Length)
                             goto add; //Ignore this sequence
-                        hex = new StringBuilder();
+                        hex = new();
                         i++;
                         for (var j = 0; i < esc.Length && j < 8; i++, j++)
                         {
@@ -283,7 +275,7 @@ public class StringPType : PType, ICilCompilerAware
                                 out utf32))
                             throw new ArgumentException(
                                 "Invalid escape character sequence. (\"\\U" +
-                                hex.ToString().Substring(2) + "\")");
+                                hex.ToString()[2..] + "\")");
                         buffer.Append(char.ConvertFromUtf32(utf32));
                         i--; //i will be incremented by the for-loop
                         break;
@@ -308,7 +300,6 @@ public class StringPType : PType, ICilCompilerAware
 
     public static string ToIdOrLiteral(string raw)
     {
-        raw ??= "";
         if (
             //Empty strings cannot be represented as Ids
             raw.Length == 0)
@@ -402,13 +393,13 @@ public class StringPType : PType, ICilCompilerAware
 
     #endregion
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (args.Length <= 0)
             result = String.CreatePValue("");
         else if (args[0].TryConvertTo(sctx, String, out var arg))
-            result = String.CreatePValue(arg.Value as string);
+            result = String.CreatePValue((string) arg.Value!);
         else
             return false;
         return true;
@@ -420,11 +411,12 @@ public class StringPType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        var str = (string) subject.Value;
-        switch (id?.ToLowerInvariant() ?? "")
+        var str = (string) subject.Value!;
+        switch (id.ToLowerInvariant())
         {
             case "":
                 if (args.Length < 1)
@@ -432,13 +424,13 @@ public class StringPType : PType, ICilCompilerAware
                 var nArg = args[0];
                 if (!nArg.TryConvertTo(sctx, Int, out var rArg))
                     return false;
-                result = str[(int) rArg.Value].ToString();
+                result = str[(int) rArg.Value!].ToString();
                 break;
             case "unescape":
                 result = Unescape(str);
                 break;
             case "format":
-                var objs = new object[args.Length];
+                var objs = new object?[args.Length];
                 for (var i = 0; i < args.Length; i++)
                     objs[i] = args[i].Value;
                 result = string.Format(str, objs);
@@ -468,14 +460,13 @@ public class StringPType : PType, ICilCompilerAware
                         return false;
                     case 1:
                         result =
-                            str.Substring(
-                                (int) args[0].ConvertTo(sctx, Int).Value);
+                            str[(int) args[0].ConvertTo(sctx, Int).Value!..];
                         break;
                     default:
                         result =
                             str.Substring(
-                                (int) args[0].ConvertTo(sctx, Int).Value,
-                                (int) args[1].ConvertTo(sctx, Int).Value);
+                                (int) args[0].ConvertTo(sctx, Int).Value!,
+                                (int) args[1].ConvertTo(sctx, Int).Value!);
                         break;
                 }
                 break;
@@ -489,7 +480,7 @@ public class StringPType : PType, ICilCompilerAware
                 }
                 //Try to interpret as params char[] or fall back to params string[]
                 var sch = new List<char>();
-                List<string> sst = null;
+                List<string>? sst = null;
 
                 var isParams = true;
 
@@ -521,7 +512,7 @@ public class StringPType : PType, ICilCompilerAware
                 sch.Clear();
                 sst = null;
                 var isValid = true;
-                _resolve_params(sctx, ((List<PValue>) list.Value).ToArray(), ref isValid, sch,
+                _resolve_params(sctx, ((List<PValue>) list.Value!).ToArray(), ref isValid, sch,
                     ref sst, true);
 
                 if (!isValid)
@@ -548,7 +539,7 @@ public class StringPType : PType, ICilCompilerAware
                     Object[typeof (string)].TryDynamicCall(
                         sctx, subject, args, call, id, out result);
         }
-        return result != null;
+        return true;
     }
 
     static List<PValue> _wrap_strings(ICollection<string> xs)
@@ -564,12 +555,12 @@ public class StringPType : PType, ICilCompilerAware
         IEnumerable<PValue> args,
         ref bool isParams,
         ICollection<char> sch,
-        ref List<string> sst,
+        ref List<string>? sst,
         bool useExplicit)
     {
         foreach (var arg in args)
         {
-            PValue v;
+            PValue? v;
             if (sst != null)
             {
                 if (! arg.TryConvertTo(sctx, String, useExplicit, out v))
@@ -577,7 +568,7 @@ public class StringPType : PType, ICilCompilerAware
                     isParams = false;
                     break;
                 }
-                sst.Add((string) v.Value);
+                sst.Add((string) v.Value!);
             }
             else if (arg.TryConvertTo(sctx, out char c))
             {
@@ -585,7 +576,7 @@ public class StringPType : PType, ICilCompilerAware
             }
             else if (arg.TryConvertTo(sctx, String, useExplicit, out v))
             {
-                sst = new List<string> {(string) v.Value};
+                sst = new() {(string) v.Value!};
             }
             else
             {
@@ -615,16 +606,16 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         if (args.Length >= 1 && Engine.StringsAreEqual(id, "unescape"))
         {
-            result = Unescape(args[0].ConvertTo(sctx, String).Value as string);
+            result = Unescape((string)args[0].ConvertTo(sctx, String).Value!);
             return true;
         }
         if (args.Length >= 1 && Engine.StringsAreEqual(id, "escape"))
         {
-            result = Escape(args[0].ConvertTo(sctx, String).Value as string);
+            result = Escape((string)args[0].ConvertTo(sctx, String).Value!);
             return true;
         }
         if (args.Length > 1 && Engine.StringsAreEqual(id, "format"))
@@ -640,10 +631,10 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
-        var str = (string) subject.Value;
+        var str = (string) subject.Value!;
         var app = sctx.ParentApplication;
         var eng = sctx.ParentEngine;
         if (app.Functions.TryGetValue(str, out var func))
@@ -659,9 +650,9 @@ public class StringPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool Increment(StackContext sctx, PValue operand, out PValue result)
+    public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
-        if (!(operand.Value is string sop))
+        if (operand.Value is not string sop)
             throw new PrexoniteException(operand + " cannot be supplied to ~String.Increment");
         result = sop.Length == 0
             ? String.CreatePValue("")
@@ -669,18 +660,18 @@ public class StringPType : PType, ICilCompilerAware
         return true;
     }
 
-    public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
+    public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
-        if (!(operand.Value is string sop))
+        if (operand.Value is not string sop)
             throw new PrexoniteException(operand + " cannot be supplied to ~String.Decrement");
         result = sop.Length == 0
             ? String.CreatePValue("")
-            : String.CreatePValue(sop.Substring(0, sop.Length - 1));
+            : String.CreatePValue(sop[..^1]);
         return true;
     }
 
     public override bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         var left = leftOperand.CallToString(sctx);
         var right = rightOperand.CallToString(sctx);
@@ -689,20 +680,20 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
-        string left;
+        string? left;
         int right;
         if (leftOperand.Type is StringPType && rightOperand.Type is IntPType)
         {
             left = leftOperand.Value as string;
-            right = (int) rightOperand.Value;
+            right = (int) rightOperand.Value!;
         }
         else if (rightOperand.Type is StringPType && leftOperand.Type is IntPType)
         {
             left = rightOperand.Value as string;
-            right = (int) leftOperand.Value;
+            right = (int) leftOperand.Value!;
         }
         else
             return false;
@@ -729,7 +720,7 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result =
             StringComparer.Ordinal.Compare(
@@ -738,7 +729,7 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result =
             StringComparer.Ordinal.Compare(
@@ -747,7 +738,7 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result =
             StringComparer.Ordinal.Compare(
@@ -793,10 +784,10 @@ public class StringPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
-        var s = (string) subject.Value;
+        var s = (string) subject.Value!;
         var builtInT = target.ToBuiltIn();
         if (useExplicit)
         {
@@ -828,9 +819,9 @@ public class StringPType : PType, ICilCompilerAware
                                      clrType == typeof (IEnumerable<char>) ||
                                      clrType == typeof (ICollection<char>) ||
                                      clrType == typeof (IList<char>))
-                                result = new PValue(s.ToCharArray(), target);
+                                result = new(s.ToCharArray(), target);
                             else if(clrType.IsInstanceOfType(s)) 
-                                result = new PValue(s, Object[clrType]);
+                                result = new(s, Object[clrType]);
                             break;
                     }
                     break;
@@ -852,16 +843,15 @@ public class StringPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
-        var subjT = subject.Type as ObjectPType;
-        if ((object) subjT != null)
+        if (subject.Type is ObjectPType subjT)
         {
             switch (Type.GetTypeCode(subjT.ClrType))
             {
                 case TypeCode.String:
-                    result = subject.Value as string;
+                    result = (string)subject.Value!;
                     goto ret;
             }
         }
@@ -875,18 +865,16 @@ public class StringPType : PType, ICilCompilerAware
         return otherType is StringPType;
     }
 
-    public const string Literal = "String";
+    public const string Literal = nameof(String);
 
     public override string ToString()
     {
         return Literal;
     }
 
-    const int _code = -631020829;
-
     public override int GetHashCode()
     {
-        return _code;
+        return -631020829;
     }
 
     #region ICilCompilerAware Members

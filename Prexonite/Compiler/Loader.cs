@@ -26,17 +26,11 @@
 #if Compress
 using System.IO.Compression;
 #endif
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
-using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
@@ -49,7 +43,6 @@ using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler;
@@ -66,7 +59,7 @@ public class Loader : StackContext, IMessageSink
 
     [DebuggerStepThrough]
     public Loader(Engine parentEngine, Application targetApplication)
-        : this(new LoaderOptions(parentEngine, targetApplication))
+        : this(new(parentEngine, targetApplication))
     {
     }
 
@@ -79,16 +72,16 @@ public class Loader : StackContext, IMessageSink
         _topLevelImports = SymbolStore.Create(_commandSymbols);
         _topLevelView = ModuleLevelView.Create(SymbolStore.Create(_topLevelImports));
 
-        _functionTargets = new SymbolTable<CompilerTarget>();
-        FunctionTargets = new FunctionTargetsIterator(this);
+        _functionTargets = new();
+        FunctionTargets = new(this);
 
         CreateFunctionTarget(ParentApplication._InitializationFunction);
 
         if (options.RegisterCommands)
             RegisterExistingCommands();
 
-        CompilerHooks = new CompilerHooksIterator(this);
-        CustomResolvers = new CustomResolversIterator(_customResolvers);
+        CompilerHooks = new(this);
+        CustomResolvers = new(_customResolvers);
 
         //Build commands
         _initializeBuildCommands();
@@ -139,17 +132,15 @@ public class Loader : StackContext, IMessageSink
     SymbolStore _topLevelImports;
     readonly ModuleLevelView _topLevelView;
 
-    [CanBeNull]
-    public DeclarationScope CurrentScope => _declarationScopes.Count > 0 ? _declarationScopes.Peek() : null;
+    public DeclarationScope? CurrentScope => _declarationScopes.Count > 0 ? _declarationScopes.Peek() : null;
 
-    public void PushScope([NN] DeclarationScope scope)
+    public void PushScope(DeclarationScope scope)
     {
         if (scope == null)
             throw new ArgumentNullException(nameof(scope));
         _declarationScopes.Push(scope);
     }
 
-    [NN]
     public DeclarationScope PopScope()
     {
         return _declarationScopes.Pop();
@@ -180,7 +171,7 @@ public class Loader : StackContext, IMessageSink
     /// top-level imports is a relatively expensive operation and should not occur more than once per module.
     /// </para>
     /// <param name="importedSymbols">The new set of symbols to import at the top level.</param>
-    public void ReplaceTopLevelImports([NN] SymbolStoreBuilder importedSymbols)
+    public void ReplaceTopLevelImports(SymbolStoreBuilder importedSymbols)
     {
         importedSymbols.ExistingNamespace = _commandSymbols;
         _topLevelImports = importedSymbols.ToSymbolStore();
@@ -207,9 +198,9 @@ public class Loader : StackContext, IMessageSink
 
         public int Count => _outer._functionTargets.Count;
 
-        public CompilerTarget this[string key] => _outer._functionTargets[key];
+        public CompilerTarget? this[string key] => _outer._functionTargets[key];
 
-        public CompilerTarget this[PFunction key] => _outer._functionTargets[key.Id];
+        public CompilerTarget? this[PFunction key] => _outer._functionTargets[key.Id];
 
         public void Remove(CompilerTarget target)
         {
@@ -248,7 +239,7 @@ public class Loader : StackContext, IMessageSink
     }
 
     //[DebuggerStepThrough]
-    public CompilerTarget CreateFunctionTarget(PFunction func, CompilerTarget parentTarget = null, ISourcePosition sourcePosition = null)
+    public CompilerTarget CreateFunctionTarget(PFunction func, CompilerTarget? parentTarget = null, ISourcePosition? sourcePosition = null)
     {
         if (func == null)
             throw new ArgumentNullException(nameof(func));
@@ -289,7 +280,7 @@ public class Loader : StackContext, IMessageSink
         ///</summary>
         ///<param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
-        public void Add(CompilerHook item)
+        public void Add(CompilerHook? item)
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
@@ -302,7 +293,7 @@ public class Loader : StackContext, IMessageSink
         /// <param name = "transformation">A managed transformation.</param>
         public void Add(AstTransformation transformation)
         {
-            _lst.Add(new CompilerHook(transformation));
+            _lst.Add(new(transformation));
         }
 
         /// <summary>
@@ -313,9 +304,9 @@ public class Loader : StackContext, IMessageSink
         {
             if (transformation.Type.ToBuiltIn() == PType.BuiltIn.Object &&
                 transformation.Value is AstTransformation transformationNode)
-                _lst.Add(new CompilerHook(transformationNode));
+                _lst.Add(new(transformationNode));
             else
-                _lst.Add(new CompilerHook(transformation));
+                _lst.Add(new(transformation));
         }
 
         ///<summary>
@@ -334,7 +325,7 @@ public class Loader : StackContext, IMessageSink
         ///    true if item is found in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
         ///</returns>
         ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
-        public bool Contains(CompilerHook item)
+        public bool Contains(CompilerHook? item)
         {
             if (item == null)
                 return false;
@@ -368,7 +359,7 @@ public class Loader : StackContext, IMessageSink
         ///</returns>
         ///<param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
-        public bool Remove(CompilerHook item)
+        public bool Remove(CompilerHook? item)
         {
             if (item == null)
                 return false;
@@ -476,7 +467,7 @@ public class Loader : StackContext, IMessageSink
         /// </summary>
         /// <param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
         /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
-        public void Add(CustomResolver item)
+        public void Add(CustomResolver? item)
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
@@ -499,7 +490,7 @@ public class Loader : StackContext, IMessageSink
         ///     true if <paramref name = "item" /> is found in the <see cref = "T:System.Collections.Generic.ICollection`1" />; otherwise, false.
         /// </returns>
         /// <param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
-        public bool Contains(CustomResolver item)
+        public bool Contains(CustomResolver? item)
         {
             return item != null && Count > 0 && _resolvers.Contains(item);
         }
@@ -533,7 +524,7 @@ public class Loader : StackContext, IMessageSink
         /// </returns>
         /// <param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
         /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
-        public bool Remove(CustomResolver item)
+        public bool Remove(CustomResolver? item)
         {
             return item != null && _resolvers.Remove(item);
         }
@@ -627,7 +618,7 @@ public class Loader : StackContext, IMessageSink
     #region Compilation
 
     [DebuggerStepThrough]
-    void _loadFromStream(Stream str, string filePath)
+    void _loadFromStream(Stream str, string? filePath)
     {
 #if Compression
             if(!str.CanSeek)
@@ -659,7 +650,7 @@ public class Loader : StackContext, IMessageSink
         _loadFromReader(reader, filePath);
     }
 
-    void _loadFromReader(TextReader reader, string filePath)
+    void _loadFromReader(TextReader reader, string? filePath)
     {
         var lex = new Lexer(reader);
         if (filePath != null)
@@ -687,7 +678,7 @@ public class Loader : StackContext, IMessageSink
     }
 
     [PublicAPI]
-    public void LoadFromReader(TextReader reader, string fileName)
+    public void LoadFromReader(TextReader reader, string? fileName)
     {
         if (reader == null)
             throw new ArgumentNullException(nameof(reader));
@@ -740,11 +731,11 @@ public class Loader : StackContext, IMessageSink
 #if DEBUG
                     var indent = new StringBuilder(_loadIndent);
                     indent.Append(' ', 2 * (_loadIndent++));
-                    Console.WriteLine(Properties.Resources.Loader__begin_compiling, file.ShortName, indent, file.FullName);
+                    Console.WriteLine(Resources.Loader__begin_compiling, file.ShortName, indent, file.FullName);
 #endif
             _loadFromStream(stream, file.FullName);
 #if DEBUG
-                    Console.WriteLine(Properties.Resources.Loader__end_compiling, file.ShortName, indent);
+                    Console.WriteLine(Resources.Loader__end_compiling, file.ShortName, indent);
                     _loadIndent--;
 #endif
         }
@@ -785,7 +776,7 @@ public class Loader : StackContext, IMessageSink
         _load(new Lexer(new StringReader(code)));
     }
 
-    Action<int, int, string> _reportSemError;
+    Action<int, int, string>? _reportSemError;
 
     /// <summary>
     ///     Reports a semantic error to the current parsers error stream. 
@@ -805,7 +796,7 @@ public class Loader : StackContext, IMessageSink
         _reportSemError(line, column, message);
     }
 
-    void _messageHook(object sender, MessageEventArgs e)
+    void _messageHook(object? sender, MessageEventArgs e)
     {
         ReportMessage(e.Message);
     }
@@ -829,7 +820,7 @@ public class Loader : StackContext, IMessageSink
         }
     }
 
-    EventHandler<MessageEventArgs> _messageHandler;
+    EventHandler<MessageEventArgs>? _messageHandler;
 
     EventHandler<MessageEventArgs> _getMessageHandler()
     {
@@ -850,6 +841,10 @@ public class Loader : StackContext, IMessageSink
 
         //Compile initialization function
         var target = FunctionTargets[Application.InitializationId];
+        if (target == null)
+        {
+            throw new PrexoniteException("Internal error: initialization function does not have a compiler target.");
+        }
         _EmitPartialInitializationCode();
         target.FinishTarget();
 
@@ -861,6 +856,10 @@ public class Loader : StackContext, IMessageSink
     internal void _EmitPartialInitializationCode()
     {
         var target = FunctionTargets[Application.InitializationId];
+        if (target == null)
+        {
+            throw new PrexoniteException("Internal error: initialization function does not have a compiler target.");
+        }
         target.ExecuteCompilerHooks();
         target.Ast.EmitCode(target, false, StackSemantics.Effect);
         //do not treat initialization blocks as top-level ones.
@@ -907,7 +906,7 @@ public class Loader : StackContext, IMessageSink
         }
     }
 
-    static readonly string _imageLocation =
+    static readonly string? _imageLocation =
         new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName;
 
     /// <summary>
@@ -917,8 +916,7 @@ public class Loader : StackContext, IMessageSink
     /// <returns>The source specification, if a source could be found; <c>null</c> otherwise.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="pathSuffix"/> is null</exception>
     /// <exception cref="ArgumentException">An incorrectly formatted file name. This primarily applies to embedded <c>resource:</c> paths.</exception>
-    [CanBeNull]
-    public ISourceSpec ApplyLoadPaths(string pathSuffix)
+    public ISourceSpec? ApplyLoadPaths(string pathSuffix)
     {
         if (pathSuffix == null)
             throw new ArgumentNullException(nameof(pathSuffix));
@@ -962,7 +960,7 @@ public class Loader : StackContext, IMessageSink
             return new FileSpec(path);
 
         //Try to find next to image
-        if (File.Exists(path = Path.Combine(_imageLocation, pathSuffix)))
+        if (_imageLocation != null && File.Exists(path = Path.Combine(_imageLocation, pathSuffix)))
             return new FileSpec(path);
 
         //Not found
@@ -1059,7 +1057,7 @@ public class Loader : StackContext, IMessageSink
                     var path = arg.CallToString(sctx);
                     LoadFromFile(path);
                 }
-                return null;
+                return PType.Null;
             });
 
         BuildCommands.AddCompilerCommand(
@@ -1110,10 +1108,10 @@ public class Loader : StackContext, IMessageSink
             {
                 foreach (var arg in args)
                 {
-                    if (arg != null && !arg.IsNull)
+                    if (arg is { IsNull: false })
                     {
                         if (arg.Type == PType.Object[typeof (AstTransformation)])
-                            CompilerHooks.Add((AstTransformation) arg.Value);
+                            CompilerHooks.Add((AstTransformation) arg.Value!);
                         else
                             CompilerHooks.Add(arg);
                     }
@@ -1128,7 +1126,7 @@ public class Loader : StackContext, IMessageSink
                 foreach (var arg in args)
                 {
                     CustomResolvers.Add(arg.Type == PType.Object[typeof (ResolveSymbol)]
-                        ? new CustomResolver((ResolveSymbol) arg.Value)
+                        ? new((ResolveSymbol) arg.Value!)
                         : new CustomResolver(arg));
                 }
                 return PType.Null.CreatePValue();
@@ -1170,20 +1168,23 @@ public class Loader : StackContext, IMessageSink
                     StoreCompressed(fstr);
             else
 #endif
-        using var writer = new StreamWriter(path, false) {NewLine = Options.StoreNewLine};
+        using var writer = new StreamWriter(path, false);
+        writer.NewLine = Options.StoreNewLine;
         Store(writer);
     }
 
     public string StoreInString()
     {
-        using var writer = new StringWriter {NewLine = Options.StoreNewLine};
+        using var writer = new StringWriter();
+        writer.NewLine = Options.StoreNewLine;
         Store(writer);
         return writer.ToString();
     }
 
     public void Store(StringBuilder builder)
     {
-        using var writer = new StringWriter(builder) {NewLine = Options.StoreNewLine};
+        using var writer = new StringWriter(builder);
+        writer.NewLine = Options.StoreNewLine;
         Store(writer);
     }
 
@@ -1268,38 +1269,28 @@ public class Loader : StackContext, IMessageSink
             StoreSymbols(writer);
     }
 
-    class SymbolSerializationPartitioner : SymbolHandler<string, object>
+    class SymbolSerializationPartitioner(IDictionary<Symbol, QualifiedId> previousSymbols) : SymbolHandler<string, object?>
     {
-        [NN]
         readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new();
 
-        [NN]
-        readonly IDictionary<Symbol,QualifiedId> _previousSymbols;
-
-        public SymbolSerializationPartitioner([NN] IDictionary<Symbol, QualifiedId> previousSymbols)
-        {
-            _previousSymbols = previousSymbols;
-        }
-
-        [NN]
         public IEnumerable<KeyValuePair<string, NamespaceSymbol>> NamespaceSymbols => _namespaceSymbols;
 
-        public override object HandleNamespace(NamespaceSymbol self, string argument)
+        public override object? HandleNamespace(NamespaceSymbol self, string argument)
         {
-            if (_previousSymbols.ContainsKey(self))
+            if (previousSymbols.ContainsKey(self))
                 return null;
-            _namespaceSymbols.Add(new KeyValuePair<string,NamespaceSymbol>(argument,self));
+            _namespaceSymbols.Add(new(argument,self));
             return null;
         }
 
-        protected override object HandleWrappingSymbol(WrappingSymbol self, string argument)
+        protected override object? HandleWrappingSymbol(WrappingSymbol self, string argument)
         {
-            if (_previousSymbols.ContainsKey(self))
+            if (previousSymbols.ContainsKey(self))
                 return null;
             return self.InnerSymbol.HandleWith(this, argument);
         }
 
-        protected override object HandleSymbolDefault(Symbol self, string argument)
+        protected override object? HandleSymbolDefault(Symbol self, string argument)
         {
             // just ignore others
             return null;
@@ -1383,18 +1374,18 @@ public class Loader : StackContext, IMessageSink
     public sealed override Engine ParentEngine
     {
         [DebuggerStepThrough]
-        get => Options.ParentEngine;
+        get => Options.ParentEngine ?? throw new PrexoniteException("Loader must have parent engine");
     }
 
-    public sealed override Application ParentApplication => Options.TargetApplication;
+    public sealed override Application ParentApplication =>
+        Options.TargetApplication ?? throw new PrexoniteException("Loader must have target application.");
 
     public sealed override SymbolCollection ImportedNamespaces =>
-        // ReSharper disable PossibleNullReferenceException
-        Options.TargetApplication._InitializationFunction.ImportedNamespaces;
+        ParentApplication._InitializationFunction.ImportedNamespaces;
 
     // ReSharper enable PossibleNullReferenceException
     [DebuggerStepThrough]
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
         return false;
     }
@@ -1402,7 +1393,7 @@ public class Loader : StackContext, IMessageSink
     public override PValue ReturnValue
     {
         [DebuggerStepThrough]
-        get => Options.ParentEngine.CreateNativePValue(Options.TargetApplication);
+        get => ParentEngine.CreateNativePValue(Options.TargetApplication);
     }
 
     public override bool TryHandleException(Exception exc)
@@ -1440,7 +1431,7 @@ public class Loader : StackContext, IMessageSink
     #endregion
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")] public const string CilHintsKey = "cilhints";
+        MessageId = nameof(Cil))] public const string CilHintsKey = "cilhints";
 
     [Obsolete("Use ObjectCreationPrefix instead")]
     [PublicAPI]

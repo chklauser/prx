@@ -1,5 +1,3 @@
-#nullable enable
-using System;
 using Prexonite.Compiler.Ast;
 
 namespace Prexonite;
@@ -65,7 +63,7 @@ public static class OperatorNames
                 BinaryOperator.LessThanOrEqual => LessThanOrEqual,
                 BinaryOperator.DeltaRight => BinaryDeltaRight,
                 BinaryOperator.DeltaLeft => BinaryDeltaLeft,
-                _ => throw new ArgumentOutOfRangeException(nameof(op))
+                _ => throw new ArgumentOutOfRangeException(nameof(op)),
             };
 
         public static string GetName(UnaryOperator op) =>
@@ -82,7 +80,7 @@ public static class OperatorNames
                 UnaryOperator.PostDeltaRight => UnaryDeltaRightPost,
                 UnaryOperator.PreDeltaLeft => UnaryDeltaLeftPre,
                 UnaryOperator.PostDeltaLeft => UnaryDeltaLeftPost,
-                _ => throw new ArgumentOutOfRangeException(nameof(op))
+                _ => throw new ArgumentOutOfRangeException(nameof(op)),
             };
     }
 }

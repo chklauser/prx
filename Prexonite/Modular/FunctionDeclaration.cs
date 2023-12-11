@@ -23,18 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Text;
 using JetBrains.Annotations;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Modular;
 
@@ -52,12 +48,6 @@ public class FunctionIdChangingEventArgs : EventArgs
 
 public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDependent<EntityRef.Function>
 {
-    protected FunctionDeclaration()
-    {
-    }
-
-    public abstract event EventHandler<FunctionIdChangingEventArgs> IdChanging;
-
     /// <summary>
     /// The id of the global variable. Not null and not empty.
     /// </summary>
@@ -94,6 +84,12 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     public abstract SymbolTable<int> LocalVariableMapping { get; protected set; }
 
     /// <summary>
+    ///  If <c>true</c> indicates that the <see cref="LocalVariableMapping"/> was deserialized from a stored
+    /// representation. In that case <see cref="CreateLocalVariableMapping"/>, respects the existing mappings.
+    /// </summary>
+    bool localVariableMappingDeserialized;
+
+    /// <summary>
     ///     Writes a representation of this function delaration to the supplied writer.
     /// </summary>
     /// <param name="writer">The writer to write to. Assumed to be currently at valid position for a top-level definition.</param>
@@ -128,10 +124,14 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     protected internal void CreateLocalVariableMapping()
     {
         var idx = 0;
-        if (LocalVariableMapping == null)
-            LocalVariableMapping = new SymbolTable<int>();
+        if (localVariableMappingDeserialized)
+        {
+            idx = LocalVariableMapping.Count;
+        }
         else
+        {
             LocalVariableMapping.Clear();
+        }
 
         foreach (var p in Parameters)
             if (!LocalVariableMapping.ContainsKey(p))
@@ -152,8 +152,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Cil")]
-    [CanBeNull]
-    public abstract ICilImplementation CilImplementation { get; protected internal set; }
+    public abstract ICilImplementation? CilImplementation { get; protected internal set; }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Cil")]
@@ -192,7 +191,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// <param name = "key">The key to transform.</param>
     /// <returns>The transformed key.</returns>
     [DebuggerNonUserCode]
-    string IMetaFilter.GetTransform(string key)
+    string? IMetaFilter.GetTransform(string? key)
     {
         if (Engine.StringsAreEqual(key, Application.NameKey))
             return PFunction.IdKey;
@@ -206,13 +205,12 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// <param name = "item">The item to update/store.</param>
     /// <returns>The transformed item or null if nothing is to be stored.</returns>
     [DebuggerNonUserCode]
-    KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
-        KeyValuePair<string, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
     {
         //Prevent changing the name of the function;
         if ((Engine.StringsAreEqual(item.Key, PFunction.IdKey) ||
                 Engine.StringsAreEqual(item.Key, Application.NameKey))
-            && Meta != null) //this clauses causes the filter to skip this check 
+            && (MetaTable?)Meta != null) //this clauses causes the filter to skip this check 
             // while the Function is still being constructed
             return null;
         else if (Engine.StringsAreEqual(item.Key, Application.ImportKey) ||
@@ -234,7 +232,8 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
         else if (Engine.StringsAreEqual(item.Key, PFunction.SymbolMappingKey))
         {
             var lst = item.Value.List;
-            LocalVariableMapping = new SymbolTable<int>(lst.Length);
+            LocalVariableMapping = new(lst.Length);
+            localVariableMappingDeserialized = true;
             for (var i = 0; i < lst.Length; i++)
             {
                 var symbol = lst[i];
@@ -271,7 +270,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                 case OpCode.func:
                     var moduleName = ins.ModuleName ?? ContainingModule;
                     yield return
-                        (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(id, moduleName));
+                        (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(id!, moduleName));
                     break;
             }
         }
@@ -305,18 +304,10 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             ContainingModule = module.Name;
             Cache = module.Cache;
 
-            LocalVariableMapping = new SymbolTable<int>();
+            LocalVariableMapping = new();
         }
 
-        List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
-
-        public override event EventHandler<FunctionIdChangingEventArgs> IdChanging;
-
-        void _onIdChanging(string newId)
-        {
-            var idChangingHandler = IdChanging;
-            idChangingHandler?.Invoke(this, new FunctionIdChangingEventArgs(newId));
-        }
+        List<TryCatchFinallyBlock>? _tryCatchFinallyBlocks;
 
         public override string Id => Meta[PFunction.IdKey].Text;
 
@@ -330,9 +321,9 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
 
         public override List<Instruction> Code { get; } = new();
 
-        public sealed override SymbolTable<int> LocalVariableMapping { get; protected set; }
+        public override SymbolTable<int> LocalVariableMapping { get; protected set; }
 
-        public override ICilImplementation CilImplementation { get; protected internal set; }
+        public override ICilImplementation? CilImplementation { get; protected internal set; }
 
         public override ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks
         {
@@ -370,7 +361,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                     {
                         BeginFinally = beginFinally,
                         BeginCatch = beginCatch,
-                        UsesException = blockLst[4].Switch
+                        UsesException = blockLst[4].Switch,
                     };
 
                     tryCatchFinallyBlocks.Add(block);
@@ -460,24 +451,24 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                     switch (rawIns.OpCode)
                     {
                         case OpCode.ldloci:
-                            ins = new Instruction(OpCode.ldloc,
+                            ins = new(OpCode.ldloc,
                                 reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.stloci:
-                            ins = new Instruction(OpCode.stloc,
+                            ins = new(OpCode.stloc,
                                 reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.incloci:
-                            ins = new Instruction(OpCode.incloc,
+                            ins = new(OpCode.incloc,
                                 reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.decloci:
-                            ins = new Instruction(OpCode.decloc,
+                            ins = new(OpCode.decloc,
                                 reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.indloci:
                             rawIns.DecodeIndLocIndex(out var index, out var argc);
-                            ins = new Instruction(OpCode.indloc, argc, reverseLocalMapping[index],
+                            ins = new(OpCode.indloc, argc, reverseLocalMapping[index],
                                 rawIns.JustEffect);
                             break;
                         default:
@@ -513,6 +504,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
         ///     Creates a string representation of the functions byte code in Prexonite Assembler
         /// </summary>
         /// <param name = "buffer">The buffer to which to write the string representation to.</param>
+        [PublicAPI]
         public void StoreCode(StringBuilder buffer)
         {
             StoreCode(new StringWriter(buffer));
@@ -532,7 +524,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             if (Parameters.Count > 0)
             {
                 writer.Write("(");
-                buffer = new StringBuilder();
+                buffer = new();
                 foreach (var param in Parameters)
                 {
                     buffer.Append(StringPType.ToIdLiteral(param));
@@ -576,7 +568,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                 var imports = new MetaEntry(lst.ToArray());
                 writer.Write(Application.ImportKey);
                 writer.Write(" ");
-                buffer = new StringBuilder();
+                buffer = new();
                 imports.ToString(buffer);
                 writer.Write(buffer.ToString());
                 writer.Write(";");

@@ -1,7 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 
 namespace Prexonite.Compiler.Internal;
 
@@ -30,14 +27,14 @@ sealed class PathSet : ICollection<string>
         _paths.Clear();
     }
 
-    public bool Contains(string path) => _paths.Contains(canonical(path));
+    public bool Contains(string? path) => path != null && _paths.Contains(canonical(path));
 
     public void CopyTo(string[] array, int arrayIndex)
     {
         _paths.CopyTo(array, arrayIndex);
     }
 
-    public bool Remove(string path) => _paths.Remove(canonical(path));
+    public bool Remove(string? path) => path != null && _paths.Remove(canonical(path));
 
     public int Count => _paths.Count;
 

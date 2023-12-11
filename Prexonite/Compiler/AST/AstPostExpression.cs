@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -35,16 +33,14 @@ namespace Prexonite.Compiler.Ast;
 /// </summary>
 public class AstPostExpression : AstExpr
 {
-    public AstPostExpression([NotNull] ISourcePosition position, [NotNull] AstExpr expression, [NotNull] AstNode action) : base(position)
+    public AstPostExpression(ISourcePosition position, AstExpr expression, AstNode action) : base(position)
     {
         Expression = expression ?? throw new ArgumentNullException(nameof(expression));
         Action = action ?? throw new ArgumentNullException(nameof(action));
     }
 
-    [NotNull]
     public AstExpr Expression { get; }
 
-    [NotNull]
     public AstNode Action { get; }
 
     #region Class
@@ -54,11 +50,11 @@ public class AstPostExpression : AstExpr
         return Expression.Equals(other.Expression) && Action.Equals(other.Action);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
+        if (obj.GetType() != GetType()) return false;
         return Equals((AstPostExpression) obj);
     }
 
@@ -79,7 +75,7 @@ public class AstPostExpression : AstExpr
         // At this point, the value of the expression remains on the stack.
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         if (Expression is AstConstant)
         {

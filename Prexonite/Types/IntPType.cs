@@ -25,18 +25,14 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Prexonite.Compiler.Cil;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
 
 namespace Prexonite.Types;
 
-[PTypeLiteral("Int")]
+[PTypeLiteral(nameof(Int))]
 [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
 public sealed class IntPType : PType, ICilCompilerAware
 {
@@ -46,7 +42,7 @@ public sealed class IntPType : PType, ICilCompilerAware
 
     static IntPType()
     {
-        Instance = new IntPType();
+        Instance = new();
     }
 
     [DebuggerStepThrough]
@@ -84,7 +80,7 @@ public sealed class IntPType : PType, ICilCompilerAware
 
     #endregion
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
         if (args.Length < 1)
         {
@@ -103,7 +99,8 @@ public sealed class IntPType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -115,12 +112,12 @@ public sealed class IntPType : PType, ICilCompilerAware
             case "TO":
                 if (args.Length < 1)
                     break;
-                var upperLimitPV = args[0].ConvertTo(sctx, Int, true);
-                var stepPV = args.Length > 1 ? args[1].ConvertTo(sctx, Int, true) : 1;
+                var upperLimitPv = args[0].ConvertTo(sctx, Int, true);
+                var stepPv = args.Length > 1 ? args[1].ConvertTo(sctx, Int, true) : 1;
 
-                var lowerLimit = (int) subject.Value;
-                var upperLimit = (int) upperLimitPV.Value;
-                var step = (int) stepPV.Value;
+                var lowerLimit = (int) subject.Value!;
+                var upperLimit = (int) upperLimitPv.Value!;
+                var step = (int) stepPv.Value!;
 
                 result = sctx.CreateNativePValue
                 (new Coroutine(new CoroutineContext(sctx,
@@ -132,7 +129,7 @@ public sealed class IntPType : PType, ICilCompilerAware
             return true;
 
         //Try CLR dynamic call
-        var clrint = Object[subject.ClrType];
+        var clrint = Object[subject.ClrType!];
         return clrint.TryDynamicCall(sctx, subject, args, call, id, out result);
     }
 
@@ -144,7 +141,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         //Try CLR static call
         var clrint = Object[typeof (int)];
@@ -156,7 +153,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -166,15 +163,15 @@ public sealed class IntPType : PType, ICilCompilerAware
             {
                 var clrType = ((ObjectPType) target).ClrType;
                 if (clrType == typeof (Byte))
-                    result = CreateObject((Byte) (Int32) subject.Value);
+                    result = CreateObject((Byte) (Int32) subject.Value!);
                 else if (clrType == typeof (Char))
-                    result = CreateObject(Convert.ToChar((Int32) subject.Value));
+                    result = CreateObject(Convert.ToChar((Int32) subject.Value!));
                 else if (clrType == typeof (SByte))
-                    result = CreateObject((SByte) (Int32) subject.Value);
+                    result = CreateObject((SByte) (Int32) subject.Value!);
                 else if (clrType == typeof (Int16))
-                    result = CreateObject((Int16) (Int32) subject.Value);
+                    result = CreateObject((Int16) (Int32) subject.Value!);
                 else if (clrType == typeof (UInt16))
-                    result = CreateObject((UInt16) (Int32) subject.Value);
+                    result = CreateObject((UInt16) (Int32) subject.Value!);
             }
         }
 
@@ -182,30 +179,30 @@ public sealed class IntPType : PType, ICilCompilerAware
         if (result == null)
         {
             if (target is StringPType)
-                result = String.CreatePValue(subject.Value.ToString());
+                result = String.CreatePValue(subject.Value!.ToString()!);
             else if (target is RealPType)
-                result = Real.CreatePValue((int) subject.Value);
+                result = Real.CreatePValue((int) subject.Value!);
             else if (target is BoolPType)
-                result = Bool.CreatePValue((int) subject.Value != 0);
+                result = Bool.CreatePValue((int) subject.Value! != 0);
             else if (target is ObjectPType objectType)
             {
                 var clrType = objectType.ClrType;
                 if (clrType == typeof (Int32))
-                    result = CreateObject((Int32) subject.Value);
+                    result = CreateObject((Int32) subject.Value!);
                 else if (clrType == typeof (Double))
-                    result = CreateObject((Double) (Int32) subject.Value);
+                    result = CreateObject((Double) (Int32) subject.Value!);
                 else if (clrType == typeof (Single))
-                    result = CreateObject((Single) (Int32) subject.Value);
+                    result = CreateObject((Single) (Int32) subject.Value!);
                 else if (clrType == typeof (Decimal))
-                    result = CreateObject((Decimal) (Int32) subject.Value);
+                    result = CreateObject((Decimal) (Int32) subject.Value!);
                 else if (clrType == typeof (Int64))
-                    result = CreateObject((Int64) (Int32) subject.Value);
+                    result = CreateObject((Int64) (Int32) subject.Value!);
                 else if (clrType == typeof (UInt32))
-                    result = CreateObject((UInt32) (Int32) subject.Value);
+                    result = CreateObject((UInt32) (Int32) subject.Value!);
                 else if (clrType == typeof (UInt64))
-                    result = CreateObject((UInt64) (Int32) subject.Value);
+                    result = CreateObject((UInt64) (Int32) subject.Value!);
                 else if (clrType == typeof(object))
-                    result = new PValue(subject.Value, Object[typeof(object)]);
+                    result = new(subject.Value, Object[typeof(object)]);
             }
         }
 
@@ -216,7 +213,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         var subjectType = subject.Type;
@@ -244,10 +241,10 @@ public sealed class IntPType : PType, ICilCompilerAware
                     case TypeCode.UInt64:
                     case TypeCode.Single:
                     case TypeCode.Double:
-                        result = (int) subject.Value;
+                        result = (int) subject.Value!;
                         break;
                     case TypeCode.Boolean:
-                        result = (bool) subject.Value ? 1 : 0;
+                        result = (bool) subject.Value! ? 1 : 0;
                         break;
                 }
 
@@ -262,7 +259,7 @@ public sealed class IntPType : PType, ICilCompilerAware
                     case TypeCode.UInt16:
                     case TypeCode.Int32:
                     case TypeCode.UInt32:
-                        result = (int) subject.Value;
+                        result = (int) subject.Value!;
                         break;
                 }
             }
@@ -297,22 +294,20 @@ public sealed class IntPType : PType, ICilCompilerAware
             case BuiltIn.Object:
                 if (operand.TryConvertTo(sctx, Int, out var pvRight))
                 {
-                    value = (int) pvRight.Value;
+                    value = (int) pvRight.Value!;
                     return true;
                 }
                 break;
             case BuiltIn.Null:
                 value = 0;
                 return allowNull;
-            default:
-                break;
         }
 
         return false;
     }
 
     public override bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -324,7 +319,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool Subtraction(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -336,7 +331,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -348,7 +343,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool Division(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -360,7 +355,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool Modulus(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -372,7 +367,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseAnd(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -384,7 +379,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -396,7 +391,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool ExclusiveOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -408,7 +403,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -420,7 +415,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -432,7 +427,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -447,7 +442,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -459,7 +454,7 @@ public sealed class IntPType : PType, ICilCompilerAware
     }
 
     public override bool LessThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -474,7 +469,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -485,7 +480,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
+    public override bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (_tryConvertToInt(sctx, operand, out var op))
@@ -494,7 +489,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
+    public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (_tryConvertToInt(sctx, operand, out var op))
@@ -503,7 +498,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool Increment(StackContext sctx, PValue operand, out PValue result)
+    public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (_tryConvertToInt(sctx, operand, out var op))
@@ -512,7 +507,7 @@ public sealed class IntPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
+    public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (_tryConvertToInt(sctx, operand, out var op))
@@ -523,7 +518,7 @@ public sealed class IntPType : PType, ICilCompilerAware
 
     #endregion
 
-    public const string Literal = "Int";
+    public const string Literal = nameof(Int);
 
     public override string ToString()
     {
@@ -536,11 +531,9 @@ public sealed class IntPType : PType, ICilCompilerAware
         return otherType is IntPType;
     }
 
-    const int _code = -408434186;
-
     public override int GetHashCode()
     {
-        return _code;
+        return -408434186;
     }
 
     #region ICilCompilerAware Members

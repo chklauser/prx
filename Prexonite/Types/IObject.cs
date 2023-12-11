@@ -1,3 +1,5 @@
+
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -28,5 +30,5 @@ namespace Prexonite.Types;
 public interface IObject
 {
     bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result);
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result);
 }

@@ -23,13 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.IO;
 using JetBrains.Annotations;
 using Prexonite.Compiler;
-using Prexonite.Types;
 
 namespace Prexonite.Modular;
 
@@ -76,37 +73,37 @@ public abstract class EntityRef
 
     public abstract TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument);
 
-    public virtual bool TryGetFunction(out Function func)
+    public virtual bool TryGetFunction([NotNullWhen(true)] out Function? func)
     {
         func = null;
         return false;
     }
 
-    public virtual bool TryGetMacroCommand(out MacroCommand mcmd)
+    public virtual bool TryGetMacroCommand([NotNullWhen(true)] out MacroCommand? mcmd)
     {
         mcmd = null;
         return false;
     }
 
-    public virtual bool TryGetCommand(out Command cmd)
+    public virtual bool TryGetCommand([NotNullWhen(true)] out Command? cmd)
     {
         cmd = null;
         return false;
     }
 
-    public virtual bool TryGetVariable(out Variable variable)
+    public virtual bool TryGetVariable([NotNullWhen(true)] out Variable? variable)
     {
         variable = null;
         return false;
     }
 
-    public virtual bool TryGetLocalVariable(out Variable.Local variable)
+    public virtual bool TryGetLocalVariable([NotNullWhen(true)] out Variable.Local? variable)
     {
         variable = null;
         return false;
     }
 
-    public virtual bool TryGetGlobalVariable(out Variable.Global variable)
+    public virtual bool TryGetGlobalVariable([NotNullWhen(true)] out Variable.Global? variable)
     {
         variable = null;
         return false;
@@ -137,16 +134,14 @@ public abstract class EntityRef
 
     public interface ICompileTime
     {
-        bool TryGetEntity(Loader ldr, out PValue entity);
+        bool TryGetEntity(Loader ldr, [NotNullWhen(true)] out PValue? entity);
     }
 
     #endregion
 
     #region Nested type: IMacro
 
-    public interface IMacro : ICompileTime
-    {
-    }
+    public interface IMacro : ICompileTime;
 
     #endregion
 
@@ -154,7 +149,7 @@ public abstract class EntityRef
 
     public interface IRunTime
     {
-        bool TryGetEntity(StackContext sctx, out PValue entity);
+        bool TryGetEntity(StackContext sctx, [NotNullWhen(true)] out PValue? entity);
     }
 
     #endregion
@@ -168,7 +163,7 @@ public abstract class EntityRef
     /// </summary>
     /// <param name="writer">The writer to write to. Must not be null.</param>
     [PublicAPI]
-    public abstract void ToString([NotNull] TextWriter writer);
+    public abstract void ToString(TextWriter writer);
 
     public sealed override string ToString()
     {
@@ -184,7 +179,7 @@ public abstract class EntityRef
     [DebuggerDisplay("function {Id}/{ModuleName}")]
     public class Function : EntityRef, IEquatable<Function>, IRunTime
     {
-        bool IEquatable<Function>.Equals(Function other)
+        bool IEquatable<Function>.Equals(Function? other)
         {
             return EqualsFunction(other);
         }
@@ -195,14 +190,14 @@ public abstract class EntityRef
             return true;
         }
 
-        protected bool EqualsFunction(Function other)
+        protected bool EqualsFunction(Function? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Equals(other.Id, Id) && Equals(other.ModuleName, ModuleName);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -232,17 +227,17 @@ public abstract class EntityRef
             }
         }
 
-        public static bool operator ==(Function left, Function right)
+        public static bool operator ==(Function? left, Function? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(Function left, Function right)
+        public static bool operator !=(Function? left, Function? right)
         {
             return !Equals(left, right);
         }
 
-        Function([NotNull] string id, [NotNull] ModuleName moduleName)
+        Function(string id, ModuleName moduleName)
         {
             if(moduleName == null)
                 throw new ArgumentNullException(nameof(moduleName));
@@ -251,23 +246,21 @@ public abstract class EntityRef
             ModuleName = moduleName;
         }
 
-        [NotNull]
         public string Id { get; }
 
-        [NotNull]
         public ModuleName ModuleName { get; }
 
-        public bool TryGetFunction(Application application, out PFunction func)
+        public bool TryGetFunction(Application application, out PFunction? func)
         {
-            if (!application.Compound.TryGetApplication(ModuleName, out application)
-                || !application.Functions.TryGetValue(Id, out func))
+            if (application.Compound.TryGetApplication(ModuleName, out var declaringApp)
+                && declaringApp.Functions.TryGetValue(Id, out func))
             {
-                func = null;
-                return false;
+                return true;
             }
             else
             {
-                return true;
+                func = null;
+                return false;
             }
         }
 
@@ -289,7 +282,7 @@ public abstract class EntityRef
             writer.Write(ModuleName);
         }
 
-        internal override bool _TryLookup(StackContext sctx, out PValue entity)
+        internal override bool _TryLookup(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
         {
             var app = sctx.ParentApplication;
             if (!app.Compound.TryGetApplication(ModuleName, out app))
@@ -308,10 +301,10 @@ public abstract class EntityRef
             return true;
         }
 
-        public static Function Create([NotNull] string internalId, [NotNull] ModuleName moduleName)
+        public static Function Create(string internalId, ModuleName moduleName)
         {
             Debug.Assert(moduleName != null, $"Module name is null for entity ref to function {internalId}.");
-            return new Function(internalId, moduleName);
+            return new(internalId, moduleName);
         }
     }
 
@@ -322,14 +315,14 @@ public abstract class EntityRef
     [DebuggerDisplay("command {Id}")]
     public sealed class Command : EntityRef, IRunTime, IEquatable<Command>
     {
-        public bool Equals(Command other)
+        public bool Equals(Command? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Equals(other.Id, Id);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -339,15 +332,15 @@ public abstract class EntityRef
 
         public override int GetHashCode()
         {
-            return Id != null ? Id.GetHashCode() : 0;
+            return Id.GetHashCode();
         }
 
-        public static bool operator ==(Command left, Command right)
+        public static bool operator ==(Command? left, Command? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(Command left, Command right)
+        public static bool operator !=(Command? left, Command? right)
         {
             return !Equals(left, right);
         }
@@ -361,7 +354,7 @@ public abstract class EntityRef
 
         #region IRunTime Members
 
-        public bool TryGetEntity(StackContext sctx, out PValue entity)
+        public bool TryGetEntity(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
         {
             if (sctx.ParentEngine.Commands.TryGetValue(Id, out var cmd))
             {
@@ -404,7 +397,7 @@ public abstract class EntityRef
             writer.Write(Id);
         }
 
-        internal override bool _TryLookup(StackContext sctx, out PValue entity)
+        internal override bool _TryLookup(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
         {
             if(sctx.ParentEngine.Commands.TryGetValue(Id,out var command))
             {
@@ -431,7 +424,7 @@ public abstract class EntityRef
 
         #region IRunTime Members
 
-        public abstract bool TryGetEntity(StackContext sctx, out PValue entity);
+        public abstract bool TryGetEntity(StackContext sctx, [NotNullWhen(true)] out PValue? entity);
 
         #endregion
 
@@ -443,9 +436,9 @@ public abstract class EntityRef
 
 
         protected abstract bool EqualsVariable(Variable other);
-        bool IEquatable<Variable>.Equals(Variable other)
+        bool IEquatable<Variable>.Equals(Variable? other)
         {
-            return EqualsVariable(other);
+            return other != null && EqualsVariable(other);
         }
 
         #region Nested type: Global
@@ -453,7 +446,7 @@ public abstract class EntityRef
         [DebuggerDisplay("global var {Id}/{ModuleName}")]
         public sealed class Global : Variable, IEquatable<Global>
         {
-            Global([NotNull] string id, [NotNull] ModuleName moduleName)
+            Global(string id, ModuleName moduleName)
             {
                 if (moduleName == null)
                     throw new ArgumentNullException(nameof(moduleName));
@@ -462,10 +455,8 @@ public abstract class EntityRef
                 ModuleName = moduleName;
             }
 
-            [NotNull]
             public string Id { get; }
 
-            [NotNull]
             public ModuleName ModuleName { get; }
 
             public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
@@ -479,13 +470,13 @@ public abstract class EntityRef
                 return true;
             }
 
-            public static Global Create([NotNull] string id, [NotNull] ModuleName moduleName)
+            public static Global Create(string id, ModuleName moduleName)
             {
                 Debug.Assert(moduleName != null, $"Module name is null for entity ref to global variable {id}.");
-                return new Global(id, moduleName);
+                return new(id, moduleName);
             }
 
-            public override bool TryGetEntity(StackContext sctx, out PValue entity)
+            public override bool TryGetEntity(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
             {
                 if (sctx.ParentApplication.Compound.TryGetApplication(ModuleName,
                         out var application)
@@ -514,7 +505,7 @@ public abstract class EntityRef
                 writer.Write(ModuleName);
             }
 
-            internal override bool _TryLookup(StackContext sctx, out PValue entity)
+            internal override bool _TryLookup(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
             {
                 var app = sctx.ParentApplication;
                 if (!app.Compound.TryGetApplication(ModuleName, out app))
@@ -539,7 +530,7 @@ public abstract class EntityRef
                 return g != null && Equals(g);
             }
 
-            public bool Equals(Global other)
+            public bool Equals(Global? other)
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -547,7 +538,7 @@ public abstract class EntityRef
                 return Equals(other.Id, Id) && Equals(other.ModuleName, ModuleName);
             }
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
@@ -563,12 +554,12 @@ public abstract class EntityRef
                 }
             }
 
-            public static bool operator ==(Global left, Global right)
+            public static bool operator ==(Global? left, Global? right)
             {
                 return Equals(left, right);
             }
 
-            public static bool operator !=(Global left, Global right)
+            public static bool operator !=(Global? left, Global? right)
             {
                 return !Equals(left, right);
             }
@@ -591,7 +582,7 @@ public abstract class EntityRef
 
             public int? Index { get; }
 
-            public bool Equals(Local other)
+            public bool Equals(Local? other)
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -604,7 +595,7 @@ public abstract class EntityRef
                 return local != null && Equals(local);
             }
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
@@ -614,15 +605,15 @@ public abstract class EntityRef
 
             public override int GetHashCode()
             {
-                return Id != null ? Id.GetHashCode() : 0;
+                return Id.GetHashCode();
             }
 
-            public static bool operator ==(Local left, Local right)
+            public static bool operator ==(Local? left, Local? right)
             {
                 return Equals(left, right);
             }
 
-            public static bool operator !=(Local left, Local right)
+            public static bool operator !=(Local? left, Local? right)
             {
                 return !Equals(left, right);
             }
@@ -637,7 +628,7 @@ public abstract class EntityRef
                 return new(Id, index);
             }
 
-            public override bool TryGetEntity(StackContext sctx, out PValue entity)
+            public override bool TryGetEntity(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
             {
                 if (sctx is FunctionContext fctx && fctx.LocalVariables.TryGetValue(Id, out var v))
                 {
@@ -673,9 +664,9 @@ public abstract class EntityRef
                 writer.Write(Id);
             }
 
-            internal override bool _TryLookup(StackContext sctx, out PValue entity)
+            internal override bool _TryLookup(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
             {
-                if(!(sctx is FunctionContext fctx))
+                if(sctx is not FunctionContext fctx)
                 {
                     entity = null;
                     return false;
@@ -714,7 +705,7 @@ public abstract class EntityRef
 
         #region ICompileTime Members
 
-        public bool TryGetEntity(Loader ldr, out PValue entity)
+        public bool TryGetEntity(Loader ldr, [NotNullWhen(true)] out PValue? entity)
         {
             if (ldr.MacroCommands.TryGetValue(Id, out var mcmd))
             {
@@ -757,40 +748,47 @@ public abstract class EntityRef
             writer.Write(Id);
         }
 
-        internal override bool _TryLookup(StackContext sctx, out PValue entity)
+        internal override bool _TryLookup(StackContext sctx, [NotNullWhen(true)] out PValue? entity)
         {
             //first: lookup in sctx (if it is a loader)
             if (sctx is Loader ldr)
                 return _tryMcmdFromLoader(sctx, ldr, out entity);
 
             //else: search stack beginning at sctx
-            if (_tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.FindLast(sctx), out var foundEntity, out entity)) 
-                return foundEntity;
+            if (sctx.ParentEngine.Stack.FindLast(sctx) is { } matchingFrame &&
+                _tryMcmdFromStack(sctx, matchingFrame, out entity)) 
+                return entity != null;
 
             //finally: search stack from bottom
-            return _tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.Last, out foundEntity, out entity) && foundEntity;
+            entity = null;
+            return sctx.ParentEngine.Stack.Last is { } lastFrame &&
+                _tryMcmdFromStack(sctx, lastFrame, out entity) && entity != null;
         }
 
-        bool _tryMcmdFromStack(StackContext sctx, LinkedListNode<StackContext> node, out bool foundEntity, out PValue entity)
+        bool _tryMcmdFromStack(
+            StackContext sctx,
+            LinkedListNode<StackContext>? node,
+            out PValue? entity
+        )
         {
-            Loader ldr;
+            Loader? ldr;
             while (node != null)
             {
                 ldr = node.Value as Loader;
                 if (ldr != null)
                 {
-                    foundEntity = _tryMcmdFromLoader(sctx, ldr, out entity);
+                    entity = null;
+                    _tryMcmdFromLoader(sctx, ldr, out entity);
                     return true;
                 }
                 node = node.Previous;
             }
 
             entity = null;
-            foundEntity = false;
             return false;
         }
 
-        bool _tryMcmdFromLoader(StackContext sctx, Loader ldr, out PValue entity)
+        bool _tryMcmdFromLoader(StackContext sctx, Loader ldr, out PValue? entity)
         {
             if (ldr.MacroCommands.TryGetValue(Id, out var mcmd))
             {
@@ -804,14 +802,14 @@ public abstract class EntityRef
             }
         }
 
-        public bool Equals(MacroCommand other)
+        public bool Equals(MacroCommand? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Equals(other.Id, Id);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -821,15 +819,15 @@ public abstract class EntityRef
 
         public override int GetHashCode()
         {
-            return Id != null ? Id.GetHashCode() : 0;
+            return Id.GetHashCode();
         }
 
-        public static bool operator ==(MacroCommand left, MacroCommand right)
+        public static bool operator ==(MacroCommand? left, MacroCommand? right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(MacroCommand left, MacroCommand right)
+        public static bool operator !=(MacroCommand? left, MacroCommand? right)
         {
             return !Equals(left, right);
         }
@@ -847,7 +845,7 @@ public abstract class EntityRef
     /// <param name="sctx">The stack context to search.</param>
     /// <param name="entity">Holds the wrapped reference to this entity on success; undefined on failure.</param>
     /// <returns>True if the entity was found in the context; false otherwise</returns>
-    internal abstract bool _TryLookup(StackContext sctx,out PValue  entity);
+    internal abstract bool _TryLookup(StackContext sctx, [NotNullWhen(true)] out PValue?  entity);
 
     #endregion
 

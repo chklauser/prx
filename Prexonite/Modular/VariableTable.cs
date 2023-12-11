@@ -1,4 +1,6 @@
-﻿// Prexonite
+﻿using System.Collections.ObjectModel;
+
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -26,7 +28,7 @@
 
 namespace Prexonite.Modular;
 
-public class VariableTable : System.Collections.ObjectModel.KeyedCollection<string,VariableDeclaration>
+public class VariableTable : KeyedCollection<string,VariableDeclaration>
 {
     protected override string GetKeyForItem(VariableDeclaration item)
     {
@@ -37,7 +39,7 @@ public class VariableTable : System.Collections.ObjectModel.KeyedCollection<stri
     {
     }
 
-    public bool TryGetVariable(string id, out VariableDeclaration variable)
+    public bool TryGetVariable(string id, [NotNullWhen(true)] out VariableDeclaration? variable)
     {
         if (Contains(id))
         {

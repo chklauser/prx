@@ -23,11 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
@@ -56,9 +53,9 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         [DebuggerStepThrough]
         get
         {
-            return
-                Enumerable.Range(_mappings.Offset, _mappings.Count).Select(
-                    i => _mappings.Array[i]);
+            return _mappings.Array == null
+                ? Enumerable.Empty<int>()
+                : Enumerable.Range(_mappings.Offset, _mappings.Count).Select(i => _mappings.Array[i]);
         }
     }
 
@@ -112,7 +109,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         var end = _mappings.Offset + _mappings.Count;
         for (var i = _mappings.Offset; i < end; i++)
         {
-            var m = _mappings.Array[i];
+            var m = _mappings.Array![i];
             int idx;
             if (0 <= m || (idx = -m - 1) >= mapped.Length)
                 continue;
@@ -146,7 +143,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     void _combineArguments(PValue[] args, out PValue[] nonArguments,
         out PValue[] effectiveArguments)
     {
-        System.Diagnostics.Debug.Assert(args.All(value => value != null),
+        System.Diagnostics.Debug.Assert(args.All(value => (PValue?)value != null),
             "Actual (CLI) null references passed to " +
             GetType().Name + ".IndirectCall");
 
@@ -168,7 +165,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         var absoluteIndex = 0;
         for (; absoluteIndex < mappingLength; absoluteIndex++)
         {
-            var mapping = _mappings.Array[_mappings.Offset + absoluteIndex];
+            var mapping = _mappings.Array![_mappings.Offset + absoluteIndex];
             System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
 
             var argumentList = _determineArgumentList(
@@ -216,7 +213,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     }
 
     public bool TryDefer(StackContext sctx, PValue[] args,
-        out StackContext partialApplicationContext, out PValue result)
+        [NotNullWhen(true)] out StackContext? partialApplicationContext, [NotNullWhen(false)] out PValue? result)
     {
         _combineArguments(args, out var nonArguments, out var effectiveArguments);
 
@@ -236,7 +233,11 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     /// <param name = "result"></param>
     /// <returns>True if the <see cref = "StackContext" /> has been created; false otherwise.</returns>
     protected virtual bool DoTryDefer(StackContext sctx, PValue[] nonArguments,
-        PValue[] arguments, out StackContext partialApplicationContext, out PValue result)
+        PValue[] arguments,
+        [NotNullWhen(true)]
+        out StackContext? partialApplicationContext,
+        [NotNullWhen(false)]
+        out PValue? result)
     {
         partialApplicationContext = null;
         result = Invoke(sctx, nonArguments, arguments);

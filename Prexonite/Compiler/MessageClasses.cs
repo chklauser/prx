@@ -1,4 +1,5 @@
-﻿// Prexonite
+﻿
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -68,6 +69,16 @@ public static class MessageClasses
     public const string ShiftedSymbolRequired = "P.ShiftedSymbolRequired";
     public const string TypeArgumentsNotSupported = "P.TypeArgumentsNotSupported";
     public const string SkeletonNamespaceRequiresSemicolon = "P.SkeletonNamespaceRequiresSemicolon";
+    public const string CannotFindPType = "P.CannotFindPType";
+    public const string ErrorInTypeExpr = "P.ErrorInTypeExpr";
+    public const string InvalidConstant = "P.InvalidConstant";
+    public const string MemberAccessWithoutSubject = "P.MemberAccessWithoutSubject";
+    public const string LoopExprNotSupported = "P.LoopExprNotSupported";
+    public const string TupleNotSupported = "P.TupleNotSupported";
+    public const string FunctionOverridingNotAllowed = "P.FunctionOverridingNotAllowed";
+    public const string RefInLazyFunction = "P.RefInLazyFunction";
+    public const string ReturnValueAssignment = "P.ReturnValueAssignment";
+    public const string CatchWithoutException = "P.CatchWithoutException";
 
     #endregion
 

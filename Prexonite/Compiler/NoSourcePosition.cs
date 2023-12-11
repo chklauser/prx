@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler;
@@ -31,9 +32,7 @@ namespace Prexonite.Compiler;
 public sealed class NoSourcePosition : ISourcePosition
 {
     #region Singleton
-
-    static NoSourcePosition _instance;
-    public static ISourcePosition Instance => _instance ??= new NoSourcePosition();
+    public static ISourcePosition Instance { get; } = new NoSourcePosition();
 
     #endregion
 

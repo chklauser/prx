@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -62,7 +61,7 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
 
         if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance,true,out var box))
         {
-            line = (int) box.Value;
+            line = (int) box.Value!;
         }
         else
         {
@@ -71,7 +70,7 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
 
         if (args.Length >= 3 && args[2].TryConvertTo(sctx, IntPType.Instance, true, out box))
         {
-            column = (int) box.Value;
+            column = (int) box.Value!;
         }
         else
         {

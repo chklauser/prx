@@ -23,13 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
-public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
+public class PartialTypecastCommand : PartialWithPTypeCommandBase<RuntimePTypeInfo, CompileTimePTypeInfo>
 {
     PartialTypecastCommand()
     {
@@ -37,21 +36,22 @@ public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
 
     public static PartialTypecastCommand Instance { get; } = new();
 
-    ConstructorInfo _partialTypeCastCtor;
+    ConstructorInfo? _partialTypeCastCtor;
 
     protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, PTypeInfo parameter)
+        PValue[] closedArguments, RuntimePTypeInfo parameter)
     {
         return new PartialTypecast(mappings, closedArguments, parameter.Type);
     }
 
-    protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
+    protected override ConstructorInfo GetConstructorCtor(CompileTimePTypeInfo parameter)
     {
         return _partialTypeCastCtor ??= typeof (PartialTypecast).GetConstructor(new[]
-            {typeof (int[]), typeof (PValue[]), typeof (PType)});
+            {typeof (int[]), typeof (PValue[]), typeof (PType)})
+            ?? throw new InvalidOperationException($"{nameof(PartialTypecast)} does not have an (int[], PValue[], PType) constructor.");
     }
 
-    protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
+    protected override Type GetPartialCallRepresentationType(CompileTimePTypeInfo parameter)
     {
         return typeof (PartialTypecast);
     }

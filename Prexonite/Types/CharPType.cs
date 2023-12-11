@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
 using System.Globalization;
 using System.Reflection;
 using Prexonite.Compiler.Cil;
@@ -35,7 +34,7 @@ using NoDebug = System.Diagnostics.DebuggerStepThroughAttribute;
 
 namespace Prexonite.Types;
 
-[PTypeLiteral("Char")]
+[PTypeLiteral(nameof(Char))]
 public class CharPType : PType, ICilCompilerAware
 {
     #region Singleton
@@ -44,7 +43,7 @@ public class CharPType : PType, ICilCompilerAware
 
     static CharPType()
     {
-        Instance = new CharPType();
+        Instance = new();
     }
 
     [NoDebug]
@@ -70,7 +69,7 @@ public class CharPType : PType, ICilCompilerAware
 
     #region PType interface
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
         char c;
         result = null;
@@ -86,11 +85,11 @@ public class CharPType : PType, ICilCompilerAware
         }
         else if (args[0].TryConvertTo(sctx, Char, out var v))
         {
-            c = (char) v.Value;
+            c = (char) v.Value!;
         }
         else if (args[0].TryConvertTo(sctx, Int, false, out v))
         {
-            c = (char) (int) v.Value;
+            c = (char) (int) v.Value!;
         }
         else
         {
@@ -106,8 +105,9 @@ public class CharPType : PType, ICilCompilerAware
         PValue subject,
         PValue[] args,
         PCall call,
-        string id,
-        out PValue result)
+        string? id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -117,8 +117,8 @@ public class CharPType : PType, ICilCompilerAware
             throw new ArgumentNullException(nameof(args));
         if (id == null)
             id = "";
-        var c = (char) subject.Value;
-        CultureInfo ci;
+        var c = (char) subject.Value!;
+        CultureInfo? ci;
         switch (id.ToLowerInvariant())
         {
             case "getnumericvalue":
@@ -190,7 +190,7 @@ public class CharPType : PType, ICilCompilerAware
 
             default:
                 //Try CLR dynamic call
-                var clrint = Object[subject.ClrType];
+                var clrint = Object[subject.ClrType!];
                 if (!clrint.TryDynamicCall(sctx, subject, args, call, id, out result))
                     result = null;
                 break;
@@ -200,7 +200,7 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         //Try CLR static call
         var clrint = Object[typeof (int)];
@@ -211,7 +211,7 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     protected override bool InternalConvertTo(
-        StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
+        StackContext sctx, PValue subject, PType target, bool useExplicit, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -221,7 +221,7 @@ public class CharPType : PType, ICilCompilerAware
             throw new ArgumentNullException(nameof(target));
 
         result = null;
-        var c = (char) subject.Value;
+        var c = (char) subject.Value!;
         var bi = target.ToBuiltIn();
 
         if (useExplicit)
@@ -232,8 +232,8 @@ public class CharPType : PType, ICilCompilerAware
                     var clrType = ((ObjectPType) target).ClrType;
                     result = Type.GetTypeCode(clrType) switch
                     {
-                        TypeCode.Byte => new PValue(Convert.ToByte(c), target),
-                        _ => result
+                        TypeCode.Byte => new(Convert.ToByte(c), target),
+                        _ => result,
                     };
                     break;
             }
@@ -253,12 +253,12 @@ public class CharPType : PType, ICilCompilerAware
                     var clrType = ((ObjectPType) target).ClrType;
                     result = Type.GetTypeCode(clrType) switch
                     {
-                        TypeCode.Char => new PValue(c, target),
-                        TypeCode.Int32 => new PValue((int) c, target),
+                        TypeCode.Char => new(c, target),
+                        TypeCode.Int32 => new((int) c, target),
                         TypeCode.Object =>
                             // explicit boxing
-                            new PValue(c, Object[typeof(object)]),
-                        _ => result
+                            new(c, Object[typeof(object)]),
+                        _ => result,
                     };
                     break;
             }
@@ -268,7 +268,7 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     protected override bool InternalConvertFrom(
-        StackContext sctx, PValue subject, bool useExplicit, out PValue result)
+        StackContext sctx, PValue subject, bool useExplicit, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -285,7 +285,7 @@ public class CharPType : PType, ICilCompilerAware
             switch (bi)
             {
                 case BuiltIn.String:
-                    var s = (string) subject.Value;
+                    var s = (string) subject.Value!;
                     if (s.Length == 1)
                         result = s[0];
                     break;
@@ -297,24 +297,24 @@ public class CharPType : PType, ICilCompilerAware
             switch (bi)
             {
                 case BuiltIn.Int:
-                    result = (char) (int) subject.Value;
+                    result = (char) (int) subject.Value!;
                     break;
                 case BuiltIn.Object:
                     var clrType = ((ObjectPType) source).ClrType;
                     var tc = Type.GetTypeCode(clrType);
                     result = tc switch
                     {
-                        TypeCode.Byte => (char) subject.Value,
-                        TypeCode.Int32 => (char) (int) subject.Value,
-                        TypeCode.Char => (char) subject.Value,
-                        _ => result
+                        TypeCode.Byte => (char) subject.Value!,
+                        TypeCode.Int32 => (char) (int) subject.Value!,
+                        TypeCode.Char => (char) subject.Value!,
+                        _ => result,
                     };
 
                     if (result == null &&
                         source.TryConvertTo(sctx, subject, Object[typeof (char)], useExplicit,
                             out result))
                     {
-                        result = (char) result.Value;
+                        result = (char) result.Value!;
                     }
                     break;
             }
@@ -328,12 +328,12 @@ public class CharPType : PType, ICilCompilerAware
         return otherType is CharPType;
     }
 
-    const int _hashcode = 361633961;
-    public const string Literal = "Char";
+    const int Hashcode = 361633961;
+    public const string Literal = nameof(Char);
 
     public override int GetHashCode()
     {
-        return _hashcode;
+        return Hashcode;
     }
 
     public override string ToString()
@@ -356,18 +356,18 @@ public class CharPType : PType, ICilCompilerAware
         switch (pv.Type.ToBuiltIn())
         {
             case BuiltIn.Char:
-                c = (char) pv.Value;
+                c = (char) pv.Value!;
                 return true;
 
             case BuiltIn.Int:
-                c = (char) (int) pv.Value;
+                c = (char) (int) pv.Value!;
                 return true;
 
             case BuiltIn.Null:
                 return true;
 
             case BuiltIn.String:
-                var s = (string) pv.Value;
+                var s = (string) pv.Value!;
                 if (s.Length == 1)
                 {
                     c = s[0];
@@ -379,8 +379,8 @@ public class CharPType : PType, ICilCompilerAware
                 }
 
             case BuiltIn.Object:
-                if (pv.TryConvertTo(sctx, Char, false, out pv))
-                    return _tryConvert(sctx, pv, out c);
+                if (pv.TryConvertTo(sctx, Char, false, out var converted))
+                    return _tryConvert(sctx, converted, out c);
                 else
                     return false;
 
@@ -398,7 +398,7 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -436,7 +436,8 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     static readonly MethodInfo _getCharPType =
-        typeof (PType).GetProperty("Char").GetGetMethod();
+        typeof(PType).GetProperty(nameof(Char))?.GetGetMethod() ??
+        throw new InvalidOperationException($"Cannot find property {nameof(PType)}.{nameof(Char)} getter.");
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

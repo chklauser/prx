@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using Prexonite.Commands.Core.Operators;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -41,15 +40,16 @@ public class AstWhileLoop : AstLoop
         IsPositive = isPositive;
     }
 
-    public AstExpr Condition;
+    public AstExpr? Condition;
     public bool IsPrecondition { get; set; }
     public bool IsPositive { get; set; }
 
     public override AstExpr[] Expressions
     {
-        get { return new[] {Condition}; }
+        get { return Condition != null ? new[] {Condition} : Array.Empty<AstExpr>(); }
     }
 
+    [MemberNotNullWhen(true, nameof(Condition))]
     public bool IsInitialized
     {
         [DebuggerStepThrough]
@@ -66,7 +66,7 @@ public class AstWhileLoop : AstLoop
         //Optimize unary not condition
         _OptimizeNode(target, ref Condition);
         // Invert condition when unary logical not
-        while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
+        while (Condition.IsCommandCall(LogicalNot.DefaultAlias, out var unaryCond))
         {
             Condition = unaryCond.Arguments[0];
             IsPositive = !IsPositive;
@@ -79,8 +79,8 @@ public class AstWhileLoop : AstLoop
             if (
                 !constCond.ToPValue(target).TryConvertTo(
                     target.Loader, PType.Bool, out var condValue))
-                goto continueFull;
-            else if ((bool) condValue.Value == IsPositive)
+            {}
+            else if ((bool) condValue.Value! == IsPositive)
                 conditionIsConstant = true;
             else
             {
@@ -94,7 +94,6 @@ public class AstWhileLoop : AstLoop
                 return;
             }
         }
-        continueFull:
 
         target.BeginBlock(Block);
         if (!Block.IsEmpty) //Body exists -> complete loop code?
@@ -130,6 +129,6 @@ public class AstWhileLoop : AstLoop
     void _emitCondition(CompilerTarget target)
     {
         target.EmitLabel(Position, Block.ContinueLabel);
-        AstLazyLogical.EmitJumpCondition(target, Condition, Block.BeginLabel, IsPositive);
+        AstLazyLogical.EmitJumpCondition(target, Condition!, Block.BeginLabel, IsPositive);
     }
 }

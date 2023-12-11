@@ -25,9 +25,9 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using JetBrains.Annotations;
 
 #endregion
 
@@ -40,14 +40,14 @@ namespace Prexonite.Types;
 [DebuggerNonUserCode]
 public class ExtendableObject : IObject, IIndirectCall
 {
-    ExtensionTable _et;
+    ExtensionTable? _et;
 
     protected void InitializeExtensionTable()
     {
         if (_et != null)
             throw new InvalidOperationException(
                 "The extension table for this object has already been created.");
-        _et = new ExtensionTable();
+        _et = new();
     }
 
     /// <summary>
@@ -85,15 +85,16 @@ public class ExtendableObject : IObject, IIndirectCall
     ///     </para>
     ///     <para>
     ///         If you want to intercept object member calls yourself, overwrite <see
-    ///      cref = "TryDynamicCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
+    ///      cref = "TryDynamicCall(Prexonite.StackContext,Prexonite.PValue[],Prexonite.Types.PCall,string,out Prexonite.PValue?)" /> instead.
     ///     </para>
     /// </remarks>
+    [PublicAPI]
     protected virtual bool TryDynamicClrCall(
         StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         var objT = subject.Type as ObjectPType;
-        if ((object) objT != null)
+        if ((object?) objT != null)
             return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out _,
                 true);
         else
@@ -118,8 +119,9 @@ public class ExtendableObject : IObject, IIndirectCall
     ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
     ///     </para>
     /// </remarks>
+    [PublicAPI]
     protected bool TryDynamicClrCall(StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return
             TryDynamicClrCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
@@ -143,8 +145,9 @@ public class ExtendableObject : IObject, IIndirectCall
     ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
     ///     </para>
     /// </remarks>
+    [PublicAPI]
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
     }
@@ -168,20 +171,22 @@ public class ExtendableObject : IObject, IIndirectCall
     ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
     ///     </para>
     /// </remarks>
+    [PublicAPI]
     public bool TryDynamicCall(
-        StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-        out PValue result)
+        StackContext sctx, PValue subject, PValue[]? args, PCall? call, string? id,
+        out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         args ??= Array.Empty<PValue>();
         id ??= "";
+        call ??= PCall.Get;
 
-        _et ??= new ExtensionTable();
+        _et ??= new();
 
-        if (TryDynamicClrCall(sctx, subject, args, call, id, out result) ||
+        if (TryDynamicClrCall(sctx, subject, args, call.Value, id, out result) ||
             //Try conventional call
-            _tryDynamicExtensionCall(sctx, subject, args, call, id, out result))
+            _tryDynamicExtensionCall(sctx, subject, args, call.Value, id, out result))
             //Try extension call
             return true;
         else if (call == PCall.Set && args.Length > 0) //Add field if it does not exist
@@ -195,33 +200,51 @@ public class ExtendableObject : IObject, IIndirectCall
 
     #endregion
 
+    [MemberNotNull(nameof(_et))]
+    protected void EnsureExtensionTableInitialized()
+    {
+        if (_et == null)
+        {
+            throw new PrexoniteException(
+                $"Extension table of expando object is not initialized. The constructor of the derived class must call {nameof(InitializeExtensionTable)}.");
+        }
+    }
+
+    [PublicAPI]
     protected void AddRefMember(string id, PValue value)
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
         if (value == null)
             throw new ArgumentNullException(nameof(value));
-        _et.Add(new ExtensionMember(id, true, value));
+        EnsureExtensionTableInitialized();
+        _et.Add(new(id, true, value));
     }
 
+    [PublicAPI]
     protected void AddMember(string id, PValue value)
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
         if (value == null)
             throw new ArgumentNullException(nameof(value));
-        _et.Add(new ExtensionMember(id, value));
+        EnsureExtensionTableInitialized();
+        _et.Add(new(id, value));
     }
 
+    [PublicAPI]
     protected void RemoveMember(string id)
     {
+        EnsureExtensionTableInitialized();
         _et.Remove(id);
     }
 
     bool _tryDynamicExtensionCall(
         StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)]
+        out PValue? result)
     {
+        EnsureExtensionTableInitialized();
         result = null;
 
         var argst = StructurePType._AddThis(subject, args);
@@ -229,7 +252,7 @@ public class ExtendableObject : IObject, IIndirectCall
         var reference = false;
 
         //Try to call the member
-        if (_et.TryGetValue(id, out var m) && m != null)
+        if (_et.TryGetValue(id, out var m))
             result = m.DynamicCall(sctx, argst, call);
         else
             switch (id.ToLowerInvariant())
@@ -242,16 +265,16 @@ public class ExtendableObject : IObject, IIndirectCall
                     if (args.Length < 2)
                         goto default;
 
-                    var mid = (string) args[0].ConvertTo(sctx, PType.String).Value;
+                    var mid = (string) args[0].ConvertTo(sctx, PType.String).Value!;
 
                     if (reference || args.Length > 2)
-                        reference = (bool) args[1].ConvertTo(sctx, PType.Bool).Value;
+                        reference = (bool) args[1].ConvertTo(sctx, PType.Bool).Value!;
 
                     if (_et.Contains(mid))
                         m = _et[mid];
                     else
                     {
-                        m = new ExtensionMember(mid);
+                        m = new(mid);
                         _et.Add(m);
                     }
 
@@ -263,7 +286,7 @@ public class ExtendableObject : IObject, IIndirectCall
                     break;
                 default:
                     //Try to call the generic "call" member
-                    if (_et.TryGetValue(StructurePType.CallId, out m) && m != null)
+                    if (_et.TryGetValue(StructurePType.CallId, out m))
                         result =
                             m.DynamicCall(
                                 sctx,
@@ -274,7 +297,7 @@ public class ExtendableObject : IObject, IIndirectCall
                     break;
             }
 
-        return result != null;
+        return (PValue?)result != null;
     }
 
     PValue _dynamicCall(StackContext sctx, PValue[] args, PCall call, string id)
@@ -288,7 +311,7 @@ public class ExtendableObject : IObject, IIndirectCall
         if (!_tryDynamicExtensionCall(sctx, subject, args, call, id, out var result))
             throw new InvalidCallException(
                 "Cannot call " + id + " on extension of type " + GetType().Name);
-        return result ?? PType.Null;
+        return (PValue?)result ?? PType.Null;
     }
 
     #region IIndirectCall Members
@@ -311,13 +334,13 @@ public class ExtendableObject : IObject, IIndirectCall
     /// <param name = "subject">The subject to substitute for this.</param>
     /// <param name = "args">The arguments to pass to the handling function.</param>
     /// <returns>The value returned by the extended part of the object.</returns>
-    public PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, PValue subject, PValue[]? args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         args ??= Array.Empty<PValue>();
 
-        _et ??= new ExtensionTable();
+        _et ??= new();
 
         if (!_et.TryGetValue(StructurePType.IndirectCallId, out var m))
             throw new PrexoniteException(this + " does not support indirect calls.");
@@ -333,12 +356,12 @@ public class ExtendableObject : IObject, IIndirectCall
 class ExtensionMember
 {
     internal ExtensionMember(string id)
-        : this(id, false, null)
+        : this(id, false, PType.Null)
     {
     }
 
     internal ExtensionMember(string id, bool indirect)
-        : this(id, indirect, null)
+        : this(id, indirect, PType.Null)
     {
     }
 
@@ -349,11 +372,7 @@ class ExtensionMember
 
     internal ExtensionMember(string id, bool indirect, PValue value)
     {
-        if (id == null)
-            throw new ArgumentNullException(nameof(id));
-        value ??= PType.Null.CreatePValue();
-
-        Id = id;
+        Id = id ?? throw new ArgumentNullException(nameof(id));
         Indirect = indirect;
         Value = value;
     }
@@ -365,7 +384,7 @@ class ExtensionMember
     public PValue Value { get; set; }
 
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, out PValue? result)
     {
         result = null;
         if (Indirect)
@@ -385,7 +404,7 @@ class ExtensionMember
                 Value = args[^1];
         }
 
-        return result != null;
+        return true;
     }
 
     public PValue DynamicCall(StackContext sctx, PValue[] args, PCall call)
@@ -393,7 +412,7 @@ class ExtensionMember
         if (!TryDynamicCall(sctx, args, call, out var result))
             throw new InvalidCallException(
                 "Cannot call extension member " + Id + " with " + args.Length + " arguments.");
-        return result;
+        return result ?? PType.Null;
     }
 }
 

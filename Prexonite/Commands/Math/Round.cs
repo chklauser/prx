@@ -23,11 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Math;
 
@@ -65,14 +64,14 @@ public class Round : PCommand, ICilCompilerAware
         return RunStatically(arg0, arg1, sctx);
     }
 
-    public static PValue RunStatically(PValue arg0, PValue arg1, StackContext sctx)
+    public static PValue RunStatically(PValue arg0, PValue? arg1, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
 
         int d;
 
         if (arg1 != null && arg1.TryConvertTo(sctx, PType.Int, true, out var pd))
-            d = System.Math.Abs((int) pd.Value);
+            d = System.Math.Abs((int) pd.Value!);
         else
             d = 0;
 
@@ -111,8 +110,8 @@ public class Round : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyMethod =
-        typeof (Round).GetMethod("RunStatically",
-            new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
+        typeof (Round).GetMethod(nameof(RunStatically),
+            new[] {typeof (PValue), typeof (PValue), typeof (StackContext)})!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

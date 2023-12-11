@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Linq;
+
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast;
@@ -33,7 +32,7 @@ public class AstReturn : AstNode,
     IAstHasExpressions
 {
     public ReturnVariant ReturnVariant;
-    public AstExpr Expression;
+    public AstExpr? Expression;
 
     public AstReturn(string file, int line, int column, ReturnVariant returnVariant)
         : base(file, line, column)
@@ -48,10 +47,7 @@ public class AstReturn : AstNode,
 
     #region IAstHasExpressions Members
 
-    public AstExpr[] Expressions
-    {
-        get { return new[] {Expression}; }
-    }
+    public AstExpr[] Expressions => Expression != null ? new[] { Expression } : Array.Empty<AstExpr>();
 
     #endregion
 
@@ -161,14 +157,14 @@ public class AstReturn : AstNode,
 
     void _emitOrdinaryValueReturn(CompilerTarget target)
     {
-        Expression.EmitValueCode(target);
+        Expression!.EmitValueCode(target);
         target.Emit(Position, OpCode.ret_value);
     }
 
     static bool _isStacklessRecursionPossible(CompilerTarget target,
         AstIndirectCall symbol)
     {
-        if (!(symbol.Subject is AstReference refNode))
+        if (symbol.Subject is not AstReference refNode)
             return false;
         if (!refNode.Entity.TryGetFunction(out var funcRef))
             return false;
@@ -187,7 +183,7 @@ public class AstReturn : AstNode,
 
     bool _optimizeConditionalReturnExpression(CompilerTarget target)
     {
-        if (!(Expression is AstConditionalExpression cond))
+        if (Expression is not AstConditionalExpression cond)
             return false;
 
         //  return  if( cond )
@@ -198,13 +194,13 @@ public class AstReturn : AstNode,
 
         var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
         {
-            Expression = cond.IfExpression
+            Expression = cond.IfExpression,
         };
         retif.IfBlock.Add(ret1);
 
         var ret2 = new AstReturn(File, Line, Column, ReturnVariant)
         {
-            Expression = cond.ElseExpression
+            Expression = cond.ElseExpression,
         };
         //not added to the condition
 
@@ -224,7 +220,7 @@ public class AstReturn : AstNode,
             ReturnVariant.Set => "return = {0};",
             ReturnVariant.Continue => Expression != null ? "yield {0};" : "continue;",
             ReturnVariant.Break => "break;",
-            _ => ""
+            _ => "",
         };
         return string.Format(format, Expression);
     }
@@ -235,5 +231,5 @@ public enum ReturnVariant
     Exit,
     Break,
     Continue,
-    Set
+    Set,
 }

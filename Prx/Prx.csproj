@@ -6,10 +6,10 @@
 
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AppConfig>config/app.$(Configuration).config</AppConfig>
-    <LangVersion>10</LangVersion>
-    <Version>1.98</Version>
+    <LangVersion>12</LangVersion>
+    <Version>1.99</Version>
     <Title>Prexonite CLI</Title>
     <Description>Prexonite command line interpreter and compiler.</Description>
     <Copyright>Christian Klauser © 2020</Copyright>
@@ -23,6 +23,7 @@
     <Product>Prexonite</Product>
     <Company>$(Product)</Company>
     <NeutralLanguage>en-US</NeutralLanguage>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <!-- single file app (Release-Mode only) -->
@@ -50,6 +51,19 @@
     </When>
   </Choose>
 
+  <ItemGroup>
+    <!-- Generate the Properties/Resources.Designer.cs file from the default translations in Resources.resx -->
+    <EmbeddedResource Update="Properties/Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <StronglyTypedFileName>Properties/Resources.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Prx.Properties</StronglyTypedNamespace>
+      <StronglyTypedClassName>Resources</StronglyTypedClassName>
+    </EmbeddedResource>
+    <Compile Remove="Properties/Resources.Designer.cs" />
+    <Compile Include="Properties/Resources.Designer.cs" />
+  </ItemGroup>
+  
   <ItemGroup>
     <None Remove="src\prx_interactive.pxs" />
     <None Remove="src\prx_lib.pxs" />

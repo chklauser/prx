@@ -1,7 +1,4 @@
-﻿#nullable enable
-using System.Diagnostics.CodeAnalysis;
-
-namespace Prexonite.Compiler.Ast;
+﻿namespace Prexonite.Compiler.Ast;
 
 public abstract class AstExpr : AstNode
 {

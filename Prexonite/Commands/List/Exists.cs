@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -53,7 +51,7 @@ public class Exists : PCommand
                 eargs[0] = value;
                 var result = f.IndirectCall(sctx, eargs);
                 if (result.TryConvertTo(sctx, PType.Bool, true, out var existance) &&
-                    (bool) existance.Value)
+                    (bool) existance.Value!)
                     return true;
             }
         }

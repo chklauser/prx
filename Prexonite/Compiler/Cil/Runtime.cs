@@ -1,11 +1,7 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Prexonite.Commands;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Cil;
 
@@ -13,94 +9,97 @@ namespace Prexonite.Compiler.Cil;
 public static class Runtime
 {
     public static readonly MethodInfo CallFunctionMethod =
-        typeof (Runtime).GetMethod(nameof(CallFunction));
+        typeof (Runtime).GetMethod(nameof(CallFunction))!;
 
     public static readonly MethodInfo CheckTypeConstMethod =
-        typeof (Runtime).GetMethod(nameof(CheckTypeConst), new[] {typeof (PValue), typeof (PType)});
+        typeof (Runtime).GetMethod(nameof(CheckTypeConst), new[] {typeof (PValue), typeof (PType)})!;
 
     public static readonly MethodInfo ConstructPTypeMethod =
-        typeof (StackContext).GetMethod(nameof(StackContext.ConstructPType), new[] {typeof (string)});
+        typeof (StackContext).GetMethod(nameof(StackContext.ConstructPType), new[] {typeof (string)})!;
 
     public static readonly MethodInfo DisposeIfPossibleMethod =
-        typeof (Runtime).GetMethod(nameof(DisposeIfPossible), new[] {typeof (object)});
+        typeof (Runtime).GetMethod(nameof(DisposeIfPossible), new[] {typeof (object)})!;
 
     public static readonly PValue[] EmptyPValueArray = Array.Empty<PValue>();
 
     public static readonly FieldInfo EmptyPValueArrayField =
-        typeof (Runtime).GetField(nameof(EmptyPValueArray));
+        typeof (Runtime).GetField(nameof(EmptyPValueArray))!;
 
     public static readonly MethodInfo ExtractEnumeratorMethod =
         typeof (Runtime).GetMethod(nameof(ExtractEnumerator),
-            new[] {typeof (PValue), typeof (StackContext)});
+            new[] {typeof (PValue), typeof (StackContext)})!;
 
     public static readonly MethodInfo LoadGlobalVariableReferenceMethod =
-        typeof (Runtime).GetMethod(nameof(LoadGlobalVariableReference));
+        typeof (Runtime).GetMethod(nameof(LoadGlobalVariableReference))!;
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")] public static readonly MethodInfo NewCoroutineMethod =
-        typeof (Runtime).GetMethod(nameof(NewCoroutine));
+        MessageId = nameof(Coroutine))] public static readonly MethodInfo NewCoroutineMethod =
+        typeof (Runtime).GetMethod(nameof(NewCoroutine))!;
 
     public static readonly MethodInfo WrapPVariableMethod =
-        typeof(Runtime).GetMethod(nameof(WrapPVariable));
+        typeof(Runtime).GetMethod(nameof(WrapPVariable))!;
 
     public static readonly MethodInfo CastConstMethod =
         typeof (Runtime).GetMethod(nameof(CastConst),
-            new[] {typeof (PValue), typeof (PType), typeof (StackContext)});
+            new[] {typeof (PValue), typeof (PType), typeof (StackContext)})!;
 
-    public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod { get; } = typeof(Runtime).GetMethod(nameof(LoadGlobalVariableReferenceAsPValue));
+    public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod { get; } =
+        typeof(Runtime).GetMethod(nameof(LoadGlobalVariableReferenceAsPValue))!;
 
-    public static MethodInfo LoadFunctionReferenceInternalMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadFunctionReferenceInternal));
+    public static MethodInfo LoadFunctionReferenceInternalMethod { get; } =
+        typeof(Runtime).GetMethod(nameof(LoadFunctionReferenceInternal))!;
 
-    public static MethodInfo LoadApplicationReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadApplicationReference));
+    public static MethodInfo LoadApplicationReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadApplicationReference))!;
 
-    public static MethodInfo LoadEngineReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadEngineReference));
+    public static MethodInfo LoadEngineReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadEngineReference))!;
 
-    public static MethodInfo LoadCommandReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadCommandReference));
+    public static MethodInfo LoadCommandReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadCommandReference))!;
 
-    public static MethodInfo ConstructPTypeAsPValueMethod { get; } = typeof (Runtime).GetMethod(nameof(ConstructPTypeAsPValue));
+    public static MethodInfo ConstructPTypeAsPValueMethod { get; } = typeof (Runtime).GetMethod(nameof(ConstructPTypeAsPValue))!;
 
-    public static MethodInfo NewTypeMethod { get; } = typeof (Runtime).GetMethod(nameof(NewType));
+    public static MethodInfo NewTypeMethod { get; } = typeof (Runtime).GetMethod(nameof(NewType))!;
 
-    public static MethodInfo NewClosureMethodLateBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosureInternal), new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
+    public static MethodInfo NewClosureMethodLateBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosureInternal),
+        new[] { typeof(StackContext), typeof(PVariable[]), typeof(string) })!;
 
     public static MethodInfo NewClosureMethodStaticallyBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosure),
-            new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)});
+            new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)})!;
 
-    public static MethodInfo RaiseToPowerMethod { get; } = typeof (Runtime).GetMethod(nameof(RaiseToPower));
+    public static MethodInfo RaiseToPowerMethod { get; } = typeof (Runtime).GetMethod(nameof(RaiseToPower))!;
 
-    public static MethodInfo CheckTypeMethod { get; } = typeof (Runtime).GetMethod(nameof(CheckType));
+    public static MethodInfo CheckTypeMethod { get; } = typeof (Runtime).GetMethod(nameof(CheckType))!;
 
-    public static MethodInfo CastMethod { get; } = typeof (Runtime).GetMethod(nameof(Cast));
+    public static MethodInfo CastMethod { get; } = typeof (Runtime).GetMethod(nameof(Cast))!;
 
     public static MethodInfo StaticCallMethod { get; } = typeof(PType).GetMethod(nameof(PType.StaticCall),
-        new[] {typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)});
+        new[] {typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)})!;
 
-    public static MethodInfo CallInternalFunctionMethod { get; } = typeof (Runtime).GetMethod(nameof(CallInternalFunction));
+    public static MethodInfo CallInternalFunctionMethod { get; } = typeof (Runtime).GetMethod(nameof(CallInternalFunction))!;
 
-    public static MethodInfo CallCommandMethod { get; } = typeof (Runtime).GetMethod(nameof(CallCommand));
+    public static MethodInfo CallCommandMethod { get; } = typeof (Runtime).GetMethod(nameof(CallCommand))!;
 
-    public static MethodInfo ThrowExceptionMethod { get; } = typeof (Runtime).GetMethod(nameof(ThrowException));
+    public static MethodInfo ThrowExceptionMethod { get; } = typeof (Runtime).GetMethod(nameof(ThrowException))!;
 
-    public static MethodInfo ExtractBoolMethod { get; } = typeof (Runtime).GetMethod(nameof(ExtractBool));
+    public static MethodInfo ExtractBoolMethod { get; } = typeof (Runtime).GetMethod(nameof(ExtractBool))!;
 
-    public static MethodInfo ParseExceptionMethod { get; } = typeof (Runtime).GetMethod(nameof(ParseException));
+    public static MethodInfo ParseExceptionMethod { get; } = typeof (Runtime).GetMethod(nameof(ParseException))!;
 
-    public static MethodInfo LoadModuleNameAsPValueMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadModuleNameAsPValue));
+    public static MethodInfo LoadModuleNameAsPValueMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadModuleNameAsPValue))!;
 
-    public static MethodInfo LoadModuleNameMethod { get; } = typeof(Runtime).GetMethod(nameof(LoadModuleName));
+    public static MethodInfo LoadModuleNameMethod { get; } = typeof(Runtime).GetMethod(nameof(LoadModuleName))!;
 
-    public static MethodInfo LoadGlobalVariableReferenceInternalMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadGlobalVariableReferenceInternal));
+    public static MethodInfo LoadGlobalVariableReferenceInternalMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadGlobalVariableReferenceInternal))!;
 
-    public static MethodInfo LoadGlobalReferenceAsPValueInternalMethod { get; } = typeof(Runtime).GetMethod(nameof(LoadGlobalVariableReferenceAsPValueInternal));
+    public static MethodInfo LoadGlobalReferenceAsPValueInternalMethod { get; } = typeof(Runtime).GetMethod(nameof(LoadGlobalVariableReferenceAsPValueInternal))!;
 
     public static MethodInfo NewClosureMethodCrossModule { get; } = typeof (Runtime).GetMethod(nameof(NewClosure),
         new[]
         {
             typeof (StackContext), typeof (PVariable[]), typeof (string),
-            typeof (ModuleName)
-        });
+            typeof (ModuleName),
+        })!;
 
-    public static MethodInfo LoadFunctionReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadFunctionReference));
+    public static MethodInfo LoadFunctionReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadFunctionReference))!;
 
     // ReSharper restore InconsistentNaming
 
@@ -223,7 +222,7 @@ public static class Runtime
         return NewClosure(sctx, sharedVariables, func);
     }
 
-    public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables,
+    public static PValue NewClosure(StackContext sctx, PVariable[]? sharedVariables,
         PFunction function)
     {
         PVariable[] emptyPVariableArray = Array.Empty<PVariable>();
@@ -270,7 +269,9 @@ public static class Runtime
 
     public static PValue Cast(PValue obj, PValue type, StackContext sctx)
     {
-        return obj.ConvertTo(sctx, (PType) type.Value, true);
+        return obj.ConvertTo(sctx,
+            (PType)(type.Value ?? throw new PrexoniteException("Cast requires a type value.")),
+            true);
     }
 
     //[System.Diagnostics.DebuggerHidden]
@@ -330,17 +331,17 @@ public static class Runtime
     public static void ThrowException(PValue obj, StackContext sctx) =>
         throw (obj.Type switch
         {
-            StringPType => PrexoniteRuntimeException.CreateRuntimeException(sctx, (string) obj.Value),
+            StringPType => PrexoniteRuntimeException.CreateRuntimeException(sctx, (string) obj.Value!),
             ObjectPType when obj.Value is Exception exception => PrexoniteRuntimeException.CreateRuntimeException(
                 sctx, exception.Message, exception),
-            _ => PrexoniteRuntimeException.CreateRuntimeException(sctx, obj.CallToString(sctx))
+            _ => PrexoniteRuntimeException.CreateRuntimeException(sctx, obj.CallToString(sctx)),
         });
 
     public static bool ExtractBool(PValue left, StackContext sctx)
     {
         if (!ReferenceEquals(left.Type, PType.Bool))
             left = left.ConvertTo(sctx, PType.Bool);
-        return (bool) left.Value;
+        return (bool) left.Value!;
     }
 
     public static PValue CreateList(StackContext sctx, params PValue[] args)
@@ -349,7 +350,7 @@ public static class Runtime
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     public static PValue NewCoroutine(PValue routine, StackContext sctx, PValue[] argv)
     {
         var routineobj = routine.Value;
@@ -361,21 +362,21 @@ public static class Runtime
         else
         {
             StackContext corctx;
-            IStackAware routinesa;
+            IStackAware? routinesa;
             if ((routinesa = routineobj as IStackAware) != null)
                 corctx = routinesa.CreateStackContext(sctx, argv);
             else
                 corctx = (StackContext)
-                    routine.DynamicCall
-                    (
-                        sctx,
-                        new[]
-                        {
-                            PType.Object.CreatePValue(sctx.ParentEngine),
-                            PType.Object.CreatePValue(argv)
-                        },
-                        PCall.Get,
-                        "CreateStackContext").Value;
+                    (routine.DynamicCall(
+                            sctx,
+                            new[] {
+                                PType.Object.CreatePValue(sctx.ParentEngine),
+                                PType.Object.CreatePValue(argv),
+                            },
+                            PCall.Get,
+                            "CreateStackContext").Value ??
+                        throw new PrexoniteException(
+                            "CreateStackContext of function used as co-routine must not return null."));
 
             return
                 PType.Object[typeof (Coroutine)].CreatePValue(new Coroutine(corctx));
@@ -412,7 +413,7 @@ public static class Runtime
         IEnumerator genEn;
 
         if (value.Type is ObjectPType)
-            genEn = (IEnumerator) value.Value;
+            genEn = (IEnumerator)(value.Value ?? throw new PrexoniteException("Cannot use null as an enumerator."));
         else
             genEn = value.ConvertTo<IEnumerator>(sctx, true);
 
@@ -427,7 +428,7 @@ public static class Runtime
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames",
-        MessageId = "obj")]
+        MessageId = nameof(obj))]
     public static void DisposeIfPossible(object obj)
     {
         var disposable = obj as IDisposable;
@@ -452,29 +453,15 @@ public static class Runtime
     /// <summary>
     ///     Used to transparently convert arbitrary sequences to PValue sequences
     /// </summary>
-    public sealed class EnumeratorWrapper
-        : IEnumerator<PValue>
+    public sealed class EnumeratorWrapper(IEnumerator enumerator, StackContext sctx) : IEnumerator<PValue>
     {
-        #region Class
-
-        readonly IEnumerator _enumerator;
-        readonly StackContext _sctx;
-
-        public EnumeratorWrapper(IEnumerator enumerator, StackContext sctx)
-        {
-            _enumerator = enumerator;
-            _sctx = sctx;
-        }
-
-        #endregion
-
         #region IEnumerator<PValue> Members
 
-        public PValue Current => _sctx.CreateNativePValue(_enumerator.Current);
+        public PValue Current => sctx.CreateNativePValue(enumerator.Current);
 
         public void Dispose()
         {
-            var disp = _enumerator as IDisposable;
+            var disp = enumerator as IDisposable;
 
             disp?.Dispose();
         }
@@ -483,12 +470,12 @@ public static class Runtime
 
         public bool MoveNext()
         {
-            return _enumerator.MoveNext();
+            return enumerator.MoveNext();
         }
 
         public void Reset()
         {
-            _enumerator.Reset();
+            enumerator.Reset();
         }
 
         #endregion

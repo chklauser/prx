@@ -23,16 +23,15 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
+using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro;
 
@@ -41,34 +40,28 @@ namespace Prexonite.Compiler.Macro;
 /// </summary>
 public class MacroSession : IDisposable
 {
-    [CanBeNull]
-    LoaderOptions _options;
+    LoaderOptions? _options;
 
-    [NotNull]
     readonly SymbolCollection _releaseList = new();
-    [NotNull]
     readonly SymbolCollection _allocationList = new();
 
-    [NotNull]
     readonly HashSet<AstGetSet> _invocations = new();
 
-    [NotNull]
     readonly object _buildCommandToken;
 
-    [NotNull]
     readonly List<PValue> _transportStore = new();
 
     /// <summary>
     ///     Creates a new macro expansion session for the specified compiler target.
     /// </summary>
     /// <param name = "target">The target to expand macros in.</param>
-    public MacroSession([NotNull] CompilerTarget target)
+    public MacroSession(CompilerTarget target)
     {
         Target = target ?? throw new ArgumentNullException(nameof(target));
         Factory = Target.Factory;
             
         GlobalSymbols = SymbolStore.Create(Target.Loader.Symbols);
-        OuterVariables = new ReadOnlyCollectionView<string>(Target.OuterVariables);
+        OuterVariables = Target.OuterVariables.ToImmutableArray();
 
         _buildCommandToken = target.Loader.RequestBuildCommands();
     }
@@ -76,17 +69,14 @@ public class MacroSession : IDisposable
     /// <summary>
     ///     Provides read-only access to the global symbol table.
     /// </summary>
-    [NotNull]
     public SymbolStore GlobalSymbols { get; }
 
     /// <summary>
     ///     The target that this macro expansion session covers.
     /// </summary>
-    [NotNull]
     public CompilerTarget Target { [DebuggerStepThrough] get; }
 
-    [NotNull]
-    public ReadOnlyCollectionView<string> OuterVariables { get; }
+    public IReadOnlyCollection<string> OuterVariables { get; }
 
     /// <summary>
     ///     A copy of the loader options in effect during this macro expansion.
@@ -97,7 +87,7 @@ public class MacroSession : IDisposable
         {
             if (_options == null)
             {
-                _options = new LoaderOptions(Target.Loader.ParentEngine,
+                _options = new(Target.Loader.ParentEngine,
                     Target.Loader.ParentApplication);
                 _options.InheritFrom(Target.Loader.Options);
             }
@@ -105,11 +95,10 @@ public class MacroSession : IDisposable
         }
     }
 
-    public ILoopBlock CurrentLoopBlock => Target.CurrentLoopBlock;
+    public ILoopBlock? CurrentLoopBlock => Target.CurrentLoopBlock;
 
     public AstBlock CurrentBlock => Target.CurrentBlock;
 
-    [NotNull]
     public IAstFactory Factory { get; }
 
     /// <summary>
@@ -173,8 +162,9 @@ public class MacroSession : IDisposable
 
     interface IMacroExpander
     {
+        [MemberNotNull(nameof(HumanId))]
         void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect);
-        string HumanId { get; }
+        string? HumanId { get; }
         void Expand(CompilerTarget target, MacroContext context);
         bool TryExpandPartially(CompilerTarget target, MacroContext context);
     }
@@ -183,9 +173,10 @@ public class MacroSession : IDisposable
 
     abstract class MacroCommandExpanderBase : IMacroExpander
     {
-        protected MacroCommand MacroCommand;
-        public string HumanId { get; protected set; }
+        protected MacroCommand? MacroCommand;
+        public string? HumanId { get; protected set; }
 
+        [MemberNotNull(nameof(HumanId))]
         public abstract void Initialize(CompilerTarget target, AstGetSet macroNode,
             bool justEffect);
 
@@ -210,7 +201,7 @@ public class MacroSession : IDisposable
 
             if(!expansion.Entity.TryGetMacroCommand(out var mcmdRef))
                 throw new InvalidOperationException(string.Format(Resources.MacroCommandExpander_MacroCommandExpected, expansion.Entity));
-            MacroCommand mcmd;
+            MacroCommand? mcmd;
             if (mcmdRef.TryGetEntity(target.Loader, out var value) && (mcmd = value.Value as MacroCommand) != null)
             {
                 HumanId = mcmdRef.Id;
@@ -234,12 +225,12 @@ public class MacroSession : IDisposable
 
     abstract class MacroFunctionExpanderBase : IMacroExpander
     {
-        protected PFunction MacroFunction;
+        protected PFunction? MacroFunction;
 
         [PublicAPI]
         public const string PartialMacroKey = @"partial\macro";
 
-        public string HumanId { get; protected set; }
+        public string? HumanId { get; protected set; }
 
         public abstract void Initialize(CompilerTarget target, AstGetSet macroNode,
             bool justEffect);
@@ -252,11 +243,7 @@ public class MacroSession : IDisposable
             var astRaw = _invokeMacroFunction(target, context);
 
             //Optimize
-            AstNode ast;
-            if (astRaw != null)
-                ast = astRaw.Value as AstNode;
-            else
-                ast = null;
+            var ast = astRaw.Value as AstNode;
 
             var expr = ast as AstExpr;
 
@@ -279,8 +266,8 @@ public class MacroSession : IDisposable
             var macroBlock = ast as AstBlock;
 
             // ReSharper disable JoinDeclarationAndInitializer
-            AstExpr ce, fe;
-            IEnumerable<AstNode> fs;
+            AstExpr? ce, fe;
+            IEnumerable<AstNode>? fs;
             // ReSharper restore JoinDeclarationAndInitializer
             //determine ce
             ce = contextBlock.Expression;
@@ -311,7 +298,7 @@ public class MacroSession : IDisposable
 
         public bool TryExpandPartially(CompilerTarget target, MacroContext context)
         {
-            if (!MacroFunction.Meta[PartialMacroKey].Switch)
+            if (MacroFunction == null || !MacroFunction.Meta[PartialMacroKey].Switch)
                 return false;
 
             var successRaw = _invokeMacroFunction(target, context);
@@ -325,11 +312,11 @@ public class MacroSession : IDisposable
                 return false;
             }
 
-            return (bool) successRaw.Value;
+            return (bool) successRaw.Value!;
         }
 
-        void _implementMergeRules(MacroContext context, AstExpr ce,
-            IEnumerable<AstNode> fs, AstExpr fe)
+        void _implementMergeRules(MacroContext context, AstExpr? ce,
+            IEnumerable<AstNode>? fs, AstExpr? fe)
         {
             var contextBlock = context.Block;
             //cs  is already stored in contextBlock, 
@@ -393,24 +380,22 @@ public class MacroSession : IDisposable
 
         PValue _invokeMacroFunction(CompilerTarget target, MacroContext context)
         {
-            var macro = PrepareMacroImplementation(target.Loader, MacroFunction, context);
+            var macro = PrepareMacroImplementation(target.Loader, MacroFunction!, context);
 
             //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
             var macroInvocation = context.Invocation;
             var arguments =
                 macroInvocation.Arguments.Select(target.Loader.CreateNativePValue).ToArray();
-            var parentApplication = MacroFunction.ParentApplication;
-            PValue astRaw;
+            var parentApplication = MacroFunction!.ParentApplication;
             try
             {
                 parentApplication._SuppressInitialization = true;
-                astRaw = macro.IndirectCall(target.Loader, arguments);
+                return macro.IndirectCall(target.Loader, arguments);
             }
             finally
             {
                 parentApplication._SuppressInitialization = false;
             }
-            return astRaw;
         }
     }
 
@@ -424,7 +409,7 @@ public class MacroSession : IDisposable
 
             if (!expansion.Entity.TryGetFunction(out var functionRef))
                 throw new InvalidOperationException(string.Format(Resources.MacroFunctionExpander_ExpectedFunctionReference, expansion.Entity));
-            PFunction func;
+            PFunction? func;
             if (functionRef.TryGetEntity(target.Loader, out var value) && (func = value.Value as PFunction) != null)
             {
                 HumanId = functionRef.Id;
@@ -482,7 +467,7 @@ public class MacroSession : IDisposable
             }
             void lockDownLexicalScopeA(Action action)
             {
-                lockDownLexicalScope<object>(() =>
+                lockDownLexicalScope<object?>(() =>
                 {
                     action();
                     return null;
@@ -571,9 +556,9 @@ public class MacroSession : IDisposable
         return call;
     }
 
-    IMacroExpander _getExpander(AstGetSet macroNode, CompilerTarget target)
+    IMacroExpander? _getExpander(AstGetSet macroNode, CompilerTarget target)
     {
-        IMacroExpander expander = null;
+        IMacroExpander? expander = null;
         if (macroNode is AstExpand expansion)
         {
             if (expansion.Entity.TryGetMacroCommand(out _))
@@ -617,9 +602,18 @@ public class MacroSession : IDisposable
         var env = new SymbolTable<PVariable>(1) {{MacroAliases.ContextAlias, contextVar}};
 
         var sharedVariables =
-            func.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).
+            func.Meta[PFunction.SharedNamesKey].List
+                .Select(entry =>
+                {
+                    if (env[entry.Text] is not { } v)
+                    {
+                        throw new PrexoniteException($"Macro references non-supported context variable {entry.Text}.");
+                    }
+
+                    return v;
+                }).
                 ToArray();
-        return new Closure(func, sharedVariables);
+        return new(func, sharedVariables);
     }
 
     /// <summary>

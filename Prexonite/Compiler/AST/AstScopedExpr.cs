@@ -23,34 +23,33 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
 
 public abstract class AstScopedExpr : AstExpr
 {
-    protected AstScopedExpr([NotNull] ISourcePosition position, [NotNull] AstBlock lexicalScope)
+    protected AstScopedExpr(ISourcePosition position, AstBlock lexicalScope)
         : base(position)
     {
-        LexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
+        LexicalScope = lexicalScope ?? throw new ArgumentNullException(nameof(lexicalScope));
     }
 
-    internal AstScopedExpr([NotNull] Parser p, [NotNull]  AstBlock lexicalScope)
+    internal AstScopedExpr(Parser p, AstBlock lexicalScope)
         : base(p)
     {
-        LexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
+        LexicalScope = lexicalScope ?? throw new ArgumentNullException(nameof(lexicalScope));
     }
 
-    protected AstScopedExpr([NotNull] string file, int line, int column, [NotNull] AstBlock lexicalScope)
+    protected AstScopedExpr(string file, int line, int column, AstBlock lexicalScope)
         : base(file, line, column)
     {
-        LexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
+        LexicalScope = lexicalScope ?? throw new ArgumentNullException(nameof(lexicalScope));
     }
 
     /// <summary>
     ///     The node this block is a part of.
     /// </summary>
-    [NotNull]
     public AstBlock LexicalScope { [DebuggerStepThrough] get; }
 }

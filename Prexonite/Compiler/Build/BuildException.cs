@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Build;
 
@@ -42,16 +40,15 @@ public class BuildException : PrexoniteException
         RelatedTarget = relatedTarget;
     }
 
-    public BuildException(string message, [CanBeNull] ITargetDescription relatedTarget) : base(message)
+    public BuildException(string message, ITargetDescription? relatedTarget) : base(message)
     {
         RelatedTarget = relatedTarget;
     }
 
-    public BuildException(string message, [CanBeNull] ITargetDescription relatedTarget, Exception inner) : base(message, inner)
+    public BuildException(string message, ITargetDescription? relatedTarget, Exception inner) : base(message, inner)
     {
         RelatedTarget = relatedTarget;
     }
 
-    [CanBeNull]
-    public ITargetDescription RelatedTarget { get; }
+    public ITargetDescription? RelatedTarget { get; }
 }

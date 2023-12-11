@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -54,7 +52,7 @@ public class HeadTail : PCommand, ICilCompilerAware
         if (args == null)
             throw new ArgumentNullException(nameof(args));
 
-        PValue head;
+        PValue? head;
         var nextArg = ((IEnumerable<PValue>) args).GetEnumerator();
         IEnumerator<PValue> nextX;
         try
@@ -88,7 +86,7 @@ public class HeadTail : PCommand, ICilCompilerAware
             {
                 head,
                 sctx.CreateNativePValue(
-                    new Coroutine(new CoroutineContext(sctx, _tail(sctx, nextX, nextArg))))
+                    new Coroutine(new CoroutineContext(sctx, _tail(sctx, nextX, nextArg)))),
             };
     }
 

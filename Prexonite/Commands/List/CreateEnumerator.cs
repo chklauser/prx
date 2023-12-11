@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -68,22 +67,15 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         return sctx.CreateNativePValue(new EnumeratorProxy(sctx, args[0], args[1], args[2]));
     }
 
-    sealed class EnumeratorProxy : PValueEnumerator
+    sealed class EnumeratorProxy(
+            StackContext sctx,
+            PValue moveNext,
+            PValue current,
+            PValue dispose
+        )
+        : PValueEnumerator
     {
-        readonly PValue _moveNext;
-        readonly PValue _current;
-        readonly PValue _dispose;
-        readonly StackContext _sctx;
         bool _disposed;
-
-        public EnumeratorProxy(StackContext sctx, PValue moveNext, PValue current,
-            PValue dispose)
-        {
-            _moveNext = moveNext;
-            _sctx = sctx;
-            _current = current;
-            _dispose = dispose;
-        }
 
         #region Implementation of IDisposable
 
@@ -93,7 +85,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
                 throw new InvalidOperationException("The enumerator has already been disposed.");
             try
             {
-                _dispose.IndirectCall(_sctx, Array.Empty<PValue>());
+                dispose.IndirectCall(sctx, Array.Empty<PValue>());
             }
             finally
             {
@@ -115,8 +107,8 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         /// <filterpriority>2</filterpriority>
         public override bool MoveNext()
         {
-            return Runtime.ExtractBool(_moveNext.IndirectCall(_sctx, Array.Empty<PValue>()),
-                _sctx);
+            return Runtime.ExtractBool(moveNext.IndirectCall(sctx, Array.Empty<PValue>()),
+                sctx);
         }
 
         #endregion
@@ -129,7 +121,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         /// <returns>
         ///     The element in the collection at the current position of the enumerator.
         /// </returns>
-        public override PValue Current => _current.IndirectCall(_sctx, Array.Empty<PValue>());
+        public override PValue Current => current.IndirectCall(sctx, Array.Empty<PValue>());
 
         #endregion
     }

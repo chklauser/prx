@@ -25,17 +25,11 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region Namespace Imports
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading;
-using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 #endregion
 
@@ -50,7 +44,7 @@ public sealed class CompilerState : StackContext
     public const int ParamSourceIndex = 0;
     public const int ParamReturnModeIndex = 5;
 
-    string _effectiveArgumentsListId;
+    string? _effectiveArgumentsListId;
 
     /// <summary>
     ///     The name of the arguments list variable.
@@ -67,19 +61,19 @@ public sealed class CompilerState : StackContext
         Pass = pass;
         TargetEngine = targetEngine ?? throw new ArgumentNullException(nameof(targetEngine));
         Il = il ?? throw new ArgumentNullException(nameof(il));
-        IndexMap = new Dictionary<int, string>();
+        IndexMap = new();
         InstructionLabels = new Label[Source.Code.Count + 1];
         for (var i = 0; i < InstructionLabels.Length; i++)
             InstructionLabels[i] = il.DefineLabel();
         ReturnLabel = il.DefineLabel();
-        Symbols = new SymbolTable<CilSymbol>();
-        TryBlocks = new Stack<CompiledTryCatchFinallyBlock>();
+        Symbols = new();
+        TryBlocks = new();
 
-        _ForeachHints = new List<ForeachHint>();
-        _CilExtensionOffsets = new Queue<int>();
+        _ForeachHints = new();
+        _CilExtensionOffsets = new();
         if (source.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
         {
-            SortedSet<int> cilExtensionOffsets = null;
+            SortedSet<int>? cilExtensionOffsets = null;
             foreach (var entry in cilHints.List)
             {
                 var hint = entry.List;
@@ -88,8 +82,7 @@ public sealed class CompilerState : StackContext
                 switch (hint[0].Text)
                 {
                     case CilExtensionHint.Key:
-                        if (cilExtensionOffsets == null)
-                            cilExtensionOffsets = new SortedSet<int>();
+                        cilExtensionOffsets ??= [];
                         var cilExt = CilExtensionHint.FromMetaEntry(hint);
                         foreach (var offset in cilExt.Offsets)
                             cilExtensionOffsets.Add(offset);
@@ -106,7 +99,7 @@ public sealed class CompilerState : StackContext
             }
         }
 
-        Seh = new StructuredExceptionHandling(this);
+        Seh = new(this);
         StackSize = new int[source.Code.Count];
     }
 
@@ -114,18 +107,22 @@ public sealed class CompilerState : StackContext
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Argc")]
-    public LocalBuilder ArgcLocal { get; internal set; }
+    public LocalBuilder ArgcLocal => _argcLocal ??= Il.DeclareLocal(typeof(int));
+
+    LocalBuilder? _argcLocal;
 
     public PFunction Source { get; }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    [SuppressMessage("Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Argv")]
-    public LocalBuilder ArgvLocal { get; internal set; }
+    public LocalBuilder ArgvLocal => _argvLocal ??= Il.DeclareLocal(typeof(PValue[]));
+    private LocalBuilder? _argvLocal;
 
     public ILGenerator Il { get; }
 
     /// <summary>
-    ///     Maps from local variable indices to local variable phyical ids
+    ///     Maps from local variable indices to local variable physical ids
     /// </summary>
     public Dictionary<int, string> IndexMap { get; }
 
@@ -143,12 +140,16 @@ public sealed class CompilerState : StackContext
     /// <summary>
     ///     The local variable that holds the CIL stack context
     /// </summary>
-    public LocalBuilder SctxLocal { get; internal set; }
+    public LocalBuilder SctxLocal => _sctxLocal ??= Il.DeclareLocal(typeof(CilFunctionContext));
+
+    LocalBuilder? _sctxLocal;
 
     /// <summary>
     ///     <para>The local variable that holds arrays of shared variables immediately before closure instantiation</para>
     /// </summary>
-    public LocalBuilder SharedLocal { get; internal set; }
+    public LocalBuilder SharedLocal => _sharedLocal ??= Il.DeclareLocal(typeof (PVariable[]));
+
+    LocalBuilder? _sharedLocal;
 
     /// <summary>
     ///     CilSymbol table for the CIL compiler. See <see cref = "CilSymbol" /> for details.
@@ -159,7 +160,13 @@ public sealed class CompilerState : StackContext
     ///     <para>Array of temporary variables. They are not preserved across Prexonite instructions. You are free to use them within <see
     ///      cref = "ICilCompilerAware.ImplementInCil" /> or <see cref = "ICilExtension.Implement" /></para>.
     /// </summary>
-    public LocalBuilder[] TempLocals { get; internal set; }
+    public LocalBuilder[] TempLocals
+    {
+        get => _tempLocals ?? throw new InvalidOperationException("TempLocals have not been computed yet.");
+        internal set => _tempLocals = value;
+    }
+    
+    LocalBuilder[]? _tempLocals;
 
     /// <summary>
     ///     The stack of try blocks currently in effect. The innermost try block is on top.
@@ -174,14 +181,16 @@ public sealed class CompilerState : StackContext
     /// <summary>
     ///     List of foreach CIL hints associated with this function.
     /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Internal")]
     internal List<ForeachHint> _ForeachHints { get; }
 
     /// <summary>
     ///     List of addresses where valid CIL extension code begins.
     /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Internal")]
     internal Queue<int> _CilExtensionOffsets { [DebuggerStepThrough] get; }
 
-    LocalBuilder _partialApplicationMapping;
+    LocalBuilder? _partialApplicationMapping;
 
     /// <summary>
     ///     <para>Local <code>System.Int32[]</code> variable. Used for temporarily holding arguments for partial application constructors.</para>
@@ -209,7 +218,7 @@ public sealed class CompilerState : StackContext
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
         return false;
     }
@@ -240,7 +249,7 @@ public sealed class CompilerState : StackContext
 
     public LocalBuilder PrimaryTempLocal => TempLocals[0];
 
-    public StructuredExceptionHandling Seh { get; }
+    public StructuredExceptionHandlingCompiler Seh { get; }
 
     public int[] StackSize { [DebuggerStepThrough] get; }
 
@@ -289,7 +298,7 @@ public sealed class CompilerState : StackContext
                 Il.Emit(OpCodes.Ldc_I4_8);
                 break;
             default:
-                if (i >= sbyte.MinValue && i <= sbyte.MaxValue)
+                if (i is >= sbyte.MinValue and <= sbyte.MaxValue)
                     Il.Emit(OpCodes.Ldc_I4_S, (sbyte) i);
                 else
                     Il.Emit(OpCodes.Ldc_I4, i);
@@ -332,7 +341,7 @@ public sealed class CompilerState : StackContext
     }
 
     /// <summary>
-    ///     Load previously perpared argument array (<see cref = "FillArgv" />) onto the stack.
+    ///     Load previously prepared argument array (<see cref = "FillArgv" />) onto the stack.
     /// </summary>
     /// <param name = "argc">The number of elements in that argument array.</param>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
@@ -471,7 +480,7 @@ public sealed class CompilerState : StackContext
     /// </summary>
     /// <param name="id">The name of the global variable to be loaded (an internal id)</param>
     /// <param name="moduleName">The name of the module that defines the global variable. May be null to indicate an internal variable.</param>
-    public void EmitLoadGlobalValue(string id, ModuleName moduleName)
+    public void EmitLoadGlobalValue(string id, ModuleName? moduleName)
     {
         EmitLoadGlobalReference(id,moduleName);
         Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
@@ -487,7 +496,7 @@ public sealed class CompilerState : StackContext
     /// </summary>
     /// <param name="id">The internal id of the global variable.</param>
     /// <param name="moduleName">The module name containing the global variable definition. May be null to indicate an internal global variable.</param>
-    public void EmitLoadGlobalReference(string id, ModuleName moduleName)
+    public void EmitLoadGlobalReference(string id, ModuleName? moduleName)
     {
         EmitLoadLocal(SctxLocal.LocalIndex);
         Il.Emit(OpCodes.Ldstr, id);
@@ -522,11 +531,11 @@ public sealed class CompilerState : StackContext
         if (sym.Kind == SymbolKind.Local)
         {
             action();
-            EmitStoreLocal(sym.Local);
+            EmitStoreLocal(sym.Local!);
         }
         else if (sym.Kind == SymbolKind.LocalRef)
         {
-            EmitLoadLocal(sym.Local);
+            EmitLoadLocal(sym.Local!);
             action();
             Il.EmitCall(OpCodes.Call, Compiler.SetValueMethod, null);
         }
@@ -545,10 +554,10 @@ public sealed class CompilerState : StackContext
         switch (sym.Kind)
         {
             case SymbolKind.Local:
-                EmitLoadLocal(sym.Local);
+                EmitLoadLocal(sym.Local!);
                 break;
             case SymbolKind.LocalRef:
-                EmitLoadLocal(sym.Local);
+                EmitLoadLocal(sym.Local!);
                 Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
                 break;
             case SymbolKind.LocalEnum:
@@ -649,7 +658,7 @@ public sealed class CompilerState : StackContext
     }
 
     static readonly MethodInfo _pTypeConstructMethod =
-        typeof (PType).GetMethod("Construct", new[] {typeof (StackContext), typeof (PValue[])});
+        typeof (PType).GetMethod(nameof(PType.Construct), new[] {typeof (StackContext), typeof (PValue[])}) ?? throw new InvalidOperationException("Method PType.Construct(StackContext, PValue[]) is missing.");
 
     public void EmitLoadClrType(Type T)
     {
@@ -658,7 +667,7 @@ public sealed class CompilerState : StackContext
     }
 
     static readonly MethodInfo _typeGetTypeFromHandle =
-        typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
+        typeof (Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] {typeof (RuntimeTypeHandle)}) ?? throw new InvalidOperationException("Method Type.GetTypeFromHandle(RuntimeTypeHandle) is missing.");
 
     #region Early bound command call
 
@@ -731,7 +740,7 @@ public sealed class CompilerState : StackContext
         Il.EmitCall(OpCodes.Call, Runtime.ConstructPTypeAsPValueMethod, null);
     }
 
-    public bool TryGetStaticallyLinkedFunction([System.Diagnostics.CodeAnalysis.NotNull] ModuleName moduleName, string id, out MethodInfo targetMethod)
+    public bool TryGetStaticallyLinkedFunction(ModuleName moduleName, string id, [NotNullWhen(true)] out MethodInfo? targetMethod)
     {
         targetMethod = null;
         return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
@@ -741,9 +750,9 @@ public sealed class CompilerState : StackContext
     public void EmitCommandCall(Instruction ins)
     {
         var argc = ins.Arguments;
-        var id = ins.Id;
+        var id = ins.Id ?? throw new PrexoniteException($"Command call instruction has no id: {ins}");
         var justEffect = ins.JustEffect;
-        ICilCompilerAware aware = null;
+        ICilCompilerAware? aware = null;
         CompilationFlags flags;
         if (
             TargetEngine.Commands.TryGetValue(id, out var cmd) &&
@@ -782,14 +791,12 @@ public sealed class CompilerState : StackContext
         }
     }
 
-    public void EmitFuncCall(int argc, string internalId, [CanBeNull] ModuleName moduleName, bool justEffect)
+    public void EmitFuncCall(int argc, string internalId, ModuleName? moduleName, bool justEffect)
     {
         if (internalId == null)
             throw new ArgumentNullException(nameof(internalId));
 
         var thisModule = Source.ParentApplication.Module.Name;
-        var isInternal = moduleName == null ||
-            Equals(moduleName, thisModule);
 
         if (TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out var staticTargetMethod))
         {
@@ -805,7 +812,7 @@ public sealed class CompilerState : StackContext
             if (!justEffect)
                 EmitLoadTemp(0);
         }
-        else if (isInternal)
+        else if (moduleName == null || Equals(moduleName, thisModule)) // module-internal function call
         {
             //Link function dynamically
             FillArgv(argc);
@@ -818,7 +825,7 @@ public sealed class CompilerState : StackContext
         }
         else
         {
-            //Cross-Module-Link function dynamically
+            //Cross-Module: link function dynamically
             FillArgv(argc);
             EmitLoadLocal(SctxLocal);
             ReadArgv(argc);
@@ -835,13 +842,12 @@ public sealed class CompilerState : StackContext
     /// </summary>
     /// <param name="internalId">The internal id of the function to create a closure for.</param>
     /// <param name="moduleName">If the function comes from another module, the module name is passed here.</param>
-    public void EmitNewClo(string internalId, [CanBeNull] ModuleName moduleName)
+    public void EmitNewClo(string internalId, ModuleName? moduleName)
     {
         if (internalId == null)
             throw new ArgumentNullException(nameof(internalId));
 
         var thisModule = Source.ParentApplication.Module.Name;
-        var isInternal = moduleName == null || Equals(moduleName, thisModule);
 
         MethodInfo runtimeMethod;
         if(TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out _))
@@ -849,12 +855,12 @@ public sealed class CompilerState : StackContext
             Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             runtimeMethod = Runtime.NewClosureMethodStaticallyBound;
         }
-        else if(isInternal)
+        else if(moduleName == null || Equals(moduleName, thisModule)) // module-internal function reference
         {
             Il.Emit(OpCodes.Ldstr,internalId);
             runtimeMethod = Runtime.NewClosureMethodLateBound;
         }
-        else
+        else // cross-module function reference
         {
             Il.Emit(OpCodes.Ldstr,internalId);
             EmitModuleName(moduleName);
@@ -885,19 +891,17 @@ public sealed class CompilerState : StackContext
         Il.EmitCall(OpCodes.Call, Runtime.LoadCommandReferenceMethod, null);
     }
 
-    public void EmitLoadFuncRefAsPValue(string internalId, [CanBeNull] ModuleName moduleName)
+    public void EmitLoadFuncRefAsPValue(string internalId, ModuleName? moduleName)
     {
         EmitLoadLocal(SctxLocal);
         var thisModule = Source.ParentApplication.Module.Name;
-        var isInternal = moduleName == null ||
-            Equals(moduleName, thisModule);
 
         if (TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out _))
         {
             Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             EmitVirtualCall(Compiler.CreateNativePValue);
         }
-        else  if(isInternal)
+        else  if(moduleName == null || Equals(moduleName, thisModule)) // module-internal function reference
         {
             // dynamically linked, same module
             Il.Emit(OpCodes.Ldstr, internalId);
@@ -912,7 +916,7 @@ public sealed class CompilerState : StackContext
         }
     }
 
-    public void EmitLoadGlobalRefAsPValue(string id, ModuleName moduleName)
+    public void EmitLoadGlobalRefAsPValue(string id, ModuleName? moduleName)
     {
         EmitLoadLocal(SctxLocal);
         Il.Emit(OpCodes.Ldstr, id);
@@ -929,7 +933,11 @@ public sealed class CompilerState : StackContext
 
     public void EmitLoadLocalRefAsPValue(string id)
     {
-        EmitLoadLocal(Symbols[id].Local);
+        if (Symbols[id] is not { Local: { } local })
+        {
+            throw new PrexoniteException($"Internal error: unexpectedly can't find symbol for local variable {id}.");
+        }
+        EmitLoadLocal(local);
         Il.EmitCall(OpCodes.Call, Runtime.WrapPVariableMethod, null);
     }
 
@@ -958,7 +966,14 @@ public sealed class CompilerState : StackContext
 
     public void EmitLoadRealAsPValue(Instruction ins)
     {
-        EmitLoadRealAsPValue((double) ins.GenericArgument);
+        if (ins.GenericArgument is double real)
+        {
+            EmitLoadRealAsPValue(real);
+        }
+        else
+        {
+            throw new PrexoniteException($"Invalid load real instruction: {ins}");
+        }
     }
 
     public void EmitLoadIntAsPValue(int argc)
@@ -986,14 +1001,14 @@ public sealed class CompilerState : StackContext
     {
         var cs = new ConstructorInfo[3];
         cs[0] = 
-            typeof (Version).GetConstructor(new[] 
-                {typeof (int), typeof (int)});
+            typeof (Version).GetConstructor(new[] {typeof (int), typeof (int)}) 
+            ?? throw new InvalidOperationException("Version(int,int) constructor is missing.");
         cs[1] =
-            typeof (Version).GetConstructor(new[] 
-                {typeof (int), typeof (int), typeof (int)});
+            typeof (Version).GetConstructor(new[] {typeof (int), typeof (int), typeof (int)})
+            ?? throw new InvalidOperationException("Version(int,int,int) constructor is missing.");
         cs[2] =
-            typeof (Version).GetConstructor(new[]
-                {typeof (int), typeof (int), typeof (int), typeof (int)});
+            typeof (Version).GetConstructor(new[] {typeof (int), typeof (int), typeof (int), typeof (int)})
+            ?? throw new InvalidOperationException("Version(int,int,int,int) constructor is missing.");
         return cs;
     },LazyThreadSafetyMode.None);
 

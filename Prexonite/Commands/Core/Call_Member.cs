@@ -23,17 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
 using Prexonite.Commands.List;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -89,7 +86,7 @@ public sealed class Call_Member : PCommand
 
         if (args[1].Type == PType.Bool && args.Length > 2)
         {
-            isSet = (bool) args[1].Value;
+            isSet = (bool) args[1].Value!;
             id = args[i++].CallToString(sctx);
         }
         else
@@ -130,7 +127,7 @@ public sealed class Call_Member : PCommand
     ///     Lists and coroutines are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
-    public PValue Run(StackContext sctx, PValue obj, bool isSet, string id, params PValue[] args)
+    public PValue Run(StackContext sctx, PValue? obj, bool isSet, string id, params PValue[] args)
     {
         if (obj == null)
             return PType.Null.CreatePValue();

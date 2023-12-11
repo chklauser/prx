@@ -23,10 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
+
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Modular
@@ -37,13 +34,11 @@ namespace Prexonite.Compiler.Build
 {
     public interface ITargetDescription : IDependent<ModuleName>
     {
-        [NotNull]
         IReadOnlyCollection<ModuleName> Dependencies { get; }
 
-        [NotNull]
         IReadOnlyList<Message> BuildMessages { get; }
 
-        Task<ITarget> BuildAsync([NotNull] IBuildEnvironment build, [NotNull] IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
+        Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
 
         IEnumerable<ModuleName> IDependent<ModuleName>.GetDependencies() => Dependencies;
     }

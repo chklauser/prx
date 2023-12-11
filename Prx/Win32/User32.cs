@@ -86,7 +86,7 @@ public static class User32
             else if (relaxed)
                 return string.Empty;
             else //Fail early (-P)
-                throw new Exception("Invalid key (" + key.KeyChar + "/" + result + "/" +
+                throw new("Invalid key (" + key.KeyChar + "/" + result + "/" +
                     outputBuilder + ")");
         }
     }
@@ -100,7 +100,7 @@ public static class User32
         if (result > 0)
             return outputBuilder.ToString(0, result);
         else
-            throw new Exception("Invalid key (" + key + ")");
+            throw new("Invalid key (" + key + ")");
     }
 
     const byte HighBit = 0x80;
@@ -121,7 +121,7 @@ public static class User32
         return keyState;
     }
 
-    [DllImport("user32.dll", EntryPoint = "GetKeyState")]
+    [DllImport("user32.dll", EntryPoint = nameof(GetKeyState))]
     static extern short _queryKeyState(uint nVirtKey);
 
     [DllImport("user32.dll")]

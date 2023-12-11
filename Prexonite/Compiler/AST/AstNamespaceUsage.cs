@@ -24,11 +24,8 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -46,10 +43,9 @@ namespace Prexonite.Compiler.Ast;
 /// </remarks>
 public class AstNamespaceUsage : AstGetSetImplBase
 {
-    [CanBeNull]
     QualifiedId? _referencePath;
 
-    public AstNamespaceUsage(ISourcePosition position, PCall call, [NotNull] Namespace @namespace) : base(position, call)
+    public AstNamespaceUsage(ISourcePosition position, PCall call, Namespace @namespace) : base(position, call)
     {
         Namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
     }
@@ -68,7 +64,6 @@ public class AstNamespaceUsage : AstGetSetImplBase
     /// otherwise it is meaningless. 
     /// </para>
     /// </remarks>
-    [CanBeNull]
     public QualifiedId? ReferencePath
     {
         get => _referencePath;
@@ -80,7 +75,6 @@ public class AstNamespaceUsage : AstGetSetImplBase
         }
     }
 
-    [NotNull]
     public Namespace Namespace { get; }
 
     protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)

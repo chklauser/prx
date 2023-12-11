@@ -23,14 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using JetBrains.Annotations;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -93,7 +89,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     ///    The index of item if found in the list; otherwise, -1.
     ///</returns>
     ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.IList`1"></see>.</param>
-    public int IndexOf([CanBeNull] AstExpr item)
+    public int IndexOf(AstExpr? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -109,7 +105,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
     ///<exception cref = "T:System.ArgumentOutOfRangeException">index is not a valid index in the <see
     ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
-    public void Insert(int index, AstExpr item)
+    public void Insert(int index, AstExpr? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -161,7 +157,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     ///</summary>
     ///<param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
     ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
-    public void Add(AstExpr item)
+    public void Add(AstExpr? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -197,7 +193,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     ///    true if item is found in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
     ///</returns>
     ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
-    public bool Contains(AstExpr item)
+    public bool Contains(AstExpr? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -230,7 +226,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     ///</returns>
     ///<param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
     ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
-    public bool Remove(AstExpr item)
+    public bool Remove(AstExpr? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -307,7 +303,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     #region Implementation of IObject
 
     public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         switch (id.ToUpperInvariant())
         {
@@ -315,7 +311,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
                 if (args.Length > 0)
                 {
                     var arg0 = args[0];
-                    IEnumerable<PValue> xs;
+                    IEnumerable<PValue>? xs;
                     if (arg0.Value is IEnumerable<AstExpr> exprs)
                     {
                         AddRange(exprs);
@@ -324,11 +320,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
                     }
                     else if ((xs = arg0.Value as IEnumerable<PValue>) != null)
                     {
-                        AddRange(
-                            from x in xs
-                            select (AstExpr)
-                                x.ConvertTo(sctx, typeof (AstExpr), true).Value
-                        );
+                        AddRange(xs.Select(x => (AstExpr)x.ConvertTo(sctx, typeof(AstExpr), true).Value!));
                         result = PType.Null;
                         return true;
                     }

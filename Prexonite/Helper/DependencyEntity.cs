@@ -23,9 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using Prexonite.Commands.List;
 
 namespace Prexonite;
@@ -39,17 +37,17 @@ public static class DependencyEntity<T>
             _dynamicallyCallGetDependencies(sctx, getDependencies));
     }
 
-    static Func<PValue, IEnumerable<T>> _dynamicallyCallGetDependencies(
-        StackContext sctx, PValue getDependenciesPV)
+    static Func<PValue, IEnumerable<T>>? _dynamicallyCallGetDependencies(
+        StackContext sctx, PValue? getDependenciesPv)
     {
-        if (getDependenciesPV == null)
+        if (getDependenciesPv == null)
             return null;
 
         return value =>
         {
-            var depsPV = getDependenciesPV.IndirectCall(sctx, new[] {value});
+            var depsPv = getDependenciesPv.IndirectCall(sctx, new[] {value});
 
-            var depsDynamic = Map._ToEnumerable(sctx, depsPV);
+            var depsDynamic = Map._ToEnumerable(sctx, depsPv);
             if (depsDynamic == null)
                 throw new PrexoniteException(
                     "getDependencies function did not return enumerable.");
@@ -66,10 +64,10 @@ public class DependencyEntity<TKey, TValue> : IDependent<TKey>
     readonly Func<TValue, IEnumerable<TKey>> _getDependencies;
 
     public DependencyEntity(TKey name, TValue value,
-        Func<TValue, IEnumerable<TKey>> getDependencies)
+        Func<TValue, IEnumerable<TKey>>? getDependencies)
     {
         Name = name;
-        _getDependencies = getDependencies ?? throw new NullReferenceException("getDependencies");
+        _getDependencies = getDependencies ?? throw new ArgumentNullException(nameof(getDependencies));
         Value = value;
     }
 

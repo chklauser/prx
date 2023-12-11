@@ -32,8 +32,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -42,16 +44,12 @@ using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
 using Prexonite.Types;
 
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
     // ReSharper disable InconsistentNaming
     public abstract partial class VMTests
         // ReSharper restore InconsistentNaming
     {
-        #region Setup
-
-        #endregion
-
         [Test]
         public virtual void CilVersusInterpreted()
         {
@@ -182,7 +180,7 @@ function main(lst)
             }
             Expect(
                 string.Concat(sbe.ToString(), sbo.ToString()),
-                new[] {PType.List.CreatePValue(lst)});
+                PType.List.CreatePValue(lst));
         }
 
         [Test]
@@ -552,7 +550,7 @@ function main(var lst)
                     new PValueKeyValuePair("apple", 1),
                     new PValueKeyValuePair("pencil", 5),
                     new PValueKeyValuePair("juice", 2),
-                    new PValueKeyValuePair("apple", 2)
+                    new PValueKeyValuePair("apple", 2),
                 };
 
             Expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
@@ -820,7 +818,7 @@ macro acquire_free()
 function main = acquire_free;
 ");
 
-            var mainFunc = target.Functions["main"];
+            var mainFunc = target.Functions["main"] ?? throw new InvalidOperationException("main not found.");
 
             Assert.AreEqual(1, mainFunc.Variables.Count);
             var v = mainFunc.Variables.First();
@@ -865,7 +863,7 @@ function write does print(var args);
 build does write(""nothing"");
 ");
 
-            Assert.IsNull(target.Variables["flag"].Value.Value);
+            Assert.IsNull((target.Variables["flag"] ?? throw new InvalidOperationException("flag not found.")).Value.Value);
         }
 
         [Test]
@@ -957,8 +955,8 @@ function eq(x) = x == x;
 function neq(x) = x != x;
 ");
 
-            ExpectNamed("eq", true, new PValue(new object(), PType.Object[typeof (object)]));
-            ExpectNamed("neq", false, new PValue(new object(), PType.Object[typeof (object)]));
+            ExpectNamed("eq", true, new PValue(new(), PType.Object[typeof (object)]));
+            ExpectNamed("neq", false, new PValue(new(), PType.Object[typeof (object)]));
         }
 
         [Test] //#18
@@ -1020,7 +1018,7 @@ function main(x,y,z) = (x : y : z).Key;
 
             public Callable(Func<StackContext, PValue[], PValue> impl)
             {
-                _impl = impl ?? throw new ArgumentNullException("impl");
+                _impl = impl ?? throw new ArgumentNullException(nameof(impl));
             }
 
             #region Implementation of IIndirectCall
@@ -1067,11 +1065,12 @@ function ret_break()
 
         void _testReturnMode(string id, ReturnMode mode, PValue retVal)
         {
-            var fctx = target.Functions[id].CreateFunctionContext(engine);
+            var func = target.Functions[id] ?? throw new InvalidOperationException("func not found.");
+            var fctx = func.CreateFunctionContext(engine);
             engine.Process(fctx);
             Assert.AreEqual(fctx.ReturnMode, mode,
                 "Return mode for function " + id + " does not match.");
-            Assert.IsTrue((bool) retVal.Equality(fctx, fctx.ReturnValue).Value,
+            Assert.IsTrue((bool) retVal.Equality(fctx, fctx.ReturnValue).Value!,
                 "Return value for function " + id + " does not match.");
         }
 
@@ -1318,6 +1317,7 @@ function main(x,type)
         }
 
         [Test]
+        [SuppressMessage("ReSharper", "RedundantAssignment")]
         public void PostIncDecGlobal()
         {
             Compile(
@@ -1367,7 +1367,7 @@ function main(x)
             Compile(
                 @"
 function main(y,x)
-[ Add Prx::Tests to Import; ]
+[ Add PrexoniteTests.Tests to Import; ]
 {
     for(var i = 0; i < y; i++)
     {
@@ -1628,7 +1628,7 @@ function main()[is volatile;]
             var pos = new SourcePosition("file", -1, -2);
             var mn = ldr.ParentApplication.Module.Name;
             var ct = ldr.FunctionTargets["main"];
-            ct.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
+            ct!.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
             var block = new AstScopedBlock(new SourcePosition("file", -1, -2),ct.Ast);
 
             var assignStmt = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s",mn),PCall.Set);
@@ -1652,24 +1652,16 @@ function main()[is volatile;]
             ct.Emit(sourcePosition, OpCode.ret_value);
 
             if (CompileToCil)
-                Prexonite.Compiler.Cil.Compiler.Compile(ldr, target, StaticLinking);
+                Compiler.Compile(ldr, target, StaticLinking);
 
             Expect("BEGIN--stmt.expr.");
         }
-
-        #region Helper
-
-        #endregion
     }
 }
 
 namespace Prx.Tests
 {
-    public static class StaticClassMock
-    {
-        public static string SomeProperty { get; set; }
-    }
-
+    [PublicAPI] // used in tests
     public class ConstructEcho
     {
         public int Index { get; set; }

@@ -23,9 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Prexonite;
@@ -70,7 +72,7 @@ public sealed class Benchmark : IObject
 
     #region Entries
 
-    public const string BenchmarkKey = "Benchmark";
+    public const string BenchmarkKey = nameof(Benchmark);
     public const string TitleKey = "Title";
     public const string DescriptionKey = "Description";
     public const string UsesIterationKey = "Iteration";
@@ -80,6 +82,7 @@ public sealed class Benchmark : IObject
 
     public BenchmarkEntryCollection Entries { get; } = new();
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Internal")]
     internal Stopwatch _Stopwatch { get; } = new();
 
     public void IncludeAll(Application application)
@@ -103,7 +106,7 @@ public sealed class Benchmark : IObject
     {
         if (function == null)
             throw new ArgumentNullException(nameof(function));
-        Entries.Add(new BenchmarkEntry(this, function));
+        Entries.Add(new(this, function));
     }
 
     public List<Measurement> MeasureAll(bool verbose)
@@ -125,7 +128,7 @@ public sealed class Benchmark : IObject
     #region IObject Members
 
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[]? args, PCall call, string? id, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -145,13 +148,13 @@ public sealed class Benchmark : IObject
                 {
                     if (arg.Type.ToBuiltIn() != PType.BuiltIn.List)
                         continue;
-                    foreach (var func in (List<PValue>) arg.Value)
+                    foreach (var func in (List<PValue>) arg.Value!)
                         Include(func.ConvertTo<PFunction>(sctx));
                 }
                 result = PType.Null.CreatePValue();
                 break;
             case "includeall":
-                if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out Application tapp)))
+                if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out Application? tapp)))
                     tapp = sctx.ParentApplication;
                 IncludeAll(tapp);
                 result = PType.Null.CreatePValue();

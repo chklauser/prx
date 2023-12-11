@@ -23,9 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.IO;
-using System.Linq;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -159,10 +157,10 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
     }
 
     internal static readonly MethodInfo _StaticPrintTextWriterGetMethod =
-        typeof (StaticPrint).GetProperty("Writer").GetGetMethod();
+        typeof (StaticPrint).GetProperty(nameof(Writer))!.GetGetMethod()!;
 
     static readonly MethodInfo _textWriterWriteMethod = typeof (TextWriter).GetMethod(
-        "Write", new[] {typeof (string)});
+        "Write", new[] {typeof (string)})!;
 
     internal static string _ToString(CompileTimeValue value)
     {

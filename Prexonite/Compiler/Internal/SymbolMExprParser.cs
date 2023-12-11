@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Properties;
 
@@ -34,14 +32,11 @@ namespace Prexonite.Compiler.Internal;
 
 public class SymbolMExprParser
 {
-    [NotNull]
     readonly ISymbolView<Symbol> _symbols;
-    [NotNull]
     readonly ISymbolView<Symbol> _topLevelSymbols;
-    [NotNull]
     readonly IMessageSink _messageSink;
 
-    public SymbolMExprParser([NotNull] ISymbolView<Symbol> symbols,[NotNull] IMessageSink messageSink, [NotNull]ISymbolView<Symbol> topLevelSymbols = null)
+    public SymbolMExprParser(ISymbolView<Symbol> symbols,IMessageSink messageSink, ISymbolView<Symbol>? topLevelSymbols = null)
     {
         _symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
         _messageSink = messageSink ?? throw new ArgumentNullException(nameof(messageSink));
@@ -52,11 +47,11 @@ public class SymbolMExprParser
 
     public const string AbsoluteModifierHead = "absolute";
 
-    bool _tryParseCrossReference(MExpr expr, [NotNull] ISymbolView<Symbol> symbols, out Symbol symbol)
+    bool _tryParseCrossReference(MExpr expr, ISymbolView<Symbol> symbols, [NotNullWhen(true)] out Symbol? symbol)
     {
         symbol = null;
 
-        if (!expr.TryMatchHead(SymbolMExprSerializer.CrossReferenceHead, out List<MExpr> elements))
+        if (!expr.TryMatchHead(SymbolMExprSerializer.CrossReferenceHead, out List<MExpr>? elements))
             return false;
 
         var currentScope = symbols;
@@ -79,7 +74,7 @@ public class SymbolMExprParser
                 var errors = new List<Message>();
                 var nsSym = NamespaceSymbol.UnwrapNamespaceSymbol(symbol, element.Position, _messageSink, errors);
 
-                Message abortMessage = null;
+                Message? abortMessage = null;
                 foreach (var error in errors)
                 {
                     if (abortMessage == null)
@@ -90,6 +85,8 @@ public class SymbolMExprParser
 
                 if (abortMessage != null)
                     throw new ErrorMessageException(abortMessage);
+                if (nsSym == null)
+                    throw new PrexoniteException("UnwrapNamespaceSymbol returned null but no error message.");
 
                 currentScope = nsSym.Namespace;
             }
@@ -102,11 +99,10 @@ public class SymbolMExprParser
         return true;
     }
 
-    [NotNull]
-    public Symbol Parse( [NotNull] MExpr expr)
+    public Symbol Parse( MExpr expr)
     {
-        Symbol innerSymbol;
-        if (expr.TryMatchHead(SymbolMExprSerializer.DereferenceHead, out MExpr innerSymbolExpr))
+        Symbol? innerSymbol;
+        if (expr.TryMatchHead(SymbolMExprSerializer.DereferenceHead, out MExpr? innerSymbolExpr))
         {
             innerSymbol = Parse(innerSymbolExpr);
             return Symbol.CreateDereference(innerSymbol, expr.Position);
@@ -119,7 +115,7 @@ public class SymbolMExprParser
         {
             return innerSymbol;
         }
-        else if (expr.TryMatchHead(SymbolMExprSerializer.ErrorHead, out List<MExpr> elements) && elements.Count == 4)
+        else if (expr.TryMatchHead(SymbolMExprSerializer.ErrorHead, out List<MExpr>? elements) && elements.Count == 4)
         {
             return _parseMessage(MessageSeverity.Error, expr, elements);
         }
@@ -147,9 +143,8 @@ public class SymbolMExprParser
         }
     }
 
-    [NotNull]
     Symbol _parseMessage(MessageSeverity severity,
-        [NotNull] MExpr expr, [NotNull] List<MExpr> elements)
+        MExpr expr, List<MExpr> elements)
     {
         Debug.Assert(elements[0] != null);
         Debug.Assert(elements[1] != null);
@@ -170,8 +165,7 @@ public class SymbolMExprParser
         }
     }
 
-    [NotNull]
-    static ISourcePosition _parsePosition([NotNull] MExpr expr)
+    static ISourcePosition _parsePosition(MExpr expr)
     {
         if (expr.TryMatchHead(SymbolMExprSerializer.SourcePositionHead, out var fileExpr, out var lineExpr,
                 out var columnExpr)
@@ -181,7 +175,7 @@ public class SymbolMExprParser
         {
             return new SourcePosition(file, line, column);
         }
-        else if(expr.TryMatchHead(HerePositionHead, out List<MExpr> _))
+        else if(expr.TryMatchHead(HerePositionHead, out List<MExpr>? _))
         {
             return expr.Position;
         }

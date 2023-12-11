@@ -24,11 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-
-#nullable enable
-
 namespace Prexonite;
 
 public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: class

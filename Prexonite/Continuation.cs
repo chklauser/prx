@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -40,7 +38,7 @@ public class Continuation : Closure
         : base(fctx.Implementation, _getSharedVariables(fctx))
     {
         EntryOffset = fctx.Pointer; //Pointer must already be incremented
-        State = new SymbolTable<PValue>(fctx.LocalVariables.Count);
+        State = new(fctx.LocalVariables.Count);
         foreach (var variable in fctx.LocalVariables)
             State[variable.Key] = variable.Value.Value;
         var stack = new PValue[fctx.StackSize];
@@ -70,7 +68,7 @@ public class Continuation : Closure
         for (var i = 0; i < sharedNames.Length; i++)
         {
             var name = sharedNames[i].Text;
-            sharedVariables[i] = fctx.LocalVariables[name];
+            sharedVariables[i] = fctx.LocalVariables[name] ?? throw new PrexoniteException("Continuation references non-existent shared variable '" + name + "'.");
         }
         return sharedVariables;
     }
@@ -104,7 +102,14 @@ public class Continuation : Closure
         _populateStack(fctx);
 
         foreach (var variable in State)
-            fctx.LocalVariables[variable.Key].Value = variable.Value;
+        {
+            var v = fctx.LocalVariables[variable.Key];
+            if (v == null)
+            {
+                throw new PrexoniteException("Continuation references non-existent local variable '" + variable.Key + "'.");
+            }
+            v.Value = variable.Value;
+        }
 
         //insert the value returned by the called function
         fctx.Push(returnValue);

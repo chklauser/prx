@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Diagnostics;
 
@@ -48,7 +49,7 @@ public sealed class Measurement
 
     public double PassMilliseconds => RawMilliseconds/(double) Entry.Parent.Iterations;
 
-    public double PassMicroseconds => checked(PassMilliseconds*1000);
+    public double PassMicroseconds => PassMilliseconds*1000;
 
     public long ClearedMilliseconds => RawMilliseconds - OverheadMilliseconds;
 
@@ -56,7 +57,7 @@ public sealed class Measurement
 
     public double ClearedPassMilliseconds => ClearedMilliseconds/(double) Entry.Parent.Iterations;
 
-    public double ClearedPassMicroseconds => checked(ClearedPassMilliseconds*1000);
+    public double ClearedPassMicroseconds => ClearedPassMilliseconds*1000;
 
     public long OverheadMilliseconds { get; }
 

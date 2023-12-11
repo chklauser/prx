@@ -35,13 +35,13 @@ public class MemberCallable : IObject
 {
     public class CallExpectation
     {
-        public PCall ExpectedCall { get; set; }
-        public PValue[] ExpectedArguments { get; set; }
-        public PValue ReturnValue { get; set; }
+        public required PCall ExpectedCall { get; init; }
+        public required PValue[] ExpectedArguments { get; init; }
+        public required PValue? ReturnValue { get; init; }
         public bool WasCalled { get; set; }
     }
 
-    public string Name { get; set; }
+    public required string Name { get; init; }
 
     public SymbolTable<CallExpectation> Expectations { [DebuggerStepThrough] get; } = new(8);
 
@@ -53,7 +53,7 @@ public class MemberCallable : IObject
         Assert.IsTrue(Expectations.TryGetValue(id, out var expectation),
             $"A call to member {id} on object {Name} is not expected.");
 
-        Assert.AreEqual(expectation.ExpectedCall, call, "Call type (get/set)");
+        Assert.AreEqual(expectation!.ExpectedCall, call, "Call type (get/set)");
         Assert.AreEqual(expectation.ExpectedArguments.Length, args.Length,
             "Number of arguments do not match. Called with " + args.ToEnumerationString());
         for (var i = 0; i < expectation.ExpectedArguments.Length; i++)
@@ -68,15 +68,14 @@ public class MemberCallable : IObject
     #endregion
 
     public void Expect(string memberId, PValue[] args, PCall call = PCall.Get,
-        PValue returns = null)
+        PValue? returns = null)
     {
         Expectations.Add(
             memberId,
-            new CallExpectation
-            {
+            new() {
                 ExpectedArguments = args,
                 ExpectedCall = call,
-                ReturnValue = returns
+                ReturnValue = returns,
             });
     }
 

@@ -23,13 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using JetBrains.Annotations;
-using Prexonite.Compiler.Symbolic;
-using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -40,7 +36,7 @@ public abstract class AstNode : IObject
     {
     }
 
-    protected AstNode([NotNull] ISourcePosition position)
+    protected AstNode(ISourcePosition position)
     {
         Position = position ?? throw new ArgumentNullException(nameof(position));
     }
@@ -50,7 +46,6 @@ public abstract class AstNode : IObject
     {
     }
 
-    [NotNull]
     public ISourcePosition Position { get; }
 
     public string File => Position.File;
@@ -59,19 +54,19 @@ public abstract class AstNode : IObject
 
     public int Column => Position.Column;
 
-    protected abstract void DoEmitCode([NotNull] CompilerTarget target, StackSemantics semantics);
+    protected abstract void DoEmitCode(CompilerTarget target, StackSemantics semantics);
 
-    public void EmitValueCode([NotNull] CompilerTarget target)
+    public void EmitValueCode(CompilerTarget target)
     {
         EmitCode(target, StackSemantics.Value);
     }
 
-    public void EmitEffectCode([NotNull] CompilerTarget target)
+    public void EmitEffectCode(CompilerTarget target)
     {
         EmitCode(target, StackSemantics.Effect);
     }
 
-    public void EmitCode([NotNull] CompilerTarget target, StackSemantics justEffectCode)
+    public void EmitCode(CompilerTarget target, StackSemantics justEffectCode)
     {
         var partiallyApplicabale = this as IAstPartiallyApplicable;
         var applicationState = partiallyApplicabale?.CheckNodeApplicationState() ?? default(NodeApplicationState);
@@ -109,9 +104,8 @@ public abstract class AstNode : IObject
     public bool CheckForPlaceholders() => 
         this is IAstPartiallyApplicable pa && pa.CheckNodeApplicationState().HasPlaceholders;
 
-    [NotNull]
     internal static AstExpr _GetOptimizedNode(
-        [NotNull] CompilerTarget target, [NotNull] AstExpr expr)
+        CompilerTarget target, AstExpr expr)
     {
         if (target == null)
             throw new ArgumentNullException(
@@ -122,7 +116,7 @@ public abstract class AstNode : IObject
         return expr.TryOptimize(target, out var opt) ? opt : expr;
     }
 
-    internal static void _OptimizeNode([NotNull] CompilerTarget target, [NotNull] ref AstExpr expr)
+    internal static void _OptimizeNode(CompilerTarget target, ref AstExpr expr)
     {
         if (target == null)
             throw new ArgumentNullException(
@@ -137,18 +131,18 @@ public abstract class AstNode : IObject
 
     public virtual bool TryDynamicCall(
         StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
         switch (id.ToUpperInvariant())
         {
             case "GETOPTIMIZEDNODE":
-                CompilerTarget target;
+                CompilerTarget? target;
                 if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                     throw new PrexoniteException(
                         "_GetOptimizedNode(CompilerTarget target) requires target.");
-                if (!(this is AstExpr expr))
+                if (this is not AstExpr expr)
                     throw new PrexoniteException("The node is not an AstExpr.");
 
                 result = target.Loader.CreateNativePValue(_GetOptimizedNode(target, expr));
@@ -166,32 +160,4 @@ public abstract class AstNode : IObject
     }
 
     #endregion
-
-    /// <summary>
-    /// Resolves the symbol associated with an operator. If no such operator is defined, an error message
-    /// is generated and a default symbol returned. If you need more control, access the 
-    /// <see cref="SymbolStore"/> directly.
-    /// </summary>
-    /// <param name="parser">The parser to post the error message to.</param>
-    /// <param name="symbolicId">The symbolic id of the operator (the id used in the source code)</param>
-    /// <returns>The symbol corresponding to the symbolic id, or a default symbol when no such symbol entry exists.</returns>
-    [NotNull]
-    internal static Symbol _ResolveOperator(Parser parser, string symbolicId)
-    {
-        if (!parser.target.Symbols.TryGet(symbolicId, out var symbolEntry))
-        {
-            parser.Loader.ReportMessage(
-                Message.Error(
-                    string.Format(
-                        Resources.AstNode_NoImplementationForOperator,
-                        symbolicId), parser.GetPosition(),
-                    MessageClasses.SymbolNotResolved));
-
-            return Symbol.CreateCall(EntityRef.Command.Create(symbolicId), NoSourcePosition.Instance);
-        }
-        else
-        {
-            return symbolEntry;
-        }
-    }
 }

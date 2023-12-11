@@ -36,9 +36,8 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Types;
-using PrexoniteTests.Tests;
 
-namespace Prx.Tests;
+namespace PrexoniteTests.Tests;
 
 public abstract partial class VMTests : VMTestsBase
 {
@@ -322,7 +321,7 @@ function main(check, n)
 }
 ");
 
-        var check = CompilerTarget.CreateFunctionValue((s, args) =>
+        var check = CompilerTarget.CreateFunctionValue((s, _) =>
         {
             if (s.ParentEngine.Stack.Count > 2)
             {
@@ -335,7 +334,7 @@ function main(check, n)
         });
 
         var fac = target.Functions["factorial"];
-        Assert.IsTrue(fac.Meta[PFunction.VolatileKey].Switch,
+        Assert.IsTrue(fac!.Meta[PFunction.VolatileKey].Switch,
             "The factorial function should be volatile.");
         Assert.IsTrue(fac.Meta[PFunction.DeficiencyKey].Text.Contains(Engine.Call_TailAlias),
             "Deficiency of factorial function must mention " + Engine.Call_TailAlias);

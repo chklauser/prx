@@ -23,12 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Runtime.Serialization;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -101,7 +98,7 @@ public class AstPlaceholder : AstGetSetImplBase
     public static void DeterminePlaceholderIndices(IEnumerable<AstPlaceholder> placeholders)
     {
         //Placeholders must be assigned in two phases, because placeholders that already have an index set take priority
-        var assigned = new List<AstPlaceholder>();
+        var assigned = new List<AstPlaceholder?>();
         var unassigned = new List<AstPlaceholder>();
 
         //Phase 1: assign placeholders with an index set, and keep the rest for later (but retain their order)
@@ -161,7 +158,6 @@ public class AstPlaceholder : AstGetSetImplBase
     }
 }
 
-[Serializable]
 public class PartialApplicationSyntaxNotSupportedException : PrexoniteException
 {
     public PartialApplicationSyntaxNotSupportedException()
@@ -174,12 +170,6 @@ public class PartialApplicationSyntaxNotSupportedException : PrexoniteException
 
     public PartialApplicationSyntaxNotSupportedException(string message, Exception inner)
         : base(message, inner)
-    {
-    }
-
-    protected PartialApplicationSyntaxNotSupportedException(
-        SerializationInfo info,
-        StreamingContext context) : base(info, context)
     {
     }
 }

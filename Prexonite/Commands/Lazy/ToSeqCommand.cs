@@ -23,11 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Lazy;
 
@@ -43,10 +40,6 @@ public class ToSeqCommand : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    #region Overrides of PCommand
-
-    #endregion
-
     #region Overrides of CoroutineCommand
 
     protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
@@ -56,7 +49,7 @@ public class ToSeqCommand : CoroutineCommand, ICilCompilerAware
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     public static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier getSctx,
         PValue[] args)
     {

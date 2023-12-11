@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -77,18 +76,18 @@ public class AstUnresolved : AstGetSetImplBase
         return copy;
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         if (base.TryOptimize(target, out expr))
             return true;
         else
         {
-            AstExpr sol = this;
+            AstExpr? sol = this;
             do
             {
                 foreach (var resolver in target.Loader.CustomResolvers)
                 {
-                    sol = resolver.Resolve(target, sol as AstUnresolved);
+                    sol = resolver.Resolve(target, (sol as AstUnresolved)!);
                     if (sol != null)
                         break;
                 }

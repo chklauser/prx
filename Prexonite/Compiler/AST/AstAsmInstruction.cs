@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -52,16 +51,16 @@ public class AstAsmInstruction : AstNode
             switch (Instruction.OpCode)
             {
                 case OpCode.jump:
-                    target.EmitJump(Position, Instruction.Id);
+                    target.EmitJump(Position, jumpTargetLabel);
                     break;
                 case OpCode.jump_t:
-                    target.EmitJumpIfTrue(Position, Instruction.Id);
+                    target.EmitJumpIfTrue(Position, jumpTargetLabel);
                     break;
                 case OpCode.jump_f:
-                    target.EmitJumpIfFalse(Position, Instruction.Id);
+                    target.EmitJumpIfFalse(Position, jumpTargetLabel);
                     break;
                 case OpCode.leave:
-                    target.EmitLeave(Position, Instruction.Id);
+                    target.EmitLeave(Position, jumpTargetLabel);
                     break;
                 default:
                     goto emitNormally;
@@ -74,6 +73,11 @@ public class AstAsmInstruction : AstNode
         emitNormally:
         target.Emit(Position, Instruction);
     }
+
+    string jumpTargetLabel =>
+        Instruction is { Id: { } id }
+            ? id
+            : throw new PrexoniteException("Invalid instruction. Missing jump target identifier.");
 
     public override string ToString()
     {

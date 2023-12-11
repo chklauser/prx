@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Text;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Text;
 
@@ -47,7 +46,6 @@ public class SetRightCommand : PCommand, ICilCompilerAware
         // function setright(w,s,f)
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
 
         string s;
         string f;
@@ -62,7 +60,7 @@ public class SetRightCommand : PCommand, ICilCompilerAware
         }
         s = args[1].CallToString(sctx);
         parseW:
-        var w = (int) args[0].ConvertTo(sctx, PType.Int).Value;
+        var w = (int) args[0].ConvertTo(sctx, PType.Int).Value!;
         if (args.Length > 2)
             f = args[2].CallToString(sctx);
         else

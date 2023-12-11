@@ -23,10 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.Operators;
 
@@ -69,19 +69,19 @@ public abstract class BinaryOperatorBase : PCommand, ICilExtension
                 switch (result.Type.ToBuiltIn())
                 {
                     case PType.BuiltIn.Real:
-                        state.EmitLoadRealAsPValue((double) result.Value);
+                        state.EmitLoadRealAsPValue((double) result.Value!);
                         break;
                     case PType.BuiltIn.Int:
-                        state.EmitLoadIntAsPValue((int) result.Value);
+                        state.EmitLoadIntAsPValue((int) result.Value!);
                         break;
                     case PType.BuiltIn.String:
-                        state.EmitLoadStringAsPValue((string) result.Value);
+                        state.EmitLoadStringAsPValue((string) result.Value!);
                         break;
                     case PType.BuiltIn.Null:
                         state.EmitLoadNullAsPValue();
                         break;
                     case PType.BuiltIn.Bool:
-                        state.EmitLoadBoolAsPValue((bool) result.Value);
+                        state.EmitLoadBoolAsPValue((bool) result.Value!);
                         break;
                     default:
                         throw new PrexoniteException(

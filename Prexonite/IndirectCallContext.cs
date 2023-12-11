@@ -23,15 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using Prexonite.Types;
 
 namespace Prexonite;
 
 public class IndirectCallContext : StackContext
 {
-    readonly StackContext _originalStackContext;
+    readonly StackContext? _originalStackContext;
 
     public IndirectCallContext(StackContext parent, IIndirectCall callable, PValue[] args)
         : this(
@@ -49,7 +46,7 @@ public class IndirectCallContext : StackContext
     {
     }
 
-    public IndirectCallContext(StackContext originalSctx,
+    public IndirectCallContext(StackContext? originalSctx,
         Engine parentEngine,
         Application parentApplication,
         IEnumerable<string> importedNamespaces,
@@ -90,7 +87,7 @@ public class IndirectCallContext : StackContext
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
         //Remove this context if possible (IndirectCallContext should be transparent)
         var sctx = _originalStackContext ?? this;
@@ -114,5 +111,5 @@ public class IndirectCallContext : StackContext
     ///     Just providing a value here does not mean that it gets consumed by the caller.
     ///     If the context does not provide a return value, this property should return null (not NullPType).
     /// </summary>
-    public override PValue ReturnValue => _returnValue ?? PType.Null;
+    public override PValue ReturnValue => _returnValue;
 }

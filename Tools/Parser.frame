@@ -34,11 +34,11 @@ Coco/R itself) does not fall under the GNU General Public License.
 // ReSharper disable RedundantArgumentName
 // ReSharper disable JoinDeclarationAndInitializer
 // ReSharper disable RedundantArgumentDefaultValue
+// ReSharper disable BadChildStatementIndent
 
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using JetBrains.Annotations;
 using Prexonite.Internal;
 using Prexonite.Compiler;
 -->namespace
@@ -53,8 +53,8 @@ internal partial class Parser {
 	internal readonly Prexonite.Internal.IScanner scanner;
 	internal readonly Errors  errors;
 
-	internal Token t;    // last recognized token
-	internal Token la;   // lookahead token
+	internal Token t = null!;    // last recognized token
+	internal Token la = null!;   // lookahead token
 	int errDist = minErrDist;
 
 -->declarations
@@ -62,8 +62,7 @@ internal partial class Parser {
     [DebuggerNonUserCode]
 	private Parser(Prexonite.Internal.IScanner scanner) {
 		this.scanner = scanner;
-		errors = new Errors();
-		errors.parentParser = this;
+		errors = new Errors() { parentParser = this };
 	}
 
   	/// <summary>
@@ -118,7 +117,7 @@ internal partial class Parser {
 		return set[s, la.kind];
 	}
 	
-	[DebuggerNonUserCode,PublicAPI]
+	[DebuggerNonUserCode,JetBrains.Annotations.PublicAPI]
 	void ExpectWeak (int n, int follow) {
 		if (la.kind == n) Get();
 		else {
@@ -145,8 +144,7 @@ internal partial class Parser {
 -->productions
 
 	public void Parse() {
-		la = new Token();
-		la.val = "";		
+		la = new Token() {val = ""};
 		Get();
 -->parseRoot
     Expect(0);
@@ -158,10 +156,11 @@ internal partial class Parser {
 } // end Parser
 
 [System.Diagnostics.DebuggerStepThrough]
-internal class Errors : System.Collections.Generic.LinkedList<Message> {
-    internal Parser parentParser;
+[System.CodeDom.Compiler.GeneratedCode("PxCoco", null)]
+internal partial class Errors : System.Collections.Generic.LinkedList<Message> {
+    internal required Parser parentParser;
   
-    internal event EventHandler<MessageEventArgs> MessageReceived;
+    internal event EventHandler<MessageEventArgs>? MessageReceived;
     protected void OnMessageReceived(Message message)
     {
         var handler = MessageReceived;

@@ -35,7 +35,7 @@ AsmStatementBlock<AstBlock block>
 AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             string id;
                                             double dblArg;
-                                            string insbase; string detail = null;
+                                            string insbase; string? detail = null;
                                             bool bolArg;
                                             OpCode code;
                                             bool justEffect = false;
@@ -141,7 +141,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
     IF(isInJumpGroup())
     AsmId<out insbase>
     [ dot AsmId<out detail> ]
-                                        (.  Instruction ins = null;
+                                        (.  Instruction? ins = null;
                                             code = getOpCode(insbase, detail);
                                         .)
     //Symbolic:
@@ -150,7 +150,10 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             ins = new Instruction(code, -1, id);
                                         .)
     |   Integer<out arguments>          (.  ins = new Instruction(code, arguments); .)
-    )                                   (.  addInstruction(block, ins); .)
+    )                                   (.  if(ins != null) {
+                                              addInstruction(block, ins);
+                                            }
+                                        .)
     
 
 |   //ID INSTRUCTIONS
@@ -202,7 +205,10 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         .)
 
 |   //ERROR PRODUCTION: INVALID INSTRUCTION
-    AsmId<out insbase>                  (.  SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); .)
+    AsmId<out insbase>                  (.  Loader.ReportMessage(Message.Error(
+                                                "Invalid assembler instruction \"" + insbase + "\" (" + t + ").",
+                                            	GetPosition(),
+                                            	MessageClasses.UnknownAssemblyOperator)); .)
         
 .
 

@@ -28,14 +28,13 @@
 #region
 
 using System.Diagnostics;
-using System.Linq;
 using Prexonite.Compiler.Cil;
 
 #endregion
 
 namespace Prexonite.Types;
 
-[PTypeLiteral("Null")]
+[PTypeLiteral(nameof(Null))]
 public class NullPType : PType, ICilCompilerAware
 {
     #region Singleton
@@ -54,7 +53,7 @@ public class NullPType : PType, ICilCompilerAware
     #region Static
 
 #if SINGLE_NULL
-    static readonly PValue _single_null = new(null, Instance);
+    static readonly PValue SingleNull = new(null, Instance);
 #endif
 
     /// <summary>
@@ -64,7 +63,7 @@ public class NullPType : PType, ICilCompilerAware
     public static PValue CreateValue()
     {
 #if SINGLE_NULL
-        return _single_null;
+        return SingleNull;
 #else
             return new PValue(null, Instance);
 #endif
@@ -80,7 +79,7 @@ public class NullPType : PType, ICilCompilerAware
     public PValue CreatePValue()
     {
 #if SINGLE_NULL
-        return _single_null;
+        return SingleNull;
 #else
             return new PValue(null, this);
 #endif
@@ -99,13 +98,15 @@ public class NullPType : PType, ICilCompilerAware
         return true;
     }
 
+    [SuppressMessage("ReSharper", "ObjectProducedWithMustDisposeAnnotatedMethodIsNotDisposed")]
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         if (Engine.StringsAreEqual(id, "tostring"))
@@ -118,7 +119,7 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         return false;
@@ -129,7 +130,7 @@ public class NullPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = target.ToBuiltIn() switch
         {
@@ -137,7 +138,7 @@ public class NullPType : PType, ICilCompilerAware
             BuiltIn.Int => Int.CreatePValue(0),
             BuiltIn.String => String.CreatePValue(""),
             BuiltIn.Bool => Bool.CreatePValue(false),
-            _ => null
+            _ => null,
         };
 
         return result != null;
@@ -158,11 +159,9 @@ public class NullPType : PType, ICilCompilerAware
         return otherType is NullPType;
     }
 
-    const int _code = 1357155649;
-
     public override int GetHashCode()
     {
-        return _code;
+        return 1357155649;
     }
 
     #region Operators (no action)
@@ -200,7 +199,7 @@ public class NullPType : PType, ICilCompilerAware
 
     //BINARY
 
-    static bool _coalesce(PValue leftOperand, PValue rightOperand, out PValue result)
+    static bool _coalesce(PValue leftOperand, PValue rightOperand, out PValue? result)
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -217,55 +216,55 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Subtraction(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Division(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Modulus(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool BitwiseAnd(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool BitwiseOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool ExclusiveOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         var leftIsNull = leftOperand.Value == null;
         var rightIsNull = rightOperand.Value == null;
@@ -281,7 +280,7 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         var leftIsNull = leftOperand.Value == null;
         var rightIsNull = rightOperand.Value == null;
@@ -297,7 +296,7 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -317,7 +316,7 @@ public class NullPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -334,7 +333,7 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool LessThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -354,7 +353,7 @@ public class NullPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -391,7 +390,7 @@ public class NullPType : PType, ICilCompilerAware
         return true;
     }
 
-    public const string Literal = "Null";
+    public const string Literal = nameof(Null);
 
     /// <summary>
     ///     Returns the Null <see cref = "Literal" />.
@@ -407,7 +406,7 @@ public class NullPType : PType, ICilCompilerAware
     public static implicit operator PValue(NullPType T)
     {
 #if SINGLE_NULL
-        return _single_null;
+        return SingleNull;
 #else
             return new PValue(null, this);
 #endif

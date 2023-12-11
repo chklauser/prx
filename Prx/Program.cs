@@ -28,17 +28,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Prx.Benchmarking;
 
@@ -87,7 +83,7 @@ static class Program
         {
             if (Debugger.IsAttached)
             {
-                Console.WriteLine(Prexonite.Properties.Resources.Program_DebugExit);
+                Console.WriteLine(Resources.Program_DebugExit);
                 Console.ReadLine();
             }
         }
@@ -103,8 +99,7 @@ static class Program
         app.Run(engine, args.Select(engine.CreateNativePValue).ToArray());
     }
 
-    [CanBeNull]
-    static Application _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole)
+    static Application? _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole)
     {
         var plan = Plan.CreateSelfAssembling();
         var opts = new LoaderOptions(engine, null);
@@ -126,7 +121,7 @@ static class Program
                 delegate
                 {
                     timer.Start();
-                    return null;
+                    return PType.Null;
                 }));
 
         engine.Commands.AddHostCommand
@@ -148,7 +143,7 @@ static class Program
                 delegate
                 {
                     timer.Reset();
-                    return null;
+                    return PType.Null;
                 }));
 
         engine.Commands.AddHostCommand
@@ -167,8 +162,8 @@ static class Program
             @"__replace_call",
             delegate(StackContext sctx, PValue[] cargs)
             {
-                cargs ??= Array.Empty<PValue>();
-                if (sctx == null)
+                cargs = (PValue[]?)cargs ?? Array.Empty<PValue>();
+                if ((StackContext?)sctx == null)
                     throw new ArgumentNullException(nameof(sctx));
 
                 var e = sctx.ParentEngine;
@@ -182,15 +177,15 @@ static class Program
                 var rargs = new PValue[cargs.Length - 1];
                 Array.Copy(cargs, 1, rargs, 0, rargs.Length);
 
-                FunctionContext rctx = null;
-                PFunction f;
+                FunctionContext? rctx = null;
+                PFunction? f;
                 switch (carg.Type.ToBuiltIn())
                 {
                     case PType.BuiltIn.String:
                         if (
                             !sctx.ParentApplication.Functions.TryGetValue
                             (
-                                (string)carg.Value, out f))
+                                (string)carg.Value!, out f))
                             throw new PrexoniteException
                             (
                                 "Cannot replace call to " + carg +
@@ -202,18 +197,18 @@ static class Program
                         var clrType = ((ObjectPType)carg.Type).ClrType;
                         if (clrType == typeof(PFunction))
                         {
-                            f = (PFunction)carg.Value;
+                            f = (PFunction)carg.Value!;
                             rctx = f.CreateFunctionContext(e, rargs);
                         }
                         else if (clrType == typeof(Closure) &&
                                  clrType != typeof(Continuation))
                         {
-                            var c = (Closure)carg.Value;
+                            var c = (Closure)carg.Value!;
                             rctx = c.CreateFunctionContext(sctx, rargs);
                         }
                         else if (clrType == typeof(FunctionContext))
                         {
-                            rctx = (FunctionContext)carg.Value;
+                            rctx = (FunctionContext)carg.Value!;
                         }
                         break;
                 }
@@ -251,9 +246,9 @@ static class Program
         ("createBenchmark",
             delegate(StackContext sctx, PValue[] cargs)
             {
-                if (sctx == null)
+                if ((StackContext?)sctx == null)
                     throw new ArgumentNullException(nameof(sctx));
-                if (cargs == null)
+                if ((PValue[]?)cargs == null)
                     cargs = Array.Empty<PValue>();
 
                 Engine teng;
@@ -284,7 +279,7 @@ static class Program
         #region Self-assembling build plan reference
 
         engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, _) => sctx.CreateNativePValue(plan));
-        engine.Commands.AddHostCommand(@"host\prx_path", (sctx, args) => sctx.CreateNativePValue(prxPath));
+        engine.Commands.AddHostCommand(@"host\prx_path", (sctx, _) => sctx.CreateNativePValue(prxPath));
 
         #endregion
 
@@ -326,16 +321,11 @@ static class Program
 #endif
         }
 
-        if (result == null)
-        {
-            return null;
-        }
-
         if (_reportErrors(result.Value.Target.Messages)) 
             return null;
             
         var app = result.Value.Application;
-        app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName()!.Version!.ToString();
+        app.Meta[nameof(Version)] = Assembly.GetExecutingAssembly().GetName().Version!.ToString();
         return app;
 
     }

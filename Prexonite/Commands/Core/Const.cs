@@ -23,9 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Reflection;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -69,14 +69,14 @@ public class Const : PCommand, ICilCompilerAware
         }
     }
 
-    MethodInfo _createConstFunctionInfoCache;
+    MethodInfo? _createConstFunctionInfoCache;
 
-    MethodInfo _createConstFunction
+    MethodInfo createConstFunction
     {
         get
         {
-            return _createConstFunctionInfoCache ??= typeof (Const).GetMethod("CreateConstFunction",
-                new[] {typeof (PValue), typeof (StackContext)});
+            return _createConstFunctionInfoCache ??= typeof (Const).GetMethod(nameof(CreateConstFunction),
+                new[] {typeof (PValue), typeof (StackContext)})!;
         }
     }
 
@@ -105,6 +105,6 @@ public class Const : PCommand, ICilCompilerAware
         if (argc == 0)
             state.EmitLoadNullAsPValue();
 
-        state.EmitCall(_createConstFunction);
+        state.EmitCall(createConstFunction);
     }
 }

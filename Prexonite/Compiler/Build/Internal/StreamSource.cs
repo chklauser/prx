@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.IO;
+
 using System.Text;
-using JetBrains.Annotations;
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Build.Internal;
@@ -35,9 +33,9 @@ class StreamSource : ISource, IDisposable
 {
     readonly Encoding _encoding;
     readonly bool _forceSingleUse;
-    Stream _stream;
+    Stream? _stream;
 
-    public StreamSource([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
+    public StreamSource(Stream stream, Encoding encoding, bool forceSingleUse)
     {
         if (stream == null)
             throw new ArgumentNullException(nameof(stream));
@@ -62,10 +60,10 @@ class StreamSource : ISource, IDisposable
 
     public bool IsSingleUse => _forceSingleUse || _stream == null || !_stream.CanSeek;
 
-    public bool TryOpen(out TextReader reader)
+    public bool TryOpen([NotNullWhen(true)] out TextReader? reader)
     {
-        object streamObject = _stream;
-        if(_stream == null)
+        object? streamObject = _stream;
+        if(streamObject == null)
         {
             reader = null;
             return false;

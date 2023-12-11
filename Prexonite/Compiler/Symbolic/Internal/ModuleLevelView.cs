@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-
-#nullable enable
 
 namespace Prexonite.Compiler.Symbolic.Internal;
 
@@ -31,7 +26,7 @@ class ModuleLevelView : SymbolStore
 
     public static ModuleLevelView Create(SymbolStore externalScope)
     {
-        return new(externalScope, new ConcurrentDictionary<Namespace, LocalNamespaceImpl>());
+        return new(externalScope, new());
     }
 
     internal class LocalNamespaceImpl : LocalNamespace
@@ -61,7 +56,7 @@ class ModuleLevelView : SymbolStore
         internal LocalNamespaceImpl(ISymbolView<Symbol> externalScope, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
             _exportScope = Create(externalScope);
-            _localView = new ModuleLevelView(_exportScope, localProxies);
+            _localView = new(_exportScope, localProxies);
         }
 
         public override string? Prefix
@@ -86,7 +81,7 @@ class ModuleLevelView : SymbolStore
             return ReferenceEquals(_localView._localProxies, view._localProxies);
         }
 
-        public override bool TryGetExported(string id, out Symbol? exported)
+        public override bool TryGetExported(string id, [NotNullWhen(true)] out Symbol? exported)
         {
             exported = null;
             return _exportScope.IsDeclaredLocally(id) && _exportScope.TryGet(id, out exported);
@@ -147,7 +142,7 @@ class ModuleLevelView : SymbolStore
             }
                 
             localNamespace = _localProxies.GetOrAdd(ns, (externalNs, proxies) => 
-                new LocalNamespaceImpl(externalNs, proxies), _localProxies);
+                new(externalNs, proxies), _localProxies);
 
             return Symbol.CreateNamespace(localNamespace, nsSymbol.Position);
         }
@@ -193,7 +188,7 @@ class ModuleLevelView : SymbolStore
         {
             var localSym = _filterSymbol(entry.Value);
             if (!ReferenceEquals(localSym, entry.Value))
-                yield return new KeyValuePair<string, Symbol>(entry.Key, localSym);
+                yield return new(entry.Key, localSym);
             else
                 yield return entry;
         }

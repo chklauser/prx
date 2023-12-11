@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Threading;
 using Prexonite.Modular;
 
 namespace Prexonite;
@@ -59,9 +57,9 @@ public abstract class CentralCache
 
     class Impl : CentralCache
     {
-        MergingCache<EntityRef> _entityRefCache;
+        MergingCache<EntityRef>? _entityRefCache;
 
-        MergingCache<ModuleName> _moduleNameCache;
+        MergingCache<ModuleName>? _moduleNameCache;
 
         public override IObjectCache<EntityRef> EntityRefs => _entityRefCache ??= _createEntityRefCache();
 
@@ -82,7 +80,7 @@ public abstract class CentralCache
             return (_entityRefCache?.EstimateSize() ?? 0) + (_moduleNameCache?.EstimateSize() ?? 0);
         }
 
-        public override ModuleName this[string internalId, Version version] => ModuleNames.GetCached(new ModuleName(internalId, version));
+        public override ModuleName this[string internalId, Version version] => ModuleNames.GetCached(new(internalId, version));
 
         public override ModuleName this[ModuleName moduleName] => ModuleNames.GetCached(moduleName);
 
@@ -90,7 +88,7 @@ public abstract class CentralCache
 
         protected internal override CentralCache LinkInto(CentralCache cache)
         {
-            if(!(cache is Impl c))
+            if(cache is not Impl c)
             {
                 throw new ArgumentException(
                     "Can only link with proper implementations of CentralCache.", nameof(cache));
@@ -145,6 +143,7 @@ public abstract class CentralCache
 }
 
 public abstract class MergingCache<T> : IObjectCache<T>
+    where T : notnull
 {
     MergingCache()
     {
@@ -159,12 +158,8 @@ public abstract class MergingCache<T> : IObjectCache<T>
 
     public abstract void LinkWith(MergingCache<T> cache);
 
-    class Cache : LastAccessCache<T>
+    class Cache(int capacity) : LastAccessCache<T>(capacity)
     {
-        public Cache(int capacity) : base(capacity)
-        {
-        }
-
         public new IEnumerable<T> Contents()
         {
             return base.Contents();
@@ -173,14 +168,9 @@ public abstract class MergingCache<T> : IObjectCache<T>
         public new int Count => base.Count;
     }
 
-    class Impl : MergingCache<T>
+    class Impl(int capacity) : MergingCache<T>
     {
-        Cache _cache;
-
-        public Impl(int capacity)
-        {
-            _cache = new Cache(capacity);
-        }
+        Cache _cache = new(capacity);
 
         public override T GetCached(T name)
         {

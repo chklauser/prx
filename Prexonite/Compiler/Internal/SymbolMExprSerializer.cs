@@ -23,10 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+
 using Prexonite.Compiler.Symbolic;
 
 namespace Prexonite.Compiler.Internal;
@@ -35,7 +32,6 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
 {
     #region Singleton
 
-    [NotNull]
     public static SymbolMExprSerializer Instance { get; } = new();
 
     #endregion
@@ -48,19 +44,17 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
     public const string SourcePositionHead = "pos";
     public const string CrossReferenceHead = "sym";
 
-    [NotNull]
-    public static MExpr SerializePosition([NotNull] ISourcePosition exprPosition, [NotNull] ISourcePosition sourcePosition)
+    public static MExpr SerializePosition(ISourcePosition exprPosition, ISourcePosition sourcePosition)
     {
         return new MExpr.MList(exprPosition, SourcePositionHead, new MExpr[]
         {
             new MExpr.MAtom(exprPosition, sourcePosition.File),
             new MExpr.MAtom(exprPosition, sourcePosition.Line), 
-            new MExpr.MAtom(exprPosition, sourcePosition.Column)
+            new MExpr.MAtom(exprPosition, sourcePosition.Column),
         });
     }
 
-    [CanBeNull]
-    MExpr _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
+    MExpr? _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
     {
         if (existingSymbols.TryGetValue(symbol, out var symbolName))
         {
@@ -110,7 +104,7 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
             MessageSeverity.Warning => WarningHead,
             MessageSeverity.Info => InfoHead,
             _ => throw new ArgumentOutOfRangeException("Unknown message severity " +
-                Enum.GetName(typeof(MessageSeverity), self.Message.Severity))
+                Enum.GetName(typeof(MessageSeverity), self.Message.Severity)),
         };
 
         return new MExpr.MList(self.Position, head,
@@ -119,7 +113,7 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
                 SerializePosition(self.Position, self.Message.Position),
                 new MExpr.MAtom(self.Position, self.Message.MessageClass),
                 new MExpr.MAtom(self.Position, self.Message.Text),
-                self.InnerSymbol.HandleWith(this,existingSymbols)
+                self.InnerSymbol.HandleWith(this,existingSymbols),
             });
     }
             

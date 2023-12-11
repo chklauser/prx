@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
 using Prexonite.Compiler;
 
@@ -38,7 +36,6 @@ namespace Prexonite
         ///     Thrown when the compiler detected an invalid state. 
         ///     You must consider both the <see cref = "Loader" /> and the <see cref = "Application" /> to be corrupt.
         /// </summary>
-        [Serializable]
         public class FatalCompilerException : PrexoniteException
         {
             //
@@ -73,18 +70,6 @@ namespace Prexonite
                 : base(message, inner)
             {
             }
-
-            /// <summary>
-            ///     Creates an in-memory instance from an already existing but serialized instance of <see cref = "FatalCompilerException" />.
-            /// </summary>
-            /// <param name = "info">The <see cref = "SerializationInfo" />.</param>
-            /// <param name = "context">The <see cref = "StreamingContext" /> of this particular instance.</param>
-            protected FatalCompilerException(
-                SerializationInfo info,
-                StreamingContext context)
-                : base(info, context)
-            {
-            }
         }
     }
 
@@ -94,7 +79,6 @@ namespace Prexonite
     /// <remarks>
     ///     Even exceptional errors during compilation are reported as <see cref = "PrexoniteException" /> if they are not considered 'fatal'.
     /// </remarks>
-    [Serializable]
     public class PrexoniteException : Exception
     {
         /// <summary>
@@ -118,20 +102,8 @@ namespace Prexonite
         /// </summary>
         /// <param name = "message">The custom message.</param>
         /// <param name = "innerException">The inner exception.</param>
-        public PrexoniteException(string message, Exception innerException)
+        public PrexoniteException(string message, Exception? innerException)
             : base(message, innerException)
-        {
-        }
-
-        /// <summary>
-        ///     Creates an in-memory instance from an already existing but serialized instance of <see cref = "PrexoniteException" />.
-        /// </summary>
-        /// <param name = "info">The <see cref = "SerializationInfo" />.</param>
-        /// <param name = "context">The <see cref = "StreamingContext" /> of this particular instance.</param>
-        protected PrexoniteException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
         {
         }
     }
@@ -143,7 +115,6 @@ namespace Prexonite
     /// <remarks>
     ///     Use an overload of the static method CreateRuntimeException to create an instance with a stack trace.
     /// </remarks>
-    [Serializable]
     public class PrexoniteRuntimeException : PrexoniteException
     {
         /// <summary>
@@ -169,10 +140,10 @@ namespace Prexonite
         ///     Provides access to the stack trace recorded when creating the exception.
         ///     This field can be null if the instance has been created without a stack trace.
         /// </summary>
-        public string PrexoniteStackTrace { get; }
+        public string? PrexoniteStackTrace { get; }
 
         PrexoniteRuntimeException(
-            string message, Exception innerException, string prexoniteStackTrace)
+            string message, Exception? innerException, string? prexoniteStackTrace)
             : base(message, innerException)
         {
             PrexoniteStackTrace = prexoniteStackTrace;
@@ -187,7 +158,7 @@ namespace Prexonite
         /// <param name = "innerException">The inner exception.</param>
         /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
-            StackContext esctx, string message, Exception innerException)
+            StackContext esctx, string? message, Exception? innerException)
         {
             if (esctx == null)
                 throw new ArgumentNullException(nameof(esctx));
@@ -236,7 +207,7 @@ namespace Prexonite
                 builder.Append("\n");
             }
 
-            return new PrexoniteRuntimeException(message, innerException, builder.ToString());
+            return new(message, innerException, builder.ToString());
         }
 
         /// <summary>
@@ -324,7 +295,7 @@ namespace Prexonite
                 ReferenceEquals(lowestRuntimeException, pExc))
                 return pExc;
 
-            return new PrexoniteRuntimeException(lowestException.Message, lowestException,
+            return new(lowestException.Message, lowestException,
                 lowestRuntimeException.PrexoniteStackTrace);
         }
 
@@ -332,7 +303,7 @@ namespace Prexonite
             out Exception lowestException, out PrexoniteRuntimeException lowestRuntimeException)
         {
             Exception exc = originalException;
-            TargetInvocationException targetInvocationExc = null;
+            TargetInvocationException? targetInvocationExc = null;
             lowestRuntimeException = originalException;
 
             while (
@@ -348,16 +319,8 @@ namespace Prexonite
             lowestRuntimeException = exc as PrexoniteRuntimeException ?? lowestRuntimeException;
             lowestException = exc;
         }
-
-        protected PrexoniteRuntimeException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
-        {
-        }
     }
 
-    [Serializable]
     public class InvalidCallException : PrexoniteException
     {
         public InvalidCallException()
@@ -373,16 +336,8 @@ namespace Prexonite
             : base(message, innerException)
         {
         }
-
-        protected InvalidCallException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
-        {
-        }
     }
 
-    [Serializable]
     public class InvalidConversionException : PrexoniteException
     {
         public InvalidConversionException()
@@ -398,16 +353,8 @@ namespace Prexonite
             : base(message, innerException)
         {
         }
-
-        protected InvalidConversionException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
-        {
-        }
     }
 
-    [Serializable]
     public class SymbolNotFoundException : PrexoniteException
     {
         public SymbolNotFoundException()
@@ -423,16 +370,8 @@ namespace Prexonite
             : base(message, inner)
         {
         }
-
-        protected SymbolNotFoundException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
-        {
-        }
     }
 
-    [Serializable]
     public class ExecutionProhibitedException : PrexoniteException
     {
         //
@@ -452,13 +391,6 @@ namespace Prexonite
 
         public ExecutionProhibitedException(string message, Exception inner)
             : base(message, inner)
-        {
-        }
-
-        protected ExecutionProhibitedException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
         {
         }
     }

@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -32,7 +33,7 @@ public abstract class AstLoop : AstNode,
     internal AstLoop(ISourcePosition p, AstBlock parentBlock)
         : base(p)
     {
-        Block = new AstLoopBlock(p, parentBlock, prefix:"body");
+        Block = new(p, parentBlock, prefix:"body");
     }
 
     #region IAstHasBlocks Members

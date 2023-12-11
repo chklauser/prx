@@ -1,9 +1,5 @@
-#nullable enable
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -55,7 +51,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
     #region IObject Members
 
     bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall(sctx, args, call, id, out result);
     }
@@ -67,7 +63,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
         return new ApplicationCompoundImpl();
     }
 
-    public abstract bool TryGetApplication(ModuleName moduleName, out Application application);
+    public abstract bool TryGetApplication(ModuleName moduleName, [NotNullWhen(true)] out Application? application);
 
     internal abstract void _Unlink(Application application);
     internal abstract void _Link(Application application);
@@ -76,7 +72,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
     public abstract bool Contains(ModuleName moduleName);
 
     protected virtual bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call,
-        string id, out PValue result)
+        string id, [NotNullWhen(true)] out PValue? result)
     {
         switch (id.ToUpperInvariant())
         {
@@ -101,7 +97,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
                 goto default;
             default:
                 return _compoundType.TryDynamicCall(sctx, sctx.CreateNativePValue(this), args,
-                    call, id, out result, out var dummyMember, true);
+                    call, id, out result, out _, true);
         }
     }
 }

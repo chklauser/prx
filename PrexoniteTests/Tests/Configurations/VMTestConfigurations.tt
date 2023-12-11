@@ -1,8 +1,7 @@
 ﻿<#@ template debug="true" hostSpecific="true" #>
 <#@ output extension=".cs" #>
 //< Assembly Name="System.Core.dll" >
-<#@ import namespace="System.IO" #>
-<#@ import namespace="System.Collections.Generic" #> 
+ 
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable RedundantNameQualifier
 using System;
@@ -116,18 +115,18 @@ namespace PrexoniteTests.Tests.Configurations
 // ReSharper enable RedundantExplicitArrayCreation
 // ReSharper enable InconsistentNaming
 
-<#@ include file="LoadConfiguration.t4" #>
+<#@ include file="LoadConfiguration.t4" #><#@ import namespace="System.Collections.Generic" #><#@ import namespace="System.IO" #>
 
 <#+
     IEnumerable<string> _getVMTestClasses()
 {
     return new []{
-        "Prx.Tests.VMTests",
+        "PrexoniteTests.Tests.VMTests",
         "PrexoniteTests.Tests.PartialApplication",
         "PrexoniteTests.Tests.Lazy",
         "PrexoniteTests.Tests.Translation",
         "PrexoniteTests.Tests.BuiltInTypeTests",
-        "PrexoniteTests.Tests.ShellExtensions"
+        "PrexoniteTests.Tests.ShellExtensions",
     };
 }
 

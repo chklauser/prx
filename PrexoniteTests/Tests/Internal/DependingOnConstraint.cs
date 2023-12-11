@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Linq;
 using NUnit.Framework.Constraints;
@@ -51,7 +52,7 @@ public class DependingOnConstraint : Constraint
     public override ConstraintResult ApplyTo<TActual>(TActual actual)
     {
         var actualValue = actual;
-        return new  ConstraintResult(this, actualValue, _matches(actualValue));
+        return new(this, actualValue, _matches(actualValue));
     }
 
     bool _matches(object actualValue)

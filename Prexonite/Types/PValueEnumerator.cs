@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 
 namespace Prexonite.Types;
 
@@ -84,7 +83,7 @@ public abstract class PValueEnumerator : IEnumerator<PValue>, IObject
     ///     Since none of the instance members take any arguments, <paramref name = "args" /> must have length 0.
     /// </remarks>
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (args == null)

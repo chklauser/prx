@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -56,7 +55,7 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
         var arg = args[0];
         if (arg.Type == PType.String)
         {
-            var s = (string) arg.Value;
+            var s = (string) arg.Value!;
             if (s.Length == 0)
                 throw new PrexoniteException("Cannot create char from empty string.");
             else
@@ -68,7 +67,7 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
         }
         else if (arg.TryConvertTo(sctx, PType.Int, true, out v))
         {
-            return (char) (int) v.Value;
+            return (char) (int) v.Value!;
         }
         else
         {

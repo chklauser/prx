@@ -23,12 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands;
 
@@ -108,7 +107,7 @@ public class CallSubInterpret : MacroCommand
         AstCondition checkCont;
         {
             var contCond = _genCompare(context, retVar(), ReturnVariant.Continue);
-            checkCont = new AstCondition(inv.Position, context.CurrentBlock, contCond);
+            checkCont = new(inv.Position, context.CurrentBlock, contCond);
             checkCont.IfBlock.Add(contStmt);
         }
 
@@ -116,7 +115,7 @@ public class CallSubInterpret : MacroCommand
         AstCondition checkBreak;
         {
             var breakCond = _genCompare(context, retVar(), ReturnVariant.Break);
-            checkBreak = new AstCondition(inv.Position, context.CurrentBlock, breakCond);
+            checkBreak = new(inv.Position, context.CurrentBlock, breakCond);
             checkBreak.IfBlock.Add(breakStmt);
         }
 

@@ -23,45 +23,32 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Runtime.Serialization;
 
 namespace Prexonite.Modular;
 
-[Serializable]
 public class ModuleConflictException : Exception
 {
-    public ModuleConflictException()
-    {
-    }
-
-    public ModuleConflictException(string message, Module module1 = null, Module module2 = null) : base(_appendModules(message,module1, module2))
+    public ModuleConflictException(string message, Module module1, Module module2) : base(_appendModules(message,module1, module2))
     {
         Module1 = module1;
         Module2 = module2;
     }
 
-    public ModuleConflictException(string message, Exception inner, Module module1 = null, Module module2 = null)
+    public ModuleConflictException(string message, Exception inner, Module module1, Module module2)
         : base(_appendModules(message, module1, module2), inner)
     {
         Module1 = module1;
         Module2 = module2;
     }
 
-    protected ModuleConflictException(
-        SerializationInfo info,
-        StreamingContext context) : base(info, context)
-    {
-    }
-
-    static string _appendModules(string message, Module m1, Module m2)
+    static string _appendModules(string message, Module? m1, Module? m2)
     {
         if(m1 == null && m2 == null)
             return message;
         return string.Format("{1}{0}Conflict over module {2}.", 
             Environment.NewLine, 
             message,
-            (m1 ?? m2).Name);
+            (m1 ?? m2)!.Name);
     }
 
     public Module Module1 { get; set; }

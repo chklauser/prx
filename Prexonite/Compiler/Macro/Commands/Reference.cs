@@ -23,13 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
 {
@@ -80,7 +80,7 @@ namespace Prexonite.Compiler.Macro.Commands
                         "{0} requires at least 3 arguments.", Alias));
 
                 var id = args[0].CallToString(sctx);
-                var interpretation = (SymbolInterpretations) args[1].Value;
+                var interpretation = (SymbolInterpretations) args[1].Value!;
                 var module = args[2].Value as ModuleName;
                 if (module == null)
                 {
@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 switch (interpretation)
                 {
                     case SymbolInterpretations.Function:
-                        PFunction func;
+                        PFunction? func;
                         if(module == null)
                         {
                             throw new PrexoniteException(string.Format("Cannot create reference to function {0}. Module name is missing.", id));
@@ -153,7 +153,7 @@ namespace Prexonite.Compiler.Macro.Commands
         private static AstGetSet _assembleImplCall(MacroContext context, SymbolEntry implementationSymbolEntry,
                                                    ISourcePosition position)
         {
-            var internalId = context.CreateConstant(implementationSymbolEntry.InternalId);
+            var internalId = context.CreateConstant(implementationSymbolEntry.InternalId!);
             var interpretation = implementationSymbolEntry.Interpretation.ToExpr(position);
             var moduleNameOpt = context.CreateConstantOrNull(implementationSymbolEntry.Module);
             var implCall = context.Factory.IndirectCall(context.Invocation.Position,

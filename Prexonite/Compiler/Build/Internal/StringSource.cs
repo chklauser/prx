@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.IO;
 
 namespace Prexonite.Compiler.Build.Internal;
 
@@ -33,7 +32,7 @@ class StringSource : ISource
 
     public StringSource(string source)
     {
-        _source = source ?? throw new System.ArgumentNullException(nameof(source));
+        _source = source ?? throw new ArgumentNullException(nameof(source));
     }
 
     #region Implementation of ISource

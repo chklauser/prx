@@ -23,13 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
-public class PartialConstructionCommand : PartialWithPTypeCommandBase<PTypeInfo>
+public class PartialConstructionCommand : PartialWithPTypeCommandBase<RuntimePTypeInfo,CompileTimePTypeInfo>
 {
     #region Singleton pattern
 
@@ -37,7 +36,7 @@ public class PartialConstructionCommand : PartialWithPTypeCommandBase<PTypeInfo>
     {
     }
 
-    ConstructorInfo _ptypeConstructCtor;
+    ConstructorInfo? _ptypeConstructCtor;
 
     public static PartialConstructionCommand Instance { get; } = new();
 
@@ -46,18 +45,20 @@ public class PartialConstructionCommand : PartialWithPTypeCommandBase<PTypeInfo>
     #region Overrides of PartialApplicationCommandBase<TypeInfo>
 
     protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, PTypeInfo parameter)
+        PValue[] closedArguments, RuntimePTypeInfo parameter)
     {
         return new PartialConstruction(mappings, closedArguments, parameter.Type);
     }
 
-    protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
+    protected override ConstructorInfo GetConstructorCtor(CompileTimePTypeInfo parameter)
     {
-        return _ptypeConstructCtor ??= GetPartialCallRepresentationType(parameter).GetConstructor(
-            new[] {typeof (int[]), typeof (PValue[]), typeof (PType)});
+        var ty = GetPartialCallRepresentationType(parameter);
+        return _ptypeConstructCtor ??= ty.GetConstructor(
+            new[] {typeof (int[]), typeof (PValue[]), typeof (PType)})
+            ?? throw new InvalidOperationException($"{ty} does not have an (int[], PValue[], PValue) constructor.");
     }
 
-    protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
+    protected override Type GetPartialCallRepresentationType(CompileTimePTypeInfo parameter)
     {
         return typeof (PartialConstruction);
     }

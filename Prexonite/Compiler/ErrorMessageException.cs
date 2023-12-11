@@ -1,8 +1,4 @@
-﻿#nullable enable
-using System;
-using JetBrains.Annotations;
-
-namespace Prexonite.Compiler;
+﻿namespace Prexonite.Compiler;
 
 public class ErrorMessageException : PrexoniteException
 {

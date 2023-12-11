@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Math;
 
@@ -75,14 +74,14 @@ public class Log : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(PValue arg0, PValue arg1, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
-        var b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
+        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
+        var b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value!;
         return System.Math.Log(x, b);
     }
 
     public static PValue RunStatically(PValue arg0, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
         return System.Math.Log(x);
     }
 
@@ -104,11 +103,11 @@ public class Log : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyNaturalMethod =
-        typeof (Log).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
+        typeof (Log).GetMethod(nameof(RunStatically), new[] {typeof (PValue), typeof (StackContext)})!;
 
     static readonly MethodInfo RunStaticallyAnyMethod =
-        typeof (Log).GetMethod("RunStatically",
-            new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
+        typeof (Log).GetMethod(nameof(RunStatically),
+            new[] {typeof (PValue), typeof (PValue), typeof (StackContext)})!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

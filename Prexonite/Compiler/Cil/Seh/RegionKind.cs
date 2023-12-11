@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
 
 namespace Prexonite.Compiler.Cil.Seh;
 
@@ -32,12 +31,12 @@ enum RegionKind
 {
     Try = 1,
     Catch = 2,
-    Finally = 4
+    Finally = 4,
 }
 
 static class RegionKindExtensions
 {
     public static bool IsIn(this RegionKind subject, RegionKind mask) => (subject & mask) == subject;
 
-    public static bool IsOfKind(this Region subject, RegionKind mask) => subject != null && subject.Kind.IsIn(mask);
+    public static bool IsOfKind(this Region? subject, RegionKind mask) => subject != null && subject.Kind.IsIn(mask);
 }

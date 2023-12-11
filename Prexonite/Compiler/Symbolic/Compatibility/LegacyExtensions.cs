@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Diagnostics;
+
+using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Properties;
 
@@ -103,7 +103,7 @@ public static class LegacyExtensions
 
     public static SymbolEntry ToSymbolEntry(this Symbol symbol)
     {
-        return symbol.HandleWith(_convertSymbol, null);
+        return symbol.HandleWith(_convertSymbol, null!);
     }
 
     public static Symbol ToSymbol(this SymbolEntry entry)
@@ -113,27 +113,27 @@ public static class LegacyExtensions
         switch (entry.Interpretation)
         {
             case SymbolInterpretations.Function:
-                entity = EntityRef.Function.Create(entry.InternalId, entry.Module);
+                entity = EntityRef.Function.Create(entry.InternalId!, entry.Module!);
                 break;
             case SymbolInterpretations.Command:
-                entity = EntityRef.Command.Create(entry.InternalId);
+                entity = EntityRef.Command.Create(entry.InternalId!);
                 break;
             case SymbolInterpretations.LocalObjectVariable:
-                entity = EntityRef.Variable.Local.Create(entry.InternalId);
+                entity = EntityRef.Variable.Local.Create(entry.InternalId!);
                 break;
             case SymbolInterpretations.LocalReferenceVariable:
-                entity = EntityRef.Variable.Local.Create(entry.InternalId);
+                entity = EntityRef.Variable.Local.Create(entry.InternalId!);
                 isDereferenced = true;
                 break;
             case SymbolInterpretations.GlobalObjectVariable:
-                entity = EntityRef.Variable.Global.Create(entry.InternalId, entry.Module);
+                entity = EntityRef.Variable.Global.Create(entry.InternalId!, entry.Module!);
                 break;
             case SymbolInterpretations.GlobalReferenceVariable:
-                entity = EntityRef.Variable.Global.Create(entry.InternalId, entry.Module);
+                entity = EntityRef.Variable.Global.Create(entry.InternalId!, entry.Module!);
                 isDereferenced = true;
                 break;
             case SymbolInterpretations.MacroCommand:
-                entity = EntityRef.MacroCommand.Create(entry.InternalId);
+                entity = EntityRef.MacroCommand.Create(entry.InternalId!);
                 break;
             default:
                 var interpretation = Enum.GetName(typeof (SymbolInterpretations), entry.Interpretation);
@@ -152,20 +152,21 @@ public class SymbolConversionException : Exception
 {
     public SymbolConversionException(Symbol symbol)
     {
-        Symbol1 = symbol;
+        Symbol = symbol;
     }
 
     public SymbolConversionException(string message, Symbol symbol)
         : base(message)
     {
-        Symbol1 = symbol;
+        Symbol = symbol;
     }
 
     public SymbolConversionException(string message, Symbol symbol, Exception inner)
         : base(message, inner)
     {
-        Symbol1 = symbol;
+        Symbol = symbol;
     }
 
-    public Symbol Symbol1 { [DebuggerStepThrough] get; }
+    [PublicAPI]
+    public Symbol Symbol { get; }
 }

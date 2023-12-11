@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -28,15 +29,10 @@ namespace Prexonite.Compiler.Ast;
 public class AstThrow : AstExpr,
     IAstHasExpressions
 {
-    public AstExpr Expression;
+    public required AstExpr Expression;
 
     public AstThrow(string file, int line, int column)
         : base(file, line, column)
-    {
-    }
-
-    internal AstThrow(Parser p)
-        : this(p.scanner.File, p.t.line, p.t.col)
     {
     }
 
@@ -51,7 +47,7 @@ public class AstThrow : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         return false;

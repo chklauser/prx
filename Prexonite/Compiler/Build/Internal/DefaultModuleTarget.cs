@@ -23,11 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -36,27 +33,24 @@ namespace Prexonite.Compiler.Build.Internal;
 [DebuggerDisplay("Target({Name}) success={IsSuccessful}")]
 class DefaultModuleTarget : ITarget
 {
-    [NotNull]
     static readonly IReadOnlyCollection<IResourceDescriptor> _emptyResourceCollection =
         Array.Empty<IResourceDescriptor>();
 
-    [CanBeNull]
-    readonly List<Message> _messages;
+    readonly List<Message>? _messages;
 
-    public DefaultModuleTarget(Module module, SymbolStore symbols, IEnumerable<Message> messages = null, Exception exception = null)
+    public DefaultModuleTarget(Module module, SymbolStore symbols, IEnumerable<Message>? messages = null, Exception? exception = null)
     {
         Module = module ?? throw new ArgumentNullException(nameof(module));
         Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
         Exception = exception;
         if(messages != null)
-            _messages = new List<Message>(messages);
+            _messages = new(messages);
         IsSuccessful = exception == null && (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
     }
 
-    [CanBeNull]
-    static Exception _createAggregateException(Exception[] aggregateExceptions)
+    static Exception? _createAggregateException(Exception[] aggregateExceptions)
     {
-        Exception aggregateException;
+        Exception? aggregateException;
         if (aggregateExceptions.Length == 1)
             aggregateException = aggregateExceptions[0];
         else if (aggregateExceptions.Length > 0)
@@ -66,14 +60,14 @@ class DefaultModuleTarget : ITarget
         return aggregateException;
     }
 
-    internal static ITarget _FromLoader(Loader loader, Exception[] exceptions = null, IEnumerable<Message> additionalMessages = null)
+    internal static ITarget _FromLoader(Loader loader, Exception[]? exceptions = null, IEnumerable<Message>? additionalMessages = null)
     {
         return _FromLoader(loader, 
             exceptions == null ? null : _createAggregateException(exceptions),
             additionalMessages);
     }
 
-    internal static ITarget _FromLoader(Loader loader, Exception exception = null, IEnumerable<Message> additionalMessages = null)
+    internal static ITarget _FromLoader(Loader loader, Exception? exception = null, IEnumerable<Message>? additionalMessages = null)
     {
         if (loader == null)
             throw new ArgumentNullException(nameof(loader));
@@ -87,23 +81,19 @@ class DefaultModuleTarget : ITarget
         return new DefaultModuleTarget(loader.ParentApplication.Module,exported,messages, exception);
     }
 
-    [NotNull]
     public Module Module { get; }
 
     public IReadOnlyCollection<IResourceDescriptor> Resources => _emptyResourceCollection;
 
-    [NotNull]
     public SymbolStore Symbols { get; }
 
     public ModuleName Name => Module.Name;
 
     internal static readonly Message[] NoMessages = Array.Empty<Message>();
 
-    [NotNull]
-    public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>)_messages ?? NoMessages;
+    public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>?)_messages ?? NoMessages;
 
-    [CanBeNull]
-    public Exception Exception { get; }
+    public Exception? Exception { get; }
 
     public bool IsSuccessful { get; }
 }

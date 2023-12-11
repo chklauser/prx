@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Linq;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -89,17 +88,17 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
     }
 
     //Fix #10
-    internal static readonly MethodInfo consoleWriteLineMethod_String =
-        typeof (Console).GetMethod("WriteLine", new[] {typeof (string)});
+    internal static readonly MethodInfo ConsoleWriteLineMethodString =
+        typeof (Console).GetMethod("WriteLine", new[] {typeof (string)})!;
 
-    internal static readonly MethodInfo consoleWriteLineMethod_ =
-        typeof (Console).GetMethod("WriteLine", Type.EmptyTypes);
+    internal static readonly MethodInfo ConsoleWriteLineMethod =
+        typeof (Console).GetMethod("WriteLine", Type.EmptyTypes)!;
 
     internal static readonly MethodInfo ConsoleWriteMethod =
-        typeof (Console).GetMethod("Write", new[] {typeof (string)});
+        typeof (Console).GetMethod("Write", new[] {typeof (string)})!;
 
     internal static readonly MethodInfo PValueCallToString =
-        typeof (PValue).GetMethod("CallToString", new[] {typeof (StackContext)});
+        typeof (PValue).GetMethod("CallToString", new[] {typeof (StackContext)})!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -111,7 +110,7 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
         switch (ins.Arguments)
         {
             case 0:
-                state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_, null);
+                state.Il.EmitCall(OpCodes.Call, ConsoleWriteLineMethod, null);
                 if (!ins.JustEffect)
                 {
                     state.Il.Emit(OpCodes.Ldstr, "");
@@ -129,7 +128,7 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
                     state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPValue);
                     state.EmitStoreTemp(0);
                 }
-                state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_String, null);
+                state.Il.EmitCall(OpCodes.Call, ConsoleWriteLineMethodString, null);
                 if (!ins.JustEffect)
                 {
                     state.EmitLoadTemp(0);
@@ -179,7 +178,7 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
         {
             state.Il.Emit(OpCodes.Dup);
         }
-        state.EmitCall(consoleWriteLineMethod_String);
+        state.EmitCall(ConsoleWriteLineMethodString);
         if (!ins.JustEffect)
         {
             state.EmitWrapString();

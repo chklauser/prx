@@ -23,15 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Cil.Seh;
 
 static class RegionExtensions
 {
-    public static bool IsTryRegion(this Region region)
+    public static bool IsTryRegion(this Region? region)
     {
         if (region == null)
             return false;
@@ -39,7 +38,7 @@ static class RegionExtensions
             return region.Kind == RegionKind.Try;
     }
 
-    public static bool IsCatchRegion(this Region region)
+    public static bool IsCatchRegion(this Region? region)
     {
         if (region == null)
             return false;
@@ -47,7 +46,7 @@ static class RegionExtensions
             return region.Kind == RegionKind.Catch;
     }
 
-    public static bool IsFinallyRegion(this Region region)
+    public static bool IsFinallyRegion(this Region? region)
     {
         if (region == null)
             return false;
@@ -82,7 +81,7 @@ sealed class Region : IEquatable<Region>
                 RegionKind.Try => Block.BeginTry,
                 RegionKind.Catch => Block.BeginCatch,
                 RegionKind.Finally => Block.BeginFinally,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(),
             };
         }
     }
@@ -117,18 +116,18 @@ sealed class Region : IEquatable<Region>
             RegionKind.Try => Block.IsInTryBlock(address),
             RegionKind.Catch => Block.IsInCatchBlock(address),
             RegionKind.Finally => Block.IsInFinallyBlock(address),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(),
         };
     }
 
     [DebuggerStepThrough]
     public static IEnumerable<Region> FromBlock(CompiledTryCatchFinallyBlock block)
     {
-        yield return new Region(block, RegionKind.Try);
+        yield return new(block, RegionKind.Try);
         if (block.HasFinally)
-            yield return new Region(block, RegionKind.Finally);
+            yield return new(block, RegionKind.Finally);
         if (block.HasCatch)
-            yield return new Region(block, RegionKind.Catch);
+            yield return new(block, RegionKind.Catch);
     }
 
     public static int CompareRegions(Region r1, Region r2)
@@ -165,14 +164,14 @@ sealed class Region : IEquatable<Region>
         return CompareRegions(this, r) < 0;
     }
 
-    public bool Equals(Region other)
+    public bool Equals(Region? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
         return Equals(other.Block, Block) && Equals(other.Kind, Kind);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;

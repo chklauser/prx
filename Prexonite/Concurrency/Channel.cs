@@ -23,19 +23,17 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using System.Threading;
-using Prexonite.Types;
 
 namespace Prexonite.Concurrency;
 
-public class Channel : IObject, IDisposable
+public sealed class Channel : IObject, IDisposable
 {
     #region Implementation of IObject
 
     public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         switch (id.ToUpperInvariant())
@@ -48,7 +46,7 @@ public class Channel : IObject, IDisposable
                 result = PType.Null;
                 break;
             case "TOSTRING":
-                result = ToString();
+                result = ToString() ?? nameof(Channel);
                 break;
             case "TRYRECEIVE":
                 var refVar = (args.Length > 0 ? args[0] : null) ?? PType.Null;
@@ -67,14 +65,14 @@ public class Channel : IObject, IDisposable
                 return false;
         }
 
-        return result != null;
+        return true;
     }
 
     #endregion
 
     #region State
 
-    PValue _datum;
+    PValue? _datum;
 
     #endregion
 
@@ -148,7 +146,7 @@ public class Channel : IObject, IDisposable
         }
     }
 
-    public bool TryReceive(out PValue datum)
+    public bool TryReceive([NotNullWhen(true)] out PValue? datum)
     {
         lock (_syncRoot)
         {
@@ -173,8 +171,8 @@ public class Channel : IObject, IDisposable
     {
         if (_disposed)
             return;
-        _channelEmpty?.Dispose();
-        _dataAvailable?.Dispose();
+        _channelEmpty.Dispose();
+        _dataAvailable.Dispose();
         _disposed = true;
     }
 

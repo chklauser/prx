@@ -23,26 +23,24 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
 
 public class AstScopedBlock : AstBlock
 {
-    [NotNull]
     readonly AstBlock _lexicalScope;
 
-    public AstScopedBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
+    public AstScopedBlock(ISourcePosition p, AstBlock lexicalScope, string? uid = null, string? prefix = null)
         : base(p,lexicalScope, uid:uid, prefix:prefix)
     {
-        _lexicalScope = lexicalScope ?? throw new System.ArgumentNullException(nameof(lexicalScope));
+        _lexicalScope = lexicalScope ?? throw new ArgumentNullException(nameof(lexicalScope));
     }
 
     /// <summary>
     ///     The node this block is a part of. Can be null.
     /// </summary>
-    [NotNull]
     public AstNode LexicalScope
     {
         [DebuggerStepThrough]

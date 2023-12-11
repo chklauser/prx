@@ -23,11 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Linq;
+
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
+using Prexonite.Properties;
 
 namespace Prexonite.Commands.Core;
 
@@ -117,11 +116,11 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
         if (arg.IsNull)
             throw new PrexoniteException("The unbind command cannot process Null.");
 
-        if (!(sctx is FunctionContext fctx))
+        if (sctx is not FunctionContext fctx)
             throw new PrexoniteException(
                 "The unbind command can only work on function contexts.");
 
-        string id;
+        string? id;
 
         if (arg.Type is ObjectPType && arg.Value is PVariable)
         {
@@ -176,7 +175,7 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
         {
             if (!compileTimeValue.TryGetLocalVariableReference(out var local))
                 throw new ArgumentException(
-                    "CIL implementation of Core.Unbind command only accepts local variable references.",
+                    Resources.Unbind_OnlyWorksForLocalVariables,
                     nameof(staticArgv));
 
             if (!state.Symbols.TryGetValue(local.Id, out var cilSymbol) ||
@@ -193,7 +192,7 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
             state.EmitCall(Compiler.Cil.Compiler.SetValueMethod);
 
             //Override variable slot
-            state.EmitStoreLocal(cilSymbol.Local);
+            state.EmitStoreLocal(cilSymbol.Local!);
         }
 
         if (!ins.JustEffect)

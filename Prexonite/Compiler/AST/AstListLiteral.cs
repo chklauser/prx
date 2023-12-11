@@ -23,9 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Text;
 using Prexonite.Modular;
 
@@ -55,14 +53,14 @@ public class AstListLiteral : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         foreach (var arg in Elements.ToArray())
         {
             if (arg == null)
                 throw new PrexoniteException(
                     "Invalid (null) argument in ListLiteral node (" + ToString() +
-                    ") detected at position " + Elements.IndexOf(null) + ".");
+                    ") detected at position " + Elements.IndexOf(null!) + ".");
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
             {

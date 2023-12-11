@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
+using System.Diagnostics;
 using Prexonite.Properties;
 
 namespace Prexonite.Modular;
@@ -41,7 +41,7 @@ public abstract class VariableDeclaration : IHasMetaTable, IMetaFilter
     /// </summary>
     public abstract MetaTable Meta { get; }
 
-    string IMetaFilter.GetTransform(string key)
+    string? IMetaFilter.GetTransform(string? key)
     {
         if (Engine.StringsAreEqual(key, Application.NameKey))
             return Application.IdKey;
@@ -49,10 +49,10 @@ public abstract class VariableDeclaration : IHasMetaTable, IMetaFilter
             return key;
     }
 
-    KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
     {
         if (Engine.StringsAreEqual(item.Key, Application.NameKey))
-            return new KeyValuePair<string, MetaEntry>(Application.IdKey, item.Value);
+            return new KeyValuePair<string?, MetaEntry>(Application.IdKey, item.Value);
         else
             return item;
     }
@@ -70,7 +70,7 @@ public abstract class VariableDeclaration : IHasMetaTable, IMetaFilter
     /// <summary>
     /// Declaration of a Prexonite (global) variable.
     /// </summary>
-    [System.Diagnostics.DebuggerDisplay("var {Id}")]
+    [DebuggerDisplay("var {Id}")]
     sealed class Impl : VariableDeclaration
     {
         /// <summary>

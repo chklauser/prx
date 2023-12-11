@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
@@ -35,10 +34,44 @@ public class PTypeInfo
     /// <summary>
     ///     The runtime instance of the PType.
     /// </summary>
-    public PType Type;
+    public PType? Type;
 
     /// <summary>
     ///     The compile time constant PType expression.
     /// </summary>
-    public string Expr;
+    public required string? Expr;
+}
+
+public abstract record RuntimePTypeInfo<TSelf> : IRuntimePTypeInfo<TSelf>
+    where TSelf : IRuntimePTypeInfo<TSelf>, new()
+{
+    public PType Type { get; init; } = null!;
+    public static TSelf Create(PType type) => new() { Type = type };
+}
+
+public record RuntimePTypeInfo : RuntimePTypeInfo<RuntimePTypeInfo>;
+
+public abstract record CompileTimePTypeInfo<TSelf> : ICompileTimePType<TSelf>
+    where TSelf : ICompileTimePType<TSelf>, new()
+{
+    public string Expr { get; init; } = null!;
+    public static TSelf Create(string expr) => new() { Expr = expr };
+}
+
+public record CompileTimePTypeInfo : CompileTimePTypeInfo<CompileTimePTypeInfo>;
+
+[SuppressMessage("ReSharper", "TypeParameterCanBeVariant", Justification = "Self")]
+public interface IRuntimePTypeInfo<TSelf>
+    where TSelf : IRuntimePTypeInfo<TSelf>
+{
+    PType Type { get; init; }
+    static abstract TSelf Create(PType type);
+}
+
+[SuppressMessage("ReSharper", "TypeParameterCanBeVariant", Justification = "Self")]
+public interface ICompileTimePType<TSelf> 
+where TSelf : ICompileTimePType<TSelf>
+{
+    string Expr { get; init; }
+    static abstract TSelf Create(string expr);
 }

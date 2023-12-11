@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
 
 namespace Prexonite.Commands;
 
@@ -42,14 +41,14 @@ public interface ICommandInfo
     /// </summary>
     /// <param name = "cilExtension">On success, holds a reference to the CIL extension. Undefined on failure.</param>
     /// <returns>True, on success; false on failure.</returns>
-    bool TryGetCilExtension(out ICilExtension cilExtension);
+    bool TryGetCilExtension([NotNullWhen(true)] out ICilExtension? cilExtension);
 
     /// <summary>
     ///     Attempts to retrieve the object describing the CIL compiler awareness of the command.
     /// </summary>
     /// <param name = "cilCompilerAware">On success, holds a reference to the object describing the CIL compiler awareness of the command. Undefined on failure.</param>
     /// <returns>True, on success; false on failure</returns>
-    bool TryGetCilCompilerAware(out ICilCompilerAware cilCompilerAware);
+    bool TryGetCilCompilerAware([NotNullWhen(true)] out ICilCompilerAware? cilCompilerAware);
 }
 
 public static class CommandInfo
@@ -67,7 +66,7 @@ public static class CommandInfo
         return _toCommandInfo(command);
     }
 
-    public static ICommandInfo ToCommandInfo(this ICilExtension cilExtension)
+    public static ICommandInfo ToCommandInfo(this ICilExtension? cilExtension)
     {
         if (cilExtension == null)
             return new CachedCommandInfo(null, null);
@@ -75,7 +74,7 @@ public static class CommandInfo
             return _toCommandInfo(cilExtension);
     }
 
-    public static ICommandInfo ToCommandInfo(this ICilCompilerAware cilCompilerAware)
+    public static ICommandInfo ToCommandInfo(this ICilCompilerAware? cilCompilerAware)
     {
         if (cilCompilerAware == null)
             return new CachedCommandInfo(null, null);
@@ -83,17 +82,9 @@ public static class CommandInfo
             return _toCommandInfo(cilCompilerAware);
     }
 
-    sealed class CachedCommandInfo : ICommandInfo
+    sealed class CachedCommandInfo(ICilCompilerAware? compilerAware, ICilExtension? extension)
+        : ICommandInfo
     {
-        readonly ICilCompilerAware _cilCompilerAware;
-        readonly ICilExtension _cilExtension;
-
-        public CachedCommandInfo(ICilCompilerAware cilCompilerAware, ICilExtension cilExtension)
-        {
-            _cilCompilerAware = cilCompilerAware;
-            _cilExtension = cilExtension;
-        }
-
         #region Implementation of ICommandInfo
 
         /// <summary>
@@ -101,9 +92,9 @@ public static class CommandInfo
         /// </summary>
         /// <param name = "cilExtension">On success, holds a reference to the CIL extension. Undefined on failure.</param>
         /// <returns>True, on success; false on failure.</returns>
-        public bool TryGetCilExtension(out ICilExtension cilExtension)
+        public bool TryGetCilExtension([NotNullWhen(true)] out ICilExtension? cilExtension)
         {
-            cilExtension = _cilExtension;
+            cilExtension = extension;
             return cilExtension != null;
         }
 
@@ -112,9 +103,9 @@ public static class CommandInfo
         /// </summary>
         /// <param name = "cilCompilerAware">On success, holds a reference to the object describing the CIL compiler awareness of the command. Undefined on failure.</param>
         /// <returns>True, on success; false on failure</returns>
-        public bool TryGetCilCompilerAware(out ICilCompilerAware cilCompilerAware)
+        public bool TryGetCilCompilerAware([NotNullWhen(true)] out ICilCompilerAware? cilCompilerAware)
         {
-            cilCompilerAware = _cilCompilerAware;
+            cilCompilerAware = compilerAware;
             return cilCompilerAware != null;
         }
 

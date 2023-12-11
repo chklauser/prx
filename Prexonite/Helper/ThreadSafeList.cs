@@ -1,9 +1,6 @@
-#nullable enable
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
+using JetBrains.Annotations;
 
 namespace Prexonite;
 
@@ -17,9 +14,10 @@ public sealed class ThreadSafeList<T> : IList<T>
         return asWeaklyConsistentEnumerable().GetEnumerator();
     }
 
+    [SuppressMessage("ReSharper", "NotDisposedResourceIsReturned", Justification = "Enumerator disposed of in caller.")]
     IEnumerable<T> asWeaklyConsistentEnumerable()
     {
-        var enumerator = WithReadLock(inner => inner.GetEnumerator());
+        using var enumerator = WithReadLock(inner => inner.GetEnumerator());
         while (true)
         {
             var (hasValue, value) = WithReadLock(_ => 
@@ -68,7 +66,7 @@ public sealed class ThreadSafeList<T> : IList<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TResult WithReadLock<TResult>(Func<IList<T>, TResult> action)
+    public TResult WithReadLock<TResult>([InstantHandle] Func<IList<T>, TResult> action)
     {
         _lock.EnterReadLock();
         try

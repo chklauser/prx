@@ -23,13 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Text;
 
 namespace Prexonite;
@@ -51,14 +47,13 @@ public static class Extensions
         TAccum seed)
     {
         if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(xs != null, "xs must not be null.");
+            throw new ArgumentNullException(nameof(func));
 
         // Don't need aggregate for this
         // ReSharper disable LoopCanBeConvertedToQuery
         IEnumerable<TSource> xsr;
-        LinkedList<TSource> xsLinkedList;
-        IList<TSource> xsList;
+        LinkedList<TSource>? xsLinkedList;
+        IList<TSource>? xsList;
         if ((xsLinkedList = xs as LinkedList<TSource>) != null)
             xsr = xsLinkedList.InReverse();
         else if ((xsList = xs as IList<TSource>) != null)
@@ -78,8 +73,7 @@ public static class Extensions
     public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> items)
     {
         if (items == null)
-            throw new ArgumentNullException("items");
-        Contract.Requires(collection != null, "collection must not be null.");
+            throw new ArgumentNullException(nameof(items));
 
         foreach (var item in items)
             collection.Add(item);
@@ -90,14 +84,12 @@ public static class Extensions
     /// </summary>
     /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
     /// <param name="source">The enumeration to convert to a string.</param>
-    /// <returns>A human-readbale string.</returns>
-    public static string ToEnumerationString<T>(this IEnumerable<T> source)
+    /// <returns>A human-readable string.</returns>
+    public static string? ToEnumerationString<T>(this IEnumerable<T> source)
     {
-        Contract.Requires(source != null, "source must not be null.");
-
         var s = new StringBuilder();
         var hasStarted = false;
-        string hold = null;
+        string? hold = null;
         foreach (var x in source)
         {
             if (hold != null)
@@ -111,7 +103,7 @@ public static class Extensions
                     s.Append(hold);
                     hasStarted = true;
                 }
-            hold = x.ToString();
+            hold = x?.ToString() ?? "";
         }
 
         if (hasStarted)
@@ -154,8 +146,7 @@ public static class Extensions
     public static void MapInPlace<T>(this List<T> source, Func<T, T> func)
     {
         if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(source != null, "source must not be null.");
+            throw new ArgumentNullException(nameof(func));
 
         for (var i = 0; i < source.Count; i++)
             source[i] = func(source[i]);
@@ -175,12 +166,10 @@ public static class Extensions
             yield return source[i];
     }
 
-    public static T Foldr1<T>(this IEnumerable<T> xs, Func<T, T, T> func)
+    public static T? Foldr1<T>(this IEnumerable<T> xs, Func<T, T, T> func)
     {
         if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(xs != null, "xs must not be null.");
-
+            throw new ArgumentNullException(nameof(func));
 
         var seed = default(T);
         var haveSeed = false;
@@ -188,7 +177,7 @@ public static class Extensions
         {
             if (haveSeed)
             {
-                seed = func(x, seed);
+                seed = func(x, seed!);
             }
             else
             {
@@ -201,9 +190,6 @@ public static class Extensions
 
     public static LinkedList<T> ToLinkedList<T>(this IEnumerable<T> source)
     {
-        Contract.Requires(source != null);
-        Contract.Ensures(Contract.Result<LinkedList<T>>() != null);
-
         var list = new LinkedList<T>();
         foreach (var item in source)
             list.AddLast(item);
@@ -221,12 +207,10 @@ public static class Extensions
     /// <returns>The sequence of mapped elements that are not <code>null</code></returns>
     [DebuggerNonUserCode]
     public static IEnumerable<TResult> MapMaybe<TSource, TResult>(
-        this IEnumerable<TSource> source, Func<TSource, TResult> func) where TResult : class
+        this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : class
     {
         if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(source != null);
-        Contract.EndContractBlock();
+            throw new ArgumentNullException(nameof(func));
 
         // ReSharper disable LoopCanBeConvertedToQuery
         foreach (var item in source)
@@ -243,9 +227,7 @@ public static class Extensions
         this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : struct
     {
         if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(source != null);
-        Contract.EndContractBlock();
+            throw new ArgumentNullException(nameof(func));
 
         // ReSharper disable LoopCanBeConvertedToQuery
         foreach (var item in source)
@@ -257,75 +239,21 @@ public static class Extensions
         // ReSharper restore LoopCanBeConvertedToQuery
     }
 
-#nullable enable
-        
     [DebuggerNonUserCode]
-    [return:NotNull]
     public static IEnumerable<TResult> SelectMaybe<TSource, TResult>(
-        [NotNull] this IEnumerable<TSource> source, [NotNull] Func<TSource, TResult?> func) where TResult : class
+        this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : class
     {
         if (func == null)
             throw new ArgumentNullException(nameof(func));
-        Contract.Requires(source != null);
-        Contract.EndContractBlock();
 
         // ReSharper disable LoopCanBeConvertedToQuery
-        foreach (var item in source!)
+        foreach (var item in source)
         {
             var y = func(item!);
             if (y != null)
                 yield return y;
         }
         // ReSharper restore LoopCanBeConvertedToQuery
-    }
-        
-#nullable restore
-
-    [DebuggerNonUserCode]
-    public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source,
-        IDictionary<TSource, TResult> mapping)
-    {
-        if (mapping == null)
-            throw new ArgumentNullException("mapping");
-        Contract.Requires(source != null);
-        Contract.EndContractBlock();
-
-        // ReSharper disable LoopCanBeConvertedToQuery
-        foreach (var item in source)
-            yield return mapping[item];
-        // ReSharper restore LoopCanBeConvertedToQuery
-    }
-
-    [DebuggerNonUserCode]
-    public static IEnumerable<T> MapSome<T>(this IEnumerable<T> source,
-        IDictionary<T, T> mapping)
-    {
-        if (mapping == null)
-            throw new ArgumentNullException("mapping");
-        Contract.Requires(source != null);
-        Contract.EndContractBlock();
-
-        foreach (var item in source)
-        {
-            yield return mapping.TryGetValue(item, out var newValue)
-                ? newValue
-                : item;
-        }
-    }
-
-    public static T TransformSome<T>(this IDictionary<T, T> mapping, T value)
-    {
-        Contract.Requires(mapping != null);
-
-        return mapping.TryGetValue(value, out var newValue) ? newValue : value;
-    }
-
-    [DebuggerNonUserCode]
-    public static IEnumerable<KeyValuePair<TLeft, TRight>> Zip<TLeft, TRight>(
-        this IEnumerable<TLeft> ls,
-        IEnumerable<TRight> rs)
-    {
-        return Zip(ls, rs, (l, r) => new KeyValuePair<TLeft, TRight>(l, r));
     }
 
     [DebuggerNonUserCode]
@@ -335,11 +263,9 @@ public static class Extensions
         Func<TLeft, TRight, TResult> func)
     {
         if (rightHandSide == null)
-            throw new ArgumentNullException("rightHandSide");
+            throw new ArgumentNullException(nameof(rightHandSide));
         if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(leftHandSide != null);
-        Contract.EndContractBlock();
+            throw new ArgumentNullException(nameof(func));
 
         using var le = leftHandSide.GetEnumerator();
         using var re = rightHandSide.GetEnumerator();
@@ -353,11 +279,9 @@ public static class Extensions
         Action<TLeft, TRight> f)
     {
         if (rightHandSide == null)
-            throw new ArgumentNullException("rightHandSide");
+            throw new ArgumentNullException(nameof(rightHandSide));
         if (f == null)
-            throw new ArgumentNullException("f");
-        Contract.Requires(leftHandSide != null);
-        Contract.EndContractBlock();
+            throw new ArgumentNullException(nameof(f));
 
         using var le = leftHandSide.GetEnumerator();
         using var re = rightHandSide.GetEnumerator();
@@ -367,23 +291,18 @@ public static class Extensions
 
     public static IEnumerable<T> Singleton<T>(this T element)
     {
-        Contract.Ensures(Contract.Result<IEnumerable<T>>() != null,
-            "Return value must not be null");
         return new SingletonEnum<T>(element);
     }
 
     public static IEnumerable<T> Append<T>(this IEnumerable<T> left,
         IEnumerable<T> right)
     {
-        Contract.Requires(left != null);
-        Contract.Requires(right != null, "right must not be null.");
         return left.Concat(right);
     }
 
     [DebuggerNonUserCode]
     public static IEnumerable<T> Append<T>(IEnumerable<T> left, T right)
     {
-        Contract.Requires(left != null);
         foreach (var item in left)
             yield return item;
         yield return right;
@@ -398,8 +317,8 @@ public static class Extensions
     }
 
     [DebuggerNonUserCode]
-    [JetBrains.Annotations.NotNull]
     public static IDictionary<TK, TC> ToGroupedDictionary<TK, TV, TC>(this IEnumerable<TV> items, Func<TV, TK> keySelector)
+        where TK : notnull
         where TC : ICollection<TV>, new()
     {
         var dict = new Dictionary<TK, TC>();
@@ -413,29 +332,6 @@ public static class Extensions
         return dict;
     }
 
-    public static TResult[] MapArray<TSource, TResult>(this TSource[] xs,
-        Func<TSource, TResult> func)
-    {
-        if (func == null)
-            throw new ArgumentNullException("func");
-        Contract.Requires(xs != null);
-        Contract.Ensures(Contract.Result<TResult[]>() != null);
-
-        Contract.EndContractBlock();
-
-
-        var result = new TResult[xs.Length];
-        for (var i = 0; i < xs.Length; i++)
-            result[i] = func(xs[i]);
-        return result;
-    }
-
-    public static IEnumerable<T> ToEnumerable<T>(this ArraySegment<T> arraySegment)
-    {
-        for (var i = arraySegment.Offset; i < arraySegment.Offset + arraySegment.Count; i++)
-            yield return arraySegment.Array[i];
-    }
-
     /// <summary>
     /// An efficient version of except when the exception set is already implemented as a set.
     /// </summary>
@@ -444,18 +340,18 @@ public static class Extensions
     /// <param name="exceptionSet">The set of elements to be excluded from the sequence.</param>
     /// <returns>The original sequence with all elements also in the <paramref name="exceptionSet"/> removed.</returns>
     /// <remarks><para>This is a streaming operator. The order of elements in the sequence is not changed. Multiple instances of the same element in the input sequence are retained (if they are not filtered out).</para></remarks>
-    public static IEnumerable<T> Except<T>([JetBrains.Annotations.NotNull] this IEnumerable<T> sequence, [JetBrains.Annotations.NotNull] ISet<T> exceptionSet)
+    public static IEnumerable<T> Except<T>(this IEnumerable<T> sequence, ISet<T> exceptionSet)
     {
         return sequence.Where(x => !exceptionSet.Contains(x));
     }
 
-    public static IEnumerable<T> WithActionAfter<T>([JetBrains.Annotations.NotNull] this IEnumerable<T> sequence, [JetBrains.Annotations.NotNull] Action action)
+    public static IEnumerable<T> WithActionAfter<T>(this IEnumerable<T> sequence, Action action)
     {
         if (sequence == null)
-            throw new ArgumentNullException("sequence");
+            throw new ArgumentNullException(nameof(sequence));
 
         if (action == null)
-            throw new ArgumentNullException("action");
+            throw new ArgumentNullException(nameof(action));
             
         foreach (var item in sequence)
             yield return item;
@@ -464,9 +360,6 @@ public static class Extensions
 
     public static IEnumerable<LinkedListNode<T>> ToNodeSequence<T>(this LinkedList<T> list)
     {
-        Contract.Requires(list != null);
-        Contract.Ensures(Contract.Result<IEnumerable<LinkedListNode<T>>>() != null);
-
         if(list.Count == 0)
             yield break;
 
@@ -543,7 +436,7 @@ public static class Extensions
 
             public T Current { get; }
 
-            object IEnumerator.Current => Current;
+            object? IEnumerator.Current => Current;
 
             #endregion
         }

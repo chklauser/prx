@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
 
 namespace Prexonite.Commands.List;
 
@@ -44,8 +42,7 @@ public class Intersect : CoroutineCommand
         foreach (var arg in args)
         {
             var xs = Map._ToEnumerable(sctx, arg);
-            if (xs != null)
-                xss.Add(xs);
+            xss.Add(xs);
         }
 
         var n = xss.Count;
@@ -55,10 +52,9 @@ public class Intersect : CoroutineCommand
         var t = new Dictionary<PValue, int>();
         //All elements of the first source are considered candidates
         foreach (var x in xss[0])
-            if (!t.ContainsKey(x))
-                t.Add(x, 1);
+            t.TryAdd(x, 1);
 
-        var d = new Dictionary<PValue, object>();
+        var d = new Dictionary<PValue, object?>();
         for (var i = 1; i < n - 1; i++)
         {
             foreach (var x in xss[i])
@@ -71,10 +67,10 @@ public class Intersect : CoroutineCommand
         }
 
         foreach (var x in xss[n - 1])
-            if (!d.ContainsKey(x) && t.ContainsKey(x))
+            if (!d.ContainsKey(x) && t.TryGetValue(x, out var value))
             {
                 d.Add(x, null); //only current source
-                var k = t[x] + 1;
+                var k = value + 1;
                 if (k == n)
                     yield return x;
             }

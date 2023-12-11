@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 
 namespace Prexonite;
 
@@ -45,14 +43,14 @@ public abstract class PFunctionTable : ICollection<PFunction>
     /// <param name="id">The id of the function to find.</param>
     /// <param name="func">The function with a matching id.</param>
     /// <returns>True if a function was found; false otherwise.</returns>
-    public abstract bool TryGetValue(string id, out PFunction func);
+    public abstract bool TryGetValue(string id, [NotNullWhen(true)] out PFunction? func);
 
     /// <summary>
     /// Looks up indvidual functions in the table.
     /// </summary>
     /// <param name="id">The id of the function to look up</param>
     /// <returns>The function with a matching id, or null if there is no such function in the table.</returns>
-    public abstract PFunction this[string id] { get; }
+    public abstract PFunction? this[string id] { get; }
 
     /// <summary>
     /// Writes a serial representation of this module into the <see cref="TextWriter"/> provided.
@@ -86,7 +84,7 @@ public abstract class PFunctionTable : ICollection<PFunction>
     /// <param name="item">The function to search the table for.</param>
     /// <returns>True if the table contains the supplied function, false otherwise</returns>
     /// <exception cref="ArgumentNullException">item</exception>
-    public abstract bool Contains(PFunction item);
+    public abstract bool Contains(PFunction? item);
 
     /// <summary>
     /// Copies the contents of the function table to the supplied array, starting at the specified index.
@@ -117,7 +115,7 @@ public abstract class PFunctionTable : ICollection<PFunction>
     /// <remarks>This function returning false can mean that a) the table contains no function 
     /// in that slot or b) that the function in that slot is different from the supplied function.</remarks>
     /// <exception cref="ArgumentNullException">item</exception>
-    public abstract bool Remove(PFunction item);
+    public abstract bool Remove(PFunction? item);
 
     /// <summary>
     /// Removes the function in the specified slot.

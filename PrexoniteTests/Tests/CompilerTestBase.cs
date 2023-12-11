@@ -23,41 +23,45 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prx.Tests;
 
-namespace Prx.Tests;
+namespace PrexoniteTests.Tests;
 
 [Parallelizable(ParallelScope.Fixtures)]
-public class Compiler
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+public class CompilerTestBase
 {
     #region Setup
 
-    protected internal Engine engine;
-    protected internal TestStackContext sctx;
-    protected internal Application target;
-    protected internal PFunction root;
+    protected internal Engine engine = null!;
+    protected internal TestStackContext sctx = null!;
+    protected internal Application target = null!;
+    protected internal PFunction root = null!;
 
     [SetUp]
     public void SetupCompilerEngine()
     {
-        engine = new Engine();
-        target = new Application("testApplication");
-        sctx = new TestStackContext(engine, target);
+        engine = new();
+        target = new("testApplication");
+        sctx = new(engine, target);
     }
 
     [TearDown]
     public void TeardownCompilerEngine()
     {
-        engine = null;
-        sctx = null;
-        target = null;
-        root = null;
+        engine = null!;
+        sctx = null!;
+        target = null!;
+        root = null!;
     }
 
     #endregion
@@ -68,7 +72,7 @@ public class Compiler
     {
         Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
             $"Expected to find symbol {symbolicId} but there is no such entry.");
-        return symbol.ToSymbolEntry();
+        return symbol!.ToSymbolEntry();
     }
 
     protected  List<Instruction> GetInstructions(string assemblerCode)
@@ -86,7 +90,7 @@ public class Compiler
             foreach (var error in ldr.Errors)
                 Assert.Fail($"Error in the expected assembler code: {error}");
         }
-        return app.Functions["MyAssemblerFunction"].Code;
+        return app.Functions["MyAssemblerFunction"]!.Code;
     }
 
     protected internal Loader _compile(string input)
@@ -190,7 +194,9 @@ public class Compiler
 
     protected internal void _expectSharedVariables(string funcId, params string[] shared)
     {
-        _expectSharedVariables_(target.Functions[funcId], shared);
+        _expectSharedVariables_(target.Functions[funcId] ??
+            throw new InvalidOperationException($"Function {funcId} does not exist in target."),
+            shared);
     }
 
     protected internal static void _expectSharedVariables_(PFunction func, string[] shared)
@@ -203,15 +209,15 @@ public class Compiler
         else if (!hasShared && shared.Length == 0)
             return;
 
-        var entries = entry.List;
+        var entries = entry?.List;
         Assert.AreEqual(
             shared.Length,
-            entries.Length,
+            entries?.Length,
             "The function {0} is expected to have a different number of shared variables.",
             func.Id);
-        for (var i = 0; i < entries.Length; i++)
+        for (var i = 0; i < entries!.Length; i++)
             Assert.IsTrue(
-                Engine.StringsAreEqual(shared[i], entries[i] == null ? "" : entries[i].Text),
+                Engine.StringsAreEqual(shared[i], (MetaEntry?)entries[i] == null ? "" : entries[i].Text),
                 "The function {0} is expected to require sharing of variable {1}.",
                 func.Id,
                 shared[i]);

@@ -1,8 +1,5 @@
-#nullable enable
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite;
 
@@ -59,8 +56,8 @@ public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 
     public TValue? GetDefault(string key, TValue? defaultValue)
     {
-        if (_table.ContainsKey(key))
-            return _table[key];
+        if (_table.TryGetValue(key, out var @default))
+            return @default;
         else
             return defaultValue;
     }
@@ -72,16 +69,26 @@ public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 
     public ICollection<TValue> Values => _table.Values;
 
-    public virtual TValue this[string key]
+    TValue IDictionary<string, TValue>.this[string key]
+    {
+        get => this[key] ?? throw new KeyNotFoundException("The given key was not present in the symbol table.");
+        set => this[key] = value;
+    }
+    
+    public virtual TValue? this[string key]
     {
         get => GetDefault(key, default) 
             ?? throw new PrexoniteException($"Lookup of {key} in symbol table failed.");
         set
         {
-            if (!_table.ContainsKey(key))
-                _table.Add(key, value);
+            if (value == null)
+            {
+                _table.Remove(key);
+            }
             else
+            {
                 _table[key] = value;
+            }
         }
     }
 

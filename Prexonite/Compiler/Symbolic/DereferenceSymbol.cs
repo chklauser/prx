@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -43,15 +43,14 @@ public sealed class DereferenceSymbol : WrappingSymbol
         }
     }
 
-    [NotNull]
-    internal static Symbol _Create([NotNull] Symbol symbol, [CanBeNull] ISourcePosition position)
+    internal static Symbol _Create(Symbol symbol, ISourcePosition? position)
     {
         if (symbol == null)
-            throw new System.ArgumentNullException(nameof(symbol));
+            throw new ArgumentNullException(nameof(symbol));
         return new DereferenceSymbol(position ?? symbol.Position, symbol);
     }
 
-    DereferenceSymbol([NotNull] ISourcePosition position, Symbol inner)
+    DereferenceSymbol(ISourcePosition position, Symbol inner)
         : base(position, inner)
     {
     }
@@ -62,7 +61,7 @@ public sealed class DereferenceSymbol : WrappingSymbol
 
     protected override int HashCodeXorFactor => 5557;
 
-    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
+    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition? newPosition = null)
     {
         return new DereferenceSymbol(newPosition ?? Position, newInnerSymbol);
     }
@@ -78,13 +77,13 @@ public sealed class DereferenceSymbol : WrappingSymbol
         return handler.HandleDereference(this, argument);
     }
 
-    public override bool TryGetDereferenceSymbol(out DereferenceSymbol dereferenceSymbol)
+    public override bool TryGetDereferenceSymbol([NotNullWhen(true)] out DereferenceSymbol? dereferenceSymbol)
     {
         dereferenceSymbol = this;
         return true;
     }
 
-    public override bool Equals(Symbol other)
+    public override bool Equals(Symbol? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;

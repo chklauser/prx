@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
@@ -64,10 +62,15 @@ public class PartialCallStar : PartialApplicationBase
     static ArraySegment<int> _splitOffWrappingDirectives(
         ref ArraySegment<int> rawMapping)
     {
+        if (rawMapping.Array == null)
+        {
+            return ArraySegment<int>.Empty;
+        }
+        
         var dirCount = rawMapping.Array[rawMapping.Offset + rawMapping.Count - 1];
         var actualMapping = new ArraySegment<int>(rawMapping.Array, rawMapping.Offset,
             rawMapping.Count - dirCount - 1);
-        rawMapping = new ArraySegment<int>(rawMapping.Array, actualMapping.Count, dirCount);
+        rawMapping = new(rawMapping.Array, rawMapping.Offset + actualMapping.Count, dirCount);
         return actualMapping;
     }
 
@@ -76,13 +79,12 @@ public class PartialCallStar : PartialApplicationBase
     protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
         PValue[] arguments)
     {
-        var end = _wrappingDirectives.Offset + _wrappingDirectives.Count;
         var effectiveArguments = new PValue[_getEffectiveArgc(arguments.Length)];
         var effIdx = 0;
         var argIdx = 0;
-        for (var i = _wrappingDirectives.Offset; i < end; i++)
+        for (var i = _wrappingDirectives.Offset; i < _wrappingDirectives.Offset + _wrappingDirectives.Count; i++)
         {
-            var directive = _wrappingDirectives.Array[i];
+            var directive = _wrappingDirectives.Array![i];
 
             System.Diagnostics.Debug.Assert(directive != 0);
 
@@ -124,10 +126,9 @@ public class PartialCallStar : PartialApplicationBase
         directedArgc = 0;
         undirectedArgc = 0;
 
-        var end = _wrappingDirectives.Offset + _wrappingDirectives.Count;
-        for (var i = _wrappingDirectives.Offset; i < end; i++)
+        for (var i = _wrappingDirectives.Offset; i < _wrappingDirectives.Offset + _wrappingDirectives.Count; i++)
         {
-            var directive = _wrappingDirectives.Array[i];
+            var directive = _wrappingDirectives.Array![i];
             System.Diagnostics.Debug.Assert(directive != 0);
 
             undirectedArgc += System.Math.Abs(directive);

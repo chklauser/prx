@@ -23,13 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro;
 
@@ -54,7 +51,7 @@ public static class MacroContextExtensions
 
         return mem;
     }
-    public static AstExpr CreateConstantOrNull(this MacroContext context, object constant)
+    public static AstExpr CreateConstantOrNull(this MacroContext context, object? constant)
     {
         if(ReferenceEquals(constant, null))
             return new AstNull(context.Invocation.File, context.Invocation.Line, context.Invocation.Column);
@@ -77,11 +74,34 @@ public static class MacroContextExtensions
             throw new ArgumentNullException(nameof(position));
 
         var member = Enum.GetName(typeof (T), enumerationValue);
-        var pcallT = new AstConstantTypeExpression(position.File,
-            position.Line,
-            position.Column,
-            PType.Object[typeof (T)].ToString());
-        return new AstGetSetStatic(position, PCall.Get, pcallT, member);
+        if (member == null)
+        {
+            var value = new AstConstant(position.File,
+                position.Line,
+                position.Column,
+                Convert.ToInt32(enumerationValue));
+            var nativeValueExpr = new AstTypecast(position,
+                value,
+                new AstConstantTypeExpression(position.File,
+                    position.Line,
+                    position.Column,
+                    PType.Object[Enum.GetUnderlyingType(typeof(T))].ToString()));
+            var enumExpr = new AstTypecast(position,
+                nativeValueExpr,
+                new AstConstantTypeExpression(position.File,
+                    position.Line,
+                    position.Column,
+                    PType.Object[typeof(T)].ToString()));
+            return enumExpr;
+        }
+        else
+        {
+            var pcallT = new AstConstantTypeExpression(position.File,
+                position.Line,
+                position.Column,
+                PType.Object[typeof(T)].ToString());
+            return new AstGetSetStatic(position, PCall.Get, pcallT, member);
+        }
     }
 
     /// <summary>
@@ -251,7 +271,7 @@ public static class MacroContextExtensions
         return context.Factory.ForeachLoop(context.Invocation.Position);
     }
 
-    public static AstNode CreateReturn(this MacroContext context, AstExpr expression = null,
+    public static AstNode CreateReturn(this MacroContext context, AstExpr? expression = null,
         ReturnVariant returnVariant = ReturnVariant.Exit)
     {
         return context.Factory.Return(context.Invocation.Position, expression, returnVariant);

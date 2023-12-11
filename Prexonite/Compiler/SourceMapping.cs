@@ -23,19 +23,17 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Prexonite.Compiler;
 
-public class SourceMapping : IDictionary<int, ISourcePosition>
+public class SourceMapping : IDictionary<int, ISourcePosition?>
 {
     #region Representation
 
-    readonly List<ISourcePosition> _positionTable = new();
+    readonly List<ISourcePosition?> positionTable = new();
 
     #endregion
 
@@ -48,13 +46,13 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     ///     A <see cref = "T:System.Collections.Generic.IEnumerator`1" /> that can be used to iterate through the collection.
     /// </returns>
     /// <filterpriority>1</filterpriority>
-    public IEnumerator<KeyValuePair<int, ISourcePosition>> GetEnumerator()
+    public IEnumerator<KeyValuePair<int, ISourcePosition?>> GetEnumerator()
     {
         var index = 0;
-        foreach (var sourcePosition in _positionTable)
+        foreach (var sourcePosition in positionTable)
         {
             if (sourcePosition != null)
-                yield return new KeyValuePair<int, ISourcePosition>(index, sourcePosition);
+                yield return new(index, sourcePosition);
 
             index++;
         }
@@ -81,8 +79,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// </summary>
     /// <param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
-    void ICollection<KeyValuePair<int, ISourcePosition>>.Add(
-        KeyValuePair<int, ISourcePosition> item)
+    void ICollection<KeyValuePair<int, ISourcePosition?>>.Add(
+        KeyValuePair<int, ISourcePosition?> item)
     {
         Add(item.Key, item.Value);
     }
@@ -93,7 +91,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only. </exception>
     public void Clear()
     {
-        _positionTable.Clear();
+        positionTable.Clear();
         Count = 0;
     }
 
@@ -104,8 +102,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     ///     true if <paramref name = "item" /> is found in the <see cref = "T:System.Collections.Generic.ICollection`1" />; otherwise, false.
     /// </returns>
     /// <param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
-    bool ICollection<KeyValuePair<int, ISourcePosition>>.Contains(
-        KeyValuePair<int, ISourcePosition> item)
+    bool ICollection<KeyValuePair<int, ISourcePosition?>>.Contains(
+        KeyValuePair<int, ISourcePosition?> item)
     {
         return TryGetValue(item.Key, out var pos) && pos.SourcePositionEquals(item.Value);
     }
@@ -130,7 +128,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     ///     from <paramref name = "arrayIndex" /> to the end of the destination <paramref name = "array" />.
     ///     -or-Type cannot be cast automatically to the type of the destination <paramref name = "array" />.
     /// </exception>
-    public void CopyTo(KeyValuePair<int, ISourcePosition>[] array, int arrayIndex)
+    public void CopyTo(KeyValuePair<int, ISourcePosition?>[] array, int arrayIndex)
     {
         this.ToArray().CopyTo(array, arrayIndex);
     }
@@ -145,8 +143,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// </returns>
     /// <param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
-    bool ICollection<KeyValuePair<int, ISourcePosition>>.Remove(
-        KeyValuePair<int, ISourcePosition> item)
+    bool ICollection<KeyValuePair<int, ISourcePosition?>>.Remove(
+        KeyValuePair<int, ISourcePosition?> item)
     {
         if (TryGetValue(item.Key, out var pos) && pos.SourcePositionEquals(item.Value))
         {
@@ -172,7 +170,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// <returns>
     ///     true if the <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only; otherwise, false.
     /// </returns>
-    bool ICollection<KeyValuePair<int, ISourcePosition>>.IsReadOnly => false;
+    bool ICollection<KeyValuePair<int, ISourcePosition?>>.IsReadOnly => false;
 
     #endregion
 
@@ -188,8 +186,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// <exception cref = "T:System.ArgumentNullException"><paramref name = "instructionOffset" /> is null.</exception>
     public bool ContainsKey(int instructionOffset)
     {
-        return instructionOffset < _positionTable.Count &&
-            _positionTable[instructionOffset] != null;
+        return instructionOffset < positionTable.Count &&
+            positionTable[instructionOffset] != null;
     }
 
     /// <summary>
@@ -201,24 +199,24 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// <exception cref = "T:System.ArgumentException">An element with the same key already exists in the <see
     ///      cref = "T:System.Collections.Generic.IDictionary`2" />.</exception>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.IDictionary`2" /> is read-only.</exception>
-    public void Add(int instructionOffset, ISourcePosition value)
+    public void Add(int instructionOffset, ISourcePosition? value)
     {
-        if (instructionOffset < _positionTable.Count)
+        if (instructionOffset < positionTable.Count)
         {
             var insertDelta = value == null ? 0 : +1;
-            var removeDelta = _positionTable[instructionOffset] == null ? 0 : -1;
+            var removeDelta = positionTable[instructionOffset] == null ? 0 : -1;
 
-            _positionTable[instructionOffset] = value;
+            positionTable[instructionOffset] = value;
 
             Count += insertDelta + removeDelta;
         }
         else
         {
-            _positionTable.Capacity = Math.Max(2,
-                Math.Max(instructionOffset + 1, _positionTable.Capacity*2));
-            for (var i = _positionTable.Count; i < _positionTable.Capacity; i++)
-                _positionTable.Add(null);
-            Debug.Assert(instructionOffset < _positionTable.Count);
+            positionTable.Capacity = Math.Max(2,
+                Math.Max(instructionOffset + 1, positionTable.Capacity*2));
+            for (var i = positionTable.Count; i < positionTable.Capacity; i++)
+                positionTable.Add(null);
+            Debug.Assert(instructionOffset < positionTable.Count);
             Add(instructionOffset, value);
         }
     }
@@ -235,11 +233,11 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.IDictionary`2" /> is read-only.</exception>
     public bool Remove(int instructionOffset)
     {
-        if (instructionOffset < _positionTable.Count)
+        if (instructionOffset < positionTable.Count)
         {
-            if (_positionTable[instructionOffset] != null)
+            if (positionTable[instructionOffset] != null)
             {
-                _positionTable[instructionOffset] = null;
+                positionTable[instructionOffset] = null;
                 Count--;
                 return true;
             }
@@ -266,13 +264,13 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
             return;
         }
 
-        if (instructionOffset < _positionTable.Count)
+        if (instructionOffset < positionTable.Count)
         {
-            count = Math.Min(instructionOffset + count, _positionTable.Count) -
+            count = Math.Min(instructionOffset + count, positionTable.Count) -
                 instructionOffset;
-            Debug.Assert(instructionOffset + count <= _positionTable.Count,
+            Debug.Assert(instructionOffset + count <= positionTable.Count,
                 "Removal range not clamped to backing storage index range.");
-            _positionTable.RemoveRange(instructionOffset, count);
+            positionTable.RemoveRange(instructionOffset, count);
         }
     }
 
@@ -286,11 +284,11 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     /// <param name = "value">When this method returns, the value associated with the specified key, if the key is found; otherwise, the default value for the type of the <paramref
     ///      name = "value" /> parameter. This parameter is passed uninitialized.</param>
     /// <exception cref = "T:System.ArgumentNullException"><paramref name = "instructionOffset" /> is null.</exception>
-    public bool TryGetValue(int instructionOffset, out ISourcePosition value)
+    public bool TryGetValue(int instructionOffset, [NotNullWhen(true)] out ISourcePosition? value)
     {
-        if (instructionOffset < _positionTable.Count)
+        if (instructionOffset < positionTable.Count)
         {
-            value = _positionTable[instructionOffset];
+            value = positionTable[instructionOffset];
             return value != null;
         }
         else
@@ -312,7 +310,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     ///      name = "instructionOffset" /> is not found.</exception>
     /// <exception cref = "T:System.NotSupportedException">The property is set and the <see
     ///      cref = "T:System.Collections.Generic.IDictionary`2" /> is read-only.</exception>
-    public ISourcePosition this[int instructionOffset]
+    public ISourcePosition? this[int instructionOffset]
     {
         get
         {
@@ -338,12 +336,12 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     ///     An <see cref = "T:System.Collections.Generic.ICollection`1" /> containing the keys of the object that implements <see
     ///      cref = "T:System.Collections.Generic.IDictionary`2" />.
     /// </returns>
-    ICollection<int> IDictionary<int, ISourcePosition>.Keys
+    ICollection<int> IDictionary<int, ISourcePosition?>.Keys
     {
         get
         {
             return
-                Enumerable.Range(0, _positionTable.Count).Where(i => _positionTable[i] != null).
+                Enumerable.Range(0, positionTable.Count).Where(i => positionTable[i] != null).
                     ToList();
         }
     }
@@ -356,9 +354,9 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
     ///     An <see cref = "T:System.Collections.Generic.ICollection`1" /> containing the values in the object that implements <see
     ///      cref = "T:System.Collections.Generic.IDictionary`2" />.
     /// </returns>
-    ICollection<ISourcePosition> IDictionary<int, ISourcePosition>.Values
+    ICollection<ISourcePosition?> IDictionary<int, ISourcePosition?>.Values
     {
-        get { return _positionTable.Where(pos => pos != null).ToList(); }
+        get { return positionTable.Where(pos => pos != null).ToList(); }
     }
 
     #endregion
@@ -379,7 +377,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
 
         //Check if there is source information available
         if (!table.TryGetValue(SourceMappingKey, out var rootEntry))
-            return new SourceMapping();
+            return new();
 
         var source = new SourceMapping();
         var root = rootEntry.List;
@@ -443,7 +441,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
 
         //find most common file name
         var mcfTable = new Dictionary<string, int>();
-        foreach (var pos in finalMapping._positionTable)
+        foreach (var pos in finalMapping.positionTable)
         {
             if (pos == null)
                 continue;
@@ -462,7 +460,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition>
 
         var entry = new List<MetaEntry>(4);
         var index = -1;
-        foreach (var pos in finalMapping._positionTable)
+        foreach (var pos in finalMapping.positionTable)
         {
             index++;
             if (pos == null)

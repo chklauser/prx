@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -39,7 +38,7 @@ namespace Prexonite.Compiler.Symbolic.Internal;
 [Obsolete("SymbolBuilder is not capable of building most legal symbols.")]
 sealed class SymbolBuilder : ICloneable
 {
-    public EntityRef Entity { get; set; }
+    public EntityRef? Entity { get; set; }
 
     public bool AutoDereferenceEnabled { get; set; } = true;
 
@@ -62,7 +61,7 @@ sealed class SymbolBuilder : ICloneable
         return this;
     }
 
-    public SymbolBuilder AddMessage([NotNull]Message message)
+    public SymbolBuilder AddMessage(Message message)
     {
         if (message == null)
             throw new ArgumentNullException(nameof(message));
@@ -100,7 +99,7 @@ sealed class SymbolBuilder : ICloneable
 
     public Symbol ToSymbol()
     {
-        Symbol symbol;
+        Symbol? symbol;
         if (Entity == null)
             symbol = null;
         else
@@ -108,7 +107,7 @@ sealed class SymbolBuilder : ICloneable
             var entityRefSym = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
             if(AutoDereferenceEnabled)
             {
-                symbol = Entity.TryGetMacroCommand(out var mcmd) 
+                symbol = Entity.TryGetMacroCommand(out _) 
                     ? Symbol.CreateExpand(entityRefSym) 
                     : Symbol.CreateDereference(entityRefSym);
             }
@@ -120,7 +119,7 @@ sealed class SymbolBuilder : ICloneable
         return WrapSymbol(symbol);
     }
 
-    public Symbol WrapSymbol([CanBeNull]Symbol symbol)
+    public Symbol WrapSymbol(Symbol? symbol)
     {
         _materializePrefix();
         if (symbol == null)
@@ -140,7 +139,7 @@ sealed class SymbolBuilder : ICloneable
         return Clone();
     }
 
-    [NotNull,PublicAPI]
+    [PublicAPI]
     public SymbolBuilder Clone()
     {
         var c = new SymbolBuilder {_dereferenceCount = _dereferenceCount, Entity = Entity, _prefix = _prefix};

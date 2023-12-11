@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
@@ -59,20 +58,21 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
         return true;
     }
 
-    ConstructorInfo _functionPartialCallCtorCache;
+    ConstructorInfo? _functionPartialCallCtorCache;
 
-    ConstructorInfo _functionPartialCallCtor
+    ConstructorInfo functionPartialCallCtor
     {
         get
         {
             return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor(new[]
-                {typeof (PValue), typeof (PValue[])});
+                {typeof (PValue), typeof (PValue[])})
+                ?? throw new InvalidOperationException($"Could not find constructor for {nameof(FunctionalPartialCall)} with (PValue, PValue[]).");
         }
     }
 
     void ICilExtension.Implement(CompilerState state, Instruction ins,
         CompileTimeValue[] staticArgv, int dynamicArgc)
     {
-        FlippedFunctionalPartialCallCommand._ImplementCtorCall(state, ins, staticArgv, dynamicArgc, _functionPartialCallCtor);
+        FlippedFunctionalPartialCallCommand._ImplementCtorCall(state, ins, staticArgv, dynamicArgc, functionPartialCallCtor);
     }
 }

@@ -22,17 +22,21 @@
  */
 
 
-Expr<out AstExpr expr>		    (.	AstConditionalExpression cexpr; expr = _NullNode(GetPosition()); .)
-=	
+Expr<out AstExpr expr>		    (.
+    expr = _NullNode(GetPosition());
+    AstExpr ifExpr;
+    AstExpr elseExpr;
+.)
+=
 	AtomicExpr<out expr>   
-|										(.	bool isNegated = false; .)
+|										(.	bool isNegated = false; ISourcePosition pos = GetPosition(); .)
 	(	if
 	|	unless							(.	isNegated = true; .)
 	)
-	lpar Expr<out expr> rpar			(.	cexpr = new AstConditionalExpression(this, expr, isNegated); .)
-	Expr<out cexpr.IfExpression>
+	lpar Expr<out expr> rpar
+	Expr<out ifExpr>
     else
-    Expr<out cexpr.ElseExpression>      (.  expr = cexpr; .)
+    Expr<out elseExpr>                  (.  expr = Create.ConditionalExpression(pos, expr, ifExpr, elseExpr, isNegated); .)
 .
 
 
@@ -63,11 +67,11 @@ AppendRightExpr<out AstExpr expr>
 	}
 .
 
-KeyValuePairExpr<out AstExpr expr>
+KeyValuePairExpr<out AstExpr expr>      (. var pos = GetPosition(); .)
 =
 	OrExpr<out expr>
 	[	colon							(.	AstExpr value; .)
-		KeyValuePairExpr<out value>		(.	expr = new AstKeyValuePair(this, expr, value); .)
+		KeyValuePairExpr<out value>		(.	expr = Create.KeyValuePair(pos, expr, value); .)
 	]
 .
 
@@ -81,138 +85,144 @@ OrExpr<out AstExpr expr>
 .
 
 AndExpr<out AstExpr expr>
-                                        (. AstExpr lhs, rhs; .)
+                                        (. AstExpr? lhs; AstExpr rhs; .)
 =
-    DeltaExpr<out lhs>                  (.  expr = lhs; .)
+    DeltaExpr<out lhs>                  (.  expr = lhs ??= Create.Null(GetPosition()); .)
     [   and AndExpr<out rhs>            (.  expr = new AstLogicalAnd(this, lhs, rhs); .)
     ]
 .
 
-DeltaExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; BinaryOperator bop; UnaryOperator uop; .)
+DeltaExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs, rhs; BinaryOperator bop; UnaryOperator uop; .)
 =
     BitOrExpr<out lhs>                  (.  expr = lhs; .)
     {   (   deltaleft                   (.  bop = BinaryOperator.DeltaLeft; uop = UnaryOperator.PostDeltaLeft; .)
         |   deltaright                  (.  bop = BinaryOperator.DeltaRight; uop = UnaryOperator.PostDeltaRight; .)
         )
-        (   BitOrExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr, bop, rhs); .)
-        |                               (.  expr = Create.UnaryOperation(GetPosition(), uop, expr); .)
+        (   BitOrExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr!, bop, rhs!); .)
+        |                               (.  expr = expr != null ? Create.UnaryOperation(GetPosition(), uop, expr) : null; .)
         )
     }
 .
 
-BitOrExpr<out AstExpr expr>
-                                        (. AstExpr lhs, rhs; .)
+BitOrExpr<out AstExpr? expr>
+                                        (. AstExpr? lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
-    {   bitOr BitXorExpr<out rhs>       (. expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseOr, rhs); .)
+    {   bitOr BitXorExpr<out rhs>       (. expr = Create.BinaryOperation(GetPosition(), expr!, BinaryOperator.BitwiseOr, rhs!); .)
     }
 .
 
-BitXorExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; .)
+BitXorExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs, rhs; .)
 =
     BitAndExpr<out lhs>                 (.  expr = lhs; .)
     {   xor BitAndExpr<out rhs>
-                                        (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.ExclusiveOr, rhs); .)
+                                        (.  expr = Create.BinaryOperation(GetPosition(), expr!, BinaryOperator.ExclusiveOr, rhs!); .)
     }
 .
 
-BitAndExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; .)
+BitAndExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs, rhs; .)
 =
     NotExpr<out lhs>                    (.  expr = lhs; .)
     {   bitAnd NotExpr<out rhs>
-                                        (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseAnd, rhs); .)
+                                        (.  expr = Create.BinaryOperation(GetPosition(), expr!, BinaryOperator.BitwiseAnd, rhs!); .)
     }
 .
 
-NotExpr<out AstExpr expr>
-                                        (. AstExpr lhs; bool isNot = false; .)
+NotExpr<out AstExpr? expr>
+                                        (. AstExpr? lhs; bool isNot = false; .)
 =
     [   not                             (.  isNot = true; .)
     ]
-    EqlExpr<out lhs>                    (.  expr = isNot ? Create.UnaryOperation(GetPosition(), UnaryOperator.LogicalNot, lhs) : lhs; .)
+    EqlExpr<out lhs>                    (.  expr = isNot && lhs != null ? Create.UnaryOperation(GetPosition(), UnaryOperator.LogicalNot, lhs) : lhs; .)
 .
 
-EqlExpr<out AstExpr expr>
-                                        (. AstExpr lhs, rhs; BinaryOperator op; .)
+EqlExpr<out AstExpr? expr>
+                                        (. AstExpr? lhs, rhs; BinaryOperator op; .)
 =
     RelExpr<out lhs>                    (. expr = lhs; .)
     {   (   eq                          (.  op = BinaryOperator.Equality; .)
         |   ne                          (.  op = BinaryOperator.Inequality; .)    
-        ) RelExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
+        ) RelExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr!, op, rhs!); .)
     }
 .
 
-RelExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; BinaryOperator op;  .)
+RelExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs, rhs; BinaryOperator op;  .)
 =
     CoalExpr<out lhs>                   (.  expr = lhs; .)
     {   (   lt                          (.  op = BinaryOperator.LessThan;              .)
         |   le                          (.  op = BinaryOperator.LessThanOrEqual;       .)
         |   gt                          (.  op = BinaryOperator.GreaterThan;           .)
         |   ge                          (.  op = BinaryOperator.GreaterThanOrEqual;    .)
-        ) CoalExpr<out rhs>             (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
+        ) CoalExpr<out rhs>             (.  expr = Create.BinaryOperation(GetPosition(), expr!, op, rhs!); .)
     }
 .
 
-CoalExpr<out AstExpr expr>
-										(.	AstExpr lhs, rhs; AstCoalescence coal = new AstCoalescence(this); .)
+CoalExpr<out AstExpr? expr>
+										(.	AstExpr? lhs, rhs; AstCoalescence coal = new AstCoalescence(this); .)
 =
-	AddExpr<out lhs>					(.	expr = lhs; coal.Expressions.Add(lhs); .)
+	AddExpr<out lhs>					(.	expr = lhs; if(lhs != null) coal.Expressions.Add(lhs); .)
 	{
 		coalescence
-		AddExpr<out rhs>				(.	expr = coal; coal.Expressions.Add(rhs); .)
+		AddExpr<out rhs>				(.	expr = coal; if(rhs != null) coal.Expressions.Add(rhs); .)
 	}
-.										
+.
 
-AddExpr<out AstExpr expr>
-                                        (.  AstExpr lhs,rhs; BinaryOperator op; .)
+AddExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs,rhs; BinaryOperator op; .)
 =
     MulExpr<out lhs>                    (.  expr = lhs; .)
     {   (   plus                        (.  op = BinaryOperator.Addition;      .)
         |   minus                       (.  op = BinaryOperator.Subtraction;   .) 
-        ) MulExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
+        ) MulExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr!, op, rhs!); .)
     }
 .
 
-MulExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; BinaryOperator op; .)
+MulExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs, rhs; BinaryOperator op; .)
 =
     PowExpr<out lhs>                    (.  expr = lhs; .)
     {   (   times                       (.  op = BinaryOperator.Multiply;      .)
         |   div                         (.  op = BinaryOperator.Division;        .)
         |   mod                         (.  op = BinaryOperator.Modulus;       .)
-        ) PowExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
+        ) PowExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr!, op, rhs!); .)
     }
 .
 
-PowExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; .)
+PowExpr<out AstExpr? expr>
+                                        (.  AstExpr? lhs, rhs; .)
 =
     AssignExpr<out lhs>                  (.  expr = lhs; .)
-    {   pow AssignExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.Power, rhs); .)
+    {   pow AssignExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr!, BinaryOperator.Power, rhs!); .)
     }
 .
 
-AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
-                                            AstGetSet typeExpr;
+AssignExpr<out AstExpr? expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
+                                            AstGetSet? typeExpr;
                                             ISourcePosition position;
                                         .)
 =                                       (.  position = GetPosition(); .)
     PostfixUnaryExpr<out expr>
     (IF(isAssignmentOperator())
-                                       (.  assignment = expr as AstGetSet;
-                                            if(assignment == null) 
+                                       (.   AstGetSet? lvalue = expr as AstGetSet;
+                                            if(lvalue == null) 
                                             {
-                                                SemErr(string.Format("Cannot assign to a {0}",
-                                                    expr.GetType().Name));
+                                                if(expr != null) {
+                                                    Loader.ReportMessage(Message.Error(
+                                                        $"Cannot assign to a {expr.GetType().Name}", 
+                                                        position, 
+                                                        MessageClasses.LValueExpected));
+                                                }
                                                 assignment = _NullNode(GetPosition()); //to prevent null references
+                                            } else {
+                                                assignment = lvalue;
                                             }
                                             assignment.Call = PCall.Set;
                                         .)
-        (                               
+        (
             (   assign                  (.  setModifier = BinaryOperator.None; .)
 	        |   plus assign             (.  setModifier = BinaryOperator.Addition; .)
 	        |   minus assign            (.  setModifier = BinaryOperator.Subtraction; .)
@@ -227,7 +237,7 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 	        
 	    |   tilde  assign               (.  setModifier = BinaryOperator.Cast; .)
 	        TypeExpr<out typeExpr, _conversionShift>     
-	                                    (.  expr = typeExpr; .)
+	                                    (.  expr = typeExpr ?? Create.Null(GetPosition()); .)
 	    )                               
 	                                    (.  assignment.Arguments.Add(expr); 
 	                                        if(setModifier == BinaryOperator.None)
@@ -238,18 +248,17 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
     |)
 .
 
-PostfixUnaryExpr<out AstExpr expr>
-                                        (.  AstGetSet type; AstGetSet extension; bool isInverted = false;
-                                            ISourcePosition notPosition = GetPosition();
+PostfixUnaryExpr<out AstExpr? expr>
+                                        (.  AstGetSet? type; AstGetSet extension; bool isInverted = false;
                                         .)
 =
     PrefixUnaryExpr<out expr>           (.  var position = GetPosition(); .)
     {   tilde TypeExpr<out type, _conversionShift>  
-                                        (.  type.Arguments.Add(expr);  
-                                            expr = type; 
+                                        (.  type?.Arguments.Add(expr);  
+                                            expr = type ?? Create.Null(GetPosition()); 
                                         .)
     |   is	                            
-        [ not						    (.	isInverted = true; notPosition = GetPosition(); .) 
+        [ not						    (.	isInverted = true;.) 
         ]
     	TypeExpr<out type, _typeCheckShift>         
     		                            (.  if (type == null)
@@ -269,14 +278,14 @@ PostfixUnaryExpr<out AstExpr expr>
                                                     : type;
                                             }
     									.)
-    |   inc                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostIncrement, expr); .)
-    |   dec                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostDecrement, expr); .)
+    |   inc                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostIncrement, expr ?? _NullNode(GetPosition())); .)
+    |   dec                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostDecrement, expr ?? _NullNode(GetPosition())); .)
     |   GetSetExtension<expr, out extension>
                                         (.  expr = extension; .)
     }
 .
 
-PrefixUnaryExpr<out AstExpr expr>
+PrefixUnaryExpr<out AstExpr? expr>
                                         (.  var prefixes = new Stack<(bool IsSplice, UnaryOperator Op)>(); .)
 =                                       (.  var position = GetPosition(); .)
     {   plus                            // don't need to do anything for '+expr'
@@ -288,17 +297,20 @@ PrefixUnaryExpr<out AstExpr expr>
     |   deltaright                      (.  prefixes.Push((false, UnaryOperator.PreDeltaRight)); .)
     }    
     Primary<out expr>                   
-                                        (.  while(prefixes.Count > 0) {
-                                                var prefix = prefixes.Pop();
-                                                if(prefix.IsSplice) 
-                                                    expr = Create.ArgumentSplice(position, expr);
-                                                else
-                                                    expr = Create.UnaryOperation(position, prefix.Op, expr);
+                                        (.  
+                                            if(expr != null) {
+                                                while(prefixes.Count > 0) {
+                                                    var prefix = prefixes.Pop();
+                                                    if(prefix.IsSplice) 
+                                                        expr = Create.ArgumentSplice(position, expr);
+                                                    else
+                                                        expr = Create.UnaryOperation(position, prefix.Op, expr);
+                                                }
                                             }
                                         .)
 .
 
-Primary<out AstExpr expr>
+Primary<out AstExpr? expr>
                                         (.  expr = null;
                                         .)
 =   IF(isLambdaExpression())
@@ -320,32 +332,33 @@ Primary<out AstExpr expr>
 
 // These are primary expressions that are suitable to use as the LHS of `LHS.method(call)` or `LHS[index]`.
 PrimaryForGetSetComplex<out AstExpr expr>
-                                        (. expr = null; .)
-=   Constant<out expr>
-|   ThisExpression<out expr>
+                                        (. AstExpr? prim = null; .)
+=(   Constant<out prim>
+|   ThisExpression<out prim>
 //  Note: the HashLiteral *cannot* appear here. A statement cannot start with an `{` because then it cannot be 
 //  distinguished from a block.
-|   ListLiteral<out expr>
-|   IF(_isNotNewDecl()) ObjectCreation<out expr>
+|   ListLiteral<out prim>
+|   IF(_isNotNewDecl()) ObjectCreation<out prim>
 |   (.  _pushLexerState(Lexer.Asm); .)  (.  var blockExpr = Create.Block(GetPosition());
 											_PushScope(blockExpr);
 										.)
     asm lpar { AsmInstruction<blockExpr> } rpar
-    (.  _popLexerState(); .)			(.  expr = blockExpr; 
+    (.  _popLexerState(); .)			(.  prim = blockExpr; 
 											_PopScope(blockExpr);
 										.)
-|   GetInitiator<out expr>
+|   GetInitiator<out prim>
+)                                       (.  expr = prim ?? Create.Null(GetPosition()); .)
 .
 
 Constant<out AstExpr expr>
-                                        (.  expr = null; int vi; double vr; bool vb; string vs; .)
-=
-        Integer<out vi>                 (.  expr = new AstConstant(this, vi); .)
-    |   Real<out vr>                    (.  expr = new AstConstant(this, vr); .)
-    |   Boolean<out vb>                 (.  expr = new AstConstant(this, vb); .)
-    |   String<out vs>                  (.  expr = new AstConstant(this, vs); .)
-    |   Null							(.  expr = new AstConstant(this, null); .)
-.
+                                        (.  AstExpr? prim = null; int vi; double vr; bool vb; string vs; .)
+=(
+        Integer<out vi>                 (.  prim = new AstConstant(this, vi); .)
+    |   Real<out vr>                    (.  prim = new AstConstant(this, vr); .)
+    |   Boolean<out vb>                 (.  prim = new AstConstant(this, vb); .)
+    |   String<out vs>                  (.  prim = new AstConstant(this, vs); .)
+    |   Null							(.  prim = new AstConstant(this, null); .)
+)                                       (.  expr = prim ?? Create.Null(GetPosition()); .).
 
 ListLiteral<out AstExpr expr>
                                         (.  AstExpr iexpr; 
@@ -357,7 +370,10 @@ ListLiteral<out AstExpr expr>
     lbrack
     [   Expr<out iexpr>                 (.  lst.Elements.Add(iexpr); .)
         {   comma                       (.  if(missingExpr)
-                                                SemErr("Missing expression in list literal (two consecutive commas).");
+                                                Loader.ReportMessage(Message.Error(
+                                                    "Missing expression in list literal (two consecutive commas).",
+                                                    GetPosition(),
+                                                    MessageClasses.DuplicateComma));
                                         .)
             (   Expr<out iexpr>         (.  lst.Elements.Add(iexpr); 
                                             missingExpr = false; 
@@ -379,7 +395,10 @@ HashLiteral<out AstExpr expr>
 	lbrace
 	[	Expr<out iexpr>					(.	hash.Elements.Add(iexpr); .)
 		{	comma                       (.  if(missingExpr)
-                                                SemErr("Missing expression in list literal (two consecutive commas).");
+                                                Loader.ReportMessage(Message.Error(
+                                                    "Missing expression in list literal (two consecutive commas).", 
+                                                    GetPosition(), 
+                                                    MessageClasses.DuplicateComma));
                                         .)
             (   Expr<out iexpr>			(.	hash.Elements.Add(iexpr); 
                                             missingExpr = false;
@@ -401,37 +420,42 @@ LoopExpr<out AstExpr expr>
 	|	ForLoop<dummyBlock>
 	|	ForeachLoop<dummyBlock>
 	)									(.	_PopScope(dummyBlock);
-											SemErr("Loop expressions are no longer supported.");
+											Loader.ReportMessage(Message.Error(
+											    "Loop expressions are no longer supported.",
+											    GetPosition(),
+											    MessageClasses.LoopExprNotSupported));
 										.)
 .										
 											
 
 ObjectCreation<out AstExpr expr>
-                                        (.  AstGetSet type;
+                                        (.  AstGetSet? type;
                                         .)
 =
     new TypeExpr<out type, _objectCreationShift>
-                                        (.  expr = type; .)
+                                        (.  type ??= _NullNode(GetPosition());
+                                            expr = type;
+                                        .)
     Arguments<type.Arguments>
 .
 
 CoroutineCreation<out AstExpr expr>
                                         (.  
-                                            AstCreateCoroutine cor = new AstCreateCoroutine(this); 
+                                            AstCreateCoroutine cor; 
                                             AstExpr iexpr;
-                                            expr = cor;
                                         .)
 =
-    coroutine Expr<out iexpr>           (.  cor.Expression = iexpr; .)
+    coroutine Expr<out iexpr>           (.   expr = cor = Create.CreateCoroutine(GetPosition(), iexpr); .)
     [ for Arguments<cor.Arguments> ]
 .
 
 LambdaExpression<out AstExpr expr>
-                                        (.  PFunction func = TargetApplication.CreateFunction(generateLocalId());                                             
+                                        (.  PFunction func = TargetApplication.CreateFunction(generateLocalId());
+		                                    ensureHasTarget();
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
-                                            CompilerTarget ft = FunctionTargets[func];
+                                            CompilerTarget ft = FunctionTargets[func]!;
                                             ISourcePosition position;
                                         .)
 =
@@ -459,10 +483,10 @@ implementation
                                             {
                                                 try {
                                                     //Emit code for top-level block
-                                                    Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
-                                                    FunctionTargets[func].FinishTarget();
+                                                    Ast[func].EmitCode(ft,true,StackSemantics.Effect);
+                                                    ft.FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of lambda expression.\n" + e);
+                                                    Loader.ReportMessage(Message.Error($"Exception during compilation of lambda expression.\n{e}", GetPosition(), MessageClasses.ParserInternal));
                                                 }
                                             }
                                             
@@ -472,10 +496,11 @@ implementation
 
 LazyExpression<out AstExpr expr>
                                         (.  PFunction func = TargetApplication.CreateFunction(generateLocalId());
+		                                    ensureHasTarget();
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
-                                            CompilerTarget ft = FunctionTargets[func];
+                                            CompilerTarget ft = FunctionTargets[func]!;
                                             ISourcePosition position;
                                             
                                             //Switch to nested target
@@ -500,10 +525,13 @@ lazy                                    (.  position = GetPosition(); .)
                                             if(errors.count == 0)
                                             {
                                                 try {
-													Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
-													FunctionTargets[func].FinishTarget();
+													Ast[func].EmitCode(ft,true,StackSemantics.Effect);
+													ft.FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of lazy expression.\n" + e);
+                                                    Loader.ReportMessage(Message.Error(
+                                                        "Exception during compilation of lazy expression.\n" + e,
+                                                        GetPosition(),
+                                                        MessageClasses.ParserInternal));
                                                 }
                                             }
                                             
@@ -516,10 +544,10 @@ lazy                                    (.  position = GetPosition(); .)
                                         .)
 .
 
-ThrowExpression<out AstThrow th>		(.  th = new AstThrow(this); .)
+ThrowExpression<out AstExpr th>        (. AstExpr expr; .)
 =
-    throw
-    Expr<out th.Expression>
+    throw                               (.  var pos = GetPosition(); .) 
+    Expr<out expr>                      (.  th = Create.Throw(pos, expr); .)
 .
 
 ThisExpression<out AstExpr expr>        (.  var position = GetPosition();
@@ -529,21 +557,21 @@ ThisExpression<out AstExpr expr>        (.  var position = GetPosition();
     this                                (.  Loader.ReportMessage(Message.Error("Illegal use of reserved keyword `this`.",position,MessageClasses.ThisReserved)); .)
 .
 
-ExplicitTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
+ExplicitTypeExpr<out AstGetSet? type, SymbolShift shift>
                                         (.  type = null; .)
 =
     tilde PrexoniteTypeExpr<out type, shift>
 |   ClrTypeExpr<out type, shift>
 .
 
-TypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
+TypeExpr<out AstGetSet? type, SymbolShift shift>
                                         (.  type = null; .)
 =
     PrexoniteTypeExpr<out type, shift>
 |   ClrTypeExpr<out type, shift>
 .
 
-ClrTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>          
+ClrTypeExpr<out AstGetSet type, SymbolShift shift>          
                                         (.  string id; ISourcePosition position = GetPosition(); .)
 =
                                         (.  StringBuilder typeId = new StringBuilder(); .)
@@ -561,12 +589,11 @@ ClrTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
                                         .)
 .
 
-PrexoniteTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
-                                        (.  AstGetSet expr = null;
+PrexoniteTypeExpr<out AstGetSet? type, SymbolShift shift>
+                                        (.  AstGetSet? expr = null;
                                             string id = "<unknownId>";
                                             string shiftedId = "<unknownShiftedId>";
                                             ISourcePosition position;
-                                            AstNamespaceUsage lastNs;
                                             bool shiftUsed = false;
                                             ISourcePosition argPos;
                                         .)
@@ -584,7 +611,7 @@ PrexoniteTypeExpr<out AstGetSet type, [NotNull]SymbolShift shift>
                                             }
                                         .)
       { IF(!shiftUsed && expr is AstNamespaceUsage ns)
-                                        (.  position = GetPosition(); lastNs = ns; .)
+                                        (.  position = GetPosition(); .)
         dot
         DotId<out id>                   (.
                                             shiftedId = shift(id);

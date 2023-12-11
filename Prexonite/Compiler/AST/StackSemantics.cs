@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -42,5 +43,5 @@ public enum StackSemantics
     /// Indicates that the operation does not modify the 
     /// evaluation stack, but may have side effects.
     /// </summary>
-    Effect
+    Effect,
 }

@@ -25,9 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text;
@@ -37,7 +35,7 @@ using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types;
 
-[PTypeLiteral("List")]
+[PTypeLiteral(nameof(List))]
 public class ListPType : PType, ICilCompilerAware
 {
     ListPType()
@@ -52,9 +50,9 @@ public class ListPType : PType, ICilCompilerAware
         var enumerable = value as IEnumerable;
 
         if (value is List<PValue> listOfPValue)
-            return new PValue(listOfPValue, this);
+            return new(listOfPValue, this);
         if (enumerableOfPValue != null)
-            return new PValue(new List<PValue>(enumerableOfPValue), this);
+            return new(new List<PValue>(enumerableOfPValue), this);
         if (enumerable == null)
             throw new PrexoniteException(
                 "Cannot create a PValue from the supplied " + value + ".");
@@ -68,7 +66,7 @@ public class ListPType : PType, ICilCompilerAware
                 throw new PrexoniteException(
                     "Cannot create List from IEnumerable that contains elements of any type other than PValue. Use List.CreateFromList for this purpose.");
         }
-        return new PValue(lst, this);
+        return new(lst, this);
     }
 
     public override bool TryDynamicCall(
@@ -77,11 +75,12 @@ public class ListPType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (!(subject.Value is List<PValue> lst))
+        if (subject.Value is not List<PValue> lst)
             throw new PrexoniteException(subject + " is not a List.");
 
         if (id.Length == 0)
@@ -94,26 +93,26 @@ public class ListPType : PType, ICilCompilerAware
                         result = lst.Count == 0 ? Null.CreatePValue() : lst[^1];
                         break;
                     case 1:
-                        result = lst[(int)args[0].ConvertTo(sctx, Int).Value];
+                        result = lst[(int?)args[0].ConvertTo(sctx, Int).Value ?? 0];
                         break;
                     default:
                         //Multi-index lookup
-                        var n_lst = new List<PValue>(args.Length);
+                        var nLst = new List<PValue>(args.Length);
                         foreach (var index in args)
-                            n_lst.Add(lst[(int)index.ConvertTo(sctx, Int).Value]);
-                        result = new PValue(n_lst, this);
+                            nLst.Add(lst[(int?)index.ConvertTo(sctx, Int).Value ?? 0]);
+                        result = new(nLst, this);
                         break;
                 }
             }
             else
             {
                 if (args.Length == 1)
-                    lst.Add(args[0] ?? Null.CreatePValue());
+                    lst.Add(args[0]);
                 else //Multi index set
                 {
-                    var v = args[^1] ?? Null.CreatePValue();
+                    var v = args[^1];
                     for (var i = 0; i < args.Length - 1; i++)
-                        lst[(int)args[i].ConvertTo(sctx, Int).Value] = v;
+                        lst[(int)args[i].ConvertTo(sctx, Int).Value!] = v;
                 }
                 result = Null.CreatePValue();
             }
@@ -153,11 +152,11 @@ public class ListPType : PType, ICilCompilerAware
                 case "copyto":
                     index = 0;
                     if (args.Length > 1)
-                        index = (int)args[1].ConvertTo(sctx, Int).Value;
+                        index = (int)args[1].ConvertTo(sctx, Int).Value!;
                     else if (args.Length == 0)
                         throw new PrexoniteException("List.CopyTo requires a target array.");
 
-                    if (!(args[0].Value is PValue[] targetAsArray))
+                    if (args[0].Value is not PValue[] targetAsArray)
                         throw new PrexoniteException(
                             "List.CopyTo requires it's first argument to be of type Object(\"" +
                             typeof(PValue[]) + "\")");
@@ -180,7 +179,7 @@ public class ListPType : PType, ICilCompilerAware
 
                     foreach (var arg in args)
                     {
-                        var li = (int)arg.ConvertTo(sctx, Int).Value;
+                        var li = (int)arg.ConvertTo(sctx, Int).Value!;
                         if (li > lst.Count - 1 || li < 0)
                             throw new ArgumentOutOfRangeException(
                                 "The index " + li + " is out of the range of the supplied list.");
@@ -208,7 +207,7 @@ public class ListPType : PType, ICilCompilerAware
                         var indices = new List<PValue>(args.Length);
                         foreach (var arg in args)
                             indices.Add(lst.IndexOf(arg));
-                        result = new PValue(indices, this);
+                        result = new(indices, this);
                     }
                     break;
                 case "insert":
@@ -216,7 +215,7 @@ public class ListPType : PType, ICilCompilerAware
                     if (args.Length < 1)
                         throw new PrexoniteException(
                             "List.InsertAt requires at least an index.");
-                    index = (int)args[0].ConvertTo(sctx, Int).Value;
+                    index = (int)args[0].ConvertTo(sctx, Int).Value!;
                     for (var i = 1; i < args.Length; i++)
                         lst.Insert(index, args[i]);
                     result = Null.CreatePValue();
@@ -240,7 +239,7 @@ public class ListPType : PType, ICilCompilerAware
 
                         if (args[0].Value is Comparer<PValue> cmp)
                         {
-                            lst.Sort(icmp);
+                            lst.Sort(cmp);
                             result = Null.CreatePValue();
                             break;
                         }
@@ -253,9 +252,9 @@ public class ListPType : PType, ICilCompilerAware
                             foreach (var f in args)
                             {
                                 var pdec = f.IndirectCall(sctx, new[] { a, b });
-                                if (!(pdec.Type is IntPType))
+                                if (pdec.Type is not IntPType)
                                     pdec = pdec.ConvertTo(sctx, Int);
-                                var dec = (int)pdec.Value;
+                                var dec = (int)pdec.Value!;
                                 if (dec != 0)
                                     return dec;
                             }
@@ -272,7 +271,7 @@ public class ListPType : PType, ICilCompilerAware
                         Type T;
                         if (arg.Type is ObjectPType &&
                             typeof(Type).IsAssignableFrom(((ObjectPType)arg.Type).ClrType))
-                            T = (Type)arg.Value;
+                            T = (Type)arg.Value!;
                         else
                         {
                             var typeName = arg.CallToString(sctx);
@@ -300,7 +299,7 @@ public class ListPType : PType, ICilCompilerAware
 
                 default:
                     if (
-                        Object[subject.ClrType].TryDynamicCall(
+                        Object[subject.ClrType!].TryDynamicCall(
                             sctx, subject, args, call, id, out result))
                     {
                         if (call == PCall.Get)
@@ -332,18 +331,18 @@ public class ListPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
         if (Engine.StringsAreEqual(id, "Create"))
         {
-            result = new PValue(new List<PValue>(args), this);
+            result = new(new List<PValue>(args), this);
         }
         else if (Engine.StringsAreEqual(id, "CreateFromSize") && args.Length >= 1)
         {
             result =
-                new PValue(new List<PValue>((int)args[0].ConvertTo(sctx, Int).Value), this);
+                new(new List<PValue>((int)args[0].ConvertTo(sctx, Int).Value!), this);
         }
         else if (Engine.StringsAreEqual(id, "CreateFromList"))
         {
@@ -359,7 +358,7 @@ public class ListPType : PType, ICilCompilerAware
                         lst.Add(e as PValue ?? sctx.CreateNativePValue(e));
                 }
             }
-            result = new PValue(lst, this);
+            result = new(lst, this);
         }
 
         return result != null;
@@ -367,7 +366,7 @@ public class ListPType : PType, ICilCompilerAware
 
     public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
     {
-        result = new PValue(new List<PValue>(args), this);
+        result = new(new List<PValue>(args), this);
         return true;
     }
 
@@ -376,12 +375,12 @@ public class ListPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         var objT = target as ObjectPType;
 
         result = null;
-        if ((object)objT != null)
+        if ((object?)objT != null)
         {
             var clrType = objT.ClrType;
             var genericTypeTemplate = clrType.IsGenericType ? clrType.GetGenericTypeDefinition() : null;
@@ -394,10 +393,10 @@ public class ListPType : PType, ICilCompilerAware
                 clrType == typeof(IList))
                 result = target.CreatePValue(subject);
             else if (clrType == typeof(PValue[]) && useExplicit)
-                result = target.CreatePValue(((List<PValue>)subject.Value).ToArray());
+                result = target.CreatePValue(((List<PValue>)subject.Value!).ToArray());
             else if (clrType == typeof(PValueKeyValuePair))
             {
-                var lst = (List<PValue>)subject.Value;
+                var lst = (List<PValue>)subject.Value!;
                 var key = lst.Count > 0 ? lst[0] : Null.CreatePValue();
                 var valueList = new List<PValue>(lst.Count > 0 ? lst.Count - 1 : 0);
                 for (var i = 1; i < lst.Count; i++)
@@ -408,8 +407,8 @@ public class ListPType : PType, ICilCompilerAware
             else if (clrType.IsArray)
             {
                 //Convert each element in the list to the element type of the array.
-                var et = clrType.GetElementType();
-                var lst = (List<PValue>)subject.Value;
+                var et = clrType.GetElementType()!;
+                var lst = (List<PValue>)subject.Value!;
                 var array = Array.CreateInstance(et, lst.Count);
                 var success = true;
                 for (var i = 0; i < lst.Count; i++)
@@ -437,9 +436,9 @@ public class ListPType : PType, ICilCompilerAware
                 var elementT = clrType.GetGenericArguments()[0];
                 var listT = typeof (List<>).MakeGenericType(elementT);
                 // ReSharper disable once PossibleNullReferenceException
-                var list = (IList) listT.GetConstructor(Array.Empty<Type>()).Invoke(Array.Empty<object>());
+                var list = (IList) listT.GetConstructor(Array.Empty<Type>())!.Invoke(Array.Empty<object>());
                 var success = true;
-                foreach (var pv in (List<PValue>)subject.Value)
+                foreach (var pv in (List<PValue>)subject.Value!)
                 {
                     if (pv.TryConvertTo(sctx, elementT, useExplicit, out var converted))
                     {
@@ -460,7 +459,7 @@ public class ListPType : PType, ICilCompilerAware
                         var readonlyListT = typeof (ReadOnlyCollection<>).MakeGenericType(elementT);
                         var readonlyList =
                             // ReSharper disable once PossibleNullReferenceException
-                            readonlyListT.GetConstructor(new[] {typeof (IList<>).MakeGenericType(elementT)})
+                            readonlyListT.GetConstructor(new[] {typeof (IList<>).MakeGenericType(elementT)})!
                                 .Invoke(new object[]{list});
                         result = sctx.CreateNativePValue(readonlyList);
                     }
@@ -478,7 +477,7 @@ public class ListPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         //TODO: Create to List conversions (KeyValuePair)
         result = null;
@@ -495,7 +494,7 @@ public class ListPType : PType, ICilCompilerAware
     {
         var lst = new List<PValue>();
         result = List.CreatePValue(lst);
-        foreach (var e in (IEnumerable<PValue>)subject.Value)
+        foreach (var e in (IEnumerable<PValue>)subject.Value!)
             if (e.TryIndirectCall(sctx, args, out var r))
                 lst.Add(r);
             else
@@ -533,12 +532,12 @@ public class ListPType : PType, ICilCompilerAware
         var npv = List.CreatePValue(nlst);
 
         if (leftOperand.Type is ListPType)
-            nlst.AddRange((List<PValue>)leftOperand.Value);
+            nlst.AddRange((List<PValue>)leftOperand.Value!);
         else
             nlst.Add(leftOperand);
 
         if (rightOperand.Type is ListPType)
-            nlst.AddRange((List<PValue>)rightOperand.Value);
+            nlst.AddRange((List<PValue>)rightOperand.Value!);
         else
             nlst.Add(rightOperand);
 
@@ -546,18 +545,16 @@ public class ListPType : PType, ICilCompilerAware
         return true;
     }
 
-    public const string Literal = "List";
+    public const string Literal = nameof(List);
 
     public override string ToString()
     {
         return Literal;
     }
 
-    const int _code = 86312339;
-
     public override int GetHashCode()
     {
-        return _code;
+        return 86312339;
     }
 
     #region ICilCompilerAware Members
@@ -573,7 +570,7 @@ public class ListPType : PType, ICilCompilerAware
     }
 
     static readonly MethodInfo GetListPType =
-        typeof(PType).GetProperty("List").GetGetMethod();
+        typeof(PType).GetProperty(nameof(List))!.GetGetMethod()!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

@@ -23,14 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite.Commands;
 
 [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Coroutine")]
+    MessageId = nameof(Coroutine))]
 public abstract class CoroutineCommand : PCommand
 {
     /// <summary>
@@ -53,7 +50,7 @@ public abstract class CoroutineCommand : PCommand
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     protected abstract IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
         PValue[] args);
 
@@ -65,25 +62,25 @@ public abstract class CoroutineCommand : PCommand
 
         public ContextCarrier(StackContext sctx)
         {
-            _stackContext = sctx;
+            stackContext = sctx;
         }
 
-        StackContext _stackContext;
+        StackContext? stackContext;
 
         public StackContext StackContext
         {
             get
             {
-                if (_stackContext == null)
+                if (stackContext == null)
                     throw new InvalidOperationException(
                         "StackContext has not been assigned yet.");
-                return _stackContext;
+                return stackContext;
             }
             set
             {
-                if (_stackContext != null)
+                if (stackContext != null)
                     throw new InvalidOperationException("StackContext can only be set once.");
-                _stackContext = value;
+                stackContext = value;
             }
         }
     }

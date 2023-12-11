@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -37,7 +38,7 @@ public class AstNull : AstExpr
     {
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         return false;

@@ -23,22 +23,19 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
 public abstract class PartialApplicationCommandBase : PCommand
 {
-    protected static readonly MethodInfo ExtractMappings32Method =
-        typeof (PartialApplicationCommandBase).GetMethod("ExtractMappings32",
-            new[] {typeof (int[])});
+    protected static readonly MethodInfo ExtractMappings32Method = typeof (PartialApplicationCommandBase)
+        .GetMethod(nameof(ExtractMappings32), new[] {typeof (int[])}) 
+        ?? throw new InvalidOperationException("Method PartialApplicationCommandBase.ExtractMappings32 not found.");
 
     /// <summary>
     ///     Calculates how many Int32 arguments are needed to encode <paramref name = "countMapppings" /> mappings, including the number that indicates how many mappings there are
@@ -82,11 +79,11 @@ public abstract class PartialApplicationCommandBase : PCommand
 
         //Extract count
         var int32 = default(ExplicitInt32);
-        int32.Int = rawInput.Last.Value;
+        int32.Int = rawInput.Last!.Value;
         int count = int32.Byte3;
         var numArgs = CountInt32Required(count);
         if (numArgs > rawInput.Count)
-            return null;
+            return Array.Empty<int>();
 
         //remove integers that do not belong to the mapping
         while (numArgs < rawInput.Count)
@@ -122,7 +119,7 @@ public abstract class PartialApplicationCommandBase : PCommand
     /// <returns>An array of mappings</returns>
     // ReSharper disable UnusedMember.Global
     //used via CIL compilation
-    public static int[] ExtractMappings32(int[] rawInput)
+    public static int[]? ExtractMappings32(int[] rawInput)
         // ReSharper restore UnusedMember.Global
     {
         if (rawInput.Length == 0)
@@ -211,20 +208,24 @@ public abstract class PartialApplicationCommandBase : PCommand
     }
 }
 
-public abstract class PartialApplicationCommandBase<TParam> : PartialApplicationCommandBase,
+public abstract class PartialApplicationCommandBase<TParam> : PartialApplicationCommandBase<TParam, TParam>
+    where TParam : notnull;
+public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam> : PartialApplicationCommandBase,
     ICilExtension
+    where TRuntimeParam : notnull
+    where TCompileParam : notnull
 {
     public override PValue Run(StackContext sctx, PValue[] args)
     {
-        var arguments = new ArraySegment<PValue>(args);
+        var arguments = args.AsSpan();
         var parameter = FilterRuntimeArguments(sctx, ref arguments);
 
         var mappingCandidates = new LinkedList<int>();
-        for (var i = arguments.Offset + arguments.Count - 1; arguments.Offset <= i; i--)
+        for (var i = arguments.Length - 1; i >= 0; i--)
         {
-            if (!arguments.Array[i].TryConvertTo(sctx, PType.Int, out var value))
+            if (!arguments[i].TryConvertTo(sctx, PType.Int, out var value))
                 break; //stop at the first non-integer
-            mappingCandidates.AddFirst((int) value.Value);
+            mappingCandidates.AddFirst((int) value.Value!);
         }
 
         //TODO: (Ticket #105) Improve interpreted runtime by only converting as many arguments as indicated by the mapping
@@ -232,13 +233,9 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
 
         //Remove mapping args, so we're only left with closed arguments
         var countMappingArgs = CountInt32Required(mappings.Length);
-        var closedArgc = arguments.Count - countMappingArgs;
-        var closedArgv = new PValue[closedArgc];
-        Array.Copy(arguments.Array, arguments.Offset, closedArgv, 0, closedArgc);
+        var closedArgv = arguments[..^countMappingArgs].ToArray();
 
-        return
-            sctx.CreateNativePValue(CreatePartialApplication(sctx, mappings, closedArgv,
-                parameter));
+        return sctx.CreateNativePValue(CreatePartialApplication(sctx, mappings, closedArgv, parameter));
     }
 
     /// <summary>
@@ -251,7 +248,7 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
     /// <param name = "parameter">The custom parameter extracted by <see cref = "FilterRuntimeArguments" />.</param>
     /// <returns>The object that represents the partial application. The application is completed when calling that object indirectly.</returns>
     protected abstract IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, TParam parameter);
+        PValue[] closedArguments, TRuntimeParam parameter);
 
     /// <summary>
     ///     <para>Extracts a custom parameter from the arguments supplied to the constructor at runtime.</para>
@@ -260,44 +257,44 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
     /// </summary>
     /// <param name = "sctx">The stack context that issued this constructor call.</param>
     /// <param name = "arguments">The arguments as provided by the interpreter. Remove any arguments used to build the parameter (the return value) from <paramref
-    ///      name = "arguments" /> by adapting the array segment.</param>
+    ///     name = "arguments" /> by adapting the array segment.</param>
     /// <returns>A custom parameter. Will be passed to <see cref = "CreatePartialApplication" /> untouched.</returns>
-    protected virtual TParam FilterRuntimeArguments(StackContext sctx,
-        ref ArraySegment<PValue> arguments)
+    protected virtual TRuntimeParam FilterRuntimeArguments(
+        StackContext sctx,
+        ref Span<PValue> arguments
+    )
     {
-        return default;
+        return default!;
     }
 
     /// <summary>
     ///     <para>Returns the constructor overload to use for CIL compilation. Must have exactly the following signature:</para>
     ///     <code>theConstructor(sbyte[] mappings, PValue[] closedArguments)</code>
     /// </summary>
-    protected virtual ConstructorInfo GetConstructorCtor(TParam parameter)
+    protected virtual ConstructorInfo GetConstructorCtor(TCompileParam parameter)
     {
-        return
-            GetPartialCallRepresentationType(parameter).GetConstructor(new[]
-                {typeof (int[]), typeof (PValue[])});
+        var ty = GetPartialCallRepresentationType(parameter);
+        return ty.GetConstructor(new[] {typeof (int[]), typeof (PValue[])}) 
+            ?? throw new PrexoniteException($"Type {ty} does not have a constructor with the signature (int[], PValue[])");
     }
 
     /// <summary>
     ///     The class that represents the partial call at runtime (implements <see cref = "IIndirectCall" />). Its <code>(sbyte[], PValue[])</code> constructor will be called by the CIL implementation.
     /// </summary>
-    protected abstract Type GetPartialCallRepresentationType(TParam parameter);
+    protected abstract Type GetPartialCallRepresentationType(TCompileParam parameter);
 
     #region Implementation of ICilExtension
 
     public virtual bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
     {
-        var staticArguments = new ArraySegment<CompileTimeValue>(staticArgv);
-        if (!FilterCompileTimeArguments(ref staticArguments, out var dummyParameter))
+        var staticArguments = staticArgv.AsSpan();
+        if (!FilterCompileTimeArguments(ref staticArguments, out _))
             return false;
 
         var mappingCandidates = new LinkedList<int>();
-        for (var i = staticArguments.Offset + staticArguments.Count - 1;
-             staticArguments.Offset <= i;
-             i--)
+        for (var i = staticArguments.Length - 1; i >= 0; i--)
         {
-            if (!staticArguments.Array[i].TryGetInt(out var value))
+            if (!staticArguments[i].TryGetInt(out var value))
                 break; //stop at the first non-integer
             mappingCandidates.AddFirst(value);
         }
@@ -309,17 +306,15 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
     public virtual void Implement(CompilerState state, Instruction ins,
         CompileTimeValue[] staticArgv, int dynamicArgc)
     {
-        var staticArguments = new ArraySegment<CompileTimeValue>(staticArgv);
+        var staticArguments = staticArgv.AsSpan();
         if (!FilterCompileTimeArguments(ref staticArguments, out var parameter))
             throw new PrexoniteException(
                 "Internal CIL compiler error. Tried to implement invalid CIL extension call.");
 
         var mappingCandidates = new LinkedList<int>();
-        for (var i = staticArguments.Offset + staticArguments.Count - 1;
-             staticArguments.Offset <= i;
-             i--)
+        for (var i = staticArguments.Length - 1; i >= 0; i--)
         {
-            if (!staticArguments.Array[i].TryGetInt(out var value))
+            if (!staticArguments[i].TryGetInt(out var value))
                 break; //stop at the first non-integer
             mappingCandidates.AddFirst(value);
         }
@@ -328,11 +323,9 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
         var packed = PackMappings32(mappings); //Might not be 32-bit in the future
 
         //Emit code for constants that are really closed arguments
-        var additionalClosedArgc = staticArguments.Count - packed.Length;
-        for (var i = staticArguments.Offset;
-             i < additionalClosedArgc - staticArguments.Offset;
-             i++)
-            staticArguments.Array[i].EmitLoadAsPValue(state);
+        var additionalClosedArgc = staticArguments.Length - packed.Length;
+        for (var i = 0; i < additionalClosedArgc; i++)
+            staticArguments[i].EmitLoadAsPValue(state);
 
         //Save closed arguments 
         var argc = dynamicArgc + additionalClosedArgc;
@@ -374,7 +367,7 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
     /// </summary>
     /// <param name = "state">The compiler state to compile to.</param>
     /// <param name = "parameter">The custom parameter as returned by <see cref = "FilterCompileTimeArguments" />.</param>
-    protected virtual void EmitConstructorCall(CompilerState state, TParam parameter)
+    protected virtual void EmitConstructorCall(CompilerState state, TCompileParam parameter)
     {
         state.Il.Emit(OpCodes.Newobj, GetConstructorCtor(parameter));
     }
@@ -385,13 +378,15 @@ public abstract class PartialApplicationCommandBase<TParam> : PartialApplication
     ///      cref = "FilterRuntimeArguments" />.</para>
     /// </summary>
     /// <param name = "staticArgv">The static arguments as read from byte code. Remove any arguments used to build the <paramref
-    ///      name = "parameter" /> from <paramref name = "staticArgv" /> by adapting the array segment.</param>
+    ///     name = "parameter" /> from <paramref name = "staticArgv" /> by adapting the array segment.</param>
     /// <param name = "parameter">The custom parameter. Will be passed to <see cref = "EmitConstructorCall" /> untouched. If the method returns false, the value of this out parameter is undefined.</param>
-    /// <returns>True if the static arguments are compatible with the partial application command; false otehrwise</returns>
+    /// <returns>True if the static arguments are compatible with the partial application command; false otherwise</returns>
     protected virtual bool FilterCompileTimeArguments(
-        ref ArraySegment<CompileTimeValue> staticArgv, out TParam parameter)
+        ref Span<CompileTimeValue> staticArgv,
+        [NotNullWhen(true)] out TCompileParam? parameter
+    )
     {
-        parameter = default;
+        parameter = default!;
         return true;
     }
 

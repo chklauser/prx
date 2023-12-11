@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite.Compiler;
@@ -37,11 +37,11 @@ namespace PrexoniteTests.Tests;
 [TestFixture]
 public class MExprTests
 {
-    ISourcePosition _position;
-    ISourcePosition _otherPosition;
-    SymbolStore _symbols;
-    IDictionary<Symbol, QualifiedId> _existing;
-    SymbolMExprParser _symbolParser;
+    ISourcePosition _position = null!;
+    ISourcePosition _otherPosition = null!;
+    SymbolStore _symbols = null!;
+    IDictionary<Symbol, QualifiedId> _existing = null!;
+    SymbolMExprParser _symbolParser = null!;
 
     class ConsoleSink : IMessageSink
     {
@@ -63,7 +63,7 @@ public class MExprTests
         _symbols = SymbolStore.Create();
         _existing = new Dictionary<Symbol, QualifiedId>();
         _otherPosition = new SourcePosition("PrexoniteTests.csproj",33,77);
-        _symbolParser = new SymbolMExprParser(_symbols, ConsoleSink.Instance);
+        _symbolParser = new(_symbols, ConsoleSink.Instance);
     }
 
     [Test]
@@ -173,7 +173,7 @@ public class MExprTests
         var s0 = Symbol.CreateNil(_otherPosition);
         var s1 = Symbol.CreateDereference(s0, _position);
 
-        _existing.Add(s0,new QualifiedId("x"));
+        _existing.Add(s0,new("x"));
         _symbols.Declare("x",s0);
 
         var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
@@ -220,7 +220,7 @@ public class MExprTests
     [Test]
     public void GlobalVariableReference()
     {
-        var mn = new ModuleName("m", new Version(1, 2, 3, 4));
+        var mn = new ModuleName("m", new(1, 2, 3, 4));
         var s1 = Symbol.CreateReference(EntityRef.Variable.Global.Create("c",mn), _position);
 
         var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
@@ -232,7 +232,7 @@ public class MExprTests
     [Test]
     public void FunctionReference()
     {
-        var mn = new ModuleName("m", new Version(1, 2, 3, 4));
+        var mn = new ModuleName("m", new(1, 2, 3, 4));
         var s1 = Symbol.CreateReference(EntityRef.Function.Create("c",mn), _position);
 
         var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
@@ -244,14 +244,14 @@ public class MExprTests
     [Test]
     public void ExpandWarningOnAliasOfDereferencedFunction()
     {
-        var mn = new ModuleName("m", new Version(0, 0, 1, 2));
+        var mn = new ModuleName("m", new(0, 0, 1, 2));
         const string mc = "T.ZOMG";
         var s0 = Symbol.CreateCall(EntityRef.Function.Create("f\\impl", mn), _position);
         var msg = Message.Create(MessageSeverity.Warning, "You shouldn't do this.", _otherPosition, mc);
         var s1 = Symbol.CreateExpand(Symbol.CreateMessage(msg, s0, _position));
 
         _symbols.Declare("f",s0);
-        _existing.Add(s0,new QualifiedId("f"));
+        _existing.Add(s0,new("f"));
 
         var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
         dynamic s2 = _symbolParser.Parse(m);

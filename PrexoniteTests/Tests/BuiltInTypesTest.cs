@@ -24,20 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using JetBrains.Annotations;
-using Moq;
 using NUnit.Framework;
-using Prexonite;
-using Prexonite.Commands;
-using Prexonite.Compiler;
-using Prexonite.Compiler.Ast;
-using Prexonite.Compiler.Build;
-using Prexonite.Compiler.Symbolic;
-using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace PrexoniteTests.Tests;
 

@@ -23,18 +23,17 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
+using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core.Operators;
-using Prexonite.Commands.List;
 using Prexonite.Compiler;
-using Prx.Tests;
 
 namespace PrexoniteTests.Tests;
 
 [TestFixture]
-public class CompilerGlobal : Compiler
+public class CompilerTestBaseGlobal : CompilerTestBase
 {
     #region Metadata
 
@@ -191,7 +190,7 @@ Add System::Xml to Imports;
         Assert.IsTrue(
             target.Meta["Import"].IsList, "Import should be a list after 2nd modification");
         Assert.AreEqual(3, target.Meta["Import"].List.Length);
-        Assert.AreEqual("System", target.Meta["Import"].List[0].Text);
+        Assert.AreEqual(nameof(System), target.Meta["Import"].List[0].Text);
         Assert.AreEqual("System.Text", target.Meta["Import"].List[1].Text);
         Assert.AreEqual("System.Xml", target.Meta["Import"].List[2].Text);
     }
@@ -310,7 +309,7 @@ Add System::Xml to Imports;
             new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", target.Module.Name),
             LookupSymbolEntry(symbols, "name2"));
         Assert.IsNotNull(target.Variables["name2"]);
-        Assert.AreEqual("NotUseful", target.Variables["name2"].Meta["description"].Text);
+        Assert.AreEqual("NotUseful", target.Variables["name2"]!.Meta["description"].Text);
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3", target.Module.Name),
             LookupSymbolEntry(symbols, "name3"));
@@ -356,7 +355,7 @@ SomeOtherSettings ""Are Valid"";
         var storedRepr = loader1.StoreInString();
         Assert.That(storedRepr, Does.StartWith($"#!{previousInterpreterLine}\n"));
             
-        var loader2 = new Loader(engine, new Application());
+        var loader2 = new Loader(engine, new());
         loader2.LoadFromString(storedRepr);
         Assert.That(loader2.Errors, Is.Empty);
         Assert.That(loader2.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
@@ -371,7 +370,7 @@ SomeOtherSettings ""Are Valid"";
     [Test]
     public void DotSeparatedMetaWithAnyIdElements()
     {
-        var ldr = _compile(@"
+        _compile(@"
 key1 $""0"".$""0"";
 ");
         Assert.That(target.Meta, Does.ContainKey("key1"));
@@ -454,7 +453,7 @@ function megabyte = 1024*1024;
         Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
         //check "twice"
-        var actual = target.Functions["twice"].Code;
+        var actual = target.Functions["twice"]!.Code;
         var expected = GetInstructions(@"
 ldc.int 2
 ldloc x
@@ -476,7 +475,7 @@ ret.value
                 $"Twice: Instructions at address {i} do not match ({expected[i]} != {actual[i]})");
 
         //check "megabyte"
-        actual = target.Functions["megabyte"].Code;
+        actual = target.Functions["megabyte"]!.Code;
         expected = GetInstructions(@"
 ldc.int 1048576
 ret.value
@@ -659,18 +658,18 @@ function func3(param1, param2)
         //func1
         Assert.IsTrue(target.Functions.Contains("func1"), "func1 is not in the function table");
         Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func1").Interpretation);
-        Assert.AreEqual(0, target.Functions["func1"].Parameters.Count);
+        Assert.AreEqual(0, target.Functions["func1"]!.Parameters.Count);
 
         Assert.IsTrue(target.Functions.Contains("func2"), "func2 is not in the function table");
         Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func2").Interpretation);
-        Assert.AreEqual(3, target.Functions["func2"].Parameters.Count);
-        Assert.AreEqual("param2", target.Functions["func2"].Parameters[1]);
+        Assert.AreEqual(3, target.Functions["func2"]!.Parameters.Count);
+        Assert.AreEqual("param2", target.Functions["func2"]!.Parameters[1]);
 
         Assert.IsTrue(target.Functions.Contains("func3"), "func3 is not in the function table");
         Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func3").Interpretation);
-        Assert.AreEqual(2, target.Functions["func3"].Parameters.Count);
-        Assert.AreEqual("param2", target.Functions["func3"].Parameters[1]);
-        Assert.AreEqual(1, target.Functions["func3"].ImportedNamespaces.Count);
+        Assert.AreEqual(2, target.Functions["func3"]!.Parameters.Count);
+        Assert.AreEqual("param2", target.Functions["func3"]!.Parameters[1]);
+        Assert.AreEqual(1, target.Functions["func3"]!.ImportedNamespaces.Count);
     }
 
     [Test]
@@ -689,18 +688,19 @@ function func1() does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
 
-        Assert.IsTrue(target.Functions["func1"].Variables.Contains("loc1"));
+        Assert.IsTrue(target.Functions["func1"]!.Variables.Contains("loc1"));
         Assert.AreEqual(
             SymbolInterpretations.LocalObjectVariable,
-            LookupSymbolEntry(ldr.FunctionTargets["func1"].Symbols, "loc1").Interpretation);
+            LookupSymbolEntry(ldr.FunctionTargets["func1"]!.Symbols, "loc1").Interpretation);
 
-        Assert.IsTrue(target.Functions["func1"].Variables.Contains("loc2"));
+        Assert.IsTrue(target.Functions["func1"]!.Variables.Contains("loc2"));
         Assert.AreEqual(
             SymbolInterpretations.LocalReferenceVariable,
-            LookupSymbolEntry(ldr.FunctionTargets["func1"].Symbols, "loc2").Interpretation);
+            LookupSymbolEntry(ldr.FunctionTargets["func1"]!.Symbols, "loc2").Interpretation);
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "RedundantAssignment")]
     public void AsmNullInstructions()
     {
         const string input1 =
@@ -753,7 +753,7 @@ function func1() does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
 
-        var code = target.Functions["func1"].Code;
+        var code = target.Functions["func1"]!.Code;
         var i = 0;
         Assert.AreEqual(OpCode.nop, code[i++].OpCode);
         Assert.AreEqual(OpCode.ldc_null, code[i++].OpCode);
@@ -830,6 +830,7 @@ function func1() does asm
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "RedundantAssignment")]
     public void AsmIdInstructions()
     {
         const string input1 =
@@ -857,7 +858,7 @@ function func1 does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
-        var code = target.Functions["func1"].Code;
+        var code = target.Functions["func1"]!.Code;
         var i = 0;
 
         Assert.AreEqual(OpCode.ldc_string, code[i].OpCode);
@@ -895,6 +896,7 @@ function func1 does asm
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "RedundantAssignment")]
     public void AsmSpecialInstructions()
     {
         const string input1 =
@@ -917,22 +919,22 @@ function func1(param1)  [ key value; ] does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
-        var code = target.Functions["func1"].Code;
+        var code = target.Functions["func1"]!.Code;
         var i = 0;
 
         Assert.AreEqual(OpCode.rot, code[i].OpCode);
         Assert.AreEqual(2, code[i].Arguments);
-        Assert.AreEqual(3, (int) code[i++].GenericArgument);
+        Assert.AreEqual(3, code[i++].GenericArgument);
 
         Assert.AreEqual(OpCode.rot, code[i].OpCode);
         Assert.AreEqual(1, code[i].Arguments);
-        Assert.AreEqual(2, (int) code[i++].GenericArgument);
+        Assert.AreEqual(2, code[i++].GenericArgument);
 
         Assert.AreEqual(OpCode.ldc_real, code[i].OpCode);
-        Assert.AreEqual(-2.53e-3, (double) code[i++].GenericArgument);
+        Assert.AreEqual(-2.53e-3, code[i++].GenericArgument);
 
         Assert.AreEqual(OpCode.ldc_real, code[i].OpCode);
-        Assert.AreEqual(2.5, (double) code[i++].GenericArgument);
+        Assert.AreEqual(2.5, code[i++].GenericArgument);
 
         Assert.AreEqual(OpCode.ldc_bool, code[i].OpCode);
         Assert.AreEqual(0, code[i++].Arguments);
@@ -948,6 +950,7 @@ function func1(param1)  [ key value; ] does asm
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "RedundantAssignment")]
     public void AsmIdArgInstructions()
     {
         const string input1 =
@@ -971,7 +974,7 @@ function func1 does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
-        var code = target.Functions["func1"].Code;
+        var code = target.Functions["func1"]!.Code;
         var i = 0;
 
         Assert.AreEqual(OpCode.newobj, code[i].OpCode);
@@ -983,7 +986,7 @@ function func1 does asm
         Assert.AreEqual(1, code[i++].Arguments);
 
         Assert.AreEqual(OpCode.get, code[i].OpCode);
-        Assert.AreEqual("ToString", code[i].Id);
+        Assert.AreEqual(nameof(ToString), code[i].Id);
         Assert.AreEqual(3, code[i++].Arguments);
 
         Assert.AreEqual(OpCode.set, code[i].OpCode);
@@ -1012,6 +1015,7 @@ function func1 does asm
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "RedundantAssignment")]
     public void AsmIntInstructions()
     {
         const string input1 =
@@ -1032,7 +1036,7 @@ function func1 does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
-        var code = target.Functions["func1"].Code;
+        var code = target.Functions["func1"]!.Code;
         var i = 0;
 
         Assert.AreEqual(OpCode.ldc_int, code[i].OpCode);
@@ -1088,7 +1092,7 @@ function func1 does asm
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
-        var code = target.Functions["func1"].Code;
+        var code = target.Functions["func1"]!.Code;
 
         Assert.AreEqual(OpCode.jump, code[0].OpCode);
         Assert.AreEqual(14, code[0].Arguments);
@@ -1150,14 +1154,14 @@ var d as e, f;
         var b = LookupSymbolEntry(ldr.Symbols, "b");
         Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable,
             "Symbol b must be global object variable.");
-        Assert.IsTrue(target.Variables.ContainsKey(b.InternalId),
+        Assert.IsTrue(target.Variables.ContainsKey(b.InternalId!),
             "Symbol b must point to a physical variable.");
 
         Assert.IsTrue(ldr.Symbols.Contains("c"), "Symbol c must exist.");
         var c = LookupSymbolEntry(ldr.Symbols, "c");
         Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable,
             "Symbol c must be global object variable.");
-        Assert.IsTrue(target.Variables.ContainsKey(c.InternalId),
+        Assert.IsTrue(target.Variables.ContainsKey(c.InternalId!),
             "Symbol c must point to a physical variable.");
         Assert.IsTrue(b.InternalId == c.InternalId, "Symbols b and c must point to the same variable.");
 
@@ -1170,18 +1174,18 @@ var d as e, f;
         var e = LookupSymbolEntry(ldr.Symbols, "e");
         Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable,
             "Symbol e must be global object variable.");
-        Assert.IsTrue(target.Variables.ContainsKey(e.InternalId),
+        Assert.IsTrue(target.Variables.ContainsKey(e.InternalId!),
             "Symbol e must point to a physical variable.");
 
         Assert.IsTrue(ldr.Symbols.Contains("f"), "Symbol f must exist.");
         var f = LookupSymbolEntry(ldr.Symbols, "f");
         Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable,
             "Symbol f must be global object variable.");
-        Assert.IsTrue(target.Variables.ContainsKey(f.InternalId),
+        Assert.IsTrue(target.Variables.ContainsKey(f.InternalId!),
             "Symbol f must point to a physical variable.");
         Assert.IsTrue(e.InternalId == f.InternalId, "Symbols e and f must point to the same variable.");
 
-        Assert.IsTrue(e.InternalId == "d", "Symbols e and f must point to variable d");
+        Assert.IsTrue(e.InternalId == nameof(d), "Symbols e and f must point to variable d");
     }
 
     [Test]
@@ -1193,7 +1197,7 @@ declare function main/the_module/0.1;
         var mainSym = LookupSymbolEntry(ldr.Symbols, "main");
         Assert.That(mainSym.InternalId,Is.EqualTo("main"));
         Assert.That(mainSym.Interpretation,Is.EqualTo(SymbolInterpretations.Function));
-        Assert.That(mainSym.Module, Is.EqualTo(target.Module.Cache["the_module", new Version(0, 1)]));
+        Assert.That(mainSym.Module, Is.EqualTo(target.Module.Cache["the_module", new(0, 1)]));
     }
 
     [Test]

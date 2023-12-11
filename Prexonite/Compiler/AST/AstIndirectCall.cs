@@ -23,15 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -51,6 +48,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
+    [PublicAPI]
     public AstIndirectCall(
         string file, int line, int column, PCall call, AstExpr subject)
         : base(file, line, column, call)
@@ -64,31 +62,6 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         Subject = subject;
     }
 
-    internal AstIndirectCall(Parser p, PCall call, AstExpr subject)
-        : this(p.scanner.File, p.t.line, p.t.col, call, subject)
-    {
-    }
-
-    public AstIndirectCall(string file, int line, int column, PCall call)
-        : this(file, line, column, call, null)
-    {
-    }
-
-    public AstIndirectCall(string file, int line, int column)
-        : this(file, line, column, PCall.Get)
-    {
-    }
-
-    public AstIndirectCall(string file, int line, int column, AstExpr subject)
-        : this(file, line, column, PCall.Get, subject)
-    {
-    }
-
-    internal AstIndirectCall(Parser p, AstExpr subject)
-        : this(p, PCall.Get, subject)
-    {
-    }
-
     public override int DefaultAdditionalArguments
     {
         get
@@ -100,23 +73,23 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    class EntityIndirectCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
+    class EntityIndirectCallMatcher : EntityRefMatcher<object?,Action<CompilerTarget,AstIndirectCall,PCall,bool>?>
     {
         public static readonly EntityIndirectCallMatcher Instance = new();
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnNotMatched(EntityRef entity, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool>? OnNotMatched(EntityRef entity, object? argument)
         {
             return null;
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object? argument)
         {
             return
                 (target, node, _, justEffect) =>
                     target.Emit(node.Position,Instruction.CreateLocalIndirectCall(node.Arguments.Count, variable.Id, justEffect));
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object? argument)
         {
             return
                 (target, node, _, justEffect) =>
@@ -124,16 +97,16 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    class EntityCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
+    class EntityCallMatcher : EntityRefMatcher<object?,Action<CompilerTarget,AstIndirectCall,PCall,bool>?>
     {
         public static readonly EntityCallMatcher Instance = new();
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnNotMatched(EntityRef entity, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool>? OnNotMatched(EntityRef entity, object? argument)
         {
             return null;
         }
 
-        public override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnFunction(EntityRef.Function function, object argument)
+        public override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnFunction(EntityRef.Function function, object? argument)
         {
             return
                 (target, node, _, justEffect) =>
@@ -141,14 +114,14 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
                         justEffect);
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnCommand(EntityRef.Command command, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnCommand(EntityRef.Command command, object? argument)
         {
             return
                 (target, node, _, justEffect) =>
                     target.EmitCommandCall(node.Position, node.Arguments.Count, command.Id, justEffect);
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object? argument)
         {
             return
                 (target, node, call, justEffect) =>
@@ -173,7 +146,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
                 };
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object? argument)
         {
             return
                 (target, node, call, justEffect) =>
@@ -199,8 +172,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    [CanBeNull]
-    Action<CompilerTarget, AstIndirectCall, PCall, bool> _getDirectCallAction()
+    Action<CompilerTarget, AstIndirectCall, PCall, bool>? _getDirectCallAction()
     {
         // This method will be called at least twice per node. Once to indicate whether a direct call is available
         //  and then a second time to actually use the direct call implementation.
@@ -241,7 +213,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         // Convert R.(A_1, A_2, *S_3, A_4, *S_5) into
         //   call(R, [A_1, A_2], S_3, [A_4], S_5)
         var callNode = target.Factory.Expand(Position, EntityRef.MacroCommand.Create(Engine.CallAlias), Call);
-        List<AstExpr> currentBatch = null;
+        List<AstExpr>? currentBatch = null;
 
         void flushCurrentBatch()
         {
@@ -262,7 +234,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
             }
             else
             {
-                currentBatch ??= new List<AstExpr>();
+                currentBatch ??= new();
                 currentBatch.Add(argument);
             }
         }
@@ -290,7 +262,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
             action(target, this, PCall.Set, true);
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         base.TryOptimize(target, out expr);
         _OptimizeNode(target, ref Subject);
@@ -323,7 +295,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
             }
             else
             {
-                target.Loader.ReportMessage(Message.Error(Resources.AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice, this.Position, MessageClasses.ArgumentSpliceNotSupported));
+                target.Loader.ReportMessage(Message.Error(Resources.AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice, Position, MessageClasses.ArgumentSpliceNotSupported));
             }
         }
         else
@@ -338,7 +310,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
             AstPartiallyApplicable.PreprocessPartialApplicationArguments(
                 Subject.Singleton().Append(Arguments));
         var argc = argv.Count;
-        AstPlaceholder p;
+        AstPlaceholder? p;
         if (argc == 0)
         {
             //There are no mappings at all, use default constructor

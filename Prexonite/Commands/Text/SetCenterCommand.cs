@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Text;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Text;
 
@@ -63,7 +62,7 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
         }
         s = args[1].CallToString(sctx);
         parseW:
-        w = (int) args[0].ConvertTo(sctx, PType.Int).Value;
+        w = (int) args[0].ConvertTo(sctx, PType.Int).Value!;
         if (args.Length > 2)
             f = args[2].CallToString(sctx);
         else
@@ -80,8 +79,8 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
 
         var ll = (int) System.Math.Round(l / 2.0, 0, MidpointRounding.AwayFromZero);
 
-        sb.Append(SetRightCommand.SetRight(lw, s.Substring(0, ll), f));
-        sb.Append(SetLeftCommand.SetLeft(rw, s.Substring(ll), f));
+        sb.Append(SetRightCommand.SetRight(lw, s[..ll], f));
+        sb.Append(SetLeftCommand.SetLeft(rw, s[ll..], f));
         return sb.ToString();
     }
 

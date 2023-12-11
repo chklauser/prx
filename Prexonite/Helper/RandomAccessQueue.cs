@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Prexonite;
@@ -38,7 +37,7 @@ public class RandomAccessQueue<T> : IList<T>
 {
     #region Constructors
 
-    const int DEFAULT_INITIAL_CAPACITY = 10;
+    const int DefaultInitialCapacity = 10;
 
     /// <summary>
     ///     Creates a new RandomAccessQueue
@@ -49,7 +48,7 @@ public class RandomAccessQueue<T> : IList<T>
     [DebuggerStepThrough]
     public RandomAccessQueue()
     {
-        _store = new List<T>();
+        _store = new();
     }
 
     /// <summary>
@@ -61,7 +60,7 @@ public class RandomAccessQueue<T> : IList<T>
     {
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
-        _store = new List<T>(collection);
+        _store = new(collection);
     }
 
     /// <summary>
@@ -75,7 +74,7 @@ public class RandomAccessQueue<T> : IList<T>
     [DebuggerStepThrough]
     public RandomAccessQueue(int capacity)
     {
-        _store = new List<T>(capacity);
+        _store = new(capacity);
     }
 
     #endregion
@@ -159,7 +158,7 @@ public class RandomAccessQueue<T> : IList<T>
             _rear++;
         }
         else if (!isWrapped())
-            if (_rear + 1 < _store.Count || _store.Count < DEFAULT_INITIAL_CAPACITY)
+            if (_rear + 1 < _store.Count || _store.Count < DefaultInitialCapacity)
             {
                 //Stay unwrapped
                 if (++_rear == _store.Count)
@@ -210,7 +209,7 @@ public class RandomAccessQueue<T> : IList<T>
     public T Dequeue()
     {
         var item = _store[_front];
-        _store[_front] = default; //Make sure, item get's garbage collected
+        _store[_front] = default!; //Make sure, item gets garbage collected
         if (_front == _rear) //just removed last element -> reset
         {
             _front = 0;

@@ -23,11 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Prexonite.Internal;
@@ -44,27 +42,25 @@ namespace Prexonite.Internal;
 /// propagate to the cached task unless <em>all</em> tokens registered for that task are cancelled.</para>
 /// </remarks>
 public class AdHocTaskCache<TKey,TResult>
+    where TKey : notnull
 {
     class TaskInfo
     {
         const int Cancelled = -7171;
 
 
-        [NotNull]
         public readonly Task<TResult> Task;
 
-        [NotNull]
         readonly CancellationTokenSource _cancelSource = new();
 
-        [NotNull]
+        [System.Diagnostics.CodeAnalysis.NotNull] [DisallowNull]
         readonly TKey _key;
 
-        [NotNull]
         readonly ConcurrentDictionary<TKey, TaskInfo> _cache;
 
         volatile int _liveTokens;
 
-        public TaskInfo([NotNull] ConcurrentDictionary<TKey, TaskInfo> cache, TKey key, [NotNull] Func<CancellationToken, Task<TResult>> taskImplementation)
+        public TaskInfo(ConcurrentDictionary<TKey, TaskInfo> cache, TKey key, Func<CancellationToken, Task<TResult>> taskImplementation)
         {
             _cache = cache;
             _key = key;
@@ -151,7 +147,7 @@ public class AdHocTaskCache<TKey,TResult>
     /// <param name="resultTask"></param>
     /// <returns></returns>
     [ContractAnnotation("=>true,resultTask:notnull; =>false,resultTask:null")]
-    public bool TryGet([NotNull] TKey key, out Task<TResult> resultTask)
+    public bool TryGet([DisallowNull] TKey key, out Task<TResult>? resultTask)
     {
         if (_cache.TryGetValue(key, out var info))
         {
@@ -192,8 +188,7 @@ public class AdHocTaskCache<TKey,TResult>
     /// </para>
     /// </remarks>
     /// <returns></returns>
-    [NotNull]
-    public Task<TResult> GetOrAdd([NotNull] TKey key, [NotNull] Func<TKey, CancellationToken,Task<TResult>> taskImplementation, CancellationToken cancellationToken)
+    public Task<TResult> GetOrAdd([DisallowNull] TKey key, Func<TKey, CancellationToken,Task<TResult>> taskImplementation, CancellationToken cancellationToken)
     {
         // This only starts a new task if the cache doesn't already contain a running version of the task
         TaskInfo info;

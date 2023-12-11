@@ -1,6 +1,4 @@
-﻿using Prexonite.Types;
-
-namespace Prexonite.Commands.Core;
+﻿namespace Prexonite.Commands.Core;
 
 public class Not : PCommand
 {
@@ -15,8 +13,8 @@ public class Not : PCommand
         foreach (var arg in args)
         {
             var b = arg.Type.ToBuiltIn() != PType.BuiltIn.Bool
-                ? (bool) arg.ConvertTo(sctx, PType.Bool, true).Value
-                : (bool) arg.Value;
+                ? (bool) arg.ConvertTo(sctx, PType.Bool, true).Value!
+                : (bool) arg.Value!;
             if(b)
                 return false;
         }

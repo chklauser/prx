@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
@@ -69,7 +67,8 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
     }
 
     public bool TryDefer(StackContext sctx, PValue[] args,
-        out StackContext partialApplicationContext, out PValue result)
+        [NotNullWhen(true)] out StackContext? partialApplicationContext, 
+        [NotNullWhen(false)] out PValue? result)
     {
         var effectiveArgs = _getEffectiveArgs(args);
 
@@ -87,7 +86,8 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
             }
 
             if (raw is IMaybeStackAware partialApplication)
-                return partialApplication.TryDefer(sctx, effectiveArgs,
+                return partialApplication.TryDefer(sctx,
+                    effectiveArgs,
                     out partialApplicationContext,
                     out result);
         }

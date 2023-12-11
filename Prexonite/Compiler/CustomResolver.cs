@@ -1,7 +1,4 @@
-#nullable enable
-using System;
 using Prexonite.Compiler.Ast;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler;
 
@@ -58,10 +55,10 @@ public sealed class CustomResolver
                 t.Loader, new[]
                 {
                     t.Loader.CreateNativePValue(t),
-                    t.Loader.CreateNativePValue(unresolved)
+                    t.Loader.CreateNativePValue(unresolved),
                 });
             if (presult.Type is ObjectPType)
-                return (AstExpr) presult.Value;
+                return (AstExpr) presult.Value!;
             else
                 return null;
         }

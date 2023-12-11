@@ -23,15 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
 using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -85,7 +83,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
     /// <param name = "args">A list of the form [ ref f, arg1, arg2, arg3, ..., argn].<br />
     ///     Lists and coroutines are expanded.</param>
     /// <returns>The result returned by <see cref = "IIndirectCall.IndirectCall" /> or PValue Null if no callable object has been passed.</returns>
-    public static PValue RunStatically(StackContext sctx, PValue[] args)
+    public static PValue RunStatically(StackContext sctx, PValue[]? args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -159,7 +157,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
         return iargs;
     }
 
-    public override StackContext CreateStackContext(StackContext sctx, PValue[] args)
+    public override StackContext CreateStackContext(StackContext sctx, PValue[]? args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

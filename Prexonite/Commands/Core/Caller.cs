@@ -23,12 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Diagnostics.CodeAnalysis;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -59,7 +57,7 @@ public sealed class Caller : PCommand, ICilCompilerAware
     /// </summary>
     /// <param name = "sctx">The stack context that wishes tp find out, who called him.</param>
     /// <returns>Either the stack context of the caller or null.</returns>
-    public static StackContext GetCaller(StackContext sctx)
+    public static StackContext? GetCaller(StackContext sctx)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -84,11 +82,11 @@ public sealed class Caller : PCommand, ICilCompilerAware
         if (stack.Count == 0)
             return PType.Null;
         else
-            return sctx.CreateNativePValue(stack.Last.Value);
+            return sctx.CreateNativePValue(stack.Last!.Value);
     }
 
     static readonly MethodInfo GetCallerFromCilFunctionMethod =
-        typeof (Caller).GetMethod("GetCallerFromCilFunction", new[] {typeof (StackContext)});
+        typeof (Caller).GetMethod(nameof(GetCallerFromCilFunction), new[] {typeof (StackContext)})!;
 
     #region ICilCompilerAware Members
 

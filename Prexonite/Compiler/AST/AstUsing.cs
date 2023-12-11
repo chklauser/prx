@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using JetBrains.Annotations;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -35,11 +34,11 @@ public class AstUsing : AstScopedBlock,
 {
     const string LabelPrefix = "using";
 
-    public AstUsing([NotNull] ISourcePosition p, 
-        [NotNull] AstBlock lexicalScope)
+    public AstUsing(ISourcePosition p, 
+        AstBlock lexicalScope)
         : base(p, lexicalScope)
     {
-        Block = new AstScopedBlock(p, this,prefix:LabelPrefix);
+        Block = new(p, this,prefix:LabelPrefix);
     }
 
     #region IAstHasBlocks Members
@@ -56,10 +55,18 @@ public class AstUsing : AstScopedBlock,
         get 
         { 
             var b = base.Expressions;
-            var r = new AstExpr[b.Length + 1];
-            b.CopyTo(r,0);
-            r[b.Length] = ResourceExpression;
-            return r;
+            if (ResourceExpression != null)
+            {
+                var r = new AstExpr[b.Length + 1];
+                b.CopyTo(r, 0);
+                r[b.Length] = ResourceExpression;
+                
+                return r;
+            }
+            else
+            {
+                return b;
+            }
         }
     }
 
@@ -67,7 +74,7 @@ public class AstUsing : AstScopedBlock,
     public AstScopedBlock Block { get; }
 
     [PublicAPI]
-    public AstExpr ResourceExpression { get; set; }
+    public AstExpr? ResourceExpression { get; set; }
 
     #endregion
 

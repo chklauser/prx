@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -59,7 +58,7 @@ public sealed class Concat : PCommand, ICilCompilerAware
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
-            var element = arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx);
+            var element = arg.Type is StringPType ? (string) arg.Value! : arg.CallToString(sctx);
             elements[i] = element;
         }
 
