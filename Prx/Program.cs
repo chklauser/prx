@@ -321,7 +321,10 @@ static class Program
 #endif
         }
 
-        if (_reportErrors(result.Value.Target.Messages)) 
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+        if (((Application, ITarget)?)result == null)
+            return null;
+        else if (_reportErrors(result.Value.Target.Messages)) 
             return null;
             
         var app = result.Value.Application;

@@ -70,7 +70,7 @@ jobs:
       - name: Prepare Binary ZIP
         run: |
           ver='${{steps.determine-version.outputs.version}}'
-          cd Prx/bin/Release/net6.0/${{ matrix.runtime_ident }} && \
+          cd Prx/bin/Release/net8.0/${{ matrix.runtime_ident }} && \
             mkdir zip-env && \
             mv publish "zip-env/prexonite-v$ver"
         shell: bash
@@ -78,7 +78,7 @@ jobs:
         uses: thedoctor0/zip-release@0.6.1
         with:
           filename: prexonite-v${{steps.determine-version.outputs.version}}-${{ matrix.runtime_ident }}.zip
-          directory: Prx/bin/Release/net6.0/${{ matrix.runtime_ident }}/zip-env
+          directory: Prx/bin/Release/net8.0/${{ matrix.runtime_ident }}/zip-env
       - name: Push Prexonite Package (windows-only)
         if: matrix.os == 'windows'
         run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.nupkg

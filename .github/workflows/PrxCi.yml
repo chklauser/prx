@@ -56,5 +56,7 @@ jobs:
       - name: Test
         run: dotnet test --no-restore --no-build --verbosity=normal
       - name: Pack
-        run: dotnet pack --no-restore --no-build --verbosity=normal
+        # Will build Release version. This is intentional to make sure
+        # that the Release configuration also works.
+        run: dotnet pack --verbosity=normal
 
