@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -83,14 +81,14 @@ public class AstTypecast : AstExpr,
         }
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         Subject = _GetOptimizedNode(target, Subject);
         Type = (AstTypeExpr) _GetOptimizedNode(target, Type);
 
         expr = null;
 
-        if (!(Type is AstConstantTypeExpression constType))
+        if (Type is not AstConstantTypeExpression constType)
             return false;
 
         //Constant cast
@@ -98,8 +96,8 @@ public class AstTypecast : AstExpr,
             return _tryOptimizeConstCast(target, constSubject, constType, out expr);
 
         //Redundant cast
-        AstTypecast castSubject;
-        AstConstantTypeExpression sndCastType;
+        AstTypecast? castSubject;
+        AstConstantTypeExpression? sndCastType;
         if ((castSubject = Subject as AstTypecast) != null &&
             (sndCastType = castSubject.Type as AstConstantTypeExpression) != null)
         {
@@ -115,7 +113,7 @@ public class AstTypecast : AstExpr,
     }
 
     bool _tryOptimizeConstCast(CompilerTarget target, AstConstant constSubject,
-        AstConstantTypeExpression constType, out AstExpr expr)
+        AstConstantTypeExpression constType, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         PType type;

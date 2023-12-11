@@ -23,12 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler;
 
@@ -60,7 +59,7 @@ public static class AstFactoryExtensions
             if (i == qualifiedId.Count - 1)
                 return expr;
 
-            if (!(expr is AstNamespaceUsage nsUsage))
+            if (expr is not AstNamespaceUsage nsUsage)
             {
                 factory.ReportMessage(Message.Error(
                     string.Format(Resources.Parser_NamespaceExpected, qualifiedId[i], sym),

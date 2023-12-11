@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,7 @@ public class AstTests
             _createPlaceholder(1),
             _createPlaceholder(),
             _createPlaceholder(1),
-            _createPlaceholder(0)
+            _createPlaceholder(0),
         };
 
         var copy = placeholders.ToList();
@@ -71,16 +72,11 @@ public class AstTests
                 "All placeholders should be assigned afterwards.");
 
         // ReSharper disable PossibleInvalidOperationException
-        Assert.AreEqual(2, placeholders[0].Index.Value,
-            "Placeholder at source position 0 is not mapped correctly");
-        Assert.AreEqual(1, placeholders[1].Index.Value,
-            "Placeholder at source position 1 is not mapped correctly");
-        Assert.AreEqual(3, placeholders[2].Index.Value,
-            "Placeholder at source position 2 is not mapped correctly");
-        Assert.AreEqual(1, placeholders[3].Index.Value,
-            "Placeholder at source position 3 is not mapped correctly");
-        Assert.AreEqual(0, placeholders[4].Index.Value,
-            "Placeholder at source position 4 is not mapped correctly");
+        Assert.AreEqual(2, placeholders[0].Index!.Value, "Placeholder at source position 0 is not mapped correctly");
+        Assert.AreEqual(1, placeholders[1].Index!.Value, "Placeholder at source position 1 is not mapped correctly");
+        Assert.AreEqual(3, placeholders[2].Index!.Value, "Placeholder at source position 2 is not mapped correctly");
+        Assert.AreEqual(1, placeholders[3].Index!.Value, "Placeholder at source position 3 is not mapped correctly");
+        Assert.AreEqual(0, placeholders[4].Index!.Value, "Placeholder at source position 4 is not mapped correctly");
         // ReSharper restore PossibleInvalidOperationException
     }
 
@@ -94,7 +90,7 @@ public class AstTests
     public void DeterminePlaceholderIndicesRejectNullTets()
     {
         Assert.Throws<NullReferenceException>(() =>
-            AstPlaceholder.DeterminePlaceholderIndices(Extensions.Singleton<AstPlaceholder>(null))
+            AstPlaceholder.DeterminePlaceholderIndices(Extensions.Singleton<AstPlaceholder>(null!))
         );
     }
 
@@ -110,7 +106,7 @@ public class AstTests
         {
             subject,
             _createPlaceholder(1),
-            _createPlaceholder(2)
+            _createPlaceholder(2),
         };
         var originalArgv = argv.ToList();
 
@@ -153,7 +149,7 @@ public class AstTests
             subject,
             _createPlaceholder(2),
             _createPlaceholder(),
-            _createPlaceholder(1)
+            _createPlaceholder(1),
         };
         var originalArgv = argv.GetRange(0, 2);
 

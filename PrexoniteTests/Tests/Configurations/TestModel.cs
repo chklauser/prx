@@ -1,4 +1,5 @@
-﻿// Prexonite
+﻿
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -26,15 +27,15 @@
 
 namespace PrexoniteTests.Tests.Configurations;
 
-class TestModel
+record TestModel
 {
-    public string TestSuiteScript { get; set; }
-    public TestDependency[] UnitsUnderTest { get; set; }
-    public TestDependency[] TestDependencies { get; set; }
+    public required string TestSuiteScript { get; init; }
+    public required TestDependency[] UnitsUnderTest { get; init; }
+    public required TestDependency[] TestDependencies { get; init; }
 }
 
-public class TestDependency
+public record TestDependency
 {
-    public string ScriptName { get; set; }
-    public string[] Dependencies { get; set; }
+    public required string ScriptName { get; init; }
+    public required string[] Dependencies { get; init; }
 }

@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Threading;
 using NUnit.Framework;
@@ -36,21 +37,21 @@ namespace PrexoniteTests.Tests;
 [TestFixture(Description = "General type system checks")]
 public class TypeSystem
 {
-    Engine engine;
-    StackContext sctx;
+    Engine engine = null!;
+    StackContext sctx = null!;
 
     [OneTimeSetUp]
     public void SetupTypeSystemEngine()
     {
-        engine = new Engine();
-        sctx = new TestStackContext(engine, new Application());
+        engine = new();
+        sctx = new TestStackContext(engine, new());
     }
 
     [OneTimeTearDown]
     public void TeardownTypeSystemEngine()
     {
-        engine = null;
-        sctx = null;
+        engine = null!;
+        sctx = null!;
     }
 
     [Test(Description = "Does a number of set and get calls on a mock object")]
@@ -70,7 +71,7 @@ public class TypeSystem
             PCall.Set,
             "Subject");
         Assert.AreSame(test, obj.Value);
-        Assert.AreEqual(test.Subject, ((TestObject) obj.Value).Subject);
+        Assert.AreEqual(test.Subject, ((TestObject) obj.Value!).Subject);
 
         //Get res = obj.Subject
         var res = obj.DynamicCall(
@@ -95,7 +96,7 @@ public class TypeSystem
             PCall.Get,
             "Count");
         Assert.AreEqual(55, test.Count);
-        Assert.AreEqual(55, (int) res.Value);
+        Assert.AreEqual(55, (int) res.Value!);
     }
 
     [Test(Description = "Test the implicit [basic] to [PValue] conversion operators")]
@@ -121,7 +122,7 @@ public class TypeSystem
     {
         var res =
             sctx.ConstructPType(
-                "Object", new[] {PType.Object.CreatePValue(typeof (int))});
+                nameof(Object), new[] {PType.Object.CreatePValue(typeof (int))});
         Assert.AreEqual(PType.Object[typeof (int)], res);
     }
 
@@ -178,9 +179,9 @@ public class TypeSystem
         var escaped = PType.String.CreatePValue(sEscaped);
         Assert.IsTrue(
             escaped.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "unescape", out var unescaped));
-        Assert.AreEqual(sUnescaped, unescaped.Value as string);
+        Assert.AreEqual(sUnescaped, unescaped!.Value as string);
         Assert.IsTrue(
             unescaped.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "escape", out escaped));
-        Assert.AreEqual(sEscaped, escaped.Value as string);
+        Assert.AreEqual(sEscaped, escaped!.Value as string);
     }
 }

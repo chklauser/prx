@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Linq;
 using System.Reflection;
@@ -49,7 +50,7 @@ public class CilRuntime
                 $"The field/property Runtime.{t.Item1.Name} is null.");
     }
 
-    object _invokeStatic(MemberInfo m)
+    object? _invokeStatic(MemberInfo m)
     {
         if(m is PropertyInfo)
         {
@@ -66,7 +67,7 @@ public class CilRuntime
             var message = string.Format("The member {1}.{0} is not a property or field.", m.Name, m.DeclaringType);
             Assert.Fail(message);
 // ReSharper disable HeuristicUnreachableCode
-            throw new Exception(message);
+            throw new(message);
 // ReSharper restore HeuristicUnreachableCode
         }
     }

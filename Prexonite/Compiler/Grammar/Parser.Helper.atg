@@ -101,7 +101,10 @@ Boolean<out bool value>         (.  value = true; .)
 Integer<out int value>
 =
 	integer                     (.  if(!TryParseInteger(t.val, out value))
-	                                    SemErr(t, "Cannot recognize integer " + t.val);
+	                                    Loader.ReportMessage(Message.Error(
+	                                        "Cannot recognize integer " + t.val, 
+	                                        GetPosition(), 
+	                                        MessageClasses.InvalidConstant));
 	                            .)
 .
 
@@ -116,16 +119,26 @@ Real<out double value>
 =
 	(real | realLike)           (.  string real = t.val;
 	                                if(!TryParseReal(real, out value))
-	                                    SemErr(t, "Cannot recognize real " + real);
+	                                    Loader.ReportMessage(Message.Error(
+	                                        "Cannot recognize real " + real, 
+	                                        GetPosition(), 
+	                                        MessageClasses.InvalidConstant));
 	                            .)
 .
 
 Version<out Version version>    // Cannot distinguish between Real and Version ↔ must not appear in the same context.
 =
     (realLike | version)        (.  var raw = t.val;
-                                    if(!TryParseVersion(raw, out version))
+                                    if(TryParseVersion(raw, out var parsedVersion))
+                                    {
+                                        version = parsedVersion;
+                                    }
+                                    else
 									{
-                                        SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+                                        Loader.ReportMessage(Message.Error(
+                                            "Cannot recognize version literal " + raw, 
+                                            GetPosition(), 
+                                            MessageClasses.InvalidConstant));
 										version = new Version(0,0);
 									}
                                 .)

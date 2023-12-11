@@ -24,14 +24,8 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using JetBrains.Annotations;
-
-#nullable enable
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -105,7 +99,7 @@ public abstract class SymbolStoreBuilder
             IEnumerable<SymbolTransferDirective> directives)
         {
             if (!_statements.TryGet(sourceDescription, out var statement))
-                _statements.Add(statement = new ImportStatement(source, sourceDescription));
+                _statements.Add(statement = new(source, sourceDescription));
 
             statement.AddRange(directives);
         }
@@ -132,7 +126,7 @@ public abstract class SymbolStoreBuilder
                     onRename: r =>
                     {
                         if (!renames.TryGetValue(r.OriginalName, out var destinations))
-                            renames.Add(r.OriginalName, destinations = new List<string>());
+                            renames.Add(r.OriginalName, destinations = new());
                         destinations.Add(r.NewName);
                     },
                     onDrop: d => drops.Add(d.Name)

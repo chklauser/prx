@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -43,11 +41,11 @@ public class Range : CoroutineCommand, ICilCompilerAware
     protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
         PValue[] args)
     {
-        return CoroutineRunStatically(sctxCarrier, args);
+        return coroutineRunStatically(sctxCarrier, args);
     }
 
     //function range(index, count, xs) = xs >> skip(index) >> limit(count);
-    static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
+    static IEnumerable<PValue> coroutineRunStatically(ContextCarrier sctxCarrier,
         PValue[] args)
     {
         if (sctxCarrier == null)
@@ -60,8 +58,8 @@ public class Range : CoroutineCommand, ICilCompilerAware
 
         var sctx = sctxCarrier.StackContext;
 
-        var skipCount = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
-        var returnCount = (int) args[1].ConvertTo(sctx, PType.Int, true).Value;
+        var skipCount = (int) args[0].ConvertTo(sctx, PType.Int, true).Value!;
+        var returnCount = (int) args[1].ConvertTo(sctx, PType.Int, true).Value!;
         var index = 0;
 
         for (var i = 2; i < args.Length; i++)
@@ -94,7 +92,7 @@ public class Range : CoroutineCommand, ICilCompilerAware
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
         var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+        var corctx = new CoroutineContext(sctx, coroutineRunStatically(carrier, args));
         carrier.StackContext = corctx;
         return sctx.CreateNativePValue(new Coroutine(corctx));
     }

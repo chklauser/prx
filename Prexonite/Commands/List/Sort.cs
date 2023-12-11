@@ -23,9 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -59,7 +56,6 @@ public class Sort : PCommand
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
         var lst = new List<PValue>();
         if (args.Length == 0)
             return PType.Null.CreatePValue();
@@ -81,9 +77,9 @@ public class Sort : PCommand
                     foreach (var f in clauses)
                     {
                         var pdec = f.IndirectCall(sctx, new[] {a, b});
-                        if (!(pdec.Type is IntPType))
+                        if (pdec.Type is not IntPType)
                             pdec = pdec.ConvertTo(sctx, PType.Int);
-                        var dec = (int) pdec.Value;
+                        var dec = (int) pdec.Value!;
                         if (dec != 0)
                             return dec;
                     }

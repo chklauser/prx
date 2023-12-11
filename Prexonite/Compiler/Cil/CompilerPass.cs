@@ -25,12 +25,9 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region Namespace Imports
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading;
 using Prexonite.Modular;
 
 #endregion
@@ -42,7 +39,7 @@ public class CompilerPass
     static int _numberOfPasses;
 
     [DebuggerStepThrough]
-    static string _createNextTypeName(string applicationId)
+    static string _createNextTypeName(string? applicationId)
     {
         if (string.IsNullOrEmpty(applicationId))
             applicationId = "cilimpl";
@@ -50,7 +47,7 @@ public class CompilerPass
         return applicationId + "_" + Interlocked.Increment(ref _numberOfPasses) + "";
     }
 
-    readonly AssemblyBuilder _assemblyBuilder;
+    readonly AssemblyBuilder? _assemblyBuilder;
 
     public AssemblyBuilder Assembly
     {
@@ -64,7 +61,7 @@ public class CompilerPass
         }
     }
 
-    readonly ModuleBuilder _moduleBuilder;
+    readonly ModuleBuilder? _moduleBuilder;
 
     public ModuleBuilder Module
     {
@@ -78,7 +75,7 @@ public class CompilerPass
         }
     }
 
-    readonly TypeBuilder _typeBuilder;
+    readonly TypeBuilder? _typeBuilder;
 
     public TypeBuilder TargetType
     {
@@ -92,7 +89,7 @@ public class CompilerPass
         }
     }
 
-    public CompilerPass(Application app, bool makeAvailableForLinking)
+    public CompilerPass(Application? app, bool makeAvailableForLinking)
     {
         MakeAvailableForLinking = makeAvailableForLinking;
         if (MakeAvailableForLinking)
@@ -202,8 +199,8 @@ public class CompilerPass
 
     public static ILGenerator GetIlGenerator(MethodInfo m)
     {
-        DynamicMethod dm;
-        MethodBuilder mb;
+        DynamicMethod? dm;
+        MethodBuilder? mb;
         if ((dm = m as DynamicMethod) != null)
             return dm.GetILGenerator();
         if ((mb = m as MethodBuilder) != null)
@@ -215,6 +212,7 @@ public class CompilerPass
             m.GetType());
     }
 
+    [MemberNotNullWhen(true, nameof(_assemblyBuilder), nameof(_moduleBuilder), nameof(_typeBuilder))]
     public bool MakeAvailableForLinking { get; }
 
     public CompilerPass(FunctionLinking linking)
@@ -227,7 +225,7 @@ public class CompilerPass
     {
     }
 
-    public CompilerPass(Application app, FunctionLinking linking)
+    public CompilerPass(Application? app, FunctionLinking linking)
         : this(
             app,
             (linking & FunctionLinking.AvailableForLinking) ==
@@ -237,7 +235,7 @@ public class CompilerPass
 
     readonly Dictionary<MethodInfo, ICilImplementation> _delegateCache = new();
 
-    Type _cachedTypeReference;
+    Type? _cachedTypeReference;
 
     public ICilImplementation GetImplementation(ModuleName moduleName, string id)
     {
@@ -254,10 +252,10 @@ public class CompilerPass
 
     ICilImplementation getDelegate(MethodInfo m)
     {
-        if (_delegateCache.ContainsKey(m))
-            return _delegateCache[m];
+        if (_delegateCache.TryGetValue(m, out var @delegate))
+            return @delegate;
 
-        DynamicMethod dm;
+        DynamicMethod? dm;
         if ((dm = m as DynamicMethod) != null)
             return _delegateCache[m] = new CilImplementation(m, (CilFunction)dm.CreateDelegate(typeof(CilFunction)));
         return
@@ -267,7 +265,7 @@ public class CompilerPass
                 (
                     typeof (CilFunction),
                     _getRuntimeType().GetMethod(m.Name)!,
-                    true));
+                    true)!); // !-safety: throwOnBindFailure = true
     }
 
     Type _getRuntimeType()

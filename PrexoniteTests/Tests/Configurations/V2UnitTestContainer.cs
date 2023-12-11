@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +17,7 @@ public abstract class V2UnitTestContainer
     const string RunTestMetaEntryId = "psr.test.run_test";
 
     static readonly ModuleName TestFrameworkModuleName =
-        new("psr.test", new Version(0, 0));
+        new("psr.test", new(0, 0));
 
     (Application app, ITarget target, PFunction runTestsFunction, Engine engine)? _testSuite;
 
@@ -29,7 +28,7 @@ public abstract class V2UnitTestContainer
     {
         CompileToCil = compileToCil;
         TestSuitePath = Path.GetFullPath(Path.Combine(
-            ModuleCacheV2.SolutionPath, "PrexoniteTests", "psr-tests", "_2", testSuiteFileName
+            ModuleCacheV2.SolutionPath, nameof(PrexoniteTests), "psr-tests", "_2", testSuiteFileName
         ));
     }
 
@@ -105,18 +104,18 @@ public abstract class V2UnitTestContainer
                     return true;
                 case "SUCCESS":
                     testCase = extract(sctx,
-                        args[0].TryDynamicCall(sctx, new PValue[0], PCall.Get, "test", out var testCaseValue)
+                        args[0].TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "test", out var testCaseValue)
                             ? testCaseValue
                             : throw new PrexoniteException("Expected test result to have a member called `test`."));
                     Trace.WriteLine($"test [{sctx.ParentApplication.Module.Name}].{testCase.Id} successful");
                     return true;
                 case "FAILURE":
                     testCase = extract(sctx,
-                        args[0].TryDynamicCall(sctx, new PValue[0], PCall.Get, "test", out testCaseValue)
+                        args[0].TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "test", out testCaseValue)
                             ? testCaseValue
                             : throw new PrexoniteException("Expected test result to have a member called `test`."));
                     var exceptionObj =
-                        args[0].TryDynamicCall(sctx, new PValue[0], PCall.Get, "e", out var exceptionValue)
+                        args[0].TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "e", out var exceptionValue)
                             ? exceptionValue.Value
                             : throw new PrexoniteException(
                                 "Expected failed test result to have a member called `e`");
@@ -148,7 +147,7 @@ public abstract class V2UnitTestContainer
             }
 
             return (
-                (string) funcValue.DynamicCall(sctx, Empty, PCall.Get, "Id").ConvertTo(sctx, PType.String).Value,
+                (string) funcValue.DynamicCall(sctx, Empty, PCall.Get, "Id").ConvertTo(sctx, PType.String).Value!,
                 funcValue.DynamicCall(sctx, Empty, PCall.Get, "ParentApplication").ConvertTo<Application>(sctx)
             );
         }
@@ -169,10 +168,10 @@ public abstract class V2UnitTestContainer
         // THEN
         // (the UI callback should actually raise an exception in case of a test error)
         var ctx = new NullContext(TestSuiteEngine, TestSuiteApplication, Enumerable.Empty<string>());
-        Assert.IsTrue(result.TryDynamicCall(ctx, new PValue[0], PCall.Get, "Key", out var successfulValue), 
+        Assert.IsTrue(result.TryDynamicCall(ctx, Array.Empty<PValue>(), PCall.Get, "Key", out var successfulValue), 
             "Expected result of test run function on [{1}].{2} to have a `Key` member. Got: {0}", result,
             TestSuiteApplication.Module.Name, testCaseName);
-        Assert.AreEqual(true, successfulValue.Value, "Expected test [{0}].{1} to be successful.",
+        Assert.AreEqual(true, successfulValue!.Value, "Expected test [{0}].{1} to be successful.",
             TestSuiteApplication.Module.Name, testCaseName);
     }
         

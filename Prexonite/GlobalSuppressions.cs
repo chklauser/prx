@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Diagnostics.CodeAnalysis;
 
 [assembly:
     SuppressMessage("Microsoft.Design", "CA1020:AvoidNamespacesWithFewTypes", Scope = "namespace",
@@ -43,70 +42,70 @@ using System.Diagnostics.CodeAnalysis;
         Target = "Prexonite.Compiler.Cil.Compiler.#NewPVariableCtor")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = nameof(Prexonite))]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.Concurrency")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.Concurrency")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.Core")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.Core")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.Core.Operators")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.Core.Operators")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace",
+        MessageId = nameof(Prexonite), Scope = "namespace",
         Target = "Prexonite.Commands.Core.PartialApplication")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.Lazy")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.Lazy")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.List")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.List")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.Math")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.Math")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Commands.Text")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Commands.Text")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Compiler")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Compiler")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Compiler.Ast")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Compiler.Ast")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Compiler.Cil")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Compiler.Cil")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Concurrency")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Concurrency")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Helper")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Helper")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Internal")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Internal")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "namespace", Target = "Prexonite.Types")]
+        MessageId = nameof(Prexonite), Scope = "namespace", Target = "Prexonite.Types")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "type", Target = "Prexonite.OperatorNames+Prexonite")]
+        MessageId = nameof(Prexonite), Scope = "type", Target = "Prexonite.OperatorNames+Prexonite")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "type", Target = "Prexonite.PrexoniteException")]
+        MessageId = nameof(Prexonite), Scope = "type", Target = "Prexonite.PrexoniteException")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "type", Target = "Prexonite.PrexoniteInvalidStackException"
+        MessageId = nameof(Prexonite), Scope = "type", Target = "Prexonite.PrexoniteInvalidStackException"
         )]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "type", Target = "Prexonite.PrexoniteRuntimeException")]
+        MessageId = nameof(Prexonite), Scope = "type", Target = "Prexonite.PrexoniteRuntimeException")]
 [assembly:
     SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Prexonite", Scope = "type",
+        MessageId = nameof(Prexonite), Scope = "type",
         Target = "Prexonite.Types.PType+PrexoniteObjectTypeProxy")]

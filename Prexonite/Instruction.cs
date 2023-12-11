@@ -23,16 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using JetBrains.Annotations;
-using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -60,20 +57,20 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     ///     One of the instructions operands. Id is commonly used to store identifiers but also more 
     ///     general call targets or type expressions.
     /// </summary>
-    public readonly string Id;
+    public readonly string? Id;
 
     /// <summary>
     /// One of the instruction operands. The Name is used for cross-module references 
     /// to functions and variables.
     /// </summary>
-    public readonly ModuleName ModuleName;
+    public readonly ModuleName? ModuleName;
 
     /// <summary>
     ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
     ///     to store a boxed double value. The VM however uses this field to cache constant data 
     ///     like evaluated type expressions or resolved call targets.
     /// </summary>
-    public object GenericArgument;
+    public object? GenericArgument;
 
     /// <summary>
     ///     The just effect flag prevents certain operations from pushing their result back on the stack.
@@ -97,6 +94,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <remarks>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
+    [PublicAPI]
     public Instruction(OpCode opCode)
 // ReSharper disable RedundantArgumentDefaultValue // need to keep the defaults for overload resolution
         : this(opCode, default,default(int))
@@ -141,7 +139,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <remarks>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
-    public Instruction(OpCode opCode, int arguments, string id)
+    public Instruction(OpCode opCode, int arguments, string? id)
         : this(opCode, id, arguments)
     {
     }
@@ -156,7 +154,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <remarks>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
-    public Instruction(OpCode opCode, int arguments, string id, bool justEffect)
+    public Instruction(OpCode opCode, int arguments, string? id, bool justEffect)
         : this(opCode, id, arguments, justEffect)
     {
     }
@@ -171,7 +169,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <remarks>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
-    public Instruction(OpCode opCode, int arguments, string id, ModuleName moduleName)
+    public Instruction(OpCode opCode, int arguments, string? id, ModuleName? moduleName)
         : this(opCode, id, arguments, default, moduleName)
     {
     }
@@ -187,7 +185,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <remarks>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
-    public Instruction(OpCode opCode, string id = default, int arguments = default, bool justEffect = false, ModuleName moduleName = default)
+    public Instruction(OpCode opCode, string? id = default, int arguments = default, bool justEffect = false, ModuleName? moduleName = default)
     {
         OpCode = opCode;
         Arguments = arguments;
@@ -212,7 +210,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     public PValueKeyValuePair DecodeIndLocIndex()
     {
         DecodeIndLocIndex(out var index, out var argc);
-        return new PValueKeyValuePair(index, argc);
+        return new(index, argc);
     }
 
     #endregion
@@ -240,7 +238,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     {
         var ins = new Instruction(OpCode.ldc_real)
         {
-            GenericArgument = r
+            GenericArgument = r,
         };
         return ins;
     }
@@ -269,12 +267,12 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         return new(OpCode.stloc, id);
     }
 
-    public static Instruction CreateLoadGlobal(string id, ModuleName moduleName)
+    public static Instruction CreateLoadGlobal(string id, ModuleName? moduleName)
     {
         return new(OpCode.ldglob, id: id, moduleName: moduleName);
     }
 
-    public static Instruction CreateStoreGlobal(string id, ModuleName moduleName)
+    public static Instruction CreateStoreGlobal(string id, ModuleName? moduleName)
     {
         return new(OpCode.stglob, id: id, moduleName: moduleName);
     }
@@ -325,11 +323,11 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         return new(OpCode.sset, arguments, callExpr);
     }
 
-    public static Instruction CreateFunctionCall(int arguments, [NN] string id, bool justEffect, [CanBeNull] ModuleName moduleName)
+    public static Instruction CreateFunctionCall(int arguments, string id, bool justEffect, ModuleName? moduleName)
     {
         if(id == null)
             throw new ArgumentNullException(nameof(id));
-        return new Instruction(OpCode.func, id, arguments, justEffect, moduleName);
+        return new(OpCode.func, id, arguments, justEffect, moduleName);
     }
 
     public static Instruction CreateFunctionCall(int arguments, string id, ModuleName moduleName)
@@ -388,7 +386,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         var idx = (ushort) index;
         var argc = (ushort) arguments;
 
-        return new Instruction(OpCode.indloci, (argc << 16) | idx, null, justEffect);
+        return new(OpCode.indloci, (argc << 16) | idx, null, justEffect);
     }
 
     #endregion
@@ -479,11 +477,11 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         rotations = (values + rotations)%values;
 
         if (rotations == 0)
-            return new Instruction(OpCode.nop);
+            return new(OpCode.nop);
 
         var ins = new Instruction(OpCode.rot, rotations)
         {
-            GenericArgument = values
+            GenericArgument = values,
         };
         return ins;
     }
@@ -556,7 +554,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <param name = "buffer">The buffer to write the representation to.</param>
     public void ToString(StringBuilder buffer)
     {
-        string escId;
+        string? escId;
         if (Id != null)
         {
             if (!OperatorCommands.TryGetLiteral(Id, out escId))
@@ -567,7 +565,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
             escId = "\"\"";
         }
 
-        string escModuleName;
+        string? escModuleName;
         if(ModuleName != null)
         {
             escModuleName = StringPType.ToIdOrLiteral(ModuleName.Id) + "," + ModuleName.Version;
@@ -640,7 +638,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                     //LOAD CONSTANT . REAL
                     case OpCode.ldc_real:
                         buffer.Append(" ");
-                        buffer.Append(((double) GenericArgument).ToString(CultureInfo.InvariantCulture));
+                        buffer.Append(((double?)GenericArgument ?? 0.0).ToString(CultureInfo.InvariantCulture));
                         return;
                     //LOAD CONSTANT . BOOL
                     case OpCode.ldc_bool:
@@ -774,7 +772,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
     /// </returns>
     /// <param name="other">An object to compare with this object.</param>
-    public bool Equals(Instruction other)
+    public bool Equals(Instruction? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -806,7 +804,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                 if (!(other.GenericArgument is double))
                     return false;
 // ReSharper disable CompareOfFloatsByEqualityOperator // Instructions either have the same literal or they don't
-                return (double)GenericArgument == (double)other.GenericArgument;
+                return (double?)GenericArgument == (double?)other.GenericArgument;
 // ReSharper restore CompareOfFloatsByEqualityOperator
             //INTEGER INSTRUCTIONS
             case OpCode.ldc_bool:
@@ -885,7 +883,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
             case OpCode.rot:
                 return
                     Arguments == other.Arguments &&
-                    (int)GenericArgument == (int)other.GenericArgument;
+                    (int?)GenericArgument == (int?)other.GenericArgument;
             default:
                 throw new PrexoniteException("Invalid opcode " + OpCode);
         }
@@ -917,7 +915,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <param name = "obj">Any object (possibly an instruction).</param>
     /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
     [DebuggerStepThrough]
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj == null)
             return false;
@@ -1063,13 +1061,13 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         }
     }
 
-    public Instruction With(OpCode? opCode = null, int? arguments = null, string id = null, bool? justEffect = null, ModuleName moduleName = null)
+    public Instruction With(OpCode? opCode = null, int? arguments = null, string? id = null, bool? justEffect = null, ModuleName? moduleName = null)
     {
         return new(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName ?? ModuleName);
     }
 
-    public Instruction WithModuleName(ModuleName moduleName, OpCode? opCode = null, int? arguments = null,
-        string id = null, bool? justEffect = null)
+    public Instruction WithModuleName(ModuleName? moduleName, OpCode? opCode = null, int? arguments = null,
+        string? id = null, bool? justEffect = null)
     {
         // This variant is necessary to allow the module name to be set to null
         return new(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName);
@@ -1165,14 +1163,14 @@ public enum OpCode
     pow, //pow           binary power operator
     //  - comparision
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "ceq")] ceq, //ceq           binary equality operator
+        MessageId = nameof(ceq))] ceq, //ceq           binary equality operator
     cne, //cne           binary inequality operator
     clt, //clt           binary less-than operator
     cle, //cle           binary less-than-or-equal operator
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "cgt")] cgt, //cgt           binary greater-than operator
+        MessageId = nameof(cgt))] cgt, //cgt           binary greater-than operator
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "cge")] cge, //cge           binary greater-than-or-equal operator
+        MessageId = nameof(cge))] cge, //cge           binary greater-than-or-equal operator
     //  - bitwise
     or, //or            binary bitwise or operator
     and, //and           binary bitwise and operator

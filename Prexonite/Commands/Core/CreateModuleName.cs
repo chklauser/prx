@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -61,7 +60,7 @@ public class CreateModuleName : PCommand, ICilCompilerAware
         {
             if(args[0].Type == PType.Object[typeof(MetaEntry)])
             {
-                var entry = (MetaEntry) args[0].Value;
+                var entry = (MetaEntry) args[0].Value!;
                 if (ModuleName.TryParse(entry, out var moduleName))
                     return sctx.CreateNativePValue(sctx.Cache[moduleName]);
                 else
@@ -83,7 +82,7 @@ public class CreateModuleName : PCommand, ICilCompilerAware
 
             return
                 sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw,
-                    (Version) rawVersion.Value)]);
+                    (Version) rawVersion.Value!)]);
         }
         else
         {

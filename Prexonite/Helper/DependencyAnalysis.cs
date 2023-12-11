@@ -25,13 +25,9 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef DEBUG
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using Prexonite.Types;
+using JetBrains.Annotations;
 
 namespace Prexonite;
 
@@ -39,8 +35,9 @@ namespace Prexonite;
 /// </summary>
 /// <typeparam name = "TKey">Identifier for nodes.</typeparam>
 /// <typeparam name = "TValue">Nodes of the dependency graph.</typeparam>
-public class DependencyAnalysis<TKey, TValue> where
-    TValue : class, IDependent<TKey>
+public class DependencyAnalysis<TKey, TValue> 
+    where TKey : notnull
+    where TValue : class, IDependent<TKey>
 {
     readonly Dictionary<TKey, Node> _nodes = new();
 
@@ -67,7 +64,7 @@ public class DependencyAnalysis<TKey, TValue> where
 
         //Add all items
         foreach (var item in query)
-            _nodes.Add(item.Name, new Node(item));
+            _nodes.Add(item.Name, new(item));
 
         //Find dependencies
         foreach (var node in _nodes.Values)
@@ -96,8 +93,7 @@ public class DependencyAnalysis<TKey, TValue> where
 
     static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
     {
-        return from pv in query
-            select (TValue) pv.Value;
+        return query.Select(pv => pv.Value).OfType<TValue>();
     }
 
     public DependencyAnalysis(IEnumerable<PValue> query, bool ignoreUnknownDependencies)
@@ -117,7 +113,6 @@ public class DependencyAnalysis<TKey, TValue> where
         }
     }
 
-    [return: NotNull]
     public IEnumerable<Group> GetMutuallyRecursiveGroups()
     {
         var env = new SearchEnv();
@@ -152,7 +147,7 @@ public class DependencyAnalysis<TKey, TValue> where
             _list.CopyTo(array, arrayIndex);
         }
 
-        bool ICollection<Node>.Remove(Node item)
+        bool ICollection<Node>.Remove(Node? item)
         {
             throw new NotSupportedException("Dependency analysis groups cannot be modified.");
         }
@@ -239,13 +234,17 @@ public class DependencyAnalysis<TKey, TValue> where
             Subject = subject ?? throw new ArgumentNullException(nameof(subject));
         }
 
+        [PublicAPI]
         public bool IsDirectlyRecursive => Dependencies.Contains(this);
 
+        [PublicAPI]
         public HashSet<Node> Dependencies { [DebuggerStepThrough] get; } = new();
 
+        [PublicAPI]
         public HashSet<Node> Clients { [DebuggerStepThrough] get; } = new();
 
 
+        [PublicAPI]
         public TValue Subject { [DebuggerStepThrough] get; }
 
         #region Class
@@ -257,7 +256,7 @@ public class DependencyAnalysis<TKey, TValue> where
         ///     true if the current object is equal to the <paramref name = "other" /> parameter; otherwise, false.
         /// </returns>
         /// <param name = "other">An object to compare with this object.</param>
-        public bool Equals(Node other)
+        public bool Equals(Node? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -273,7 +272,7 @@ public class DependencyAnalysis<TKey, TValue> where
         /// <param name = "obj">The <see cref = "object" /> to compare with the current <see cref = "object" />. </param>
         /// <exception cref = "NullReferenceException">The <paramref name = "obj" /> parameter is null.</exception>
         /// <filterpriority>2</filterpriority>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -330,8 +329,8 @@ public class DependencyAnalysis<TKey, TValue> where
                     u = env.Unassigned.Pop();
                     u._assignmentPending = false;
                     group.AddLast(u);
-                } while (u != this);
-                yield return new Group(group);
+                } while (!ReferenceEquals(u, this));
+                yield return new(group);
             }
         }
 

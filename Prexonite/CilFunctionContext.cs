@@ -23,11 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -43,14 +41,14 @@ public sealed class CilFunctionContext : StackContext
     }
 
     internal static MethodInfo NewMethod { get; } = typeof (CilFunctionContext).GetMethod(
-        "New", new[] {typeof (StackContext), typeof (PFunction)});
+        nameof(New), new[] {typeof (StackContext), typeof (PFunction)})!;
 
     CilFunctionContext(Engine parentEngine, Application parentApplication,
         SymbolCollection importedNamespaces)
     {
-        this.ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-        this.ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-        this.ImportedNamespaces = importedNamespaces ?? throw new ArgumentNullException(nameof(importedNamespaces));
+        ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
+        ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+        ImportedNamespaces = importedNamespaces ?? throw new ArgumentNullException(nameof(importedNamespaces));
     }
 
     /// <summary>
@@ -69,7 +67,7 @@ public sealed class CilFunctionContext : StackContext
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
         return false;
     }

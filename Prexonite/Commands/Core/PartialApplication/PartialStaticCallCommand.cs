@@ -23,15 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
-public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallInfo>
+public sealed class PartialStaticCallCommand : PartialWithPTypeCommandBase<RuntimeStaticCallInfo, CompileTimeStaticCallInfo>
 {
     PartialStaticCallCommand()
     {
@@ -39,18 +38,18 @@ public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallIn
 
     public static PartialStaticCallCommand Instance { get; } = new();
 
-    ConstructorInfo _partialStaticCallCtor;
+    ConstructorInfo? _partialStaticCallCtor;
 
-    protected override ConstructorInfo GetConstructorCtor(StaticCallInfo parameter)
+    protected override ConstructorInfo GetConstructorCtor(CompileTimeStaticCallInfo parameter)
     {
         return _partialStaticCallCtor ??= typeof (PartialStaticCall).GetConstructor(new[]
         {
             typeof (int[]), typeof (PValue[]), typeof (PCall), typeof (string),
-            typeof (PType)
-        });
+            typeof (PType),
+        }) ?? throw new InvalidOperationException($"{nameof(PartialStaticCall)} does not have an (int[], PValue[], PCall, string, PType) constructor.");
     }
 
-    protected override void EmitConstructorCall(CompilerState state, StaticCallInfo parameter)
+    protected override void EmitConstructorCall(CompilerState state, CompileTimeStaticCallInfo parameter)
     {
         state.EmitLdcI4((int) parameter.Call);
         state.Il.Emit(OpCodes.Ldstr, parameter.MemberId);
@@ -58,16 +57,17 @@ public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallIn
     }
 
     protected override bool FilterCompileTimeArguments(
-        ref ArraySegment<CompileTimeValue> staticArgv, out StaticCallInfo parameter)
+        ref Span<CompileTimeValue> staticArgv,
+        [NotNullWhen(true)] out CompileTimeStaticCallInfo? parameter
+    )
     {
         parameter = default;
-        if (staticArgv.Count < 3)
+        if (staticArgv.Length < 3)
             return false;
 
         //Read call and memberId
-        var lastIdx = staticArgv.Offset + staticArgv.Count;
-        var rawMemberId = staticArgv.Array[lastIdx - 1];
-        var rawCall = staticArgv.Array[lastIdx - 2];
+        var rawMemberId = staticArgv[^1];
+        var rawCall = staticArgv[^2];
         if (!rawMemberId.TryGetString(out var memberId))
             return false;
         if (!rawCall.TryGetInt(out var callValue) || !Enum.IsDefined(typeof (PCall), callValue))
@@ -75,9 +75,8 @@ public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallIn
         var call = (PCall) callValue;
 
         //Transfer control to base implementation for PType handling
-        staticArgv = new ArraySegment<CompileTimeValue>(staticArgv.Array, staticArgv.Offset,
-            staticArgv.Count - 2);
-        if (!base.FilterCompileTimeArguments(ref staticArgv, out parameter))
+        staticArgv = staticArgv[..^2];
+        if (!base.FilterCompileTimeArguments(ref staticArgv, out parameter) || parameter == null)
             return false;
 
         //Combine call information
@@ -86,26 +85,27 @@ public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallIn
         return true;
     }
 
-    protected override StaticCallInfo FilterRuntimeArguments(StackContext sctx,
-        ref ArraySegment<PValue> arguments)
+    protected override RuntimeStaticCallInfo FilterRuntimeArguments(
+        StackContext sctx,
+        ref Span<PValue> arguments
+    )
     {
-        if (arguments.Count < 3)
+        if (arguments.Length < 3)
             throw new PrexoniteException(
                 $"{PartialApplicationKind} requires a PType, a call-kind and a member id.");
 
         //read call and memberId
-        var lastIdx = arguments.Offset + arguments.Count;
-        var memberId = arguments.Array[lastIdx - 1].CallToString(sctx);
-        var rawCall = arguments.Array[lastIdx - 2];
+        var memberId = arguments[^1].CallToString(sctx);
+        var rawCall = arguments[^2];
 
         PCall call;
-        if (rawCall.Type is ObjectPType && rawCall.Value is PCall)
+        if (rawCall is { Type: ObjectPType, Value: PCall })
         {
             call = (PCall) rawCall.Value;
         }
         else
         {
-            var callValue = (int) rawCall.ConvertTo(sctx, PType.Int).Value;
+            var callValue = (int) rawCall.ConvertTo(sctx, PType.Int).Value!;
             if (!Enum.IsDefined(typeof (PCall), callValue))
                 throw new PrexoniteException(
                     $"The value {callValue} is not a valid PCall value.");
@@ -113,8 +113,7 @@ public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallIn
         }
 
         //Call base implementation to handle PType argument
-        arguments = new ArraySegment<PValue>(arguments.Array, arguments.Offset,
-            arguments.Count - 2);
+        arguments = arguments[..^2];
         var p = base.FilterRuntimeArguments(sctx, ref arguments);
 
         //Combine static call information
@@ -126,30 +125,32 @@ public class PartialStaticCallCommand : PartialWithPTypeCommandBase<StaticCallIn
     protected override string PartialApplicationKind => "Partial static call";
 
     protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, StaticCallInfo parameter)
+        PValue[] closedArguments, RuntimeStaticCallInfo parameter)
     {
         return new PartialStaticCall(mappings, closedArguments, parameter.Call,
             parameter.MemberId, parameter.Type);
     }
 
-    protected override Type GetPartialCallRepresentationType(StaticCallInfo parameter)
+    protected override Type GetPartialCallRepresentationType(CompileTimeStaticCallInfo parameter)
     {
         return typeof (PartialStaticCall);
     }
 }
 
-/// <summary>
-///     Holds information about a static call at compile- and run-time.
-/// </summary>
-public class StaticCallInfo : PTypeInfo
+public record RuntimeStaticCallInfo : RuntimePTypeInfo<RuntimeStaticCallInfo>, IStaticCallInfo
 {
-    /// <summary>
-    ///     The call type.
-    /// </summary>
-    public PCall Call;
+    public PCall Call { get; set; } = PCall.Get;
+    public string MemberId { get; set; } = null!;
+}
 
-    /// <summary>
-    ///     The id of the static member to call.
-    /// </summary>
-    public string MemberId;
+public record CompileTimeStaticCallInfo : CompileTimePTypeInfo<CompileTimeStaticCallInfo>, IStaticCallInfo
+{
+    public PCall Call { get; set; } = PCall.Get;
+    public string MemberId { get; set; } = null!;
+}
+
+public interface IStaticCallInfo
+{
+    PCall Call { get; }
+    string MemberId { get; }
 }

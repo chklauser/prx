@@ -23,12 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
-using System.Linq;
+
 using JetBrains.Annotations;
+using Prexonite.Commands.List;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -46,12 +45,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall(sctx, args, call, id, out result, out _);
     }
 
-    static bool _require(PValue[] args, ref int index, out PValue rawValue)
+    static bool _require(PValue[] args, ref int index, [NotNullWhen(true)] out PValue? rawValue)
     {
         if (index < args.Length)
         {
@@ -67,11 +66,11 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _require(StackContext sctx, PValue[] args, ref int index, out IEnumerable<AstExpr> argSeq)
+    static bool _require(StackContext sctx, PValue[] args, ref int index, [NotNullWhen(true)] out IEnumerable<AstExpr>? argSeq)
     {
         if(_require(args, ref index, out var raw))
         {
-            argSeq = Commands.List.Map._ToEnumerable(sctx, raw)
+            argSeq = Map._ToEnumerable(sctx, raw)
                 .Select(x => x.ConvertTo<AstExpr>(sctx, true));
             return true;
         }
@@ -82,7 +81,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _require<T>(StackContext sctx, PValue[] args, ref int index, out T value)
+    static bool _require<T>(StackContext sctx, PValue[] args, ref int index, [NotNullWhen(true)] out T? value)
     {
         if (index < args.Length && args[index].TryConvertTo(sctx, false, out value))
         {
@@ -97,7 +96,14 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _takeOptional<T>(StackContext sctx, PValue[]  args, ref int index, out T value, T defaultValue = default)
+    [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Local")]
+    static bool _takeOptional<T>(
+        StackContext sctx,
+        PValue[] args,
+        ref int index,
+        [NotNullWhen(true)] out T? value,
+        T? defaultValue = default
+    )
     {
         if(index < args.Length && args[index].TryConvertTo(sctx, false,out value))
         {
@@ -112,7 +118,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue defaultValue = null)
+    static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue? defaultValue = null)
     {
         if(index < args.Length)
         {
@@ -131,7 +137,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
     {
         if(_takeOptional(args, ref index, out var raw))
         {
-            expressions = Commands.List.Map._ToEnumerable(sctx, raw)
+            expressions = Map._ToEnumerable(sctx, raw)
                 .Select(x => x.ConvertTo<AstExpr>(sctx, true));
             return true;
         }
@@ -143,9 +149,9 @@ public class AstFactoryBridge : IObject, IIndirectCall
     }
 
     [PublicAPI]
-    protected bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result, out string detailedError)
+    protected bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result, out string? detailedError)
     {
-        if (args.Length == 0 || !args[0].TryConvertTo(sctx, false, out ISourcePosition position))
+        if (args.Length == 0 || !args[0].TryConvertTo(sctx, false, out ISourcePosition? position))
         {
             detailedError = "Not enough arguments for creating an AST node. Missing source position.";
             result = null;
@@ -154,7 +160,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
 
         detailedError = null;
         result = null;
-        AstNode node = null;
+        AstNode? node = null;
         var i = 1; // the argument index
         switch (id.ToLowerInvariant())
         {
@@ -163,7 +169,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
                 throw new PrexoniteException("Cannot construct \"ConstantTypeExpression\", did you mean \"ConstantType\"?");
             case "constanttype":
             {
-                if (!_require(sctx, args, ref i, out string typeExpression))
+                if (!_require(sctx, args, ref i, out string? typeExpression))
                 {
                     detailedError =
                         "ConstantTypeExpression(position, typeExpression~String), typeExpression is missing.";
@@ -176,7 +182,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
                 throw new PrexoniteException("Cannot construct \"DynamicTypeExpression\", did you mean \"DynamicType\"?");
             case "dynamictype":
             {
-                if (!_require(sctx, args, ref i, out string typeId))
+                if (!_require(sctx, args, ref i, out string? typeId))
                 {
                     detailedError =
                         "DynamicTypeExpression(position, typeId~String, arguments~List), typeId is missing";
@@ -198,7 +204,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "binaryoperation":
             {
                 const string sig = "BinaryOperation(position, left~AstExpr, op~BinaryOperator, right~AstExpr)";
-                if (!_require(sctx, args, ref i, out AstExpr left))
+                if (!_require(sctx, args, ref i, out AstExpr? left))
                 {
                     detailedError = sig + ", missing left expr.";
                     return false;
@@ -208,7 +214,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
                     detailedError = sig + ", missing operator.";
                     return false;
                 }
-                if (!_require(sctx, args, ref i, out AstExpr right))
+                if (!_require(sctx, args, ref i, out AstExpr? right))
                 {
                     detailedError = sig + ", missing right expr.";
                     return false;
@@ -225,7 +231,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
                     detailedError = sig + ", missing operator.";
                     return false;
                 }
-                if (!_require(sctx, args, ref i, out AstExpr operand))
+                if (!_require(sctx, args, ref i, out AstExpr? operand))
                 {
                     detailedError = sig + ", missing operand expr.";
                     return false;
@@ -248,17 +254,17 @@ public class AstFactoryBridge : IObject, IIndirectCall
             {
                 const string sig =
                     "ConditionalExpression(position, condition~AstExpr, thenExpr~AstExpr, elseExpr~AstExpr, isNegative = false)";
-                if(!_require(sctx, args, ref i,out AstExpr condition))
+                if(!_require(sctx, args, ref i,out AstExpr? condition))
                 {
                     detailedError = sig + ", condition is missing.";
                     return false;
                 }
-                if(!_require(sctx, args, ref i, out AstExpr thenExpr))
+                if(!_require(sctx, args, ref i, out AstExpr? thenExpr))
                 {
                     detailedError = sig + ", thenExpr is missing.";
                     return false;
                 }
-                if(!_require(sctx,args, ref i, out AstExpr elseExpr))
+                if(!_require(sctx,args, ref i, out AstExpr? elseExpr))
                 {
                     detailedError = sig + ", elseExpr is missing.";
                     return false;
@@ -280,7 +286,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             }
             case "createclosure":
             {
-                if(!_require(sctx,args,ref i, out EntityRef.Function funcRef))
+                if(!_require(sctx,args,ref i, out EntityRef.Function? funcRef))
                 {
                     detailedError = "CreateClosure(position, funcRef~EntityRef.Function), funcRef is missing.";
                     return false;
@@ -291,7 +297,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             }
             case "createcoroutine":
             {
-                if(!_require(sctx, args, ref i, out AstExpr expr))
+                if(!_require(sctx, args, ref i, out AstExpr? expr))
                 {
                     detailedError =
                         "CreateCoroutine(position, generatorExpr~AstExpr), generatorExpr is missing.";
@@ -305,12 +311,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "keyvaluepair":
             {
                 const string sig = "KeyValuePair(position, key~AstExpr, value~AstExpr)";
-                if(!_require(sctx, args, ref i, out AstExpr key))
+                if(!_require(sctx, args, ref i, out AstExpr? key))
                 {
                     detailedError = sig + ", key is missing";
                     return false;
                 }
-                if(!_require(sctx,args, ref i, out AstExpr value))
+                if(!_require(sctx,args, ref i, out AstExpr? value))
                 {
                     detailedError = sig + ", value is missing";
                     return false;
@@ -379,7 +385,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "createobject":
             {
                 const string sig = "CreateObject(position, typeExpr~AstTypeExpr)";
-                if(!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
+                if(!_require(sctx, args, ref i, out AstTypeExpr? typeExpr))
                 {
                     detailedError = sig + ", typeExpr is missing";
                     return false;
@@ -393,12 +399,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "typecheck":
             {
                 const string sig = "Typecheck(position, operand~AstExpr, type~AstTypeExpr)";
-                if(!_require(sctx, args, ref i, out AstExpr operand))
+                if(!_require(sctx, args, ref i, out AstExpr? operand))
                 {
                     detailedError = sig + ", operand is missing.";
                     return false;
                 }
-                if(!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
+                if(!_require(sctx, args, ref i, out AstTypeExpr? typeExpr))
                 {
                     detailedError = sig + ", typeExpr is missing.";
                     return false;
@@ -410,12 +416,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "typecast":
             {
                 const string sig = "Typecast(position, operand~AstExpr, type~AstTypeExpr)";
-                if (!_require(sctx, args, ref i, out AstExpr operand))
+                if (!_require(sctx, args, ref i, out AstExpr? operand))
                 {
                     detailedError = sig + ", operand is missing.";
                     return false;
                 }
-                if (!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
+                if (!_require(sctx, args, ref i, out AstTypeExpr? typeExpr))
                 {
                     detailedError = sig + ", typeExpr is missing.";
                     return false;
@@ -427,7 +433,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "reference":
             {
                 const string sig = "Reference(position, entityRef~EntityRef)";
-                if(!_require(sctx, args, ref i, out EntityRef entityRef))
+                if(!_require(sctx, args, ref i, out EntityRef? entityRef))
                 {
                     detailedError = sig + ", entityRef is missing.";
                     return false;
@@ -438,12 +444,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "memberaccess":
             {
                 const string sig = "MemberAccess(position, receiver~AstExpr, memberId~String, call~PCall, args~List<AstExpr> = [])";
-                if (!_require(sctx, args, ref i, out AstExpr receiver))
+                if (!_require(sctx, args, ref i, out AstExpr? receiver))
                 {
                     detailedError = sig + ", receiver is missing.";
                     return false;
                 }
-                if(!_require(sctx,args, ref i, out string memberId))
+                if(!_require(sctx,args, ref i, out string? memberId))
                 {
                     detailedError = sig + ", memberId is missing.";
                     return false;
@@ -458,12 +464,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "staticmemberaccess":
             {
                 const string sig = "StaticMemberAccess(position, typeExpr~AstTypeExpr, memberId~String, call~PCall, args~List<AstExpr> = [])";
-                if (!_require(sctx, args, ref i, out AstTypeExpr typeExpr))
+                if (!_require(sctx, args, ref i, out AstTypeExpr? typeExpr))
                 {
                     detailedError = sig + ", typeExpr is missing.";
                     return false;
                 }
-                if (!_require(sctx, args, ref i, out string memberId))
+                if (!_require(sctx, args, ref i, out string? memberId))
                 {
                     detailedError = sig + ", memberId is missing.";
                     return false;
@@ -476,7 +482,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "indirectcall":
             {
                 const string sig = "IndirectCall(position, receiver~AstExpr, call~PCall, args~List<AstExpr> = [])";
-                if (!_require(sctx, args, ref i, out AstExpr receiver))
+                if (!_require(sctx, args, ref i, out AstExpr? receiver))
                 {
                     detailedError = sig + ", receiver is missing.";
                     return false;
@@ -489,7 +495,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "expand":
             {
                 const string sig = "Expand(position, entity~EntityRef, call~PCall)";
-                if (!_require(sctx, args, ref i, out EntityRef entity))
+                if (!_require(sctx, args, ref i, out EntityRef? entity))
                 {
                     detailedError = sig + ", entity is missing.";
                     return false;
@@ -508,7 +514,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
                 else
                 {
                     if (raw.TryConvertTo(sctx, PType.Int, true, out var intValue))
-                        index = (int) intValue.Value;
+                        index = (int) intValue.Value!;
                     else
                         index = null;
                 }
@@ -520,18 +526,18 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "exprfor":
             {
                 const string sig = "ExprFor(position, symbol~Symbol)";
-                if (_require(args, ref i, out var symbolPV))
+                if (!_require(args, ref i, out var symbolPv))
                 {
                     detailedError = sig + ", symbol is missing.";
                     return false;
                 }
 
                 // Parse symbol parameter
-                if (symbolPV.TryConvertTo(sctx, out Symbol symbol))
+                if (symbolPv.TryConvertTo(sctx, out Symbol? symbol))
                 {
                     // nothing to do in this case
                 }
-                else if (symbolPV.IsNull)
+                else if (symbolPv.IsNull)
                 {
                     symbol = null;
                 }
@@ -557,7 +563,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "condition":
             {
                 const string sig = "Condition(position, condition~AstExpr, isNegative = false)";
-                if(!_require(sctx, args, ref i, out AstExpr condition))
+                if(!_require(sctx, args, ref i, out AstExpr? condition))
                 {
                     detailedError = sig + ", condition is missing.";
                     return false;
@@ -572,7 +578,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
                 const string sig =
                     "WhileLoop(position, condition~AstExpr, isPostcondition = false, isNegative = false)";
 
-                if(!_require(sctx, args, ref i, out AstExpr _))
+                if(!_require(sctx, args, ref i, out AstExpr? _))
                 {
                     detailedError = sig + ", condition is missing.";
                     return false;
@@ -591,12 +597,12 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "foreachloop":
             {
                 const string sig = "ForeachLoop(position, element~AstGetSet, sequence~AstExpr)";
-                if(!_require(sctx, args, ref i, out AstGetSet _))
+                if(!_require(sctx, args, ref i, out AstGetSet? _))
                 {
                     detailedError = sig + ", element is missing.";
                     return false;
                 }
-                if(!_require( sctx, args, ref i, out AstExpr _))
+                if(!_require( sctx, args, ref i, out AstExpr? _))
                 {
                     detailedError = sig + ", sequence is missing.";
                     return false;
@@ -606,7 +612,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             }
             case "return":
             {
-                _takeOptional(sctx, args, ref i, out AstExpr expression);
+                _takeOptional(sctx, args, ref i, out AstExpr? expression);
                 _takeOptional(sctx, args, ref i, out ReturnVariant returnVariant);
                 node = _base.Return(position, expression, returnVariant);
                 break;
@@ -614,7 +620,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
             case "throw":
             {
                 const string sig = "Throw(position, exception~AstExpr)";
-                if(!_require(sctx, args, ref i, out AstExpr exception))
+                if(!_require(sctx, args, ref i, out AstExpr? exception))
                 {
                     detailedError = sig + ", exception is missing.";
                     return false;

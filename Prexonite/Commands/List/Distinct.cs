@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
 
 namespace Prexonite.Commands.List;
 
@@ -38,15 +36,13 @@ public class Distinct : CoroutineCommand
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
 
-        var t = new Dictionary<PValue, object>();
+        var t = new Dictionary<PValue, object?>();
 
         var sctx = sctxCarrier.StackContext;
 
         foreach (var arg in args)
         {
             var xs = Map._ToEnumerable(sctx, arg);
-            if (xs == null)
-                continue;
             foreach (var x in xs)
                 if (!t.ContainsKey(x))
                 {

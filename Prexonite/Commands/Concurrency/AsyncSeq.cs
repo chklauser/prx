@@ -23,14 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Concurrency;
 
@@ -46,10 +43,6 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    #region Overrides of PCommand
-
-    #endregion
-
     #region Overrides of CoroutineCommand
 
     protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
@@ -59,7 +52,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
         PValue[] args)
     {
@@ -90,6 +83,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
         #region Implementation of IEnumerable
 
+        [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
         public IEnumerator<PValue> GetEnumerator()
         {
             var peek = new Channel();
@@ -125,10 +119,10 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
                     Select.RunStatically(
                         _sctxCarrier.StackContext, new[]
                         {
-                            new KeyValuePair<Channel, PValue>
+                            new KeyValuePair<Channel?, PValue>
                             (
                                 rset, pfunc(
-                                    (s, a) =>
+                                    (_, _) =>
                                     {
                                         doCont = true;
                                         try
@@ -143,16 +137,16 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
                                         rset.Send(PType.Null);
                                         return PType.Null;
                                     })),
-                            new KeyValuePair<Channel, PValue>
+                            new KeyValuePair<Channel?, PValue>
                             (
                                 disp, pfunc(
-                                    (s, a) =>
+                                    (_, _) =>
                                     {
                                         doCont = false;
                                         doDisp = true;
                                         return PType.Null;
                                     })),
-                            new KeyValuePair<Channel, PValue>
+                            new KeyValuePair<Channel?, PValue>
                                 (null, PType.Null),
                         }, false);
 
@@ -211,6 +205,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
         readonly Channel _disp;
         readonly Func<PValue> _produce;
         readonly ContextCarrier _sctxCarrier;
+        PValue? _current;
 
         #region Implementation of IDisposable
 
@@ -225,7 +220,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
         public bool MoveNext()
         {
-            if (Current == null)
+            if (_current == null)
             {
                 //The producer runs on a separate thread and communicates
                 //  with this thread via 4 channels, one for each method
@@ -233,7 +228,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
                 Current = PType.Null;
             }
 
-            if ((bool) _peek.Receive().Value)
+            if ((bool) _peek.Receive().Value!)
             {
                 Current = _data.Receive();
                 return true;
@@ -257,7 +252,11 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
             }
         }
 
-        public PValue Current { get; private set; }
+        public PValue Current
+        {
+            get => _current ?? PType.Null;
+            private set => _current = value;
+        }
 
         object IEnumerator.Current => Current;
 

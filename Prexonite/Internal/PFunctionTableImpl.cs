@@ -23,12 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using Prexonite.Modular;
 
 namespace Prexonite.Internal;
 
@@ -39,31 +33,19 @@ public class PFunctionTableImpl : PFunctionTable
 {
     #region table
 
-    readonly SymbolTable<PFunction> _table;
-
-    public PFunctionTableImpl()
-    {
-        _table = new SymbolTable<PFunction>();
-        _idChangingHandler = _onIdChanging;
-    }
-
-    public PFunctionTableImpl(int capacity)
-    {
-        _table = new SymbolTable<PFunction>(capacity);
-        _idChangingHandler = _onIdChanging;
-    }
+    readonly SymbolTable<PFunction> _table = new();
 
     public override bool Contains(string id)
     {
         return _table.ContainsKey(id);
     }
 
-    public override bool TryGetValue(string id, out PFunction func)
+    public override bool TryGetValue(string id, [NotNullWhen(true)] out PFunction? func)
     {
         return _table.TryGetValue(id, out func);
     }
 
-    public override PFunction this[string id] => _table.GetDefault(id, null);
+    public override PFunction? this[string id] => _table.GetDefault(id, null);
 
     #endregion
 
@@ -79,56 +61,39 @@ public class PFunctionTableImpl : PFunctionTable
 
     #region ICollection<PFunction> Members
 
-    readonly EventHandler<FunctionIdChangingEventArgs> _idChangingHandler;
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    void _onIdChanging(object o, FunctionIdChangingEventArgs args)
+    public override void Add(PFunction? item)
     {
-        var sender = (FunctionDeclaration)o;
-        if(TryGetValue(sender.Id,out var func))
+        if (item == null)
         {
-            _table.Remove(func.Id);
-            _table.Add(args.NewId,func);
+            return;
         }
-        else
-        {
-            Debug.Assert(false,
-                $"PFunction table is still registered to function declaration {sender} even though it is no longer in the table.");
-        }
-    }
-
-    public override void Add(PFunction item)
-    {
-        if (_table.ContainsKey(item.Id))
+        if (!_table.TryAdd(item.Id, item))
             throw new ArgumentException(
                 "The function table already contains a function named " + item.Id);
-
-        item.Declaration.IdChanging += _idChangingHandler;
-        _table.Add(item.Id, item);
     }
 
     public override void AddOverride(PFunction item)
     {
         if (_table.TryGetValue(item.Id,out var oldFunc))
         {
-            oldFunc.Declaration.IdChanging -= _idChangingHandler;
             _table.Remove(oldFunc.Id);
         }
 
-        item.Declaration.IdChanging += _idChangingHandler;
         _table.Add(item.Id, item);
     }
 
     public override void Clear()
     {
-        foreach (var func in _table)
-            func.Value.Declaration.IdChanging -= _idChangingHandler;
-
         _table.Clear();
     }
 
-    public override bool Contains(PFunction item)
+    public override bool Contains(PFunction? item)
     {
+        if (item == null)
+        {
+            return false;
+        }
+        
         return _table.ContainsKey(item.Id);
     }
 
@@ -150,11 +115,14 @@ public class PFunctionTableImpl : PFunctionTable
 
     public override bool IsReadOnly => _table.IsReadOnly;
 
-    public override bool Remove(PFunction item)
+    public override bool Remove(PFunction? item)
     {
-        if(_table.TryGetValue(item.Id,out var f) && ReferenceEquals(f,item))
+        if (item == null)
         {
-            f.Declaration.IdChanging -= _idChangingHandler;
+            return false;
+        }
+        else if(_table.TryGetValue(item.Id,out var f) && ReferenceEquals(f,item))
+        {
             _table.Remove(item.Id);
             return true;
         }
@@ -166,7 +134,6 @@ public class PFunctionTableImpl : PFunctionTable
     {
         if (_table.TryGetValue(id,out var oldFunc))
         {
-            oldFunc.Declaration.IdChanging -= _idChangingHandler;
             return _table.Remove(id);
         }
         else
@@ -182,10 +149,6 @@ public class PFunctionTableImpl : PFunctionTable
         foreach (var kvp in _table)
             yield return kvp.Value;
     }
-
-    #endregion
-
-    #region IEnumerable Members
 
     #endregion
 }

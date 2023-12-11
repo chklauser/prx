@@ -1,6 +1,3 @@
-#nullable enable
-using System;
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Internal;
@@ -10,9 +7,9 @@ static class EntityRefMExprParser
     public static EntityRef Parse(MExpr expr)
     {
         // ReSharper disable TooWideLocalVariableScope
-        string internalId;
-        string moduleId;
-        Version moduleVersion;
+        string? internalId;
+        string? moduleId;
+        Version? moduleVersion;
         // ReSharper restore TooWideLocalVariableScope
         if (expr.TryMatchHead(EntityRefMExprSerializer.FunctionHead, out var internalIdExpr, out var moduleIdExpr, out var moduleVersionExpr))
         {
@@ -20,7 +17,7 @@ static class EntityRefMExprParser
                 && moduleIdExpr.TryMatchStringAtom(out moduleId)
                 && moduleVersionExpr.TryMatchVersionAtom(out moduleVersion))
             {
-                return EntityRef.Function.Create(internalId, new ModuleName(moduleId, moduleVersion));
+                return EntityRef.Function.Create(internalId, new(moduleId, moduleVersion));
             }
             else
             {
@@ -69,7 +66,7 @@ static class EntityRefMExprParser
                 && moduleIdExpr.TryMatchStringAtom(out moduleId)
                 && moduleVersionExpr.TryMatchVersionAtom(out moduleVersion))
             {
-                return EntityRef.Variable.Global.Create(internalId, new ModuleName(moduleId,moduleVersion));
+                return EntityRef.Variable.Global.Create(internalId, new(moduleId,moduleVersion));
             }
             else
             {
@@ -78,7 +75,7 @@ static class EntityRefMExprParser
                         expr.Position, MessageClasses.CannotParseMExpr));
             }
         }
-        else if (expr.TryMatchHead(EntityRefMExprSerializer.MacroCommandModifierHead, out MExpr commandExpr)
+        else if (expr.TryMatchHead(EntityRefMExprSerializer.MacroCommandModifierHead, out MExpr? commandExpr)
                  && commandExpr.TryMatchHead(EntityRefMExprSerializer.CommandHead, out internalIdExpr))
         {
             if (internalIdExpr.TryMatchStringAtom(out internalId))

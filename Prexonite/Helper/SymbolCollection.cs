@@ -23,27 +23,20 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite;
 
 [DebuggerStepThrough]
-public class SymbolCollection : ICollection<string>
+public class SymbolCollection(int capacity) : ICollection<string>
 {
-    readonly Hashtable _set;
+    readonly HashSet<string> _set = new(capacity, StringComparer.OrdinalIgnoreCase);
 
-    public SymbolCollection()
+    public SymbolCollection() : this(0)
     {
-        _set = new Hashtable(StringComparer.OrdinalIgnoreCase);
-    }
-
-    public SymbolCollection(int capacity)
-    {
-        _set = new Hashtable(capacity, StringComparer.OrdinalIgnoreCase);
+        _set = new(0, StringComparer.OrdinalIgnoreCase);
     }
 
     public SymbolCollection(IEnumerable<string> items)
@@ -57,8 +50,7 @@ public class SymbolCollection : ICollection<string>
 
     public void Add(string item)
     {
-        if (!_set.ContainsKey(item))
-            _set.Add(item, null);
+        _set.Add(item);
     }
 
     public void Clear()
@@ -66,36 +58,35 @@ public class SymbolCollection : ICollection<string>
         _set.Clear();
     }
 
-    public bool Contains(string item)
+    public bool Contains(string? item)
     {
-        return _set.ContainsKey(item);
+        return item != null && _set.Contains(item);
     }
 
     public void CopyTo(string[] array, int arrayIndex)
     {
-        _set.Keys.CopyTo(array, arrayIndex);
+        _set.CopyTo(array, arrayIndex);
     }
 
     public int Count => _set.Count;
 
-    public bool IsReadOnly => _set.IsReadOnly;
+    public bool IsReadOnly => false;
 
-    public bool Remove(string item)
+    public bool Remove(string? item)
     {
-        var cnt = _set.Count;
-        _set.Remove(item);
-        return cnt != _set.Count;
+        if (item == null)
+        {
+            return false;
+        }
+        
+        return _set.Remove(item);
     }
 
     #endregion
 
     #region IEnumerable<string> Members
 
-    public IEnumerator<string> GetEnumerator()
-    {
-        foreach (DictionaryEntry entry in _set)
-            yield return entry.Key as string;
-    }
+    public IEnumerator<string> GetEnumerator() => _set.GetEnumerator();
 
     #endregion
 

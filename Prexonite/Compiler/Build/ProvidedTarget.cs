@@ -23,75 +23,66 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
+using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
 
-[DebuggerDisplay("{" + nameof(_debuggerDisplay) + "}")]
+[DebuggerDisplay("{" + nameof(debuggerDisplay) + "}")]
 public class ProvidedTarget : ITargetDescription, ITarget
 {
-    [NotNull]
-    readonly DependencySet _dependencies;
+    readonly DependencySet dependencies;
 
-    [CanBeNull]
-    readonly List<IResourceDescriptor> _resources;
+    readonly List<IResourceDescriptor>? resources;
 
-    [CanBeNull]
-    readonly List<Message> _messages;
+    readonly List<Message>? messages;
 
-    [CanBeNull]
-    readonly IReadOnlyList<Message> _buildMessages;
+    readonly IReadOnlyList<Message>? buildMessages;
 
-    string _debuggerDisplay =>
+    string debuggerDisplay =>
         $"ProvidedTarget({Name}) {(IsSuccessful ? "successful" : "errors detected")}";
 
     public ProvidedTarget(Module module,
-        IEnumerable<ModuleName> dependencies = null,
-        IEnumerable<KeyValuePair<string, Symbol>> symbols = null,
-        IEnumerable<IResourceDescriptor> resources = null,
-        IEnumerable<Message> messages = null,
-        IEnumerable<Message> buildMessages = null,
-        Exception exception = null)
+        IEnumerable<ModuleName>? dependencies = null,
+        IEnumerable<KeyValuePair<string, Symbol>>? symbols = null,
+        IEnumerable<IResourceDescriptor>? resources = null,
+        IEnumerable<Message>? messages = null,
+        IEnumerable<Message>? buildMessages = null,
+        Exception? exception = null)
     {
         Module = module;
-        _dependencies = new DependencySet(module.Name);
+        this.dependencies = new(module.Name);
         if (dependencies != null)
-            _dependencies.AddRange(dependencies);
+            this.dependencies.AddRange(dependencies);
         Symbols = SymbolStore.Create();
         if (symbols != null)
             foreach (var entry in symbols)
                 Symbols.Declare(entry.Key, entry.Value);
-        _resources = new List<IResourceDescriptor>();
+        this.resources = new();
         if (resources != null)
-            _resources.AddRange(resources);
+            this.resources.AddRange(resources);
 
         Exception = exception;
 
         if (messages != null)
-            _messages = new List<Message>(messages);
+            this.messages = new(messages);
 
         if (buildMessages != null)
         {
-            _buildMessages = new List<Message>(buildMessages);
+            this.buildMessages = new List<Message>(buildMessages);
 
-            if (_messages == null)
-                _messages = new List<Message>(_buildMessages);
+            if (this.messages == null)
+                this.messages = new(this.buildMessages);
             else
-                _messages.AddRange(_buildMessages);
-                
+                this.messages.AddRange(this.buildMessages);
         }
 
         IsSuccessful = exception == null &&
-            (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
+            (this.messages == null || this.messages.All(m => m.Severity != MessageSeverity.Error));
     }
 
     public ProvidedTarget(ITargetDescription description, ITarget result)
@@ -101,22 +92,19 @@ public class ProvidedTarget : ITargetDescription, ITarget
 
     #region Implementation of ITargetDescription
 
-    public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
+    public IReadOnlyCollection<ModuleName> Dependencies => dependencies;
 
-    [NotNull]
     public Module Module { get; }
 
-    [CanBeNull]
-    public IReadOnlyCollection<IResourceDescriptor> Resources => _resources;
+    public IReadOnlyCollection<IResourceDescriptor> Resources => resources ??
+        (IReadOnlyCollection<IResourceDescriptor>)ImmutableArray<IResourceDescriptor>.Empty;
 
-    [CanBeNull]
     public SymbolStore Symbols { get; }
 
     public ModuleName Name => Module.Name;
 
-    public IReadOnlyList<Message> BuildMessages => _buildMessages ?? DefaultModuleTarget.NoMessages;
+    public IReadOnlyList<Message> BuildMessages => buildMessages ?? DefaultModuleTarget.NoMessages;
 
-    [NotNull]
     public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
     {
         var tcs = new TaskCompletionSource<ITarget>();
@@ -127,11 +115,9 @@ public class ProvidedTarget : ITargetDescription, ITarget
 
     #region Implementation of ITarget
 
-    [NotNull]
-    public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>)_messages ?? DefaultModuleTarget.NoMessages;
+    public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>?)messages ?? DefaultModuleTarget.NoMessages;
 
-    [CanBeNull]
-    public Exception Exception { get; }
+    public Exception? Exception { get; }
 
     public bool IsSuccessful { get; }
 
@@ -139,7 +125,7 @@ public class ProvidedTarget : ITargetDescription, ITarget
 
     public override string ToString()
     {
-        return _debuggerDisplay;
+        return debuggerDisplay;
     }
 
     #endregion

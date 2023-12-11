@@ -29,19 +29,13 @@
 
 #region Namespace Imports
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using JetBrains.Annotations;
-using NN = JetBrains.Annotations.NotNullAttribute;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 #endregion
 
@@ -79,7 +73,7 @@ public class CompilerTarget : IHasMetaTable
 
     #region Fields
 
-    MacroSession _macroSession;
+    MacroSession? _macroSession;
     int _macroSessionReferenceCounter;
 
     /// <summary>
@@ -91,7 +85,7 @@ public class CompilerTarget : IHasMetaTable
     {
         _macroSessionReferenceCounter++;
         Debug.Assert(_macroSessionReferenceCounter > 0);
-        return _macroSession ??= new MacroSession(this);
+        return _macroSession ??= new(this);
     }
 
     /// <summary>
@@ -120,7 +114,7 @@ public class CompilerTarget : IHasMetaTable
 
     public PFunction Function { [DebuggerStepThrough] get; }
 
-    public CompilerTarget ParentTarget { [DebuggerStepThrough] get; }
+    public CompilerTarget? ParentTarget { [DebuggerStepThrough] get; }
 
     int _nestedIdCounter;
 
@@ -130,7 +124,7 @@ public class CompilerTarget : IHasMetaTable
 
     [PublicAPI]
     [DebuggerStepThrough]
-    public CompilerTarget(Loader loader, PFunction function, CompilerTarget parentTarget = null, ISourcePosition position = null)
+    public CompilerTarget(Loader loader, PFunction? function, CompilerTarget? parentTarget = null, ISourcePosition? position = null)
     {
         if (loader == null)
             throw new ArgumentNullException(nameof(loader));
@@ -293,7 +287,6 @@ public class CompilerTarget : IHasMetaTable
 
     #region Symbol Lookup / Combined Symbol Proxy
 
-    [NN]
     public SymbolStore Symbols
     {
         [DebuggerStepThrough]
@@ -316,9 +309,8 @@ public class CompilerTarget : IHasMetaTable
 
     public AstBlock Ast { [DebuggerStepThrough] get; }
 
-    CompilerTargetAstFactory _factory;
+    CompilerTargetAstFactory? _factory;
 
-    [NN]
     public IAstFactory Factory
     {
         get
@@ -327,7 +319,7 @@ public class CompilerTarget : IHasMetaTable
             {
                 lock (this)
                 {
-                    _factory ??= new CompilerTargetAstFactory(this);
+                    _factory ??= new(this);
                 }
             }
             return _factory;
@@ -336,7 +328,6 @@ public class CompilerTarget : IHasMetaTable
 
     class CompilerTargetAstFactory : AstFactoryBase
     {
-        [NN]
         readonly CompilerTarget _target;
 
         public CompilerTargetAstFactory(CompilerTarget target)
@@ -401,7 +392,7 @@ public class CompilerTarget : IHasMetaTable
         }
     }
 
-    public AstLoopBlock CurrentLoopBlock
+    public AstLoopBlock? CurrentLoopBlock
     {
         get
         {
@@ -425,7 +416,7 @@ public class CompilerTarget : IHasMetaTable
 
     [PublicAPI]
     [DebuggerStepThrough]
-    public AstScopedBlock BeginBlock(string prefix)
+    public AstScopedBlock BeginBlock(string? prefix)
     {
         var currentBlock = CurrentBlock;
         var bl = new AstScopedBlock(currentBlock.Position, currentBlock, GenerateLocalId(), prefix);
@@ -438,7 +429,7 @@ public class CompilerTarget : IHasMetaTable
     public AstScopedBlock BeginBlock()
     {
         // ReSharper disable once IntroduceOptionalParameters.Global
-        return BeginBlock((string) null);
+        return BeginBlock((string?) null);
     }
 
     [DebuggerStepThrough]
@@ -680,13 +671,13 @@ public class CompilerTarget : IHasMetaTable
     }
 
     [DebuggerStepThrough]
-    public void Emit(ISourcePosition position, OpCode code, string id, ModuleName moduleName)
+    public void Emit(ISourcePosition position, OpCode code, string id, ModuleName? moduleName)
     {
         Emit(position, code, 0, id, moduleName);
     }
 
     [DebuggerStepThrough]
-    public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName moduleName)
+    public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName? moduleName)
     {
         Emit(position, new Instruction(code,arguments,id,moduleName));
     }
@@ -733,10 +724,6 @@ public class CompilerTarget : IHasMetaTable
 
     #endregion
 
-    #region Operators
-
-    #endregion
-
     #region Variables
 
     [DebuggerStepThrough]
@@ -750,14 +737,14 @@ public class CompilerTarget : IHasMetaTable
         Emit(position, Instruction.CreateStoreLocal(id));
     }
 
-    public void EmitLoadGlobal(ISourcePosition position, string id, ModuleName moduleName)
+    public void EmitLoadGlobal(ISourcePosition position, string id, ModuleName? moduleName)
     {
         if (moduleName == Loader.ParentApplication.Module.Name)
             moduleName = null;
         Emit(position, Instruction.CreateLoadGlobal(id, moduleName));
     }
 
-    public void EmitStoreGlobal(ISourcePosition position, string id, ModuleName moduleName)
+    public void EmitStoreGlobal(ISourcePosition position, string id, ModuleName? moduleName)
     {
         if (moduleName == Loader.ParentApplication.Module.Name)
             moduleName = null;
@@ -842,7 +829,7 @@ public class CompilerTarget : IHasMetaTable
     #region Functions/Commands
 
     [DebuggerStepThrough]
-    public void EmitFunctionCall(ISourcePosition position, int args,[NN] string id, [CanBeNull] ModuleName moduleName, bool justEffect = false)
+    public void EmitFunctionCall(ISourcePosition position, int args,string id, ModuleName? moduleName, bool justEffect = false)
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
@@ -976,7 +963,6 @@ public class CompilerTarget : IHasMetaTable
     /// This means that imported symbols shadow the surrounding context but 
     /// any local definitions (even when provided by the compiler) precede imported symbols.
     /// </remarks>
-    [JetBrains.Annotations.NotNull]
     public SymbolStore ImportScope { get; }
 
     public void EmitJump(ISourcePosition position, string label)
@@ -1422,7 +1408,7 @@ public class CompilerTarget : IHasMetaTable
              */
             if (condJ.IsConditionalJump)
             {
-                code[i] = new Instruction(Instruction.InvertJumpCondition(condJ.OpCode), uncondJ.Arguments, uncondJ.Id);
+                code[i] = new(Instruction.InvertJumpCondition(condJ.OpCode), uncondJ.Arguments, uncondJ.Id);
                 RemoveInstructionAt(i + 1);
             }
             else
@@ -1451,13 +1437,13 @@ public class CompilerTarget : IHasMetaTable
         private void _byIndex()
         {
             //Exclude the initialization function from this optimization
-            // as its self table keeps changing as more code files
-            // are loaded into the VM.
+            // as its table keeps changing as more code files are loaded into the VM.
             if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
                 return;
 
             var code = Function.Code;
 
+            Function.Declaration.CreateLocalVariableMapping();
             var map = Function.LocalVariableMapping;
             if (map == null)
                 throw new PrexoniteException("Local variable mapping of function " + Function.Id +
@@ -1495,7 +1481,7 @@ public class CompilerTarget : IHasMetaTable
                         code[i] = new Instruction(nopc, idx);
                         break;
                     case OpCode.indloc:
-                        if (!map.TryGetValue(ins.Id, out idx))
+                        if (!map.TryGetValue(ins.Id!, out idx))
                             continue;
                         var argc = ins.Arguments;
                         code[i] = Instruction.CreateIndLocI(idx, argc, ins.JustEffect);
@@ -1515,7 +1501,7 @@ public class CompilerTarget : IHasMetaTable
         return GenerateLocalId("");
     }
 
-    public string GenerateLocalId(string prefix)
+    public string GenerateLocalId(string? prefix)
     {
         prefix ??= "";
         return
@@ -1523,7 +1509,7 @@ public class CompilerTarget : IHasMetaTable
             _nestedIdCounter++;
     }
 
-    public ModuleName ToInternalModule(ModuleName moduleName)
+    public ModuleName? ToInternalModule(ModuleName moduleName)
     {
         return moduleName == Function.ParentApplication.Module.Name ? null : moduleName;
     }

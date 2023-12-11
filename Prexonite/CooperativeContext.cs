@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -52,7 +50,7 @@ public class CooperativeContext : StackContext, IDisposable
         ImportedNamespaces = sctx.ImportedNamespaces;
     }
 
-    IEnumerator<bool> _method
+    IEnumerator<bool> method
     {
         [DebuggerStepThrough]
         get
@@ -61,19 +59,23 @@ public class CooperativeContext : StackContext, IDisposable
             {
                 return _existingMethod;
             }
-            else
+            else if (_methodCtor != null)
             {
                 _existingMethod = _methodCtor(v => _returnValue = v).GetEnumerator();
                 _methodCtor = null;
                 return _existingMethod;
             }
+            else
+            {
+                throw new PrexoniteException("Can only execute the method once.");
+            }
         }
     }
 
-    Func<Action<PValue>, IEnumerable<bool>> _methodCtor;
-    IEnumerator<bool> _existingMethod;
+    Func<Action<PValue>, IEnumerable<bool>>? _methodCtor;
+    IEnumerator<bool>? _existingMethod;
 
-    PValue _returnValue;
+    PValue? _returnValue;
 
     /// <summary>
     ///     Represents the engine this context is part of.
@@ -91,9 +93,9 @@ public class CooperativeContext : StackContext, IDisposable
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected override bool PerformNextCycle(StackContext lastContext)
+    protected override bool PerformNextCycle(StackContext? lastContext)
     {
-        return _method.MoveNext() && _method.Current;
+        return method.MoveNext() && method.Current;
     }
 
     /// <summary>
@@ -109,7 +111,7 @@ public class CooperativeContext : StackContext, IDisposable
             return false;
     }
 
-    public Func<Exception, bool> ExceptionHandler { get; set; }
+    public Func<Exception, bool>? ExceptionHandler { get; set; }
 
     /// <summary>
     ///     Represents the return value of the context.
@@ -120,7 +122,7 @@ public class CooperativeContext : StackContext, IDisposable
 
     #region IDisposable
 
-    bool _disposed;
+    bool disposed;
 
     public void Dispose()
     {
@@ -130,14 +132,14 @@ public class CooperativeContext : StackContext, IDisposable
 
     void _dispose(bool disposing)
     {
-        if (!_disposed)
+        if (!disposed)
         {
             if (disposing)
             {
                 _existingMethod?.Dispose();
             }
         }
-        _disposed = true;
+        disposed = true;
     }
 
     ~CooperativeContext()

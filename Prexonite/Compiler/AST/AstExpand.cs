@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Macro;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -52,7 +51,7 @@ public class AstExpand : AstGetSetImplBase, IAstPartiallyApplicable
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
         //instantiate macro for the current target
-        MacroSession session = null;
+        MacroSession? session = null;
 
         try
         {
@@ -79,7 +78,7 @@ public class AstExpand : AstGetSetImplBase, IAstPartiallyApplicable
         DoEmitCode(target, StackSemantics.Value);
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         //Do not optimize the macros arguments! They should be passed to the macro in their original form.
         //  the macro should decide whether or not to apply AST-optimization to the arguments or not.

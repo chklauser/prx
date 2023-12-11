@@ -35,11 +35,10 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Types;
-using PrexoniteTests.Tests;
 
-namespace Prx.Tests;
+namespace PrexoniteTests.Tests;
 
-public abstract partial class VMTests : VMTestsBase
+public abstract partial class VMTests
 {
     [Test]
     public void UnusedTry()
@@ -176,9 +175,9 @@ function main()
             Assert.AreEqual("3", exc.Message);
         }
 
-        var pxs = target.Variables["xs"].Value;
+        var pxs = target.Variables["xs"]!.Value;
         Assert.IsInstanceOf(typeof (ListPType), pxs.Type, "xs must be a ~List.");
-        var xs = (List<PValue>) pxs.Value;
+        var xs = (List<PValue>) pxs.Value!;
         Assert.AreEqual("0", xs[0].CallToString(sctx));
         Assert.AreEqual("1", xs[1].CallToString(sctx));
         Assert.AreEqual("2", xs[2].CallToString(sctx));
@@ -524,7 +523,7 @@ function main(cond, xs)
         if (CompileToCil)
         {
             var main = target.Functions["main"];
-            Assert.IsFalse(main.Meta[PFunction.VolatileKey], "main must not be volatile.");
+            Assert.IsFalse(main!.Meta[PFunction.VolatileKey], "main must not be volatile.");
             Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey),
                 "main must not have a deficiency");
             Assert.IsTrue(main.HasCilImplementation, "main must have CIL implementation.");
@@ -559,14 +558,14 @@ function main()
         if (CompileToCil)
         {
             var nullContext = new NullContext(engine, target, new List<string>());
-            Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
-            func.CilImplementation(
+            Assert.IsTrue(func!.HasCilImplementation, "main must have CIL implementation.");
+            func.CilImplementation!(
                 func, nullContext, emptyArgV, emptyEnvironment, out var value, out var returnMode);
             Assert.AreEqual(value.Type, PType.Null);
             Assert.AreEqual(returnMode, ReturnMode.Continue);
         }
 
-        var fctx = func.CreateFunctionContext(engine, emptyArgV, emptyEnvironment);
+        var fctx = func!.CreateFunctionContext(engine, emptyArgV, emptyEnvironment);
         engine.Process(fctx);
         Assert.AreEqual(fctx.ReturnValue.Type, PType.Null);
         Assert.AreEqual(fctx.ReturnMode, ReturnMode.Continue);
@@ -597,7 +596,7 @@ after:
 
         if (CompileToCil)
         {
-            Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
+            Assert.IsTrue(func!.HasCilImplementation, "main must have CIL implementation.");
         }
 
         ExpectNull(Array.Empty<PValue>());
@@ -626,7 +625,7 @@ function main(x)
 }
 ");
 
-        var mainTable = target.Functions["main"].Meta;
+        var mainTable = target.Functions["main"]!.Meta;
 
         if (CompileToCil)
         {
@@ -659,7 +658,7 @@ function main()
 ");
 
         ExpectNull();
-        Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"].Value).Value,
+        Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"]!.Value).Value!,
             "trace does not match");
     }
 
@@ -679,7 +678,7 @@ function main(x)
 }");
 
         ExpectNull();
-        Assert.IsTrue((bool) target.Variables["t"].Value.Equality(sctx, "tf").Value,
+        Assert.IsTrue((bool) target.Variables["t"]!.Value.Equality(sctx, "tf").Value!,
             "Unexpected trace");
     }
 
@@ -729,7 +728,7 @@ endfinally3:
         if (CompileToCil)
         {
             Assert.IsNotNull(target.Functions["main"], "function main must exist.");
-            Assert.IsFalse(target.Functions["main"].Meta[PFunction.VolatileKey].Switch,
+            Assert.IsFalse(target.Functions["main"]!.Meta[PFunction.VolatileKey].Switch,
                 "should compile to cil successfully");
         }
         Expect("t1e1t2e2t3e3", true, false);

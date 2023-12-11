@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Linq;
 using NUnit.Framework;
@@ -201,8 +202,8 @@ public class ApplicationLinking
     [Test]
     public void DryCrossModuleCall()
     {
-        var m1 = Module.Create(new ModuleName("dragon", new Version(1, 2)));
-        var m2 = Module.Create(new ModuleName("std", new Version(1, 3, 1)));
+        var m1 = Module.Create(new("dragon", new(1, 2)));
+        var m2 = Module.Create(new("std", new(1, 3, 1)));
 
         var a1 = new Application(m1);
         var a2 = new Application(m2);
@@ -211,12 +212,12 @@ public class ApplicationLinking
 
         var f2 = a2.CreateFunction("sayHello");
 
-        f1.Code.Add(new Instruction(OpCode.func, 0, f2.Id, m2.Name));
-        f1.Code.Add(new Instruction(OpCode.ret_value));
+        f1.Code.Add(new(OpCode.func, 0, f2.Id, m2.Name));
+        f1.Code.Add(new(OpCode.ret_value));
 
         const string helloModules = "Hello Modules";
-        f2.Code.Add(new Instruction(OpCode.ldc_string,helloModules));
-        f2.Code.Add(new Instruction(OpCode.ret_value));
+        f2.Code.Add(new(OpCode.ldc_string,helloModules));
+        f2.Code.Add(new(OpCode.ret_value));
 
         TestContext.WriteLine("=========== Module {0} ==========", m1.Name);
         a1.Store(TestContext.Out);
@@ -253,7 +254,7 @@ public class ApplicationLinking
         var sctx = new NullContext(eng, app, Enumerable.Empty<string>());
         var rawMn = cmd.Run(sctx, new[] {sctx.CreateNativePValue(new MetaEntry(new MetaEntry[]{"sys","1.0"}))});
         Assert.That(rawMn.Value,Is.InstanceOf<ModuleName>());
-        var mn = (ModuleName) rawMn.Value;
+        var mn = (ModuleName) rawMn.Value!;
         Assert.That(mn.Id,Is.EqualTo("sys"));
         Assert.That(mn.Version,Is.EqualTo(new Version(1,0)));
     }

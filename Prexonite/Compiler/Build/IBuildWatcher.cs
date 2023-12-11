@@ -1,4 +1,5 @@
-﻿// Prexonite
+﻿
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -25,7 +26,4 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Prexonite.Compiler.Build;
 
-public interface IBuildWatcher
-{
-         
-}
+public interface IBuildWatcher;

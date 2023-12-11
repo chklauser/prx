@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler;
 
 namespace Prexonite.Commands.Core;
@@ -38,7 +38,7 @@ public class Debug : PCommand
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         args ??= Array.Empty<PValue>();
-        if (!(sctx is FunctionContext fctx))
+        if (sctx is not FunctionContext fctx)
             return false;
         var debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);
         var println = sctx.ParentEngine.Commands[Engine.PrintLineAlias];

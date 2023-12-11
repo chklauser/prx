@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
-using System.Linq;
+
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
@@ -134,7 +133,7 @@ public class CallStar : PartialMacroCommand
         return _isPartialList(expr, out _);
     }
 
-    static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
+    static bool _isPartialList(AstExpr expr, [NotNullWhen(true)] out AstListLiteral? lit)
     {
         lit = expr as AstListLiteral;
         return lit != null && lit.CheckForPlaceholders();
@@ -173,12 +172,12 @@ public class CallStar : PartialMacroCommand
         var passThroughNode = arg0 as AstConstant;
         if (passThroughNode?.Constant is int constant)
         {
-            arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
+            arguments = new(context.Invocation.Arguments.Skip(1));
             passThrough = constant;
         }
         else
         {
-            arguments = new List<AstExpr>(context.Invocation.Arguments);
+            arguments = new(context.Invocation.Arguments);
             passThrough = 1;
         }
 

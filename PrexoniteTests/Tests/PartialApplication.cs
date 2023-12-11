@@ -23,9 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core.PartialApplication;
@@ -37,24 +40,23 @@ public abstract class PartialApplication : VMTestsBase
 {
     #region Mock implementation of partial application
 
-    public class PartialApplicationMock : PartialApplicationBase
+    public class PartialApplicationMock(
+        int[] mappings,
+        PValue[] closedArguments,
+        int theNonArgumentPrefix
+    )
+        : PartialApplicationBase(mappings, closedArguments, theNonArgumentPrefix)
     {
-        public PartialApplicationMock(int[] mappings, PValue[] closedArguments,
-            int theNonArgumentPrefox)
-            : base(mappings, closedArguments, theNonArgumentPrefox)
-        {
-        }
-
         #region Overrides of PartialApplicationBase
 
         protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
             PValue[] arguments)
         {
             var temp = InvokeImpl;
-            return temp?.Invoke(sctx, nonArguments, arguments);
+            return temp?.Invoke(sctx, nonArguments, arguments) ?? PType.Null;
         }
 
-        public Func<StackContext, PValue[], PValue[], PValue> InvokeImpl { get; set; }
+        public Func<StackContext, PValue[], PValue[], PValue>? InvokeImpl { get; set; }
 
         #endregion
     }
@@ -81,20 +83,11 @@ public abstract class PartialApplication : VMTestsBase
 
     public class PartialApplicationImplMock : IIndirectCall
     {
-        public PartialApplicationImplMock()
-        {
-        }
-
-        public PartialApplicationImplMock(int[] mappings, PValue[] closedArguments)
-        {
-            Mappings = mappings;
-            ClosedArguments = closedArguments;
-        }
-
-
-        public int[] Mappings { get; set; }
-        public PValue[] ClosedArguments { get; set; }
-        public Func<int[], PValue[], StackContext, PValue[], PValue> IndirectCallImpl { get; set; }
+        public required int[] Mappings { get; init; }
+        public required PValue[] ClosedArguments { get; init; }
+        
+        [PublicAPI]
+        public Func<int[], PValue[], StackContext, PValue[], PValue>? IndirectCallImpl { get; set; }
 
         #region Implementation of IIndirectCall
 
@@ -293,7 +286,7 @@ public abstract class PartialApplication : VMTestsBase
     {
         const int nonArgc = 2;
         var closedArguments = Array.Empty<PValue>();
-        var mappings = new int[] {};
+        var mappings = Array.Empty<int>();
         var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
         Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
@@ -333,7 +326,7 @@ public abstract class PartialApplication : VMTestsBase
     {
         var mappings = new[]
         {
-            1, -8, 2, -13, 3, -5, 4, 5
+            1, -8, 2, -13, 3, -5, 4, 5,
         };
 
         var packed = PartialApplicationCommandBase.PackMappings32(mappings);
@@ -351,7 +344,7 @@ public abstract class PartialApplication : VMTestsBase
         Assert.IsNotNull(mockP.Value);
         Assert.IsAssignableFrom(typeof (PartialApplicationImplMock), mockP.Value);
 
-        var mock = (PartialApplicationImplMock) mockP.Value;
+        var mock = (PartialApplicationImplMock) mockP.Value!;
 
         Assert.IsNotNull(mock.Mappings, "Mappings must no be null");
         Assert.AreEqual(mappings.Length, mock.Mappings.Length, "Mappings lengths don't match");
@@ -687,7 +680,7 @@ function main(x,y,z)
 }
 ");
 
-        Expect(new DateTime(2010, 10, 10), "DateTime", 2010, 10);
+        Expect(new DateTime(2010, 10, 10), nameof(DateTime), 2010, 10);
     }
 
     [Test]
@@ -747,7 +740,7 @@ function main(x,y,z)
     return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
 }
 ");
-        Expect("T_T", "I'm", 'a', "String");
+        Expect("T_T", "I'm", 'a', nameof(String));
     }
 
     [Test]
@@ -762,7 +755,7 @@ function main(x,y,z)
     return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
 }
 ");
-        Expect("_T_", "I'm", 'a', "String");
+        Expect("_T_", "I'm", 'a', nameof(String));
     }
 
     [Test]
@@ -836,14 +829,13 @@ function main(a,c,d)
         >> foldl(""$(?)|$(?)"","""");
 }
 ");
-        var paCtors = (from ins in target.Functions["main"].Code
-            where
-                ins.OpCode == OpCode.cmd
-            let id = ins.Id
-            where
-                id == FunctionalPartialCallCommand.Alias ||
-                id == Engine.PartialCallAlias
-            select id).Distinct();
+        var paCtors = target.Functions["main"]!
+            .Code.Where(ins => ins.OpCode == OpCode.cmd)
+            .Select(ins => new { ins, id = ins.Id })
+            .Where(t => t.id is FunctionalPartialCallCommand.Alias or Engine.PartialCallAlias)
+            .Select(t => t.id)
+            .Distinct()
+            .ToImmutableArray();
 
         Assert.AreEqual(0, paCtors.Count(),
             "Should not use the following partial application constructors: " +

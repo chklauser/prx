@@ -23,18 +23,18 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
 
 namespace Prexonite.Compiler;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 class Token
 {
     internal int kind;
-    internal string val;
+    internal string val = string.Empty;
     internal int pos;
     internal int line;
     internal int col;
-    internal Token next;
+    internal Token? next;
 
     public Token()
     {

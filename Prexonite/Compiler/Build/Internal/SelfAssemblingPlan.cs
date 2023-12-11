@@ -23,21 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
-
-#nullable enable
 
 namespace Prexonite.Compiler.Build.Internal;
 
@@ -78,13 +71,13 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     [PublicAPI]
     public async Task<ITargetDescription> ResolveAndAssembleAsync(string refSpec, CancellationToken token)
     {
-        var resolvedRefSpec = await _resolveRefSpec(_parseRefSpec(new MetaEntry(refSpec)), token, SelfAssemblyMode.RecurseIntoFileSystem);
+        var resolvedRefSpec = await _resolveRefSpec(_parseRefSpec(new(refSpec)), token, SelfAssemblyMode.RecurseIntoFileSystem);
         if (resolvedRefSpec.ErrorMessage != null)
         {
             return _wrapErrorInTargetDescription(resolvedRefSpec.ErrorMessage, resolvedRefSpec.ModuleName);
         }
 
-        return TargetDescriptions[resolvedRefSpec!.ModuleName];
+        return TargetDescriptions[resolvedRefSpec.ModuleName!];
     }
 
     /// <summary>
@@ -145,7 +138,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     enum SelfAssemblyMode
     {
         RecurseIntoFileSystem = 0,
-        RegisterOnly
+        RegisterOnly,
     }
 
     readonly HashSet<ModuleName> _standardLibrary = new();
@@ -173,7 +166,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         // ensures result != null
     {
         if (refSpec.ErrorMessage != null)
-            return new PreflightResult { ErrorMessage = refSpec.ErrorMessage };
+            return new() { ErrorMessage = refSpec.ErrorMessage };
 
         token.ThrowIfCancellationRequested();
         _trace.TraceEvent(TraceEventType.Information, 0, "Preflight parsing of {0} requested.", refSpec);
@@ -192,7 +185,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         var eng = _createPreflightEngine();
         var app = new Application();
         var ldr =
-            new Loader(new LoaderOptions(eng, app)
+            new Loader(new(eng, app)
             {
                 // Important: Have preflight flag set
                 PreflightModeEnabled = true,
@@ -206,7 +199,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             var errorResult = new PreflightResult
             {
                 ErrorMessage =
-                    "Failed to open " + refSpec + " for preflight parsing."
+                    "Failed to open " + refSpec + " for preflight parsing.",
             };
             return errorResult;
         }
@@ -221,7 +214,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             ModuleName = theModuleName,
             SuppressStandardLibrary =
                 app.Meta.TryGetValue(Module.NoStandardLibraryKey, out var noStdLibEntry) && noStdLibEntry.Switch,
-            Path = reportedPath
+            Path = reportedPath,
         };
 
         result.References.AddRange(
@@ -238,7 +231,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         {
             // We cannot modify a shared engine from the pool, but we can clone one (cloning is far cheaper than
             // instantiating a new one).
-            return new Engine(compilationEngine) {ExecutionProhibited = true};
+            return new(compilationEngine) {ExecutionProhibited = true};
         }
         finally
         {
@@ -259,20 +252,19 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         if (entry.IsText && _fileReferencePattern.IsMatch(text = entry.Text))
         {
             // This is a file path reference specification
-            return new RefSpec { RawPath = text };
+            return new() { RawPath = text };
         }
         else if (ModuleName.TryParse(entry, out var moduleName))
         {
             // This is a module name reference specification
-            return new RefSpec { ModuleName = moduleName };
+            return new() { ModuleName = moduleName };
         }
         else
         {
             // This is an invalid reference specification
-            return new RefSpec
-            {
+            return new() {
                 RawPath = text ?? entry.Text,
-                ErrorMessage = "The reference specification is neither a path nor a module name."
+                ErrorMessage = "The reference specification is neither a path nor a module name.",
             };
         }
     }
@@ -341,7 +333,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             candidateSequence?.Dispose();
         }
 
-        Debug.Assert(!refSpec.IsValid || TargetDescriptions.Contains(refSpec.ModuleName));
+        Debug.Assert(!refSpec.IsValid || TargetDescriptions.Contains(refSpec.ModuleName!));
         return refSpec;
     }
 
@@ -384,13 +376,11 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
             s =>
             {
                 Debug.Assert(!s.IsValid);
-                // ReSharper disable PossibleNullReferenceException,AssignNullToNotNullAttribute
                 var refPosition = new SourcePosition(
                     s.ResolvedPath != null ? s.ResolvedPath.ToString() 
                     : result.Path != null    ? result.Path.ToString() 
                     : NoSourcePosition.MissingFileName, 0, 0);
                 return Message.Error(s.ErrorMessage, refPosition, MessageClasses.SelfAssembly);
-                // ReSharper restore PossibleNullReferenceException,AssignNullToNotNullAttribute
             });
 
         // Assemble dependencies, including standard library (unless suppressed)
@@ -409,7 +399,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         // not be detected until full preflight is done.
         // This GetOrAdd is our last line of defense against that scenario and race conditions
         // around targets in general (e.g., when symbolic links or duplicate files are involved)
-        return TargetDescriptions.GetOrAdd(result.ModuleName,
+        return TargetDescriptions.GetOrAdd(result.ModuleName ?? throw new PrexoniteException($"pre-flight of {reportedFileName} did not result in module name."),
             mn => CreateDescription(mn, source, reportedFileName, deps, buildMessages));
     }
 
@@ -466,8 +456,8 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
                 if (1 <= dotIndex && dotIndex <= splitPrefix.Length - 2)
                 {
                     splitPrefix = Path.Combine(
-                        splitPrefix.Substring(0, dotIndex),
-                        splitPrefix.Substring(dotIndex + 1));
+                        splitPrefix[..dotIndex],
+                        splitPrefix[(dotIndex + 1)..]);
                 }
                 else
                 {
@@ -488,7 +478,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         FileInfo? candidate;
         try
         {
-            candidate = new FileInfo(path);
+            candidate = new(path);
             // Note: We DON'T check existence of this candidate here
             // Instead we will order a Preflight of this path, which
             // will neatly cache the information whether the file exists in the first place
@@ -581,6 +571,7 @@ class RefSpec
 
     public volatile string? ErrorMessage;
 
+    [MemberNotNullWhen(false, nameof(ErrorMessage))]
     public bool IsValid => ErrorMessage == null;
 
     public override string ToString()

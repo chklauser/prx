@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Diagnostics.CodeAnalysis;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -120,7 +118,7 @@ public class CompileToCil : PCommand, ICilCompilerAware
                     goto case 0;
                 if (arg0.Type == PType.Bool)
                 {
-                    if ((bool) arg0.Value)
+                    if ((bool) arg0.Value!)
                         linking = FunctionLinking.FullyStatic;
                     else
                         linking = FunctionLinking.FullyIsolated;
@@ -128,7 +126,7 @@ public class CompileToCil : PCommand, ICilCompilerAware
                 }
                 else if (arg0.Type == typeof (FunctionLinking))
                 {
-                    linking = (FunctionLinking) arg0.Value;
+                    linking = (FunctionLinking) arg0.Value!;
                     goto case 0;
                 }
                 else

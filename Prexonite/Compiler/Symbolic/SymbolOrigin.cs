@@ -24,10 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
 using System.Diagnostics;
-using System.Linq;
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic;
@@ -59,10 +56,9 @@ public abstract class SymbolOrigin
                 x is MergedScope mergedScope ? mergedScope._origins : x.Singleton()).ToArray());
         }
 
-        [NotNull]
         readonly SymbolOrigin[] _origins;
 
-        MergedScope([NotNull] SymbolOrigin[] origins)
+        MergedScope(SymbolOrigin[] origins)
         {
             if (origins == null)
                 throw new ArgumentNullException(nameof(origins));
@@ -87,7 +83,7 @@ public abstract class SymbolOrigin
     {
         readonly QualifiedId _namespaceId;
 
-        public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
+        public NamespaceImport(QualifiedId namespaceId, ISourcePosition position)
         {
             _namespaceId = namespaceId;
             Position = position ?? throw new ArgumentNullException(nameof(position));
@@ -95,7 +91,6 @@ public abstract class SymbolOrigin
 
         public override string Description => $"import from namespace {NamespaceId}";
 
-        [NotNull]
         public override ISourcePosition Position { get; }
 
         public QualifiedId NamespaceId => _namespaceId;
@@ -105,7 +100,7 @@ public abstract class SymbolOrigin
             return _namespaceId.Equals(other._namespaceId);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -121,7 +116,7 @@ public abstract class SymbolOrigin
     public sealed class ModuleTopLevel : SymbolOrigin
     {
         [DebuggerStepThrough]
-        public ModuleTopLevel([NotNull] ModuleName moduleName, [NotNull] ISourcePosition position)
+        public ModuleTopLevel(ModuleName moduleName, ISourcePosition position)
         {
             if (moduleName == null)
                 throw new ArgumentNullException(nameof(moduleName));
@@ -131,13 +126,10 @@ public abstract class SymbolOrigin
             Description = $"top-level declaration in module {moduleName}";
         }
 
-        [NotNull]
         public ModuleName ModuleName { [DebuggerStepThrough] get; }
 
-        [NotNull]
         public override ISourcePosition Position { get; }
 
-        [NotNull]
         public override string Description { [DebuggerStepThrough] get; }
 
         public override string ToString()
@@ -150,7 +142,7 @@ public abstract class SymbolOrigin
             return Equals(ModuleName, other.ModuleName);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -169,7 +161,7 @@ public abstract class SymbolOrigin
     {
         public QualifiedId NamespacePath { get; }
 
-        public NamespaceDeclarationScope([NotNull] ISourcePosition position, QualifiedId namespacePath)
+        public NamespaceDeclarationScope(ISourcePosition position, QualifiedId namespacePath)
         {
             Position = position ?? throw new ArgumentNullException(nameof(position));
             NamespacePath = namespacePath;
@@ -177,7 +169,6 @@ public abstract class SymbolOrigin
 
         public override string Description => $"private declaration in namespace {NamespacePath}.";
 
-        [NotNull]
         public override ISourcePosition Position { get; }
     }
 }

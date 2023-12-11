@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Lazy;
 
@@ -69,7 +68,7 @@ public class ForceCommand : PCommand, ICilCompilerAware
     {
         var result = arg.Value is Thunk t ? t.Force(sctx) : arg;
 
-        Debug.Assert(!(result.Value is Thunk), "Force wanted to return an unevaluated thunk.");
+        Debug.Assert(result.Value is not Thunk, "Force wanted to return an unevaluated thunk.");
 
         return result;
     }

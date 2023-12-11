@@ -43,7 +43,7 @@ public class EmbeddedPrxLibTests
     static void _checkEmbeddedResource(string name)
     {
         Assert.True(Source.FromEmbeddedPrexoniteResource(name).TryOpen(out var reader), $"Cannot open {name}");
-        var contents = reader.ReadToEnd();
+        var contents = reader!.ReadToEnd();
         Assert.That(contents, Is.Not.Null);
         Assert.That(contents.Length, Is.GreaterThan(100));
     }

@@ -23,11 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
@@ -35,7 +33,6 @@ namespace Prexonite.Compiler.Build;
 public sealed class TargetDescriptionSet 
     : ICollection<ITargetDescription>
 {
-    [NotNull]
     readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new();
 
     TargetDescriptionSet()
@@ -47,7 +44,7 @@ public sealed class TargetDescriptionSet
         return new();
     }
 
-    public bool TryGetValue(ModuleName name, out ITargetDescription description)
+    public bool TryGetValue(ModuleName name, out ITargetDescription? description)
     {
         if ((object) name == null)
             throw new ArgumentNullException(nameof(name));
@@ -106,7 +103,7 @@ public sealed class TargetDescriptionSet
 
     #region Implementation of ICollection<ITargetDescription>
 
-    public void Add(ITargetDescription item)
+    public void Add(ITargetDescription? item)
     {
         if(item == null)
             throw new ArgumentNullException(nameof(item));
@@ -119,7 +116,7 @@ public sealed class TargetDescriptionSet
         _table.Clear();
     }
 
-    public bool Contains(ITargetDescription item)
+    public bool Contains(ITargetDescription? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -131,7 +128,7 @@ public sealed class TargetDescriptionSet
         _table.Values.CopyTo(array, arrayIndex);
     }
 
-    public bool Remove(ITargetDescription item)
+    public bool Remove(ITargetDescription? item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));

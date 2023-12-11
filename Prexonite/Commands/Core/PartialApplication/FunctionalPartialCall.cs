@@ -23,29 +23,19 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
-public class FunctionalPartialCall : IMaybeStackAware
+public class FunctionalPartialCall(PValue subject, PValue[] arguments) : IMaybeStackAware
 {
-    readonly PValue _subject;
-    readonly PValue[] _closedArguments;
-
-    public FunctionalPartialCall(PValue subject, PValue[] closedArguments)
-    {
-        _subject = subject;
-        _closedArguments = closedArguments;
-    }
-
     public PValue IndirectCall(StackContext sctx, PValue[] args)
     {
-        return _subject.IndirectCall(sctx, _getEffectiveArgs(args));
+        return subject.IndirectCall(sctx, _getEffectiveArgs(args));
     }
 
     public bool TryDefer(StackContext sctx, PValue[] args,
-        out StackContext partialApplicationContext, out PValue result)
+        [NotNullWhen(true)] out StackContext? partialApplicationContext,
+        [NotNullWhen(false)] out PValue? result)
     {
         var effectiveArgs = _getEffectiveArgs(args);
 
@@ -53,9 +43,9 @@ public class FunctionalPartialCall : IMaybeStackAware
         result = null;
 
         //The following code exists in a very similar form in PartialCall.cs, FlippedFunctionalPartialCall.cs
-        if (_subject.Type is ObjectPType)
+        if (subject.Type is ObjectPType)
         {
-            var raw = _subject.Value;
+            var raw = subject.Value;
             if (raw is IStackAware stackAware)
             {
                 partialApplicationContext = stackAware.CreateStackContext(sctx, effectiveArgs);
@@ -68,15 +58,15 @@ public class FunctionalPartialCall : IMaybeStackAware
                     out result);
         }
 
-        result = _subject.IndirectCall(sctx, effectiveArgs);
+        result = subject.IndirectCall(sctx, effectiveArgs);
         return false;
     }
 
     PValue[] _getEffectiveArgs(PValue[] args)
     {
-        var effectiveArgs = new PValue[args.Length + _closedArguments.Length];
-        Array.Copy(_closedArguments, effectiveArgs, _closedArguments.Length);
-        Array.Copy(args, 0, effectiveArgs, _closedArguments.Length, args.Length);
+        var effectiveArgs = new PValue[args.Length + arguments.Length];
+        Array.Copy(arguments, effectiveArgs, arguments.Length);
+        Array.Copy(args, 0, effectiveArgs, arguments.Length, args.Length);
         return effectiveArgs;
     }
 }

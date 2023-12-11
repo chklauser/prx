@@ -14,5 +14,5 @@ public interface IMessageSink
     /// <para>Messages should always have a message class. Especially warnings and infos (that way, the user can filter undesired warnings/infos)</para>
     /// </remarks>
     [PublicAPI]
-    void ReportMessage([NotNull] Message message);
+    void ReportMessage(Message message);
 }

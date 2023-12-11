@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
@@ -54,7 +54,7 @@ public class AstUnaryOperator : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         var operand = Operand;
@@ -62,7 +62,7 @@ public class AstUnaryOperator : AstExpr,
         if (operand is AstConstant constOperand) 
         {
             var valueOperand = constOperand.ToPValue(target);
-            PValue result;
+            PValue? result;
             switch (Operator)
             {
                 case UnaryOperator.UnaryNegation:
@@ -146,7 +146,7 @@ public class AstUnaryOperator : AstExpr,
             
         var symbolCall = Operand as AstIndirectCall;
         var symbol = symbolCall?.Subject as AstReference;
-        EntityRef.Variable variableRef = null;
+        EntityRef.Variable? variableRef = null;
         var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
         var isPre = Operator == UnaryOperator.PreDecrement || Operator == UnaryOperator.PreIncrement;
         switch (Operator)
@@ -287,5 +287,5 @@ public enum UnaryOperator
     PreDeltaLeft,
     PostDeltaLeft,
     PreDeltaRight,
-    PostDeltaRight
+    PostDeltaRight,
 }

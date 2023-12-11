@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -74,13 +73,11 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
     public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs,
         bool useIndirectCallAsFallback)
     {
-        IStackAware f;
-        IMaybeStackAware m;
-        CilClosure cilClosure;
-        PFunction func = null;
-        PVariable[] sharedVars = null;
+        CilClosure? cilClosure;
+        PFunction? func = null;
+        PVariable[]? sharedVars = null;
 
-        PValue result;
+        PValue? result;
         ReturnMode returnMode;
 
         if ((cilClosure = fpv.Value as CilClosure) != null)
@@ -89,13 +86,13 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
             sharedVars = cilClosure.SharedVariables;
         }
 
-        if ((func ??= fpv.Value as PFunction) != null && func.HasCilImplementation)
+        if ((func ?? fpv.Value as PFunction) is { CilImplementation: { } cilImpl} pFunc)
         {
-            func.CilImplementation.Invoke(
-                func, CilFunctionContext.New(sctx, func), iargs, sharedVars ?? Array.Empty<PVariable>(),
+            cilImpl.Invoke(
+                pFunc, CilFunctionContext.New(sctx, pFunc), iargs, sharedVars ?? Array.Empty<PVariable>(),
                 out result, out returnMode);
         }
-        else if ((f = fpv.Value as IStackAware) != null)
+        else if (fpv.Value is IStackAware f)
         {
             //Create stack context, let the engine execute it
             var subCtx = f.CreateStackContext(sctx, iargs);
@@ -103,7 +100,7 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
             result = subCtx.ReturnValue;
             returnMode = subCtx.ReturnMode;
         }
-        else if ((m = fpv.Value as IMaybeStackAware) != null)
+        else if (fpv.Value is IMaybeStackAware m)
         {
             if (m.TryDefer(sctx, iargs, out var subCtx, out result))
             {

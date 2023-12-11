@@ -23,11 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
+
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
@@ -37,32 +33,25 @@ public interface IPlan
     /// <summary>
     /// Set of build watchers that will get access to events raised during building.
     /// </summary>
-    [NotNull]
     ISet<IBuildWatcher> BuildWatchers
     {
         get;
     }
 
-    [NotNull]
     TargetDescriptionSet TargetDescriptions
     {
         get;
     }
 
-    [NotNull]
-    IDictionary<ModuleName,Task<ITarget>> BuildAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
+    IDictionary<ModuleName,Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token);
 
-    [NotNull]
-    Task<ITarget> BuildAsync([NotNull] ModuleName name, CancellationToken token) => 
+    Task<ITarget> BuildAsync(ModuleName name, CancellationToken token) => 
         BuildAsync(name.Singleton(), token)[name];
 
-    [NotNull]
-    Task<(Application Application, ITarget Target)> LoadAsync([NotNull] ModuleName name, CancellationToken token) => 
+    Task<(Application Application, ITarget Target)> LoadAsync(ModuleName name, CancellationToken token) => 
         LoadAsync(name.Singleton(), token)[name];
 
-    [NotNull]
-    IDictionary<ModuleName, Task<(Application Application, ITarget Target)>> LoadAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
+    IDictionary<ModuleName, Task<(Application Application, ITarget Target)>> LoadAsync(IEnumerable<ModuleName> names, CancellationToken token);
 
-    [CanBeNull]
-    LoaderOptions Options { get; set; }
+    LoaderOptions? Options { get; set; }
 }

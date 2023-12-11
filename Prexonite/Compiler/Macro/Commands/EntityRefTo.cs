@@ -23,12 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Linq;
-using JetBrains.Annotations;
+
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands;
 
@@ -63,8 +60,8 @@ public class EntityRefTo : MacroCommand
         }
             
         var prototype = context.Invocation.Arguments[0];
-        EntityRef entityRef;
-        AstExpand expand;
+        EntityRef? entityRef;
+        AstExpand? expand;
         if ((expand = prototype as AstExpand) != null)
         {
             entityRef = expand.Entity;
@@ -124,8 +121,7 @@ public class EntityRefTo : MacroCommand
 
     static readonly Lifter _lifter = new();
 
-    [NotNull]
-    public static AstExpr ToExpr([NotNull] IAstFactory factory, [NotNull] ISourcePosition position, [NotNull] EntityRef entityRef)
+    public static AstExpr ToExpr(IAstFactory factory, ISourcePosition position, EntityRef entityRef)
     {
         if (entityRef == null)
             throw new ArgumentNullException(nameof(entityRef));

@@ -1,16 +1,11 @@
-#nullable enable
 #region Namespace Imports
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
 
@@ -59,7 +54,7 @@ public class  PFunction : IHasMetaTable,
     /// <summary>
     ///     The id used in the source code. (As the nested function)
     /// </summary>
-    public const string LogicalIdKey = "LogicalId";
+    public const string LogicalIdKey = nameof(LogicalId);
 
     /// <summary>
     ///     The name of the functions logical parent.
@@ -318,7 +313,7 @@ public class  PFunction : IHasMetaTable,
             (
                 this,
                 new NullContext(engine, ParentApplication, ImportedNamespaces),
-                args,
+                args ?? [],
                 sharedVariables,
                 out var result, out _);
             return result;

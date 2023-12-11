@@ -3,8 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsTestProject>true</IsTestProject>
-    <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>10</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -23,7 +24,7 @@
 
   <ItemGroup>
     <!-- These files might not exist initially, so we track the by hand. 
-         To make this compatible with the implicit Compile rule, we have to remove the items first, 
+         To make this compatible with the implicit Compile rule, we have to remove the items first,
          otherwise, the tool will complain about duplicate items. -->
     <Compile Remove="Tests\Configurations\PsrUnitTests.cs" />
     <Compile Remove="Tests\Configurations\VMTestConfigurations.cs" />

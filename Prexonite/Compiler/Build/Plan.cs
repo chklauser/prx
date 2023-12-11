@@ -24,13 +24,8 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Prexonite.Compiler.Build.Internal;
-using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
 
@@ -45,7 +40,7 @@ public static class Plan
         Source.FromEmbeddedPrexoniteResource("prxlib.prx.core.pxs"),
         Source.FromEmbeddedPrexoniteResource("prxlib.sys.pxs"),
         Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.pxs"),
-        Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs")
+        Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs"),
     };
 
     public static IPlan CreateDefault()
@@ -69,7 +64,7 @@ public static class Plan
             await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));
 
             // Describe standard library. Dependencies must be satisfied
-            plan.StandardLibrary.Add(new ModuleName("sys", new Version(0, 0)));
+            plan.StandardLibrary.Add(new("sys", new(0, 0)));
         }
         return plan;
     }
@@ -83,5 +78,5 @@ public static class Plan
 public enum StandardLibraryPreference
 {
     Default = 0,
-    None
+    None,
 }

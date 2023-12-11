@@ -23,13 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Lazy;
 
@@ -101,7 +97,7 @@ public class Thunk : IIndirectCall, IObject
         {
             _isActive = true;
             _threadId = threadId;
-            _evaluationDone = new ManualResetEvent(false);
+            _evaluationDone = new(false);
         }
 
         public static BlackHole Active(int threadId)
@@ -140,21 +136,22 @@ public class Thunk : IIndirectCall, IObject
 
     BlackHole _blackHole;
 
-    PValue _expr;
-    PValue[] _parameters;
-    PValue _value;
-    Exception _exception;
+    (PValue Expr, PValue[] Parameters)? impl;
+    
+    PValue? _value;
+    Exception? _exception;
 
     #region Construction
 
     Thunk(PValue expr, PValue[] parameters)
     {
-        _expr = expr ?? throw new ArgumentNullException(nameof(expr));
-        _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+        impl = (expr ?? throw new ArgumentNullException(nameof(expr)),
+            parameters ?? throw new ArgumentNullException(nameof(parameters)));
     }
 
     Thunk(PValue value)
     {
+        impl = null;
         _value = value ?? throw new ArgumentNullException(nameof(value));
     }
 
@@ -180,7 +177,7 @@ public class Thunk : IIndirectCall, IObject
     public bool IsEvaluated => _value != null;
 
     public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         switch (id.ToUpperInvariant())
@@ -224,19 +221,19 @@ public class Thunk : IIndirectCall, IObject
             Debug.Indent();
             //We need to save stack space here, so try to invoke via IStackAware
             //  Since most expressions are closures, this has a high success rate
-            if (_expr.Value is IStackAware stackAware)
+            if (impl is { Expr.Value: IStackAware stackAware, Parameters: { } parameters })
             {
                 //Exception handler defined in creation of cooperative context
-                var exprCtx = stackAware.CreateStackContext(sctx, _parameters);
+                var exprCtx = stackAware.CreateStackContext(sctx, parameters);
                 sctx.ParentEngine.Stack.AddLast(exprCtx);
                 yield return true;
                 _value = exprCtx.ReturnValue;
             }
-            else
+            else if (impl is { Expr: var expr, Parameters: var dynParameters })
             {
                 try
                 {
-                    _value = _expr.IndirectCall(sctx, _parameters);
+                    _value = expr.IndirectCall(sctx, dynParameters);
                 }
                 catch (Exception ex)
                 {
@@ -246,6 +243,10 @@ public class Thunk : IIndirectCall, IObject
                     throw;
                 }
             }
+            else
+            {
+                throw new PrexoniteException("Thunk must have an implementation or a a value.");
+            }
             Debug.Unindent();
 
 
@@ -253,30 +254,27 @@ public class Thunk : IIndirectCall, IObject
             {
                 //Assimilate nested thunk
                 _blackHole = t._blackHole;
-                _expr = t._expr;
-                _parameters = t._parameters;
+                impl = t.impl;
                 _value = t._value;
                 _exception = t._exception;
-                continue;
             }
             else
             {
                 //Release expression
-                _expr = null;
-                _parameters = null;
+                impl = null;
                 _blackHole = _blackHole.Inactivate();
                 break;
             }
         }
 
         setReturnValue(_value);
-        yield break;
     }
 
+    [SuppressMessage("ReSharper", "AccessToModifiedClosure")]
     PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
     {
-        CooperativeContext coopctx = null;
-        coopctx = new CooperativeContext(sctx, f => _cooperativeForce(coopctx, f))
+        CooperativeContext coopCtx = null!;
+        coopCtx = new(sctx, f => _cooperativeForce(coopCtx, f))
         {
             ExceptionHandler = ex =>
             {
@@ -284,20 +282,20 @@ public class Thunk : IIndirectCall, IObject
                 _value = PType.Null;
                 _exception = ex;
                 return false;
-            }
+            },
         };
 
         if (sctx is FunctionContext fctx)
         {
             //Turn CLR call into Prexonite stack call
             fctx._UseVirtualMachineStackInstead();
-            sctx.ParentEngine.Stack.AddLast(coopctx);
+            sctx.ParentEngine.Stack.AddLast(coopCtx);
             return PType.Null;
         }
         else
         {
             //Traditional implementation using the managed stack
-            return sctx.ParentEngine.Process(coopctx);
+            return sctx.ParentEngine.Process(coopCtx);
         }
     }
 }

@@ -23,497 +23,437 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil.Seh;
 
-namespace Prexonite.Compiler.Cil.Seh
+namespace Prexonite.Compiler.Cil;
+
+public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHandling
 {
+    internal StructuredExceptionHandlingCompiler(CompilerState state) : base(state.Source)
+    {
+        State = state;
+    }
+
+    /// <summary>
+    ///     The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.
+    /// </summary>
+    public CompilerState? State { [DebuggerStepThrough] get; }
+
+    /// <summary>
+    ///     Emits the jump or return using the appropriate equivalent in CIL.
+    /// </summary>
+    /// <param name = "sourceAddr">The address where the jump originates (the address of the jump/leave instruction normally)</param>
+    /// <param name = "ins">The instruction for this jump. Must be a jump/leave instruction.</param>
+    /// <exception cref = "PrexoniteException">when the jump is invalid in CIL (as per <see cref = "BranchHandling.Invalid" />)</exception>
+    /// <exception cref = "ArgumentException">when the instruction supplied is not a jump/leave instruction.</exception>
+    public void EmitJump(int sourceAddr, Instruction ins)
+    {
+        if (State == null)
+            throw new InvalidOperationException(
+                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+        int targetAddr;
+        var returning = false;
+        switch (ins.OpCode)
+        {
+            case OpCode.jump:
+            case OpCode.jump_f:
+            case OpCode.jump_t:
+            case OpCode.leave:
+                targetAddr = ins.Arguments;
+                break;
+            case OpCode.ret_value:
+            case OpCode.ret_exit:
+            case OpCode.ret_continue:
+            case OpCode.ret_break:
+                targetAddr = State.Source.Code.Count;
+                returning = true;
+                break;
+            default:
+                throw new ArgumentException(
+                    "The supplied instruction does not involve branching.", nameof(ins));
+        }
+
+        var handling = AssessJump(sourceAddr, targetAddr);
+
+        switch (handling)
+        {
+            case BranchHandling.Branch:
+                _emitBranch(sourceAddr, targetAddr, ins);
+                break;
+            case BranchHandling.Leave:
+                _emitLeave(sourceAddr, targetAddr, ins);
+                break;
+            case BranchHandling.EndFinally:
+                Debug.Assert(!returning);
+                _emitEndFinally(ins);
+                break;
+            case BranchHandling.LeaveSkipTry:
+                _emitLeave(sourceAddr,
+                    _loci[sourceAddr].InnermostRegion?.Block.EndTry ?? throw new PrexoniteException(
+                        $"Internal error branch mode for jump instruction {sourceAddr}: {ins} implies a surrounding region that was not found."),
+                    ins);
+                break;
+            case BranchHandling.Invalid:
+                throw new PrexoniteException(
+                    "Attempted to compile function with invalid SEH construct");
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    void _emitEndFinally(Instruction ins)
+    {
+        if (State == null)
+        {
+            throw new InvalidOperationException(
+                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+        }
+
+        Action endfinally = () => State.Il.Emit(OpCodes.Endfinally);
+        switch (ins.OpCode)
+        {
+            case OpCode.jump:
+            case OpCode.leave:
+                endfinally();
+                break;
+            case OpCode.jump_t:
+                _emitSkipFalse(endfinally);
+                break;
+            case OpCode.jump_f:
+                _emitSkipTrue(endfinally);
+                break;
+            default:
+                throw new PrexoniteException("Cannot implement " + ins + " using endfinally.");
+        }
+    }
+
+    void _emitLeave(int sourceAddr, int targetAddr, Instruction ins)
+    {
+        if (State == null)
+        {
+            throw new InvalidOperationException(
+                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+        }
+        
+        Action leave = () => State.Il.Emit(OpCodes.Leave, State.InstructionLabels[targetAddr]);
+        switch (ins.OpCode)
+        {
+            case OpCode.jump:
+            case OpCode.leave:
+                leave();
+                break;
+            case OpCode.jump_t:
+                _emitSkipFalse(leave);
+                break;
+            case OpCode.jump_f:
+                _emitSkipTrue(leave);
+                break;
+            case OpCode.ret_value:
+                State.EmitSetReturnValue();
+                goto case OpCode.ret_exit;
+            case OpCode.ret_exit:
+                _clearStack(sourceAddr);
+                leave();
+                break;
+            case OpCode.ret_break:
+                State._EmitAssignReturnMode(ReturnMode.Break);
+                goto case OpCode.ret_exit;
+            case OpCode.ret_continue:
+                State._EmitAssignReturnMode(ReturnMode.Continue);
+                goto case OpCode.ret_exit;
+        }
+    }
+
+    void _emitBranch(int sourceAddr, int targetAddr, Instruction ins)
+    {
+        if (State == null)
+        {
+            throw new InvalidOperationException(
+                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+        }
+        
+        switch (ins.OpCode)
+        {
+            case OpCode.jump:
+            case OpCode.leave:
+                State.Il.Emit(OpCodes.Br, State.InstructionLabels[targetAddr]);
+                break;
+            case OpCode.jump_f:
+                _emitUnboxBool();
+                State.Il.Emit(OpCodes.Brfalse, State.InstructionLabels[targetAddr]);
+                break;
+            case OpCode.jump_t:
+                _emitUnboxBool();
+                State.Il.Emit(OpCodes.Brtrue, State.InstructionLabels[targetAddr]);
+                break;
+            case OpCode.ret_value:
+                State.EmitSetReturnValue();
+                goto case OpCode.ret_exit;
+            case OpCode.ret_exit:
+                //return mode is set implicitly by function header
+                _clearStack(sourceAddr);
+                State.Il.Emit(OpCodes.Br, State.InstructionLabels[State.Source.Code.Count]);
+                break;
+            case OpCode.ret_continue:
+                State._EmitAssignReturnMode(ReturnMode.Continue);
+                goto case OpCode.ret_exit;
+            case OpCode.ret_break:
+                State._EmitAssignReturnMode(ReturnMode.Break);
+                goto case OpCode.ret_exit;
+        }
+    }
+
+    void _clearStack(int sourceAddress)
+    {
+        if (State == null)
+        {
+            throw new InvalidOperationException(
+                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+        }
+        Debug.Assert(0 <= sourceAddress && sourceAddress <= State.StackSize.Length);
+        State.EmitIgnoreArguments(State.StackSize[sourceAddress]);
+    }
+
+    void _emitSkipFalse(Action skippable)
+    {
+        _emitUnboxBool();
+        var cont = State.Il.DefineLabel();
+        State.Il.Emit(OpCodes.Brfalse_S, cont);
+        skippable();
+        State.Il.MarkLabel(cont);
+    }
+
+    void _emitSkipTrue(Action skippable)
+    {
+        _emitUnboxBool();
+        var cont = State.Il.DefineLabel();
+        State.Il.Emit(OpCodes.Brtrue_S, cont);
+        skippable();
+        State.Il.MarkLabel(cont);
+    }
+
+    [MemberNotNull(nameof(State))]
+    void _emitUnboxBool()
+    {
+        if (State == null)
+        {
+            throw new InvalidOperationException(
+                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+        }
+        State.EmitLoadLocal(State.SctxLocal);
+        State.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
+    }
 }
 
-namespace Prexonite.Compiler.Cil
+/// <summary>
+///     <para>Prepares information required to translate structured exception handling in CIL. Handles implementation of all jump instructions.</para>
+///     <para>Each instance of <see cref = "StructuredExceptionHandling" /> is tied to one <see cref = "CompilerState" /> and vice-versa.</para>
+/// </summary>
+public class StructuredExceptionHandling
 {
-    /// <summary>
-    ///     <para>Prepares information required to translate structured exception handling in CIL. Handles implementation of all jump instructions.</para>
-    ///     <para>Each instance of <see cref = "StructuredExceptionHandling" /> is tied to one <see cref = "CompilerState" /> and vice-versa.</para>
-    /// </summary>
-    [DebuggerDisplay("SEH for {State}")]
-    public sealed class StructuredExceptionHandling
+    internal readonly InstructionInfo[] _loci;
+    
+    internal StructuredExceptionHandling(PFunction source)
     {
-        readonly InstructionInfo[] _loci;
+        _loci = new InstructionInfo[source.Code.Count + 1];
+        //include virtual instruction at the end of the function.
 
-        /// <summary>
-        ///     Creates a new instance of structured exception handling.
-        /// </summary>
-        /// <param name = "state">The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.</param>
-        internal StructuredExceptionHandling(CompilerState state) : this(state.Source)
+        var regions =
+            source.TryCatchFinallyBlocks
+                .Select(CompiledTryCatchFinallyBlock.Create)
+                .SelectMany(Region.FromBlock).ToList();
+        for (var instructionOffset = 0; instructionOffset < _loci.Length; instructionOffset++)
         {
-            State = state;
+            var address = instructionOffset; //make sure that we don't access a modified closure
+            var locus = new InstructionInfo(this, address);
+            locus.Regions.AddRange(regions.Where(r => r.Contains(address)));
+            locus.Regions.Sort(Region.CompareRegions);
+            _loci[address] = locus;
         }
+    }
 
-        internal StructuredExceptionHandling(PFunction source)
+    /// <summary>
+    ///     Determines the handling for a branching instruction, depending on source and target address.
+    /// </summary>
+    /// <param name = "sourceAddr">The address of the jump instruction-</param>
+    /// <param name = "targetAddr">The address the jump instruction targets</param>
+    /// <returns>The handling required to implement this jump.</returns>
+    public BranchHandling AssessJump(int sourceAddr, int targetAddr)
+    {
+        var decisions = 
+            _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
+            .Select(st => _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr));
+
+        return decisions.Aggregate(_integrateBranchHandling);
+    }
+
+    static IEnumerable<(Region?, Region?)> _involvedRegions(List<Region> source,
+        List<Region> target)
+    {
+        //Find common ancestor
+        var areParallel = false; //have regions of same try-catch-finally construct
+        var ss = source.Count;
+        var tt = target.Count;
+        for (var s = 0; s < ss; s++)
         {
-            _loci = new InstructionInfo[source.Code.Count + 1];
-            //include virtual instruction at the end of the function.
-
-            var regions =
-                source.TryCatchFinallyBlocks
-                    .Select(CompiledTryCatchFinallyBlock.Create)
-                    .SelectMany(Region.FromBlock).ToList();
-            for (var instructionOffset = 0; instructionOffset < _loci.Length; instructionOffset++)
+            var sourceRegion = source[s];
+            for (var t = 0; t < tt; t++)
             {
-                var address = instructionOffset; //make sure that we don't access a modified closure
-                var locus = new InstructionInfo(this, address);
-                locus.Regions.AddRange(regions.Where(r => r.Contains(address)));
-                locus.Regions.Sort(Region.CompareRegions);
-                _loci[address] = locus;
-            }
-            State = null;
-        }
-
-        /// <summary>
-        ///     The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.
-        /// </summary>
-        public CompilerState State { [DebuggerStepThrough] get; }
-
-        /// <summary>
-        ///     Determines the handling for a branching instruction, depending on source and target address.
-        /// </summary>
-        /// <param name = "sourceAddr">The address of the jump instruction-</param>
-        /// <param name = "targetAddr">The address the jump instruction targets</param>
-        /// <returns>The handling required to implement this jump.</returns>
-        public BranchHandling AssessJump(int sourceAddr, int targetAddr)
-        {
-            var decisions =
-                from st in _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
-                select _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr);
-
-            return decisions.Aggregate(_integrateBranchHandling);
-        }
-
-        static IEnumerable<Tuple<Region, Region>> _involvedRegions(List<Region> source,
-            List<Region> target)
-        {
-            //Find common ancestor
-            var areParallel = false; //have regions of same try-catch-finally construct
-            var ss = source.Count;
-            var tt = target.Count;
-            for (var s = 0; s < ss; s++)
-            {
-                var sourceRegion = source[s];
-                for (var t = 0; t < tt; t++)
+                var targetRegion = target[t];
+                if (sourceRegion.Equals(targetRegion))
                 {
-                    var targetRegion = target[t];
-                    if (sourceRegion.Equals(targetRegion))
-                    {
-                        ss = s;
-                        tt = t;
-                    }
-                    else if (sourceRegion.Block == targetRegion.Block)
-                    {
-                        ss = s;
-                        tt = t;
-                        areParallel = true;
-                    }
+                    ss = s;
+                    tt = t;
                 }
-            }
-
-            //Return pairs up to common ancestor
-            for (var s = ss; s >= 0; s--)
-            {
-                Region sourceRegion;
-                if (s == ss && (!areParallel || s == source.Count))
-                    sourceRegion = null;
-                else
-                    sourceRegion = source[s];
-
-                for (var t = tt; t >= 0; t--)
+                else if (sourceRegion.Block == targetRegion.Block)
                 {
-                    Region targetRegion;
-                    if (t == tt && (!areParallel || t == target.Count))
-                        targetRegion = null;
-                    else
-                        targetRegion = target[t];
-
-                    yield return Tuple.Create(sourceRegion, targetRegion);
+                    ss = s;
+                    tt = t;
+                    areParallel = true;
                 }
             }
         }
 
-        static BranchHandling _integrateBranchHandling(BranchHandling h1, BranchHandling h2)
+        //Return pairs up to common ancestor
+        for (var s = ss; s >= 0; s--)
         {
-            if (h1 == h2)
-                return h1;
-
-            if (h1 == BranchHandling.Branch)
-                return h2;
-            else if (h2 == BranchHandling.Branch)
-                return h1;
-            else if (h1 == BranchHandling.Invalid)
-                return h1;
-            else if (h2 == BranchHandling.Invalid)
-                return h2;
-            else if (h1 == BranchHandling.EndFinally || h2 == BranchHandling.EndFinally)
-                return BranchHandling.Invalid; //end finally is only compatible with itself
-            else if (h1 == BranchHandling.Leave && h2 == BranchHandling.LeaveSkipTry ||
-                h2 == BranchHandling.Leave && h1 == BranchHandling.LeaveSkipTry)
-                return BranchHandling.LeaveSkipTry;
+            Region? sourceRegion;
+            if (s == ss && (!areParallel || s == source.Count))
+                sourceRegion = null;
             else
+                sourceRegion = source[s];
+
+            for (var t = tt; t >= 0; t--)
             {
-                throw new PrexoniteException(
-                    $"Invalid decision by SEH checking algorithm: {Enum.GetName(typeof(BranchHandling), h1)} and {Enum.GetName(typeof(BranchHandling), h1)}.");
+                Region? targetRegion;
+                if (t == tt && (!areParallel || t == target.Count))
+                    targetRegion = null;
+                else
+                    targetRegion = target[t];
+
+                yield return (sourceRegion, targetRegion);
             }
         }
+    }
 
-        BranchHandling _assesJumpForTwoRegions(Region sourceRegion, Region targetRegion,
-            int sourceAddr, int targetAddr)
+    static BranchHandling _integrateBranchHandling(BranchHandling h1, BranchHandling h2)
+    {
+        if (h1 == h2)
+            return h1;
+
+        if (h1 == BranchHandling.Branch)
+            return h2;
+        else if (h2 == BranchHandling.Branch)
+            return h1;
+        else if (h1 == BranchHandling.Invalid)
+            return h1;
+        else if (h2 == BranchHandling.Invalid)
+            return h2;
+        else if (h1 == BranchHandling.EndFinally || h2 == BranchHandling.EndFinally)
+            return BranchHandling.Invalid; //end finally is only compatible with itself
+        else if (h1 == BranchHandling.Leave && h2 == BranchHandling.LeaveSkipTry ||
+            h2 == BranchHandling.Leave && h1 == BranchHandling.LeaveSkipTry)
+            return BranchHandling.LeaveSkipTry;
+        else
         {
-            if (Equals(sourceRegion, targetRegion))
+            throw new PrexoniteException(
+                $"Invalid decision by SEH checking algorithm: {Enum.GetName(typeof(BranchHandling), h1)} and {Enum.GetName(typeof(BranchHandling), h1)}.");
+        }
+    }
+
+    static BranchHandling _assesJumpForTwoRegions(
+        Region? sourceRegion,
+        Region? targetRegion,
+        int sourceAddr,
+        int targetAddr
+    )
+    {
+        switch (sourceRegion, targetRegion)
+        {
+            case (null, null):
+            // case var (source, target) when Equals(source, target):
+            //     return BranchHandling.Branch;
+            case (null, { Kind: RegionKind.Try })
+                when targetAddr == targetRegion.Begin || targetRegion.Contains(sourceAddr):
+                //Jump into try block only legal if target is first instruction of said try block
+                //Or else target must be in a surrounding try block
                 return BranchHandling.Branch;
+            case ({ Kind: RegionKind.Try }, null):
+                return BranchHandling.Leave;
+            case ({ Kind: RegionKind.Try }, { Kind: RegionKind.Try })
+                when targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion):
+                //Jump into try block only legal if target is first instruction of said try block
+                //Or else target must be in a surrounding try block
+                return BranchHandling.Leave;
+            case ({ Kind: RegionKind.Try }, { Kind: RegionKind.Finally }) when targetAddr == targetRegion.Begin:
+                return BranchHandling.LeaveSkipTry;
+            case ({ Kind: RegionKind.Catch }, null):
+                return BranchHandling.Leave;
+            case ({ Kind: RegionKind.Catch }, { Kind: RegionKind.Try })
+                when targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion):
+                return BranchHandling.Leave;
+            case ({ Kind: RegionKind.Catch }, { Kind: RegionKind.Finally }) when targetAddr == targetRegion.Begin:
+                return BranchHandling.LeaveSkipTry;
+            case ({ Kind: RegionKind.Finally }, _) when targetRegion == null || !targetRegion.IsIn(sourceRegion):
+                //Prexonite byte code ends a finally block sometimes by jumping to the 
+                //  instruction right after the whole try-catch-finally. In CIL this
+                //  has to be implemented by the endfinally opcode.
+                return targetAddr == sourceRegion.Block.EndTry ? BranchHandling.EndFinally : BranchHandling.Invalid;
+            case ({ Kind: RegionKind.Finally }, { Kind: RegionKind.Try }) when targetAddr == targetRegion.Begin ||
+                sourceRegion.IsIn(targetRegion):
+                return BranchHandling.Leave;
+            case (_, _):
+                return BranchHandling.Invalid;
+        }
+    }
 
-            if (sourceRegion == null)
+    /// <summary>
+    ///     Returns the try blocks opening at this instruction in reverse order (closest block comes last)
+    /// </summary>
+    /// <param name = "address">The address of the instruction.</param>
+    /// <returns>The try blocks opening at this instruction in reverse order (closest block comes last)</returns>
+    public IEnumerable<CompiledTryCatchFinallyBlock> GetOpeningTryBlocks(int address)
+    {
+        if (address > _loci.Length)
+            address = _loci.Length - 1;
+        return _loci[address].OpeningTryBlocks();
+    }
+
+    [DebuggerDisplay(
+        "{address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnermostRegion}]")]
+    internal sealed class InstructionInfo(StructuredExceptionHandling seh, int address)
+    {
+        readonly int address = address;
+        public readonly List<Region> Regions = new(8);
+
+        public Region? InnermostRegion => Regions.Count > 0 ? Regions[0] : default;
+
+        public IEnumerable<CompiledTryCatchFinallyBlock> OpeningTryBlocks()
+        {
+            for (var i = Regions.Count - 1; i >= 0; i--)
             {
-                if (targetRegion == null)
-                    return BranchHandling.Branch;
-                switch (targetRegion.Kind)
-                {
-                        //Jump into try block only legal if target is first instruction of said try block
-                    case RegionKind.Try:
-                        if (targetAddr == targetRegion.Begin || targetRegion.Contains(sourceAddr))
-                            return BranchHandling.Branch;
-                        else
-                            return BranchHandling.Invalid;
-                    case RegionKind.Catch:
-                        return BranchHandling.Invalid;
-                    case RegionKind.Finally:
-                        return BranchHandling.Invalid;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-            switch (sourceRegion.Kind)
-            {
-                case RegionKind.Try:
-                    if (targetRegion == null)
-                        return BranchHandling.Leave;
-                    switch (targetRegion.Kind)
-                    {
-                        case RegionKind.Try:
-                            //Jump into try block only legal if target is first instruction of said try block
-                            //Or else target must be in a surrounding try block
-                            if (targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion))
-                                return BranchHandling.Leave;
-                            else
-                                return BranchHandling.Invalid;
-                        case RegionKind.Catch:
-                            return BranchHandling.Invalid;
-                        case RegionKind.Finally:
-                            //Jump to finally appears in Prexonite byte code as a jump to the first finally
-                            //  instruction. There is no equivalent jump in CIL (finally is invoked automatically)
-                            if (targetAddr == targetRegion.Begin)
-                                return BranchHandling.LeaveSkipTry;
-                            else
-                                return BranchHandling.Invalid;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                case RegionKind.Catch:
-                    if (targetRegion == null)
-                        return BranchHandling.Leave;
-                    switch (targetRegion.Kind)
-                    {
-                        case RegionKind.Try:
-                            if (targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion))
-                                return BranchHandling.Leave;
-                            else
-                                return BranchHandling.Invalid;
-                        case RegionKind.Catch:
-                            return BranchHandling.Invalid;
-                        case RegionKind.Finally:
-                            if (targetAddr == targetRegion.Begin)
-                                return BranchHandling.LeaveSkipTry;
-                            else
-                                return BranchHandling.Invalid;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                case RegionKind.Finally:
-                    if (targetRegion == null || !targetRegion.IsIn(sourceRegion))
-                    {
-                        //Prexonite byte code ends a finally block sometimes by jumping to the 
-                        //  instruction right after the whole try-catch-finally. In CIL this
-                        //  has to be implemented by the endfinally opcode.
-                        if (targetAddr == sourceRegion.Block.EndTry)
-                            return BranchHandling.EndFinally;
-                        else
-                            return BranchHandling.Invalid;
-                    }
-                    else
-                    {
-                        switch (targetRegion.Kind)
-                        {
-                            case RegionKind.Try:
-                                if (targetAddr == targetRegion.Begin ||
-                                    sourceRegion.IsIn(targetRegion))
-                                    return BranchHandling.Leave;
-                                else
-                                    return BranchHandling.Invalid;
-                            case RegionKind.Catch:
-                                return BranchHandling.Invalid;
-                            case RegionKind.Finally:
-                                return BranchHandling.Invalid;
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-                    }
-                default:
-                    throw new ArgumentOutOfRangeException();
+                var region = Regions[i];
+                if (region.Begin == address && region.Kind == RegionKind.Try)
+                    yield return region.Block;
             }
         }
 
-        /// <summary>
-        ///     Emits the jump or return using the appropriate equivalent in CIL.
-        /// </summary>
-        /// <param name = "sourceAddr">The address where the jump originates (the address of the jump/leave instruction normally)</param>
-        /// <param name = "ins">The instruction for this jump. Must be a jump/leave instruction.</param>
-        /// <exception cref = "PrexoniteException">when the jump is invalid in CIL (as per <see cref = "BranchHandling.Invalid" />)</exception>
-        /// <exception cref = "ArgumentException">when the instruction supplied is not a jump/leave instruction.</exception>
-        public void EmitJump(int sourceAddr, Instruction ins)
+        public Instruction Instruction
         {
-            if (State == null)
-                throw new InvalidOperationException(
-                    "Cannot emit code on a SEH instance that is not tied to a compiler state.");
-            int targetAddr;
-            var returning = false;
-            switch (ins.OpCode)
-            {
-                case OpCode.jump:
-                case OpCode.jump_f:
-                case OpCode.jump_t:
-                case OpCode.leave:
-                    targetAddr = ins.Arguments;
-                    break;
-                case OpCode.ret_value:
-                case OpCode.ret_exit:
-                case OpCode.ret_continue:
-                case OpCode.ret_break:
-                    targetAddr = State.Source.Code.Count;
-                    returning = true;
-                    break;
-                default:
-                    throw new ArgumentException(
-                        "The supplied instruction does not involve branching.", nameof(ins));
-            }
-
-            var handling = AssessJump(sourceAddr, targetAddr);
-
-            switch (handling)
-            {
-                case BranchHandling.Branch:
-                    _emitBranch(sourceAddr, targetAddr, ins);
-                    break;
-                case BranchHandling.Leave:
-                    _emitLeave(sourceAddr, targetAddr, ins);
-                    break;
-                case BranchHandling.EndFinally:
-                    Debug.Assert(!returning);
-                    _emitEndFinally(sourceAddr, ins);
-                    break;
-                case BranchHandling.LeaveSkipTry:
-                    _emitLeave(sourceAddr, _loci[sourceAddr].InnerMostRegion.Block.EndTry, ins);
-                    break;
-                case BranchHandling.Invalid:
-                    throw new PrexoniteException(
-                        "Attempted to compile function with invalid SEH construct");
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        void _emitEndFinally(int sourceAddr, Instruction ins)
-        {
-            Action endfinally = () => State.Il.Emit(OpCodes.Endfinally);
-            switch (ins.OpCode)
-            {
-                case OpCode.jump:
-                case OpCode.leave:
-                    endfinally();
-                    break;
-                case OpCode.jump_t:
-                    _emitSkipFalse(endfinally);
-                    break;
-                case OpCode.jump_f:
-                    _emitSkipTrue(endfinally);
-                    break;
-                default:
-                    throw new PrexoniteException("Cannot implement " + ins + " using endfinally.");
-            }
-        }
-
-        void _emitLeave(int sourceAddr, int targetAddr, Instruction ins)
-        {
-            Action leave = () => State.Il.Emit(OpCodes.Leave, State.InstructionLabels[targetAddr]);
-            switch (ins.OpCode)
-            {
-                case OpCode.jump:
-                case OpCode.leave:
-                    leave();
-                    break;
-                case OpCode.jump_t:
-                    _emitSkipFalse(leave);
-                    break;
-                case OpCode.jump_f:
-                    _emitSkipTrue(leave);
-                    break;
-                case OpCode.ret_value:
-                    State.EmitSetReturnValue();
-                    goto case OpCode.ret_exit;
-                case OpCode.ret_exit:
-                    _clearStack(sourceAddr);
-                    leave();
-                    break;
-                case OpCode.ret_break:
-                    State._EmitAssignReturnMode(ReturnMode.Break);
-                    goto case OpCode.ret_exit;
-                case OpCode.ret_continue:
-                    State._EmitAssignReturnMode(ReturnMode.Continue);
-                    goto case OpCode.ret_exit;
-            }
-        }
-
-        void _emitBranch(int sourceAddr, int targetAddr, Instruction ins)
-        {
-            switch (ins.OpCode)
-            {
-                case OpCode.jump:
-                case OpCode.leave:
-                    State.Il.Emit(OpCodes.Br, State.InstructionLabels[targetAddr]);
-                    break;
-                case OpCode.jump_f:
-                    _emitUnboxBool();
-                    State.Il.Emit(OpCodes.Brfalse, State.InstructionLabels[targetAddr]);
-                    break;
-                case OpCode.jump_t:
-                    _emitUnboxBool();
-                    State.Il.Emit(OpCodes.Brtrue, State.InstructionLabels[targetAddr]);
-                    break;
-                case OpCode.ret_value:
-                    State.EmitSetReturnValue();
-                    goto case OpCode.ret_exit;
-                case OpCode.ret_exit:
-                    //return mode is set implicitly by function header
-                    _clearStack(sourceAddr);
-                    State.Il.Emit(OpCodes.Br, State.InstructionLabels[State.Source.Code.Count]);
-                    break;
-                case OpCode.ret_continue:
-                    State._EmitAssignReturnMode(ReturnMode.Continue);
-                    goto case OpCode.ret_exit;
-                case OpCode.ret_break:
-                    State._EmitAssignReturnMode(ReturnMode.Break);
-                    goto case OpCode.ret_exit;
-            }
-        }
-
-        void _clearStack(int sourceAddress)
-        {
-            Debug.Assert(0 <= sourceAddress && sourceAddress <= State.StackSize.Length);
-            State.EmitIgnoreArguments(State.StackSize[sourceAddress]);
-        }
-
-        void _emitSkipFalse(Action skippable)
-        {
-            _emitUnboxBool();
-            var cont = State.Il.DefineLabel();
-            State.Il.Emit(OpCodes.Brfalse_S, cont);
-            skippable();
-            State.Il.MarkLabel(cont);
-        }
-
-        void _emitSkipTrue(Action skippable)
-        {
-            _emitUnboxBool();
-            var cont = State.Il.DefineLabel();
-            State.Il.Emit(OpCodes.Brtrue_S, cont);
-            skippable();
-            State.Il.MarkLabel(cont);
-        }
-
-        void _emitUnboxBool()
-        {
-            State.EmitLoadLocal(State.SctxLocal);
-            State.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-        }
-
-        /// <summary>
-        ///     Returns the try blocks opening at this instruction in reverse order (closest block comes last)
-        /// </summary>
-        /// <param name = "address">The address of the instruction.</param>
-        /// <returns>The try blocks opening at this instruction in reverse order (closest block comes last)</returns>
-        public IEnumerable<CompiledTryCatchFinallyBlock> GetOpeningTryBlocks(int address)
-        {
-            if (address > _loci.Length)
-                address = _loci.Length - 1;
-            return _loci[address].OpeningTryBlocks();
-        }
-
-        [DebuggerDisplay(
-            "{_address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnerMostRegion}]")]
-        sealed class InstructionInfo
-        {
-            readonly int _address;
-            readonly StructuredExceptionHandling _seh;
-            public readonly List<Region> Regions = new(8);
-
-            bool _isInRegion
-            {
-                [DebuggerStepThrough]
-                get => Regions.Count > 0;
-            }
-
-            public Region InnerMostRegion
-            {
-                [DebuggerStepThrough]
-                get
-                {
-                    if (_isInRegion)
-                        return Regions[0];
-                    else
-                        return default;
-                }
-            }
-
             [DebuggerStepThrough]
-            public InstructionInfo(StructuredExceptionHandling seh, int address)
+            get
             {
-                _seh = seh;
-                _address = address;
-            }
-
-            public IEnumerable<CompiledTryCatchFinallyBlock> OpeningTryBlocks()
-            {
-                for (var i = Regions.Count - 1; i >= 0; i--)
+                if (seh is StructuredExceptionHandlingCompiler { State.Source.Code: var source } &&
+                    address < source.Count)
                 {
-                    var region = Regions[i];
-                    if (region.Begin == _address && region.Kind == RegionKind.Try)
-                        yield return region.Block;
+                    return source[address];
                 }
-            }
-
-            public Instruction Instruction
-            {
-                [DebuggerStepThrough]
-                get
+                else
                 {
-                    if (_seh.State == null)
-                        return new Instruction(OpCode.nop);
-
-                    if (_address >= _seh.State.Source.Code.Count)
-                        return new Instruction(OpCode.nop);
-                    else
-                        return _seh.State.Source.Code[_address];
+                    return new(OpCode.nop);
                 }
             }
         }

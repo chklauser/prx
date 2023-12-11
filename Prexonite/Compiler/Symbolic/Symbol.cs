@@ -23,11 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -39,14 +38,13 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     {
     }
 
-    public abstract TResult HandleWith<TArg, TResult>([NotNull] ISymbolHandler<TArg, TResult> handler, TArg argument);
+    public abstract TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument);
 
-    [NotNull]
     public abstract ISourcePosition Position { get; }
 
     [PublicAPI]
     [ContractAnnotation("=>true,expandSymbol: notnull;=>false,expandSymbol:canbenull")]
-    public virtual bool TryGetExpandSymbol(out ExpandSymbol expandSymbol)
+    public virtual bool TryGetExpandSymbol([NotNullWhen(true)] out ExpandSymbol? expandSymbol)
     {
         expandSymbol = null;
         return false;
@@ -54,7 +52,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,messageSymbol: notnull;=>false,messageSymbol:canbenull")]
-    public virtual bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
+    public virtual bool TryGetMessageSymbol([NotNullWhen(true)] out MessageSymbol? messageSymbol)
     {
         messageSymbol = null;
         return false;
@@ -62,7 +60,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,dereferenceSymbol: notnull;=>false,dereferenceSymbol:canbenull")]
-    public virtual bool TryGetDereferenceSymbol(out DereferenceSymbol dereferenceSymbol)
+    public virtual bool TryGetDereferenceSymbol([NotNullWhen(true)] out DereferenceSymbol? dereferenceSymbol)
     {
         dereferenceSymbol = null;
         return false;
@@ -70,7 +68,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,referenceSymbol: notnull;=>false,referenceSymbol:canbenull")]
-    public virtual bool TryGetReferenceSymbol(out ReferenceSymbol referenceSymbol)
+    public virtual bool TryGetReferenceSymbol([NotNullWhen(true)] out ReferenceSymbol? referenceSymbol)
     {
         referenceSymbol = null;
         return false;
@@ -78,7 +76,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,nilSymbol: notnull;=>false,nilSymbol:canbenull")]
-    public virtual bool TryGetNilSymbol(out NilSymbol nilSymbol)
+    public virtual bool TryGetNilSymbol([NotNullWhen(true)] out NilSymbol? nilSymbol)
     {
         nilSymbol = null;
         return false;
@@ -86,7 +84,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,namespaceSymbol: notnull;=>false,namespaceSymbol:canbenull")]
-    public virtual bool TryGetNamespaceSymbol(out NamespaceSymbol namespaceSymbol)
+    public virtual bool TryGetNamespaceSymbol([NotNullWhen(true)] out NamespaceSymbol? namespaceSymbol)
     {
         namespaceSymbol = null;
         return false;
@@ -95,30 +93,26 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     #region Factory Methods
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateReference([NotNull] EntityRef entityRef, [NotNull] ISourcePosition position)
+    public static Symbol CreateReference(EntityRef entityRef, ISourcePosition position)
     {
         return ReferenceSymbol._Create(entityRef,position);
     }
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateNamespace([NotNull] Namespace @namespace,
-        [NotNull] ISourcePosition position)
+    public static Symbol CreateNamespace(Namespace @namespace,
+        ISourcePosition position)
     {
         return NamespaceSymbol._Create(@namespace, position);
     }
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateNil([NotNull] ISourcePosition position)
+    public static Symbol CreateNil(ISourcePosition position)
     {
         return NilSymbol._Create(position);
     }
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateDereference([NotNull] Symbol inner, [CanBeNull] ISourcePosition position = null)
+    public static Symbol CreateDereference(Symbol inner, ISourcePosition? position = null)
     {
         if (inner == null)
             throw new ArgumentNullException(nameof(inner));
@@ -126,8 +120,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     }
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateMessage([NotNull] Message message, [NotNull] Symbol inner, ISourcePosition position = null)
+    public static Symbol CreateMessage(Message message, Symbol inner, ISourcePosition? position = null)
     {
         if (message == null)
             throw new ArgumentNullException(nameof(message));
@@ -137,8 +130,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     }
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateExpand([NotNull] Symbol inner, [CanBeNull] ISourcePosition position = null)
+    public static Symbol CreateExpand(Symbol inner, ISourcePosition? position = null)
     {
         return ExpandSymbol._Create(inner, position);
     }
@@ -146,14 +138,13 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     #endregion
 
     [PublicAPI]
-    [NotNull]
-    public static Symbol CreateCall([NotNull] EntityRef entity, [NotNull] ISourcePosition position)
+    public static Symbol CreateCall(EntityRef entity, ISourcePosition position)
     {
         return CreateDereference(CreateReference(entity,position),position);
     }
 
-    public abstract bool Equals(Symbol other);
-    public sealed override bool Equals(object obj)
+    public abstract bool Equals(Symbol? other);
+    public sealed override bool Equals(object? obj)
     {
         if (ReferenceEquals(this, obj)) return true;
         if (ReferenceEquals(obj, null)) return false;
@@ -164,7 +155,7 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
     {
-        static PValue assignOutParameter(StackContext stackContext, PValue[] innerArgs, object value, bool found)
+        static PValue assignOutParameter(StackContext stackContext, PValue[] innerArgs, object? value, bool found)
         {
             if (innerArgs.Length > 0)
             {
@@ -218,18 +209,17 @@ public abstract class WrappingSymbol : Symbol
     public override ISourcePosition Position { get; }
 
     [DebuggerStepThrough]
-    internal WrappingSymbol([NotNull] ISourcePosition position, [NotNull] Symbol innerSymbol)
+    internal WrappingSymbol(ISourcePosition position, Symbol innerSymbol)
     {
         InnerSymbol = innerSymbol;
         Position = position;
     }
 
-    [NotNull]
     public Symbol InnerSymbol { [DebuggerStepThrough] get; }
 
     #region Equality members
 
-    protected bool Equals(WrappingSymbol other)
+    protected bool Equals(WrappingSymbol? other)
     {
         return other != null 
             && other.GetType() == GetType() 
@@ -243,8 +233,7 @@ public abstract class WrappingSymbol : Symbol
 
     protected abstract int HashCodeXorFactor { get; }
 
-    [NotNull]
-    public abstract WrappingSymbol With([NotNull] Symbol newInnerSymbol, [CanBeNull] ISourcePosition newPosition = null);
+    public abstract WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition? newPosition = null);
 
     #endregion
 }

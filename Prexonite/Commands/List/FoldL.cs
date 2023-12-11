@@ -23,10 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -60,8 +58,6 @@ public class FoldL : PCommand, ICilCompilerAware
             throw new ArgumentNullException(nameof(sctx));
         if (f == null)
             throw new ArgumentNullException(nameof(f));
-        left ??= PType.Null.CreatePValue();
-        source ??= Array.Empty<PValue>();
 
         foreach (var right in source)
         {
@@ -92,7 +88,7 @@ public class FoldL : PCommand, ICilCompilerAware
         if (args.Length == 3)
         {
             var psource = args[2];
-            source = Map._ToEnumerable(sctx, psource) ?? new[] {psource};
+            source = Map._ToEnumerable(sctx, psource);
         }
         else
         {
@@ -100,15 +96,12 @@ public class FoldL : PCommand, ICilCompilerAware
             for (var i = 2; i < args.Length; i++)
             {
                 var multiple = Map._ToEnumerable(sctx, args[i]);
-                if (multiple != null)
-                    lstsource.AddRange(multiple);
-                else
-                    lstsource.Add(args[i]);
+                lstsource.AddRange(multiple);
             }
             source = lstsource;
         }
 
-        return Run(sctx, f, left, source);
+        return Run(sctx, f, left ?? PType.Null, source);
     }
 
     public override PValue Run(StackContext sctx, PValue[] args)

@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Text;
 
 namespace Prexonite.Compiler.Build;
@@ -44,12 +43,12 @@ public class BuildFailureException : BuildException
         return string.Format(messageFormat, e, e == 1 ? "error" : "errors", e == 1 ? "was" : "were");
     }
 
-    public BuildFailureException(ITargetDescription target, string messageFormat, IEnumerable<Message> messages) : base(_makeErrorMessage(messages, messageFormat),target)
+    public BuildFailureException(ITargetDescription? target, string messageFormat, IEnumerable<Message> messages) : base(_makeErrorMessage(messages, messageFormat),target)
     {
         Messages.AddRange(messages);
     }
 
-    public BuildFailureException(ITargetDescription target, string messageFormat, IEnumerable<Message> messages, Exception inner)
+    public BuildFailureException(ITargetDescription? target, string messageFormat, IEnumerable<Message> messages, Exception inner)
         : base(_makeErrorMessage(messages, messageFormat), target,inner)
     {
         Messages.AddRange(messages);

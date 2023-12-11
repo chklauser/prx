@@ -23,10 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -48,7 +47,7 @@ public sealed class PVariable : IHasMetaTable,
 {
     PValue _value = PType.Null;
     //Variable metatables are only created when requested.
-    VariableDeclaration _declaration;
+    VariableDeclaration? _declaration;
 
     /// <summary>
     /// Returns the id of this variable. For local variables, this id might be different from the

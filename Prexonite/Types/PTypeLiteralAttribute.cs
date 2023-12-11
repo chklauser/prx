@@ -1,6 +1,3 @@
-#nullable enable
-
-using System;
 using System.Diagnostics;
 
 namespace Prexonite.Types;

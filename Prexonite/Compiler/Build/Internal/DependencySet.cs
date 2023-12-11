@@ -24,13 +24,12 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.ObjectModel;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal;
 
-class DependencySet : System.Collections.ObjectModel.KeyedCollection<string,ModuleName>, ISet<ModuleName>
+class DependencySet : KeyedCollection<string,ModuleName>, ISet<ModuleName>
 {
     readonly HashSet<ModuleName> _nameSet = new();
     readonly ModuleName _correspondingModule;
@@ -44,23 +43,21 @@ class DependencySet : System.Collections.ObjectModel.KeyedCollection<string,Modu
     protected override void RemoveItem(int index)
     {
         var existing = this[index];
-        if(existing != null)
-            _nameSet.Remove(existing);
+        _nameSet.Remove(existing);
         base.RemoveItem(index);
     }
 
     protected override void SetItem(int index, ModuleName item)
     {
         var existing = this[index];
-        if (existing != null)
-            _nameSet.Remove(existing);
+        _nameSet.Remove(existing);
         _nameSet.Add(item);
         base.SetItem(index, item);
     }
 
     public DependencySet(ModuleName correspondingModule)
     {
-        this._correspondingModule = correspondingModule;
+        _correspondingModule = correspondingModule;
     }
 
     protected override string GetKeyForItem(ModuleName item)

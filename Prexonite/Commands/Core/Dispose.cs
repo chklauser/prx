@@ -23,11 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.ComponentModel;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -45,7 +44,7 @@ public sealed class Dispose : PCommand, ICilCompilerAware
 
     public static Dispose Instance { get; } = new();
 
-    public const string DisposeMemberId = "Dispose";
+    public const string DisposeMemberId = nameof(Dispose);
 
     /// <summary>
     ///     Executes the dispose function.<br />
@@ -79,17 +78,16 @@ public sealed class Dispose : PCommand, ICilCompilerAware
         if (args == null)
             throw new ArgumentNullException(nameof(args));
         foreach (var arg in args)
-            if (arg != null)
-            {
-                RunStatically(arg, sctx);
-            }
+        {
+            RunStatically(arg, sctx);
+        }
+
         return PType.Null.CreatePValue();
     }
 
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public static void RunStatically(PValue arg, StackContext sctx)
     {
-        PValue dummy;
         if (arg.Type is ObjectPType)
         {
             if (arg.Value is IDisposable toDispose)
@@ -99,13 +97,13 @@ public sealed class Dispose : PCommand, ICilCompilerAware
                 if (arg.Value is IObject isObj)
                 {
                     isObj.TryDynamicCall(
-                        sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out dummy);
+                        sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out _);
                 }
             }
         }
         else
         {
-            arg.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out dummy);
+            arg.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out _);
         }
     }
 
@@ -128,8 +126,8 @@ public sealed class Dispose : PCommand, ICilCompilerAware
                 //Emit call to RunStatically(PValue, StackContext)
                 state.EmitLoadLocal(state.SctxLocal);
                 var run =
-                    typeof (Dispose).GetMethod("RunStatically",
-                        new[] {typeof (PValue), typeof (StackContext)});
+                    typeof (Dispose).GetMethod(nameof(RunStatically),
+                        new[] {typeof (PValue), typeof (StackContext)})!;
                 state.Il.EmitCall(OpCodes.Call, run, null);
                 if (!ins.JustEffect)
                     state.EmitLoadNullAsPValue();

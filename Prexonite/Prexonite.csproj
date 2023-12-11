@@ -1,14 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>10</LangVersion>
-
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>UseIndex</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Version>1.98</Version>
+    <Version>1.99</Version>
     <Title>Prexonite Scripting Language</Title>
     <PackageDescription>An embeddable scripting language with a focus on meta programming and domain specific languages.</PackageDescription>
     <Description>$(PackageDescription)</Description>
@@ -157,6 +159,8 @@
       <StronglyTypedNamespace>Prexonite.Properties</StronglyTypedNamespace>
       <StronglyTypedClassName>Resources</StronglyTypedClassName>
     </EmbeddedResource>
+    <Compile Remove="Properties/Resources.Designer.cs" />
+    <Compile Include="Properties/Resources.Designer.cs" />
   </ItemGroup>
 
   <!-- NUGET References -->

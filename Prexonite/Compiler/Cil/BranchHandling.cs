@@ -1,4 +1,5 @@
-﻿// Prexonite
+﻿
+// Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
@@ -53,5 +54,5 @@ public enum BranchHandling
     /// <summary>
     ///     The jump in question is illegal in CIL. It cannot be repaired on the fly.
     /// </summary>
-    Invalid
+    Invalid,
 }

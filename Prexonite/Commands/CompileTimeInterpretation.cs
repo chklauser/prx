@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using Prexonite.Modular;
 
 namespace Prexonite.Commands;
@@ -71,5 +72,5 @@ public enum CompileTimeInterpretation
     /// <summary>
     ///     A command reference literal. Obtained from <code>ldr.cmd</code>. Represented as an <see cref = "EntityRef" />.
     /// </summary>
-    CommandReference
+    CommandReference,
 }

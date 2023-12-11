@@ -23,14 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic.Internal;
-using Prexonite.Types;
-
-#nullable enable
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -144,7 +140,7 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
                 if (args.Length < 2)
                     throw new PrexoniteException(
                         "Not enough arguments for SymbolStore.TryGet(symbolicId, resultVar).");
-                var symbolic = (string)args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value;
+                var symbolic = (string)args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value!;
                 if(TryGet(symbolic,out var symbol))
                 {
                     args[1].IndirectCall(sctx, new[] {sctx.CreateNativePValue(symbol)});

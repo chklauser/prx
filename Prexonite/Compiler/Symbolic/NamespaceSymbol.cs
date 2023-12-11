@@ -1,8 +1,4 @@
-#nullable enable
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using JetBrains.Annotations;
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic;
@@ -58,7 +54,7 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return new(position, @namespace);
     }
 
-    public override bool TryGetNamespaceSymbol(out NamespaceSymbol namespaceSymbol)
+    public override bool TryGetNamespaceSymbol([NotNullWhen(true)] out NamespaceSymbol? namespaceSymbol)
     {
         namespaceSymbol = this;
         return true;

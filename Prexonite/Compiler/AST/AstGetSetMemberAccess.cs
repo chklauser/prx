@@ -23,16 +23,25 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using Prexonite.Types;
+
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstGetSetMemberAccess : AstGetSetImplBase,
-    IAstPartiallyApplicable
+[method: PublicAPI]
+public class AstGetSetMemberAccess(
+    string file,
+    int line,
+    int column,
+    PCall call,
+    AstExpr subject,
+    string id
+)
+    : AstGetSetImplBase(file, line, column, call),
+        IAstPartiallyApplicable
 {
-    public string Id { get; set; }
-    public AstExpr Subject { get; set; }
+    public string Id { get; set; } = id;
+    public AstExpr Subject { get; set; } = subject;
 
     public override AstExpr[] Expressions
     {
@@ -46,48 +55,10 @@ public class AstGetSetMemberAccess : AstGetSetImplBase,
         }
     }
 
-    public AstGetSetMemberAccess(
-        string file, int line, int column, PCall call, AstExpr subject, string id)
-        : base(file, line, column, call)
-    {
-        id ??= "";
-        Subject = subject ?? throw new ArgumentNullException(nameof(subject));
-        Id = id;
-    }
-
-    internal AstGetSetMemberAccess(Parser p, PCall call, AstExpr subject, string id)
-        : this(p.scanner.File, p.t.line, p.t.col, call, subject, id)
-    {
-    }
-
-    public AstGetSetMemberAccess(string file, int line, int column, PCall call, string id)
-        : this(file, line, column, call, null, id)
-    {
-    }
-
-    internal AstGetSetMemberAccess(Parser p, PCall call, string id)
-        : this(p, call, null, id)
-    {
-    }
-
-    public AstGetSetMemberAccess(string file, int line, int column, string id)
-        : this(file, line, column, PCall.Get, id)
-    {
-    }
-
-    internal AstGetSetMemberAccess(Parser p, string id)
-        : this(p.scanner.File, p.t.line, p.t.col, PCall.Get, id)
-    {
-    }
-
+    [PublicAPI]
     public AstGetSetMemberAccess(
         string file, int line, int column, AstExpr subject, string id)
         : this(file, line, column, PCall.Get, subject, id)
-    {
-    }
-
-    internal AstGetSetMemberAccess(Parser p, AstExpr subject, string id)
-        : this(p, PCall.Get, subject, id)
     {
     }
 
@@ -109,7 +80,7 @@ public class AstGetSetMemberAccess : AstGetSetImplBase,
         target.EmitSetCall(Position, Arguments.Count, Id);
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         base.TryOptimize(target, out expr);
         var subject = Subject;

@@ -25,9 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 
 #endregion
 
@@ -36,11 +34,9 @@ namespace Prexonite.Types;
 /// <summary>
 ///     An enumerator proxy that returns the values instead of PValue objects of an <see cref = "IEnumerable{T}" />
 /// </summary>
-public sealed class PValueEnumeratorWrapper : PValueEnumerator
+public sealed class PValueEnumeratorWrapper(IEnumerator<PValue> baseEnumerator) : PValueEnumerator
 {
     #region Class
-
-    readonly IEnumerator<PValue> _baseEnumerator;
 
     /// <summary>
     ///     Creates a new proxy for the IEnumerator of the supplied <paramref name = "enumerable" />.
@@ -51,15 +47,6 @@ public sealed class PValueEnumeratorWrapper : PValueEnumerator
     {
     }
 
-    /// <summary>
-    ///     Creates a new prox for the supplied enumerator.
-    /// </summary>
-    /// <param name = "baseEnumerator">An IEnumerator</param>
-    public PValueEnumeratorWrapper(IEnumerator<PValue> baseEnumerator)
-    {
-        _baseEnumerator = baseEnumerator ?? throw new ArgumentNullException(nameof(baseEnumerator));
-    }
-
     #endregion
 
     #region IEnumerator<PValue> Members
@@ -67,7 +54,7 @@ public sealed class PValueEnumeratorWrapper : PValueEnumerator
     /// <summary>
     ///     Returns the current element
     /// </summary>
-    public override PValue Current => _baseEnumerator.Current;
+    public override PValue Current => baseEnumerator.Current;
 
     #endregion
 
@@ -81,7 +68,7 @@ public sealed class PValueEnumeratorWrapper : PValueEnumerator
         if (!disposing)
             return;
         // free managed resources 
-        _baseEnumerator?.Dispose();
+        baseEnumerator.Dispose();
     }
 
     #endregion
@@ -94,7 +81,7 @@ public sealed class PValueEnumeratorWrapper : PValueEnumerator
     /// <returns>True if that next value exists; false otherwise.</returns>
     public override bool MoveNext()
     {
-        return _baseEnumerator.MoveNext();
+        return baseEnumerator.MoveNext();
     }
 
     /// <summary>
@@ -106,12 +93,8 @@ public sealed class PValueEnumeratorWrapper : PValueEnumerator
     /// <exception cref = "NotSupportedException">The base enumerator does not support resetting.</exception>
     public override void Reset()
     {
-        _baseEnumerator.Reset();
+        baseEnumerator.Reset();
     }
-
-    #endregion
-
-    #region IObject Members
 
     #endregion
 }

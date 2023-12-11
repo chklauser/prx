@@ -24,19 +24,15 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
-using JetBrains.Annotations;
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstArgumentSplice : AstExpr, IAstHasExpressions
 {
-    [NotNull]
     public AstExpr ArgumentList { get; private set; }
 
     public bool IsSplicedPlaceholder => ArgumentList is AstPlaceholder;
 
-    public AstArgumentSplice(ISourcePosition position, [NotNull] AstExpr argumentList)
+    public AstArgumentSplice(ISourcePosition position, AstExpr argumentList)
         : base(position)
     {
         ArgumentList = argumentList ?? throw new ArgumentNullException(nameof(argumentList));
@@ -54,7 +50,7 @@ public class AstArgumentSplice : AstExpr, IAstHasExpressions
             $"This syntax does not support argument slices (*some_expr). (Position {File}:{Line} col {Column})");
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         if (ArgumentList.TryOptimize(target, out var next))
         {

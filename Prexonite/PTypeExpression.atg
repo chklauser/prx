@@ -105,7 +105,7 @@ PTypeExpression
     Type<out _lastType>
 .
 
-Expr<out PValue value>          (.  PType vt; value = null; .)
+Expr<out PValue value>          (.  PType vt; value = PType.Null; .)
 =	
 	Boolean<out value>             
 |	Integer<out value>             
@@ -124,7 +124,7 @@ Integer<out PValue value>       (.  int i; .)
 =
 	integer                     (.  
 	                                if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
-	                                    SemErr("Cannot recognize integer " + t.val);
+	                                    SemErr("Cannot recognize integer " + t.val, MessageClasses.InvalidConstant);
 	                                value = i;
 	                            .)
 .
@@ -132,7 +132,7 @@ Integer<out PValue value>       (.  int i; .)
 Real<out PValue value>          (.  double d; .)
 =
 	real                        (.  if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
-	                                    SemErr("Cannot recognize real " + t.val);
+	                                    SemErr("Cannot recognize real " + t.val, MessageClasses.InvalidConstant);
 	                                value = d;
 	                            .)
 .
@@ -145,6 +145,7 @@ String<out PValue value>
 
 Type<out PType value>           (.  string id; 
                                     System.Collections.Generic.List<PValue> args = new System.Collections.Generic.List<PValue>();
+                                    var pos = GetNextPosition();
                                 .)
 =
     [ "~" ]
@@ -153,8 +154,9 @@ Type<out PType value>           (.  string id;
 										id = id.Substring(1);
                                     if(!Sctx.ParentEngine.PTypeRegistry.Contains(id))
                                     {
-                                        SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
-                                    }                                    
+                                        SemErr("Cannot find PType " + id + " referenced in PTypeExpression.", 
+                                            MessageClasses.CannotFindPType, pos);
+                                    }
                                 .)
     [   '('                     (.  PValue obj; .)
         [   Expr<out obj>       (.  args.Add(obj); .)
@@ -164,9 +166,9 @@ Type<out PType value>           (.  string id;
         ]
         ')'
     ]
-                                (.  if(id == null) //Error recovery.
+                                (.  if((string?)id == null) //Error recovery.
                                     {
-                                        SemErr("Error in type expression.");
+                                        SemErr("Error in type expression.", MessageClasses.ErrorInTypeExpr, pos);
                                         value = PType.Object[typeof(object)];
                                     }
                                     else //Normal case

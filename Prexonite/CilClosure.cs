@@ -23,9 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Diagnostics.CodeAnalysis;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite;
 
@@ -103,11 +100,11 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// <param name = "a">A closure</param>
     /// <param name = "b">A closure</param>
     /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
-    public static bool operator ==(CilClosure a, CilClosure b)
+    public static bool operator ==(CilClosure? a, CilClosure? b)
     {
-        if ((object) a == null && (object) b == null)
+        if ((object?) a == null && (object?) b == null)
             return true;
-        else if ((object) a == null || (object) b == null)
+        else if ((object?) a == null || (object?) b == null)
             return false;
         else if (ReferenceEquals(a, b))
             return true;
@@ -130,7 +127,7 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// <param name = "a">A closure</param>
     /// <param name = "b">A closure</param>
     /// <returns>True, if the two closures do not use to the same function and the same shared variables; false otherwise.</returns>
-    public static bool operator !=(CilClosure a, CilClosure b)
+    public static bool operator !=(CilClosure? a, CilClosure? b)
     {
         return !(a == b);
     }
@@ -141,10 +138,10 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// </summary>
     /// <param name = "obj">Any object.</param>
     /// <returns>True if <paramref name = "obj" /> is a closure that is equal to the current instance.</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         var clo = obj as CilClosure;
-        if ((object) clo == null)
+        if ((object?) clo == null)
             return false;
         return this == clo;
     }

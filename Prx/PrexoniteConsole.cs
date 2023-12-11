@@ -23,12 +23,15 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Types;
+using Resources = Prx.Properties.Resources;
 
 namespace Prx;
 
@@ -41,7 +44,7 @@ public class PrexoniteConsole : SuperConsole,
     {
     }
 
-    public PValue Tab { get; set; }
+    public PValue? Tab { get; set; }
 
     public override bool IsPartOfIdentifier(char c)
     {
@@ -50,22 +53,22 @@ public class PrexoniteConsole : SuperConsole,
 
     public override IEnumerable<string> OnTab(string attr, string pref, string root)
     {
-        return OnTab(attr, pref, root, _sctx);
+        return OnTab(attr, pref, root, sctx);
     }
 
     public virtual IEnumerable<string> OnTab(string attr, string pref, string root,
-        StackContext sctx)
+        StackContext? callingSctx)
     {
-        if (sctx == null)
-            throw new ArgumentNullException(nameof(sctx),
-                "OnTab must either be called from via the ReadLine method or with a valid stack context.");
-        if (Tab != null && !Tab.IsNull)
+        if (callingSctx == null)
+            throw new ArgumentNullException(nameof(callingSctx),
+                Resources.PrexoniteConsole_OnTab_RequiresSctx);
+        if (Tab is { IsNull: false })
         {
-            var plst = Tab.IndirectCall(_sctx, new PValue[] {pref, root});
-            plst.ConvertTo(_sctx, PType.Object[typeof (IEnumerable)], true);
-            foreach (var o in (IEnumerable) plst.Value)
+            var plst = Tab.IndirectCall(callingSctx, new PValue[] {pref, root});
+            plst.ConvertTo(callingSctx, PType.Object[typeof (IEnumerable)], true);
+            foreach (var o in (IEnumerable) plst.Value!)
             {
-                yield return ((PValue) o).CallToString(_sctx);
+                yield return ((PValue) o).CallToString(callingSctx);
             }
         }
     }
@@ -75,12 +78,12 @@ public class PrexoniteConsole : SuperConsole,
     /// <summary>
     ///     Returns a reference to the prexonite console.
     /// </summary>
-    /// <param name = "sctx">The stack context in which the command is executed.</param>
+    /// <param name = "callingSctx">The stack context in which the command is executed.</param>
     /// <param name = "args">The array of arguments supplied to the command.</param>
     /// <returns>A reference to the prexonite console.</returns>
-    public PValue Run(StackContext sctx, PValue[] args)
+    public PValue Run(StackContext callingSctx, PValue[] args)
     {
-        return sctx.CreateNativePValue(this);
+        return callingSctx.CreateNativePValue(this);
     }
 
     /// <summary>
@@ -92,10 +95,10 @@ public class PrexoniteConsole : SuperConsole,
 
     #region IObject Members
 
-    StackContext _sctx;
+    StackContext? sctx;
 
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext callingSctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
@@ -120,23 +123,23 @@ public class PrexoniteConsole : SuperConsole,
             case "readline":
                 try
                 {
-                    _sctx = sctx;
-                    result = ReadLine();
+                    sctx = callingSctx;
+                    result = ReadLine() ?? PType.Null.CreatePValue();
                 }
                 finally
                 {
-                    _sctx = null;
+                    sctx = null;
                 }
                 break;
             case "readlineinteractive":
                 try
                 {
-                    _sctx = sctx;
-                    result = ReadLineInteractive();
+                    sctx = callingSctx;
+                    result = ReadLineInteractive() ?? PType.Null.CreatePValue();
                 }
                 finally
                 {
-                    _sctx = null;
+                    sctx = null;
                 }
                 break;
         }

@@ -1,10 +1,5 @@
-#nullable enable
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Threading;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
@@ -15,7 +10,6 @@ using Prexonite.Commands.List;
 using Prexonite.Commands.Math;
 using Prexonite.Commands.Text;
 using Prexonite.Compiler.Internal;
-using Prexonite.Types;
 using Char = Prexonite.Commands.Core.Char;
 using Debug = Prexonite.Commands.Core.Debug;
 using Range = Prexonite.Commands.List.Range;
@@ -28,6 +22,7 @@ namespace Prexonite;
 ///     Prexonite virtual machines. Engines manage available <see cref = "PType">PTypes</see>, assemblies accessible by the virtual machine as well as available <see
 ///      cref = "Commands" />.
 /// </summary>
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public partial class Engine
 {
     #region Static
@@ -131,22 +126,12 @@ public partial class Engine
         {
             get
             {
-                if (_outer._pTypeMap.ContainsKey(clrType))
-                    return _outer._pTypeMap[clrType];
+                if (_outer._pTypeMap.TryGetValue(clrType, out var item))
+                    return item;
                 else
                     return PType.Object[clrType];
             }
-            set
-            {
-                if (_outer._pTypeMap.ContainsKey(clrType))
-                {
-                    _outer._pTypeMap[clrType] = value;
-                }
-                else
-                {
-                    _outer._pTypeMap.Add(clrType, value);
-                }
-            }
+            set => _outer._pTypeMap[clrType] = value;
         }
 
         /// <summary>
@@ -249,8 +234,8 @@ public partial class Engine
         {
             get
             {
-                if (_outer._pTypeRegistry.ContainsKey(name))
-                    return _outer._pTypeRegistry[name];
+                if (_outer._pTypeRegistry.TryGetValue(name, out var item))
+                    return item;
                 else
                     return null;
             }
@@ -312,12 +297,13 @@ public partial class Engine
                 throw new ArgumentNullException(nameof(name));
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
-            else if (!PType.IsPType(type))
+            
+            if (!PType.IsPType(type))
                 throw new ArgumentException("ClrType " + type + " is not a PType.");
-            if (_outer._pTypeRegistry.ContainsKey(name))
+            if (_outer._pTypeRegistry.TryGetValue(name, out var value))
                 throw new ArgumentException(
                     "The registry already contains an entry " + name + " => " +
-                    _outer._pTypeRegistry[name] + ".");
+                    value + ".");
             _outer._pTypeRegistry.Add(name, type);
         }
 
@@ -337,6 +323,7 @@ public partial class Engine
         ///     Returns an IEnumerator to enumerate over all registrations.
         /// </summary>
         /// <returns>An IEnumerator to enumerate over all registrations.</returns>
+        [SuppressMessage("ReSharper", "ObjectProducedWithMustDisposeAnnotatedMethodIsReturned")]
         public IEnumerator<KeyValuePair<string, Type>> GetEnumerator()
         {
             return _outer._pTypeRegistry.GetEnumerator();
@@ -407,7 +394,7 @@ public partial class Engine
         if (clrType == typeof (NullPType))
             return PType.Null;
         if (clrType == typeof (ObjectPType) && args.Length > 0 && args[0].Type == PType.String)
-            return PType.Object[sctx, (string) args[0].Value];
+            return PType.Object[sctx, (string) args[0].Value!];
         if (clrType == typeof (ListPType))
             return PType.List;
         if (clrType == typeof (HashPType))
@@ -426,7 +413,7 @@ public partial class Engine
             throw new PrexoniteException(
                 "Could not construct PType (" + result.ClrType +
                 " is not a PType).");
-        return (PType)result.Value;
+        return (PType)result.Value!;
     }
 
     /// <summary>
@@ -468,7 +455,7 @@ public partial class Engine
         using var lexer = TypeExpressionScanner.CreateFromString(expression);
         var parser = new TypeExpressionParser(lexer, sctx);
         parser.Parse();
-        if (parser.errors.count > 0)
+        if (parser.errors.count > 0 || ReferenceEquals(parser.LastType, null))
             throw new PrexoniteException(
                 "Could not construct PType. (Errors in PType expression: " + expression +
                 ")");
@@ -568,8 +555,8 @@ public partial class Engine
         Meta = MetaTable.Create();
 
         //PTypes
-        _pTypeMap = new Dictionary<Type, PType>();
-        PTypeMap = new PTypeMapIterator(this);
+        _pTypeMap = new();
+        PTypeMap = new(this);
         //int
         PTypeMap[typeof (int)] = PType.Int;
         PTypeMap[typeof (long)] = PType.Int;
@@ -601,8 +588,8 @@ public partial class Engine
         PTypeMap[typeof (PValueHashtable)] = PType.Hash;
 
         //Registry
-        _pTypeRegistry = new SymbolTable<Type>();
-        PTypeRegistry = new PTypeRegistryIterator(this)
+        _pTypeRegistry = new();
+        PTypeRegistry = new(this)
         {
             [IntPType.Literal] = typeof(IntPType),
             [BoolPType.Literal] = typeof(BoolPType),
@@ -614,7 +601,7 @@ public partial class Engine
             [ListPType.Literal] = typeof(ListPType),
             [StructurePType.Literal] = typeof(StructurePType),
             [HashPType.Literal] = typeof(HashPType),
-            [StructurePType.Literal] = typeof(StructurePType)
+            [StructurePType.Literal] = typeof(StructurePType),
         };
 
         //Assembly registry
@@ -626,7 +613,7 @@ public partial class Engine
             _registeredAssemblies.Add(Assembly.Load(assName.FullName));
 
         //Commands
-        Commands = new CommandTable();
+        Commands = new();
         PCommand cmd;
 
         Commands.AddEngineCommand(PrintAlias, ConsolePrint.Instance);
@@ -816,13 +803,13 @@ public partial class Engine
     {
         _stackSlot = Thread.AllocateDataSlot();
         Meta = prototype.Meta.Clone();
-        _pTypeMap = new Dictionary<Type, PType>(prototype._pTypeMap);
-        PTypeMap = new PTypeMapIterator(this);
-        _pTypeRegistry = new SymbolTable<Type>(prototype._pTypeRegistry.Count);
+        _pTypeMap = new(prototype._pTypeMap);
+        PTypeMap = new(this);
+        _pTypeRegistry = new(prototype._pTypeRegistry.Count);
         _pTypeRegistry.AddRange(prototype._pTypeRegistry);
-        PTypeRegistry = new PTypeRegistryIterator(this);
+        PTypeRegistry = new(this);
         _registeredAssemblies = prototype._registeredAssemblies.Clone();
-        Commands = new CommandTable();
+        Commands = new();
         Commands.AddRange(prototype.Commands);
             
     }
@@ -941,7 +928,7 @@ public partial class Engine
     /// <summary>
     ///     Alias used for the "loadAssembly" command.
     /// </summary>
-    public const string LoadAssemblyAlias = "LoadAssembly";
+    public const string LoadAssemblyAlias = nameof(LoadAssembly);
 
     /// <summary>
     ///     Alias used for the debug command.
@@ -1124,7 +1111,7 @@ public partial class Engine
     ///     Alias used for the CompileToCil command.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")] public const string CompileToCilAlias = "CompileToCil";
+        MessageId = "Cil")] public const string CompileToCilAlias = nameof(CompileToCil);
 
     /// <summary>
     ///     Alias used for the TakeWhile command.

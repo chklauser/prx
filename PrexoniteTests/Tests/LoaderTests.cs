@@ -13,10 +13,10 @@ namespace PrexoniteTests.Tests;
 [TestFixture]
 public class LoaderTests
 {
-    string _tempDirectory;
-    Engine _eng;
-    Application _app;
-    Loader _ldr;
+    string? _tempDirectory;
+    Engine _eng = null!;
+    Application _app = null!;
+    Loader _ldr = null!;
 
     [OneTimeSetUp]
     public void SetUpFixture()
@@ -59,9 +59,9 @@ public class LoaderTests
         //    `- sub2/
         //       `- sub2.pxs
             
-        _eng = new Engine();
-        _app = new Application();
-        _ldr = new Loader(_eng, _app);
+        _eng = new();
+        _app = new();
+        _ldr = new(_eng, _app);
         _ldr.LoadPaths.Push(_tempDirectory);
     }
 
@@ -113,8 +113,8 @@ public class LoaderTests
 
         Assert.That(spec, Is.Not.Null);
         Assert.That(spec, Is.InstanceOf<ResourceSpec>());
-        Assert.That(((ResourceSpec) spec).Name, Is.EqualTo("Prexonite.prxlib.sys.pxs"));
-        Assert.That(((ResourceSpec) spec).ResourceAssembly, Is.SameAs(Assembly.GetAssembly(typeof(Engine))));
+        Assert.That(((ResourceSpec?) spec)?.Name, Is.EqualTo("Prexonite.prxlib.sys.pxs"));
+        Assert.That(((ResourceSpec?) spec)?.ResourceAssembly, Is.SameAs(Assembly.GetAssembly(typeof(Engine))));
     }
 
     [Test]
@@ -124,14 +124,14 @@ public class LoaderTests
 
         Assert.That(spec, Is.Not.Null);
         Assert.That(spec, Is.InstanceOf<ResourceSpec>());
-        Assert.That(((ResourceSpec) spec).Name, Is.EqualTo("Prexonite.prxlib.sys.pxs"));
-        Assert.That(((ResourceSpec) spec).ResourceAssembly, Is.SameAs(Assembly.GetAssembly(typeof(Engine))));
+        Assert.That(((ResourceSpec?) spec)?.Name, Is.EqualTo("Prexonite.prxlib.sys.pxs"));
+        Assert.That(((ResourceSpec?) spec)?.ResourceAssembly, Is.SameAs(Assembly.GetAssembly(typeof(Engine))));
     }
 
     [Test]
     public void EmbeddedResourceAssemblyNotFound()
     {
-        var spec = _ldr.ApplyLoadPaths($"resource:DoesNotExist:Prexonite.prxlib.sys.pxs");
+        var spec = _ldr.ApplyLoadPaths("resource:DoesNotExist:Prexonite.prxlib.sys.pxs");
 
         Assert.That(spec, Is.Null);
     }
@@ -139,18 +139,18 @@ public class LoaderTests
     [Test]
     public void EmbeddedResourceNotFound()
     {
-        var spec = _ldr.ApplyLoadPaths($"resource:Prexonite:doesnotexist.pxs");
+        var spec = _ldr.ApplyLoadPaths("resource:Prexonite:doesnotexist.pxs");
 
         Assert.That(spec, Is.Null);
     }
 
     void _assertFindsFile(string logicalPath, params string[] physicalPathComponents)
     {
-        var effectivePathComponents = _tempDirectory.Singleton().Append(physicalPathComponents).ToArray();
+        var effectivePathComponents = _tempDirectory.Singleton().Append(physicalPathComponents).OfType<string>().ToArray();
         var fileInfo = new FileInfo(Path.Combine(effectivePathComponents));
         var appliedPath = _ldr.ApplyLoadPaths(logicalPath);
         Assert.That(appliedPath, Is.Not.Null, "Loader.ApplyLoadPaths(\"{0}\") should not be null.", logicalPath);
-        Assert.That(appliedPath.FullName, Is.EqualTo(fileInfo.FullName));
+        Assert.That(appliedPath?.FullName, Is.EqualTo(fileInfo.FullName));
     }
         
         

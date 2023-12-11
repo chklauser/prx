@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -48,5 +47,5 @@ public interface IBuildEnvironment : IDisposable
     /// <param name="defaults">The default values for the loader options.</param>
     /// <param name="compilationTarget">The module instance to be used for compiling the module.</param>
     /// <returns></returns>
-    Loader CreateLoader(LoaderOptions defaults = null, Application compilationTarget = null);
+    Loader CreateLoader(LoaderOptions? defaults = null, Application? compilationTarget = null);
 }

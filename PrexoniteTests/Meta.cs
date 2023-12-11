@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using NUnit.Framework.Constraints;
 using Prexonite;
@@ -66,12 +67,12 @@ public static class Meta
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
             object actualObj = actual;
-            return new ConstraintResult(this, actualObj, _matches(actualObj));
+            return new(this, actualObj, _matches(actualObj));
         }
 
         bool _matches(object actual)
         {
-            if (!(actual is IHasMetaTable ihmt))
+            if (actual is not IHasMetaTable ihmt)
             {
                 return false;
             }
@@ -98,12 +99,12 @@ public static class Meta
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
             var actualValue = actual;
-            return new ConstraintResult(this, actualValue, _matches(actualValue));
+            return new(this, actualValue, _matches(actualValue));
         }
 
         bool _matches(object actual)
         {
-            IHasMetaTable ihmt;
+            IHasMetaTable? ihmt;
             MetaTable mt;
             if ((ihmt = actual as IHasMetaTable) != null)
                 mt = ihmt.Meta;

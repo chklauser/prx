@@ -1,6 +1,3 @@
-#nullable enable
-using System;
-using System.IO;
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Build;

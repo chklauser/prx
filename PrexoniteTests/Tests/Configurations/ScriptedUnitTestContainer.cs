@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,7 +32,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Prexonite;
-using Prexonite.Commands.Core;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
 using Prexonite.Modular;
@@ -42,13 +42,11 @@ namespace PrexoniteTests.Tests.Configurations;
 [Parallelizable(ParallelScope.Fixtures)]
 abstract class ScriptedUnitTestContainer : IDisposable
 {
-    public Application Application { get; set; }
-    public Engine Engine { get; set; }
-    public Loader Loader { get; set; }
+    public Application Application { get; set; } = null!;
+    public Engine Engine { get; private set; } = null!;
+    public Loader Loader { get; private set; } = null!;
 
-    public List<string> Dependencies { get; set; }
-
-    public StackContext Root { get; set; }
+    public StackContext Root { get; set; } = null!;
 
     public const string ListTestsId = @"test\list_test";
     public const string RunTestId = @"test\run_test";
@@ -64,11 +62,10 @@ abstract class ScriptedUnitTestContainer : IDisposable
 
     public void Initialize()
     {
-        Application = new Application(ApplicationName);
-        Engine = new Engine();
-        Loader = new Loader(Engine, Application);
+        Application = new(ApplicationName);
+        Engine = new();
+        Loader = new(Engine, Application);
 
-        Dependencies = new List<string>();
         Root = new NullContext(Engine, Application, Array.Empty<string>());
 
         var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -78,11 +75,11 @@ abstract class ScriptedUnitTestContainer : IDisposable
         if (slnPath != null && Directory.Exists(slnPath))
         {
             var psrTestsPath =
-                Path.GetFullPath(Path.Combine(slnPath, "PrexoniteTests", "psr-tests"));
+                Path.GetFullPath(Path.Combine(slnPath, nameof(PrexoniteTests), "psr-tests"));
             OneTimeSetupLog.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
             Engine.Paths.Add(psrTestsPath);
 
-            var prxPath = Path.GetFullPath(Path.Combine(slnPath, @"Prx"));
+            var prxPath = Path.GetFullPath(Path.Combine(slnPath, nameof(Prx)));
             OneTimeSetupLog.WriteLine("inferred prx path: " + prxPath, "Engine.Path");
             Engine.Paths.Add(prxPath);
         }
@@ -104,6 +101,7 @@ abstract class ScriptedUnitTestContainer : IDisposable
 
         var tc = Application.Functions[testCaseId];
         Assert.That(tc, Is.Not.Null, "Test case " + testCaseId + " not found.");
+        if (tc == null) throw new InvalidOperationException("tc is null");
         if (Runner.CompileToCil)
         {
             Assert.That(tc.CilImplementation, Is.Not.Null, "Test case " + testCaseId + " should have a CIL implementation.");
@@ -116,9 +114,10 @@ abstract class ScriptedUnitTestContainer : IDisposable
         var rt = _findRunFunction();
         Assert.That(rt, Is.Not.Null,
             "Test case run function (part of testing framework) not found. Was looking for {0}.", RunTestId);
+        if (rt == null) throw new InvalidOperationException("rt is null");
 
         var resP = rt.Run(Engine, new[] {PType.Null, Root.CreateNativePValue(tc)});
-        var success = (bool) resP.DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Key").Value;
+        var success = (bool) resP.DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Key").Value!;
         if (success)
             return;
 
@@ -157,7 +156,7 @@ abstract class ScriptedUnitTestContainer : IDisposable
             OneTimeSetupLog.WriteLine();
             OneTimeSetupLog.WriteLine("##################################  begin of stored representation for {0} ",name);
 
-            var opt = new LoaderOptions(Engine, new Application(target.Module), target.Symbols)
+            var opt = new LoaderOptions(Engine, new(target.Module), target.Symbols)
                 {ReconstructSymbols = false, RegisterCommands = false, StoreSymbols = true};
             var ldr = new Loader(opt);
             ldr.Store(OneTimeSetupLog);
@@ -171,7 +170,7 @@ abstract class ScriptedUnitTestContainer : IDisposable
         }
     }
 
-    PFunction _findRunFunction()
+    PFunction? _findRunFunction()
     {
         return Application.Compound.Select(app =>
         {
@@ -181,6 +180,6 @@ abstract class ScriptedUnitTestContainer : IDisposable
 
     public void Dispose()
     {
-        Runner?.Dispose();
+        ((UnitTestConfiguration?)Runner)?.Dispose();
     }
 }

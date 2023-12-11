@@ -39,11 +39,10 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Modular;
 using Prexonite.Types;
-using PrexoniteTests.Tests;
 
-namespace Prx.Tests;
+namespace PrexoniteTests.Tests;
 
-public abstract partial class VMTests : VMTestsBase
+public abstract partial class VMTests
 {
     [Test]
     public void CallSubMacroCommandNested()
@@ -101,7 +100,7 @@ function main(x1,x2,x3)
 ");
         Func<List<PValue>> getZs = () =>
         {
-            var pv = target.Variables["zs"].Value.Value as List<PValue>;
+            var pv = target.Variables["zs"]!.Value.Value as List<PValue>;
             return pv ?? new List<PValue>(0);
         };
         Action resetZs = () => getZs().Clear();
@@ -227,7 +226,7 @@ function main(xs,y)
 ");
         var clo = target.Functions["echo\\0"];
         Assert.IsNotNull(clo, "Closure must exist.");
-        Assert.IsTrue(clo.Meta.ContainsKey(PFunction.SharedNamesKey));
+        Assert.IsTrue(clo!.Meta.ContainsKey(PFunction.SharedNamesKey));
         Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
         Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
             MacroAliases.ContextAlias);
@@ -330,14 +329,14 @@ function main(x,y)
             "a__xXx__jeb",
             "a__xXx__b",
             "a__xXx__je=b",
-            "a__xXx__=b"
+            "a__xXx__=b",
         }, "a", "b");
 
         if (CompileToCil)
         {
             var surround = target.Functions["__surround"];
             Assert.That(surround, Is.Not.Null, "Function __surround does not exist.");
-            Assert.That(surround.Meta[PFunction.VolatileKey].Switch,
+            Assert.That(surround!.Meta[PFunction.VolatileKey].Switch,
                 Is.False,
                 $"Function {surround.Id} is volatile. Reason: {surround.Meta[PFunction.DeficiencyKey].Text}");
         }
@@ -434,7 +433,7 @@ function main(x,y)
             "a__xXx__jeb",
             "a__xXx__b",
             "a__xXx__je=b",
-            "a__xXx__=b"
+            "a__xXx__=b",
         }, "a", "b");
     }
 

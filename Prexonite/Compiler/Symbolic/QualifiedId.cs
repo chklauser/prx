@@ -24,19 +24,14 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic;
 
 public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<QualifiedId>, IComparable<QualifiedId>
 {
-    public void ToString([NotNull] TextWriter writer)
+    public void ToString(TextWriter writer)
     {
         if(_elements == null)
             return;
@@ -63,18 +58,17 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
         return sb.ToString();
     }
 
-    [CanBeNull]
-    readonly string[] _elements;
+    readonly string[]? _elements;
 
-    public QualifiedId(params string[] elements) : this()
+    public QualifiedId(params string[]? elements) : this()
     {
 #if DEBUG
-            if (_elements != null)
+            if (elements != null)
             {
                 for (var i = 0; i < elements.Length; i++)
                 {
                     if (elements[i] == null)
-                        throw new ArgumentException(string.Format("Element of qualified id at index {0} is null.", i));
+                        throw new ArgumentException($"Element of qualified id at index {i} is null.");
                 }
             }
 #endif
@@ -108,13 +102,13 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
     public QualifiedId ExtendedWith(string suffix)
     {
         if(_elements == null || _elements.Length == 0)
-            return new QualifiedId(new []{suffix});
+            return new(suffix);
         else
         {
             var next = new string[_elements.Length + 1];
             Array.Copy(_elements,next, _elements.Length);
             next[^1] = suffix;
-            return new QualifiedId(next);
+            return new(next);
         }
     }
 
@@ -129,7 +123,7 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
 
         var ps = new string[thisCount - count];
         Array.Copy(_elements,0,ps,0,ps.Length);
-        return new QualifiedId(ps);
+        return new(ps);
     }
 
     public QualifiedId WithPrefixDropped(int count)
@@ -143,7 +137,7 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
 
         var ps = new string[thisCount - count];
         Array.Copy(_elements, count, ps, 0, ps.Length);
-        return new QualifiedId(ps);
+        return new(ps);
     }
 
     public bool Equals(QualifiedId other)
@@ -154,7 +148,7 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
         {
             return true;
         }
-        else if (thisZero || otherZero || _elements.Length != other._elements.Length)
+        else if (thisZero || otherZero || _elements!.Length != other._elements!.Length)
         {
             // Treat uninitialized and zero length paths the same.
             return false;
@@ -202,7 +196,7 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
         }
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         return obj is QualifiedId id && Equals(id);

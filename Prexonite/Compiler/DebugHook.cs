@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using JetBrains.Annotations;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
@@ -87,8 +86,8 @@ public static class DebugHook
     /// <returns>True if the function allows debugging, false otherwise.</returns>
     public static bool IsDebuggingEnabled(PFunction function)
     {
-        if (function.Meta.ContainsKey(DebuggingMetaKey))
-            return function.Meta[DebuggingMetaKey].Switch;
+        if (function.Meta.TryGetValue(DebuggingMetaKey, out var value))
+            return value.Switch;
         else
             return function.ParentApplication.Meta[DebuggingMetaKey].Switch;
     }
@@ -108,7 +107,7 @@ public static class DebugHook
                 {
                     for (var j = 0; j < stmt.Arguments.Count; j++)
                     {
-                        AstReference refNode;
+                        AstReference? refNode;
                         if (stmt.Arguments[j] is AstIndirectCall arg && (refNode = arg.Subject as AstReference) != null)
                         {
                             var printlnCall = t.Factory.Call(stmt.Position,
@@ -137,7 +136,7 @@ public static class DebugHook
             //look for conditions
             if (block[i] is AstCondition cond)
             {
-                AstReference refNode;
+                AstReference? refNode;
                 if (cond.Condition is AstIndirectCall expr 
                     && (refNode = expr.Subject as AstReference) != null 
                     && refNode.Entity.TryGetCommand(out var cmd) 
@@ -154,8 +153,8 @@ public static class DebugHook
     }
 
     [ContractAnnotation("=>true,stmt:notnull;=>false,stmt:canbenull")]
-    static bool _isDebugCall([CanBeNull] AstGetSet stmt)
+    static bool _isDebugCall(AstGetSet? stmt)
     {
-        return stmt.TryMatchCall(out var entityRef) && entityRef.TryGetCommand(out var cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
+        return stmt != null && stmt.TryMatchCall(out var entityRef) && entityRef.TryGetCommand(out var cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
     }
 }

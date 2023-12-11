@@ -24,8 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
-using System.Linq;
 using Prexonite.Commands.Core;
 using Prexonite.Properties;
 using Debug = System.Diagnostics.Debug;
@@ -56,7 +54,7 @@ public class AstCoalescence : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
 
@@ -67,7 +65,7 @@ public class AstCoalescence : AstExpr,
             if (arg == null)
                 throw new PrexoniteException(
                     "Invalid (null) argument in GetSet node (" + ToString() +
-                    ") detected at position " + Expressions.IndexOf(arg) + ".");
+                    ") detected at position " + Expressions.IndexOf(null!) + ".");
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
                 Expressions[i] = oArg;
@@ -164,7 +162,7 @@ public class AstCoalescence : AstExpr,
     {
         var hasSplices = Expressions.Any(x => x is AstArgumentSplice);
         var hasPlaceholders = Expressions.Any(x => x.IsPlaceholder());
-        return new NodeApplicationState(hasPlaceholders, hasSplices);
+        return new(hasPlaceholders, hasSplices);
     }
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
@@ -208,11 +206,7 @@ public class AstCoalescence : AstExpr,
             return;
         }
 
-        if (count == 0)
-        {
-            this.ConstFunc().EmitValueCode(target);
-        }
-        else if (count == 1)
+        if (count == 1)
         {
             Debug.Assert(Expressions[0].IsPlaceholder(),
                 "Singleton ??-chain expected to consist of placeholder.");

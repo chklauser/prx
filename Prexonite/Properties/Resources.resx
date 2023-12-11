@@ -481,4 +481,16 @@
   <data name="Loader_CannotAddFileRepeatedly" xml:space="preserve">
     <value>Cannot add file '{0}' more than once. It makes the order in which code gets loaded fragile.</value>
   </data>
+  <data name="Unbind_OnlyWorksForLocalVariables" xml:space="preserve">
+    <value>CIL implementation of Core.Unbind command only accepts local variable references.</value>
+  </data>
+  <data name="Lexer_multiple_MustContainOneNonNull" xml:space="preserve">
+    <value>Must contain at least one non-null token.</value>
+  </data>
+  <data name="AstPartiallyApplicable_IdFunc_Placeholder_must_have_its_index_assigned_" xml:space="preserve">
+    <value>Placeholder must have its index assigned.</value>
+  </data>
+  <data name="SingletonCompound_CopyTo_IndexOutOfArrayBounds" xml:space="preserve">
+    <value>Index is outside of the arrays bounds.</value>
+  </data>
 </root>

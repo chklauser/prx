@@ -23,27 +23,23 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.IO;
 using JetBrains.Annotations;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Internal;
 
 public abstract class MExpr
 {
-    MExpr([NotNull] ISourcePosition position)
+    MExpr(ISourcePosition position)
     {
         Position = position;
     }
 
-    [NotNull]
     public ISourcePosition Position { get; }
 
     [PublicAPI]
-    public abstract void ToString([NotNull] TextWriter writer);
+    public abstract void ToString(TextWriter writer);
 
     public sealed override string ToString()
     {
@@ -53,17 +49,17 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=>true,args: notnull;=>false,args:canbenull")]
-    public abstract bool TryMatchHead(string head, out List<MExpr> args);
+    public abstract bool TryMatchHead(string head, [NotNullWhen(true)] out List<MExpr>? args);
 
     [ContractAnnotation("=>false,value:null;=>true")]
-    public abstract bool TryMatchAtom(out object value);
+    public abstract bool TryMatchAtom(out object? value);
 
     #region Parsing helper methods
 
     [ContractAnnotation("=> true, arg: notnull; =>false,arg: canbenull")]
-    public bool TryMatchHead(string head, out MExpr arg)
+    public bool TryMatchHead(string head, [NotNullWhen(true)] out MExpr? arg)
     {
-        if (TryMatchHead(head, out List<MExpr> args) && args.Count == 1)
+        if (TryMatchHead(head, out List<MExpr>? args) && args.Count == 1)
         {
             arg = args[0];
             return true;
@@ -76,9 +72,9 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=> true, arg: notnull; =>false,arg: null")]
-    public bool TryMatchHeadPrefix(string head, out MExpr arg)
+    public bool TryMatchHeadPrefix(string head, [NotNullWhen(true)] out MExpr? arg)
     {
-        if (TryMatchHead(head, out List<MExpr> args) && args.Count >= 1)
+        if (TryMatchHead(head, out List<MExpr>? args) && args.Count >= 1)
         {
             arg = args[0];
             return true;
@@ -91,9 +87,13 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
-    public bool TryMatchHeadPrefix(string head, out MExpr arg1, out MExpr arg2)
+    public bool TryMatchHeadPrefix(
+        string head,
+        [NotNullWhen(true)] out MExpr? arg1,
+        [NotNullWhen(true)] out MExpr? arg2
+    )
     {
-        if (TryMatchHead(head, out List<MExpr> args) && args.Count >= 2)
+        if (TryMatchHead(head, out List<MExpr>? args) && args.Count >= 2)
         {
             arg1 = args[0];
             arg2 = args[1];
@@ -107,9 +107,9 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
-    public bool TryMatchHead(string head, out MExpr arg1, out MExpr arg2)
+    public bool TryMatchHead(string head, [NotNullWhen(true)] out MExpr? arg1, [NotNullWhen(true)] out MExpr? arg2)
     {
-        if (TryMatchHead(head, out List<MExpr> args) && args.Count == 2)
+        if (TryMatchHead(head, out List<MExpr>? args) && args.Count == 2)
         {
             arg1 = args[0];
             arg2 = args[1];
@@ -123,9 +123,14 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
-    public bool TryMatchHeadPrefix(string head, out MExpr arg1, out MExpr arg2, out MExpr arg3)
+    public bool TryMatchHeadPrefix(
+        string head,
+        [NotNullWhen(true)] out MExpr? arg1,
+        [NotNullWhen(true)] out MExpr? arg2,
+        [NotNullWhen(true)] out MExpr? arg3
+    )
     {
-        if (TryMatchHead(head, out List<MExpr> args) && args.Count >= 3)
+        if (TryMatchHead(head, out List<MExpr>? args) && args.Count >= 3)
         {
             arg1 = args[0];
             arg2 = args[1];
@@ -140,9 +145,14 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=> true, arg1: notnull, arg2: notnull, arg3: notnull; =>false,arg1: null,arg2: null, arg3: notnull")]
-    public bool TryMatchHead(string head, out MExpr arg1, out MExpr arg2, out MExpr arg3)
+    public bool TryMatchHead(
+        string head,
+        [NotNullWhen(true)] out MExpr? arg1,
+        [NotNullWhen(true)] out MExpr? arg2,
+        [NotNullWhen(true)] out MExpr? arg3
+    )
     {
-        if (TryMatchHead(head, out List<MExpr> args) && args.Count == 3)
+        if (TryMatchHead(head, out List<MExpr>? args) && args.Count == 3)
         {
             arg1 = args[0];
             arg2 = args[1];
@@ -157,7 +167,7 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=>true,value: notnull;=>false,value:null")]
-    public bool TryMatchStringAtom(out string value)
+    public bool TryMatchStringAtom([NotNullWhen(true)] out string? value)
     {
         if (TryMatchAtom(out var raw) && (value = raw as string) != null)
         {
@@ -184,7 +194,7 @@ public abstract class MExpr
         }
     }
 
-    public bool TryMatchVersionAtom(out Version version)
+    public bool TryMatchVersionAtom([NotNullWhen(true)] out Version? version)
     {
         if (TryMatchAtom(out var raw) && (version = raw as Version) != null)
         {
@@ -202,17 +212,16 @@ public abstract class MExpr
 
     public sealed class MAtom : MExpr, IEquatable<MAtom>
     {
-        public MAtom([NotNull] ISourcePosition position, object value) : base(position)
+        public MAtom(ISourcePosition position, object? value) : base(position)
         {
             Value = value;
         }
 
-        [CanBeNull]
-        public object Value { get; }
+        public object? Value { get; }
 
         public override void ToString(TextWriter writer)
         {
-            string str;
+            string? str;
             if (Value == null)
                 writer.Write("null");
             else if ((str = Value as string) != null)
@@ -225,26 +234,26 @@ public abstract class MExpr
                 writer.Write(Value);
         }
 
-        public override bool TryMatchHead(string head, out List<MExpr> args)
+        public override bool TryMatchHead(string head, [NotNullWhen(true)] out List<MExpr>? args)
         {
             args = null;
             return false;
         }
 
-        public override bool TryMatchAtom(out object value)
+        public override bool TryMatchAtom(out object? value)
         {
             value = Value;
             return true;
         }
 
-        public bool Equals(MAtom other)
+        public bool Equals(MAtom? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Equals(Value, other.Value);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -259,37 +268,35 @@ public abstract class MExpr
 
     public sealed class MList : MExpr, IEquatable<MList>
     {
-        [NotNull]
         readonly string _head;
-        [NotNull]
         readonly List<MExpr> _args;
 
-        public MList([NotNull] ISourcePosition position, [NotNull] string head, [NotNull] IEnumerable<MExpr> args) : base(position)
+        public MList(ISourcePosition position, string head, IEnumerable<MExpr> args) : base(position)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new List<MExpr>(args);
+            _args = new(args);
         }
 
-        public MList([NotNull] ISourcePosition position, [NotNull] string head, MExpr arg) : base(position)
+        public MList(ISourcePosition position, string head, MExpr arg) : base(position)
         {
             if (arg == null) throw new ArgumentNullException(nameof(arg));
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new List<MExpr>(1) {arg};
+            _args = new(1) {arg};
         }
 
-        public MList([NotNull] ISourcePosition position, [NotNull] string head)
+        public MList(ISourcePosition position, string head)
             : base(position)
         {
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new List<MExpr>();
+            _args = new();
         }
 
-        public MList([NotNull] ISourcePosition position, [NotNull] string head, object arg) : base(position)
+        public MList(ISourcePosition position, string head, object arg) : base(position)
         {
             if (arg == null) throw new ArgumentNullException(nameof(arg));
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new List<MExpr>(1) { new MAtom(position, arg) };
+            _args = new(1) { new MAtom(position, arg) };
         }
 
         public override void ToString(TextWriter builder)
@@ -322,7 +329,7 @@ public abstract class MExpr
             }
         }
 
-        public override bool TryMatchHead(string head, out List<MExpr> args)
+        public override bool TryMatchHead(string? head, [NotNullWhen(true)] out List<MExpr>? args)
         {
             if (_head.Equals(head))
             {
@@ -336,20 +343,20 @@ public abstract class MExpr
             }
         }
 
-        public override bool TryMatchAtom(out object value)
+        public override bool TryMatchAtom(out object? value)
         {
             value = null;
             return false;
         }
 
-        public bool Equals(MList other)
+        public bool Equals(MList? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return string.Equals(_head, other._head) && _args.Equals(other._args);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;

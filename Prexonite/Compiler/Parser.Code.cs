@@ -23,12 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using JetBrains.Annotations;
+using System.Runtime.CompilerServices;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
@@ -37,7 +35,6 @@ using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 // ReSharper disable InconsistentNaming
 
@@ -51,14 +48,14 @@ partial class Parser
     {
         Loader = loader ?? throw new ArgumentNullException(nameof(loader));
         _createTableOfInstructions();
-        Ast = new AstProxy(this);
+        Ast = new(this);
         Create = new ParserAstFactory(this);
-        _referenceTransformer = new ReferenceTransformer(this);
+        _referenceTransformer = new(this);
     }
 
     #region Proxy interface
 
-    public Loader Loader { [DebuggerStepThrough] get; }
+    public Loader Loader { get; } = null!; // initialized in the only publicly available constructor
 
     /// <summary>
     /// Preflight mode causes the parser to abort at the 
@@ -71,7 +68,7 @@ partial class Parser
     public Application TargetApplication
     {
         [DebuggerStepThrough]
-        get => Loader.Options.TargetApplication;
+        get => Loader.ParentApplication;
     }
 
     public Module TargetModule
@@ -89,7 +86,7 @@ partial class Parser
     public Engine ParentEngine
     {
         [DebuggerStepThrough]
-        get => Loader.Options.ParentEngine;
+        get => Loader.ParentEngine;
     }
 
     public SymbolStore Symbols
@@ -105,10 +102,10 @@ partial class Parser
         var outerScope = Loader.CurrentScope;
         QualifiedId prefix;
         SymbolStore declScopeStore;
-        LocalNamespace surroundingNamespace;
+        LocalNamespace? surroundingNamespace;
         if (outerScope == null)
         {
-            prefix = new QualifiedId(null);
+            prefix = new(null);
             declScopeStore = Loader.TopLevelSymbols;
             surroundingNamespace = null;
         }
@@ -148,41 +145,37 @@ partial class Parser
         // Not that this is almost completely independent of the namespace itself
         // It is just used as one possible source for exports
         var builder = SymbolStoreBuilder.Create(declScopeStore);
-        return new DeclarationScopeBuilder(builder, prefix, surroundingNamespace);
+        return new(builder, prefix, surroundingNamespace);
     }
 
     class DeclarationScopeBuilder
     {
-        public DeclarationScopeBuilder([NotNull]SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, [NotNull]LocalNamespace ns)
+        public DeclarationScopeBuilder(SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, LocalNamespace ns)
         {
             LocalScopeBuilder = localScopeBuilder ?? throw new ArgumentNullException(nameof(localScopeBuilder));
             Prefix = prefix;
             Namespace = ns ?? throw new ArgumentNullException(nameof(ns));
         }
 
-        [NotNull]
         public SymbolStoreBuilder LocalScopeBuilder { get; }
 
         public QualifiedId Prefix { get; }
 
-        [NotNull]
         public LocalNamespace Namespace { get; }
 
-        [NotNull]
         public DeclarationScope ToDeclarationScope()
         {
             return new(Namespace, Prefix, LocalScopeBuilder.ToSymbolStore());
         }
     }
 
-    [CanBeNull]
-    LocalNamespace _tryGetLocalNamespace([NotNull] ISymbolView<Symbol> currentSurrounding, [NotNull] string superNsId, [NotNull] ISourcePosition idPosition)
+    LocalNamespace? _tryGetLocalNamespace(ISymbolView<Symbol> currentSurrounding, string superNsId, ISourcePosition idPosition)
     {
-        LocalNamespace localNs = null;
+        LocalNamespace? localNs = null;
         if (currentSurrounding.TryGet(superNsId, out var sym))
         {
             var fakeExpr = Create.ExprFor(idPosition, sym);
-            if (!(fakeExpr is AstNamespaceUsage nsUsage))
+            if (fakeExpr is not AstNamespaceUsage nsUsage)
                 Loader.ReportMessage(Message.Error(
                     string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
                     idPosition, MessageClasses.NamespaceExcepted));
@@ -212,7 +205,7 @@ partial class Parser
     /// <param name="localNs">The namespace to declare</param>
     /// <param name="nextPrefix">Namespaces prefix to use for physical names in declared namespace. Or null if the namespace already has a prefix assigned.</param>
     static void _declareNamespaceAsExported(
-        LocalNamespace surroundingNamespace, 
+        LocalNamespace? surroundingNamespace, 
         SymbolStore outer, 
         string superNsId, 
         bool isOutermostNs, 
@@ -221,7 +214,7 @@ partial class Parser
         QualifiedId nextPrefix)
     {
         var nsSym = Symbol.CreateNamespace(localNs, idPosition);
-        Symbol existingSym;
+        Symbol? existingSym;
         if (isOutermostNs)
         {
             // The outermost namespace (x in x.y.z) is declared as an ordinary symbol in the current scope
@@ -247,8 +240,7 @@ partial class Parser
         localNs.Prefix ??= nextPrefix.ToString().Replace('.', '\\');
     }
 
-    [CanBeNull]
-    ISymbolView<Symbol> _resolveNamespace(ISymbolView<Symbol> scope, [NotNull] ISourcePosition qualifiedIdPosition, QualifiedId qualifiedId)
+    ISymbolView<Symbol>? _resolveNamespace(ISymbolView<Symbol> scope, ISourcePosition qualifiedIdPosition, QualifiedId qualifiedId)
     {
         while (qualifiedId.Count > 0)
         {
@@ -301,7 +293,7 @@ partial class Parser
         return index;
     }
 
-    string _assignPhysicalFunctionSlot([CanBeNull] string primaryId)
+    string _assignPhysicalFunctionSlot(string? primaryId)
     {
         return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("f"));
     }
@@ -312,7 +304,7 @@ partial class Parser
         return scope == null ? id : scope._LocalNamespace.DerivePhysicalName(id);
     }
 
-    string _assignPhysicalGlobalVariableSlot([CanBeNull] string primaryId)
+    string _assignPhysicalGlobalVariableSlot(string? primaryId)
     {
         return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("v"));
     }
@@ -323,7 +315,7 @@ partial class Parser
         get => Loader.FunctionTargets;
     }
 
-    public AstProxy Ast { get; }
+    public AstProxy Ast { get; } = null!; // initialized in the only publicly available constructor
 
     [DebuggerStepThrough]
     public class AstProxy
@@ -335,10 +327,23 @@ partial class Parser
             this.outer = outer;
         }
 
-        public AstBlock this[PFunction func] => outer.Loader.FunctionTargets[func].Ast;
+        public AstBlock this[PFunction func]
+        {
+            get
+            {
+                var target = outer.Loader.FunctionTargets[func];
+                if (target == null)
+                {
+                    throw new PrexoniteException(
+                        "Internal error: tried to access AST of function that is not part of this compilation unit: " +
+                        func);
+                }
+                return target.Ast;
+            }
+        }
     }
 
-    public CompilerTarget target { [DebuggerStepThrough] get; private set; }
+    public CompilerTarget? target { [DebuggerStepThrough] get; private set; }
 
     protected int LocalState
     {
@@ -362,9 +367,9 @@ partial class Parser
         }
     }
 
-    public AstBlock CurrentBlock => target?.CurrentBlock;
+    public AstBlock? CurrentBlock => target?.CurrentBlock;
 
-    protected IAstFactory Create { get; }
+    protected IAstFactory Create { get; } = null!; // initialized in the only publicly available constructor
 
     #endregion
 
@@ -381,7 +386,7 @@ partial class Parser
     public void ViolentlyAbortParse()
     {
         scanner.Abort();
-        la = new Token {kind = _EOF, pos = la.pos, line = la.pos, col = la.col, val = ""};
+        la = new() {kind = _EOF, pos = la.pos, line = la.pos, col = la.col, val = ""};
     }
 
     #region Helper
@@ -405,7 +410,7 @@ partial class Parser
             out d);
     }
 
-    public static bool TryParseVersion(string s, out Version version)
+    public static bool TryParseVersion(string? s, [NotNullWhen(true)] out Version? version)
     {
         return System.Version.TryParse(s, out version);
     }
@@ -428,24 +433,24 @@ partial class Parser
 
     void _pushLexerState(int state)
     {
-        if (!(scanner is Lexer lex))
+        if (scanner is not Lexer lex)
             throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
         lex.PushState(state);
     }
 
     void _popLexerState()
     {
-        if (!(scanner is Lexer lex))
+        if (scanner is not Lexer lex)
             throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
         lex.PopState();
         //Might be id or keyword
-        if (la.kind > _BEGINKEYWORDS && la.kind < _ENDKEYWORDS || la.kind == _id)
+        if (la.kind is > _BEGINKEYWORDS and < _ENDKEYWORDS or _id)
             la.kind = lex.checkKeyword(la.val);
     }
 
     void _inject(Token c)
     {
-        if (!(scanner is Lexer lex))
+        if (scanner is not Lexer lex)
             throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
 
         if (c == null)
@@ -461,7 +466,7 @@ partial class Parser
         var c = new Token
         {
             kind = kind,
-            val = val
+            val = val,
         };
         _inject(c);
     }
@@ -478,15 +483,17 @@ partial class Parser
     /// <param name="vari">The variable declaration for the new variable.</param>
     protected PVariable DefineGlobalVariable(string id, out VariableDeclaration vari)
     {
-        if (TargetModule.Variables.TryGetVariable(id, out vari))
+        if (TargetModule.Variables.TryGetVariable(id, out var x))
         {
-            return TargetApplication.Variables[vari.Id];
+            vari = x;
+            return TargetApplication.Variables[vari.Id] 
+                ?? throw new PrexoniteException("Internal error: declared variable is not reflected in application.");
         }
         else
         {
             vari = global::Prexonite.Modular.VariableDeclaration.Create(id);
             TargetModule.Variables.Add(vari);
-            return TargetApplication.Variables[id] = new PVariable(vari);
+            return TargetApplication.Variables[id] = new(vari);
         }
     }
 
@@ -503,13 +510,13 @@ partial class Parser
         {
             buildBlockTarget.Ast.EmitCode(buildBlockTarget, true, StackSemantics.Effect);
 
-            buildBlockTarget.Function.Meta["File"] = scanner.File;
+            buildBlockTarget.Function.Meta[nameof(File)] = scanner.File;
             buildBlockTarget.FinishTarget();
             //Run the build block 
             var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
                 Array.Empty<PValue>(),
                 Array.Empty<PVariable>(), true);
-            object token = null;
+            object? token = null;
             try
             {
                 TargetApplication._SuppressInitialization = true;
@@ -548,14 +555,27 @@ partial class Parser
 
     readonly Stack<object> _scopeStack = new();
 
+    [MemberNotNull(nameof(target), nameof(CurrentBlock))]
+    void ensureHasTarget([CallerMemberName] string? caller = null)
+    {
+        if (target == null || CurrentBlock == null)
+        {
+            throw new PrexoniteException($"Internal error: {caller} does not have access to a compiler target.");
+        }
+    }
+    
+    [MemberNotNull(nameof(target), nameof(CurrentBlock))]
     internal void _PushScope(AstScopedBlock block)
     {
         if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
             throw new PrexoniteException("Cannot push scope of unrelated block.");
+        ensureHasTarget();
         _scopeStack.Push(block);
         target.BeginBlock(block);
+        ensureHasTarget();
     }
 
+    [MemberNotNull(nameof(target), nameof(CurrentBlock))]
     internal void _PushScope(CompilerTarget ct)
     {
         if (!ReferenceEquals(ct.ParentTarget, target))
@@ -571,6 +591,7 @@ partial class Parser
         // Record scope
         _scopeStack.Push(ct);
         target = ct;
+        ensureHasTarget();
     }
 
     internal void _PopScope(AstScopedBlock block)
@@ -578,6 +599,7 @@ partial class Parser
         if (!ReferenceEquals(_scopeStack.Peek(), block))
             throw new PrexoniteException(
                 $"Tried to pop scope of block {block} but {_scopeStack.Peek()} was on top.");
+        ensureHasTarget();
         _scopeStack.Pop();
         target.EndBlock();
     }
@@ -790,13 +812,16 @@ partial class Parser
     }
         
     [DebuggerStepThrough]
+    [MemberNotNull(nameof(target))]
     bool isOuterVariable(string id) //context
     {
+        ensureHasTarget();
         return target._IsOuterVariable(id);
     }
 
     string generateLocalId(string prefix = "")
     {
+        ensureHasTarget();
         return target.GenerateLocalId(prefix);
     }
 
@@ -809,6 +834,7 @@ partial class Parser
             ? Symbol.CreateDereference(refSym, declPos)
             : refSym;
 
+        ensureHasTarget();
         target.Symbols.Declare(localAlias, sym);
         if (!isOverrideDecl && !target.Function.Variables.Contains(physicalId) &&
             isOuterVariable(physicalId))
@@ -830,8 +856,7 @@ partial class Parser
     /// <param name="id">The ID to resolve.</param>
     /// <param name="position">The position to use for error messages.</param>
     /// <returns>The expression that this symbol resolves to.</returns>
-    [NotNull]
-    AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] string id, [NotNull] ISourcePosition position)
+    AstGetSet _useSymbol(ISymbolView<Symbol> scope, string id, ISourcePosition position)
     {
         var expr = scope.TryGet(id, out var sym)
             ? Create.ExprFor(position, sym)
@@ -861,8 +886,7 @@ partial class Parser
     /// <param name="id">The ID to resolve within the base namespace.</param>
     /// <param name="position">The position to use for error messages.</param>
     /// <returns>The expression that this symbol resolves to.</returns>
-    [NotNull]
-    AstGetSet _useSymbolFromNamespace([NotNull] AstNamespaceUsage ns, [NotNull] string id, [NotNull] ISourcePosition position)
+    AstGetSet _useSymbolFromNamespace(AstNamespaceUsage ns, string id, ISourcePosition position)
     {
         var expr = _useSymbol(ns.Namespace, id, position);
         // write down qualified path
@@ -942,10 +966,9 @@ partial class Parser
 
     class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
     {
-        [NotNull]
         readonly Parser _parser;
 
-        public ReferenceTransformer([NotNull] Parser parser)
+        public ReferenceTransformer(Parser parser)
         {
             _parser = parser;
         }
@@ -1000,7 +1023,7 @@ partial class Parser
                 // Here, we don't actually remove the expansion, but rather switch the 
                 //  flag to true to indicate that the calling procedure should 
                 //  convert the resulting expansion node into a partial application.
-                return new Tuple<Symbol, bool>(base.HandleExpand(self,argument-1).Item1,true);
+                return new(base.HandleExpand(self,argument-1).Item1,true);
             }
             else
             {
@@ -1009,8 +1032,7 @@ partial class Parser
         }
     }
 
-    [NotNull]
-    readonly ReferenceTransformer _referenceTransformer;
+    readonly ReferenceTransformer _referenceTransformer = null!; // initialized in the only publicly available constructor
 
     AstExpr _assembleReference(string id, int ptrCount)
     {
@@ -1033,7 +1055,7 @@ partial class Parser
                 {
                     // If the reference transformer indicates that an Expand prefix was eliminated
                     //  during the transformation, we need to convert the invocation into a partial application
-                    if (!(invocation is AstGetSet invocationCall))
+                    if (invocation is not AstGetSet invocationCall)
                     {
                         Loader.ReportMessage(
                             Message.Error(Resources.Parser__assembleReference_MacroDefinitionNotLValue, position,
@@ -1055,10 +1077,10 @@ partial class Parser
         }
     }
 
-    static readonly SymbolShift _objectCreationShift = static id => Compiler.Loader.ObjectCreationPrefix + id;
-    static readonly SymbolShift _conversionShift =  static id => Compiler.Loader.ConversionPrefix + id;
-    static readonly SymbolShift _typeCheckShift =  static id => Compiler.Loader.TypeCheckPrefix + id;
-    static readonly SymbolShift _staticCallShift =  static id => Compiler.Loader.StaticCallPrefix + id;
+    static readonly SymbolShift _objectCreationShift = static id => Loader.ObjectCreationPrefix + id;
+    static readonly SymbolShift _conversionShift =  static id => Loader.ConversionPrefix + id;
+    static readonly SymbolShift _typeCheckShift =  static id => Loader.TypeCheckPrefix + id;
+    static readonly SymbolShift _staticCallShift =  static id => Loader.StaticCallPrefix + id;
 
     /// <summary>
     /// Given the partial application of a type check <c>(? is T)</c>, this method will construct the
@@ -1068,12 +1090,12 @@ partial class Parser
     /// <param name="position">The position of the overall expression.</param>
     /// <param name="check">The (non-inverted) type check.</param>
     /// <returns>The partial application of an inverted type check.</returns>
-    [NotNull]
-    AstExpr _createPartialInvertedTypeCheck([NotNull] ISourcePosition position, [NotNull] AstExpr check)
+    AstExpr _createPartialInvertedTypeCheck(ISourcePosition position, AstExpr check)
     {
         // Special handling of "? is not Y" as that's not the same thing as "not (? is Y)"
         // when placeholders are involved.
         Debug.Assert(check.CheckForPlaceholders(), "check is expected to have placeholders");
+        ensureHasTarget();
 
         // Create "not ?"
         var notId = OperatorNames.Prexonite.GetName(UnaryOperator.LogicalNot);
@@ -1106,7 +1128,8 @@ partial class Parser
 
     AstGetSet _createUnknownGetSet()
     {
-        return new AstIndirectCall(this, new AstNull(this));
+        var pos = GetPosition();
+        return Create.IndirectCall(pos, Create.Null(pos));
     }
 
     void _appendRight(AstExpr lhs, AstGetSet rhs)
@@ -1118,8 +1141,8 @@ partial class Parser
     {
         rhs.Arguments.RightAppend(lhs);
         rhs.Arguments.ReleaseRightAppend();
-        AstIndirectCall indirectCallNode;
-        AstReference refNode;
+        AstIndirectCall? indirectCallNode;
+        AstReference? refNode;
         if ((indirectCallNode = rhs as AstIndirectCall) != null 
             && (refNode = indirectCallNode.Subject as AstReference) != null 
             && refNode.Entity.TryGetVariable(out _))
@@ -1139,7 +1162,7 @@ partial class Parser
         block.Add(new AstAsmInstruction(this, ins));
     }
 
-    public void addOpAlias(AstBlock block, string insBase, string detail)
+    public void addOpAlias(AstBlock block, string insBase, string? detail)
     {
         var alias = getOpAlias(insBase, detail, out var argc);
         if (alias == null)
@@ -1148,7 +1171,7 @@ partial class Parser
                 Message.Error(
                     string.Format(Resources.Parser_addOpAlias_Unknown, insBase, detail),
                     GetPosition(), MessageClasses.UnknownAssemblyOperator));
-            block.Add(new AstAsmInstruction(this, new Instruction(OpCode.nop)));
+            block.Add(new AstAsmInstruction(this, new(OpCode.nop)));
             return;
         }
 
@@ -1162,7 +1185,7 @@ partial class Parser
     }
 
     [DebuggerStepThrough]
-    bool isAsmInstruction(string insBase, string detail) //LL(4)
+    bool isAsmInstruction(string insBase, string? detail) //LL(4)
     {
         scanner.ResetPeek();
         var la1 = la.kind == _at ? scanner.Peek() : la;
@@ -1172,7 +1195,7 @@ partial class Parser
     }
 
     static bool checkAsmInstruction(
-        Token la1, Token la2, Token la3, string insBase, string detail)
+        Token la1, Token la2, Token la3, string insBase, string? detail)
     {
         return
             la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
@@ -1231,14 +1254,14 @@ partial class Parser
     }
 
     //[NoDebug()]
-    bool peekIsOneOf(string[,] table)
+    bool peekIsOneOf(string?[,] table)
     {
         scanner.ResetPeek();
         var la1 = la.kind == _at ? scanner.Peek() : la;
         var la2 = scanner.Peek();
         var la3 = scanner.Peek();
         for (var i = table.GetUpperBound(0); i >= 0; i--)
-            if (checkAsmInstruction(la1, la2, la3, table[i, 0], table[i, 1]))
+            if (checkAsmInstruction(la1, la2, la3, table[i, 0]!, table[i, 1]))
                 return true;
         return false;
     }
@@ -1298,8 +1321,7 @@ partial class Parser
         ops.Add("xor", Tuple.Create(ExclusiveOr.DefaultAlias, 2));
     }
 
-    //[DebuggerStepThrough]
-    string getOpAlias(string insBase, string detail, out int argc)
+    string? getOpAlias(string insBase, string? detail, out int argc)
     {
         var combined = insBase + (detail == null ? "" : "." + detail);
         var entry = _opAliasTable.GetDefault(combined, null);
@@ -1316,7 +1338,7 @@ partial class Parser
     }
 
     //[DebuggerStepThrough]
-    OpCode getOpCode(string insBase, string detail)
+    OpCode getOpCode(string insBase, string? detail)
     {
         var combined = insBase + (detail == null ? "" : "." + detail);
         return _instructionNameTable.GetDefault(combined, OpCode.invalid);
@@ -1324,7 +1346,7 @@ partial class Parser
 
     #region Instruction tables
 
-    readonly string[,] asmIntegerGroup =
+    readonly string?[,] asmIntegerGroup =
     {
         {"ldc", "int"},
         {"pop", null},
@@ -1334,20 +1356,20 @@ partial class Parser
         {"incloci", null},
         {"inci", null},
         {"deci", null},
-        {"ldr", "loci"}
+        {"ldr", "loci"},
     };
 
-    readonly string[,] asmJumpGroup =
+    readonly string?[,] asmJumpGroup =
     {
         {"jump", null},
-        {"jump", "t"},
+        {"jump", nameof(t)},
         {"jump", "f"},
         {"jump", "true"},
         {"jump", "false"},
-        {"leave", null}
+        {"leave", null},
     };
 
-    readonly string[,] asmNullGroup =
+    readonly string?[,] asmNullGroup =
     {
         {"ldc", "null"},
         {"ldnull", null},
@@ -1357,7 +1379,7 @@ partial class Parser
         {"ldr", "eng"},
         {"ldr", "app"},
         {"ret", null},
-        {"ret", "set"},
+        {"ret", nameof(set)},
         {"ret", "value"},
         {"ret", "val"},
         {"ret", "break"},
@@ -1370,10 +1392,10 @@ partial class Parser
         {"try", null},
         {"throw", null},
         {"exc", null},
-        {"exception", null}
+        {"exception", null},
     };
 
-    readonly string[,] asmOpAliasGroup =
+    readonly string?[,] asmOpAliasGroup =
     {
         {"neg", null},
         {"not", null},
@@ -1391,10 +1413,10 @@ partial class Parser
         {"cge", null},
         {"or", null},
         {"and", null},
-        {"xor", null}
+        {"xor", null},
     };
 
-    readonly string[,] asmIdGroup =
+    readonly string?[,] asmIdGroup =
     {
         {"inc", null},
         {"incloc", null},
@@ -1416,10 +1438,10 @@ partial class Parser
         {"check", null},
         {"cast", "const"},
         {"cast", null},
-        {"newclo", null}
+        {"newclo", null},
     };
 
-    readonly string[,] asmIdArgGroup =
+    readonly string?[,] asmIdArgGroup =
     {
         {"newtype", null},
         {"get", null},
@@ -1427,24 +1449,24 @@ partial class Parser
         {"func", null},
         {"cmd", null},
         {"indloc", null},
-        {"indglob", null}
+        {"indglob", null},
     };
 
-    readonly string[,] asmArgGroup =
+    readonly string?[,] asmArgGroup =
     {
         {"indarg", null},
         {"inda", null},
         {"newcor", null},
         {"cor", null},
-        {"tail", null}
+        {"tail", null},
     };
 
-    readonly string[,] asmQualidArgGroup =
+    readonly string?[,] asmQualidArgGroup =
     {
         {"sget", null},
         {"sset", null},
         {"newobj", null},
-        {"new", null}
+        {"new", null},
     };
 
     #endregion

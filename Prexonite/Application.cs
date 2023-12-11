@@ -23,16 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Compiler;
 using Prexonite.Internal;
 using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite;
 
@@ -105,7 +103,7 @@ public class Application : IMetaFilter,
 
     #region Construction
 
-    public static readonly MetaEntry DefaultImport = new(new MetaEntry[] {"System"});
+    public static readonly MetaEntry DefaultImport = new(new MetaEntry[] { nameof(System) });
 
     /// <summary>
     ///     Creates a new application with a GUID as its Id.
@@ -120,7 +118,7 @@ public class Application : IMetaFilter,
     ///     Creates a new application with a given Id.
     /// </summary>
     /// <param name = "id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
-    public Application(string id) : this(Module.Create(new ModuleName(id,new Version())))
+    public Application(string id) : this(Module.Create(new(id,new())))
     {
     }
 
@@ -130,16 +128,15 @@ public class Application : IMetaFilter,
 
         //instantiate variables
         foreach (var decl in Module.Variables)
-            Variables.Add(decl.Id, new PVariable(decl));
+            Variables.Add(decl.Id, new(decl));
 
         //instantiate functions
         foreach (var funDecl in Module.Functions)
-            Functions.Add(new PFunction(this, funDecl));
+            Functions.Add(new(this, funDecl));
 
-        Debug.Assert(Functions.Contains(InitializationId),
-            $"Instantiating module {Module.Name} did not result in an instantiated initialization function.");
-        _InitializationFunction = Functions[InitializationId];
-        Debug.Assert(_InitializationFunction != null);
+        _InitializationFunction = Functions[InitializationId] ??
+            throw new PrexoniteException(
+                $"Instantiating module {Module.Name} did not result in an instantiated initialization function.");
     }
 
     #endregion
@@ -155,7 +152,7 @@ public class Application : IMetaFilter,
 
     #region Functions
 
-    public bool TryGetFunction(string id, ModuleName moduleName, out PFunction func)
+    public bool TryGetFunction(string id, ModuleName? moduleName, [NotNullWhen(true)] out PFunction? func)
     {
         var app = this;
         if (moduleName != null && moduleName != Module.Name)
@@ -181,7 +178,7 @@ public class Application : IMetaFilter,
     /// <value>
     ///     A reference to the application's entry function or null, if no such function does not exists.
     /// </value>
-    public PFunction EntryFunction
+    public PFunction? EntryFunction
     {
         [DebuggerStepThrough]
         get => Functions[Meta[EntryKey]];
@@ -229,7 +226,6 @@ public class Application : IMetaFilter,
     /// <summary>
     ///     Provides access to the initialization function.
     /// </summary>
-    [NotNull]
     internal PFunction _InitializationFunction { get; }
 
     /// <summary>
@@ -521,7 +517,7 @@ public class Application : IMetaFilter,
     #region IMetaFilter Members
 
     [DebuggerStepThrough]
-    string IMetaFilter.GetTransform(string key)
+    string? IMetaFilter.GetTransform(string? key)
     {
         if (Engine.StringsAreEqual(key, NameKey))
             return IdKey;
@@ -532,14 +528,13 @@ public class Application : IMetaFilter,
     }
 
     [DebuggerStepThrough]
-    KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
-        KeyValuePair<string, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
     {
         //Unlike the function, the application allows name changes
         if (Engine.StringsAreEqual(item.Key, NameKey))
-            item = new KeyValuePair<string, MetaEntry>(IdKey, item.Value);
+            item = new(IdKey, item.Value);
         else if (Engine.StringsAreEqual(item.Key, "imports"))
-            item = new KeyValuePair<string, MetaEntry>(ImportKey, item.Value);
+            item = new(ImportKey, item.Value);
         return item;
     }
 
@@ -547,7 +542,7 @@ public class Application : IMetaFilter,
 
     #region Application Compound Linking
 
-    ApplicationCompound _compound;
+    ApplicationCompound? _compound;
 
     public ApplicationCompound Compound => _compound ??= new SingletonCompound(this);
 
@@ -593,7 +588,7 @@ public class Application : IMetaFilter,
     /// </summary>
     /// <param name="application">The application to look for.</param>
     /// <returns>True if the two applications are linked, false otherwise.</returns>
-    public bool IsLinkedTo(Application application)
+    public bool IsLinkedTo(Application? application)
     {
         if (application == null)
             return false;
@@ -601,23 +596,24 @@ public class Application : IMetaFilter,
             return IsLinked && _compound == application._compound;
     }
 
-    public bool IsLinkedTo(Module module)
+    [PublicAPI]
+    public bool IsLinkedTo(Module? module)
     {
         if(module == null)
             return false;
         else
         {
-            return IsLinked && _compound.TryGetApplication(module.Name, out var moduleInstance) &&
+            return IsLinked && _compound != null && _compound.TryGetApplication(module.Name, out var moduleInstance) &&
                 moduleInstance.Module == module;
         }
     }
 
-    public bool IsLinkedTo(ModuleName name)
+    public bool IsLinkedTo(ModuleName? name)
     {
         if (name == null)
             return false;
         else
-            return IsLinked && _compound.Contains(name);
+            return IsLinked && _compound != null && _compound.Contains(name);
     }
 
 
@@ -665,8 +661,8 @@ public class Application : IMetaFilter,
 
     class SingletonCompound : ApplicationCompound
     {
-        Application _application;
-        CentralCache _cache;
+        Application? _application;
+        CentralCache? _cache;
 
         public override CentralCache Cache
         {
@@ -708,7 +704,7 @@ public class Application : IMetaFilter,
         }
 
         public override bool TryGetApplication(ModuleName moduleName,
-            out Application application)
+            [NotNullWhen(true)] out Application? application)
         {
             if (_application == null || !_application.Module.Name.Equals(moduleName))
             {
@@ -731,7 +727,7 @@ public class Application : IMetaFilter,
                 throw new ArgumentNullException(nameof(array));
             if (arrayIndex < 0 || array.Length <= arrayIndex)
                 throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex,
-                    "Index is outside of the arrays bounds.");
+                    Resources.SingletonCompound_CopyTo_IndexOutOfArrayBounds);
 
             array[arrayIndex] = _application;
         }
@@ -764,5 +760,5 @@ public enum ApplicationInitializationState
     /// <summary>
     ///     The application is completely initialized.
     /// </summary>
-    Complete = 2
+    Complete = 2,
 }

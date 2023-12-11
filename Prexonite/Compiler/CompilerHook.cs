@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
 
 namespace Prexonite.Compiler;
@@ -41,8 +41,8 @@ public delegate void AstTransformation(CompilerTarget target);
 [DebuggerNonUserCode]
 public sealed class CompilerHook
 {
-    readonly AstTransformation _managed;
-    readonly PValue _interpreted;
+    readonly AstTransformation? _managed;
+    readonly PValue? _interpreted;
 
     /// <summary>
     ///     Creates a new compiler hook, that executes a managed method.
@@ -65,11 +65,15 @@ public sealed class CompilerHook
     /// <summary>
     ///     Indicates whether the compiler hook is managed.
     /// </summary>
+    [MemberNotNullWhen(true, nameof(_managed))]
+    [MemberNotNullWhen(false, nameof(_interpreted))]
     public bool IsManaged => _managed != null;
 
     /// <summary>
     ///     Indicates whether the compiler hook is interpreted.
     /// </summary>
+    [MemberNotNullWhen(true, nameof(_interpreted))]
+    [MemberNotNullWhen(false, nameof(_managed))]
     public bool IsInterpreted => _interpreted != null;
 
     /// <summary>
@@ -81,7 +85,7 @@ public sealed class CompilerHook
     {
         try
         {
-            target.Loader.Options.TargetApplication._SuppressInitialization = true;
+            target.Loader.ParentApplication._SuppressInitialization = true;
             if (IsManaged)
                 _managed(target);
             else
@@ -90,7 +94,7 @@ public sealed class CompilerHook
         }
         finally
         {
-            target.Loader.Options.TargetApplication._SuppressInitialization = false;
+            target.Loader.ParentApplication._SuppressInitialization = false;
         }
     }
 }

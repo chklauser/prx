@@ -68,8 +68,8 @@ StructureStatement<AstBlock block>
 .
 
 GetSetComplex<AstBlock block>
-                                        (.  AstGetSet complex; 
-                                            AstExpr expr;
+                                        (.  AstGetSet? complex; 
+                                            AstExpr? expr;
                                             AstNode node;
                                         .)
 =
@@ -80,7 +80,7 @@ PrimaryForGetSetComplex<out expr>       (.  complex = expr as AstGetSet; .)
 {   GetSetExtension<expr, out complex>  (.  expr = complex; .)
 }
 //GetSet Terminator
-(                                       (.  if(expr != null) // Happens in case of an error
+(                                       (.  if((AstExpr?)expr != null) // Happens in case of an error
                                                 block.Add(expr); 
                                         .)
 |                                       (.  var pos = GetPosition(); 
@@ -123,25 +123,29 @@ AppendRightTermination<ref AstGetSet complex>
 										.)
 .
 
-GetSetExtension<AstExpr subject, out AstGetSet extension>
-                                        (.  extension = null; string id;
+GetSetExtension<AstExpr? subject, out AstGetSet extension>
+                                        (.  extension = Create.IndirectCall(GetPosition(), Create.Null(GetPosition()));
+                                            string id;
 											if(subject == null)
 											{
-												SemErr("Member access not preceded by a proper expression.");
+												Loader.ReportMessage(Message.Error(
+                                                    "Member access not preceded by a proper expression.", 
+                                                    GetPosition(), 
+                                                    MessageClasses.MemberAccessWithoutSubject));
 												subject = new AstConstant(this,null);
 											}
                                         .)
                                         
 =
     IF( isIndirectCall() )
-    dot                                 (.  extension = new AstIndirectCall(this, PCall.Get, subject); .)
+    dot                                 (.  extension = Create.IndirectCall(GetPosition(), subject, PCall.Get); .)
     Arguments<extension.Arguments>
 |   dot
     DotId<out id>                          (.  var ns = subject as AstNamespaceUsage;
                                             if(ns == null)
                                             {
                                                 // Ordinary member access
-                                                extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id);
+                                                extension = Create.MemberAccess(GetPosition(), subject, id, PCall.Get);
                                             }
                                             else
                                             {
@@ -152,7 +156,7 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     Arguments<extension.Arguments> 
 |                                       (.  
                                             AstExpr expr; 
-                                            extension = new AstGetSetMemberAccess(this, PCall.Get, subject, ""); 
+                                            extension = Create.MemberAccess(GetPosition(), subject, "", PCall.Get); 
                                         .)
     lbrack [
             Expr<out expr>              (.  extension.Arguments.Add(expr); .)  
@@ -162,18 +166,18 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     rbrack                                                                      
 .
 
-GetInitiator<out AstExpr complex>
-                                        (.  complex = null; 
-                                            AstGetSet actualComplex = null;
-                                            AstGetSet staticCall = null;
-                                            AstGetSet member = null;
+GetInitiator<out AstExpr _complex>
+                                        (.  AstExpr? complex = null; 
+                                            AstGetSet actualComplex;
+                                            AstGetSet? staticCall = null;
+                                            AstGetSet? member = null;
                                             AstExpr expr;
                                             List<AstExpr> args = new List<AstExpr>();
                                             string id;
                                             int placeholderIndex = -1;
                                             bool missingArg = false;
                                         .)
-=
+=(
     //Actual value
     (   SymbolicUsage<out actualComplex>
                                         (.  complex = actualComplex; .)
@@ -181,7 +185,7 @@ GetInitiator<out AstExpr complex>
                                         (.  complex = actualComplex; .)
     |   StaticCall<out staticCall>
     |	lpar Expr<out expr>				(.	args.Add(expr); .)
-		{	WEAK comma                  (.  if(missingArg) SemErr("Missing expression (two consecutive commas)."); .)
+		{	WEAK comma                  (.  if(missingArg) Loader.ReportMessage(Message.Error("Missing expression (two consecutive commas).", GetPosition(), MessageClasses.DuplicateComma)); .)
 		    (   Expr<out expr>		    (.	args.Add(expr); .) //multiple expressions can only be used as arguments
 		    |                           (.  missingArg = true; .)
 		    )
@@ -189,22 +193,26 @@ GetInitiator<out AstExpr complex>
 		rpar
 		(	GetSetExtension<expr, out member>
 										(.	if(args.Count > 1)
-												SemErr("A member access cannot have multiple subjects. (Did you mean '>>'?)");
+												Loader.ReportMessage(Message.Error(
+												    "A member access cannot have multiple subjects. (Did you mean '>>'?)",
+												    GetPosition(),
+												    MessageClasses.MemberAccessWithoutSubject));
 										.)
 		|	appendright
 			GetCall<out actualComplex>  (.  _appendRight(args,actualComplex);
                                             complex = actualComplex;
 										.)
 		|                               (.  if(args.Count > 1) 
-		                                        SemErr("Expression in parentheses cannot have more than 1 value.");
+		                                        Loader.ReportMessage(Message.Error(
+		                                            "Expression in parentheses cannot have more than 1 value.",
+		                                            GetPosition(),
+		                                            MessageClasses.TupleNotSupported));
                                             complex = args[0]; 
 		                                .)
 		)
     )
-                                        (.  complex =  
-												staticCall ?? 
-												member ??
-												complex; 
+                                        (.  if(staticCall != null) complex = staticCall;
+                                            if(member != null) complex = member;
 										.)
     //Reference
 |   pointer                             (.  var ptrCount = 1; .)
@@ -212,7 +220,8 @@ GetInitiator<out AstExpr complex>
     }
     Id<out id>                          (.  complex = _assembleReference(id, ptrCount); .)
 |   question
-    [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? (int?)placeholderIndex : null); .)
+    [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? placeholderIndex : null); .)
+)                                       (.  _complex = complex ?? Create.Null(GetPosition()); .)
 .
 
 VariableDeclaration<out AstGetSet complex>
@@ -250,6 +259,7 @@ VariableDeclaration<out AstGetSet complex>
     Id<out id>                  (.  physicalId = id;
                                     if(isStatic)
                                     {
+                                        ensureHasTarget();
                                         physicalId = target.Function.Id + "\\static\\" + id;
                                         VariableDeclaration vari;
                                         if(isOverrideDecl)
@@ -271,6 +281,7 @@ VariableDeclaration<out AstGetSet complex>
                                     {
                                         if(isOverrideDecl)
                                         {
+                                            ensureHasTarget();
                                             if(target.Function.Variables.Contains(physicalId))
                                                 physicalId = target.GenerateLocalId(physicalId);
                                             target.Function.Variables.Add(physicalId);
@@ -292,9 +303,9 @@ VariableDeclaration<out AstGetSet complex>
                                     
                                     // Declare the symbol in the current scope and assemble an AST node
                                     Symbols.Declare(id,sym);
-                                    complex = Create.ExprFor(position, Symbol.CreateDereference(varSym)) as AstGetSet;
+                                    AstGetSet? derefExpr = Create.ExprFor(position, Symbol.CreateDereference(varSym)) as AstGetSet;
 
-                                    if(complex == null)
+                                    if(derefExpr == null)
                                     {
                                         Loader.ReportMessage(Message.Error("Expected variable declaration to result in LValue.",position,MessageClasses.LValueExpected));
                                         complex = Create.IndirectCall(position,Create.Null(position));
@@ -302,8 +313,12 @@ VariableDeclaration<out AstGetSet complex>
                                     else if(isUnbound)
                                     {
                                         // Wrap variable access in NewDecl
-                                        var newDecl = new AstGetSetNewDecl(position,physicalId,complex);
+                                        var newDecl = new AstGetSetNewDecl(position,physicalId,derefExpr);
                                         complex = newDecl;
+                                    }
+                                    else 
+                                    {
+                                        complex = derefExpr;
                                     }
                                 .)
 .
@@ -321,7 +336,8 @@ StaticCall<out AstGetSet staticCall>
                                     ISourcePosition idPosition;
                                 .)
 =
-    ExplicitTypeExpr<out staticCall, _staticCallShift>
+    ExplicitTypeExpr<out var staticCall_, _staticCallShift>
+                                (. staticCall = staticCall_ ?? _NullNode(GetPosition()); .)
     dot                         (. idPosition = GetPosition(); .)
     DotId<out memberId>         (.  staticCall.Arguments.Add(Create.Constant(idPosition, memberId)); .)
     Arguments<staticCall.Arguments>
@@ -341,9 +357,9 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
 .
 
 Assignment<AstGetSet lvalue, out AstNode node>
-                                (.  AstExpr expr = null;
+                                (.  AstExpr? expr = null;
 									BinaryOperator setModifier = BinaryOperator.None;
-									AstGetSet typeExpr;
+									AstGetSet? typeExpr;
 									node = lvalue;
                                     ISourcePosition position;
 								.)
@@ -401,7 +417,9 @@ Condition<AstBlock block>
 .
 
 WhileLoop<AstBlock block>
-                                (.  AstWhileLoop loop = new AstWhileLoop(GetPosition(),CurrentBlock); .)
+                                (.  ensureHasTarget();
+                                    AstWhileLoop loop = new AstWhileLoop(GetPosition(),CurrentBlock); 
+                                .)
 =
 (   (   while  | until          (.  loop.IsPositive = false; .)    
     )                           
@@ -422,6 +440,7 @@ WhileLoop<AstBlock block>
 
 ForLoop<AstBlock block>         (.  AstForLoop loop;
 									AstExpr condition;
+									ensureHasTarget();
                                 .)
 =
     for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); 
@@ -474,28 +493,31 @@ ForeachLoop<AstBlock block>
 GetCall<out AstGetSet complex>  // This is used in placed where an LValue is expected
                                 // as the name of this production so helpfully suggests ;-)
                                 // Thus checking for LValue-ness is required and expected.
-                                (.  AstGetSet getMember = null; 
+                                (.  AstGetSet getMember; 
                                     AstExpr expr;
                                 .)
 =
     GetInitiator<out expr>
-                                (.  complex = expr as AstGetSet;
-                                    if(complex == null)
+                                (.  AstGetSet? lvalue = expr as AstGetSet;
+                                    if(lvalue == null)
                                     {
                                         var pos = GetPosition();
                                         Loader.ReportMessage(Message.Error("Expected an LValue (Get/Set-Complex) for ++,-- or assignment statement.",pos,MessageClasses.LValueExpected));
                                         complex = Create.IndirectCall(pos,Create.Null(pos));
-                                    }  
+                                    } else {
+                                        complex = lvalue;
+                                    }
                                 .)
     { GetSetExtension<complex, out getMember> 
                                 (.  complex = getMember; .)
     }
 .
 
-Return<AstBlock block>          (.  AstReturn ret = null; 
-                                    AstExplicitGoTo jump = null; 
+Return<AstBlock block>          (.  AstReturn? ret = null; 
+                                    AstExplicitGoTo? jump = null; 
                                     AstExpr expr; 
-                                    AstLoopBlock bl = target.CurrentLoopBlock;
+                                    ensureHasTarget();
+                                    AstLoopBlock? bl = target.CurrentLoopBlock;
                                 .)
 =
 (   
@@ -506,7 +528,11 @@ Return<AstBlock block>          (.  AstReturn ret = null;
     [   Expr<out expr>          (.  ret.Expression = expr; .)
     |   assign                  (.  ret.ReturnVariant = ReturnVariant.Set; .)
         Expr<out expr>          (.  ret.Expression = expr; .)
-                                (.  SemErr("Return value assignment is no longer supported. You must use local variables instead."); .)
+                                (.  Loader.ReportMessage(Message.Error(
+                                        "Return value assignment is no longer supported. You must use local variables instead.", 
+                                        GetPosition(), 
+                                        MessageClasses.ReturnValueAssignment));
+                                .)
     ]
 |   break                       (.  if(bl == null)
                                         ret = new AstReturn(this, ReturnVariant.Break); 
@@ -518,18 +544,18 @@ Return<AstBlock block>          (.  AstReturn ret = null;
                                     else
                                         jump = new AstExplicitGoTo(this, bl.ContinueLabel);
                                 .)
-)                               (.  block.Add((AstNode)ret ?? jump); .)
+)                               (.  block.Add((AstNode?)ret ?? jump); .)
 .
 
 NestedFunction<AstBlock block>
-                                (.  PFunction func; .)
+                                (.  PFunction func; ensureHasTarget(); .)
 =
     FunctionDefinition<out func>
                                 (.  
                                     string logicalId = func.Meta[PFunction.LogicalIdKey];
                                     func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                     
-                                    CompilerTarget ft = FunctionTargets[func];
+                                    CompilerTarget ft = FunctionTargets[func]!;
                                     var pos = GetPosition();
                                     var setVar = Create.IndirectCall(pos,Create.Reference(pos,EntityRef.Variable.Local.Create(logicalId)),PCall.Set);
                                     if(func.Meta[PFunction.LazyKey].Switch)
@@ -563,8 +589,9 @@ LetBindingStmt<AstBlock block>
 .
 
 LetBinder<AstBlock block>
-                                (.  string id = null;
+                                (.  string id;
                                     AstExpr thunk;
+                                    ensureHasTarget();
                                 .)
 =                               (.  var position = GetPosition(); .)
     Id<out id>                  (.  //Declare local "let" variable
@@ -600,7 +627,11 @@ TryCatchFinally<AstBlock block>
 		(   lpar
 			GetCall<out excVar> (. a.ExceptionVar = excVar; .)
 			rpar
-	    |                       (.  SemErr(la,"catch-clauses that don't store the exception are illegal."); .)
+	    |                       (.  Loader.ReportMessage(Message.Error(
+	                                    "catch-clauses that don't store the exception are illegal.",
+	                                    GetNextPosition(),
+	                                    MessageClasses.CatchWithoutException));
+                                .)
 		)
 		lbrace
 		{   Statement<a.CatchBlock>
@@ -627,7 +658,11 @@ TryCatchFinally<AstBlock block>
 				GetCall<out excVar>
                                 (. a.ExceptionVar = excVar; .)
 				rpar
-			|                   (.  SemErr(la,"catch-clauses that don't store the exception are illegal."); .)
+			|                   (.  Loader.ReportMessage(Message.Error(
+                                        "catch-clauses that don't store the exception are illegal.",
+                                        GetNextPosition(),
+                                        MessageClasses.CatchWithoutException));
+                                .)
 			)
 			lbrace
 			{   Statement<a.CatchBlock>
@@ -643,7 +678,7 @@ TryCatchFinally<AstBlock block>
 .
 
 Throw<AstBlock block>
-                                (.  AstThrow th; .)
+                                (.  AstExpr th; .)
 =
 	ThrowExpression<out th>
                                 (.  block.Add(th); .)
@@ -676,7 +711,10 @@ Arguments<ArgumentsProxy args>
 		lpar
 		[	Expr<out expr>      (.  args.Add(expr); .)
 			{	comma           (.  if(missingArg)
-                                        SemErr("Missing argument expression (two consecutive commas)");
+                                        Loader.ReportMessage(Message.Error(
+                                            "Missing argument expression (two consecutive commas)",
+                                            GetPosition(),
+                                            MessageClasses.DuplicateComma));
                                 .)
 				(   Expr<out expr>  
                                 (.  args.Add(expr);

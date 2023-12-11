@@ -23,11 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace Prexonite.Compiler.Cil;
 
@@ -35,7 +32,7 @@ namespace Prexonite.Compiler.Cil;
 ///     Wraps a cil extension hint. Should replace existing hints of the same kind.
 /// </summary>
 [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Cil")]
+    MessageId = nameof(Cil))]
 public class CilExtensionHint : ICilHint
 {
     /// <summary>
@@ -92,6 +89,6 @@ public class CilExtensionHint : ICilHint
                 offsets.Add(offset);
         }
 
-        return new CilExtensionHint(offsets);
+        return new(offsets);
     }
 }

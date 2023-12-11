@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Diagnostics;
 
-#nullable enable
+using System.Diagnostics;
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -34,9 +33,9 @@ public sealed class SymbolInfo
 {
     public SymbolInfo(Symbol symbol, SymbolOrigin origin, string name)
     {
-        Symbol = symbol ?? throw new System.ArgumentNullException(nameof(symbol));
-        Origin = origin ?? throw new System.ArgumentNullException(nameof(origin));
-        Name = name ?? throw new System.ArgumentNullException(nameof(name));
+        Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
+        Origin = origin ?? throw new ArgumentNullException(nameof(origin));
+        Name = name ?? throw new ArgumentNullException(nameof(name));
     }
 
     public Symbol Symbol { get; }

@@ -23,7 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
+using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast;
@@ -31,33 +32,21 @@ namespace Prexonite.Compiler.Ast;
 public class AstKeyValuePair : AstExpr,
     IAstHasExpressions, IAstPartiallyApplicable
 {
-    public AstKeyValuePair(string file, int line, int column)
-        : this(file, line, column, null, null)
-    {
-    }
+    AstExpr _key;
+    AstExpr _value;
 
+    [PublicAPI]
     public AstKeyValuePair(
         string file, int line, int column, AstExpr key, AstExpr value)
         : base(file, line, column)
     {
-        Key = key;
-        Value = value;
+        _key = key;
+        _value = value;
     }
 
-    internal AstKeyValuePair(Parser p)
-        : this(p, null, null)
-    {
-    }
+    public AstExpr Key => _key;
 
-    internal AstKeyValuePair(Parser p, AstExpr key, AstExpr value)
-        : base(p)
-    {
-        Key = key;
-        Value = value;
-    }
-
-    public AstExpr Key;
-    public AstExpr Value;
+    public AstExpr Value => _value;
 
     #region IAstHasExpressions Members
 
@@ -90,15 +79,15 @@ public class AstKeyValuePair : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         if (Key == null)
             throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
         if (Value == null)
             throw new ArgumentNullException(nameof(target));
 
-        _OptimizeNode(target, ref Key);
-        _OptimizeNode(target, ref Value);
+        _OptimizeNode(target, ref _key);
+        _OptimizeNode(target, ref _value);
 
         expr = null;
 
@@ -112,8 +101,8 @@ public class AstKeyValuePair : AstExpr,
     public NodeApplicationState CheckNodeApplicationState()
     {
         return new(
-            (Key?.IsPlaceholder() ?? false) || (Value?.IsPlaceholder() ?? false), 
-            (Key?.IsArgumentSplice() ?? false) || (Value?.IsArgumentSplice() ?? false));
+            Key.IsPlaceholder() || Value.IsPlaceholder(), 
+            Key.IsArgumentSplice() || Value.IsArgumentSplice());
     }
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
@@ -135,8 +124,8 @@ public class AstKeyValuePair : AstExpr,
 
     public override string ToString()
     {
-        var key = Key?.ToString() ?? "-null-";
-        var value = Value?.ToString() ?? "-null-";
+        var key = Key.ToString() ?? "-null-";
+        var value = Value.ToString() ?? "-null-";
         return $"Key = ({key}): Value = ({value})";
     }
 }

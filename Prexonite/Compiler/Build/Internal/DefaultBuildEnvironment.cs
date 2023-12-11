@@ -1,11 +1,4 @@
-﻿#nullable enable
-
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading;
+﻿using System.Diagnostics;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -66,7 +59,7 @@ class DefaultBuildEnvironment : IBuildEnvironment
 
     public Loader CreateLoader(LoaderOptions? defaults = null, Application? compilationTarget = null)
     {
-        defaults ??= new LoaderOptions(null, null);
+        defaults ??= new(null, null);
         var planOptions = _plan.Options;
         if(planOptions != null)
             defaults.InheritFrom(planOptions);
@@ -92,7 +85,7 @@ class DefaultBuildEnvironment : IBuildEnvironment
         var finalOptions = new LoaderOptions(_compilationEngine, compilationTarget, predef)
             {ReconstructSymbols = false, RegisterCommands = false};
         finalOptions.InheritFrom(defaults);
-        return new Loader(finalOptions);
+        return new(finalOptions);
     }
 
     [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse")]

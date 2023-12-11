@@ -1,7 +1,3 @@
-#nullable enable
-using System;
-using JetBrains.Annotations;
-
 namespace Prexonite;
 
 /// <summary>

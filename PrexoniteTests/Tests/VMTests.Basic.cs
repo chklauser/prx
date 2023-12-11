@@ -34,6 +34,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
@@ -41,11 +42,10 @@ using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
-using PrexoniteTests.Tests;
 
-namespace Prx.Tests;
+namespace PrexoniteTests.Tests;
 
-public abstract partial class VMTests : VMTestsBase
+public abstract partial class VMTests
 {
     [Test]
     public void Basic()
@@ -61,10 +61,12 @@ function test1
         Assert.AreEqual(0, ldr.ErrorCount);
 
         var test1 = target.Functions["test1"];
-        var fctx = new FunctionContext(engine, test1);
+        Assert.NotNull(test1);
+        var fctx = new FunctionContext(engine, test1!);
         var x = fctx.LocalVariables["x"];
+        Assert.NotNull(x);
         Assert.IsTrue(
-            x.Value?.Value == null, "variable x must be null in some way.");
+            x!.Value.Value == null, "variable x must be null in some way.");
         engine.Stack.AddLast(fctx);
         engine.Process();
         Assert.AreEqual(
@@ -72,7 +74,7 @@ function test1
         Assert.IsNotNull(x.Value, "Value of PVariable is null (violates invariant).");
         Assert.AreEqual(PType.BuiltIn.Int, x.Value.Type.ToBuiltIn());
         Assert.IsNotNull(x.Value.Value, "Result is null (while PType is Int)");
-        Assert.AreEqual(10, (int) x.Value.Value);
+        Assert.AreEqual(10, (int) x.Value.Value!);
     }
 
     [Test]
@@ -102,19 +104,19 @@ function test1(x)
         var expected = x--;
 
         var fctx =
-            target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            target.Functions["test1"]!.CreateFunctionContext(engine, new PValue[] {x0});
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
 
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
         Assert.AreEqual(
             expected,
-            (int) rv.Value,
+            (int) rv.Value!,
             "Return value is expected to be " + expected + ".");
 
         Assert.AreEqual(
             x,
-            (int) fctx.LocalVariables["x"].Value.Value,
+            (int) fctx.LocalVariables[nameof(x)]!.Value.Value!,
             "Value of x is supposed to be " + x + ".");
     }
 
@@ -172,12 +174,12 @@ function complicated(x,y) does
         var v0 = rnd.Next(1, 100);
         var expected = 2*v0;
 
-        var result = target.Functions["twice"].Run(engine, new PValue[] {v0});
+        var result = target.Functions["twice"]!.Run(engine, new PValue[] {v0});
         Assert.AreEqual(
             PType.BuiltIn.Int,
             result.Type.ToBuiltIn(),
             "Result is expected to be an integer. (twice)");
-        Assert.AreEqual(expected, (int) result.Value);
+        Assert.AreEqual(expected, (int) result.Value!);
 
         //Test complicated            
         var x0 = rnd.Next(1, 100);
@@ -187,15 +189,16 @@ function complicated(x,y) does
         var y1 = x1 + z;
         expected = y1 + x1;
 
-        result = target.Functions["complicated"].Run(engine, new PValue[] {x0, y0});
+        result = target.Functions["complicated"]!.Run(engine, new PValue[] {x0, y0});
         Assert.AreEqual(
             PType.BuiltIn.Int,
             result.Type.ToBuiltIn(),
             "Result is expected to be an integer. (complicated)");
-        Assert.AreEqual(expected, (int) result.Value);
+        Assert.AreEqual(expected, (int) result.Value!);
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "UselessBinaryOperation")]
     public void FunctionAndGlobals()
     {
         const string input1 =
@@ -215,7 +218,7 @@ function test1(x) does
 
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
-        target.Variables["J"].Value = j;
+        target.Variables["J"]!.Value = j;
         Assert.AreEqual(0, ldr.ErrorCount);
 
         TestContext.WriteLine(target.StoreInString());
@@ -227,11 +230,11 @@ function test1(x) does
         var expected = (x0 + 2 + j)/j;
 
         var fctx =
-            target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            target.Functions["test1"]!.CreateFunctionContext(engine, new PValue[] {x0});
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
-        Assert.AreEqual(expected, (int) rv.Value);
+        Assert.AreEqual(expected, (int) rv.Value!);
     }
 
     [Test]
@@ -263,14 +266,14 @@ function test1(x) does
         const int expected = (2 + x1 + j1)/j1;
 
         var fctx =
-            target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            target.Functions["test1"]!.CreateFunctionContext(engine, new PValue[] {x0});
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
-        Assert.AreEqual(expected, (int) fctx.ReturnValue.Value);
+        Assert.AreEqual(expected, (int) fctx.ReturnValue.Value!);
 
-        Assert.AreEqual(PType.BuiltIn.Int, target.Variables["J"].Value.Type.ToBuiltIn());
-        Assert.AreEqual(j1, (int) target.Variables["J"].Value.Value);
+        Assert.AreEqual(PType.BuiltIn.Int, target.Variables["J"]!.Value.Type.ToBuiltIn());
+        Assert.AreEqual(j1, (int) target.Variables["J"]!.Value.Value!);
     }
 
     [Test]
@@ -295,14 +298,14 @@ function fib(n) does
             TestContext.WriteLine("\nFib(" + n + ") do ");
             var expected = _fibonacci(n);
             var fctx =
-                target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
+                target.Functions["fib"]!.CreateFunctionContext(engine, new PValue[] {n});
             engine.Stack.AddLast(fctx);
             var rv = engine.Process();
             Assert.AreEqual(
                 PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
             Assert.AreEqual(
                 expected,
-                (int) rv.Value,
+                (int) rv.Value!,
                 "Fib(" + n + ") = " + expected + " and not " + (int) rv.Value);
         }
     }
@@ -349,14 +352,14 @@ function fib(n) does asm
             TestContext.WriteLine("\nFib(" + n + ") do ");
             var expected = _fibonacci(n);
             var fctx =
-                target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
+                target.Functions["fib"]!.CreateFunctionContext(engine, new PValue[] {n});
             engine.Stack.AddLast(fctx);
             var rv = engine.Process();
             Assert.AreEqual(
                 PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
             Assert.AreEqual(
                 expected,
-                (int) rv.Value,
+                (int) rv.Value!,
                 "Fib(" + n + ") = " + expected + " and not " + (int) rv.Value);
         }
     }
@@ -446,7 +449,7 @@ function main(aList, max)
                 GenerateRandomString(10),
                 GenerateRandomString(15),
                 GenerateRandomString(3),
-                GenerateRandomString(5)
+                GenerateRandomString(5),
             });
 
         foreach (var elem in aList)
@@ -562,7 +565,7 @@ function print(text) does
 }
 ");
 
-        var str = Guid.NewGuid().ToString("N").Substring(0, 3);
+        var str = Guid.NewGuid().ToString("N")[..3];
         var rnd = new Random();
         var idx = rnd.Next(0, str.Length);
         var buffer = new StringBuilder();
@@ -611,7 +614,7 @@ function main(a,b,c) = work(a,b,c).ToString;
                     var sb = new StringBuilder();
                     for (var i = args.Length - 1; i > -1; i--)
                         sb.Append(args[i].CallToString(localSctx));
-                    return (PValue) sb.ToString();
+                    return sb.ToString();
                 }));
 
         var list =
@@ -620,7 +623,7 @@ function main(a,b,c) = work(a,b,c).ToString;
         engine.Commands.AddUserCommand(
             "theList",
             new DelegatePCommand(
-                (localSctx, args) => localSctx.CreateNativePValue(list)));
+                (localSctx, _) => localSctx.CreateNativePValue(list)));
         Compile(
             @"function main = conRev(theList[0], theList[1], theList[2], theList[3], theList[4], theList[5], theList[6], theList[7], theList[8]);");
 
@@ -644,7 +647,8 @@ function main(a,b,c) = work(a,b,c).ToString;
 
         public IEnumerator<string> GetEnumerator()
         {
-            var words = _input.Split(new[] {' ', '\t', '\n', '\r'});
+            var words = _input.Split(' ', '\t', '\n',
+                '\r');
 
             foreach (var word in words)
                 if (word.Length > 0)
@@ -1018,7 +1022,7 @@ function main(arg)
             new PValue[]
             {
                 GenerateRandomString(2), GenerateRandomString(3),
-                GenerateRandomString(4)
+                GenerateRandomString(4),
             });
         var ls = lst.Aggregate("", (current, e) => current + (e.Value as string));
         Expect(ls, (PValue) lst);
@@ -1054,14 +1058,14 @@ function clo2(a)
             Assert.AreEqual(PType.Object[typeof (CilClosure)], pclo2.Type);
             var clo2 = pclo2.Value as CilClosure;
             Assert.IsNotNull(clo2);
-            Assert.AreEqual(1, clo2.SharedVariables.Length);
+            Assert.AreEqual(1, clo2!.SharedVariables.Length);
         }
         else
         {
             Assert.AreEqual(PType.Object[typeof (Closure)], pclo2.Type);
             var clo2 = pclo2.Value as Closure;
             Assert.IsNotNull(clo2);
-            Assert.AreEqual(1, clo2.SharedVariables.Length);
+            Assert.AreEqual(1, clo2!.SharedVariables.Length);
         }
 
 #else
@@ -1254,7 +1258,7 @@ function main(p)
             new[]
             {
                 1, 2, 10, 27, 26, 57, 60, 157, rnd.Next(1, 190), rnd.Next(1, 190),
-                rnd.Next(1, 190)
+                rnd.Next(1, 190),
             };
         foreach (var p in ps)
         {
@@ -1267,11 +1271,11 @@ function main(p)
             string koo;
             var q = goo.ToString();
             if (p <= 50)
-                koo = q.Length > 1 ? q + "koo" : q;
+                koo = q.Length > 1 ? q + nameof(koo) : q;
             else
             {
                 q = q + q;
-                koo = q.Length%2 != 0 ? q + "q" : q;
+                koo = q.Length%2 != 0 ? q + nameof(q) : q;
             }
 
             Expect(koo, p);
@@ -1447,7 +1451,7 @@ function main(xs)
                 12, //=> 12
                 4, //=> 8
                 5, //=> 3
-                13 //=> 15
+                13, //=> 15
             });
 
         Expect(12 + 8 + 3 + 15, PType.List.CreatePValue(xs));
@@ -1567,7 +1571,7 @@ function main()
         Expect(rs =>
         {
             Assert.That(rs,Is.InstanceOf<IEnumerable<string>>());
-            Assert.That(((IEnumerable<string>)rs.Value).ToList(),Is.EquivalentTo(new[]{"1","2","3","4.0"}));
+            Assert.That(((IEnumerable<string>)rs.Value!).ToList(),Is.EquivalentTo(new[]{"1","2","3","4.0"}));
         });
     }
 }

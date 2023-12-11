@@ -27,7 +27,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using JetBrains.Annotations;
 using Moq;
 using NUnit.Framework;
 using Prexonite;
@@ -508,7 +507,7 @@ function main()
 
             Assert.That(r[0], Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
             Assert.That(r[1], Is.EqualTo(EntityRef.Variable.Global.Create("v", nm).ToString()));
-            Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create("r", nm).ToString()));
+            Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create(nameof(r), nm).ToString()));
             Assert.That(r[3], Is.EqualTo(EntityRef.Function.Create("m", nm).ToString()));
             Assert.That(r[4], Is.EqualTo(EntityRef.Variable.Local.Create("loc").ToString()));
             Assert.That(r[5], Is.EqualTo(EntityRef.Variable.Local.Create("rloc").ToString()));
@@ -528,10 +527,10 @@ function f = 17;
             Assert.Fail("Expected module level symbol f to exist.");
 
         var scopea = SymbolStore.Create();
-        scopea.Declare("g",f);
+        scopea.Declare("g",f!);
         var nsa = new MergedNamespace(scopea);
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
-        ldr.Symbols.Declare("a",a);
+        ldr.Symbols.Declare(nameof(a),a);
 
         Compile(ldr, @"
 function main()
@@ -555,16 +554,16 @@ function f = 17;
             Assert.Fail("Expected module level symbol f to exist.");
 
         var scopea = SymbolStore.Create();
-        scopea.Declare("g", f);
+        scopea.Declare("g", f!);
         var nsa = new MergedNamespace(scopea);
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
 
         var scopeb = SymbolStore.Create();
-        scopeb.Declare("a",a);
+        scopeb.Declare(nameof(a),a);
         var nsb = new MergedNamespace(scopeb);
         var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
 
-        ldr.Symbols.Declare("b",b);
+        ldr.Symbols.Declare(nameof(b),b);
 
         Compile(ldr, @"
 function main()
@@ -588,16 +587,16 @@ function f = 17;
             Assert.Fail("Expected module level symbol f to exist.");
 
         var scopea = SymbolStore.Create();
-        scopea.Declare("g", f);
+        scopea.Declare("g", f!);
         var nsa = new MergedNamespace(scopea);
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
 
         var scopeb = SymbolStore.Create();
-        scopeb.Declare("a", a);
+        scopeb.Declare(nameof(a), a);
         var nsb = new MergedNamespace(scopeb);
         var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
 
-        ldr.Symbols.Declare("b", b);
+        ldr.Symbols.Declare(nameof(b), b);
 
         Compile(ldr, @"
 declare(z = sym(""b"",""a""));
@@ -1293,9 +1292,9 @@ namespace a {
         var symbols = moduleTwo.Symbols;
         Assert.That(symbols.TryGet("a",out var symbol),Is.True,"Expect module two to have a symbol called 'a'");
         Assert.That(symbol,Is.InstanceOf<NamespaceSymbol>());
-        var nsSym = (NamespaceSymbol) symbol;
-        _assumeNotNull(nsSym);
-        Assert.That(nsSym.Namespace.TryGet("b",out symbol),"Expect namespace a to contain a symbol b.");
+        var nsSym = (NamespaceSymbol?) symbol;
+        Assert.That(nsSym,Is.Not.Null);
+        Assert.That(nsSym!.Namespace.TryGet("b",out symbol),"Expect namespace a to contain a symbol b.");
         Assert.That(nsSym.Namespace.TryGet("c",out symbol),"Expect namespace a to contain a symbol c.");
 
     }
@@ -1346,13 +1345,13 @@ build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(e
         Assert.That(actualFuncId, Is.Not.Empty);
         var pointedToFunction = ldr.ParentApplication.Functions[actualFuncId];
         Assert.That(pointedToFunction, Is.Not.Null);
-        Assert.That(pointedToFunction.LogicalId, Does.EndWith("fox"));
+        Assert.That(pointedToFunction!.LogicalId, Does.EndWith("fox"));
     }
         
     [Test]
     public void DotSeparatedMetaValues()
     {
-        var ldr = Compile(@"
+        Compile(@"
 name some.module.test;
 references {
   some.module
@@ -1368,7 +1367,7 @@ function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
         Assert.That(meta["references"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("some.module")})));
 
         var f = target.Functions["main"];
-        Assert.That(f.Meta, Does.ContainKey("key1"));
+        Assert.That(f!.Meta, Does.ContainKey("key1"));
         Assert.That(f.Meta, Does.ContainKey("key2"));
         Assert.That(f.Meta, Does.ContainKey("key3"));
         Assert.That(f.Meta["key1"], Is.EqualTo(new MetaEntry("dot.separated.value")));
@@ -1519,7 +1518,7 @@ function main(x,y) {
             "pot.heat(X)",
             true,
             true,
-            true
+            true,
         }, "X", "Y");
     }
 
@@ -1547,8 +1546,8 @@ function main(y) {
             "pot.heat",
             "True",
             "True",
-            "True"
-                
+            "True",
+
         },"Y");
     }
 
@@ -1587,7 +1586,7 @@ function main(x,y) {
             "pot`2<e,f>.heat(X)",
             true,
             true,
-            true
+            true,
         }, "X", "Y");
     }
 
@@ -1633,12 +1632,6 @@ function main() = target.f;
         Expect("f");
     }
 
-    [ContractAnnotation("value:null=>halt")]
-    static void _assumeNotNull(object value)
-    {
-        Assert.That(value,Is.Not.Null);
-    }
-
     /// <summary>
     /// A command that works in a fashion very similar to the add and requires commands
     /// that a loader exposes in build blocks.
@@ -1646,15 +1639,13 @@ function main() = target.f;
     /// </summary>
     class InternalLoadCommand : PCommand
     {
-        [NotNull]
         readonly Loader _loaderReference;
 
-        public InternalLoadCommand([NotNull] Loader loaderReference)
+        public InternalLoadCommand(Loader loaderReference)
         {
             _loaderReference = loaderReference;
         }
 
-        [NotNull]
         public Dictionary<string, string> VirtualFiles { get; } = new();
 
         public override PValue Run(StackContext sctx, PValue[] args)

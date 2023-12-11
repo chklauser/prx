@@ -23,13 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using JetBrains.Annotations;
 using Prexonite.Commands.Core;
 using Prexonite.Properties;
-using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast;
@@ -323,7 +320,7 @@ public abstract class AstLazyLogical : AstExpr,
         }
 
         //We have expression of the form `e1 and e2 and e3 and ... and ?i`
-        var placeholder = (AstPlaceholder) Conditions.Last.Value;
+        var placeholder = (AstPlaceholder) Conditions.Last!.Value;
         AstPlaceholder.DeterminePlaceholderIndices(placeholder.Singleton());
 
 
@@ -337,7 +334,7 @@ public abstract class AstLazyLogical : AstExpr,
             ShortcircuitValue)
         {
             IfExpression = identityFunc,
-            ElseExpression = this.ConstFunc(ShortcircuitValue)
+            ElseExpression = this.ConstFunc(ShortcircuitValue),
         };
         conditional.EmitValueCode(target);
     }
@@ -361,7 +358,7 @@ public abstract class AstLazyLogical : AstExpr,
         throw new NotSupportedException(string.Format(Resources.AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication, GetType().Name));
     }
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
         var placeholders = Conditions.Count(AstPartiallyApplicable.IsPlaceholder);
@@ -375,28 +372,28 @@ public abstract class AstLazyLogical : AstExpr,
                 ((AstConstant) condition).ToPValue(target).TryConvertTo(target.Loader,
                     PType.Bool, false, out var resultP))
             {
-                if ((bool) resultP.Value == ShortcircuitValue)
+                if ((bool) resultP.Value! == ShortcircuitValue)
                 {
-                    // Expr1 OP shortcircuit OP Expr2 = shortcircuit
-                    // Expr1 OP shortcircuit OP Expr2 OP ? = const(shortcircuit)
-                    var shortcircuitConst = new AstConstant(condition.File, condition.Line,
+                    // Expr1 OP short circuit OP Expr2 = shortCircuit
+                    // Expr1 OP short circuit OP Expr2 OP ? = const(shortCircuit)
+                    var shortCircuitConst = new AstConstant(condition.File, condition.Line,
                         condition.Column, ShortcircuitValue);
                     if (placeholders > 0)
                     {
-                        if (!Conditions.Last.Value.IsPlaceholder() || placeholders > 1)
+                        if (!Conditions.Last!.Value.IsPlaceholder() || placeholders > 1)
                             _reportInvalidPlaceholders(target);
 
-                        expr = shortcircuitConst.ConstFunc();
+                        expr = shortCircuitConst.ConstFunc();
                     }
                     else
                     {
-                        expr = shortcircuitConst;
+                        expr = shortCircuitConst;
                     }
                     return true;
                 }
                 else
                 {
-                    // Expr1 OP ¬shortcircuit OP Expr2 = Expr1 OP Expr2
+                    // Expr1 OP ¬short circuit OP Expr2 = Expr1 OP Expr2
                     Conditions.Remove(node);
                 }
             }
@@ -412,7 +409,7 @@ public abstract class AstLazyLogical : AstExpr,
         }
         else if (Conditions.Count == 1)
         {
-            var primaryExpr = Conditions.First.Value;
+            var primaryExpr = Conditions.First!.Value;
             expr = _GetOptimizedNode(target,
                 new AstTypecast(primaryExpr.Position, primaryExpr,
                     new AstConstantTypeExpression(primaryExpr.File,

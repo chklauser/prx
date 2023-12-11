@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -29,5 +30,5 @@ public enum MessageSeverity
 {
     Error,
     Warning,
-    Info
+    Info,
 }

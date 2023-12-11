@@ -23,14 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Modular;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -55,7 +53,7 @@ public sealed class Call_Tail : StackAwareCommand
     /// <param name = "sctx">The stack context in which to execut the command.</param>
     /// <param name = "args">The arguments to be passed to the command.</param>
     /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, PValue[]? args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -68,7 +66,7 @@ public sealed class Call_Tail : StackAwareCommand
         return args[0].IndirectCall(sctx, iargs.ToArray());
     }
 
-    public override StackContext CreateStackContext(StackContext sctx, PValue[] args)
+    public override StackContext CreateStackContext(StackContext sctx, PValue[]? args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

@@ -23,18 +23,16 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using Prexonite.Commands.Core.Operators;
 
 namespace Prexonite.Compiler.Ast;
 
 public class AstForLoop : AstLoop
 {
     public AstForLoop(ISourcePosition position, AstBlock parentBlock)
-        : this(position, new AstScopedBlock(
+        : this(position, new(
             position,
             new AstScopedBlock(
                 position, 
@@ -59,7 +57,7 @@ public class AstForLoop : AstLoop
         NextIteration = nextBlock;
     }
 
-    public AstExpr Condition { get; set; }
+    public AstExpr? Condition { get; set; }
     public AstScopedBlock Initialize { get; }
 
     public AstScopedBlock NextIteration { get; }
@@ -68,11 +66,8 @@ public class AstForLoop : AstLoop
 
     public bool IsPrecondition { [DebuggerStepThrough] get; [DebuggerStepThrough] set; } = true;
 
-    public bool IsInitialized
-    {
-        [DebuggerStepThrough]
-        get => Condition != null;
-    }
+    [MemberNotNullWhen(true, nameof(Condition))]
+    public bool IsInitialized => Condition != null;
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
@@ -87,7 +82,7 @@ public class AstForLoop : AstLoop
 
         _OptimizeNode(target, ref condition);
         // Invert condition when unary logical not
-        while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out var unaryCond))
+        while (Condition.IsCommandCall(LogicalNot.DefaultAlias, out var unaryCond))
         {
             Condition = unaryCond.Arguments[0];
             IsPositive = !IsPositive;
@@ -99,9 +94,12 @@ public class AstForLoop : AstLoop
         {
             if (
                 !constCond.ToPValue(target).TryConvertTo(
-                    target.Loader, PType.Bool, out var condValue))
-                goto continueFull;
-            else if ((bool) condValue.Value == IsPositive)
+                    target.Loader,
+                    PType.Bool,
+                    out var condValue))
+            {
+            }
+            else if ((bool) condValue.Value! == IsPositive)
                 conditionIsConstant = true;
             else
             {
@@ -109,9 +107,8 @@ public class AstForLoop : AstLoop
                 return;
             }
         }
-        continueFull:
 
-        var conditionLabel = Block.CreateLabel("condition");
+        var conditionLabel = Block.CreateLabel(nameof(condition));
 
         if (!Block.IsEmpty) //Body exists -> complete loop code?
         {
@@ -205,7 +202,7 @@ public class AstForLoop : AstLoop
             {
                 Initialize,
                 NextIteration,
-                Block
+                Block,
             };
             return blocks.ToArray();
         }
@@ -215,7 +212,7 @@ public class AstForLoop : AstLoop
 
     public override AstExpr[] Expressions
     {
-        get { return new[] {Condition}; }
+        get { return Condition != null ? new[] {Condition} : Array.Empty<AstExpr>(); }
     }
 
     #endregion

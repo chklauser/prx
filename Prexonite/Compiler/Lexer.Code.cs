@@ -23,13 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Globalization;
 using System.Text;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Internal;
+using Prexonite.Properties;
 using Parser = Prexonite.Compiler.Parser;
 
 // ReSharper disable InconsistentNaming
@@ -52,7 +52,7 @@ partial class Lexer
                 val = val,
                 pos = yychar,
                 line = yyline,
-                col = yycolumn
+                col = yycolumn,
             };
 
         return t;
@@ -127,7 +127,7 @@ partial class Lexer
             _tokenBuffer.Insert(0, c);
     }
 
-    Token multiple(params Token[] tokens)
+    Token? multiple(params Token?[] tokens)
     {
         if (tokens == null)
             throw new ArgumentNullException(nameof(tokens));
@@ -318,7 +318,7 @@ partial class Lexer
     string _unescapeChar(string sequence)
     {
         var kind = sequence.Substring(1, 1);
-        sequence = sequence.Substring(2);
+        sequence = sequence[2..];
         if (
             !int.TryParse(sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var utf32))
             throw new PrexoniteException(
@@ -347,7 +347,7 @@ partial class Lexer
     /// <param name = "rawIdentifier">a $identifier as it was recognized by the lexer (including the $).</param>
     /// <param name = "clipped">The part that was clipped off, excluding the \&</param>
     /// <returns>The actual identifier, ready to be used.</returns>
-    string _pruneSmartStringIdentifier(string rawIdentifier, out string clipped)
+    string _pruneSmartStringIdentifier(string rawIdentifier, out string? clipped)
     {
         if (rawIdentifier.EndsWith("\\&"))
         {

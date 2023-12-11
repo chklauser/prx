@@ -23,15 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Linq;
-using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -39,29 +35,26 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
 {
     protected AstFactoryBase()
     {
-        _bridge = new AstFactoryBridge(this);
+        _bridge = new(this);
     }
 
     protected abstract AstBlock CurrentBlock { get; }
 
     // TODO: (Ticket #109) TryUseSymbolEntry and NullNode should not be defined on AstFactoryBase
-    [NotNull]
-    protected abstract AstGetSet CreateNullNode([NotNull] ISourcePosition position);
+    protected abstract AstGetSet CreateNullNode(ISourcePosition position);
 
-    protected abstract bool IsOuterVariable([NotNull] string id);
+    protected abstract bool IsOuterVariable(string id);
 
-    protected abstract void RequireOuterVariable([NotNull] string id);
+    protected abstract void RequireOuterVariable(string id);
 
     public abstract void ReportMessage(Message message);
 
     // TODO: Move constant folding out of AST factory and into operator macros
-    [NotNull]
     protected abstract CompilerTarget CompileTimeExecutionContext { get; }
 
-    [NotNull]
-    static readonly ISymbolHandler<List<Message>, Symbol> _listMessages = new ListMessagesHandler();
+    static readonly ISymbolHandler<List<Message>, Symbol?> _listMessages = new ListMessagesHandler();
 
-    class ListMessagesHandler : ISymbolHandler<List<Message>, Symbol>
+    class ListMessagesHandler : ISymbolHandler<List<Message>, Symbol?>
     {
         #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
 
@@ -75,24 +68,24 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
             return self;
         }
 
-        public Symbol HandleExpand(ExpandSymbol self, List<Message> argument)
+        public Symbol? HandleExpand(ExpandSymbol self, List<Message> argument)
         {
             return _handleWrapped(self, argument);
         }
 
-        public Symbol HandleMessage(MessageSymbol self, List<Message> argument)
+        public Symbol? HandleMessage(MessageSymbol self, List<Message> argument)
         {
             // Add the symbol to the list and unwrap contents
             argument.Add(self.Message);
             return self.InnerSymbol.HandleWith(this, argument);
         }
 
-        public Symbol HandleDereference(DereferenceSymbol self, List<Message> argument)
+        public Symbol? HandleDereference(DereferenceSymbol self, List<Message> argument)
         {
             return _handleWrapped(self, argument);
         }
 
-        Symbol _handleWrapped(WrappingSymbol self, List<Message> argument)
+        Symbol? _handleWrapped(WrappingSymbol self, List<Message> argument)
         {
             var s = self.InnerSymbol.HandleWith(this, argument);
             if (s == null)
@@ -118,7 +111,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
     /// <param name="position">The position in the source program where the symbol was used.</param>
     /// <returns>A <see cref="SymbolUsageResult"/> indicating whether the usage results in an error. 
     /// If and only if the <paramref name="symbol"/> was null, <see cref="SymbolUsageResult.Unresolved"/> is returned.</returns>
-    SymbolUsageResult _useSymbol([CanBeNull] ref Symbol symbol, [NotNull] ISourcePosition position)
+    SymbolUsageResult _useSymbol(ref Symbol? symbol, ISourcePosition position)
     {
         var msgs = new List<Message>(1);
         // symbol could be null.
@@ -161,35 +154,35 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
     static readonly PValue _constZero = new(0,PType.Int);
     static readonly PValue _constOne = new(1, PType.Int);
 
-    bool _safeEquals(PValue value,PValue constant)
+    bool _safeEquals(PValue? value,PValue constant)
     {
         return value != null && value.Equality(CompileTimeExecutionContext.Loader, constant, out var result) &&
             result.TryConvertTo(CompileTimeExecutionContext.Loader, PType.Bool, out var booleanResult) &&
-            (bool) booleanResult.Value;
+            (bool) booleanResult.Value!;
     }
 
     bool _safeEquals(AstExpr value, PValue constant)
     {
-        AstConstant lhs;
+        AstConstant? lhs;
         return (lhs = value as AstConstant) != null &&
             _safeEquals(CompileTimeExecutionContext.Loader.CreateNativePValue(lhs.Constant), constant);
     }
 
-    bool _safeTypecheck(AstExpr expr, PType type)
+    bool _safeTypeCheck(AstExpr expr, PType type)
     {
-        AstConstant lhs;
+        AstConstant? lhs;
         return (lhs = expr as AstConstant) != null &&
-            _safeTypecheck(CompileTimeExecutionContext.Loader.CreateNativePValue(lhs.Constant), type);
+            _safeTypeCheck(CompileTimeExecutionContext.Loader.CreateNativePValue(lhs.Constant), type);
     }
 
-    bool _safeTypecheck(PValue expr, PType type)
+    bool _safeTypeCheck(PValue? expr, PType type)
     {
         return expr != null && expr.Type.IsEqual(type);
     }
 
     AstExpr _leftRedundant(AstExpr expr, PValue identity)
     {
-        AstIndirectCall callNode;
+        AstIndirectCall? callNode;
         if ((callNode = expr as AstIndirectCall) != null
             && callNode.Arguments.Count == 2
             && _safeEquals(callNode.Arguments[0], identity))
@@ -204,7 +197,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
 
     AstExpr _rightRedundant(AstExpr expr, PValue identity)
     {
-        AstIndirectCall callNode;
+        AstIndirectCall? callNode;
         if ((callNode = expr as AstIndirectCall) != null
             && callNode.Arguments.Count == 2
             && _safeEquals(callNode.Arguments[1], identity))
@@ -230,8 +223,8 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
     /// annotations, but there is one caller, the parser, for which it is impractical to have null checking enabled.
     /// </remarks>
     /// <returns><c>true</c> if the operands are valid; <c>false</c> otherwise</returns>
-    bool validateBinaryOperands(ISourcePosition position, [CanBeNull] AstExpr left,
-        BinaryOperator op, [CanBeNull] AstExpr right)
+    bool validateBinaryOperands(ISourcePosition position, AstExpr? left,
+        BinaryOperator op, AstExpr? right)
     {
         var isValid = true;
         if (left == null)
@@ -263,12 +256,13 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
             return IndirectCall(position, Null(position));
         }
 
-        PValue leftNeutral = null;
-        PValue rightNeutral = null;
+        PValue? leftNeutral = null;
+        PValue? rightNeutral = null;
         switch (op)
         {
             case BinaryOperator.Addition:
-                if (left is AstStringConcatenation concatenation)
+                AstStringConcatenation? concatenation;
+                if ((concatenation = left as AstStringConcatenation) != null)
                 {
                     // The LHS is a concatenation, check if RHS is a concatenation
                     //  as well and absorb it if that is the case.
@@ -293,14 +287,14 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
                     {
                         concatenation.Arguments.Insert(0, left);
                     }
-                    else if (_safeTypecheck(left, PType.String) || _safeTypecheck(right, PType.String))
+                    else if (_safeTypeCheck(left, PType.String) || _safeTypeCheck(right, PType.String))
                     {
                         // One of the two operands is known to be of type string. 
                         //  As a consequence we construct a new Concatenation node.
                         // TODO: Remove hard-coded reference to concat command by re-writing the StringConcatenation node
                         var simpleConcat = (AstGetSet) _resolveImplementation(position, op, expr => expr);
                         var multiConcat = (AstGetSet) _resolveImplementation(position, expr => expr, Engine.ConcatenateAlias);
-                        concatenation = new AstStringConcatenation(position,simpleConcat,multiConcat,left,right);
+                        concatenation = new(position,simpleConcat,multiConcat,left,right);
                     }
                 }
                     
@@ -433,13 +427,12 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         var call = expr as AstGetSet;
         if (call == null)
             ReportMessage(Message.Error(string.Format(Resources.AstFactoryBase__resolveImplementation_LValueExpected, qualid), position, MessageClasses.LValueExpected));
-        return impl(call);
+        return impl(call ?? CreateNullNode(position));
     }
 
-    [NotNull]
-    AstExpr _foldConstants([NotNull] AstExpr callNode)
+    AstExpr _foldConstants(AstExpr callNode)
     {
-        if (callNode.TryMatchCall(out AstIndirectCall indirectCallNode, out EntityRef entityRef) 
+        if (callNode.TryMatchCall(out AstIndirectCall? indirectCallNode, out EntityRef? entityRef) 
             && entityRef.TryGetCommand(out var command)
             && indirectCallNode.Arguments.All(x => x is AstConstant)
             && command.TryGetEntity(CompileTimeExecutionContext.Loader, out var commandImpl)
@@ -481,7 +474,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
                 var callExpr = CurrentBlock.Symbols.TryGet(id, out symbol)
                     ? ExprFor(position, symbol)
                     : new AstUnresolved(position, id);
-                if (!(callExpr is AstGetSet callLValue))
+                if (callExpr is not AstGetSet callLValue)
                 {
                     ReportMessage(Message.Error(Resources.AstFactoryBase_UnaryOperation_Target_must_be_LValue,
                         position, MessageClasses.LValueExpected));
@@ -497,12 +490,11 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
             case UnaryOperator.PostIncrement:
             case UnaryOperator.PostDecrement:
             {
-                var symbol = !(operand is AstIndirectCall symbolCall) ? null : symbolCall.Subject as AstReference;
+                var symbol = operand is not AstIndirectCall symbolCall ? null : symbolCall.Subject as AstReference;
                 var complex = operand as AstGetSet;
 
                 var isVariable = symbol != null && symbol.Entity.TryGetVariable(out _);
-                        
-                var isAssignable = complex != null;
+
                 var isPre = op == UnaryOperator.PreDecrement || op == UnaryOperator.PreIncrement;
                 var isIncrement =   op == UnaryOperator.PostIncrement ||
                     op == UnaryOperator.PreIncrement;
@@ -511,7 +503,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
                 {
                     return new AstUnaryOperator(position, op,operand);
                 }
-                else if (isAssignable)
+                else if (complex != null)
                 {
                     if (complex.Call != PCall.Get)
                     {
@@ -674,7 +666,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         return c;
     }
 
-    public AstExpr Constant(ISourcePosition position, object constant)
+    public AstExpr Constant(ISourcePosition position, object? constant)
     {
         return new AstConstant(position.File,position.Line,position.Column,constant);
     }
@@ -827,12 +819,12 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         return new(position, CurrentBlock);
     }
 
-    public AstNode Return(ISourcePosition position, AstExpr expression = null, ReturnVariant returnVariant = ReturnVariant.Exit)
+    public AstNode Return(ISourcePosition position, AstExpr? expression = null, ReturnVariant returnVariant = ReturnVariant.Exit)
     {
         return new AstReturn(position.File, position.Line, position.Column, returnVariant) {Expression = expression};
     }
 
-    public AstNode Throw(ISourcePosition position, AstExpr exceptionExpression)
+    public AstExpr Throw(ISourcePosition position, AstExpr exceptionExpression)
     {
         return new AstThrow(position.File, position.Line, position.Column){Expression = exceptionExpression};
     }
@@ -847,7 +839,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         return new(position,CurrentBlock);
     }
 
-    public AstExpr ExprFor(ISourcePosition position, Symbol symbol)
+    public AstExpr ExprFor(ISourcePosition position, Symbol? symbol)
     {
         // note that `symbol` could be null (if the symbol was not found in the first place)
         // That case is already handled by `_useSymbol`. It will immediately return `Unsuccessful`
@@ -949,7 +941,6 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
 
     #region Implementation of IIndirectCall
 
-    [NotNull]
     readonly AstFactoryBridge _bridge;
 
     public PValue IndirectCall(StackContext sctx, PValue[] args)
@@ -961,7 +952,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         return _bridge.TryDynamicCall(sctx, args, call, id, out result);
     }

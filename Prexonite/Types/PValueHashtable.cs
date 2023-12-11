@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System.Collections.Generic;
 using System.Diagnostics;
 
 #endregion
@@ -108,7 +107,7 @@ public class PValueHashtable : Dictionary<PValue, PValue>
     /// </summary>
     /// <param name = "obj">The object to check for equality.</param>
     /// <returns>True if this PValueHashtable and the object are equal, False otherwise.</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj != null && (obj is PValueHashtable || obj is Dictionary<PValue, PValue>))
             return base.Equals(obj);

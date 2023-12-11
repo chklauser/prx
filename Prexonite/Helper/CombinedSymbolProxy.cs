@@ -23,8 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Diagnostics.Contracts;
 
 namespace Prexonite;
 
@@ -32,9 +30,6 @@ public class CombinedSymbolProxy<T>
 {
     CombinedSymbolProxy(ISymbolTable<T>[] tables)
     {
-        Contract.Requires<ArgumentNullException>(tables != null);
-        Contract.Requires(tables.Length > 0,"A CombinedSymbolProxy needs to be backed by at least one SymbolTable. (Array was empty)");
-
         var copy = new ISymbolTable<T>[tables.Length];
         Array.Copy(tables, copy, tables.Length);
         _tables = tables;

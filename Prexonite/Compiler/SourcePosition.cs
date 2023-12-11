@@ -23,13 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
 
 namespace Prexonite.Compiler;
 
 public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
 {
-    public SourcePosition(string file, int line, int column)
+    public SourcePosition(string? file, int line, int column)
     {
         File = file ?? "unknown~";
         Line = line;
@@ -62,7 +61,7 @@ public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
     ///     true if the current object is equal to the <paramref name = "other" /> parameter; otherwise, false.
     /// </returns>
     /// <param name = "other">An object to compare with this object.</param>
-    public bool Equals(SourcePosition other)
+    public bool Equals(SourcePosition? other)
     {
         return !ReferenceEquals(null, other);
     }
@@ -75,7 +74,7 @@ public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
     /// </returns>
     /// <param name = "obj">The <see cref = "T:System.Object" /> to compare with the current <see cref = "T:System.Object" />. </param>
     /// <filterpriority>2</filterpriority>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;

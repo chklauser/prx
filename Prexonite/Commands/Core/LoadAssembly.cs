@@ -23,12 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.IO;
+
 using System.Reflection;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core;
 
@@ -66,7 +64,7 @@ public sealed class LoadAssembly : PCommand, ICilCompilerAware
             var path = arg.CallToString(sctx);
             var ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication)
             {
-                ReconstructSymbols = false
+                ReconstructSymbols = false,
             };
             var ldr = sctx as Loader ?? new Loader(ldrOptions);
             var asmFile = ldr.ApplyLoadPaths(path);

@@ -1,5 +1,3 @@
-#nullable enable
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -55,7 +53,7 @@ public static class ModuleCacheV2
                 "Creating self-assembling build plan for test thread {0}", 
                 Thread.CurrentThread.ManagedThreadId);
 
-            var psrPath = Path.GetFullPath(Path.Combine(SolutionPath, "Prx", "psr", "_2"));
+            var psrPath = Path.GetFullPath(Path.Combine(SolutionPath, nameof(Prx), "psr", "_2"));
             _trace.TraceEvent(TraceEventType.Information, 0, "inferred psr path {0}", psrPath);
             var plan = Plan.CreateSelfAssembling(StandardLibraryPreference.Default);
             plan.SearchPaths.Add(psrPath);
@@ -66,7 +64,7 @@ public static class ModuleCacheV2
 
     public static Engine CreateEngine() => new(sharedEnginePrototype);
 
-    static Engine sharedEnginePrototype => _sharedEnginePrototype ??= new Engine();
+    static Engine sharedEnginePrototype => _sharedEnginePrototype ??= new();
 
     public static (Application, ITarget) Load(string path, bool compileToCil) => 
         loadAsync(path, compileToCil, sharedPlan).Result;
@@ -74,7 +72,7 @@ public static class ModuleCacheV2
     static async Task<(Application, ITarget)> loadAsync(string path, bool compileToCil, ISelfAssemblingPlan plan,
         CancellationToken ct = default)
     {
-        var source = new FileSource(new FileInfo(path), Encoding.UTF8);
+        var source = new FileSource(new(path), Encoding.UTF8);
         var desc = await plan.AssembleAsync(source, ct);
         var loadedAppTask = compileToCil
             ? (await Compiler.CompileModulesAsync(plan, desc.Name.Singleton(), 

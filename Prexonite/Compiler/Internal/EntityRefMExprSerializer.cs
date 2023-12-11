@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Internal;
@@ -50,20 +49,18 @@ class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
     public const string GlobalVariableHead = "var";
     public const string MacroCommandModifierHead = "macro";
 
-    [NotNull]
-    MExpr _serializeRefWithModule([NotNull] ISourcePosition position, [NotNull] string head,
-        [NotNull] string id, [NotNull] ModuleName moduleName)
+    MExpr _serializeRefWithModule(ISourcePosition position, string head,
+        string id, ModuleName moduleName)
     {
         return new MExpr.MList(position, head,
             new[]
             {
                 new MExpr.MAtom(position, id),
                 new MExpr.MAtom(position, moduleName.Id),
-                new MExpr.MAtom(position, moduleName.Version)
+                new MExpr.MAtom(position, moduleName.Version),
             });
     }
 
-    [NotNull]
     MExpr _serializeRef(ISourcePosition position, string head, string id)
     {
         return new MExpr.MList(position, head,new []{new MExpr.MAtom(position,id) });

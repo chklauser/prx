@@ -1,8 +1,4 @@
-﻿#nullable enable
-
-using System.Diagnostics.CodeAnalysis;
-
-namespace Prexonite;
+﻿namespace Prexonite;
 
 /// <summary>
 ///     Partial application implementations commonly implement this interface. It allows
@@ -23,6 +19,6 @@ public interface IMaybeStackAware : IIndirectCall
     ///     executing the application.</param>
     /// <returns>True if a stack context has been created; false if the application has been executed.</returns>
     bool TryDefer(StackContext sctx, PValue[] args,
-        [NotNullWhen(true)] out StackContext partialApplicationContext,
-        [NotNullWhen(false)] out PValue result);
+        [NotNullWhen(true)] out StackContext? partialApplicationContext,
+        [NotNullWhen(false)] out PValue? result);
 }

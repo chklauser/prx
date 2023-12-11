@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +39,7 @@ public sealed class BenchmarkEntry
     public readonly string Title;
     public readonly string Description;
     public readonly bool UsesIteration;
-    public readonly string Overhead;
+    public readonly string? Overhead;
     public readonly Benchmark Parent;
 
     public List<Measurement> Measurements { get; } = new();
@@ -56,27 +57,27 @@ public sealed class BenchmarkEntry
         Parent = parent ?? throw new ArgumentNullException(nameof(parent));
         Function = function ?? throw new ArgumentNullException(nameof(function));
         var m = function.Meta;
-        if (m.ContainsKey(Benchmark.TitleKey))
-            Title = m[Benchmark.TitleKey];
+        if (m.TryGetValue(Benchmark.TitleKey, out var value))
+            Title = value;
         else
             Title = function.Id;
 
-        if (m.ContainsKey(Benchmark.DescriptionKey))
-            Description = m[Benchmark.DescriptionKey];
+        if (m.TryGetValue(Benchmark.DescriptionKey, out var value1))
+            Description = value1;
         else
             Description = $"The benchmarked function {Title}";
 
         UsesIteration = m[Benchmark.UsesIterationKey];
 
-        if (m.ContainsKey(Benchmark.OverheadKey))
-            Overhead = m[Benchmark.OverheadKey];
+        if (m.TryGetValue(Benchmark.OverheadKey, out var value2))
+            Overhead = value2;
     }
 
     #endregion
 
     #region Equality
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj == null)
             return false;
@@ -89,21 +90,21 @@ public sealed class BenchmarkEntry
         return Function.GetHashCode() ^ 12;
     }
 
-    public static bool operator ==(BenchmarkEntry be1, BenchmarkEntry be2)
+    public static bool operator ==(BenchmarkEntry? be1, BenchmarkEntry? be2)
     {
-        if ((object) be1 == null && (object) be2 == null)
+        if ((object?) be1 == null && (object?) be2 == null)
             return true;
-        else if ((object) be1 == null || (object) be2 == null)
+        else if ((object?) be1 == null || (object?) be2 == null)
             return false;
         else
             return be1.Equals(be2);
     }
 
-    public static bool operator !=(BenchmarkEntry be1, BenchmarkEntry be2)
+    public static bool operator !=(BenchmarkEntry? be1, BenchmarkEntry? be2)
     {
-        if ((object) be1 == null && (object) be2 == null)
+        if ((object?) be1 == null && (object?) be2 == null)
             return false;
-        else if ((object) be1 == null || (object) be2 == null)
+        else if ((object?) be1 == null || (object?) be2 == null)
             return true;
         else
             return !be1.Equals(be2);

@@ -23,11 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -50,7 +47,7 @@ public class Skip : CoroutineCommand, ICilCompilerAware
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
         PValue[] args)
     {
@@ -65,7 +62,7 @@ public class Skip : CoroutineCommand, ICilCompilerAware
         if (args.Length < 1)
             throw new PrexoniteException("Skip requires at least one argument.");
 
-        var index = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
+        var index = (int) args[0].ConvertTo(sctx, PType.Int, true).Value!;
 
         for (var j = 1; j < args.Length; j++)
         {

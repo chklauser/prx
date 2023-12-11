@@ -23,14 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal;
@@ -38,20 +32,16 @@ namespace Prexonite.Compiler.Build.Internal;
 [DebuggerDisplay("ManualTargetDescription({Name} from {_fileName})")]
 class ManualTargetDescription : ITargetDescription
 {
-    [NotNull]
     readonly ISource _source;
     /// <summary>
     /// The file name for symbols derived from the supplied reader. Can be null.
     /// </summary>
-    [CanBeNull]
-    readonly string _fileName;
-    [NotNull]
+    readonly string? _fileName;
     readonly DependencySet _dependencies;
 
-    [CanBeNull]
-    readonly List<Message> _buildMessages;
+    readonly List<Message>? _buildMessages;
 
-    internal ManualTargetDescription([NotNull] ModuleName moduleName, [NotNull] ISource source, [CanBeNull] string fileName, [NotNull] IEnumerable<ModuleName> dependencies, [CanBeNull] IEnumerable<Message> buildMessages = null)
+    internal ManualTargetDescription(ModuleName moduleName, ISource source, string? fileName, IEnumerable<ModuleName> dependencies, IEnumerable<Message>? buildMessages = null)
     {
         if (moduleName == null)
             throw new ArgumentNullException(nameof(moduleName));
@@ -60,18 +50,17 @@ class ManualTargetDescription : ITargetDescription
         Name = moduleName;
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _fileName = fileName;
-        _dependencies = new DependencySet(moduleName);
+        _dependencies = new(moduleName);
         _dependencies.AddRange(dependencies);
         if (buildMessages != null)
-            _buildMessages = new List<Message>(buildMessages);
+            _buildMessages = new(buildMessages);
     }
 
     public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
 
-    [NotNull]
     public ModuleName Name { get; }
 
-    public IReadOnlyList<Message> BuildMessages => (IReadOnlyList<Message>)_buildMessages ?? DefaultModuleTarget.NoMessages;
+    public IReadOnlyList<Message> BuildMessages => (IReadOnlyList<Message>?)_buildMessages ?? DefaultModuleTarget.NoMessages;
 
     public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
     {
@@ -80,14 +69,14 @@ class ManualTargetDescription : ITargetDescription
             {
                 var ldr = build.CreateLoader(new(null, null)
                 {
-                    EnforceDeterministicCodeOrder = true
+                    EnforceDeterministicCodeOrder = true,
                 });
 
                 var aggregateMessages = dependencies.Values
                     .SelectMany(t => t.Result.Messages);
                 var aggregateExceptions = dependencies.Values
                     .Select(t => t.Result.Exception)
-                    .Where(e => e != null);
+                    .OfType<Exception>();
                 if (dependencies.Values.All(t => t.Result.IsSuccessful))
                 {
                     try
@@ -103,10 +92,9 @@ class ManualTargetDescription : ITargetDescription
                             // Hand compilation off to loader. 
                             // If the description is backed by a file, allow inclusion of 
                             // other files via relative paths.
-                            FileInfo fsContext;
-                            if (_fileName != null)
+                            FileInfo? fsContext;
+                            if (_fileName != null && (fsContext = new(_fileName)) is {DirectoryName: not null})
                             {
-                                fsContext = new FileInfo(_fileName);
                                 ldr.LoadPaths.Push(fsContext.DirectoryName);
                             }
                             else
@@ -121,12 +109,12 @@ class ManualTargetDescription : ITargetDescription
                             }
                             foreach (var msg in ldr.Infos.Append(ldr.Warnings).Append(ldr.Errors).OrderBy(m => m))
                             {
-                                TraceEventType evType = msg.Severity switch
+                                var evType = msg.Severity switch
                                 {
                                     MessageSeverity.Error => TraceEventType.Error,
                                     MessageSeverity.Warning => TraceEventType.Warning,
                                     MessageSeverity.Info => TraceEventType.Information,
-                                    _ => throw new ArgumentOutOfRangeException()
+                                    _ => throw new ArgumentOutOfRangeException(),
                                 };
                                 Plan.Trace.TraceEvent(evType, 0, "({0}) {1}", this, msg);
                             }

@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite;
 
@@ -116,11 +115,11 @@ public class Closure : IIndirectCall,
     /// <param name = "a">A closure</param>
     /// <param name = "b">A closure</param>
     /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
-    public static bool operator ==(Closure a, Closure b)
+    public static bool operator ==(Closure? a, Closure? b)
     {
-        if ((object) a == null && (object) b == null)
+        if ((object?) a == null && (object?) b == null)
             return true;
-        else if ((object) a == null || (object) b == null)
+        else if ((object?) a == null || (object?) b == null)
             return false;
         else if (ReferenceEquals(a, b))
             return true;
@@ -143,7 +142,7 @@ public class Closure : IIndirectCall,
     /// <param name = "a">A closure</param>
     /// <param name = "b">A closure</param>
     /// <returns>True, if the two closures do not use to the same function and the same shared variables; false otherwise.</returns>
-    public static bool operator !=(Closure a, Closure b)
+    public static bool operator !=(Closure? a, Closure? b)
     {
         return !(a == b);
     }
@@ -154,10 +153,10 @@ public class Closure : IIndirectCall,
     /// </summary>
     /// <param name = "obj">Any object.</param>
     /// <returns>True if <paramref name = "obj" /> is a closure that is equal to the current instance.</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         var clo = obj as Closure;
-        if ((object) clo == null)
+        if ((object?) clo == null)
             return false;
         return this == clo;
     }

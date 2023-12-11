@@ -40,14 +40,14 @@
 		return new Dependency
 		{
 			FileName = _normalizePath(ds[0]),
-			Dependencies = ds.Skip(1).Select(_normalizePath)
+			Dependencies = ds.Skip(1).Select(_normalizePath),
 		};
 	}
 	
     // Normalize directory separator for cross-platform testing
     static string _normalizePath(string path) => path
-        .Replace('/', System.IO.Path.DirectorySeparatorChar)
-        .Replace('\\', System.IO.Path.DirectorySeparatorChar);
+        .Replace('/', Path.DirectorySeparatorChar)
+        .Replace('\\', Path.DirectorySeparatorChar);
         
 
     // [(test_file_name, [under_test], [test_deps], [test_case])] 
@@ -57,7 +57,7 @@
         var path = Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
         using var sr = new StreamReader(
             new FileStream(path, FileMode.Open, FileAccess.Read), 
-            System.Text.Encoding.UTF8);
+            Encoding.UTF8);
         var line = sr.ReadLine();
         while(line != null && line.Length > 2)
         {   
@@ -74,7 +74,7 @@
                 TestFileName = tfn,
                 TestCases = testCases,
                 UnitsUnderTest = underTest,
-                TestDependencies = deps
+                TestDependencies = deps,
             };
 
             line = sr.ReadLine();
@@ -100,7 +100,7 @@
             yield return new ConfigurationV2()
             {
                 TestFileName = tfn,
-                TestCases = testCases
+                TestCases = testCases,
             };
 
             line = sr.ReadLine();

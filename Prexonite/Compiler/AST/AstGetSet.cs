@@ -23,22 +23,18 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using JetBrains.Annotations;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
 public abstract class AstGetSet : AstExpr, IAstHasExpressions
 {
-    protected AstGetSet([NotNull] ISourcePosition position) : base(position)
+    protected AstGetSet(ISourcePosition position) : base(position)
     {
     }
 
-    [NotNull]
     public abstract ArgumentsProxy Arguments { [DebuggerNonUserCode] get; }
 
     /// <summary>
@@ -47,12 +43,11 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
     /// </summary>
     public abstract PCall Call { get; set; }
 
-    [NotNull]
     public virtual AstExpr[] Expressions => Arguments.ToArray();
 
     public virtual int DefaultAdditionalArguments => 0;
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         expr = null;
 
@@ -85,7 +80,7 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
     protected void EmitArguments(CompilerTarget target, bool duplicateLast,
         int additionalArguments)
     {
-        object lastArg = null;
+        object? lastArg = null;
         foreach (AstExpr expr in Arguments)
         {
             Debug.Assert(expr != null,
@@ -170,6 +165,6 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
         string typeName;
         var name = Enum.GetName(typeof (PCall), Call);
         return
-            $"{name?.ToLowerInvariant() ?? "-"}: {((typeName = GetType().Name).StartsWith("AstGetSet") ? typeName.Substring(9) : typeName)}";
+            $"{name?.ToLowerInvariant() ?? "-"}: {((typeName = GetType().Name).StartsWith(nameof(AstGetSet)) ? typeName[9..] : typeName)}";
     }
 }

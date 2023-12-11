@@ -27,9 +27,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -42,13 +42,14 @@ using Compiler = Prexonite.Compiler.Cil.Compiler;
 namespace PrexoniteTests.Tests;
 
 [Parallelizable(ParallelScope.Fixtures)]
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public class VMTestsBase
 {
     public const string StoreDebugImplementationKey = "store_debug_implementation";
-    protected Engine engine;
-    protected TestStackContext sctx;
-    protected Application target;
-    protected LoaderOptions options;
+    protected Engine engine = null!;
+    protected TestStackContext sctx = null!;
+    protected Application target = null!;
+    protected LoaderOptions options = null!;
 
     /// <summary>
     /// Indicates whether to skip the <see cref="Loader.Store(System.Text.StringBuilder)"/> call on compilation.
@@ -71,25 +72,25 @@ public class VMTestsBase
     [SetUp]
     public virtual void SetupCompilerEngine()
     {
-        engine = new Engine();
-        target = new Application("testApplication");
-        sctx = new TestStackContext(engine, target);
-        options = new LoaderOptions(engine, target);
+        engine = new();
+        target = new("testApplication");
+        sctx = new(engine, target);
+        options = new(engine, target);
         SkipStore = false;
     }
 
     [TearDown]
     public void TeardownCompilerEngine()
     {
-        engine = null;
-        sctx = null;
-        target = null;
-        options = null;
+        engine = null!;
+        sctx = null!;
+        target = null!;
+        options = null!;
     }
 
     protected static string GenerateRandomString(int length)
     {
-        return GenerateRandomString().Substring(0, length);
+        return GenerateRandomString()[..length];
     }
 
     protected static string GenerateRandomString()
@@ -161,7 +162,7 @@ public class VMTestsBase
         //Create a new engine
         SetupCompilerEngine();
 
-        ldr = new Loader(options);
+        ldr = new(options);
         try
         {
             ldr.LoadFromString(sb.ToString());
@@ -218,7 +219,7 @@ public class VMTestsBase
         if (assertion == null)
             throw new ArgumentNullException(nameof(assertion));
            
-        if (args.Any(value => value == null))
+        if (args.Any(value => (PValue?)value == null))
             throw new ArgumentException(
                 "Arguments must not contain naked CLR null references. Use `PType.Null`.");
 
@@ -226,7 +227,8 @@ public class VMTestsBase
             throw new PrexoniteException("Function " + functionId + " cannot be found.");
 
         var func = target.Functions[functionId];
-        if (func.Meta[StoreDebugImplementationKey].Switch)
+        Assert.That(func, Is.Not.Null);
+        if (func!.Meta[StoreDebugImplementationKey].Switch)
             Compiler.StoreDebugImplementation(target, engine);
 
         PValue rv;
@@ -260,8 +262,8 @@ public class VMTestsBase
             $"Return value is expected to be of type {expected.Type} and not {rv.Type}. Returned {rv}.");
         if (expected.Type == PType.List)
         {
-            var expectedL = (List<PValue>) expected.Value;
-            var rvL = (List<PValue>) rv.Value;
+            var expectedL = (List<PValue>) expected.Value!;
+            var rvL = (List<PValue>) rv.Value!;
             Assert.AreEqual(expectedL.Count, rvL.Count,
                 $"Returned list differs in length. Elements returned {rvL.ToEnumerationString()}");
 
@@ -307,9 +309,9 @@ public class VMTestsBase
 
     protected PValue GetReturnValueNamedExplicit(string functionId, PValue[] args)
     {
-        if (!target.Functions.Contains(functionId))
+        if (target.Functions[functionId] is not {} func)
             throw new PrexoniteException("Function " + functionId + " cannot be found.");
-        var fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
+        var fctx = func.CreateFunctionContext(engine, args);
         engine.Stack.AddLast(fctx);
         return engine.Process();
     }
@@ -319,12 +321,11 @@ public class VMTestsBase
         return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
     }
 
-    [NotNull]
-    protected Symbol LookupSymbolEntry([NotNull] ISymbolView<Symbol> store,[NotNull] string symbolicId)
+    protected Symbol LookupSymbolEntry(ISymbolView<Symbol> store,string symbolicId)
     {
         Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
             $"Expected to find symbol {symbolicId} but there is no such entry.");
-        return symbol;
+        return symbol!;
     }
 
     protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,

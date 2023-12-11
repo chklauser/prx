@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using Prexonite.Modular;
 
@@ -11,28 +10,28 @@ public class ModuleNameTests
     [Test]
     public void ModuleNameToString()
     {
-        var moduleName = new ModuleName("This.is.the.name", new Version(1, 2, 3, 4));
+        var moduleName = new ModuleName("This.is.the.name", new(1, 2, 3, 4));
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}/1.2.3.4"));
     }
     [Test]
     public void ModuleNameToStringZeroVersion()
     {
-        var moduleName = new ModuleName("This.is.the.name", new Version());
+        var moduleName = new ModuleName("This.is.the.name", new());
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}"));
     }
     [Test]
     public void ModuleNameToStringShortVersion3()
     {
-        var moduleName = new ModuleName("This.is.the.name", new Version(1, 2, 3));
+        var moduleName = new ModuleName("This.is.the.name", new(1, 2, 3));
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}/1.2.3"));
     }
     [Test]
     public void ModuleNameToStringShortVersion2()
     {
-        var moduleName = new ModuleName("This.is.the.name", new Version(1, 2));
+        var moduleName = new ModuleName("This.is.the.name", new(1, 2));
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}/1.2"));
     }
@@ -44,7 +43,7 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new Version())));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new())));
     }
 
     [Test]
@@ -54,7 +53,7 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new Version(1,2,3,4))));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1,2,3,4))));
     }
 
     [Test]
@@ -64,7 +63,7 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new Version(1,2,3))));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1,2,3))));
     }
 
     [Test]
@@ -74,13 +73,13 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new Version(1,2))));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1,2))));
     }
 
     [Test]
     public void RoundTrip()
     {
-        var name1 = new ModuleName("this.is.the.name", new Version(1, 2, 3, 4));
+        var name1 = new ModuleName("this.is.the.name", new(1, 2, 3, 4));
         var result = ModuleName.TryParse(name1.ToString(), out var name2);
         Assert.That(result, Is.True, "TryParse({}) is successful", name1);
         Assert.That(name2, Is.Not.Null);

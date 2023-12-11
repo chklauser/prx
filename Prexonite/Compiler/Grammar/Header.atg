@@ -21,7 +21,6 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-//A comment
 using System.Collections.Generic;
 using System.Linq;
 using FatalError = Prexonite.Compiler.FatalCompilerException;
@@ -35,6 +34,8 @@ using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Properties;
+using CanBeNullAttribute = JetBrains.Annotations.CanBeNullAttribute;
+using PublicAPIAttribute = JetBrains.Annotations.PublicAPIAttribute;
 
 COMPILER Prexonite
 

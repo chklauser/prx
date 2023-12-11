@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System;
+﻿using System;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
@@ -11,9 +9,7 @@ namespace PrexoniteTests.Tests.Configurations;
 
 abstract class UnitTestConfiguration : IDisposable
 {
-    public class InMemory : UnitTestConfiguration
-    {
-    }
+    public class InMemory : UnitTestConfiguration;
 
     protected UnitTestConfiguration()
     {
@@ -51,9 +47,9 @@ abstract class UnitTestConfiguration : IDisposable
 
     protected void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
     {
-        Cache.Describe(container.Loader,new TestDependency
-        {
-            ScriptName = ScriptedUnitTestContainer.PrexoniteUnitTestFramework
+        Cache.Describe(container.Loader,new() {
+            ScriptName = ScriptedUnitTestContainer.PrexoniteUnitTestFramework,
+            Dependencies = [],
         });
     }
 
@@ -84,7 +80,7 @@ abstract class UnitTestConfiguration : IDisposable
                 .ToArray();
         var suiteDescription = new TestDependency
         {
-            ScriptName = model.TestSuiteScript, Dependencies = suiteDependencies
+            ScriptName = model.TestSuiteScript, Dependencies = suiteDependencies,
         };
         Cache.Describe(container.Loader, suiteDescription);
 

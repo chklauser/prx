@@ -25,8 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region Namespace Imports
 
-using System;
-
 #endregion
 
 namespace Prexonite.Compiler.Cil;
@@ -72,5 +70,5 @@ public enum FunctionLinking
     /// <summary>
     ///     The CIL implementation is available for static linking but links just by name.
     /// </summary>
-    JustAvailableForLinking = AvailableForLinking | ByName
+    JustAvailableForLinking = AvailableForLinking | ByName,
 }

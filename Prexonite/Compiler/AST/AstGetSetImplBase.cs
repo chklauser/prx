@@ -24,9 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -57,7 +55,7 @@ public abstract class AstGetSetImplBase : AstGetSet
         : base(position)
     {
         Call = call;
-        Arguments = new ArgumentsProxy(new List<AstExpr>());
+        Arguments = new(new());
     }
 
     internal AstGetSetImplBase(Parser p, PCall call)

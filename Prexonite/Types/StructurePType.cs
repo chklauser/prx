@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
 using System.Reflection;
 using Prexonite.Compiler.Cil;
 
@@ -42,12 +41,12 @@ public class StructurePType : PType, ICilCompilerAware
     /// <summary>
     ///     The official name for this type.
     /// </summary>
-    public const string Literal = "Structure";
+    public const string Literal = nameof(Structure);
 
     /// <summary>
     ///     Reserved for the member that reacts on <see cref = "IndirectCall" />.
     /// </summary>
-    public const string IndirectCallId = "IndirectCall";
+    public const string IndirectCallId = nameof(IndirectCall);
 
     /// <summary>
     ///     Reserved for the member that reacts on failed calls to <see cref = "TryDynamicCall" />.
@@ -148,10 +147,11 @@ public class StructurePType : PType, ICilCompilerAware
         PValue[] args,
         PCall call,
         string id,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (!(subject.Value is SymbolTable<Member> obj))
+        if (subject.Value is not SymbolTable<Member> obj)
             return false;
 
         var argst = _AddThis(subject, args);
@@ -159,7 +159,7 @@ public class StructurePType : PType, ICilCompilerAware
         var isReference = false;
 
         //Try to call the member
-        if (obj.TryGetValue(id, out var m) && m != null)
+        if (obj.TryGetValue(id, out var m))
             result = m.Invoke(sctx, argst, call);
         else
             switch (id.ToLowerInvariant())
@@ -172,16 +172,16 @@ public class StructurePType : PType, ICilCompilerAware
                     if (args.Length < 2)
                         goto default;
 
-                    var mid = (string) args[0].ConvertTo(sctx, String).Value;
+                    var mid = (string) args[0].ConvertTo(sctx, String).Value!;
 
                     if (isReference || args.Length > 2)
-                        isReference = (bool) args[1].ConvertTo(sctx, Bool).Value;
+                        isReference = (bool) args[1].ConvertTo(sctx, Bool).Value!;
 
-                    if (obj.ContainsKey(mid))
-                        m = obj[mid];
+                    if (obj.TryGetValue(mid, out var memberValue))
+                        m = memberValue;
                     else
                     {
-                        m = new Member();
+                        m = new();
                         obj.Add(mid, m);
                     }
 
@@ -193,18 +193,18 @@ public class StructurePType : PType, ICilCompilerAware
                     break;
                 default:
                     //Try to call the generic "call" member
-                    if (obj.TryGetValue(CallId, out m) && m != null)
+                    if (obj.TryGetValue(CallId, out m))
                         result = m.Invoke(sctx, _addThisAndId(id, argst), call);
                     else
                         return false;
                     break;
             }
 
-        return result != null;
+        return true;
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         return false;
@@ -213,7 +213,7 @@ public class StructurePType : PType, ICilCompilerAware
     #region Operators
 
     public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -221,7 +221,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -229,7 +229,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -237,7 +237,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool Division(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -245,7 +245,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get, OperatorNames.Prexonite.Modulus,
@@ -253,7 +253,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -261,7 +261,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -269,7 +269,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -277,7 +277,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -285,7 +285,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -293,7 +293,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -301,7 +301,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThanOrEqual(StackContext sctx, PValue leftOperand,
-        PValue rightOperand, out PValue result)
+        PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -309,7 +309,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
@@ -317,35 +317,35 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool LessThanOrEqual(StackContext sctx, PValue leftOperand,
-        PValue rightOperand, out PValue result)
+        PValue rightOperand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
             OperatorNames.Prexonite.LessThanOrEqual, out result);
     }
 
-    public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
+    public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.UnaryNegation,
             out result);
     }
 
-    public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
+    public override bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.OnesComplement,
             out result);
     }
 
-    public override bool Increment(StackContext sctx, PValue operand, out PValue result)
+    public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.Increment,
             out result);
     }
 
-    public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
+    public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
         (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.Decrement,
@@ -361,9 +361,9 @@ public class StructurePType : PType, ICilCompilerAware
     /// <param name = "args">An array of arguments. Ignored in the current implementation.</param>
     /// <param name = "result">The out parameter that holds the resulting PValue.</param>
     /// <returns>True if the construction was successful; false otherwise.</returns>
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
-        result = new PValue(new SymbolTable<Member>(), this);
+        result = new(new SymbolTable<Member>(), this);
         return true;
     }
 
@@ -372,10 +372,10 @@ public class StructurePType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
-        if (!(subject.Value is SymbolTable<Member> obj))
+        if (subject.Value is not SymbolTable<Member>)
             return false;
 
         switch (target.ToBuiltIn())
@@ -383,7 +383,7 @@ public class StructurePType : PType, ICilCompilerAware
             case BuiltIn.String:
                 normalString:
                 if (
-                    !TryDynamicCall(sctx, subject, Array.Empty<PValue>(), PCall.Get, "ToString",
+                    !TryDynamicCall(sctx, subject, Array.Empty<PValue>(), PCall.Get, nameof(ToString),
                         out result))
                     result = null;
                 break;
@@ -405,20 +405,20 @@ public class StructurePType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        out PValue result)
+        [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         return false;
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
-        if (!(subject.Value is SymbolTable<Member> obj))
+        if (subject.Value is not SymbolTable<Member> obj)
             return false;
 
-        if (obj.TryGetValue(IndirectCallId, out var m) && m != null)
+        if (obj.TryGetValue(IndirectCallId, out var m))
             result = m.IndirectCall(sctx, _AddThis(subject, args));
 
         return result != null;
@@ -429,15 +429,13 @@ public class StructurePType : PType, ICilCompilerAware
         return otherType is StructurePType;
     }
 
-    const int _code = 1558687994;
-
     /// <summary>
     ///     returns a constant hash code.
     /// </summary>
     /// <returns>A constant hash code.</returns>
     public override int GetHashCode()
     {
-        return _code;
+        return 1558687994;
     }
 
     /// <summary>
@@ -464,7 +462,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     static readonly MethodInfo GetStructurePType =
-        typeof (PType).GetProperty("Structure").GetGetMethod();
+        typeof (PType).GetProperty(nameof(Structure))!.GetGetMethod()!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -23,21 +24,19 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using JetBrains.Annotations;
-
 namespace Prexonite.Compiler.Symbolic;
 
 public interface ISymbolHandler<in TArg, out TResult>
 {
-    TResult HandleReference([NotNull] ReferenceSymbol self, TArg argument);
+    TResult HandleReference(ReferenceSymbol self, TArg argument);
 
-    TResult HandleNil([NotNull] NilSymbol self, TArg argument);
+    TResult HandleNil(NilSymbol self, TArg argument);
 
-    TResult HandleExpand([NotNull] ExpandSymbol self, TArg argument);
+    TResult HandleExpand(ExpandSymbol self, TArg argument);
 
-    TResult HandleDereference([NotNull] DereferenceSymbol self, TArg argument);
+    TResult HandleDereference(DereferenceSymbol self, TArg argument);
 
-    TResult HandleMessage([NotNull] MessageSymbol self, TArg argument);
+    TResult HandleMessage(MessageSymbol self, TArg argument);
 
-    TResult HandleNamespace([NotNull] NamespaceSymbol self, TArg argument);
+    TResult HandleNamespace(NamespaceSymbol self, TArg argument);
 }

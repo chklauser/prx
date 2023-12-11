@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Prexonite.Modular;
@@ -89,7 +88,7 @@ class ApplicationCompoundImpl : ApplicationCompound
         return _table.Contains(item);
     }
 
-    public override bool TryGetApplication(ModuleName moduleName, out Application application)
+    public override bool TryGetApplication(ModuleName moduleName, [NotNullWhen(true)] out Application? application)
     {
         if (_table.Contains(moduleName))
         {

@@ -23,9 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Diagnostics;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -38,29 +37,27 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
             $"{Enum.GetName(typeof(MessageSeverity), Message.Severity)}({Message.MessageClass}) {InnerSymbol}";
     }
 
-    [NotNull]
-    internal static MessageSymbol _Create([NotNull] Message message, [NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
+    internal static MessageSymbol _Create(Message message, Symbol inner, ISourcePosition? position)
     {
         return new(position ?? inner.Position, message, inner);
     }
 
-    MessageSymbol([NotNull] ISourcePosition position, [NotNull] Message message, [NotNull] Symbol symbol)
+    MessageSymbol(ISourcePosition position, Message message, Symbol symbol)
         : base(position, symbol)
     {
         Message = message;
     }
 
-    [NotNull]
     public Message Message { get; }
 
     #region Equality members
 
-    public bool Equals(MessageSymbol other)
+    public bool Equals(MessageSymbol? other)
     {
         return base.Equals(other) && Message.Equals(other?.Message);
     }
 
-    public override bool Equals(Symbol other)
+    public override bool Equals(Symbol? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -77,7 +74,7 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
 
     protected override int HashCodeXorFactor => 599;
 
-    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
+    public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition? newPosition = null)
     {
         return new MessageSymbol(newPosition ?? Position, Message,newInnerSymbol);
     }
@@ -89,7 +86,7 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
         return handler.HandleMessage(this, argument);
     }
 
-    public override bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
+    public override bool TryGetMessageSymbol([NotNullWhen(true)] out MessageSymbol? messageSymbol)
     {
         messageSymbol = this;
         return true;

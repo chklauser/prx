@@ -1,8 +1,3 @@
-#nullable enable
-
-using System;
-using System.Diagnostics.CodeAnalysis;
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstConstantTypeExpression : AstTypeExpr

@@ -1,11 +1,6 @@
-﻿#nullable enable
-using System;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+﻿using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Modular;
 
@@ -193,7 +188,7 @@ public sealed class ModuleName : IEquatable<ModuleName>
                             return false;
                         if(!lst.All(_isText))
                             return false;
-                        rawVersion = lst.Foldr1((l, r) => l + "." + r);
+                        rawVersion = lst.Foldr1((l, r) => l + "." + r)!;
                     }
                     else
                     {
@@ -225,7 +220,7 @@ public sealed class ModuleName : IEquatable<ModuleName>
             // v already assigned
         }
 
-        name = new ModuleName(id, v);
+        name = new(id, v);
         return true;
     }
 

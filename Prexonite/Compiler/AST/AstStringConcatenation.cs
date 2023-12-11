@@ -23,11 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
 using System.Text;
-using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
 
@@ -42,15 +40,12 @@ namespace Prexonite.Compiler.Ast;
 public class AstStringConcatenation : AstExpr,
     IAstHasExpressions
 {
-    [NotNull]
     readonly AstGetSet _simpleConcatPrototype;
-    [NotNull]
     readonly AstGetSet _multiConcatPrototype;
 
     /// <summary>
     ///     The list of arguments for the string concatenation.
     /// </summary>
-    [NotNull]
     readonly List<AstExpr> _arguments = new();
 
     /// <summary>
@@ -141,10 +136,10 @@ public class AstStringConcatenation : AstExpr,
             {
                 _arguments[0].EmitValueCode(target);
 
-                AstConstant constant;
+                AstConstant? constant;
                 if ((constant = _arguments[0] as AstConstant) != null &&
-                    !(constant.Constant is string))
-                    target.EmitGetCall(Position, 1, "ToString");
+                    constant.Constant is not string)
+                    target.EmitGetCall(Position, 1, nameof(ToString));
             }
             else
             {
@@ -176,16 +171,16 @@ public class AstStringConcatenation : AstExpr,
     ///         Also, <paramref name = "expr" /> is only defined if the method call returns <c>true</c>. Don't use it otherwise.
     ///     </para>
     /// </remarks>
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         _OptimizeInternal(target);
 
-        AstConstant collapsed;
+        AstConstant? collapsed;
         if (Arguments.Count == 1 && (collapsed = Arguments[0] as AstConstant) != null)
         {
             expr = collapsed.Constant is string
-                ? (AstExpr) collapsed
-                : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
+                ? collapsed
+                : new AstGetSetMemberAccess(File, Line, Column, collapsed, nameof(ToString));
         }
         else
         {
@@ -230,11 +225,11 @@ public class AstStringConcatenation : AstExpr,
 
         //Try to shorten argument list
         var nlst = new List<AstExpr>();
-        string last = null;
+        string? last = null;
         var buffer = new StringBuilder();
         foreach (var e in _arguments)
         {
-            string current;
+            string? current;
             if (e is AstConstant currConst)
                 current = currConst.ToPValue(target).CallToString(target.Loader);
             else

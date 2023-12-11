@@ -1,8 +1,4 @@
-#nullable enable
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -16,7 +12,7 @@ public class PValueComparer : IComparer<PValue>
 
     public PValueComparer(StackContext sctx)
     {
-        this._sctx = sctx ?? throw new ArgumentNullException(nameof(sctx));
+        _sctx = sctx ?? throw new ArgumentNullException(nameof(sctx));
     }
 
     #region IComparer<PValue> Members
@@ -42,15 +38,15 @@ public class PValueComparer : IComparer<PValue>
         {
             if (x.TryDynamicCall(_sctx, Array.Empty<PValue>(), PCall.Get, "CompareTo", out var pr))
             {
-                if (!(pr.Type is IntPType))
+                if (pr.Type is not IntPType)
                     pr.ConvertTo(_sctx, PType.Int);
-                return (int) pr.Value;
+                return (int) pr.Value!;
             }
             else if (y.TryDynamicCall(_sctx, Array.Empty<PValue>(), PCall.Get, "CompareTo", out pr))
             {
-                if (!(pr.Type is IntPType))
+                if (pr.Type is not IntPType)
                     pr.ConvertTo(_sctx, PType.Int);
-                return (int) pr.Value;
+                return (int) pr.Value!;
             }
             else
             {

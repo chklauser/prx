@@ -1,9 +1,3 @@
-#nullable enable
-
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Prexonite.Commands;
 
 namespace Prexonite;
@@ -115,7 +109,8 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "key">The name of the command to retrieve.</param>
     /// <returns>The command registered with the supplied name.</returns>
-    public override PCommand this[string key]
+    [NotNull]
+    public override PCommand? this[string key]
     {
         get => TryGetValue(key, out var cmd) 
             ? cmd 

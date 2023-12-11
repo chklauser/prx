@@ -23,15 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading;
-using Prexonite.Properties;
 
-#nullable enable
+using System.Diagnostics;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Internal;
 
@@ -74,15 +68,15 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             var merged = _merge(x, y);
             if (merged == null)
             {
-                return _unifySymbolsDualMode(new SymbolInfo(x.Symbol, x.Origin, unionInfo.Name), y, e);
+                return _unifySymbolsDualMode(new(x.Symbol, x.Origin, unionInfo.Name), y, e);
             }
             else
             {
-                x = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(x.Origin, y.Origin),x.Name);
+                x = new(merged,SymbolOrigin.MergedScope.CreateMerged(x.Origin, y.Origin),x.Name);
             }
         }
 
-        return new KeyValuePair<string, Symbol>(unionInfo.Name, x.Symbol);
+        return new(unionInfo.Name, x.Symbol);
     }
 
     static KeyValuePair<string, Symbol> _unifySymbolsDualMode(SymbolInfo first, SymbolInfo second, IEnumerator<SymbolInfo> e)
@@ -98,14 +92,14 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             var merged = _merge(x1, y);
             if (merged != null)
             {
-                x1 = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(x1.Origin,y.Origin),x1.Name);
+                x1 = new(merged,SymbolOrigin.MergedScope.CreateMerged(x1.Origin,y.Origin),x1.Name);
             }
             else
             {
                 merged = _merge(x2,y);
                 if (merged != null)
                 {
-                    x2 = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(x2.Origin,y.Origin),x2.Name);
+                    x2 = new(merged,SymbolOrigin.MergedScope.CreateMerged(x2.Origin,y.Origin),x2.Name);
                 }
                 else
                 {
@@ -117,7 +111,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         var msg = $"There are two incompatible declarations of the symbol {first.Name} in this scope. " +
             $"One comes from {first.Origin}, the other one from {second.Origin}.";
 
-        return new KeyValuePair<string, Symbol>(first.Name,
+        return new(first.Name,
             Symbol.CreateMessage(Message.Create(MessageSeverity.Error,
                 msg,
                 first.Origin.Position,
@@ -140,7 +134,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
                 var merged = _merge(thisSymbol, y);
                 if (merged != null)
                 {
-                    xs[i] = new SymbolInfo(merged,SymbolOrigin.MergedScope.CreateMerged(thisSymbol.Origin, y.Origin),thisSymbol.Name);
+                    xs[i] = new(merged,SymbolOrigin.MergedScope.CreateMerged(thisSymbol.Origin, y.Origin),thisSymbol.Name);
                     break;
                 }
             }
@@ -155,7 +149,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         var msg =
             $"There are {xs.Count} incompatible declarations of the symbol {first.Name}. " +
             $"They originate from {symbols.Select(s => s.Origin).ToEnumerationString()}.";
-        return new KeyValuePair<string, Symbol>(first.Name,
+        return new(first.Name,
             Symbol.CreateMessage(Message.Create(MessageSeverity.Error, msg, first.Origin.Position,
                 MessageClasses.SymbolConflict), xs[0].Symbol));
     }
@@ -270,7 +264,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             var innerInfo = new SymbolInfo(thisSymbol.InnerSymbol, mergeContext.ThisInfo.Origin,
                 mergeContext.ThisInfo.Name);
             var innerUnionSymbol = thisSymbol.InnerSymbol.HandleWith(this,
-                new MergeContext(innerInfo, mergeContext.OtherInfo));
+                new(innerInfo, mergeContext.OtherInfo));
             if (innerUnionSymbol == null) // the underlying self is not the same
                 return null;
 
@@ -347,7 +341,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             (null, null, {} parent) => parent.GetEnumerator(),
             (null, {} union, null) => union.GetEnumerator(),
             (null, {} union, {} parent) => union.Append(parent.Where(_notInUnion)).GetEnumerator(),
-            ({} local, _ , _) => _readLockEnumerable(_assembleEnumerator(local, parentOpt))
+            ({} local, _ , _) => _readLockEnumerable(_assembleEnumerator(local, parentOpt)),
         };
     }
 
@@ -372,7 +366,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             (null, null) => local,
             (null, {} parent) => local.Append(parent.Where(_notInLocal)),
             ({} union, null) => local.Append(union.Where(_notInLocal)),
-            ({} union, {} parent) => local.Append(union.Where(_notInLocal)).Append(parent.Where(_notInLocalAndUnion))
+            ({} union, {} parent) => local.Append(union.Where(_notInLocal)).Append(parent.Where(_notInLocalAndUnion)),
         };
     }
 
@@ -427,7 +421,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         try
         {
             if (_local == null)
-                _local = new SymbolTable<Symbol>();
+                _local = new();
             _local[id] = symbol;
         }
         finally

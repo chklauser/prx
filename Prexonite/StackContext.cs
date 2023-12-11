@@ -23,9 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.Diagnostics.CodeAnalysis;
-using Prexonite.Types;
 
 namespace Prexonite;
 
@@ -52,7 +49,7 @@ public abstract class StackContext : IIndirectCall
     ///     Indicates whether the context still has code/work to do.
     /// </summary>
     /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-    protected abstract bool PerformNextCycle(StackContext lastContext);
+    protected abstract bool PerformNextCycle(StackContext? lastContext);
 
     /// <summary>
     ///     Tries to handle the supplied exception.
@@ -61,7 +58,7 @@ public abstract class StackContext : IIndirectCall
     /// <returns>True if the exception has been handled, false otherwise.</returns>
     public abstract bool TryHandleException(Exception exc);
 
-    internal bool _NextCylce(StackContext lastContext)
+    internal bool _NextCycle(StackContext? lastContext)
     {
         return PerformNextCycle(lastContext);
     }
@@ -141,8 +138,8 @@ public abstract class StackContext : IIndirectCall
     /// <param name = "obj">The object to be represented.</param>
     /// <returns>A PValue containing the supplied object with an appropriate type.</returns>
     [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames",
-        MessageId = "obj")]
-    public PValue CreateNativePValue(object obj)
+        MessageId = nameof(obj))]
+    public PValue CreateNativePValue(object? obj)
     {
         return ParentEngine.CreateNativePValue(obj);
     }
@@ -183,5 +180,5 @@ public enum ReturnMode
     /// <summary>
     ///     The context has only been suspended.
     /// </summary>
-    Continue
+    Continue,
 }

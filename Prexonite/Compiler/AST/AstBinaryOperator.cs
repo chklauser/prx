@@ -1,3 +1,4 @@
+
 // Prexonite
 // 
 // Copyright (c) 2014, Christian Klauser
@@ -139,5 +140,5 @@ public enum BinaryOperator
     ///<summary>
     ///    The binary &lt;| operator. No fixed semantics
     ///</summary>
-    DeltaLeft
+    DeltaLeft,
 }

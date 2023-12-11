@@ -23,13 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Prexonite.Compiler.Ast;
 
 [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Coroutine")]
+    MessageId = nameof(Coroutine))]
 public class AstCreateCoroutine : AstExpr,
     IAstHasExpressions
 {
@@ -39,7 +37,7 @@ public class AstCreateCoroutine : AstExpr,
 
     public AstExpr[] Expressions => Arguments.ToArray();
 
-    public AstExpr Expression { get; set; }
+    public required AstExpr Expression { get; set; }
 
     #endregion
 
@@ -48,13 +46,7 @@ public class AstCreateCoroutine : AstExpr,
     public AstCreateCoroutine(string file, int line, int col)
         : base(file, line, col)
     {
-        Arguments = new ArgumentsProxy(_arguments);
-    }
-
-    internal AstCreateCoroutine(Parser p)
-        : base(p)
-    {
-        Arguments = new ArgumentsProxy(_arguments);
+        Arguments = new(_arguments);
     }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -74,7 +66,7 @@ public class AstCreateCoroutine : AstExpr,
 
     #region AstExpr Members
 
-    public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         Expression = _GetOptimizedNode(target, Expression);
 
@@ -84,7 +76,7 @@ public class AstCreateCoroutine : AstExpr,
             if (arg == null)
                 throw new PrexoniteException(
                     "Invalid (null) argument in CreateCoroutine node (" + ToString() +
-                    ") detected at position " + _arguments.IndexOf(arg) + ".");
+                    ") detected at position " + _arguments.IndexOf(null!) + ".");
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
             {

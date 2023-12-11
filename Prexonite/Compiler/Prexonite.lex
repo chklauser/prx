@@ -20,6 +20,20 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+#nullable disable
+// ReSharper disable ArrangeTypeMemberModifiers
+// ReSharper disable InvalidXmlDocComment
+// ReSharper disable InconsistentNaming
+// ReSharper disable IdentifierTypo
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable CheckNamespace
+// ReSharper disable RedundantUsingDirective
+// ReSharper disable RedundantArrayCreationExpression
+// ReSharper disable RedundantAssignment
+// ReSharper disable RedundantExplicitArrayCreation
+// ReSharper disable RedundantNameQualifier
+// ReSharper disable RedundantJumpStatement
+// ReSharper disable PossibleNullReferenceException
 
 //Prexonite Scanner file.
 

@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.Collections.Generic;
 
 namespace Prexonite.Internal;
 
@@ -40,7 +39,7 @@ class MetaTableImpl : MetaTable
     ///     Creates a new meta table.
     /// </summary>
     /// <param name = "filter">An object that filters requests to the meta table.</param>
-    internal MetaTableImpl(IMetaFilter filter) : this(filter, 7)
+    internal MetaTableImpl(IMetaFilter? filter) : this(filter, 7)
     {
     }
 
@@ -49,22 +48,22 @@ class MetaTableImpl : MetaTable
     /// </summary>
     /// <param name = "filter">An object that filters request to the meta table.</param>
     /// <param name = "capacity">The initial capacity for the underlying data structure.</param>
-    protected MetaTableImpl(IMetaFilter filter, int capacity)
+    protected MetaTableImpl(IMetaFilter? filter, int capacity)
     {
         _filter = filter;
-        _table = new SymbolTable<MetaEntry>(capacity);
+        _table = new(capacity);
     }
 
     #endregion
 
     #region Filter
 
-    IMetaFilter _filter;
+    IMetaFilter? _filter;
 
     /// <summary>
     ///     Returns a reference to the object that filters requests to this meta table. Can be null.
     /// </summary>
-    protected override IMetaFilter Filter => _filter;
+    protected override IMetaFilter? Filter => _filter;
 
     protected override bool RemoveTransformed(string key)
     {
@@ -104,7 +103,7 @@ class MetaTableImpl : MetaTable
         _table[key] = entry;
     }
 
-    protected override bool TryGetValueTransformed(string key, out MetaEntry entry)
+    protected override bool TryGetValueTransformed(string key, [NotNullWhen(true)] out MetaEntry? entry)
     {
         return _table.TryGetValue(key, out entry);
     }
@@ -132,7 +131,6 @@ class MetaTableImpl : MetaTable
         return _table.GetEnumerator();
     }
 
-    public override MetaEntry DefaultValue { get; set; }
     public override void AddRange(IEnumerable<KeyValuePair<string, MetaEntry>> entries)
     {
         _table.AddRange(entries);

@@ -25,9 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #region
 
-using System;
-using System.Collections.Generic;
-
 #endregion
 
 namespace Prexonite.Types;
@@ -58,7 +55,7 @@ public class PValueKeyValuePair : IObject
     /// </summary>
     /// <param name = "key">The key.</param>
     /// <param name = "value">The value.</param>
-    public PValueKeyValuePair(PValue key, PValue value)
+    public PValueKeyValuePair(PValue? key, PValue? value)
     {
         Key = key ?? PType.Null.CreatePValue();
         Value = value ?? PType.Null.CreatePValue();
@@ -89,18 +86,18 @@ public class PValueKeyValuePair : IObject
     /// </remarks>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         if (args == null)
-            args = Array.Empty<PValue>();
+            throw new ArgumentNullException(nameof(args));
         if (id == null)
-            id = "";
+            throw new ArgumentNullException(nameof(id));
 
         result = null;
 
-        PValue arg0;
+        PValue? arg0;
 
         switch (id.ToLowerInvariant())
         {
@@ -109,7 +106,7 @@ public class PValueKeyValuePair : IObject
                 {
                     if (args[0].TryConvertTo(sctx, PType.Int, out arg0))
                     {
-                        var i = (int) arg0.Value;
+                        var i = (int) arg0.Value!;
                         if (i == 0)
                             result = Key;
                         else
@@ -128,7 +125,7 @@ public class PValueKeyValuePair : IObject
                 {
                     if (args[0].TryConvertTo(sctx, ObjectType, out arg0))
                     {
-                        var pair = (PValueKeyValuePair) arg0.Value;
+                        var pair = (PValueKeyValuePair) arg0.Value!;
                         result = Key.Equals(pair.Key) && Value.Equals(pair.Value);
                     }
                 }
@@ -148,7 +145,7 @@ public class PValueKeyValuePair : IObject
     /// </summary>
     /// <param name = "obj">The object to check for equality.</param>
     /// <returns>True if the two object are equal, False otherwise.</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj == null)
             return false;

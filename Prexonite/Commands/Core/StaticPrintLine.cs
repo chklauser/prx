@@ -23,9 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
-using System.IO;
-using System.Linq;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -133,7 +131,7 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
 
     static readonly MethodInfo _textWriterWriteLineMethod = typeof (TextWriter).
         GetMethod(
-            "WriteLine", new[] {typeof (string)});
+            "WriteLine", new[] {typeof (string)})!;
 
     #endregion
 }

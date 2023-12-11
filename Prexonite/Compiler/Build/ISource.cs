@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System.IO;
 
 namespace Prexonite.Compiler.Build;
 
@@ -31,5 +30,5 @@ public interface ISource
 {
     bool CanOpen { get; }
     bool IsSingleUse { get; }
-    bool TryOpen(out TextReader reader);
+    bool TryOpen([NotNullWhen(true)] out TextReader? reader);
 }

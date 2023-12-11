@@ -23,12 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Concurrency;
 
@@ -61,10 +60,10 @@ public class Chan : PCommand, ICilCompilerAware
     }
 
     static readonly ConstructorInfo _channelCtor =
-        typeof (Channel).GetConstructor(Array.Empty<Type>());
+        typeof (Channel).GetConstructor(Array.Empty<Type>())!;
 
     static readonly ConstructorInfo _newPValue =
-        typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
+        typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)})!;
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {

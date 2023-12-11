@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using Prexonite.Compiler.Ast;
 using Prexonite.Properties;
 
@@ -33,7 +33,8 @@ class ParserAstFactory : AstFactoryBase
 {
     readonly Parser _parser;
 
-    protected override AstBlock CurrentBlock => _parser.CurrentBlock;
+    protected override AstBlock CurrentBlock => _parser.CurrentBlock ??
+        throw new PrexoniteException("Internal error: current block cannot be accessed on the top level.");
 
     protected override AstGetSet CreateNullNode(ISourcePosition position)
     {
@@ -51,10 +52,16 @@ class ParserAstFactory : AstFactoryBase
     protected override void RequireOuterVariable(string id)
     {
         if (_parser.target == null)
+        {
             ReportMessage(
                 Message.Error(Resources.ParserAstFactory_RequireOuterVariable_Outside_function,
-                    _parser.GetPosition(), MessageClasses.ParserInternal));
-        _parser.target.RequireOuterVariable(id);
+                    _parser.GetPosition(),
+                    MessageClasses.ParserInternal));
+        }
+        else
+        {
+            _parser.target.RequireOuterVariable(id);
+        }
     }
 
     public override void ReportMessage(Message message)

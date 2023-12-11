@@ -1,24 +1,15 @@
-#nullable enable 
 #region Namespace Imports
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lokad.ILPack;
 using Prexonite.Commands;
 using Prexonite.Compiler.Build;
 using Prexonite.Modular;
-using Prexonite.Types;
-using CilException = Prexonite.PrexoniteException;
 
 #endregion
 
@@ -82,12 +73,12 @@ public static class Compiler
             if (value == null)
                 continue;
             var T = value.Type.ToBuiltIn();
-            PFunction func;
+            PFunction? func;
             switch (T)
             {
                 case PType.BuiltIn.String:
                     if (
-                        !sctx.ParentApplication.Functions.TryGetValue((string) value.Value,
+                        !sctx.ParentApplication.Functions.TryGetValue((string) value.Value!,
                             out func))
                         continue;
                     break;
@@ -109,22 +100,23 @@ public static class Compiler
         Compile(functions, targetEngine, FunctionLinking.FullyStatic);
     }
 
+    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine,
         FunctionLinking linking)
     {
         _checkQualification(functions, targetEngine);
 
         //Get a list of qualifying functions
-        var qfuncs = functions
+        var qFuncs = functions
             .Where(func => !func.Meta.GetDefault(PFunction.VolatileKey, false))
             .ToList();
         
-        if (qfuncs.Count == 0)
+        if (qFuncs.Count == 0)
             return; //No compilation to be done
         
         // Group functions by module and perform topological sort on module dependencies
         var dependencyAnalysis = new DependencyAnalysis<ModuleName, AdHocModuleDependencyInfo>(
-            qfuncs.GroupBy(f => f.ParentApplication.Module.Name)
+            qFuncs.GroupBy(f => f.ParentApplication.Module.Name)
                 .Select(listModuleReferences)
             , false);
         foreach (var node in dependencyAnalysis.GetMutuallyRecursiveGroups())
@@ -152,10 +144,11 @@ public static class Compiler
     }
 
     static AdHocModuleDependencyInfo listModuleReferences(IGrouping<ModuleName, PFunction> group) =>
-        new AdHocModuleDependencyInfo(group.Key, group
+        new(group.Key, group
             .SelectMany(f => f.Code)
             .Select(i => i.ModuleName)
-            .Where(m => m != null && m != group.Key)
+            .OfType<ModuleName>()
+            .Where(m => m != group.Key)
             .Distinct()
             .ToImmutableHashSet(), 
             group.ToList());
@@ -217,7 +210,7 @@ public static class Compiler
     }
 
     static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
-        new(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
+        new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
 
     public static void StoreDebugImplementation(Application app, Engine targetEngine)
     {
@@ -350,7 +343,7 @@ public static class Compiler
             {
                 case OpCode.cmd:
                     //Check for commands that are not compatible.
-                    if (!targetEngine.Commands.TryGetInfo(ins.Id, out var cmd))
+                    if (!targetEngine.Commands.TryGetInfo(ins.Id!, out var cmd))
                     {
                         reason = "Cannot find information about command " + ins.Id;
                         return false;
@@ -386,7 +379,7 @@ public static class Compiler
                     break;
                 case OpCode.func:
                     //Check for functions that use dynamic features
-                    if (source.ParentApplication.Functions.TryGetValue(ins.Id, out var func) &&
+                    if (source.ParentApplication.Functions.TryGetValue(ins.Id!, out var func) &&
                         func.Meta[PFunction.DynamicKey].Switch)
                     {
                         reason = "Uses dynamic function " + ins.Id;
@@ -399,7 +392,7 @@ public static class Compiler
                     return false;
                 case OpCode.newclo:
                     //Function must already be available
-                    if (!source.ParentApplication.Functions.Contains(ins.Id))
+                    if (!source.ParentApplication.Functions.Contains(ins.Id!))
                     {
                         reason = "Enclosed function " + ins.Id +
                             " must already be compiled (closure creation)";
@@ -500,7 +493,6 @@ public static class Compiler
     {
         //Create local cil function stack context
         //  CilFunctionContext cfctx = CilFunctionContext.New(sctx, source);
-        state.SctxLocal = state.Il.DeclareLocal(typeof (CilFunctionContext));
         state.EmitLoadArg(CompilerState.ParamSctxIndex);
         state.EmitLoadArg(CompilerState.ParamSourceIndex);
         state.Il.EmitCall(OpCodes.Call, CilFunctionContext.NewMethod, null);
@@ -518,16 +510,16 @@ public static class Compiler
     {
         //Create local ref variables for shared names
         //  and populate them with the contents of the sharedVariables parameter
-        if (state.Source.Meta.ContainsKey(PFunction.SharedNamesKey))
+        if (state.Source.Meta.TryGetValue(PFunction.SharedNamesKey, out var value))
         {
-            var sharedNames = state.Source.Meta[PFunction.SharedNamesKey].List;
+            var sharedNames = value.List;
             for (var i = 0; i < sharedNames.Length; i++)
             {
                 if (state.Source.Variables.Contains(sharedNames[i]))
                     continue; //Arguments are redeclarations.
                 var sym = new CilSymbol(SymbolKind.LocalRef)
                 {
-                    Local = state.Il.DeclareLocal(typeof (PVariable))
+                    Local = state.Il.DeclareLocal(typeof (PVariable)),
                 };
                 var id = sharedNames[i].Text;
 
@@ -547,7 +539,7 @@ public static class Compiler
         //Add entries for paramters
         foreach (var parameter in state.Source.Parameters)
             if (!state.Symbols.ContainsKey(parameter))
-                state.Symbols.Add(parameter, new CilSymbol(SymbolKind.Local));
+                state.Symbols.Add(parameter, new(SymbolKind.Local));
 
         //Add entries for enumerator variables
         foreach (var hint in state._ForeachHints)
@@ -555,13 +547,13 @@ public static class Compiler
             if (state.Symbols.ContainsKey(hint.EnumVar))
                 throw new PrexoniteException(
                     "Invalid foreach hint. Enumerator variable is shared.");
-            state.Symbols.Add(hint.EnumVar, new CilSymbol(SymbolKind.LocalEnum));
+            state.Symbols.Add(hint.EnumVar, new(SymbolKind.LocalEnum));
         }
 
         //Add entries for non-shared local variables
         foreach (var variable in state.Source.Variables)
             if (!state.Symbols.ContainsKey(variable))
-                state.Symbols.Add(variable, new CilSymbol(SymbolKind.Local));
+                state.Symbols.Add(variable, new(SymbolKind.Local));
     }
 
     static void _analysisAndPreparation(CompilerState state)
@@ -579,22 +571,31 @@ public static class Compiler
                     toConvert = state.IndexMap[ins.Arguments];
                     goto Convert;
                 case OpCode.ldr_loc:
-                    toConvert = ins.Id;
+                    toConvert = ins.Id!;
                     Convert:
+                    if (state.Symbols[toConvert] is not { } locSym)
+                    {
+                        throw new PrexoniteException("Missing symbol for identifier " + toConvert);
+                    }
 
                     //Normal local variables are implemented as CIL locals.
                     // If the function uses variable references, they must be converted to reference variables.
-                    state.Symbols[toConvert].Kind = SymbolKind.LocalRef;
+                    locSym.Kind = SymbolKind.LocalRef;
                     break;
                 case OpCode.rot:
                     //Determine the maximum number of temporary variables for the implementation of rot[ate]
-                    var order = (int) ins.GenericArgument;
+                    var order = (int) ins.GenericArgument!;
                     if (order > tempMaxOrder)
                         tempMaxOrder = order;
                     break;
                 case OpCode.newclo:
                     MetaEntry[] entries;
-                    var func = state.Source.ParentApplication.Functions[ins.Id];
+                    var func = state.Source.ParentApplication.Functions[ins.Id!];
+                    if (func == null)
+                    {
+                        throw new PrexoniteException("Internal error: failed to resolve function for closure creation. ID: " + ins.Id);
+                    }
+                    
                     MetaEntry entry;
                     if (func.Meta.ContainsKey(PFunction.SharedNamesKey) &&
                         (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
@@ -610,7 +611,7 @@ public static class Compiler
                                 symbolName);
 
                         //In order for variables to be shared, they too, need to be converted to reference locals.
-                        state.Symbols[symbolName].Kind = SymbolKind.LocalRef;
+                        state.Symbols[symbolName]!.Kind = SymbolKind.LocalRef;
                     }
 
                     //Notify the compiler of the presence of closures with shared variables
@@ -623,20 +624,12 @@ public static class Compiler
         state.TempLocals = new LocalBuilder[tempMaxOrder];
         for (var i = 0; i < tempMaxOrder; i++)
         {
-            var rotTemp = state.Il.DeclareLocal(typeof (PValue));
-            state.TempLocals[i] = rotTemp;
+            state.TempLocals[i] = state.Il.DeclareLocal(typeof (PValue));
         }
-
-        //Create temporary variable for argv and sharedVariables
-        state.ArgvLocal = state.Il.DeclareLocal(typeof (PValue[]));
-        state.SharedLocal = needsSharedVariables
-            ? state.Il.DeclareLocal(typeof (PVariable[]))
-            : null;
 
         //Create argc local variable and initialize it, if needed
         if (state.Source.Parameters.Count > 0)
         {
-            state.ArgcLocal = state.Il.DeclareLocal(typeof (int));
             state.EmitLoadArg(CompilerState.ParamArgsIndex);
             state.Il.Emit(OpCodes.Ldlen);
             state.Il.Emit(OpCodes.Conv_I4);
@@ -719,6 +712,10 @@ public static class Compiler
         {
             var id = state.Source.Parameters[i];
             var sym = state.Symbols[id];
+            if (sym == null)
+            {
+                throw new PrexoniteException("Internal error: missing symbol for parameter " + id);
+            }
             LocalBuilder local;
 
             //Determine whether local variables for parameters have already been created and create them if necessary
@@ -1003,7 +1000,7 @@ public static class Compiler
                             case OpCode.cmd:
                                 ICilExtension? extension;
                                 if (
-                                    !state.TargetEngine.Commands.TryGetValue(ins.Id, out var command) ||
+                                    !state.TargetEngine.Commands.TryGetValue(ins.Id!, out var command) ||
                                     (extension = command as ICilExtension) == null)
                                     goto default;
 
@@ -1029,13 +1026,13 @@ public static class Compiler
                     state.Il.EmitCall(OpCodes.Call, Runtime.ExtractEnumeratorMethod, null);
                     instructionIndex++;
                     //stloc enum
-                    state.EmitStoreLocal(state.Symbols[hint.EnumVar].Local);
+                    state.EmitStoreLocal(state.Symbols[hint.EnumVar]!.Local!);
                     continue;
                 }
                 else if (foreachGetCurrents.TryGetValue(instructionIndex, out hint))
                 {
                     //ldloc enum
-                    state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
+                    state.EmitLoadLocal(state.Symbols[hint.EnumVar]!.Local!);
                     instructionIndex++;
                     //get.0 Current
                     state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.GetCurrentMethod, null);
@@ -1045,7 +1042,7 @@ public static class Compiler
                 else if (foreachMoveNexts.TryGetValue(instructionIndex, out hint))
                 {
                     //ldloc enum
-                    state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
+                    state.EmitLoadLocal(state.Symbols[hint.EnumVar]!.Local!);
                     instructionIndex++;
                     //get.0 MoveNext
                     state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.MoveNextMethod, null);
@@ -1058,7 +1055,7 @@ public static class Compiler
                 else if (foreachDisposes.TryGetValue(instructionIndex, out hint))
                 {
                     //ldloc enum
-                    state.EmitLoadLocal(state.Symbols[hint.EnumVar].Local);
+                    state.EmitLoadLocal(state.Symbols[hint.EnumVar]!.Local!);
                     instructionIndex++;
                     //@cmd.1 dispose
                     state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.DisposeMethod, null);
@@ -1106,7 +1103,7 @@ public static class Compiler
                     state.EmitLoadBoolAsPValue(argc != 0);
                     break;
                 case OpCode.ldc_string:
-                    state.EmitLoadStringAsPValue(id);
+                    state.EmitLoadStringAsPValue(id!);
                     break;
 
                 case OpCode.ldc_null:
@@ -1119,19 +1116,19 @@ public static class Compiler
 
                 //LOAD REFERENCE
                 case OpCode.ldr_loc:
-                    state.EmitLoadLocalRefAsPValue(id);
+                    state.EmitLoadLocalRefAsPValue(id!);
                     break;
                 case OpCode.ldr_loci:
                     id = state.IndexMap[argc];
                     goto case OpCode.ldr_loc;
                 case OpCode.ldr_glob:
-                    state.EmitLoadGlobalRefAsPValue(id, moduleName);
+                    state.EmitLoadGlobalRefAsPValue(id!, moduleName);
                     break;
                 case OpCode.ldr_func:
-                    state.EmitLoadFuncRefAsPValue(id, moduleName);
+                    state.EmitLoadFuncRefAsPValue(id!, moduleName);
                     break;
                 case OpCode.ldr_cmd:
-                    state.EmitLoadCmdRefAsPValue(id);
+                    state.EmitLoadCmdRefAsPValue(id!);
                     break;
                 case OpCode.ldr_app:
                     CompilerState.EmitLoadAppRefAsPValue(state);
@@ -1140,10 +1137,10 @@ public static class Compiler
                     state.EmitLoadEngRefAsPValue();
                     break;
                 case OpCode.ldr_type:
-                    state.EmitPTypeAsPValue(id);
+                    state.EmitPTypeAsPValue(id!);
                     break;
                 case OpCode.ldr_mod:
-                    state.EmitModuleNameAsPValue(moduleName);
+                    state.EmitModuleNameAsPValue(moduleName!);
                     break;
 
                 #endregion //LOAD REFERENCE
@@ -1156,19 +1153,19 @@ public static class Compiler
 
                 //LOAD LOCAL VARIABLE
                 case OpCode.ldloc:
-                    state.EmitLoadPValue(state.Symbols[id]);
+                    state.EmitLoadPValue(state.Symbols[id!]!);
                     break;
                 case OpCode.stloc:
                     //Don't use EmitStorePValue here, because this is a more efficient solution
-                    var sym = state.Symbols[id];
+                    var sym = state.Symbols[id!]!;
                     if (sym.Kind == SymbolKind.Local)
                     {
-                        state.EmitStoreLocal(sym.Local.LocalIndex);
+                        state.EmitStoreLocal(sym.Local!.LocalIndex);
                     }
                     else if (sym.Kind == SymbolKind.LocalRef)
                     {
                         state.EmitStoreLocal(state.PrimaryTempLocal.LocalIndex);
-                        state.EmitLoadLocal(sym.Local.LocalIndex);
+                        state.EmitLoadLocal(sym.Local!.LocalIndex);
                         state.EmitLoadLocal(state.PrimaryTempLocal.LocalIndex);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                     }
@@ -1188,11 +1185,11 @@ public static class Compiler
 
                 //LOAD GLOBAL VARIABLE
                 case OpCode.ldglob:
-                    state.EmitLoadGlobalValue(id, moduleName);
+                    state.EmitLoadGlobalValue(id!, moduleName);
                     break;
                 case OpCode.stglob:
                     state.EmitStoreLocal(state.PrimaryTempLocal);
-                    state.EmitLoadGlobalReference(id,moduleName);
+                    state.EmitLoadGlobalReference(id!,moduleName);
                     state.EmitLoadLocal(state.PrimaryTempLocal);
                     state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                     break;
@@ -1205,20 +1202,20 @@ public static class Compiler
 
                 //CONSTRUCTION
                 case OpCode.newobj:
-                    state.EmitNewObj(id, argc);
+                    state.EmitNewObj(id!, argc);
                     break;
                 case OpCode.newtype:
                     state.FillArgv(argc);
                     state.EmitLoadLocal(state.SctxLocal);
                     state.ReadArgv(argc);
-                    state.Il.Emit(OpCodes.Ldstr, id);
+                    state.Il.Emit(OpCodes.Ldstr, id!);
                     state.Il.EmitCall(OpCodes.Call, Runtime.NewTypeMethod, null);
                     break;
 
                 case OpCode.newclo:
                     //Collect shared variables
                     MetaEntry[] entries;
-                    var func = state.Source.ParentApplication.Functions[id];
+                    var func = state.Source.ParentApplication.Functions[id!]!;
                     entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
                         ? sharedNamesEntry.List 
                         : Array.Empty<MetaEntry>();
@@ -1232,7 +1229,7 @@ public static class Compiler
                         {
                             state.EmitLoadLocal(state.SharedLocal);
                             state.EmitLdcI4(i);
-                            state.EmitLoadLocal(state.Symbols[entries[i].Text].Local);
+                            state.EmitLoadLocal(state.Symbols[entries[i].Text]!.Local!);
                             state.Il.Emit(OpCodes.Stelem_Ref);
                         }
                     }
@@ -1242,7 +1239,7 @@ public static class Compiler
                     else
                         state.Il.Emit(OpCodes.Ldnull);
 
-                    state.EmitNewClo(id,moduleName);
+                    state.EmitNewClo(id!, moduleName);
                     break;
 
                 case OpCode.newcor:
@@ -1260,17 +1257,17 @@ public static class Compiler
 
                 //UNARY OPERATORS
                 case OpCode.incloc:
-                    sym = state.Symbols[id];
+                    sym = state.Symbols[id!]!;
                     if (sym.Kind == SymbolKind.Local)
                     {
-                        state.EmitLoadLocal(sym.Local);
+                        state.EmitLoadLocal(sym.Local!);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
-                        state.EmitStoreLocal(sym.Local);
+                        state.EmitStoreLocal(sym.Local!);
                     }
                     else if (sym.Kind == SymbolKind.LocalRef)
                     {
-                        state.EmitLoadLocal(sym.Local);
+                        state.EmitLoadLocal(sym.Local!);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1284,7 +1281,7 @@ public static class Compiler
                     goto case OpCode.incloc;
 
                 case OpCode.incglob:
-                    state.EmitLoadGlobalReference(id,moduleName);
+                    state.EmitLoadGlobalReference(id!,moduleName);
                     state.Il.Emit(OpCodes.Dup);
                     state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                     state.EmitLoadLocal(state.SctxLocal);
@@ -1293,17 +1290,17 @@ public static class Compiler
                     break;
 
                 case OpCode.decloc:
-                    sym = state.Symbols[id];
+                    sym = state.Symbols[id!]!;
                     if (sym.Kind == SymbolKind.Local)
                     {
-                        state.EmitLoadLocal(sym.Local);
+                        state.EmitLoadLocal(sym.Local!);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
-                        state.EmitStoreLocal(sym.Local);
+                        state.EmitStoreLocal(sym.Local!);
                     }
                     else if (sym.Kind == SymbolKind.LocalRef)
                     {
-                        state.EmitLoadLocal(sym.Local);
+                        state.EmitLoadLocal(sym.Local!);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1316,7 +1313,7 @@ public static class Compiler
                     goto case OpCode.decloc;
 
                 case OpCode.decglob:
-                    state.EmitLoadGlobalReference(id,moduleName);
+                    state.EmitLoadGlobalReference(id!,moduleName);
                     state.Il.Emit(OpCodes.Dup);
                     state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                     state.EmitLoadLocal(state.SctxLocal);
@@ -1343,7 +1340,7 @@ public static class Compiler
                 case OpCode.check_const:
                     //Stack:
                     //  Obj
-                    state.EmitLoadType(id);
+                    state.EmitLoadType(id!);
                     //Stack:
                     //  Obj
                     //  Type
@@ -1370,7 +1367,7 @@ public static class Compiler
                 case OpCode.cast_const:
                     //Stack:
                     //  Obj
-                    state.EmitLoadType(id);
+                    state.EmitLoadType(id!);
                     //Stack:
                     //  Obj
                     //  Type
@@ -1399,7 +1396,7 @@ public static class Compiler
                     state.EmitLoadLocal(state.SctxLocal);
                     state.ReadArgv(argc);
                     state.EmitLdcI4((int) PCall.Get);
-                    state.Il.Emit(OpCodes.Ldstr, id);
+                    state.Il.Emit(OpCodes.Ldstr, id!);
                     state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
                     if (justEffect)
                         state.Il.Emit(OpCodes.Pop);
@@ -1410,7 +1407,7 @@ public static class Compiler
                     state.EmitLoadLocal(state.SctxLocal);
                     state.ReadArgv(argc);
                     state.EmitLdcI4((int) PCall.Set);
-                    state.Il.Emit(OpCodes.Ldstr, id);
+                    state.Il.Emit(OpCodes.Ldstr, id!);
                     state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
                     state.Il.Emit(OpCodes.Pop);
                     break;
@@ -1426,13 +1423,13 @@ public static class Compiler
                     //   .
                     //   .
                     state.FillArgv(argc);
-                    idx = id.LastIndexOf("::", StringComparison.Ordinal);
+                    idx = id!.LastIndexOf("::", StringComparison.Ordinal);
                     if (idx < 0)
                         throw new PrexoniteException
                         (
                             "Invalid sget instruction. Does not specify a method.");
-                    methodId = id.Substring(idx + 2);
-                    typeExpr = id.Substring(0, idx);
+                    methodId = id[(idx + 2)..];
+                    typeExpr = id[..idx];
                     state.EmitLoadType(typeExpr);
                     state.EmitLoadLocal(state.SctxLocal);
                     state.ReadArgv(argc);
@@ -1445,13 +1442,13 @@ public static class Compiler
 
                 case OpCode.sset:
                     state.FillArgv(argc);
-                    idx = id.LastIndexOf("::", StringComparison.Ordinal);
+                    idx = id!.LastIndexOf("::", StringComparison.Ordinal);
                     if (idx < 0)
                         throw new PrexoniteException
                         (
                             "Invalid sset instruction. Does not specify a method.");
-                    methodId = id.Substring(idx + 2);
-                    typeExpr = id.Substring(0, idx);
+                    methodId = id[(idx + 2)..];
+                    typeExpr = id[..idx];
                     state.EmitLoadType(typeExpr);
                     state.EmitLoadLocal(state.SctxLocal);
                     state.ReadArgv(argc);
@@ -1468,7 +1465,7 @@ public static class Compiler
                 #region INDIRECT CALLS
 
                 case OpCode.indloc:
-                    sym = state.Symbols[id];
+                    sym = state.Symbols[id!];
                     if (sym == null)
                         throw new PrexoniteException(
                             "Internal CIL compiler error. Information about local entity " + id +
@@ -1486,7 +1483,7 @@ public static class Compiler
 
                 case OpCode.indglob:
                     state.FillArgv(argc);
-                    state.EmitLoadGlobalValue(id,moduleName);
+                    state.EmitLoadGlobalValue(id!,moduleName);
                     state.EmitIndirectCall(argc, justEffect);
                     break;
 
@@ -1507,7 +1504,7 @@ public static class Compiler
                 #region ENGINE CALLS
 
                 case OpCode.func:
-                    state.EmitFuncCall(argc, id, moduleName, justEffect);
+                    state.EmitFuncCall(argc, id!, moduleName, justEffect);
                     break;
                 case OpCode.cmd:
                     state.EmitCommandCall(ins);
@@ -1593,7 +1590,7 @@ public static class Compiler
                         state.Il.Emit(OpCodes.Dup);
                     break;
                 case OpCode.rot:
-                    var values = (int) ins.GenericArgument;
+                    var values = (int) ins.GenericArgument!;
                     var rotations = argc;
                     for (var i = 0; i < values; i++)
                         state.EmitStoreLocal
@@ -1630,7 +1627,7 @@ public static class Compiler
     // ReSharper disable InconsistentNaming
 
     public static readonly MethodInfo CreateNativePValue =
-        typeof(CilFunctionContext).GetMethod("CreateNativePValue", new[] { typeof(object) })
+        typeof(CilFunctionContext).GetMethod(nameof(CreateNativePValue), new[] { typeof(object) })
         ?? throw new PrexoniteException("Cannot find method CilFunctionContext.CreateNativePValue(object).");
 
     internal static readonly MethodInfo GetNullPType =
@@ -1799,7 +1796,7 @@ public static class Compiler
     {
         None,
         Null,
-        ArgV
+        ArgV,
     }
 
     static VariableInitialization _getVariableInitialization(CompilerState state,
@@ -1837,7 +1834,7 @@ public static class Compiler
     /// <param name = "target"></param>
     /// <param name = "newHint"></param>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")]
+        MessageId = nameof(Cil))]
     public static void SetCilHint(IHasMetaTable target, ICilHint newHint)
     {
         if (target.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
@@ -1904,7 +1901,7 @@ public static class Compiler
     /// <param name = "target">The meta table to add the CIL hint to</param>
     /// <param name = "hint">The CIL hint to add</param>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")]
+        MessageId = nameof(Cil))]
     public static void AddCilHint(IHasMetaTable target, ICilHint hint)
     {
         if (target.Meta.ContainsKey(Loader.CilHintsKey))

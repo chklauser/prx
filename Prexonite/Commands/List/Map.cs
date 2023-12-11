@@ -23,12 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List;
 
@@ -58,8 +55,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
     #endregion
 
     /// <summary>
-    ///     Tries to turn a generic PValue object into an <see cref = "IEnumerable{PValue}" /> if possible. Returns null if <paramref
-    ///      name = "psource" /> cannot be enumerated over.
+    ///     Tries to turn a generic PValue object into an <see cref = "IEnumerable{PValue}" /> if possible.
     /// </summary>
     /// <param name = "sctx"></param>
     /// <param name = "psource"></param>
@@ -69,20 +65,20 @@ public class Map : CoroutineCommand, ICilCompilerAware
         switch (psource.Type.ToBuiltIn())
         {
             case PType.BuiltIn.List:
-                return (IEnumerable<PValue>) psource.Value;
+                return (IEnumerable<PValue>) psource.Value!;
             case PType.BuiltIn.Object:
                 var clrType = ((ObjectPType) psource.Type).ClrType;
                 if (typeof (IEnumerable<PValue>).IsAssignableFrom(clrType))
                     goto case PType.BuiltIn.List;
                 else if (typeof (IEnumerable).IsAssignableFrom(clrType))
-                    return _wrapNonGenericIEnumerable(sctx, (IEnumerable) psource.Value);
+                    return _wrapNonGenericIEnumerable(sctx, (IEnumerable) psource.Value!);
 
                 break;
         }
 
-        if (psource.TryConvertTo(sctx, true, out IEnumerable<PValue> set))
+        if (psource.TryConvertTo(sctx, true, out IEnumerable<PValue>? set))
             return set;
-        else if (psource.TryConvertTo(sctx, true, out IEnumerable nset))
+        else if (psource.TryConvertTo(sctx, true, out IEnumerable? nset))
             return _wrapNonGenericIEnumerable(sctx, nset);
         else
             return _wrapDynamicIEnumerable(sctx, psource);
@@ -93,8 +89,8 @@ public class Map : CoroutineCommand, ICilCompilerAware
         var pvEnumerator =
             psource.DynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "GetEnumerator").
                 ConvertTo(sctx, typeof (IEnumerator));
-        var enumerator = (IEnumerator) pvEnumerator.Value;
-        PValueEnumerator pvEnum;
+        var enumerator = (IEnumerator) pvEnumerator.Value!;
+        PValueEnumerator? pvEnum;
         try
         {
             if ((pvEnum = enumerator as PValueEnumerator) != null)
@@ -116,9 +112,9 @@ public class Map : CoroutineCommand, ICilCompilerAware
     }
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     protected static IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        IIndirectCall f, IEnumerable<PValue> source)
+        IIndirectCall? f, IEnumerable<PValue> source)
     {
         var sctx = sctxCarrier.StackContext;
 
@@ -133,7 +129,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
     /// <param name = "args">The list of arguments to be passed to the command.</param>
     /// <returns>A coroutine that maps the.</returns>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Coroutine")]
+        MessageId = nameof(Coroutine))]
     protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
         PValue[] args)
     {
@@ -145,7 +141,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         var sctx = sctxCarrier.StackContext;
 
         //Get f
-        IIndirectCall f;
+        IIndirectCall? f;
         if (args.Length < 1)
             f = null;
         else
@@ -156,7 +152,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         if (args.Length == 2)
         {
             var psource = args[1];
-            source = _ToEnumerable(sctx, psource) ?? new[] {psource};
+            source = _ToEnumerable(sctx, psource);
         }
         else
         {
@@ -164,10 +160,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
             for (var i = 1; i < args.Length; i++)
             {
                 var multiple = _ToEnumerable(sctx, args[i]);
-                if (multiple != null)
-                    lstsource.AddRange(multiple);
-                else
-                    lstsource.Add(args[i]);
+                lstsource.AddRange(multiple);
             }
             source = lstsource;
         }
