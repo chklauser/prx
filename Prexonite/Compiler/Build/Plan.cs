@@ -41,6 +41,7 @@ public static class Plan
         Source.FromEmbeddedPrexoniteResource("prxlib.sys.pxs"),
         Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.pxs"),
         Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs"),
+        Source.FromEmbeddedPrexoniteResource("prxlib.prx.v2.prelude.pxs"),
     };
 
     public static IPlan CreateDefault()
@@ -58,13 +59,17 @@ public static class Plan
         CancellationToken token)
     {
         var plan = new SelfAssemblingPlan();
-        if (stdPreference == StandardLibraryPreference.Default)
+        if (stdPreference is StandardLibraryPreference.Default or StandardLibraryPreference.NoPrelude)
         {
             // Provide modules that the standard library may be composed of. No dependency checking.
             await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));
 
             // Describe standard library. Dependencies must be satisfied
             plan.StandardLibrary.Add(new("sys", new(0, 0)));
+            if (stdPreference != StandardLibraryPreference.NoPrelude)
+            {
+                plan.StandardLibrary.Add(new("prx.prelude", new(2, 0)));
+            }
         }
         return plan;
     }
@@ -78,5 +83,6 @@ public static class Plan
 public enum StandardLibraryPreference
 {
     Default = 0,
+    NoPrelude = 1,
     None,
 }

@@ -30,7 +30,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
+using Prexonite;
 using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
@@ -562,5 +564,23 @@ references {
             Assert.That(lostTarget.Dependencies, Contains.Item(baseModuleName), string.Format("{1} is expected to depend on {0}.", baseModuleName, lostTarget));
             Assert.That(lostTarget.BuildMessages, Is.Empty, $"{lostTarget} should not have build (error) messages");
         }
+    }
+
+    [Test]
+    public async Task StandardPreludeV2()
+    {
+        using var _ = MockFile("file.pxs",
+            """
+            function main() {
+              println("Hello World");
+              return 5 + 4;
+            }
+            """
+            );
+
+        var targetDesc = await Sam.AssembleAsync(Source.FromFile(Path.Combine(_basePath, "file.pxs"), Encoding.UTF8));
+        var app = await Sam.LoadAsync(targetDesc.Name);
+        var result = app.Run(new());
+        Assert.That(result, Is.EqualTo((PValue)9));
     }
 }

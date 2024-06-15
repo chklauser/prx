@@ -21,6 +21,12 @@ public class EmbeddedPrxLibTests
     {
         _checkEmbeddedResource("prxlib.prx.v1.prelude.pxs");
     }
+
+    [Test]
+    public void V2Prelude()
+    {
+        _checkEmbeddedResource("prxlib.prx.v2.prelude.pxs");
+    }
         
     [Test]
     public void PrxCore()

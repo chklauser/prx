@@ -55,15 +55,10 @@ public class ModuleCache
 
     ITargetDescription _loadLegacySymbols()
     {
-        var moduleName = new ModuleName("prx.v1", new(0, 0));
-        var desc = Cache.CreateDescription(moduleName,
-            Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs"),
-            "prxlib/prx.v1.prelude.pxs",
-            Enumerable.Empty<ModuleName>());
-        Cache.TargetDescriptions.Add(desc);
-        Cache.Build(moduleName);
+        var preludeName = new ModuleName("prx.prelude", new(1, 0));
+        Cache.Build(preludeName);
         // Important: lookup the target description in order to get the cached description
-        return Cache.TargetDescriptions[moduleName];
+        return Cache.TargetDescriptions[preludeName];
 
     }
 
@@ -82,12 +77,12 @@ public class ModuleCache
         {
             var v1Name = new ModuleName("prx", new(1, 0));
             var v1Desc = Cache.CreateDescription(v1Name, Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.pxs"),
-                "prxlib/prx.v1.pxs", Enumerable.Empty<ModuleName>());
+                "prxlib/prx.v1.pxs", []);
             Cache.TargetDescriptions.Add(v1Desc);
                 
             var primName = new ModuleName("prx.prim", new(0, 0));
             var primDesc = Cache.CreateDescription(primName, Source.FromEmbeddedPrexoniteResource("prxlib.prx.prim.pxs"),
-                "prxlib/prx.prim.pxs", Enumerable.Empty<ModuleName>());
+                "prxlib/prx.prim.pxs", []);
             Cache.TargetDescriptions.Add(primDesc);
 
             var coreName = new ModuleName("prx.core", new(0, 0));
@@ -95,10 +90,20 @@ public class ModuleCache
                 "prxlib/prx.core.pxs", primName.Singleton());
             Cache.TargetDescriptions.Add(coreDesc);
 
+            var preludeV1Name = new ModuleName("prx.prelude", new(1, 0));
+            var preludeV1Desc = Cache.CreateDescription(preludeV1Name, Source.FromEmbeddedPrexoniteResource("prxlib.prx.v1.prelude.pxs"),
+                "prxlib/prx.v1.prelude.pxs", v1Name.Singleton());
+            Cache.TargetDescriptions.Add(preludeV1Desc);
+
             var sysName = new ModuleName("sys", new(0, 0));
             var desc = Cache.CreateDescription(sysName, Source.FromEmbeddedPrexoniteResource("prxlib.sys.pxs"), "prxlib/sys.pxs",
-                new[]{ primName, coreName });
+                [primName, coreName]);
             Cache.TargetDescriptions.Add(desc);
+
+            var preludeV2Name = new ModuleName("prx.prelude", new(2, 0));
+            var preludeV2Desc = Cache.CreateDescription(preludeV2Name, Source.FromEmbeddedPrexoniteResource("prxlib.prx.v2.prelude.pxs"),
+                "prxlib/prx.v2.prelude.pxs", sysName.Singleton());
+            Cache.TargetDescriptions.Add(preludeV2Desc);
 
             Cache.Build(sysName);
             return Cache.TargetDescriptions[sysName];
@@ -133,7 +138,7 @@ public class ModuleCache
                 new ModuleName(Path.GetFileNameWithoutExtension(dep), new(0, 0))).ToArray();
 
         // Manually add legacy symbol and stdlib dependencies
-        var effectiveDependencies = dependencyNames.Append(LegacySymbolsDescription.Name).Append(stdlibDescription.Name);
+        var effectiveDependencies = dependencyNames.Append(stdlibDescription.Name).Append(LegacySymbolsDescription.Name);
         var desc = Cache.CreateDescription(moduleName, file.ToSource(), path, effectiveDependencies);
         _trace.TraceEvent(TraceEventType.Information, 0,
             "Adding new target description for cache on thread {0}: {1}.", Thread.CurrentThread.ManagedThreadId,

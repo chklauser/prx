@@ -1135,6 +1135,9 @@ public class Loader : StackContext, IMessageSink
         BuildCommands.AddCompilerCommand(
             BuildGetLoaderCommand,
             (sctx, _) => sctx.CreateNativePValue(this));
+
+        BuildCommands.AddCompilerCommand("re_export_namespace_exports_top_level",
+            new ReExportNamespaceExportsTopLevel(this));
     }
 
 

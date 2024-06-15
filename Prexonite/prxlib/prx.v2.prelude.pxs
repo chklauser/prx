@@ -1,0 +1,9 @@
+﻿//PRX
+
+Name prx::prelude/2.0;
+References {
+  sys/0.0
+};
+
+namespace import sys.*;
+build does sys.ct.re_export_namespace_exports_top_level(["sys"]);

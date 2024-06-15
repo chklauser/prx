@@ -70,7 +70,9 @@ namespace prx.core
 
   namespace math export(*),prx.prim(abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan);
 
-  namespace ct export(*),prx.prim(
+  namespace ct {
+    declare(re_export_namespace_exports_top_level = ref command "re_export_namespace_exports_top_level");
+  } export(*),prx.prim(
     create_source_position, get_unscoped_ast_factory,
     macro\pack => pack, macro\unpack => unpack, macro\reference => macro_reference, call\macro,
     entityref_to);
