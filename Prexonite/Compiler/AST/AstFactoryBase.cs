@@ -943,7 +943,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
 
     readonly AstFactoryBridge _bridge;
 
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return _bridge.IndirectCall(sctx, args);
     }
@@ -952,7 +952,14 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         return _bridge.TryDynamicCall(sctx, args, call, id, out result);
     }

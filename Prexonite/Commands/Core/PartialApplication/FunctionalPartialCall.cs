@@ -28,7 +28,7 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public class FunctionalPartialCall(PValue subject, PValue[] arguments) : IMaybeStackAware
 {
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return subject.IndirectCall(sctx, _getEffectiveArgs(args));
     }
@@ -62,11 +62,11 @@ public class FunctionalPartialCall(PValue subject, PValue[] arguments) : IMaybeS
         return false;
     }
 
-    PValue[] _getEffectiveArgs(PValue[] args)
+    PValue[] _getEffectiveArgs(ReadOnlySpan<PValue> args)
     {
         var effectiveArgs = new PValue[args.Length + arguments.Length];
         Array.Copy(arguments, effectiveArgs, arguments.Length);
-        Array.Copy(args, 0, effectiveArgs, arguments.Length, args.Length);
+        args.CopyTo(effectiveArgs.AsSpan(arguments.Length, args.Length));
         return effectiveArgs;
     }
 }

@@ -43,9 +43,9 @@ public class ThenCommand : PCommand, ICilCompilerAware
 
     #region Overrides of PCommand
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)
@@ -87,10 +87,9 @@ public class CallComposition : IIndirectCall
 
     #region Implementation of IIndirectCall
 
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
-        return OuterExpression.IndirectCall(sctx,
-            new[] {InnerExpression.IndirectCall(sctx, args)});
+        return OuterExpression.IndirectCall(sctx, InnerExpression.IndirectCall(sctx, args));
     }
 
     #endregion

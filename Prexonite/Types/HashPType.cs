@@ -61,7 +61,7 @@ public class HashPType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -97,10 +97,11 @@ public class HashPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         if (sctx == null)
@@ -264,7 +265,7 @@ public class HashPType : PType, ICilCompilerAware
                 {
                     if (pvht.TryGetValue(args[0], out var value))
                     {
-                        args[1].IndirectCall(sctx, new[] {value});
+                        args[1].IndirectCall(sctx, value);
                         result = true;
                     }
                     else
@@ -287,7 +288,7 @@ public class HashPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -328,7 +329,7 @@ public class HashPType : PType, ICilCompilerAware
         return true;
     }
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

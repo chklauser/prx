@@ -47,9 +47,9 @@ public sealed class LoadAssembly : PCommand, ICilCompilerAware
     /// <param name = "sctx">The stack context in which to load the assembly</param>
     /// <param name = "args">A list of file paths to assemblies.</param>
     /// <returns>Null</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)

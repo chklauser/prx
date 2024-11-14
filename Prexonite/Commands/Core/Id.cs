@@ -47,9 +47,9 @@ public class Id : PCommand, ICilCompilerAware
         return args.Length > 0 ? args[0] : PType.Null;
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public CompilationFlags CheckQualification(Instruction ins)

@@ -69,7 +69,7 @@ public class CharPType : PType, ICilCompilerAware
 
     #region PType interface
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         char c;
         result = null;
@@ -103,18 +103,17 @@ public class CharPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
-        string? id,
-        [NotNullWhen(true)] out PValue? result
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         if (subject == null)
             throw new ArgumentNullException(nameof(subject));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
         if (id == null)
             id = "";
         var c = (char) subject.Value!;
@@ -200,7 +199,7 @@ public class CharPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         //Try CLR static call
         var clrint = Object[typeof (int)];

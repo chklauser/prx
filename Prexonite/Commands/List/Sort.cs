@@ -52,7 +52,7 @@ public class Sort : PCommand
     /// <param name = "sctx">The stack context in which the sort is performed.</param>
     /// <param name = "args">A list of sort expressions followed by the list to sort.</param>
     /// <returns>The a sorted copy of the list.</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -76,7 +76,7 @@ public class Sort : PCommand
                 {
                     foreach (var f in clauses)
                     {
-                        var pdec = f.IndirectCall(sctx, new[] {a, b});
+                        var pdec = f.IndirectCall(sctx, a, b);
                         if (pdec.Type is not IntPType)
                             pdec = pdec.ConvertTo(sctx, PType.Int);
                         var dec = (int) pdec.Value!;

@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using JetBrains.Annotations;
-using Lokad.ILPack;
 using Prexonite.Commands;
 using Prexonite.Compiler.Build;
 using Prexonite.Modular;
@@ -199,18 +198,17 @@ public static class Compiler
 
     #region Store debug implementation
 
+    [PublicAPI]
     public static void StoreDebugImplementation(StackContext sctx)
     {
         StoreDebugImplementation(sctx.ParentApplication, sctx.ParentEngine);
     }
 
+    [PublicAPI]
     public static void StoreDebugImplementation(StackContext sctx, Application app)
     {
         StoreDebugImplementation(app, sctx.ParentEngine);
     }
-
-    static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
-        new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
 
     public static void StoreDebugImplementation(Application app, Engine targetEngine)
     {
@@ -236,8 +234,7 @@ public static class Compiler
 
         pass.TargetType.CreateType();
 
-        // .NET Core no longer offers AssemblyBuilder.Save. We use Lokad.ILPack instead.
-        AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
+        pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
     }
 
     public static void StoreDebugImplementation(PFunction func, Engine targetEngine)
@@ -252,11 +249,7 @@ public static class Compiler
         _compile(func, il, targetEngine, pass, linking);
 
         pass.TargetType.CreateType();
-
-        //var sm = tb.DefineMethod("whoop", MethodAttributes.Static | MethodAttributes.Public);
-
-        //ab.SetEntryPoint(sm);
-        AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
+        pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
     }
 
     public static void StoreDebugImplementation(StackContext sctx, PFunction func)
@@ -754,7 +747,7 @@ public static class Compiler
                 state.EmitStorePValue
                 (
                     sym,
-                    delegate
+                    () =>
                     {
                         //(idx < argc) ? args[idx] : null; 
                         state.EmitLdcI4(i);
@@ -1779,15 +1772,17 @@ public static class Compiler
         ?? throw new PrexoniteException("Cannot find method PValue.IsNull(StackContext, PValue).");
 
     public static MethodInfo PVDynamicCallMethod { get; } =
-        typeof(PValue).GetMethod("DynamicCall")
+        typeof(PValue).GetMethod("DynamicCall", BindingFlags.Instance | BindingFlags.Public, 
+            [typeof(StackContext), typeof(PValue[]), typeof(PCall), typeof(string)])
         ?? throw new PrexoniteException("Cannot find method PValue.DynamicCall(StackContext, PValue).");
 
     public static MethodInfo PVIndirectCallMethod { get; } =
-        typeof(PValue).GetMethod("IndirectCall")
+        typeof(PValue).GetMethod("IndirectCall", BindingFlags.Instance | BindingFlags.Public, [
+        typeof(StackContext), typeof(PValue[])])
         ?? throw new PrexoniteException("Cannot find method PValue.IndirectCall(StackContext, PValue).");
 
     public static MethodInfo PVOnesComplementMethod { get; } =
-        typeof(PValue).GetMethod("OnesComplement", new[] { typeof(StackContext) })
+        typeof(PValue).GetMethod("OnesComplement", [typeof(StackContext)])
         ?? throw new PrexoniteException("Cannot find method PValue.OnesComplement(StackContext, PValue).");
 
     // ReSharper restore InconsistentNaming

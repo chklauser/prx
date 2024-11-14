@@ -36,13 +36,13 @@ public class PValueComparer : IComparer<PValue>
             return 1;
         else
         {
-            if (x.TryDynamicCall(_sctx, Array.Empty<PValue>(), PCall.Get, "CompareTo", out var pr))
+            if (x.TryDynamicCall(_sctx, [], PCall.Get, "CompareTo", out var pr))
             {
                 if (pr.Type is not IntPType)
                     pr.ConvertTo(_sctx, PType.Int);
                 return (int) pr.Value!;
             }
-            else if (y.TryDynamicCall(_sctx, Array.Empty<PValue>(), PCall.Get, "CompareTo", out pr))
+            else if (y.TryDynamicCall(_sctx, [], PCall.Get, "CompareTo", out pr))
             {
                 if (pr.Type is not IntPType)
                     pr.ConvertTo(_sctx, PType.Int);

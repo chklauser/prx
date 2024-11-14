@@ -91,7 +91,13 @@ public abstract class V2UnitTestContainer
     {
             
             
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx,
+            ReadOnlySpan<PValue> args,
+            PCall call,
+            string id,
+            out PValue? result
+        )
         {
             result = PType.Null;
             (string Id, Application ParentApplication) testCase;
@@ -104,18 +110,18 @@ public abstract class V2UnitTestContainer
                     return true;
                 case "SUCCESS":
                     testCase = extract(sctx,
-                        args[0].TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "test", out var testCaseValue)
+                        args[0].TryDynamicCall(sctx, [], PCall.Get, "test", out var testCaseValue)
                             ? testCaseValue
                             : throw new PrexoniteException("Expected test result to have a member called `test`."));
                     Trace.WriteLine($"test [{sctx.ParentApplication.Module.Name}].{testCase.Id} successful");
                     return true;
                 case "FAILURE":
                     testCase = extract(sctx,
-                        args[0].TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "test", out testCaseValue)
+                        args[0].TryDynamicCall(sctx, [], PCall.Get, "test", out testCaseValue)
                             ? testCaseValue
                             : throw new PrexoniteException("Expected test result to have a member called `test`."));
                     var exceptionObj =
-                        args[0].TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "e", out var exceptionValue)
+                        args[0].TryDynamicCall(sctx, [], PCall.Get, "e", out var exceptionValue)
                             ? exceptionValue.Value
                             : throw new PrexoniteException(
                                 "Expected failed test result to have a member called `e`");
@@ -163,12 +169,12 @@ public abstract class V2UnitTestContainer
             
         // WHEN
         // result~(Bool:Structure)
-        var result = TestSuiteRunFunction.Run(TestSuiteEngine, new[] {ui, testCaseValue});
+        var result = TestSuiteRunFunction.Run(TestSuiteEngine, [ui, testCaseValue]);
             
         // THEN
         // (the UI callback should actually raise an exception in case of a test error)
-        var ctx = new NullContext(TestSuiteEngine, TestSuiteApplication, Enumerable.Empty<string>());
-        Assert.IsTrue(result.TryDynamicCall(ctx, Array.Empty<PValue>(), PCall.Get, "Key", out var successfulValue), 
+        var ctx = new NullContext(TestSuiteEngine, TestSuiteApplication, []);
+        Assert.IsTrue(result.TryDynamicCall(ctx, [], PCall.Get, "Key", out var successfulValue), 
             "Expected result of test run function on [{1}].{2} to have a `Key` member. Got: {0}", result,
             TestSuiteApplication.Module.Name, testCaseName);
         Assert.AreEqual(true, successfulValue!.Value, "Expected test [{0}].{1} to be successful.",

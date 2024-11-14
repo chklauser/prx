@@ -129,7 +129,13 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        out PValue result
+    )
     {
         switch (id.ToUpperInvariant())
         {
@@ -143,7 +149,7 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
                 var symbolic = (string)args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value!;
                 if(TryGet(symbolic,out var symbol))
                 {
-                    args[1].IndirectCall(sctx, new[] {sctx.CreateNativePValue(symbol)});
+                    args[1].IndirectCall(sctx, sctx.CreateNativePValue(symbol));
                     result = true;
                     return true;
                 }

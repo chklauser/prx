@@ -28,7 +28,7 @@ namespace Prexonite.Commands.List;
 
 public class Exists : PCommand
 {
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

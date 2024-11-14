@@ -50,10 +50,16 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
 
     #region IObject Members
 
-    bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        [NotNullWhen(true)] out PValue? result)
+    bool IObject.TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
-        return TryDynamicCall(sctx, args, call, id, out result);
+        return tryDynamicCall(sctx, args, call, id, out result);
     }
 
     #endregion
@@ -71,7 +77,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
 
     public abstract bool Contains(ModuleName moduleName);
 
-    protected virtual bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call,
+    bool tryDynamicCall(StackContext sctx, ReadOnlySpan<PValue> args, PCall call,
         string id, [NotNullWhen(true)] out PValue? result)
     {
         switch (id.ToUpperInvariant())
@@ -83,13 +89,12 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
                     PValue target = args[1];
                     if (TryGetApplication(moduleName, out var application))
                     {
-                        target.IndirectCall(sctx,
-                            new[] {sctx.CreateNativePValue(application)});
+                        target.IndirectCall(sctx, sctx.CreateNativePValue(application));
                         result = true;
                     }
                     else
                     {
-                        target.IndirectCall(sctx, new PValue[] {PType.Null});
+                        target.IndirectCall(sctx, PType.Null);
                         result = false;
                     }
                     return true;

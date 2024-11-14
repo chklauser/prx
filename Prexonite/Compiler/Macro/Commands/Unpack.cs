@@ -96,7 +96,7 @@ public class Unpack : MacroCommand
 
         #region Overrides of PCommand
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
         {
             MacroContext? context;
             if (args.Length < 2 || args[0].Type is not ObjectPType ||

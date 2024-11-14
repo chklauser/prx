@@ -47,12 +47,12 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
         _closedArguments = closedArguments;
     }
 
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return _subject.IndirectCall(sctx, _getEffectiveArgs(args));
     }
 
-    PValue[] _getEffectiveArgs(PValue[] args)
+    PValue[] _getEffectiveArgs(ReadOnlySpan<PValue> args)
     {
         var effectiveArgs =
             new PValue[System.Math.Max(args.Length, 1) + _closedArguments.Length];
@@ -61,8 +61,7 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
         else
             effectiveArgs[0] = PType.Null;
         Array.Copy(_closedArguments, 0, effectiveArgs, 1, _closedArguments.Length);
-        Array.Copy(args, System.Math.Min(1, args.Length), effectiveArgs,
-            _closedArguments.Length + 1, System.Math.Max(args.Length - 1, 0));
+        args[System.Math.Min(1, args.Length)..].CopyTo(effectiveArgs.AsSpan(_closedArguments.Length + 1, System.Math.Max(args.Length - 1, 0)));
         return effectiveArgs;
     }
 

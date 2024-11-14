@@ -153,14 +153,20 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     }
     public abstract override int GetHashCode();
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        out PValue result
+    )
     {
-        static PValue assignOutParameter(StackContext stackContext, PValue[] innerArgs, object? value, bool found)
+        static PValue assignOutParameter(StackContext stackContext, ReadOnlySpan<PValue> innerArgs, object? value, bool found)
         {
             if (innerArgs.Length > 0)
             {
                 var wrappedValue = found ? stackContext.CreateNativePValue(value) : PType.Null;   
-                innerArgs[0].IndirectCall(stackContext, new[] {wrappedValue});
+                innerArgs[0].IndirectCall(stackContext, wrappedValue);
             }
             return stackContext.CreateNativePValue(found);
         }

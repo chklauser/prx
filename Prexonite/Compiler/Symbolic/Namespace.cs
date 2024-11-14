@@ -12,7 +12,13 @@ public abstract class Namespace : ISymbolView<Symbol>, IObject
     public abstract IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator();
     public abstract bool IsEmpty { get; }
     public abstract bool TryGet(string id, [NotNullWhen(true)] out Symbol? value);
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        out PValue result
+    )
     {
         if ("TRYGET".Equals(id, StringComparison.InvariantCultureIgnoreCase))
         {
@@ -24,7 +30,7 @@ public abstract class Namespace : ISymbolView<Symbol>, IObject
             var found = TryGet(args[0].CallToString(sctx), out var symbol);
             if (args.Length >= 2)
             {
-                args[1].IndirectCall(sctx, new[] {sctx.CreateNativePValue(symbol)});
+                args[1].IndirectCall(sctx, sctx.CreateNativePValue(symbol));
             }
 
             result = sctx.CreateNativePValue(found);

@@ -90,9 +90,9 @@ public class SetLeftCommand : PCommand, ICilCompilerAware
         return SetLeft(w, s, " ");
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     #region ICilCompilerAware Members

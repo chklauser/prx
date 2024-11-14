@@ -41,9 +41,9 @@ public class ThunkCommand : PCommand, ICilCompilerAware
 
     #endregion
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     // ReSharper disable MemberCanBePrivate.Global
@@ -176,8 +176,14 @@ public class Thunk : IIndirectCall, IObject
 
     public bool IsEvaluated => _value != null;
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        [NotNullWhen(true)] out PValue? result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         result = null;
         switch (id.ToUpperInvariant())
@@ -271,7 +277,7 @@ public class Thunk : IIndirectCall, IObject
     }
 
     [SuppressMessage("ReSharper", "AccessToModifiedClosure")]
-    PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
+    PValue IIndirectCall.IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         CooperativeContext coopCtx = null!;
         coopCtx = new(sctx, f => _cooperativeForce(coopCtx, f))

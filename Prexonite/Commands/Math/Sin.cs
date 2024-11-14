@@ -62,9 +62,9 @@ public class Sin : PCommand, ICilCompilerAware
         return RunStatically(arg0, sctx);
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public static PValue RunStatically(PValue arg0, StackContext sctx)

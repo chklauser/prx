@@ -7,7 +7,7 @@ namespace Prexonite.Commands;
 
 public class ReExportNamespaceExportsTopLevel(Loader loader) : ICommand
 {
-    public PValue Run(StackContext sctx, PValue[] args)
+    public PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (args.Length < 1)
         {

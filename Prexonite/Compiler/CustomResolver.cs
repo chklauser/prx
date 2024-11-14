@@ -52,11 +52,9 @@ public sealed class CustomResolver
         {
             var presult = _interpreted.IndirectCall
             (
-                t.Loader, new[]
-                {
-                    t.Loader.CreateNativePValue(t),
-                    t.Loader.CreateNativePValue(unresolved),
-                });
+                t.Loader,
+                t.Loader.CreateNativePValue(t),
+                t.Loader.CreateNativePValue(unresolved));
             if (presult.Type is ObjectPType)
                 return (AstExpr) presult.Value!;
             else

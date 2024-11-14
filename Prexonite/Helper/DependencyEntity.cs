@@ -45,7 +45,7 @@ public static class DependencyEntity<T>
 
         return value =>
         {
-            var depsPv = getDependenciesPv.IndirectCall(sctx, new[] {value});
+            var depsPv = getDependenciesPv.IndirectCall(sctx, value);
 
             var depsDynamic = Map._ToEnumerable(sctx, depsPv);
             if (depsDynamic == null)

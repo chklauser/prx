@@ -77,7 +77,7 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// <param name = "sctx">The stack context in which to invoke the function.</param>
     /// <param name = "args">A list of arguments to pass to the function.</param>
     /// <returns>The value returned by the function.</returns>
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         if (Function.CilImplementation is not {} cilImplementation)
             throw new PrexoniteException("CilClosure cannot handle " + Function +
@@ -86,7 +86,7 @@ public sealed class CilClosure : IIndirectCall, IStackAware
         var callCtx = sctx.ParentApplication == Function.ParentApplication 
             ? sctx 
             : CilFunctionContext.New(sctx, Function);
-        cilImplementation(Function, callCtx, args, SharedVariables, out var result, out _);
+        cilImplementation(Function, callCtx, args.ToArray(), SharedVariables, out var result, out _);
         return result;
     }
 

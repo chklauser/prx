@@ -83,9 +83,9 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
 
     #endregion
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     static readonly ConcurrentDictionary<ModuleName,UnscopedFactory> _unscopedFactories = new();

@@ -91,7 +91,7 @@ public class StructurePType : PType, ICilCompilerAware
         {
         }
 
-        public PValue Invoke(StackContext sctx, PValue[] args, PCall call)
+        public PValue Invoke(StackContext sctx, ReadOnlySpan<PValue> args, PCall call)
         {
             if (IsReference)
                 return Value.IndirectCall(sctx, args);
@@ -102,7 +102,7 @@ public class StructurePType : PType, ICilCompilerAware
 
         #region IIndirectCall Members
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
         {
             if (IsReference)
                 return Value.IndirectCall(sctx, args);
@@ -124,11 +124,11 @@ public class StructurePType : PType, ICilCompilerAware
 
     #region PType implementation
 
-    internal static PValue[] _AddThis(PValue subject, PValue[] args)
+    internal static PValue[] _AddThis(PValue subject, ReadOnlySpan<PValue> args)
     {
         var argst = new PValue[args.Length + 1];
         argst[0] = subject;
-        Array.Copy(args, 0, argst, 1, args.Length);
+        args.CopyTo(argst.AsSpan(1, args.Length));
         return argst;
     }
 
@@ -144,10 +144,11 @@ public class StructurePType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         result = null;
@@ -204,7 +205,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         return false;
@@ -361,7 +362,7 @@ public class StructurePType : PType, ICilCompilerAware
     /// <param name = "args">An array of arguments. Ignored in the current implementation.</param>
     /// <param name = "result">The out parameter that holds the resulting PValue.</param>
     /// <returns>True if the construction was successful; false otherwise.</returns>
-    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         result = new(new SymbolTable<Member>(), this);
         return true;
@@ -412,7 +413,7 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (subject.Value is not SymbolTable<Member> obj)
@@ -461,7 +462,7 @@ public class StructurePType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    static readonly MethodInfo GetStructurePType =
+    static readonly MethodInfo _getStructurePType =
         typeof (PType).GetProperty(nameof(Structure))!.GetGetMethod()!;
 
     /// <summary>
@@ -471,7 +472,7 @@ public class StructurePType : PType, ICilCompilerAware
     /// <param name = "ins">The instruction to compile.</param>
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        state.EmitCall(GetStructurePType);
+        state.EmitCall(_getStructurePType);
     }
 
     #endregion

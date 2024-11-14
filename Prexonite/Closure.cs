@@ -73,9 +73,9 @@ public class Closure : IIndirectCall,
     /// <param name = "sctx">The stack context in which to invoke the function.</param>
     /// <param name = "args">A list of arguments to pass to the function.</param>
     /// <returns>The value returned by the function.</returns>
-    public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
+    public virtual PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
-        var fctx = CreateStackContext(sctx, args);
+        var fctx = CreateStackContext(sctx, args.ToArray());
         return sctx.ParentEngine.Process(fctx);
     }
 

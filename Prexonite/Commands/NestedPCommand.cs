@@ -55,7 +55,7 @@ public sealed class NestedPCommand : PCommand
     /// <param name = "sctx">The stack context in which to execute the command.</param>
     /// <param name = "args">The arguments to pass to the command invocation.</param>
     /// <returns>The value returned by <c><see cref = "Action" />.Run</c>.</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         return Action.Run(sctx, args);
     }
@@ -89,5 +89,5 @@ public interface ICommand
     /// <remarks>
     ///     If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!
     /// </remarks>
-    PValue Run(StackContext sctx, PValue[] args);
+    PValue Run(StackContext sctx, ReadOnlySpan<PValue> args);
 }

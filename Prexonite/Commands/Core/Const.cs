@@ -63,7 +63,7 @@ public class Const : PCommand, ICilCompilerAware
             _value = value;
         }
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
         {
             return _value;
         }
@@ -85,9 +85,9 @@ public class Const : PCommand, ICilCompilerAware
         return sctx.CreateNativePValue(new Impl(constant));
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public CompilationFlags CheckQualification(Instruction ins)

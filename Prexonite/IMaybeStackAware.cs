@@ -21,4 +21,5 @@ public interface IMaybeStackAware : IIndirectCall
     bool TryDefer(StackContext sctx, PValue[] args,
         [NotNullWhen(true)] out StackContext? partialApplicationContext,
         [NotNullWhen(false)] out PValue? result);
+    // TODO ReadOnlySpan this
 }

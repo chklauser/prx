@@ -178,10 +178,10 @@ public class TypeSystem
 
         var escaped = PType.String.CreatePValue(sEscaped);
         Assert.IsTrue(
-            escaped.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "unescape", out var unescaped));
+            escaped.TryDynamicCall(sctx, [], PCall.Get, "unescape", out var unescaped));
         Assert.AreEqual(sUnescaped, unescaped!.Value as string);
         Assert.IsTrue(
-            unescaped.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "escape", out escaped));
+            unescaped.TryDynamicCall(sctx, [], PCall.Get, "escape", out escaped));
         Assert.AreEqual(sEscaped, escaped!.Value as string);
     }
 }

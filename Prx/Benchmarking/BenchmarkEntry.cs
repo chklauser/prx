@@ -126,10 +126,9 @@ public sealed class BenchmarkEntry
                 Console.WriteLine("\tIterations:\t{0}", iterations);
         }
 
-        var argv = new PValue[] {iterations};
         sw.Reset();
         sw.Start();
-        Function.Run(Parent.Machine, argv);
+        Function.Run(Parent.Machine, [iterations]);
         sw.Stop();
 
         var raw = sw.ElapsedMilliseconds;

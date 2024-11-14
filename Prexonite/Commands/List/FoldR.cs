@@ -66,14 +66,14 @@ public class FoldR : PCommand, ICilCompilerAware
 
         for (var i = lst.Count - 1; i >= 0; i--)
         {
-            right = f.IndirectCall(sctx, new[] {lst[i], right});
+            right = f.IndirectCall(sctx, lst[i], right);
         }
         return right;
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)

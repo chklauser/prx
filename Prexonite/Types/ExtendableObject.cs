@@ -85,12 +85,12 @@ public class ExtendableObject : IObject, IIndirectCall
     ///     </para>
     ///     <para>
     ///         If you want to intercept object member calls yourself, overwrite <see
-    ///      cref = "TryDynamicCall(Prexonite.StackContext,Prexonite.PValue[],Prexonite.Types.PCall,string,out Prexonite.PValue?)" /> instead.
+    ///      cref = "TryDynamicCall(Prexonite.StackContext,System.ReadOnlySpan{Prexonite.PValue},Prexonite.Types.PCall,string,out Prexonite.PValue?)" /> instead.
     ///     </para>
     /// </remarks>
     [PublicAPI]
     protected virtual bool TryDynamicClrCall(
-        StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, PCall call, string id,
         [NotNullWhen(true)] out PValue? result)
     {
         var objT = subject.Type as ObjectPType;
@@ -116,7 +116,7 @@ public class ExtendableObject : IObject, IIndirectCall
     ///     </para>
     ///     <para>
     ///         If you want to intercept object member calls yourself, overwrite <see
-    ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
+    ///      cref = "TryDynamicClrCall(Prexonite.StackContext,Prexonite.PValue,System.ReadOnlySpan{Prexonite.PValue},Prexonite.Types.PCall,string,out Prexonite.PValue?)" /> instead.
     ///     </para>
     /// </remarks>
     [PublicAPI]
@@ -142,12 +142,18 @@ public class ExtendableObject : IObject, IIndirectCall
     ///     </para>
     ///     <para>
     ///         If you want to intercept object member calls yourself, overwrite <see
-    ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
+    ///      cref = "TryDynamicClrCall(Prexonite.StackContext,Prexonite.PValue,System.ReadOnlySpan{Prexonite.PValue},Prexonite.Types.PCall,string,out Prexonite.PValue?)" /> instead.
     ///     </para>
     /// </remarks>
     [PublicAPI]
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         return TryDynamicCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
     }
@@ -168,17 +174,16 @@ public class ExtendableObject : IObject, IIndirectCall
     ///     </para>
     ///     <para>
     ///         If you want to intercept object member calls yourself, overwrite <see
-    ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
+    ///      cref = "TryDynamicClrCall(Prexonite.StackContext,Prexonite.PValue,System.ReadOnlySpan{Prexonite.PValue},Prexonite.Types.PCall,string,out Prexonite.PValue?)" /> instead.
     ///     </para>
     /// </remarks>
     [PublicAPI]
     public bool TryDynamicCall(
-        StackContext sctx, PValue subject, PValue[]? args, PCall? call, string? id,
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, PCall? call, string? id,
         out PValue? result)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
         id ??= "";
         call ??= PCall.Get;
 
@@ -197,6 +202,21 @@ public class ExtendableObject : IObject, IIndirectCall
 
         return result != null;
     }
+
+    [Obsolete("Use TryDynamicCall(StackContext, PValue, ReadOnlySpan<PValue>, PCall?, string?, out PValue?) instead.")]
+    public bool TryDynamicCall(
+        StackContext sctx,
+        PValue subject,
+        PValue[] args,
+        PCall? call,
+        string? id,
+        out PValue? result
+    ) => TryDynamicCall(sctx,
+        subject,
+        args.AsSpan(),
+        call,
+        id,
+        out result);
 
     #endregion
 
@@ -240,7 +260,7 @@ public class ExtendableObject : IObject, IIndirectCall
     }
 
     bool _tryDynamicExtensionCall(
-        StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, PCall call, string id,
         [NotNullWhen(true)]
         out PValue? result)
     {
@@ -322,25 +342,13 @@ public class ExtendableObject : IObject, IIndirectCall
     /// <param name = "sctx">The stack context in which to perform the call.</param>
     /// <param name = "args">The arguments to pass to the handling function.</param>
     /// <returns>The value returned by the extended part of the object.</returns>
-    public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
+    public virtual PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
-        return IndirectCall(sctx, sctx.CreateNativePValue(this), args);
-    }
-
-    /// <summary>
-    ///     Indirectly calls the extended part of this object using a different subject (used together with object facades).
-    /// </summary>
-    /// <param name = "sctx">The stack context in which to perform the call.</param>
-    /// <param name = "subject">The subject to substitute for this.</param>
-    /// <param name = "args">The arguments to pass to the handling function.</param>
-    /// <returns>The value returned by the extended part of the object.</returns>
-    public PValue IndirectCall(StackContext sctx, PValue subject, PValue[]? args)
-    {
+        var subject = sctx.CreateNativePValue(this);
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
 
-        _et ??= new();
+        _et ??= [];
 
         if (!_et.TryGetValue(StructurePType.IndirectCallId, out var m))
             throw new PrexoniteException(this + " does not support indirect calls.");

@@ -56,7 +56,7 @@ public class DynamicPrintLine : PCommand
     /// <param name = "sctx">The context in which to convert the arguments to strings.</param>
     /// <param name = "args">The list of arguments to print.</param>
     /// <returns></returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         var s = Concat.ConcatenateString(sctx, args);
 

@@ -287,7 +287,7 @@ public static class Runtime
         }
         else
         {
-            return func.Run(sctx.ParentEngine, args);
+            return func.Run(sctx.ParentEngine, args.AsSpan());
         }
     }
 
@@ -309,7 +309,7 @@ public static class Runtime
         }
         else
         {
-            return func.Run(sctx.ParentEngine, args);
+            return func.Run(sctx.ParentEngine, args.AsSpan());
         }
     }
 

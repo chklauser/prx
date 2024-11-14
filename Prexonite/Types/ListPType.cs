@@ -26,6 +26,7 @@
 #region
 
 using System.Collections;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text;
@@ -72,10 +73,11 @@ public class ListPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         result = null;
@@ -246,18 +248,20 @@ public class ListPType : PType, ICilCompilerAware
                     }
                     //else
                     //Comparison using lambda expressions
+                    var allocatedArgs = args.ToImmutableArray();
                     lst.Sort(
-                        delegate(PValue a, PValue b)
+                        (a, b) =>
                         {
-                            foreach (var f in args)
+                            foreach (var f in allocatedArgs)
                             {
-                                var pdec = f.IndirectCall(sctx, new[] { a, b });
+                                var pdec = f.IndirectCall(sctx, a, b);
                                 if (pdec.Type is not IntPType)
                                     pdec = pdec.ConvertTo(sctx, Int);
                                 var dec = (int)pdec.Value!;
                                 if (dec != 0)
                                     return dec;
                             }
+
                             return 0;
                         });
                     result = Null.CreatePValue();
@@ -331,13 +335,19 @@ public class ListPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
 
         if (Engine.StringsAreEqual(id, "Create"))
         {
-            result = new(new List<PValue>(args), this);
+            var buf = new List<PValue>(args.Length);
+            foreach (var arg in args)
+            {
+                buf.Add(arg);
+            }
+            
+            result = new(buf, this);
         }
         else if (Engine.StringsAreEqual(id, "CreateFromSize") && args.Length >= 1)
         {
@@ -364,9 +374,15 @@ public class ListPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, out PValue result)
     {
-        result = new(new List<PValue>(args), this);
+        var buf = new List<PValue>(args.Length);
+        foreach (var arg in args)
+        {
+            buf.Add(arg);
+        }
+
+        result = new(buf, this);
         return true;
     }
 
@@ -490,7 +506,7 @@ public class ListPType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, out PValue result)
     {
         var lst = new List<PValue>();
         result = List.CreatePValue(lst);

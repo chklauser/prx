@@ -264,35 +264,21 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     }
 
     //Makes working with select from managed code easier
-    class PFunc : IIndirectCall
+    class PFunc(PFuncImpl f) : IIndirectCall
     {
-        readonly Func<StackContext, PValue[], PValue> _f;
-
-        public PFunc(Func<StackContext, PValue[], PValue> f)
-        {
-            _f = f;
-        }
-
         #region Implementation of IIndirectCall
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
-        {
-            return _f(sctx, args);
-        }
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args) => f(sctx, args);
 
         #endregion
 
-        public static implicit operator PValue(PFunc f)
-        {
-            return PType.Object.CreatePValue(f);
-        }
+        public static implicit operator PValue(PFunc f) => PType.Object.CreatePValue(f);
     }
 
-    static PValue pfunc(Func<StackContext, PValue[], PValue> f)
-    {
-        return new PFunc(f);
-    }
+    static PValue pfunc(PFuncImpl f) => new PFunc(f);
 
+    delegate PValue PFuncImpl(StackContext sctx, ReadOnlySpan<PValue> args);
+    
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
         var carrier = new ContextCarrier();

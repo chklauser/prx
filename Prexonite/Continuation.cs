@@ -73,14 +73,14 @@ public class Continuation : Closure
         return sharedVariables;
     }
 
-    public override PValue IndirectCall(StackContext sctx, PValue[] args)
+    public override PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         if (args == null)
             throw new ArgumentNullException(nameof(args));
 
-        var fctx = CreateFunctionContext(sctx, args);
+        var fctx = CreateFunctionContext(sctx, args.ToArray());
 
         //run the continuation
         return sctx.ParentEngine.Process(fctx);

@@ -84,7 +84,7 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
     ///     Each of the supplied arguments is processed individually.
     /// </remarks>
     /// <exception cref = "ArgumentNullException">args is null</exception>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (args == null)
             throw new ArgumentNullException(nameof(args));

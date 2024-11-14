@@ -64,7 +64,7 @@ public class PrexoniteConsole : SuperConsole,
                 Resources.PrexoniteConsole_OnTab_RequiresSctx);
         if (Tab is { IsNull: false })
         {
-            var plst = Tab.IndirectCall(callingSctx, new PValue[] {pref, root});
+            var plst = Tab.IndirectCall(callingSctx, pref, root);
             plst.ConvertTo(callingSctx, PType.Object[typeof (IEnumerable)], true);
             foreach (var o in (IEnumerable) plst.Value!)
             {
@@ -81,7 +81,7 @@ public class PrexoniteConsole : SuperConsole,
     /// <param name = "callingSctx">The stack context in which the command is executed.</param>
     /// <param name = "args">The array of arguments supplied to the command.</param>
     /// <returns>A reference to the prexonite console.</returns>
-    public PValue Run(StackContext callingSctx, PValue[] args)
+    public PValue Run(StackContext callingSctx, ReadOnlySpan<PValue> args)
     {
         return callingSctx.CreateNativePValue(this);
     }
@@ -98,7 +98,13 @@ public class PrexoniteConsole : SuperConsole,
     StackContext? sctx;
 
     public bool TryDynamicCall(
-        StackContext callingSctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext callingSctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         result = null;
 

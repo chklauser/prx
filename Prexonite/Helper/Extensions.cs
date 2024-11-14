@@ -119,6 +119,45 @@ public static class Extensions
     }
 
     /// <summary>
+    /// Constructs a human-readable enumeration of the form "x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>, …, x<sub>n-2</sub>, x<sub>n-1</sub>, and x<sub>n</sub>".
+    /// </summary>
+    /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
+    /// <param name="source">The enumeration to convert to a string.</param>
+    /// <returns>A human-readable string.</returns>
+    public static string? ToEnumerationString<T>(this ReadOnlySpan<T> source)
+    {
+        var s = new StringBuilder();
+        var hasStarted = false;
+        string? hold = null;
+        foreach (var x in source)
+        {
+            if (hold != null)
+                if (hasStarted)
+                {
+                    s.Append(", ");
+                    s.Append(hold);
+                }
+                else
+                {
+                    s.Append(hold);
+                    hasStarted = true;
+                }
+            hold = x?.ToString() ?? "";
+        }
+
+        if (hasStarted)
+        {
+            s.Append(" and ");
+            s.Append(hold);
+            return s.ToString();
+        }
+        else
+        {
+            return hold;
+        }
+    }
+
+    /// <summary>
     /// Constructs a machine-readable, comma-separated list. ("x<sub>1</sub>, x<sub>2</sub>, …, x<sub>n</sub>").
     /// </summary>
     /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>

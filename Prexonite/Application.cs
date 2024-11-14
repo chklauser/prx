@@ -366,7 +366,7 @@ public class Application : IMetaFilter,
     /// <param name = "parentEngine">The engine in which execute the entry function.</param>
     /// <param name = "args">The actual arguments for the entry function.</param>
     /// <returns>The value returned by the entry function.</returns>
-    public PValue Run(Engine parentEngine, PValue[] args)
+    public PValue Run(Engine parentEngine, ReadOnlySpan<PValue> args)
     {
         string entryName = Meta[EntryKey];
         if (!Functions.TryGetValue(entryName, out var func))
@@ -377,6 +377,18 @@ public class Application : IMetaFilter,
         EnsureInitialization(parentEngine);
 
         return func.Run(parentEngine, args);
+    }
+
+    /// <summary>
+    ///     Executes the application's <see cref = "EntryFunction">entry function</see> in the given <paramref
+    ///      name = "parentEngine">Engine</paramref> and returns it's result.
+    /// </summary>
+    /// <param name = "parentEngine">The engine in which execute the entry function.</param>
+    /// <param name = "args">The actual arguments for the entry function.</param>
+    /// <returns>The value returned by the entry function.</returns>
+    public PValue Run(Engine parentEngine, params PValue[] args)
+    {
+        return Run(parentEngine, args.AsSpan());
     }
 
     /// <summary>
@@ -507,7 +519,7 @@ public class Application : IMetaFilter,
     /// <seealso cref = "EntryKey" />
     /// <seealso cref = "EntryFunction" />
     [DebuggerStepThrough]
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return Run(sctx.ParentEngine, args);
     }

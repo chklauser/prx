@@ -128,11 +128,16 @@ public sealed class Benchmark : IObject
     #region IObject Members
 
     public bool TryDynamicCall(
-        StackContext sctx, PValue[]? args, PCall call, string? id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
         id ??= "";
 
         result = null;

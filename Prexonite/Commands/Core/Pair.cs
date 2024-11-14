@@ -47,16 +47,14 @@ public sealed class Pair : PCommand, ICilCompilerAware
     /// <summary>
     ///     Turns to arguments into a key-value pair
     /// </summary>
-    /// <param name = "args">The arguments to pass to this command. Array must contain 2 elements.</param>
     /// <param name = "sctx">Unused.</param>
+    /// <param name = "args">The arguments to pass to this command. Array must contain 2 elements.</param>
     /// <remarks>
     ///     Equivalent to:
     ///     <code>function pair(key, value) = key: value;</code>
     /// </remarks>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        args ??= Array.Empty<PValue>();
-
         if (args.Length < 2)
             return PType.Null.CreatePValue();
         else

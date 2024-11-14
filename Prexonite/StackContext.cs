@@ -154,7 +154,7 @@ public abstract class StackContext : IIndirectCall
     /// <param name = "sctx">The stack context in which to execute.</param>
     /// <param name = "args">ignored.</param>
     /// <returns>The value returned by the execution.</returns>
-    PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
+    PValue IIndirectCall.IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return sctx.ParentEngine.Process(this);
     }

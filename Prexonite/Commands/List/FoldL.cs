@@ -61,7 +61,7 @@ public class FoldL : PCommand, ICilCompilerAware
 
         foreach (var right in source)
         {
-            left = f.IndirectCall(sctx, new[] {left, right});
+            left = f.IndirectCall(sctx, left, right);
         }
         return left;
     }
@@ -104,9 +104,9 @@ public class FoldL : PCommand, ICilCompilerAware
         return Run(sctx, f, left ?? PType.Null, source);
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     #region ICilCompilerAware Members

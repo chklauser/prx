@@ -45,7 +45,7 @@ public class Chan : PCommand, ICilCompilerAware
 
     #region Overrides of PCommand
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         return PType.Object.CreatePValue(new Channel());
     }

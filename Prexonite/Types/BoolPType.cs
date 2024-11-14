@@ -68,7 +68,7 @@ public class BoolPType : PType, ICilCompilerAware
 
     #region Access interface implementation
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         if (args.Length <= 0)
         {
@@ -84,10 +84,11 @@ public class BoolPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         //Try CLR dynamic call
@@ -96,7 +97,7 @@ public class BoolPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         if (Object[typeof (bool)].TryStaticCall(sctx, args, call, id, out result))
             return true;

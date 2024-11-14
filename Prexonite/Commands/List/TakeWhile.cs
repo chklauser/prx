@@ -73,7 +73,7 @@ public class TakeWhile : CoroutineCommand, ICilCompilerAware
             foreach (var value in set)
                 if (
                     (bool)
-                    f.IndirectCall(sctx, new[] {value, i++}).ConvertTo(sctx, PType.Bool,
+                    f.IndirectCall(sctx, value, i++).ConvertTo(sctx, PType.Bool,
                         true).Value!)
                     yield return value;
         }

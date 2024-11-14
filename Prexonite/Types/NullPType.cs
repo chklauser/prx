@@ -92,7 +92,7 @@ public class NullPType : PType, ICilCompilerAware
         return Null.CreatePValue();
     }
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, out PValue result)
     {
         result = Null.CreatePValue();
         return true;
@@ -102,10 +102,11 @@ public class NullPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         result = null;
@@ -119,7 +120,7 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         return false;
@@ -383,7 +384,7 @@ public class NullPType : PType, ICilCompilerAware
     /// <returns>Always true (doing nothing can't possibly fail...)</returns>
     [DebuggerStepThrough]
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, out PValue result)
     {
         //Does nothing
         result = CreatePValue();

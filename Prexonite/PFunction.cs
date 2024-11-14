@@ -303,8 +303,9 @@ public class  PFunction : IHasMetaTable,
     /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
     /// <returns>The value returned by the function or {null~Null}</returns>
     [PublicAPI]
-    public PValue Run(Engine engine, PValue[]? args, PVariable[]? sharedVariables)
+    public PValue Run(Engine engine, ReadOnlySpan<PValue> args, PVariable[]? sharedVariables)
     {
+        var allocatedArgs = args.ToArray();
         if (CilImplementation is {} cilImplementation)
         {
             //Fix #8
@@ -313,17 +314,23 @@ public class  PFunction : IHasMetaTable,
             (
                 this,
                 new NullContext(engine, ParentApplication, ImportedNamespaces),
-                args ?? [],
+                allocatedArgs,
                 sharedVariables,
                 out var result, out _);
             return result;
         }
         else
         {
-            var fctx = CreateFunctionContext(engine, args, sharedVariables);
+            var fctx = CreateFunctionContext(engine, allocatedArgs, sharedVariables);
             engine.Stack.AddLast(fctx);
             return engine.Process();
         }
+    }
+
+    [Obsolete("Use the overload that takes a ReadOnlySpan instead.")]
+    public PValue Run(Engine engine, PValue[] args, PVariable[]? sharedVariables)
+    {
+        return Run(engine, args.AsSpan(), sharedVariables);
     }
 
     /// <summary>
@@ -334,9 +341,15 @@ public class  PFunction : IHasMetaTable,
     /// <returns>A function context for the execution of this function.</returns>
     /// <returns>The value returned by the function or {null~Null}</returns>
     [PublicAPI]
-    public PValue Run(Engine engine, PValue[]? args)
+    public PValue Run(Engine engine, ReadOnlySpan<PValue> args)
     {
         return Run(engine, args, null);
+    }
+
+    [Obsolete("Use the overload that takes a ReadOnlySpan instead.")]
+    public PValue Run(Engine engine, PValue[]? args)
+    {
+        return Run(engine, args.AsSpan(), null);
     }
 
     /// <summary>
@@ -348,7 +361,7 @@ public class  PFunction : IHasMetaTable,
     [PublicAPI]
     public PValue Run(Engine engine)
     {
-        return Run(engine, null);
+        return Run(engine, [], null);
     }
 
     #endregion
@@ -361,7 +374,7 @@ public class  PFunction : IHasMetaTable,
     /// <param name = "sctx">The stack context from which the function is called.</param>
     /// <param name = "args">The list of arguments to be passed to the function.</param>
     /// <returns>The value returned by the function or {null~Null}</returns>
-    PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[]? args)
+    PValue IIndirectCall.IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return Run(sctx.ParentEngine, args);
     }

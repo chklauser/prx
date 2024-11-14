@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Prexonite.Commands.Core.PartialApplication;
@@ -133,17 +134,17 @@ public abstract class PartialApplicationBase : IMaybeStackAware
             System.Diagnostics.Debug.Assert(mapping != 0);
     }
 
-    public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
+    public virtual PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         _combineArguments(args, out var nonArguments, out var effectiveArguments);
 
         return Invoke(sctx, nonArguments, effectiveArguments);
     }
 
-    void _combineArguments(PValue[] args, out PValue[] nonArguments,
+    void _combineArguments(ReadOnlySpan<PValue> args, out PValue[] nonArguments,
         out PValue[] effectiveArguments)
     {
-        System.Diagnostics.Debug.Assert(args.All(value => (PValue?)value != null),
+        System.Diagnostics.Debug.Assert(args.ToImmutableArray().All(value => (PValue?)value != null),
             "Actual (CLI) null references passed to " +
             GetType().Name + ".IndirectCall");
 

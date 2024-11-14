@@ -28,6 +28,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.Loader;
 using Prexonite.Modular;
 
 #endregion
@@ -47,9 +48,9 @@ public class CompilerPass
         return applicationId + "_" + Interlocked.Increment(ref _numberOfPasses) + "";
     }
 
-    readonly AssemblyBuilder? _assemblyBuilder;
+    readonly PersistedAssemblyBuilder? _assemblyBuilder;
 
-    public AssemblyBuilder Assembly
+    public PersistedAssemblyBuilder Assembly
     {
         [DebuggerStepThrough]
         get
@@ -96,7 +97,10 @@ public class CompilerPass
         {
             var sequenceName = _createNextTypeName(app?.Id);
             var asmName = new AssemblyName(sequenceName);
-            _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndCollect);
+            _assemblyBuilder = new PersistedAssemblyBuilder(asmName, typeof(object).Assembly) {
+                
+            };
+            
             _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name!);
             _typeBuilder = _moduleBuilder.DefineType(sequenceName);
         }
@@ -270,7 +274,34 @@ public class CompilerPass
 
     Type _getRuntimeType()
     {
-        return _cachedTypeReference ??= TargetType.CreateType();
+        if (_cachedTypeReference == null)
+        {
+            if (!MakeAvailableForLinking)
+            {
+                throw new PrexoniteException("Cannot get CIL implementation type when static linking is not enabled.");
+            }
+
+            // Emit type IL
+            _ = TargetType.CreateType();
+
+            // Unlike the old .NET implementation of Reflection.Emit, we have to decide between
+            // a persisted and a runtime assembly builder. They are essentially two separate implementations of the
+            // Reflection.Emit interface. The persisted assembly builder has the drawback that the types it generates
+            // cannot be used without serializing the IL and loading it as an assembly.
+            // It's a bit misleading that Microsoft kept the old Reflection.Emit API where `CreateType` returns a "Type".
+            // That type is secretly still a type builder and can thus not be used with Delegate.CreateDelegate.
+            using var mem = new MemoryStream();
+            _assemblyBuilder.Save(mem);
+            mem.Seek(0, SeekOrigin.Begin);
+            var ldCtx = AssemblyLoadContext.GetLoadContext(typeof(CompilerPass).Assembly) 
+                ?? throw new PrexoniteException("Failed to construct assembly load context.");
+            var loaded = ldCtx.LoadFromStream(mem);
+
+            _cachedTypeReference = loaded.GetType(TargetType.FullName!, throwOnError: true)
+                ?? throw new PrexoniteException("Generated assembly did not contain the type that holds CIL implementations.");
+        }
+
+        return _cachedTypeReference;
     }
 
     public void LinkMetadata(PFunction func)

@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Diagnostics;
 using NUnit.Framework;
 using Prexonite;
@@ -47,8 +48,13 @@ public class MemberCallable : IObject
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        out PValue result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        out PValue? result
+    )
     {
         Assert.IsTrue(Expectations.TryGetValue(id, out var expectation),
             $"A call to member {id} on object {Name} is not expected.");

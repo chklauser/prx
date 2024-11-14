@@ -131,10 +131,18 @@ public sealed class PValue : DynamicObject,
     /// <returns>The value returned by the dynamic (instance) call. In case the call does not have a return value, a PValue containing null is returned.</returns>
     /// <exception cref = "InvalidCallException">Thrown if the call is not successful.</exception>
     [DebuggerStepThrough]
-    public PValue DynamicCall(StackContext sctx, PValue[] args, PCall call, string id)
+    public PValue DynamicCall(StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id)
     {
         return Type.DynamicCall(sctx, this, args, call, id);
     }
+
+    [Obsolete("Use the overload with ReadOnlySpan<PValue> instead.")]
+    public PValue DynamicCall(
+        StackContext sctx,
+        PValue[] args,
+        PCall call,
+        string id
+    ) => DynamicCall(sctx, args.AsSpan(), call, id);
 
     /// <summary>
     ///     Tries to perform a dynamic (instance) call on the value and stores the result in the out parameter <paramref
@@ -153,10 +161,31 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         return Type.TryDynamicCall(sctx, this, args, call, id, out result);
     }
+
+    /// <summary>
+    ///     Tries to perform a dynamic (instance) call on the value and stores the result in the out parameter <paramref
+    ///      name = "result" />.
+    /// </summary>
+    /// <param name = "sctx">The stack context in which to perform the call.</param>
+    /// <param name = "args">An array of arguments to be passed in the call.</param>
+    /// <param name = "call">The semantic context of the call. <see cref = "PCall.Get" /> and <see cref = "PCall.Set" /> will have the same effect in most cases. See the TryDynamicCall of <see
+    ///      cref = "PType" /> implementors for details.</param>
+    /// <param name = "id">The name of the member to call. <paramref name = "id" /> might or might not be case sensitive, depending on the PType.
+    ///     The string can be empty if you want to call the default member (C# only supports default indexers).</param>
+    /// <param name = "result">Contains the value returned by the dynamic (instance) call. In case the call does not have a return value, a PValue containing null is returned.</param>
+    /// <returns>True if the call was successful, false otherwise.</returns>
+    /// <remarks>
+    ///     Note that the value of <paramref name = "result" /> is undefined (and therefor not to be used) if the method call returned false.
+    /// </remarks>
+    [DebuggerStepThrough]
+    [Obsolete("Use the overload with ReadOnlySpan<PValue> instead.")]
+    public bool TryDynamicCall(
+        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result) =>
+        TryDynamicCall(sctx, args.AsSpan(), call, id, out result);
 
     /// <summary>
     ///     Performs a conversion on the value and returns the resulting PValue. You should use <see
@@ -377,7 +406,7 @@ public sealed class PValue : DynamicObject,
     ///     Note that the value of <paramref name = "result" /> is undefined (and therefor not to be used) if the method call returned false.
     /// </remarks>
     [DebuggerStepThrough]
-    public bool TryIndirectCall(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public bool TryIndirectCall(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         return Type.IndirectCall(sctx, this, args, out result);
     }
@@ -391,6 +420,12 @@ public sealed class PValue : DynamicObject,
     /// <returns>Contains the value returned by the indirect call. In case the call does not have a return value, a PValue containing null is returned.</returns>
     /// <exception cref = "InvalidCallException">Thrown if the call is not successful.</exception>
     [DebuggerStepThrough]
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
+    {
+        return Type.IndirectCall(sctx, this, args);
+    }
+    
+    [Obsolete("Use the overload with ReadOnlySpan<PValue> instead.")]
     public PValue IndirectCall(StackContext sctx, PValue[] args)
     {
         return Type.IndirectCall(sctx, this, args);
@@ -1395,7 +1430,7 @@ public sealed class PValue : DynamicObject,
     {
         if (Type == PType.String)
             return (string) Value!;
-        else if (TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, nameof(ToString), out var text))
+        else if (TryDynamicCall(sctx, [], PCall.Get, nameof(ToString), out var text))
             return text.Value!.ToString()!;
         else
             return ToString();
@@ -1634,7 +1669,13 @@ public sealed class PValue : DynamicObject,
     #region IObject Members
 
     bool IObject.TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         if (Engine.StringsAreEqual(id, "self"))
             result = this;
@@ -1710,7 +1751,7 @@ public sealed class PValue : DynamicObject,
     {
         result = null;
 
-        if (_tryParseCall(args ?? Array.Empty<object?>(), out var sctx, out var icargs))
+        if (_tryParseCall(args ?? [], out var sctx, out var icargs))
             result = IndirectCall(sctx, icargs);
 
         return result != null || base.TryInvoke(binder, args, out result);
@@ -1721,8 +1762,8 @@ public sealed class PValue : DynamicObject,
     {
         result = null;
 
-        if (_tryParseCall(args ?? Array.Empty<object?>(), out var sctx, out var icargs) &&
-            TryDynamicCall(sctx, icargs, PCall.Get, binder.Name, out var pvresult))
+        if (_tryParseCall(args ?? [], out var sctx, out var icargs) &&
+            TryDynamicCall(sctx, icargs.AsSpan(), PCall.Get, binder.Name, out var pvresult))
             result = pvresult;
 
         return result != null || base.TryInvokeMember(binder, args, out result);
@@ -1733,7 +1774,7 @@ public sealed class PValue : DynamicObject,
         result = null;
 
         if (_tryParseCall(indexes, out var sctx, out var icargs) &&
-            TryDynamicCall(sctx, icargs, PCall.Get, string.Empty, out var pvresult))
+            TryDynamicCall(sctx, icargs.AsSpan(), PCall.Get, string.Empty, out var pvresult))
         {
             result = pvresult;
         }
@@ -1748,7 +1789,7 @@ public sealed class PValue : DynamicObject,
         args[^1] = value;
 
         return _tryParseCall(args, out var sctx, out var icargs) &&
-            TryDynamicCall(sctx, icargs, PCall.Set, string.Empty, out _)
+            TryDynamicCall(sctx, icargs.AsSpan(), PCall.Set, string.Empty, out _)
             || base.TrySetIndex(binder, indexes, value);
     }
 

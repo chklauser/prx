@@ -72,7 +72,7 @@ public sealed class Call_Member : PCommand
     /// <param name = "args">A list of the form [ obj, id, arg1, arg2, arg3, ..., argn].<br />
     ///     Lists and coroutines are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -94,11 +94,7 @@ public sealed class Call_Member : PCommand
             id = args[1].CallToString(sctx);
         }
 
-
-        var iargs = new PValue[args.Length - i];
-        Array.Copy(args, i, iargs, 0, iargs.Length);
-
-        return Run(sctx, args[0], isSet, id, iargs);
+        return Run(sctx, args[0], isSet, id, args.Slice(i, args.Length - i));
     }
 
     /// <summary>
@@ -127,13 +123,12 @@ public sealed class Call_Member : PCommand
     ///     Lists and coroutines are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
-    public PValue Run(StackContext sctx, PValue? obj, bool isSet, string id, params PValue[] args)
+    public PValue Run(StackContext sctx, PValue? obj, bool isSet, string id, params ReadOnlySpan<PValue> args)
     {
         if (obj == null)
             return PType.Null.CreatePValue();
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
 
         var iargs = new List<PValue>();
         foreach (var arg in args)

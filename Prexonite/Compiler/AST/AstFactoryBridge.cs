@@ -45,12 +45,19 @@ public class AstFactoryBridge : IObject, IIndirectCall
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         return TryDynamicCall(sctx, args, call, id, out result, out _);
     }
 
-    static bool _require(PValue[] args, ref int index, [NotNullWhen(true)] out PValue? rawValue)
+    static bool _require(ReadOnlySpan<PValue> args, ref int index, [NotNullWhen(true)] out PValue? rawValue)
     {
         if (index < args.Length)
         {
@@ -66,7 +73,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _require(StackContext sctx, PValue[] args, ref int index, [NotNullWhen(true)] out IEnumerable<AstExpr>? argSeq)
+    static bool _require(StackContext sctx, ReadOnlySpan<PValue> args, ref int index, [NotNullWhen(true)] out IEnumerable<AstExpr>? argSeq)
     {
         if(_require(args, ref index, out var raw))
         {
@@ -81,7 +88,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _require<T>(StackContext sctx, PValue[] args, ref int index, [NotNullWhen(true)] out T? value)
+    static bool _require<T>(StackContext sctx, ReadOnlySpan<PValue> args, ref int index, [NotNullWhen(true)] out T? value)
     {
         if (index < args.Length && args[index].TryConvertTo(sctx, false, out value))
         {
@@ -99,7 +106,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
     [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Local")]
     static bool _takeOptional<T>(
         StackContext sctx,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         ref int index,
         [NotNullWhen(true)] out T? value,
         T? defaultValue = default
@@ -118,7 +125,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue? defaultValue = null)
+    static bool _takeOptional(ReadOnlySpan<PValue> args, ref int index, out PValue rawValue, PValue? defaultValue = null)
     {
         if(index < args.Length)
         {
@@ -133,7 +140,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static bool _takeOptionalList(StackContext sctx, PValue[] args, ref int  index, out IEnumerable<AstExpr> expressions)
+    static bool _takeOptionalList(StackContext sctx, ReadOnlySpan<PValue> args, ref int  index, out IEnumerable<AstExpr> expressions)
     {
         if(_takeOptional(args, ref index, out var raw))
         {
@@ -143,13 +150,13 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
         else
         {
-            expressions = Enumerable.Empty<AstExpr>();
+            expressions = [];
             return false;
         }
     }
 
     [PublicAPI]
-    protected bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result, out string? detailedError)
+    protected bool TryDynamicCall(StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result, out string? detailedError)
     {
         if (args.Length == 0 || !args[0].TryConvertTo(sctx, false, out ISourcePosition? position))
         {
@@ -647,7 +654,7 @@ public class AstFactoryBridge : IObject, IIndirectCall
         return node != null;
     }
 
-    static AstGetSet _takeOptionalArguments(StackContext sctx, PValue[] args, int i, AstGetSet complex)
+    static AstGetSet _takeOptionalArguments(StackContext sctx, ReadOnlySpan<PValue> args, int i, AstGetSet complex)
     {
         if (_takeOptionalList(sctx, args, ref i, out var nodeArgs))
             complex.Arguments.AddRange(nodeArgs);
@@ -658,11 +665,11 @@ public class AstFactoryBridge : IObject, IIndirectCall
 
     #region Implementation of IIndirectCall
 
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         if (args.Length == 0)
             throw new PrexoniteException("AstFactory.() requires at least one argument, the name of the node type to create.");
-        if (TryDynamicCall(sctx, args.Skip(1).ToArray(), PCall.Get, args[0].CallToString(sctx), out var result, out var detailedError))
+        if (TryDynamicCall(sctx, args[1..], PCall.Get, args[0].CallToString(sctx), out var result, out var detailedError))
             return result;
         else
         {
@@ -672,10 +679,10 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
-    static void _throwInvalidCall(IEnumerable<PValue> args, string errorFormat, string detailedError)
+    static void _throwInvalidCall(ReadOnlySpan<PValue> args, string errorFormat, string detailedError)
     {
         throw new PrexoniteException(string.Format(errorFormat, detailedError,
-            args.Select(x => x.Type.ToString()).ToListString()));
+            args.ToArray().Select(x => x.Type.ToString()).ToListString()));
     }
 
     #endregion

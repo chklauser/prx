@@ -393,7 +393,7 @@ public class StringPType : PType, ICilCompilerAware
 
     #endregion
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (args.Length <= 0)
@@ -408,10 +408,11 @@ public class StringPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         result = null;
@@ -552,7 +553,7 @@ public class StringPType : PType, ICilCompilerAware
 
     static void _resolve_params(
         StackContext sctx,
-        IEnumerable<PValue> args,
+        ReadOnlySpan<PValue> args,
         ref bool isParams,
         ICollection<char> sch,
         ref List<string>? sst,
@@ -606,7 +607,7 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
     {
         if (args.Length >= 1 && Engine.StringsAreEqual(id, "unescape"))
         {
@@ -631,7 +632,7 @@ public class StringPType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         var str = (string) subject.Value!;
@@ -639,7 +640,7 @@ public class StringPType : PType, ICilCompilerAware
         var eng = sctx.ParentEngine;
         if (app.Functions.TryGetValue(str, out var func))
         {
-            var fctx = func.CreateFunctionContext(sctx, args);
+            var fctx = func.CreateFunctionContext(sctx, args.ToArray());
             result = eng.Process(fctx);
         }
         else if (eng.Commands.TryGetValue(str, out var cmd))

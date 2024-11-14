@@ -347,7 +347,7 @@ function main(a){
     }
 
     [Test]
-    public void SpliceFunctionCall()
+    public void SpliceFunctionCall_IndirectCall()
     {
         Compile(@"
 function f() {
@@ -357,53 +357,91 @@ function f() {
 function main(a, xs, b, ys, c){
     return ->f.(a, *xs, b, *ys, c);
 }
-
-function main2(xs) {
-    return f(*xs);
-}
-
-function main3(xs, ys){
-    return f(*xs, *ys);
-}
-
-function main4(a, b, c, xs) {
-    return f(a, b, c, *xs);
-}
-
-function main5(xs, a, b, c) {
-    return f(*xs, a, b, c);
-}
 ");
             
         Expect(":<a><x1><x2><x3><b><y1><y2><y3><c>", 
             "a", _list("x1", "x2", "x3"), "b", _list("y1", "y2", "y3"), "c");
         Expect(":<a><x1><x2><x3><b><c>", 
             "a", _list("x1", "x2", "x3"), "b", _list(), "c");
-        Expect(":<a><x1><b><c>", 
-            "a", _list("x1"), "b", _list(), "c");
-            
-        ExpectNamed("main2", ":<x1><x2><x3>", _list("x1", "x2", "x3"));
-        ExpectNamed("main2", ":<x1>", _list("x1"));
-        ExpectNamed("main2", ":", _list());
-            
-        ExpectNamed("main3", ":<x1><x2><x3><y1><y2><y3>", 
-            _list("x1", "x2", "x3"), _list("y1", "y2", "y3"));
-        ExpectNamed("main3", ":<x1><x2><x3>", 
-            _list("x1", "x2", "x3"), _list());
-        ExpectNamed("main3", ":<x1>", 
-            _list("x1"), _list());
-            
-        ExpectNamed("main4", ":<a><b><c><x1><x2><x3>", "a", "b", "c", _list("x1", "x2", "x3"));
-        ExpectNamed("main4", ":<a><b><c><x1>", "a", "b", "c", _list("x1"));
-        ExpectNamed("main4", ":<a><b><c>", "a", "b", "c", _list());
-        ExpectNamed("main5", ":<x1><x2><x3><a><b><c>", _list("x1", "x2", "x3"), "a", "b", "c");
-        ExpectNamed("main5", ":<x1><a><b><c>", _list("x1"), "a", "b", "c");
-        ExpectNamed("main5", ":<a><b><c>", _list(), "a", "b", "c");
-        ExpectNamed("main4", ":<a><b><c>", "a", "b", "c", PType.Null);
-        ExpectNamed("main5", ":<a><b><c>", PType.Null, "a", "b", "c");
-        ExpectNamed("main3", ":<x1>", 
-            _list("x1"), PType.Null);
-        ExpectNamed("main2", ":", PType.Null);
+        Expect(":<a><x1><b><c>",
+            "a",
+            _list("x1"),
+            "b",
+            _list(),
+            "c");
+    }
+    
+    [Test]
+    public void SpliceFunctionCall_FullSplice()
+    {
+        Compile(@"
+function f() {
+    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
+}
+
+function main(xs) {
+    return f(*xs);
+}
+
+");
+        Expect(":<x1><x2><x3>", _list("x1", "x2", "x3"));
+        Expect(":<x1>", _list("x1"));
+        Expect(":", _list());
+        Expect(":", PType.Null);
+    }
+    [Test]
+    public void SpliceFunctionCall_PrefixSuffix()
+    {
+        Compile(@"
+function f() {
+    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
+}
+
+function main(xs, ys){
+    return f(*xs, *ys);
+}
+");
+        
+        Expect(":<x1><x2><x3><y1><y2><y3>", _list("x1", "x2", "x3"), _list("y1", "y2", "y3"));
+        Expect(":<x1><x2><x3>", _list("x1", "x2", "x3"), _list());
+        Expect(":<x1>", _list("x1"), _list());
+        Expect(":<x1>", _list("x1"), PType.Null);
+    }
+    [Test]
+    public void SpliceFunctionCall_Suffix()
+    {
+        Compile(@"
+function f() {
+    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
+}
+
+function main(a, b, c, xs) {
+    return f(a, b, c, *xs);
+}
+");
+        
+        Expect(":<a><b><c><x1><x2><x3>", "a", "b", "c", _list("x1", "x2", "x3"));
+        Expect(":<a><b><c><x1>", "a", "b", "c", _list("x1"));
+        Expect(":<a><b><c>", "a", "b", "c", _list());
+        Expect(":<a><b><c>", "a", "b", "c", PType.Null);
+    }
+    [Test]
+    public void SpliceFunctionCall_Prefix()
+    {
+        Compile(@"
+function f() {
+    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
+}
+
+function main(xs, a, b, c) {
+    return f(*xs, a, b, c);
+}
+");
+        
+        Expect(":<x1><x2><x3><a><b><c>", _list("x1", "x2", "x3"), "a", "b", "c");
+        Expect(":<x1><a><b><c>", _list("x1"), "a", "b", "c");
+        Expect(":<a><b><c>", _list(), "a", "b", "c");
+        Expect(":<a><b><c>", PType.Null, "a", "b", "c");
     }
 
     /// <summary>

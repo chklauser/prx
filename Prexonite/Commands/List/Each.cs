@@ -40,9 +40,9 @@ public class Each : PCommand, ICilCompilerAware
 
     #endregion
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)

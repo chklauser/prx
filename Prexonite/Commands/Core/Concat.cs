@@ -52,7 +52,7 @@ public sealed class Concat : PCommand, ICilCompilerAware
     /// <remarks>
     ///     Please note that this method uses a string builder. The addition operator is faster for only two fragments.
     /// </remarks>
-    public static string ConcatenateString(StackContext sctx, PValue[] args)
+    public static string ConcatenateString(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         var elements = new string[args.Length];
         for (var i = 0; i < args.Length; i++)
@@ -85,9 +85,9 @@ public sealed class Concat : PCommand, ICilCompilerAware
     /// <param name = "sctx">The context in which to convert the arguments to strings.</param>
     /// <param name = "args">The list of fragments to concatenate.</param>
     /// <returns>A PValue containing the concatenated string.</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     #region ICilCompilerAware Members

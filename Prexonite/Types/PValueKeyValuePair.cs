@@ -86,12 +86,16 @@ public class PValueKeyValuePair : IObject
     /// </remarks>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
         if (id == null)
             throw new ArgumentNullException(nameof(id));
 

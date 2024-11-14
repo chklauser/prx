@@ -44,9 +44,9 @@ public class CreateModuleName : PCommand, ICilCompilerAware
 
     public const string Alias = "create_module_name";
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)

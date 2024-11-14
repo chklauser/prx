@@ -39,7 +39,7 @@ public class FlatMap : CoroutineCommand, ICilCompilerAware
             var xs = Map._ToEnumerable(sctx, arg);
             foreach (var x in xs)
             {
-                var rawYs = f != null ? f.IndirectCall(sctx, new[] {x}) : x;
+                var rawYs = f != null ? f.IndirectCall(sctx, x) : x;
                 var ys = Map._ToEnumerable(sctx, rawYs);
                 foreach (var y in ys)
                 {

@@ -120,7 +120,13 @@ public class Coroutine : IEnumerable<PValue>,
     /// <returns>True if a member has been called; false otherwise.</returns>
     [SuppressMessage("ReSharper", "ObjectProducedWithMustDisposeAnnotatedMethodIsNotDisposed")]
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         switch (id.ToLower())
         {
@@ -160,7 +166,7 @@ public class Coroutine : IEnumerable<PValue>,
     ///     This method returns <see cref = "PType.Null" /> PValue if the coroutine is 
     ///     no longer valid.
     /// </remarks>
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return Execute(sctx);
     }

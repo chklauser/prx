@@ -43,13 +43,13 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
 
     #endregion
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (args.Length < 1)
             return PType.Null;
 
         var closed = new PValue[args.Length - 1];
-        Array.Copy(args, 1, closed, 0, args.Length - 1);
+        args[1..].CopyTo(closed.AsSpan(0, args.Length - 1));
         return sctx.CreateNativePValue(new FunctionalPartialCall(args[0], closed));
     }
 

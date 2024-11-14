@@ -302,8 +302,14 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
 
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        [NotNullWhen(true)] out PValue? result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         switch (id.ToUpperInvariant())
         {

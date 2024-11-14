@@ -69,9 +69,9 @@ public class Ceiling : PCommand, ICilCompilerAware
         return System.Math.Ceiling(x);
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     #region ICilCompilerAware Members

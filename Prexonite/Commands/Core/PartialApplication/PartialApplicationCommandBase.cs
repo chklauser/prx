@@ -215,9 +215,10 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
     where TRuntimeParam : notnull
     where TCompileParam : notnull
 {
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        var arguments = args.AsSpan();
+        var allocatedArgs = args.ToArray();
+        var arguments = allocatedArgs.AsSpan();
         var parameter = FilterRuntimeArguments(sctx, ref arguments);
 
         var mappingCandidates = new LinkedList<int>();

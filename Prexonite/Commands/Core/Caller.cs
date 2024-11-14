@@ -47,7 +47,7 @@ public sealed class Caller : PCommand, ICilCompilerAware
     /// <param name = "sctx">The stack contetx that wishes to find out, who called him.</param>
     /// <param name = "args">Ignored</param>
     /// <returns>Either the stack context of the caller or null encapsulated in a PValue.</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         return sctx.CreateNativePValue(GetCaller(sctx));
     }

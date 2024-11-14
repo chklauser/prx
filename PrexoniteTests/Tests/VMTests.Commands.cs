@@ -321,17 +321,19 @@ function main(check, n)
 }
 ");
 
-        var check = CompilerTarget.CreateFunctionValue((s, _) =>
-        {
-            if (s.ParentEngine.Stack.Count > 2)
+        var check = new PValue(new ProvidedFunction((s, _) =>
             {
-                foreach (var stackContext in s.ParentEngine.Stack)
-                    TestContext.WriteLine(" - " + stackContext);
+                if (s.ParentEngine.Stack.Count > 2)
+                {
+                    foreach (var stackContext in s.ParentEngine.Stack)
+                        TestContext.WriteLine(" - " + stackContext);
 
-                throw new PrexoniteException("Stack size is not constant.");
-            }
-            return PType.Null;
-        });
+                    throw new PrexoniteException("Stack size is not constant.");
+                }
+
+                return PType.Null;
+            }),
+            PType.Object[typeof(IIndirectCall)]);
 
         var fac = target.Functions["factorial"];
         Assert.IsTrue(fac!.Meta[PFunction.VolatileKey].Switch,
@@ -342,6 +344,16 @@ function main(check, n)
         Expect(1, check, 1);
         //Expect(40320,check,8);
     }
+
+    class ProvidedFunction(ProvidedFunctionImpl func) : IIndirectCall
+    {
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
+        {
+            return func(sctx, args);
+        }
+    }
+
+    delegate PValue ProvidedFunctionImpl(StackContext sctx, ReadOnlySpan<PValue> args);
 
     [Test]
     public void CallAsyncCommandImplementation()

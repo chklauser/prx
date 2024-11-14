@@ -123,15 +123,9 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
     /// <param name = "args">A list of the form [ ref f, arg1, arg2, arg3, ..., argn].<br />
     ///     Lists and coroutines are expanded.</param>
     /// <returns>The result returned by <see cref = "IIndirectCall.IndirectCall" /> or PValue Null if no callable object has been passed.</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
-    }
-
-    [DebuggerStepThrough]
-    public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args)
-    {
-        return FlattenArguments(sctx, args, 0);
+        return RunStatically(sctx, args.ToArray());
     }
 
     /// <summary>
@@ -141,10 +135,9 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
     /// <param name = "args">The raw list of arguments to process.</param>
     /// <param name = "offset">The offset at which to start processing.</param>
     /// <returns>A copy of the argument list with top-level lists expanded.</returns>
-    public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args, int offset)
+    public static List<PValue> FlattenArguments(StackContext sctx, ReadOnlySpan<PValue> args, int offset = 0)
     {
-        args ??= Array.Empty<PValue>();
-        var iargs = new List<PValue>();
+        var iargs = new List<PValue>(args.Length);
         for (var i = offset; i < args.Length; i++)
         {
             var arg = args[i];

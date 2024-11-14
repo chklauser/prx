@@ -54,7 +54,7 @@ public class GroupBy : CoroutineCommand
                 continue;
             foreach (var x in xs)
             {
-                var fx = f.IndirectCall(sctx, new[] {x});
+                var fx = f.IndirectCall(sctx, x);
                 if (!groups.ContainsKey(fx))
                 {
                     var lst = new List<PValue>();

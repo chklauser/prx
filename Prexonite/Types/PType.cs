@@ -364,16 +364,19 @@ public abstract class PType : IObject
     public abstract bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     );
 
     public abstract bool TryStaticCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result);
+        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result);
+    // TODO overload with PValue[] args
 
-    public abstract bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result);
+    public abstract bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result);
+    // TODO overload with PValue[] args
 
     [DebuggerStepThrough]
     public virtual PValue Construct(StackContext sctx, PValue[] args)
@@ -401,13 +404,19 @@ public abstract class PType : IObject
     #region Indirect Call
 
     public virtual bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         return false;
     }
 
-    public PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
+    public bool IndirectCall(
+        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    {
+        return IndirectCall(sctx, subject, new ReadOnlySpan<PValue>(args), out result);
+    }
+
+    public PValue IndirectCall(StackContext sctx, PValue subject, ReadOnlySpan<PValue> args)
     {
         if (IndirectCall(sctx, subject, args, out var ret))
             return ret;
@@ -773,7 +782,12 @@ public abstract class PType : IObject
     #endregion //Operators
 
     public virtual PValue DynamicCall(
-        StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id
+    )
     {
         if (TryDynamicCall(sctx, subject, args, call, id, out var result))
             return result;
@@ -1259,8 +1273,14 @@ public abstract class PType : IObject
     }
 
 
-    bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        [NotNullWhen(true)] out PValue? result)
+    bool IObject.TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         result = null;
 
@@ -1273,10 +1293,8 @@ public abstract class PType : IObject
         else if (Engine.StringsAreEqual(id, StaticCallFromStackId))
         {
             //Try perform static call using the first arguments as the member id.
-            var actualArgs = new PValue[args.Length - 1];
-            Array.Copy(args, 1, actualArgs, 0, actualArgs.Length);
             var actualId = args[0].CallToString(sctx);
-            if (!TryStaticCall(sctx, actualArgs, call, actualId, out result))
+            if (!TryStaticCall(sctx, args[1..], call, actualId, out result))
                 result = null;
         }
 

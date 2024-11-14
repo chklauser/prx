@@ -87,16 +87,16 @@ public abstract class PartialApplication : VMTestsBase
         public required PValue[] ClosedArguments { get; init; }
         
         [PublicAPI]
-        public Func<int[], PValue[], StackContext, PValue[], PValue>? IndirectCallImpl { get; set; }
+        public Func<int[], PValue[], StackContext, ReadOnlyMemory<PValue>, PValue>? IndirectCallImpl { get; set; }
 
         #region Implementation of IIndirectCall
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
         {
             var indirectCallImpl = IndirectCallImpl;
             return indirectCallImpl == null
                 ? PType.Null
-                : indirectCallImpl(Mappings, ClosedArguments, sctx, args);
+                : indirectCallImpl(Mappings, ClosedArguments, sctx, args.ToImmutableArray().AsMemory());
         }
 
         #endregion

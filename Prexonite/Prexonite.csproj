@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -166,9 +166,7 @@
 
   <!-- NUGET References -->
   <ItemGroup>
-    <PackageReference Include="Lokad.ILPack" Version="0.2.0" />
     <PackageReference Include="PxCoco" Version="1.98.0" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.13" />
   </ItemGroup>
 </Project>

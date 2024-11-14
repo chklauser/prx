@@ -1023,9 +1023,9 @@ function main(x,y,z) = (x : y : z).Key;
 
             #region Implementation of IIndirectCall
 
-            public PValue IndirectCall(StackContext sctx, PValue[] args)
+            public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
             {
-                return _impl(sctx, args);
+                return _impl(sctx, args.ToArray());
             }
 
             #endregion

@@ -190,22 +190,22 @@ public class VMTestsBase
         return Store(Compile(input));
     }
 
-    protected void Expect<T>(T expectedReturnValue, params PValue[] args)
+    protected void Expect<T>(T expectedReturnValue, params ReadOnlySpan<PValue> args)
     {
         ExpectReturnValue(target.Meta[Application.EntryKey], expectedReturnValue, args);
     }
 
-    protected void Expect(Action<PValue> assertion, params PValue[] args)
+    protected void Expect(Action<PValue> assertion, params ReadOnlySpan<PValue> args)
     {
         ExpectReturnValue(target.Meta[Application.EntryKey], assertion, args);
     }
 
-    protected void ExpectNamed<T>(string functionId, T expectedReturnValue, params PValue[] args)
+    protected void ExpectNamed<T>(string functionId, T expectedReturnValue, params ReadOnlySpan<PValue> args)
     {
         ExpectReturnValue(functionId, expectedReturnValue, args);
     }
 
-    protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
+    protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, ReadOnlySpan<PValue> args)
     {
         ExpectReturnValue(functionId, rv =>
         {
@@ -214,14 +214,15 @@ public class VMTestsBase
         }, args);
     }
 
-    protected void ExpectReturnValue(string functionId, Action<PValue> assertion, PValue[] args)
+    protected void ExpectReturnValue(string functionId, Action<PValue> assertion, ReadOnlySpan<PValue> args)
     {
         if (assertion == null)
             throw new ArgumentNullException(nameof(assertion));
-           
-        if (args.Any(value => (PValue?)value == null))
-            throw new ArgumentException(
-                "Arguments must not contain naked CLR null references. Use `PType.Null`.");
+
+        foreach (var value in args)
+        {
+            if ((PValue?)value == null) throw new ArgumentException("Arguments must not contain naked CLR null references. Use `PType.Null`.");
+        }
 
         if (!target.Functions.Contains(functionId))
             throw new PrexoniteException("Function " + functionId + " cannot be found.");

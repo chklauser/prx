@@ -90,7 +90,8 @@ public sealed class CompilerHook
                 _managed(target);
             else
                 _interpreted.IndirectCall(
-                    target.Loader, new[] {target.Loader.CreateNativePValue(target)});
+                    target.Loader,
+                    target.Loader.CreateNativePValue(target));
         }
         finally
         {

@@ -36,7 +36,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#region PCommand implementation
 		
-		public override PValue Run(StackContext sctx, PValue[] args)
+		public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
 		{
 			if(args.Length < <#=argc#>)
 				throw new PrexoniteException("The <#=op.PrxName#> operator requires <#=errMsg#>.");

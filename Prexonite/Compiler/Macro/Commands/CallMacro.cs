@@ -66,7 +66,7 @@ public class CallMacro : PartialMacroCommand
 
         const int CallingConventionArgumentsCount = 4;
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
         {
             if (args.Length < CallingConventionArgumentsCount)
                 throw new PrexoniteException(

@@ -150,10 +150,11 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     public override bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)] out PValue? result
+        [NotNullWhen(true)]
+        out PValue? result
     )
     {
         return tryDynamicCall(sctx, subject, args, call, id, out result, out var dummy);
@@ -162,7 +163,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     bool tryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
         [NotNullWhen(true)] out PValue? result,
@@ -175,7 +176,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     internal bool TryDynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string? id,
         [NotNullWhen(true)] out PValue? result,
@@ -218,7 +219,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 return true;
         }
 
-        var cond = new CallConditions(sctx, args, call, id);
+        var cond = new CallConditions(sctx, args.ToImmutableArray().AsMemory(), call, id);
         MemberTypes mtypes;
         MemberFilter filter;
         if (id.Length != 0)
@@ -242,13 +243,13 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                     ClrType.FindMembers(
                         MemberTypes.Method,
                         BindingFlags.Public | BindingFlags.Instance,
-                        Type.FilterName,
+                        Type.FilterNameIgnoreCase,
                         cond.Call == PCall.Get ? "GetValue" : "SetValue"));
                 cond.MemberRestriction.AddRange(
                     ClrType.FindMembers(
                         MemberTypes.Method,
                         BindingFlags.Public | BindingFlags.Instance,
-                        Type.FilterName,
+                        Type.FilterNameIgnoreCase,
                         cond.Call == PCall.Get ? "Get" : "Set"));
             }
         }
@@ -275,7 +276,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
     public override bool TryStaticCall(
         StackContext sctx,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
         [NotNullWhen(true)] out PValue? result)
@@ -285,7 +286,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
     bool tryStaticCall(
         StackContext sctx,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
         [NotNullWhen(true)] out PValue? result,
@@ -297,7 +298,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         result = null;
         resolvedMember = null;
 
-        var cond = new CallConditions(sctx, args, call, id);
+        var cond = new CallConditions(sctx, args.ToImmutableArray().AsMemory(), call, id);
         MemberTypes mtypes;
         MemberFilter filter;
         if (id.Length != 0)
@@ -492,16 +493,15 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             case MemberTypes.Method:
                 var method = (MethodBase) candidate;
                 var parameters = method.GetParameters();
-                var cargs = new object[parameters.Length];
                 //The Sctx hack needs to modify the supplied arguments, so we need a copy of the original reference
                 var sargs = cond.Args;
                 var numUpcasts = 0;
                 var numConversions = 0;
 
                 var sctxHackOffset = _sctx_hack(parameters, cond) ? 1 : 0;
-                for (var i = 0; i < cargs.Length && i  + sctxHackOffset < parameters.Length; i++)
+                for (var i = 0; i < parameters.Length && i  + sctxHackOffset < parameters.Length; i++)
                 {
-                    var arg = sargs[i];
+                    var arg = sargs.Span[i];
                     if (arg.IsNull)
                     {
                         // null matches anything without penalty
@@ -553,14 +553,15 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 if (_sctx_hack(parameters, cond))
                 {
                     //Add cond.Sctx to the array of arguments
-                    sargs = new PValue[sargs.Length + 1];
-                    Array.Copy(cond.Args, 0, sargs, 1, cond.Args.Length);
-                    sargs[0] = Object.CreatePValue(cond.Sctx);
+                    var a = new PValue[sargs.Length + 1];
+                    cond.Args.Span.CopyTo(a.AsSpan(1, cond.Args.Length));
+                    a[0] = Object.CreatePValue(cond.Sctx);
+                    sargs = new(a);
                 }
 
                 for (var i = 0; i < cargs.Length; i++)
                 {
-                    var arg = sargs[i];
+                    var arg = sargs.Span[i];
                     if (!arg.IsNull) //Neither Type-locked nor null
                     {
                         var pTy = parameters[i].ParameterType;
@@ -604,7 +605,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                     result = field.GetValue(subject?.Value);
                 else
                 {
-                    var arg = cond.Args[0];
+                    var arg = cond.Args.Span[0];
                     if (!(arg.IsNull)) //Neither Type-locked nor null
                     {
                         var paramTy = field.FieldType;
@@ -706,7 +707,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     class CallConditions
     {
         public readonly StackContext Sctx;
-        public readonly PValue[] Args;
+        public readonly ReadOnlyMemory<PValue> Args;
         public readonly PCall Call;
         public readonly string Id;
         public bool IgnoreId;
@@ -714,10 +715,10 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         public Type? ReturnType;
         public List<MemberInfo>? MemberRestriction;
 
-        public CallConditions(StackContext sctx, PValue[]? args, PCall call, string id)
+        public CallConditions(StackContext sctx, ReadOnlyMemory<PValue> args, PCall call, string id)
         {
             Sctx = sctx ?? throw new ArgumentNullException(nameof(sctx));
-            Args = args ?? Array.Empty<PValue>();
+            Args = args;
             Call = call;
             Id = id;
             Directive = null;
@@ -864,7 +865,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         result = null;
         if (subject.Value is IIndirectCall icall)
@@ -880,7 +881,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     PValue dynamicCall(
         StackContext sctx,
         PValue subject,
-        PValue[] args,
+        ReadOnlySpan<PValue> args,
         PCall call,
         string id,
         out MemberInfo? resolvedMember)
@@ -907,7 +908,12 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     }
 
     public override PValue DynamicCall(
-        StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id
+    )
     {
         return dynamicCall(sctx, subject, args, call, id, out var dummy);
     }
@@ -941,15 +947,15 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return StaticCall(sctx, args, call, id, out var dummy);
     }
 
-    public override bool TryConstruct(StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
         return tryConstruct(sctx, args, out result);
     }
 
     bool tryConstruct(
-        StackContext sctx, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
     {
-        var cond = new CallConditions(sctx, args, PCall.Get, "")
+        var cond = new CallConditions(sctx, args.ToImmutableArray().AsMemory(), PCall.Get, "")
         {
             IgnoreId = true,
         };

@@ -33,11 +33,10 @@ namespace Prexonite.Commands.Core;
 /// </summary>
 public class Debug : PCommand
 {
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
         if (sctx is not FunctionContext fctx)
             return false;
         var debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);

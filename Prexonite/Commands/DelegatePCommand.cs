@@ -53,9 +53,9 @@ public sealed class DelegatePCommand : PCommand
     /// <param name = "sctx">The stack context in which to execute the command.</param>
     /// <param name = "args">The array of arguments to pass to the command.</param>
     /// <returns></returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return Action(sctx, args);
+        return Action(sctx, args.ToArray());
     }
 
     /// <summary>

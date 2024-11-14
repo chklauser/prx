@@ -57,9 +57,9 @@ public sealed class Dispose : PCommand, ICilCompilerAware
     ///     <para>
     ///         Dispose tries to call the implementation of the IDisposable interface first before issuing dynamic calls.</para>
     /// </remarks>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     /// <summary>
@@ -97,13 +97,13 @@ public sealed class Dispose : PCommand, ICilCompilerAware
                 if (arg.Value is IObject isObj)
                 {
                     isObj.TryDynamicCall(
-                        sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out _);
+                        sctx, [], PCall.Get, DisposeMemberId, out _);
                 }
             }
         }
         else
         {
-            arg.TryDynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, DisposeMemberId, out _);
+            arg.TryDynamicCall(sctx, [], PCall.Get, DisposeMemberId, out _);
         }
     }
 

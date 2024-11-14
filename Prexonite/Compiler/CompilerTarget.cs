@@ -200,27 +200,12 @@ public class CompilerTarget : IHasMetaTable
 
         #region Implementation of IIndirectCall
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
         {
             return _value;
         }
 
         #endregion
-    }
-
-    class ProvidedFunction : IIndirectCall
-    {
-        readonly Func<StackContext, PValue[], PValue> _func;
-
-        public ProvidedFunction(Func<StackContext, PValue[], PValue> func)
-        {
-            _func = func;
-        }
-
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
-        {
-            return _func(sctx, args);
-        }
     }
 
     /// <summary>
@@ -231,12 +216,6 @@ public class CompilerTarget : IHasMetaTable
     public static PVariable CreateReadonlyVariable(PValue value)
     {
         return new() {Value = PType.Object.CreatePValue(new ProvidedValue(value))};
-    }
-
-    public static PValue CreateFunctionValue(Func<StackContext, PValue[], PValue> implementation)
-    {
-        return new(new ProvidedFunction(implementation),
-            PType.Object[typeof (IIndirectCall)]);
     }
 
     #region Temporary variables

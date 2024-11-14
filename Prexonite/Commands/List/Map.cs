@@ -119,7 +119,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         var sctx = sctxCarrier.StackContext;
 
         foreach (var x in source)
-            yield return f != null ? f.IndirectCall(sctx, new[] {x}) : x;
+            yield return f != null ? f.IndirectCall(sctx, x) : x;
     }
 
     /// <summary>

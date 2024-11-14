@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -1648,7 +1649,7 @@ function main() = target.f;
 
         public Dictionary<string, string> VirtualFiles { get; } = new();
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
         {
             var n = args[0].CallToString(sctx);
             var virtualFile = VirtualFiles[n];

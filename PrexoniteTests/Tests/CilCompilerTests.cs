@@ -171,6 +171,22 @@ function main()
         Expect(Enumerable.Range(1, 10).Select(_ => (PValue) true).ToList());
     }
 
+    [Test]
+    public void IndexAssign()
+    {
+        Compile(
+            @"
+function main()
+{
+    var results = [];
+    results[] = true;
+    return results;
+}
+");
+        _expectCil();
+        Expect((List<PValue>)[(PValue) true]);
+    }
+
 
     [Test]
     public void JumpBreaksCilExtensions()
@@ -644,5 +660,20 @@ function main(x) [store_debug_implementation enabled;]
 }");
 
         Expect("12", true);
+    }
+
+    [Test]
+    public void ManyParameters()
+    {
+        Compile(
+            """
+            store_debug_implementation;
+            function main(a, b, c, d, f) {
+                //return a + "." + b + "." + c + "." + d + "." + f;
+                return "a.b.c.d.f";
+            }
+            """);
+        
+        Expect("a.b.c.d.f");
     }
 }

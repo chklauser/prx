@@ -8,7 +8,7 @@ public class Not : PCommand
     {
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         foreach (var arg in args)
         {

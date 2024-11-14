@@ -116,7 +116,7 @@ abstract class ScriptedUnitTestContainer : IDisposable
             "Test case run function (part of testing framework) not found. Was looking for {0}.", RunTestId);
         if (rt == null) throw new InvalidOperationException("rt is null");
 
-        var resP = rt.Run(Engine, new[] {PType.Null, Root.CreateNativePValue(tc)});
+        var resP = rt.Run(Engine, [PType.Null, Root.CreateNativePValue(tc)]);
         var success = (bool) resP.DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Key").Value!;
         if (success)
             return;

@@ -73,7 +73,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             #region Overrides of PCommand
 
-            public override PValue Run(StackContext sctx, PValue[] args)
+            public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
             {
                 if (args.Length < 3)
                     throw new PrexoniteException(string.Format(

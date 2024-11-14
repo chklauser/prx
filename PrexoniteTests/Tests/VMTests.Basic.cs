@@ -174,7 +174,7 @@ function complicated(x,y) does
         var v0 = rnd.Next(1, 100);
         var expected = 2*v0;
 
-        var result = target.Functions["twice"]!.Run(engine, new PValue[] {v0});
+        var result = target.Functions["twice"]!.Run(engine, [v0]);
         Assert.AreEqual(
             PType.BuiltIn.Int,
             result.Type.ToBuiltIn(),
@@ -189,7 +189,7 @@ function complicated(x,y) does
         var y1 = x1 + z;
         expected = y1 + x1;
 
-        result = target.Functions["complicated"]!.Run(engine, new PValue[] {x0, y0});
+        result = target.Functions["complicated"]!.Run(engine, [x0, y0]);
         Assert.AreEqual(
             PType.BuiltIn.Int,
             result.Type.ToBuiltIn(),

@@ -32,8 +32,14 @@ public sealed class Channel : IObject, IDisposable
 {
     #region Implementation of IObject
 
-    public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
-        [NotNullWhen(true)] out PValue? result)
+    public bool TryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         result = null;
         switch (id.ToUpperInvariant())
@@ -52,12 +58,12 @@ public sealed class Channel : IObject, IDisposable
                 var refVar = (args.Length > 0 ? args[0] : null) ?? PType.Null;
                 if (TryReceive(out var datum))
                 {
-                    refVar.IndirectCall(sctx, new[] {datum});
+                    refVar.IndirectCall(sctx, datum);
                     result = true;
                 }
                 else
                 {
-                    refVar.IndirectCall(sctx, new PValue[] {PType.Null});
+                    refVar.IndirectCall(sctx, PType.Null);
                     result = false;
                 }
                 break;

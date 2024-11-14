@@ -84,9 +84,9 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
         return sb.ToString();
     }
 
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        return RunStatically(sctx, args);
+        return RunStatically(sctx, args.ToArray());
     }
 
     #region ICilCompilerAware Members

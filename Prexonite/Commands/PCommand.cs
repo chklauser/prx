@@ -37,17 +37,19 @@ public abstract class PCommand : IIndirectCall
     /// <param name = "sctx">The stack context in which to execut the command.</param>
     /// <param name = "args">The arguments to be passed to the command.</param>
     /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-    public abstract PValue Run(StackContext sctx, PValue[] args);
+    public abstract PValue Run(StackContext sctx, ReadOnlySpan<PValue> args);
+    
+    public PValue Run(StackContext sctx, params PValue[] args) => Run(sctx, new ReadOnlySpan<PValue>(args));
 
     #region IIndirectCall Members
 
     /// <summary>
-    ///     Runs the command. (Calls <see cref = "Run" />)
+    ///     Runs the command. (Calls <see cref = "Run(Prexonite.StackContext,System.ReadOnlySpan{Prexonite.PValue})" />)
     /// </summary>
     /// <param name = "sctx">The stack context in which to call the command.</param>
     /// <param name = "args">The arguments to pass to the command.</param>
     /// <returns>The value returned by the command.</returns>
-    PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
+    PValue IIndirectCall.IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return Run(sctx, args) ?? PType.Null.CreatePValue();
     }

@@ -36,7 +36,7 @@ public abstract class CoroutineCommand : PCommand
     /// <param name = "sctx">The stack context in which to execut the command.</param>
     /// <param name = "args">The arguments to be passed to the command.</param>
     /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-    public override PValue Run(StackContext sctx, PValue[] args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -44,7 +44,7 @@ public abstract class CoroutineCommand : PCommand
             throw new ArgumentNullException(nameof(args));
 
         var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, CoroutineRun(carrier, args));
+        var corctx = new CoroutineContext(sctx, CoroutineRun(carrier, args.ToArray()));
         carrier.StackContext = corctx;
         return sctx.CreateNativePValue(new Coroutine(corctx));
     }

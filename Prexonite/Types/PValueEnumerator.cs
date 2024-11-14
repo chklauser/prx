@@ -83,7 +83,13 @@ public abstract class PValueEnumerator : IEnumerator<PValue>, IObject
     ///     Since none of the instance members take any arguments, <paramref name = "args" /> must have length 0.
     /// </remarks>
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)]
+        out PValue? result
+    )
     {
         result = null;
         if (args == null)

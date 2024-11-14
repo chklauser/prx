@@ -141,7 +141,7 @@ public sealed class PVariable : IHasMetaTable,
     ///     Otherwise, the first element of <paramref name = "args" /> is assigned to the variable.
     /// </remarks>
     /// <returns>Always the variable's (new) value.</returns>
-    public PValue IndirectCall(StackContext sctx, PValue[] args)
+    public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         if (args.Length != 0)
             _value = args[^1];

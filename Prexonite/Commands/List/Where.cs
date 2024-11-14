@@ -81,7 +81,7 @@ public class Where : CoroutineCommand, ICilCompilerAware
                 continue;
             foreach (var value in set)
             {
-                var include = f.IndirectCall(sctx, new[] {value}).ConvertTo(sctx, PType.Bool,
+                var include = f.IndirectCall(sctx, value).ConvertTo(sctx, PType.Bool,
                     true);
                 if ((bool) include.Value!)
                     yield return value;

@@ -402,24 +402,26 @@ public sealed class CompilerState : StackContext
     /// <param name = "index">The index of the local variable to load.</param>
     public void EmitLoadLocal(int index)
     {
+        // TODO: for yet unknown reasons using the short versions of ldloc causes System.Reflection.Emit
+        //       to generate invalid IL (an instruction gets missing after being emitted).
         switch (index)
         {
-            case 0:
-                Il.Emit(OpCodes.Ldloc_0);
-                break;
-            case 1:
-                Il.Emit(OpCodes.Ldloc_1);
-                break;
-            case 2:
-                Il.Emit(OpCodes.Ldloc_2);
-                break;
-            case 3:
-                Il.Emit(OpCodes.Ldloc_3);
-                break;
+            // case 0:
+            //     Il.Emit(OpCodes.Ldloc_0);
+            //     break;
+            // case 1:
+            //     Il.Emit(OpCodes.Ldloc_1);
+            //     break;
+            // case 2:
+            //     Il.Emit(OpCodes.Ldloc_2);
+            //     break;
+            // case 3:
+            //     Il.Emit(OpCodes.Ldloc_3);
+            //     break;
             default:
-                if (index < byte.MaxValue)
-                    Il.Emit(OpCodes.Ldloc_S, (byte) index);
-                else
+                // if (index < byte.MaxValue)
+                //     Il.Emit(OpCodes.Ldloc_S, (byte) index);
+                // else
                     Il.Emit(OpCodes.Ldloc, index);
                 break;
         }

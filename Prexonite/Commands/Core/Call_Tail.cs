@@ -53,7 +53,7 @@ public sealed class Call_Tail : StackAwareCommand
     /// <param name = "sctx">The stack context in which to execut the command.</param>
     /// <param name = "args">The arguments to be passed to the command.</param>
     /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-    public override PValue Run(StackContext sctx, PValue[]? args)
+    public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -79,7 +79,7 @@ public sealed class Call_Tail : StackAwareCommand
         return Call.CreateStackContext(sctx, args[0], iargs.ToArray());
     }
 
-    static List<PValue> make_tailcall(StackContext sctx, PValue[] args)
+    static List<PValue> make_tailcall(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         var iargs = Call.FlattenArguments(sctx, args, 1);
 
