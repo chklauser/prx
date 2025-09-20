@@ -53,7 +53,7 @@ class ManualTargetDescription : ITargetDescription
         _dependencies = new(moduleName);
         _dependencies.AddRange(dependencies);
         if (buildMessages != null)
-            _buildMessages = new(buildMessages);
+            _buildMessages = [..buildMessages];
     }
 
     public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
@@ -84,7 +84,7 @@ class ManualTargetDescription : ITargetDescription
                         if (!_source.TryOpen(out var reader))
                             throw new BuildFailureException(this,
                                 $"The source for target {Name} could not be opened.",
-                                Enumerable.Empty<Message>());
+                                []);
                         using (reader)
                         {
                             token.ThrowIfCancellationRequested();

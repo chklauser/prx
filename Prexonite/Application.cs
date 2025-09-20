@@ -103,7 +103,7 @@ public class Application : IMetaFilter,
 
     #region Construction
 
-    public static readonly MetaEntry DefaultImport = new(new MetaEntry[] { nameof(System) });
+    public static readonly MetaEntry DefaultImport = new([nameof(System)]);
 
     /// <summary>
     ///     Creates a new application with a GUID as its Id.
@@ -318,8 +318,8 @@ public class Application : IMetaFilter,
                         _InitializationFunction.CreateFunctionContext
                         (
                             targetEngine,
-                            Array.Empty<PValue>(), // \init has no arguments
-                            Array.Empty<PVariable>(), // \init is not a closure
+                            [], // \init has no arguments
+                            [], // \init is not a closure
                             true // don't initialize. That's what WE are trying to do here.
                         );
 

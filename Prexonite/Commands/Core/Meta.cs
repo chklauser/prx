@@ -72,7 +72,7 @@ public class Meta : PCommand, ICilCompilerAware
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args != null && args.Length > 0)
+        if (args.Length > 0)
             throw new PrexoniteException("The meta command no longer accepts arguments.");
 
         if (sctx is not FunctionContext fctx)

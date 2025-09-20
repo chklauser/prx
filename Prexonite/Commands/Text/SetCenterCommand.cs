@@ -46,7 +46,7 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
         // function setright(w,s,f)
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
+        args ??= [];
 
         string s;
         int w;

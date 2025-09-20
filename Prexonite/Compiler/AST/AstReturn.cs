@@ -47,7 +47,7 @@ public class AstReturn : AstNode,
 
     #region IAstHasExpressions Members
 
-    public AstExpr[] Expressions => Expression != null ? new[] { Expression } : Array.Empty<AstExpr>();
+    public AstExpr[] Expressions => Expression != null ? [Expression] : [];
 
     #endregion
 

@@ -87,12 +87,12 @@ public class Map : CoroutineCommand, ICilCompilerAware
     static IEnumerable<PValue> _wrapDynamicIEnumerable(StackContext sctx, PValue psource)
     {
         var pvEnumerator =
-            psource.DynamicCall(sctx, Array.Empty<PValue>(), PCall.Get, "GetEnumerator").
+            psource.DynamicCall(sctx, [], PCall.Get, "GetEnumerator").
                 ConvertTo(sctx, typeof (IEnumerator));
         var enumerator = (IEnumerator) pvEnumerator.Value!;
-        PValueEnumerator? pvEnum;
         try
         {
+            PValueEnumerator? pvEnum;
             if ((pvEnum = enumerator as PValueEnumerator) != null)
             {
                 while (pvEnum.MoveNext())

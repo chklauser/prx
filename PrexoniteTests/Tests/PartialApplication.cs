@@ -515,7 +515,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("m", new PValue[] {3, 2}, call: PCall.Get, returns: 11);
+        x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();
@@ -533,7 +533,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("", new PValue[] {2, 3}, call: PCall.Get, returns: 11);
+        x.Expect("", [2, 3], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();
@@ -551,7 +551,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("m", new PValue[] {3, 2}, call: PCall.Get, returns: 11);
+        x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();
@@ -569,7 +569,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("m", new PValue[] {3, 2}, call: PCall.Get, returns: 11);
+        x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();
@@ -587,7 +587,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("m", new PValue[] {3, 2}, call: PCall.Set, returns: 11);
+        x.Expect("m", [3, 2], call: PCall.Set, returns: 11);
 
         Expect(2, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();
@@ -606,7 +606,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("m", new PValue[] {3, 2}, call: PCall.Set, returns: 11);
+        x.Expect("m", [3, 2], call: PCall.Set, returns: 11);
 
         Expect(2, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();
@@ -624,7 +624,7 @@ function main(x,y,z)
 ");
 
         var x = new MemberCallable {Name = "x"};
-        x.Expect("", new PValue[] {3, 2}, call: PCall.Set, returns: 11);
+        x.Expect("", [3, 2], call: PCall.Set, returns: 11);
 
         Expect(2, sctx.CreateNativePValue(x), 2, 3);
         x.AssertCalledAll();

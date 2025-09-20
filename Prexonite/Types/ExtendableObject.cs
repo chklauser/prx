@@ -47,7 +47,7 @@ public class ExtendableObject : IObject, IIndirectCall
         if (_et != null)
             throw new InvalidOperationException(
                 "The extension table for this object has already been created.");
-        _et = new();
+        _et = [];
     }
 
     /// <summary>
@@ -187,7 +187,7 @@ public class ExtendableObject : IObject, IIndirectCall
         id ??= "";
         call ??= PCall.Get;
 
-        _et ??= new();
+        _et ??= [];
 
         if (TryDynamicClrCall(sctx, subject, args, call.Value, id, out result) ||
             //Try conventional call
@@ -196,7 +196,8 @@ public class ExtendableObject : IObject, IIndirectCall
             return true;
         else if (call == PCall.Set && args.Length > 0) //Add field if it does not exist
             result = _dynamicCall(
-                sctx, new[] {id, args[0]}, PCall.Set, StructurePType.SetId);
+                sctx,
+                [id, args[0]], PCall.Set, StructurePType.SetId);
         else
             result = null; //Make sure result is really null.
 

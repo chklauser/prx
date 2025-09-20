@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Types;
@@ -53,6 +54,7 @@ public class MemberCallable : IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
+        [NotNullWhen(true)]
         out PValue? result
     )
     {

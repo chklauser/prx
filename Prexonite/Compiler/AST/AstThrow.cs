@@ -40,7 +40,7 @@ public class AstThrow : AstExpr,
 
     public AstExpr[] Expressions
     {
-        get { return new[] {Expression}; }
+        get { return [Expression]; }
     }
 
     #endregion

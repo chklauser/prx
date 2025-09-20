@@ -97,7 +97,7 @@ function main [loc {1,2,3,}]
 
 ");
 
-        var entry = new MetaEntry(new MetaEntry[] {"1", "2", "3"});
+        var entry = new MetaEntry(["1", "2", "3"]);
 
         Assert.That(target, Meta.Contains("glob", entry));
         var main = target.Functions["main"];
@@ -1365,7 +1365,7 @@ function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
         Assert.That(meta, Does.ContainKey("name"));
         Assert.That(meta, Does.ContainKey("references"));
         Assert.That(meta["name"], Is.EqualTo(new MetaEntry("some.module.test")));
-        Assert.That(meta["references"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("some.module")})));
+        Assert.That(meta["references"], Is.EqualTo(new MetaEntry([new MetaEntry("some.module")])));
 
         var f = target.Functions["main"];
         Assert.That(f!.Meta, Does.ContainKey("key1"));
@@ -1373,7 +1373,7 @@ function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
         Assert.That(f.Meta, Does.ContainKey("key3"));
         Assert.That(f.Meta["key1"], Is.EqualTo(new MetaEntry("dot.separated.value")));
         Assert.That(f.Meta["key2"], Is.EqualTo(new MetaEntry("value2")));
-        Assert.That(f.Meta["key3"], Is.EqualTo(new MetaEntry(new[]{new MetaEntry("a.b"), new MetaEntry("c")})));
+        Assert.That(f.Meta["key3"], Is.EqualTo(new MetaEntry([new MetaEntry("a.b"), new MetaEntry("c")])));
     }
 
     [Test]

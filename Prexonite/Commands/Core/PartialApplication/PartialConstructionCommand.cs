@@ -54,7 +54,7 @@ public class PartialConstructionCommand : PartialWithPTypeCommandBase<RuntimePTy
     {
         var ty = GetPartialCallRepresentationType(parameter);
         return _ptypeConstructCtor ??= ty.GetConstructor(
-            new[] {typeof (int[]), typeof (PValue[]), typeof (PType)})
+                [typeof (int[]), typeof (PValue[]), typeof (PType)])
             ?? throw new InvalidOperationException($"{ty} does not have an (int[], PValue[], PValue) constructor.");
     }
 

@@ -63,8 +63,8 @@ public class FunctionContext : StackContext
             throw new ArgumentNullException(nameof(parentEngine));
         if (implementation == null)
             throw new ArgumentNullException(nameof(implementation));
-        sharedVariables ??= Array.Empty<PVariable>();
-        args ??= Array.Empty<PValue>();
+        sharedVariables ??= [];
+        args ??= [];
 
         if (
             !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
@@ -550,7 +550,7 @@ public class FunctionContext : StackContext
                     {
                         var entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
                             ? sharedNamesEntry.List 
-                            : Array.Empty<MetaEntry>();
+                            : [];
                         vars = new string[entries.Length];
                         for (var i = 0; i < entries.Length; i++)
                             vars[i] = entries[i].Text;

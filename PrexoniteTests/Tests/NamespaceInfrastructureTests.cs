@@ -303,11 +303,10 @@ public class NamespaceInfrastructureTests
         var nsa = mlv.CreateLocalNamespace(new EmptySymbolView<Symbol>());
         var b = Symbol.CreateReference(EntityRef.Command.Create("c"),NoSourcePosition.Instance);
         var d = Symbol.CreateReference(EntityRef.Command.Create("e"),NoSourcePosition.Instance);
-        nsa.DeclareExports(new[]
-        {
+        nsa.DeclareExports([
             new KeyValuePair<string, Symbol>(nameof(b),b), 
             new KeyValuePair<string, Symbol>(nameof(d),d),
-        });
+        ]);
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
         globalScope.Declare(nameof(a), a);
 
@@ -320,11 +319,10 @@ public class NamespaceInfrastructureTests
             
         var ssb = SymbolStoreBuilder.Create(mlv);
         ssb.Forward(new SymbolOrigin.NamespaceImport(new(nameof(a)),NoSourcePosition.Instance),nssyma!.Namespace,
-            new []
-            {
-                SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"f"),
+        [
+            SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"f"),
                 SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"g"),
-            });
+        ]);
         var scope = ssb.ToSymbolStore();
 
         _assertNotExists(scope, nameof(d));
@@ -343,11 +341,10 @@ public class NamespaceInfrastructureTests
         var nsa = mlv.CreateLocalNamespace(new EmptySymbolView<Symbol>());
         var b = Symbol.CreateReference(EntityRef.Command.Create("c"), NoSourcePosition.Instance);
         var d = Symbol.CreateReference(EntityRef.Command.Create("e"), NoSourcePosition.Instance);
-        nsa.DeclareExports(new[]
-        {
+        nsa.DeclareExports([
             new KeyValuePair<string, Symbol>(nameof(b),b), 
             new KeyValuePair<string, Symbol>(nameof(d),d),
-        });
+        ]);
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
         globalScope.Declare(nameof(a), a);
 
@@ -360,12 +357,11 @@ public class NamespaceInfrastructureTests
 
         var ssb = SymbolStoreBuilder.Create(mlv);
         ssb.Forward(new SymbolOrigin.NamespaceImport(new(nameof(a)), NoSourcePosition.Instance), nssyma!.Namespace,
-            new SymbolTransferDirective[]
-            {
-                SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"f"),
+        [
+            SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"f"),
                 SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"g"),
                 SymbolTransferDirective.CreateWildcard(NoSourcePosition.Instance),
-            });
+        ]);
         var scope = ssb.ToSymbolStore();
 
         _assertNotExists(scope, nameof(b),"import scope");
@@ -385,11 +381,10 @@ public class NamespaceInfrastructureTests
         var nsa = mlv.CreateLocalNamespace(new EmptySymbolView<Symbol>());
         var b = Symbol.CreateReference(EntityRef.Command.Create("c"), NoSourcePosition.Instance);
         var d = Symbol.CreateReference(EntityRef.Command.Create("e"), NoSourcePosition.Instance);
-        nsa.DeclareExports(new[]
-        {
+        nsa.DeclareExports([
             new KeyValuePair<string, Symbol>(nameof(b),b), 
             new KeyValuePair<string, Symbol>(nameof(d),d),
-        });
+        ]);
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
         globalScope.Declare(nameof(a), a);
 
@@ -402,13 +397,12 @@ public class NamespaceInfrastructureTests
 
         var ssb = SymbolStoreBuilder.Create(mlv);
         ssb.Forward(new SymbolOrigin.NamespaceImport(new(nameof(a)), NoSourcePosition.Instance), nssyma!.Namespace,
-            new SymbolTransferDirective[]
-            {
-                SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"f"),
+        [
+            SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"f"),
                 SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, nameof(b),"g"),
                 SymbolTransferDirective.CreateWildcard(NoSourcePosition.Instance),
                 SymbolTransferDirective.CreateDrop(NoSourcePosition.Instance, nameof(d)),
-            });
+        ]);
         var scope = ssb.ToSymbolStore();
 
         _assertNotExists(scope,nameof(d),"import scope");

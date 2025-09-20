@@ -42,14 +42,14 @@ public class MacroSession : IDisposable
 {
     LoaderOptions? _options;
 
-    readonly SymbolCollection _releaseList = new();
-    readonly SymbolCollection _allocationList = new();
+    readonly SymbolCollection _releaseList = [];
+    readonly SymbolCollection _allocationList = [];
 
-    readonly HashSet<AstGetSet> _invocations = new();
+    readonly HashSet<AstGetSet> _invocations = [];
 
     readonly object _buildCommandToken;
 
-    readonly List<PValue> _transportStore = new();
+    readonly List<PValue> _transportStore = [];
 
     /// <summary>
     ///     Creates a new macro expansion session for the specified compiler target.
@@ -61,7 +61,7 @@ public class MacroSession : IDisposable
         Factory = Target.Factory;
             
         GlobalSymbols = SymbolStore.Create(Target.Loader.Symbols);
-        OuterVariables = Target.OuterVariables.ToImmutableArray();
+        OuterVariables = [..Target.OuterVariables];
 
         _buildCommandToken = target.Loader.RequestBuildCommands();
     }
@@ -289,7 +289,7 @@ public class MacroSession : IDisposable
             if (macroBlock != null)
                 fs = macroBlock.Count > 0 ? macroBlock.Statements : null;
             else if (ast != null)
-                fs = new[] {ast};
+                fs = [ast];
             else
                 fs = null;
 

@@ -452,7 +452,7 @@ public class ListPType : PType, ICilCompilerAware
                 var elementT = clrType.GetGenericArguments()[0];
                 var listT = typeof (List<>).MakeGenericType(elementT);
                 // ReSharper disable once PossibleNullReferenceException
-                var list = (IList) listT.GetConstructor(Array.Empty<Type>())!.Invoke(Array.Empty<object>());
+                var list = (IList) listT.GetConstructor([])!.Invoke([]);
                 var success = true;
                 foreach (var pv in (List<PValue>)subject.Value!)
                 {
@@ -475,8 +475,8 @@ public class ListPType : PType, ICilCompilerAware
                         var readonlyListT = typeof (ReadOnlyCollection<>).MakeGenericType(elementT);
                         var readonlyList =
                             // ReSharper disable once PossibleNullReferenceException
-                            readonlyListT.GetConstructor(new[] {typeof (IList<>).MakeGenericType(elementT)})!
-                                .Invoke(new object[]{list});
+                            readonlyListT.GetConstructor([typeof (IList<>).MakeGenericType(elementT)])!
+                                .Invoke([list]);
                         result = sctx.CreateNativePValue(readonlyList);
                     }
                     else

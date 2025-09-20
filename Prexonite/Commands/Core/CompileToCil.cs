@@ -84,7 +84,7 @@ public class CompileToCil : PCommand, ICilCompilerAware
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
+        args ??= [];
 
         var linking = FunctionLinking.FullyStatic;
         switch (args.Length)

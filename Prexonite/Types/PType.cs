@@ -283,7 +283,7 @@ public abstract class PType : IObject
             typeof (PValueKeyValuePair).GetProperty(nameof(PValueHashtable.ObjectType))!.GetGetMethod()!;
 
         static readonly MethodInfo _getAnyObjectType =
-            typeof (PrexoniteObjectTypeProxy).GetProperty("Item", new[] {typeof (Type)})!.
+            typeof (PrexoniteObjectTypeProxy).GetProperty("Item", [typeof (Type)])!.
                 GetGetMethod()!;
 
         public ObjectPType this[Type clrType]

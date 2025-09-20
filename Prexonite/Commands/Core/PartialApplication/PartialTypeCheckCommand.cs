@@ -46,8 +46,8 @@ public class PartialTypeCheckCommand : PartialWithPTypeCommandBase<RuntimePTypeI
 
     protected override ConstructorInfo GetConstructorCtor(CompileTimePTypeInfo parameter)
     {
-        return _partialTypeCheckCtor ??= typeof (PartialTypeCheck).GetConstructor(new[]
-            {typeof (int[]), typeof (PValue[]), typeof (PType)})
+        return _partialTypeCheckCtor ??= typeof (PartialTypeCheck).GetConstructor([typeof (int[]), typeof (PValue[]), typeof (PType),
+            ])
             ?? throw new InvalidOperationException($"{nameof(PartialTypeCheck)} does not have an (int[], PValue[], PType) constructor.");
     }
 

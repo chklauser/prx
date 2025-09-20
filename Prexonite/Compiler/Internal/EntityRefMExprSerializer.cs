@@ -53,17 +53,16 @@ class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
         string id, ModuleName moduleName)
     {
         return new MExpr.MList(position, head,
-            new[]
-            {
-                new MExpr.MAtom(position, id),
+        [
+            new MExpr.MAtom(position, id),
                 new MExpr.MAtom(position, moduleName.Id),
                 new MExpr.MAtom(position, moduleName.Version),
-            });
+        ]);
     }
 
     MExpr _serializeRef(ISourcePosition position, string head, string id)
     {
-        return new MExpr.MList(position, head,new []{new MExpr.MAtom(position,id) });
+        return new MExpr.MList(position, head, [new MExpr.MAtom(position,id)]);
     }
 
     public override MExpr OnFunction(EntityRef.Function function, ISourcePosition position)
@@ -83,7 +82,8 @@ class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
 
     protected override MExpr OnLocalVariable(EntityRef.Variable.Local variable, ISourcePosition position)
     {
-        return new MExpr.MList(position,LocalVariableHead,new []{new MExpr.MAtom(position, variable.Id), new MExpr.MAtom(position,variable.Index)});
+        return new MExpr.MList(position,LocalVariableHead, [new MExpr.MAtom(position, variable.Id), new MExpr.MAtom(position,variable.Index),
+        ]);
     }
 
     protected override MExpr OnGlobalVariable(EntityRef.Variable.Global variable, ISourcePosition position)

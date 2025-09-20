@@ -70,7 +70,7 @@ public class AstBlock : AstExpr,
         Symbols = newStore;
     }
 
-    List<AstNode> _statements = new();
+    List<AstNode> _statements = [];
 
     public List<AstNode> Statements
     {
@@ -331,9 +331,9 @@ public class AstBlock : AstExpr,
         get
         {
             if(Expression == null)
-                return Array.Empty<AstExpr>();
+                return [];
             else
-                return new[] {Expression};
+                return [Expression];
         }
     }
 

@@ -235,7 +235,7 @@ public sealed class ModuleName : IEquatable<ModuleName>
 
     public MetaEntry ToMetaEntry()
     {
-        return new(new MetaEntry[] {Id, Version.ToString()});
+        return new([Id, Version.ToString()]);
     }
 
     public static implicit operator MetaEntry(ModuleName name)

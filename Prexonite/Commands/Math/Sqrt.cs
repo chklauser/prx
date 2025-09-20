@@ -94,7 +94,7 @@ public class Sqrt : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyMethod =
-        typeof (Sqrt).GetMethod(nameof(RunStatically), new[] {typeof (PValue), typeof (StackContext)})!;
+        typeof (Sqrt).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

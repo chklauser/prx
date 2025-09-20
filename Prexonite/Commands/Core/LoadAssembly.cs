@@ -56,7 +56,7 @@ public sealed class LoadAssembly : PCommand, ICilCompilerAware
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        args ??= Array.Empty<PValue>();
+        args ??= [];
 
         var eng = sctx.ParentEngine;
         foreach (var arg in args)

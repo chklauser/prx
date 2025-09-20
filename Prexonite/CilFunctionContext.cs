@@ -41,7 +41,8 @@ public sealed class CilFunctionContext : StackContext
     }
 
     internal static MethodInfo NewMethod { get; } = typeof (CilFunctionContext).GetMethod(
-        nameof(New), new[] {typeof (StackContext), typeof (PFunction)})!;
+        nameof(New),
+        [typeof (StackContext), typeof (PFunction)])!;
 
     CilFunctionContext(Engine parentEngine, Application parentApplication,
         SymbolCollection importedNamespaces)

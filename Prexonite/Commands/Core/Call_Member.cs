@@ -76,7 +76,7 @@ public sealed class Call_Member : PCommand
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null || args.Length < 2 || args[0] == null)
+        if (args.Length < 2 || args[0] == null)
             throw new ArgumentException(
                 "The command callmember has the signature(obj, [isSet,] id [, arg1, arg2,...,argn]).");
 

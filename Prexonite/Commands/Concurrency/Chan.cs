@@ -60,10 +60,10 @@ public class Chan : PCommand, ICilCompilerAware
     }
 
     static readonly ConstructorInfo _channelCtor =
-        typeof (Channel).GetConstructor(Array.Empty<Type>())!;
+        typeof (Channel).GetConstructor([])!;
 
     static readonly ConstructorInfo _newPValue =
-        typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)})!;
+        typeof (PValue).GetConstructor([typeof (object), typeof (PType)])!;
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {

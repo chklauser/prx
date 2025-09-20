@@ -51,14 +51,14 @@ public class AstCondition : AstNode,
 
     public AstBlock[] Blocks
     {
-        get { return new AstBlock[] {IfBlock, ElseBlock}; }
+        get { return [IfBlock, ElseBlock]; }
     }
 
     #region IAstHasExpressions Members
 
     public AstExpr[] Expressions
     {
-        get { return new[] {Condition}; }
+        get { return [Condition]; }
     }
 
     #endregion

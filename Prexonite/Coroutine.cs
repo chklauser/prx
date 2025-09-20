@@ -226,6 +226,6 @@ public class Coroutine : IEnumerable<PValue>,
     /// <returns>Do not use with infinite lists!</returns>
     public List<PValue> All()
     {
-        return new(this);
+        return [..this];
     }
 }

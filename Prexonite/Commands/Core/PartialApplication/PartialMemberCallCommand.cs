@@ -127,13 +127,12 @@ public class PartialMemberCallCommand :
         state.Il.Emit(
             OpCodes.Newobj,
             _partialMemberCallCtor ??= (typeof (PartialMemberCall).GetConstructor(
-                new[]
-                {
-                    typeof (int[]),
+            [
+                typeof (int[]),
                     typeof (PValue[]),
                     typeof (string),
                     typeof (PCall),
-                })) ?? throw new InvalidOperationException("Constructor PartialMemberCall(int[], PValue[], string, PCall) is missing."));
+            ])) ?? throw new InvalidOperationException("Constructor PartialMemberCall(int[], PValue[], string, PCall) is missing."));
     }
 
     #endregion

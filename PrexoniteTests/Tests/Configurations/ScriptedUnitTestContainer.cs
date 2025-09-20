@@ -66,7 +66,7 @@ abstract class ScriptedUnitTestContainer : IDisposable
         Engine = new();
         Loader = new(Engine, Application);
 
-        Root = new NullContext(Engine, Application, Array.Empty<string>());
+        Root = new NullContext(Engine, Application, []);
 
         var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         while (slnPath != null && Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "prx.sln")))
@@ -117,13 +117,13 @@ abstract class ScriptedUnitTestContainer : IDisposable
         if (rt == null) throw new InvalidOperationException("rt is null");
 
         var resP = rt.Run(Engine, [PType.Null, Root.CreateNativePValue(tc)]);
-        var success = (bool) resP.DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Key").Value!;
+        var success = (bool) resP.DynamicCall(Root, [], PCall.Get, "Key").Value!;
         if (success)
             return;
 
         var eObj = resP
-            .DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "Value")
-            .DynamicCall(Root, Array.Empty<PValue>(), PCall.Get, "e")
+            .DynamicCall(Root, [], PCall.Get, "Value")
+            .DynamicCall(Root, [], PCall.Get, "e")
             .Value;
         if (eObj is Exception e)
         {

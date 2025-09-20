@@ -69,7 +69,7 @@ public sealed class CompilerState : StackContext
         Symbols = new();
         TryBlocks = new();
 
-        _ForeachHints = new();
+        _ForeachHints = [];
         _CilExtensionOffsets = new();
         if (source.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
         {
@@ -660,7 +660,7 @@ public sealed class CompilerState : StackContext
     }
 
     static readonly MethodInfo _pTypeConstructMethod =
-        typeof (PType).GetMethod(nameof(PType.Construct), new[] {typeof (StackContext), typeof (PValue[])}) ?? throw new InvalidOperationException("Method PType.Construct(StackContext, PValue[]) is missing.");
+        typeof (PType).GetMethod(nameof(PType.Construct), [typeof (StackContext), typeof (PValue[])]) ?? throw new InvalidOperationException("Method PType.Construct(StackContext, PValue[]) is missing.");
 
     public void EmitLoadClrType(Type T)
     {
@@ -669,7 +669,7 @@ public sealed class CompilerState : StackContext
     }
 
     static readonly MethodInfo _typeGetTypeFromHandle =
-        typeof (Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] {typeof (RuntimeTypeHandle)}) ?? throw new InvalidOperationException("Method Type.GetTypeFromHandle(RuntimeTypeHandle) is missing.");
+        typeof (Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof (RuntimeTypeHandle)]) ?? throw new InvalidOperationException("Method Type.GetTypeFromHandle(RuntimeTypeHandle) is missing.");
 
     #region Early bound command call
 
@@ -702,7 +702,7 @@ public sealed class CompilerState : StackContext
     public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect)
     {
         var run =
-            target.GetMethod("RunStatically", new[] {typeof (StackContext), typeof (PValue[])});
+            target.GetMethod("RunStatically", [typeof (StackContext), typeof (PValue[])]);
 
         if (run == null)
             throw new PrexoniteException
@@ -1003,13 +1003,13 @@ public sealed class CompilerState : StackContext
     {
         var cs = new ConstructorInfo[3];
         cs[0] = 
-            typeof (Version).GetConstructor(new[] {typeof (int), typeof (int)}) 
+            typeof (Version).GetConstructor([typeof (int), typeof (int)]) 
             ?? throw new InvalidOperationException("Version(int,int) constructor is missing.");
         cs[1] =
-            typeof (Version).GetConstructor(new[] {typeof (int), typeof (int), typeof (int)})
+            typeof (Version).GetConstructor([typeof (int), typeof (int), typeof (int)])
             ?? throw new InvalidOperationException("Version(int,int,int) constructor is missing.");
         cs[2] =
-            typeof (Version).GetConstructor(new[] {typeof (int), typeof (int), typeof (int), typeof (int)})
+            typeof (Version).GetConstructor([typeof (int), typeof (int), typeof (int), typeof (int)])
             ?? throw new InvalidOperationException("Version(int,int,int,int) constructor is missing.");
         return cs;
     },LazyThreadSafetyMode.None);

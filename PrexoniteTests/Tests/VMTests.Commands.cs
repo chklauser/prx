@@ -264,8 +264,8 @@ function main()
     public void CallMemberCommandImplementation()
     {
         var obj = new MemberCallable {Name = "obj"};
-        obj.Expect("m", new PValue[] {1, 2, 3}, PCall.Get, 6);
-        obj.Expect("", new PValue[] {4, "a"}, PCall.Set);
+        obj.Expect("m", [1, 2, 3], PCall.Get, 6);
+        obj.Expect("", [4, "a"], PCall.Set);
 
         Compile(
             @"
@@ -453,7 +453,7 @@ function main = pi;
     {
         Compile(@"function main = [1,2,3,4,5] >> reverse >> foldl((a,b) => a + b,"""");");
 
-        Expect("54321", Array.Empty<PValue>());
+        Expect("54321");
     }
 
     [Test]

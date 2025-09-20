@@ -40,7 +40,7 @@ public abstract class AstLoop : AstNode,
 
     public virtual AstBlock[] Blocks
     {
-        get { return new AstBlock[] {Block}; }
+        get { return [Block]; }
     }
 
     #endregion

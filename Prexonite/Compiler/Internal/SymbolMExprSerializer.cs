@@ -46,12 +46,12 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
 
     public static MExpr SerializePosition(ISourcePosition exprPosition, ISourcePosition sourcePosition)
     {
-        return new MExpr.MList(exprPosition, SourcePositionHead, new MExpr[]
-        {
+        return new MExpr.MList(exprPosition, SourcePositionHead,
+        [
             new MExpr.MAtom(exprPosition, sourcePosition.File),
             new MExpr.MAtom(exprPosition, sourcePosition.Line), 
             new MExpr.MAtom(exprPosition, sourcePosition.Column),
-        });
+        ]);
     }
 
     MExpr? _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
@@ -108,13 +108,12 @@ public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, Qualified
         };
 
         return new MExpr.MList(self.Position, head,
-            new[]
-            {
-                SerializePosition(self.Position, self.Message.Position),
+        [
+            SerializePosition(self.Position, self.Message.Position),
                 new MExpr.MAtom(self.Position, self.Message.MessageClass),
                 new MExpr.MAtom(self.Position, self.Message.Text),
                 self.InnerSymbol.HandleWith(this,existingSymbols),
-            });
+        ]);
     }
             
 }

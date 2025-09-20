@@ -141,7 +141,8 @@ public class MExprTests
     public void DirectAlias()
     {
         const string alias = "x";
-        var me = new MExpr.MList(_position,SymbolMExprSerializer.CrossReferenceHead, new[] {new MExpr.MAtom(_position, alias)});
+        var me = new MExpr.MList(_position,SymbolMExprSerializer.CrossReferenceHead, [new MExpr.MAtom(_position, alias),
+        ]);
         var s0 = Symbol.CreateNil(_position);
         _symbols.Declare(alias,s0);
 
@@ -265,6 +266,6 @@ public class MExprTests
     MExpr.MList _createCrossReference(string alias)
     {
         return new(_position, SymbolMExprSerializer.CrossReferenceHead,
-            new[] {new MExpr.MAtom(_position, alias)});
+            [new MExpr.MAtom(_position, alias)]);
     }
 }

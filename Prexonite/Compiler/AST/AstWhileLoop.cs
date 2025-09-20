@@ -46,7 +46,7 @@ public class AstWhileLoop : AstLoop
 
     public override AstExpr[] Expressions
     {
-        get { return Condition != null ? new[] {Condition} : Array.Empty<AstExpr>(); }
+        get { return Condition != null ? [Condition] : []; }
     }
 
     [MemberNotNullWhen(true, nameof(Condition))]

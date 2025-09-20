@@ -117,7 +117,7 @@ public class Min : PCommand, ICilCompilerAware
 
     static readonly MethodInfo RunStaticallyMethod =
         typeof (Min).GetMethod(nameof(RunStatically),
-            new[] {typeof (PValue), typeof (PValue), typeof (StackContext)})!;
+            [typeof (PValue), typeof (PValue), typeof (StackContext)])!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

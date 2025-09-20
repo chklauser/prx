@@ -116,7 +116,7 @@ public sealed class Abs : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyMethod =
-        typeof (Abs).GetMethod(nameof(RunStatically), new[] {typeof (PValue), typeof (StackContext)})!;
+        typeof (Abs).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

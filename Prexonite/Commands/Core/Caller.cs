@@ -86,7 +86,7 @@ public sealed class Caller : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo GetCallerFromCilFunctionMethod =
-        typeof (Caller).GetMethod(nameof(GetCallerFromCilFunction), new[] {typeof (StackContext)})!;
+        typeof (Caller).GetMethod(nameof(GetCallerFromCilFunction), [typeof (StackContext)])!;
 
     #region ICilCompilerAware Members
 

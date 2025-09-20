@@ -116,7 +116,7 @@ public class Select : PCommand, ICilCompilerAware
         return performSubCall
             ? CallSubPerform.RunStatically(sctx, handler, handlerArgv,
                 useIndirectCallAsFallback: true)
-            : handler.IndirectCall(sctx, handlerArgv);
+            : handler.IndirectCall(sctx, handlerArgv.AsSpan());
     }
 
     static readonly PType _chanType = PType.Object[typeof (Channel)];
@@ -138,7 +138,7 @@ public class Select : PCommand, ICilCompilerAware
                         return null;
                 else if (key.Value == null)
                     return null;
-                else if (Runtime.ExtractBool(key.IndirectCall(sctx, Array.Empty<PValue>()),
+                else if (Runtime.ExtractBool(key.IndirectCall(sctx),
                              sctx))
                     return kvp.Value;
                 else

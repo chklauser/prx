@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
@@ -96,6 +97,7 @@ public abstract class V2UnitTestContainer
             ReadOnlySpan<PValue> args,
             PCall call,
             string id,
+            [NotNullWhen(true)]
             out PValue? result
         )
         {
@@ -143,7 +145,7 @@ public abstract class V2UnitTestContainer
             }
         }
 
-        static readonly PValue[] Empty = Array.Empty<PValue>();
+        static readonly PValue[] Empty = [];
 
         static (string Id, Application ParentApplication) extract(StackContext sctx, PValue funcValue)
         {

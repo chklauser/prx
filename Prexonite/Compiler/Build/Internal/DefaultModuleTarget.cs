@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Build.Internal;
 class DefaultModuleTarget : ITarget
 {
     static readonly IReadOnlyCollection<IResourceDescriptor> _emptyResourceCollection =
-        Array.Empty<IResourceDescriptor>();
+        [];
 
     readonly List<Message>? _messages;
 
@@ -44,7 +44,7 @@ class DefaultModuleTarget : ITarget
         Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
         Exception = exception;
         if(messages != null)
-            _messages = new(messages);
+            _messages = [..messages];
         IsSuccessful = exception == null && (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
     }
 
@@ -89,7 +89,7 @@ class DefaultModuleTarget : ITarget
 
     public ModuleName Name => Module.Name;
 
-    internal static readonly Message[] NoMessages = Array.Empty<Message>();
+    internal static readonly Message[] NoMessages = [];
 
     public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>?)_messages ?? NoMessages;
 

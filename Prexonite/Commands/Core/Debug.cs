@@ -45,7 +45,8 @@ public class Debug : PCommand
             foreach (var arg in args)
             {
                 println.Run(
-                    sctx, new PValue[] {string.Concat("DEBUG ??? = ", arg.CallToString(sctx))});
+                    sctx,
+                    string.Concat("DEBUG ??? = ", arg.CallToString(sctx)));
             }
         return debugging;
     }

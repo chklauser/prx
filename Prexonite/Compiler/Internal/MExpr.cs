@@ -282,21 +282,21 @@ public abstract class MExpr
         {
             if (arg == null) throw new ArgumentNullException(nameof(arg));
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new(1) {arg};
+            _args = [arg];
         }
 
         public MList(ISourcePosition position, string head)
             : base(position)
         {
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new();
+            _args = [];
         }
 
         public MList(ISourcePosition position, string head, object arg) : base(position)
         {
             if (arg == null) throw new ArgumentNullException(nameof(arg));
             _head = head ?? throw new ArgumentNullException(nameof(head));
-            _args = new(1) { new MAtom(position, arg) };
+            _args = [new MAtom(position, arg)];
         }
 
         public override void ToString(TextWriter builder)

@@ -76,9 +76,7 @@ public class CharPType : PType, ICilCompilerAware
 
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
-
+        
         if (args.Length < 1 || args[0].IsNull)
         {
             c = '\0';

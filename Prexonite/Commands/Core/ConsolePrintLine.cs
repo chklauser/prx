@@ -89,16 +89,16 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
 
     //Fix #10
     internal static readonly MethodInfo ConsoleWriteLineMethodString =
-        typeof (Console).GetMethod("WriteLine", new[] {typeof (string)})!;
+        typeof (Console).GetMethod("WriteLine", [typeof (string)])!;
 
     internal static readonly MethodInfo ConsoleWriteLineMethod =
         typeof (Console).GetMethod("WriteLine", Type.EmptyTypes)!;
 
     internal static readonly MethodInfo ConsoleWriteMethod =
-        typeof (Console).GetMethod("Write", new[] {typeof (string)})!;
+        typeof (Console).GetMethod("Write", [typeof (string)])!;
 
     internal static readonly MethodInfo PValueCallToString =
-        typeof (PValue).GetMethod("CallToString", new[] {typeof (StackContext)})!;
+        typeof (PValue).GetMethod("CallToString", [typeof (StackContext)])!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

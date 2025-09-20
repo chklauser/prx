@@ -65,7 +65,7 @@ public abstract class BinaryOperatorBase : PCommand, ICilExtension
             {
                 //Both operands are constants (remember: static args can also be references)
                 //=> Apply the operator at compile time.
-                var result = Run(state, new[] {left, right});
+                var result = Run(state, left, right);
                 switch (result.Type.ToBuiltIn())
                 {
                     case PType.BuiltIn.Real:

@@ -40,8 +40,6 @@ public abstract class CoroutineCommand : PCommand
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
 
         var carrier = new ContextCarrier();
         var corctx = new CoroutineContext(sctx, CoroutineRun(carrier, args.ToArray()));

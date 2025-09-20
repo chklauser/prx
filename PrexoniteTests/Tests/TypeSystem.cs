@@ -67,7 +67,7 @@ public class TypeSystem
         //Set obj.Subject = 55
         obj.DynamicCall(
             sctx,
-            new PValue[] {55},
+            [55],
             PCall.Set,
             "Subject");
         Assert.AreSame(test, obj.Value);
@@ -76,7 +76,7 @@ public class TypeSystem
         //Get res = obj.Subject
         var res = obj.DynamicCall(
             sctx,
-            Array.Empty<PValue>(),
+            [],
             PCall.Get,
             "Subject");
         Assert.AreEqual(test.Subject, res.Value);
@@ -84,7 +84,7 @@ public class TypeSystem
         //Set obj.Count = res
         obj.DynamicCall(
             sctx,
-            new[] {res},
+            [res],
             PCall.Set,
             "Count");
         Assert.AreEqual(55, test.Count);
@@ -92,7 +92,7 @@ public class TypeSystem
         //Get res = obj.Count
         res = obj.DynamicCall(
             sctx,
-            Array.Empty<PValue>(),
+            [],
             PCall.Get,
             "Count");
         Assert.AreEqual(55, test.Count);
@@ -122,7 +122,8 @@ public class TypeSystem
     {
         var res =
             sctx.ConstructPType(
-                nameof(Object), new[] {PType.Object.CreatePValue(typeof (int))});
+                nameof(Object),
+                [PType.Object.CreatePValue(typeof (int))]);
         Assert.AreEqual(PType.Object[typeof (int)], res);
     }
 
@@ -131,7 +132,8 @@ public class TypeSystem
     {
         var res =
             sctx.ConstructPType(
-                typeof (ObjectPType), new[] {PType.Object.CreatePValue(typeof (DateTime))});
+                typeof (ObjectPType),
+                [PType.Object.CreatePValue(typeof (DateTime))]);
         Assert.AreEqual(PType.Object[typeof (DateTime)], res);
     }
 
@@ -141,7 +143,7 @@ public class TypeSystem
         var res =
             sctx.ConstructPType(
                 PType.Object[typeof (ObjectPType)],
-                new[] {PType.Object.CreatePValue(typeof (Thread))});
+                [PType.Object.CreatePValue(typeof (Thread))]);
         Assert.AreEqual(PType.Object[typeof (Thread)], res);
     }
 

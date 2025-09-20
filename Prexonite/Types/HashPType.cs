@@ -67,9 +67,7 @@ public class HashPType : PType, ICilCompilerAware
             throw new ArgumentNullException(nameof(sctx));
         if (subject == null)
             throw new ArgumentNullException(nameof(subject));
-        if(args == null)
-            throw new ArgumentNullException(nameof(args));
-
+        
         result = null;
 
         var argc = args.Length;
@@ -108,8 +106,6 @@ public class HashPType : PType, ICilCompilerAware
             throw new ArgumentNullException(nameof(sctx));
         if (subject == null)
             throw new ArgumentNullException(nameof(subject));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
         if (id == null)
             throw new ArgumentNullException(nameof(id));
 
@@ -292,8 +288,6 @@ public class HashPType : PType, ICilCompilerAware
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
         if (id == null)
             throw new ArgumentNullException(nameof(id));
 
@@ -333,9 +327,7 @@ public class HashPType : PType, ICilCompilerAware
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if(args == null)
-            throw new ArgumentNullException(nameof(args));
-
+        
         result = null;
 
         var argc = args.Length;

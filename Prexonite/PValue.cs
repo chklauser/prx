@@ -26,6 +26,7 @@
 
 using System.Diagnostics;
 using System.Dynamic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Prexonite;
@@ -131,6 +132,7 @@ public sealed class PValue : DynamicObject,
     /// <returns>The value returned by the dynamic (instance) call. In case the call does not have a return value, a PValue containing null is returned.</returns>
     /// <exception cref = "InvalidCallException">Thrown if the call is not successful.</exception>
     [DebuggerStepThrough]
+    [OverloadResolutionPriority(1)]
     public PValue DynamicCall(StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id)
     {
         return Type.DynamicCall(sctx, this, args, call, id);
@@ -420,6 +422,7 @@ public sealed class PValue : DynamicObject,
     /// <returns>Contains the value returned by the indirect call. In case the call does not have a return value, a PValue containing null is returned.</returns>
     /// <exception cref = "InvalidCallException">Thrown if the call is not successful.</exception>
     [DebuggerStepThrough]
+    [OverloadResolutionPriority(1)]
     public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
         return Type.IndirectCall(sctx, this, args);

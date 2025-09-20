@@ -328,28 +328,28 @@ public class StructurePType : PType, ICilCompilerAware
     public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
-        (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.UnaryNegation,
+        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.UnaryNegation,
             out result);
     }
 
     public override bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
-        (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.OnesComplement,
+        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.OnesComplement,
             out result);
     }
 
     public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
-        (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.Increment,
+        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.Increment,
             out result);
     }
 
     public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
     {
         return TryDynamicCall
-        (sctx, operand, Array.Empty<PValue>(), PCall.Get, OperatorNames.Prexonite.Decrement,
+        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.Decrement,
             out result);
     }
 
@@ -384,7 +384,7 @@ public class StructurePType : PType, ICilCompilerAware
             case BuiltIn.String:
                 normalString:
                 if (
-                    !TryDynamicCall(sctx, subject, Array.Empty<PValue>(), PCall.Get, nameof(ToString),
+                    !TryDynamicCall(sctx, subject, [], PCall.Get, nameof(ToString),
                         out result))
                     result = null;
                 break;

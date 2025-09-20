@@ -53,7 +53,7 @@ public class AstForeachLoop : AstLoop
 
     public override AstExpr[] Expressions
     {
-        get { return List != null ? new[] {List} : Array.Empty<AstExpr>(); }
+        get { return List != null ? [List] : []; }
     }
 
     #endregion

@@ -251,8 +251,8 @@ public class ApplicationLinking
         var cmd = CreateModuleName.Instance;
         var eng = new Engine();
         var app = new Application("cmnc");
-        var sctx = new NullContext(eng, app, Enumerable.Empty<string>());
-        var rawMn = cmd.Run(sctx, new[] {sctx.CreateNativePValue(new MetaEntry(new MetaEntry[]{"sys","1.0"}))});
+        var sctx = new NullContext(eng, app, []);
+        var rawMn = cmd.Run(sctx, sctx.CreateNativePValue(new MetaEntry(["sys","1.0"])));
         Assert.That(rawMn.Value,Is.InstanceOf<ModuleName>());
         var mn = (ModuleName) rawMn.Value!;
         Assert.That(mn.Id,Is.EqualTo("sys"));

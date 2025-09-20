@@ -32,10 +32,7 @@ public class ForAll : PCommand
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
-
-        if (args.Length < 1)
+        if (args.IsEmpty)
             throw new PrexoniteException("Exists requires at least two arguments");
         var f = args[0];
 

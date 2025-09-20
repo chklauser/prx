@@ -44,7 +44,7 @@ public class AstUnaryOperator : AstExpr,
 
     #region IAstHasExpressions Members
 
-    public AstExpr[] Expressions => new[] {Operand};
+    public AstExpr[] Expressions => [Operand];
 
     public UnaryOperator Operator { get; }
 

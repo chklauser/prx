@@ -231,7 +231,7 @@ function main(xs,y)
         Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
             MacroAliases.ContextAlias);
 
-        Expect(15, Array.Empty<PValue>());
+        Expect(15);
     }
 
     [Test]

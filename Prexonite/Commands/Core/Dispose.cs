@@ -127,7 +127,7 @@ public sealed class Dispose : PCommand, ICilCompilerAware
                 state.EmitLoadLocal(state.SctxLocal);
                 var run =
                     typeof (Dispose).GetMethod(nameof(RunStatically),
-                        new[] {typeof (PValue), typeof (StackContext)})!;
+                        [typeof (PValue), typeof (StackContext)])!;
                 state.Il.EmitCall(OpCodes.Call, run, null);
                 if (!ins.JustEffect)
                     state.EmitLoadNullAsPValue();

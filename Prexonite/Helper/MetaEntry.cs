@@ -36,7 +36,7 @@ public sealed class MetaEntry
     /// </summary>
     readonly string? _text;
 
-    static readonly MetaEntry[] EmptyList = Array.Empty<MetaEntry>();
+    static readonly MetaEntry[] EmptyList = [];
 
     #endregion
 
@@ -80,8 +80,8 @@ public sealed class MetaEntry
             return EntryType switch
             {
                 Type.List => _list ?? EmptyList,
-                Type.Switch => new MetaEntry[] {_switch},
-                Type.Text => string.IsNullOrEmpty(_text) ? EmptyList : new MetaEntry[] {_text ?? ""},
+                Type.Switch => [_switch],
+                Type.Text => string.IsNullOrEmpty(_text) ? EmptyList : [_text ?? ""],
                 _ => throw new PrexoniteException("Unknown type in meta entry"),
             };
         }
@@ -225,7 +225,7 @@ public sealed class MetaEntry
                 }
                 else
                 {
-                    lst = new(0);
+                    lst = [];
                 }
                 return PType.List.CreatePValue(lst);
             default:
@@ -318,8 +318,8 @@ public sealed class MetaEntry
         //Change type to list
         return EntryType switch
         {
-            Type.Switch => new MetaEntry[] {_switch},
-            Type.Text => string.IsNullOrEmpty(_text) ? EmptyList : new MetaEntry[] {_text},
+            Type.Switch => [_switch],
+            Type.Text => string.IsNullOrEmpty(_text) ? EmptyList : [_text],
             Type.List => _list ?? EmptyList,
             _ => throw new PrexoniteException("Invalid meta entry."),
         };

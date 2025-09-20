@@ -58,12 +58,12 @@ public sealed class Call_Tail : StackAwareCommand
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
 
-        if (args == null || args.Length < 1 || args[0] == null || args[0].IsNull)
+        if (args.IsEmpty || (PValue?)args[0] == null || args[0].IsNull)
             return PType.Null;
 
         var iargs = make_tailcall(sctx, args);
 
-        return args[0].IndirectCall(sctx, iargs.ToArray());
+        return args[0].IndirectCall(sctx, [..iargs.AsReadOnly()]);
     }
 
     public override StackContext CreateStackContext(StackContext sctx, PValue[]? args)
@@ -71,7 +71,7 @@ public sealed class Call_Tail : StackAwareCommand
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
 
-        if (args == null || args.Length < 1 || args[0] == null || args[0].IsNull)
+        if (args == null || args.Length < 1 || (PValue?)args[0] == null || args[0].IsNull)
             return new NullContext(sctx);
 
         var iargs = make_tailcall(sctx, args);

@@ -46,7 +46,7 @@ public class AstTryCatchFinally : AstScopedBlock,
 
     public AstBlock[] Blocks
     {
-        get { return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock}; }
+        get { return [TryBlock, CatchBlock, FinallyBlock]; }
     }
 
     #endregion

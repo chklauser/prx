@@ -12,22 +12,22 @@ public static class Runtime
         typeof (Runtime).GetMethod(nameof(CallFunction))!;
 
     public static readonly MethodInfo CheckTypeConstMethod =
-        typeof (Runtime).GetMethod(nameof(CheckTypeConst), new[] {typeof (PValue), typeof (PType)})!;
+        typeof (Runtime).GetMethod(nameof(CheckTypeConst), [typeof (PValue), typeof (PType)])!;
 
     public static readonly MethodInfo ConstructPTypeMethod =
-        typeof (StackContext).GetMethod(nameof(StackContext.ConstructPType), new[] {typeof (string)})!;
+        typeof (StackContext).GetMethod(nameof(StackContext.ConstructPType), [typeof (string)])!;
 
     public static readonly MethodInfo DisposeIfPossibleMethod =
-        typeof (Runtime).GetMethod(nameof(DisposeIfPossible), new[] {typeof (object)})!;
+        typeof (Runtime).GetMethod(nameof(DisposeIfPossible), [typeof (object)])!;
 
-    public static readonly PValue[] EmptyPValueArray = Array.Empty<PValue>();
+    public static readonly PValue[] EmptyPValueArray = [];
 
     public static readonly FieldInfo EmptyPValueArrayField =
         typeof (Runtime).GetField(nameof(EmptyPValueArray))!;
 
     public static readonly MethodInfo ExtractEnumeratorMethod =
         typeof (Runtime).GetMethod(nameof(ExtractEnumerator),
-            new[] {typeof (PValue), typeof (StackContext)})!;
+            [typeof (PValue), typeof (StackContext)])!;
 
     public static readonly MethodInfo LoadGlobalVariableReferenceMethod =
         typeof (Runtime).GetMethod(nameof(LoadGlobalVariableReference))!;
@@ -41,7 +41,7 @@ public static class Runtime
 
     public static readonly MethodInfo CastConstMethod =
         typeof (Runtime).GetMethod(nameof(CastConst),
-            new[] {typeof (PValue), typeof (PType), typeof (StackContext)})!;
+            [typeof (PValue), typeof (PType), typeof (StackContext)])!;
 
     public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod { get; } =
         typeof(Runtime).GetMethod(nameof(LoadGlobalVariableReferenceAsPValue))!;
@@ -60,10 +60,10 @@ public static class Runtime
     public static MethodInfo NewTypeMethod { get; } = typeof (Runtime).GetMethod(nameof(NewType))!;
 
     public static MethodInfo NewClosureMethodLateBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosureInternal),
-        new[] { typeof(StackContext), typeof(PVariable[]), typeof(string) })!;
+        [typeof(StackContext), typeof(PVariable[]), typeof(string)])!;
 
     public static MethodInfo NewClosureMethodStaticallyBound { get; } = typeof(Runtime).GetMethod(nameof(NewClosure),
-            new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)})!;
+        [typeof (StackContext), typeof (PVariable[]), typeof (PFunction)])!;
 
     public static MethodInfo RaiseToPowerMethod { get; } = typeof (Runtime).GetMethod(nameof(RaiseToPower))!;
 
@@ -72,7 +72,7 @@ public static class Runtime
     public static MethodInfo CastMethod { get; } = typeof (Runtime).GetMethod(nameof(Cast))!;
 
     public static MethodInfo StaticCallMethod { get; } = typeof(PType).GetMethod(nameof(PType.StaticCall),
-        new[] {typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)})!;
+        [typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)])!;
 
     public static MethodInfo CallInternalFunctionMethod { get; } = typeof (Runtime).GetMethod(nameof(CallInternalFunction))!;
 
@@ -93,11 +93,10 @@ public static class Runtime
     public static MethodInfo LoadGlobalReferenceAsPValueInternalMethod { get; } = typeof(Runtime).GetMethod(nameof(LoadGlobalVariableReferenceAsPValueInternal))!;
 
     public static MethodInfo NewClosureMethodCrossModule { get; } = typeof (Runtime).GetMethod(nameof(NewClosure),
-        new[]
-        {
-            typeof (StackContext), typeof (PVariable[]), typeof (string),
+    [
+        typeof (StackContext), typeof (PVariable[]), typeof (string),
             typeof (ModuleName),
-        })!;
+    ])!;
 
     public static MethodInfo LoadFunctionReferenceMethod { get; } = typeof (Runtime).GetMethod(nameof(LoadFunctionReference))!;
 
@@ -225,7 +224,7 @@ public static class Runtime
     public static PValue NewClosure(StackContext sctx, PVariable[]? sharedVariables,
         PFunction function)
     {
-        PVariable[] emptyPVariableArray = Array.Empty<PVariable>();
+        PVariable[] emptyPVariableArray = [];
         if (function.HasCilImplementation)
         {
             return

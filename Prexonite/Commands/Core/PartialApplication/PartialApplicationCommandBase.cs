@@ -34,7 +34,7 @@ namespace Prexonite.Commands.Core.PartialApplication;
 public abstract class PartialApplicationCommandBase : PCommand
 {
     protected static readonly MethodInfo ExtractMappings32Method = typeof (PartialApplicationCommandBase)
-        .GetMethod(nameof(ExtractMappings32), new[] {typeof (int[])}) 
+        .GetMethod(nameof(ExtractMappings32), [typeof (int[])]) 
         ?? throw new InvalidOperationException("Method PartialApplicationCommandBase.ExtractMappings32 not found.");
 
     /// <summary>
@@ -75,7 +75,7 @@ public abstract class PartialApplicationCommandBase : PCommand
     public static int[] ExtractMappings32(LinkedList<int> rawInput)
     {
         if (rawInput.Count == 0)
-            return Array.Empty<int>();
+            return [];
 
         //Extract count
         var int32 = default(ExplicitInt32);
@@ -83,7 +83,7 @@ public abstract class PartialApplicationCommandBase : PCommand
         int count = int32.Byte3;
         var numArgs = CountInt32Required(count);
         if (numArgs > rawInput.Count)
-            return Array.Empty<int>();
+            return [];
 
         //remove integers that do not belong to the mapping
         while (numArgs < rawInput.Count)
@@ -123,7 +123,7 @@ public abstract class PartialApplicationCommandBase : PCommand
         // ReSharper restore UnusedMember.Global
     {
         if (rawInput.Length == 0)
-            return Array.Empty<int>();
+            return [];
 
         //Extract count
         var int32 = default(ExplicitInt32);
@@ -275,7 +275,7 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
     protected virtual ConstructorInfo GetConstructorCtor(TCompileParam parameter)
     {
         var ty = GetPartialCallRepresentationType(parameter);
-        return ty.GetConstructor(new[] {typeof (int[]), typeof (PValue[])}) 
+        return ty.GetConstructor([typeof (int[]), typeof (PValue[])]) 
             ?? throw new PrexoniteException($"Type {ty} does not have a constructor with the signature (int[], PValue[])");
     }
 

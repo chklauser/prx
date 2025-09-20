@@ -345,7 +345,7 @@ public class CallMacro : PartialMacroCommand
             if (getArgs.Any(a => !_ensureExplicitPlaceholder(context, a)))
 
             {
-                args = Array.Empty<AstExpr>();
+                args = [];
                 return false;
             }
 
@@ -360,7 +360,7 @@ public class CallMacro : PartialMacroCommand
             // ReSharper restore PossibleMultipleEnumeration
             else
             {
-                getArgsLit = Enumerable.Empty<AstExpr>();
+                getArgsLit = [];
             }
 
             IEnumerable<AstExpr> setArgsLit;
@@ -368,7 +368,7 @@ public class CallMacro : PartialMacroCommand
             {
                 if (!_ensureExplicitPlaceholder(context, setArgs))
                 {
-                    args = Array.Empty<AstExpr>();
+                    args = [];
                     return false;
                 }
                 var lit = new AstListLiteral(setArgs.File, setArgs.Line, setArgs.Column);
@@ -377,7 +377,7 @@ public class CallMacro : PartialMacroCommand
             }
             else
             {
-                setArgsLit = Enumerable.Empty<AstExpr>();
+                setArgsLit = [];
             }
 
             args = getArgsLit

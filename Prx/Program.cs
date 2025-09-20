@@ -162,7 +162,7 @@ static class Program
             @"__replace_call",
             delegate(StackContext sctx, PValue[] cargs)
             {
-                cargs = (PValue[]?)cargs ?? Array.Empty<PValue>();
+                cargs = (PValue[]?)cargs ?? [];
                 if ((StackContext?)sctx == null)
                     throw new ArgumentNullException(nameof(sctx));
 
@@ -249,7 +249,7 @@ static class Program
                 if ((StackContext?)sctx == null)
                     throw new ArgumentNullException(nameof(sctx));
                 if ((PValue[]?)cargs == null)
-                    cargs = Array.Empty<PValue>();
+                    cargs = [];
 
                 Engine teng;
                 int tit;

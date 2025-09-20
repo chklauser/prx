@@ -85,7 +85,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
                 throw new InvalidOperationException("The enumerator has already been disposed.");
             try
             {
-                dispose.IndirectCall(sctx, Array.Empty<PValue>());
+                dispose.IndirectCall(sctx);
             }
             finally
             {
@@ -107,7 +107,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         /// <filterpriority>2</filterpriority>
         public override bool MoveNext()
         {
-            return Runtime.ExtractBool(moveNext.IndirectCall(sctx, Array.Empty<PValue>()),
+            return Runtime.ExtractBool(moveNext.IndirectCall(sctx),
                 sctx);
         }
 
@@ -121,7 +121,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         /// <returns>
         ///     The element in the collection at the current position of the enumerator.
         /// </returns>
-        public override PValue Current => current.IndirectCall(sctx, Array.Empty<PValue>());
+        public override PValue Current => current.IndirectCall(sctx);
 
         #endregion
     }

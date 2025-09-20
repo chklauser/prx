@@ -32,8 +32,6 @@ public class Exists : PCommand
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
 
         if (args.Length < 1)
             throw new PrexoniteException("Exists requires at least two arguments");

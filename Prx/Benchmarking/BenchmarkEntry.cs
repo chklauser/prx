@@ -42,7 +42,7 @@ public sealed class BenchmarkEntry
     public readonly string? Overhead;
     public readonly Benchmark Parent;
 
-    public List<Measurement> Measurements { get; } = new();
+    public List<Measurement> Measurements { get; } = [];
 
     public long GetAverageRawMilliseconds()
     {
@@ -168,7 +168,8 @@ public sealed class BenchmarkEntry
     {
         var fctx =
             Function.CreateFunctionContext(
-                Parent.Machine, new PValue[] {Benchmark.DefaultWarmUpIterations});
+                Parent.Machine,
+                [Benchmark.DefaultWarmUpIterations]);
         Parent.Machine.Process(fctx);
     }
 }

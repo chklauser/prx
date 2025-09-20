@@ -62,21 +62,21 @@ public class ProvidedTarget : ITargetDescription, ITarget
         if (symbols != null)
             foreach (var entry in symbols)
                 Symbols.Declare(entry.Key, entry.Value);
-        this.resources = new();
+        this.resources = [];
         if (resources != null)
             this.resources.AddRange(resources);
 
         Exception = exception;
 
         if (messages != null)
-            this.messages = new(messages);
+            this.messages = [..messages];
 
         if (buildMessages != null)
         {
             this.buildMessages = new List<Message>(buildMessages);
 
             if (this.messages == null)
-                this.messages = new(this.buildMessages);
+                this.messages = [..this.buildMessages];
             else
                 this.messages.AddRange(this.buildMessages);
         }

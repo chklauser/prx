@@ -50,7 +50,7 @@ public class AstKeyValuePair : AstExpr,
 
     #region IAstHasExpressions Members
 
-    public AstExpr[] Expressions => new[] {Key, Value};
+    public AstExpr[] Expressions => [Key, Value];
 
     #endregion
 

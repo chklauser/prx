@@ -42,11 +42,10 @@ public sealed class PartialStaticCallCommand : PartialWithPTypeCommandBase<Runti
 
     protected override ConstructorInfo GetConstructorCtor(CompileTimeStaticCallInfo parameter)
     {
-        return _partialStaticCallCtor ??= typeof (PartialStaticCall).GetConstructor(new[]
-        {
+        return _partialStaticCallCtor ??= typeof (PartialStaticCall).GetConstructor([
             typeof (int[]), typeof (PValue[]), typeof (PCall), typeof (string),
             typeof (PType),
-        }) ?? throw new InvalidOperationException($"{nameof(PartialStaticCall)} does not have an (int[], PValue[], PCall, string, PType) constructor.");
+        ]) ?? throw new InvalidOperationException($"{nameof(PartialStaticCall)} does not have an (int[], PValue[], PCall, string, PType) constructor.");
     }
 
     protected override void EmitConstructorCall(CompilerState state, CompileTimeStaticCallInfo parameter)

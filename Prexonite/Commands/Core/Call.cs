@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Diagnostics;
 using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
@@ -92,7 +91,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
 
         var iargs = FlattenArguments(sctx, args, 1);
 
-        return args[0].IndirectCall(sctx, iargs.ToArray());
+        return args[0].IndirectCall(sctx, [..iargs.AsReadOnly()]);
     }
 
     /// <summary>
@@ -166,7 +165,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
     public static StackContext CreateStackContext(StackContext sctx, PValue callable,
         PValue[] args)
     {
-        if (callable.Type is ObjectPType && callable.Value is IStackAware sa)
+        if (callable is { Type: ObjectPType, Value: IStackAware sa })
             return sa.CreateStackContext(sctx, args);
         else
             return new IndirectCallContext(sctx, callable, args);

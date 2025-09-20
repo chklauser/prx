@@ -834,8 +834,8 @@ function interpreted [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a
 function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
 ");
 
-            ExpectNamed("interpreted", true, Array.Empty<PValue>());
-            ExpectNamed("compiled", true, Array.Empty<PValue>());
+            ExpectNamed("interpreted", true);
+            ExpectNamed("compiled", true);
         }
 
         [Test]
@@ -848,7 +848,7 @@ function main()
 }
 ");
 
-            Expect(2, Array.Empty<PValue>());
+            Expect(2);
         }
 
         [Test]

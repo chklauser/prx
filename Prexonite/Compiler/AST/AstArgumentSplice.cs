@@ -60,7 +60,7 @@ public class AstArgumentSplice : AstExpr, IAstHasExpressions
         return false;
     }
 
-    public AstExpr[] Expressions => new[] {ArgumentList};
+    public AstExpr[] Expressions => [ArgumentList];
 
     public bool IsPlaceholderSplice => ArgumentList is AstPlaceholder;
 

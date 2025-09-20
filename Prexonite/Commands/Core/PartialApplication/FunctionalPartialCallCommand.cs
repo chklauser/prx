@@ -64,8 +64,8 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
     {
         get
         {
-            return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor(new[]
-                {typeof (PValue), typeof (PValue[])})
+            return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor([typeof (PValue), typeof (PValue[]),
+                ])
                 ?? throw new InvalidOperationException($"Could not find constructor for {nameof(FunctionalPartialCall)} with (PValue, PValue[]).");
         }
     }

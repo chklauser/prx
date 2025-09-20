@@ -477,7 +477,7 @@ references {
         // Provide the module lost to the SAM ahead of time, fully resolved
         var lostModuleName = new ModuleName("lost", new(0, 0));
         Sam.TargetDescriptions.Add(new ManualTargetDescription(lostModuleName, Source.FromString("name: lost;"),
-            pathLost, Enumerable.Empty<ModuleName>()));
+            pathLost, []));
 
         // Have module found short-circuit when resolving lost
         using (MockFile(pathFound, "name found;references{lost}"))

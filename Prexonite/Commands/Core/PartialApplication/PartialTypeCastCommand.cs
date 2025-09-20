@@ -46,8 +46,8 @@ public class PartialTypecastCommand : PartialWithPTypeCommandBase<RuntimePTypeIn
 
     protected override ConstructorInfo GetConstructorCtor(CompileTimePTypeInfo parameter)
     {
-        return _partialTypeCastCtor ??= typeof (PartialTypecast).GetConstructor(new[]
-            {typeof (int[]), typeof (PValue[]), typeof (PType)})
+        return _partialTypeCastCtor ??= typeof (PartialTypecast).GetConstructor([typeof (int[]), typeof (PValue[]), typeof (PType),
+            ])
             ?? throw new InvalidOperationException($"{nameof(PartialTypecast)} does not have an (int[], PValue[], PType) constructor.");
     }
 

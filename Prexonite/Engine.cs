@@ -405,7 +405,7 @@ public partial class Engine
             return PType.Structure;
 
         var result =
-            ptypeClrType.Construct(sctx, new[] {PType.Object.CreatePValue(args)});
+            ptypeClrType.Construct(sctx, [PType.Object.CreatePValue(args)]);
         if (result == null || result.IsNull)
             throw new PrexoniteException(
                 "Could not construct PType (resulted in null reference)");
@@ -535,7 +535,7 @@ public partial class Engine
     /// <summary>
     ///     Provides access to the search paths used by this particular engine.
     /// </summary>
-    public List<string> Paths { get; } = new();
+    public List<string> Paths { get; } = [];
 
     #endregion
 

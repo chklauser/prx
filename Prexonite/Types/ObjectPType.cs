@@ -1390,7 +1390,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             (
                 sctx, new[] {operand}, PCall.Get, "op_UnaryNegation", out result) ||
             TryDynamicCall
-            (sctx, operand, Array.Empty<PValue>(), PCall.Get,
+            (sctx, operand, [], PCall.Get,
                 OperatorNames.Prexonite.UnaryNegation, out result);
     }
 
@@ -1406,7 +1406,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             TryStaticCall(
                 sctx, new[] {operand}, PCall.Get, "op_OnesComplement", out result) ||
             TryDynamicCall
-            (sctx, operand, Array.Empty<PValue>(), PCall.Get,
+            (sctx, operand, [], PCall.Get,
                 OperatorNames.Prexonite.OnesComplement, out result);
     }
 
@@ -1415,7 +1415,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return
             TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Increment", out result) ||
             TryDynamicCall
-            (sctx, operand, Array.Empty<PValue>(), PCall.Get,
+            (sctx, operand, [], PCall.Get,
                 OperatorNames.Prexonite.Increment, out result);
     }
 
@@ -1424,7 +1424,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         return
             TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Decrement", out result) ||
             TryDynamicCall
-            (sctx, operand, Array.Empty<PValue>(), PCall.Get,
+            (sctx, operand, [], PCall.Get,
                 OperatorNames.Prexonite.Decrement, out result);
     }
 

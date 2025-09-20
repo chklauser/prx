@@ -83,7 +83,7 @@ public class AstTests
     [Test]
     public void DeterminePlaceholderIndicesEmptyTets()
     {
-        AstPlaceholder.DeterminePlaceholderIndices(Enumerable.Empty<AstPlaceholder>());
+        AstPlaceholder.DeterminePlaceholderIndices([]);
     }
 
     [Test]

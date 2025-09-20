@@ -61,7 +61,7 @@ public class Continuation : Closure
         var metaTable = fctx.Implementation.Meta;
         if (!(metaTable.TryGetValue(PFunction.SharedNamesKey, out var entry) && entry.IsList))
         {
-            return Array.Empty<PVariable>();
+            return [];
         }
         var sharedNames = entry.List;
         var sharedVariables = new PVariable[sharedNames.Length];
@@ -77,8 +77,6 @@ public class Continuation : Closure
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
 
         var fctx = CreateFunctionContext(sctx, args.ToArray());
 

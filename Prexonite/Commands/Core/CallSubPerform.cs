@@ -89,7 +89,7 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
         if ((func ?? fpv.Value as PFunction) is { CilImplementation: { } cilImpl} pFunc)
         {
             cilImpl.Invoke(
-                pFunc, CilFunctionContext.New(sctx, pFunc), iargs, sharedVars ?? Array.Empty<PVariable>(),
+                pFunc, CilFunctionContext.New(sctx, pFunc), iargs, sharedVars ?? [],
                 out result, out returnMode);
         }
         else if (fpv.Value is IStackAware f)
@@ -123,7 +123,7 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
         }
         else if (useIndirectCallAsFallback)
         {
-            result = fpv.IndirectCall(sctx, iargs);
+            result = fpv.IndirectCall(sctx, [..iargs.AsReadOnly()]);
             returnMode = ReturnMode.Exit;
         }
         else

@@ -171,7 +171,7 @@ public class Thunk : IIndirectCall, IObject
 
     public PValue Force(StackContext sctx)
     {
-        return ((IIndirectCall) this).IndirectCall(sctx, Array.Empty<PValue>());
+        return ((IIndirectCall) this).IndirectCall(sctx);
     }
 
     public bool IsEvaluated => _value != null;
@@ -239,7 +239,7 @@ public class Thunk : IIndirectCall, IObject
             {
                 try
                 {
-                    _value = expr.IndirectCall(sctx, dynParameters);
+                    _value = expr.IndirectCall(sctx, dynParameters.AsSpan());
                 }
                 catch (Exception ex)
                 {

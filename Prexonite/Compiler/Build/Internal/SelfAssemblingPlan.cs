@@ -125,13 +125,13 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         {
             return CreateDescription(moduleName, Source.FromString(""),
                 NoSourcePosition.MissingFileName,
-                Enumerable.Empty<ModuleName>(),
-                new[] {errorMessage});
+                [],
+                [errorMessage]);
         }
         else
         {
             throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.",
-                new[] {errorMessage});
+                [errorMessage]);
         }
     }
 
@@ -141,7 +141,7 @@ public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
         RegisterOnly,
     }
 
-    readonly HashSet<ModuleName> _standardLibrary = new();
+    readonly HashSet<ModuleName> _standardLibrary = [];
     public ISet<ModuleName> StandardLibrary => _standardLibrary;
 
 
@@ -510,7 +510,7 @@ class PreflightResult
 {
     public volatile ModuleName? ModuleName;
 
-    public readonly List<RefSpec> References = new();
+    public readonly List<RefSpec> References = [];
 
     public volatile string? ErrorMessage;
 

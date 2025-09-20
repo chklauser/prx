@@ -106,7 +106,7 @@ class Lexer: Prexonite.Internal.IScanner {
   /** 
    * Translates characters to character classes
    */
-  private static readonly ushort[] ZZ_CMAP_PACKED = new ushort[] {
+  private static readonly ushort[] ZZ_CMAP_PACKED = [
     9, 9, 1, 12, 1, 10, 3, 10, 14, 9, 4, 0, 1, 12, 1, 20, 1, 13, 1, 19,
     1, 14, 1, 0, 1, 41, 1, 3, 1, 24, 1, 25, 1, 16, 1, 5, 1, 50, 1, 6,
     1, 27, 1, 15, 1, 28, 9, 1, 1, 36, 1, 49, 1, 44, 1, 26, 1, 43, 1, 48,
@@ -186,7 +186,8 @@ class Lexer: Prexonite.Internal.IScanner {
     24, 0, 3, 7, 25, 0, 1, 7, 6, 0, 3, 7, 1, 0, 1, 7, 1, 0, 135, 7,
     2, 0, 1, 9, 4, 0, 1, 7, 11, 0, 10, 9, 7, 0, 26, 7, 4, 0, 1, 7,
     1, 0, 26, 7, 11, 0, 89, 7, 3, 0, 6, 7, 2, 0, 6, 7, 2, 0, 6, 7,
-    2, 0, 3, 7, 3, 0, 2, 7, 3, 0, 2, 7, 25, 0, 0 };
+    2, 0, 3, 7, 3, 0, 2, 7, 3, 0, 2, 7, 25, 0, 0,
+  ];
 
   /** 
    * Translates characters to character classes
@@ -198,7 +199,7 @@ class Lexer: Prexonite.Internal.IScanner {
    */
   private static readonly int [] ZZ_ACTION;
 
-  private static readonly ushort[] ZZ_ACTION_PACKED_0 = new ushort[] {
+  private static readonly ushort[] ZZ_ACTION_PACKED_0 = [
     10, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7,
     1, 3, 1, 8, 1, 9, 1, 3, 1, 1, 1, 10, 1, 3, 1, 11,
     1, 12, 1, 13, 1, 14, 1, 15, 1, 2, 3, 3, 1, 16, 1, 17,
@@ -223,7 +224,8 @@ class Lexer: Prexonite.Internal.IScanner {
     1, 122, 1, 123, 1, 0, 1, 3, 1, 109, 1, 0, 1, 110, 1, 0,
     1, 124, 1, 0, 1, 125, 1, 126, 1, 127, 1, 128, 1, 129, 1, 130,
     1, 131, 1, 132, 1, 109, 1, 0, 1, 110, 2, 0, 2, 109, 2, 110,
-    1, 125, 6, 0, 0 };
+    1, 125, 6, 0, 0,
+  ];
 
   private static int [] zzUnpackAction() {
     int [] result = new int[243];
@@ -250,7 +252,7 @@ class Lexer: Prexonite.Internal.IScanner {
    */
   private static readonly int [] ZZ_ROWMAP;
 
-  private static readonly ushort[] ZZ_ROWMAP_PACKED_0 = new ushort[] {
+  private static readonly ushort[] ZZ_ROWMAP_PACKED_0 = [
     0, 0, 0, 53, 0, 106, 0, 159, 0, 212, 0, 0x0109, 0, 0x013e, 0, 0x0173,
     0, 0x01a8, 0, 0x01dd, 0, 0x0212, 0, 0x0247, 0, 0x027c, 0, 0x02b1, 0, 0x02e6, 0, 0x031b,
     0, 0x0212, 0, 0x0350, 0, 0x0385, 0, 0x0212, 0, 0x03ba, 0, 0x03ef, 0, 0x0424, 0, 0x0459,
@@ -281,7 +283,8 @@ class Lexer: Prexonite.Internal.IScanner {
     0, 0x1839, 0, 0x186e, 0, 0x18a3, 0, 0x18d8, 0, 0x0212, 0, 0x0212, 0, 0x0212, 0, 0x0212,
     0, 0x0212, 0, 0x0212, 0, 0x027c, 0, 0x190d, 0, 0x1942, 0, 0x1977, 0, 0x19ac, 0, 0x19e1,
     0, 0x0212, 0, 0x1a16, 0, 0x0212, 0, 0x1a4b, 0, 0x1a80, 0, 0x1ab5, 0, 0x1aea, 0, 0x1b1f,
-    0, 0x1b54, 0, 0x190d, 0, 0x1977, 0 };
+    0, 0x1b54, 0, 0x190d, 0, 0x1977, 0,
+  ];
 
   private static int [] zzUnpackRowMap() {
     int [] result = new int[243];
@@ -306,7 +309,7 @@ class Lexer: Prexonite.Internal.IScanner {
    */
   private static readonly int [] ZZ_TRANS;
 
-  private static readonly ushort[] ZZ_TRANS_PACKED_0 = new ushort[] {
+  private static readonly ushort[] ZZ_TRANS_PACKED_0 = [
     1, 11, 1, 12, 1, 13, 1, 11, 1, 13, 1, 14, 1, 15, 2, 13,
     1, 11, 3, 16, 1, 17, 1, 18, 1, 19, 1, 20, 1, 21, 1, 13,
     1, 22, 1, 23, 1, 24, 1, 13, 1, 25, 1, 26, 1, 27, 1, 28,
@@ -478,7 +481,8 @@ class Lexer: Prexonite.Internal.IScanner {
     6, 0, 1, 241, 3, 0, 2, 241, 17, 0, 1, 241, 2, 0, 2, 242,
     1, 0, 1, 242, 16, 0, 1, 242, 6, 0, 1, 242, 3, 0, 2, 242,
     17, 0, 1, 242, 2, 0, 2, 243, 1, 0, 1, 243, 16, 0, 1, 243,
-    6, 0, 1, 243, 3, 0, 2, 243, 17, 0, 1, 243, 1, 0, 0 };
+    6, 0, 1, 243, 3, 0, 2, 243, 17, 0, 1, 243, 1, 0, 0,
+  ];
 
   private static int [] zzUnpackTrans() {
     int [] result = new int[7049];
@@ -507,18 +511,18 @@ class Lexer: Prexonite.Internal.IScanner {
   private const int ZZ_PUSHBACK_2BIG = 2;
 
   /* error messages for the codes above */
-  private static readonly String[] ZZ_ERROR_MSG = new string[] {
+  private static readonly String[] ZZ_ERROR_MSG = [
     "Unkown internal scanner error",
     "Error: could not match input",
-    "Error: pushback value was too large"
-  };
+    "Error: pushback value was too large",
+  ];
 
   /**
    * ZZ_ATTRIBUTE[aState] contains the attributes of state <code>aState</code>
    */
   private static readonly int [] ZZ_ATTRIBUTE;
 
-  private static readonly ushort[] ZZ_ATTRIBUTE_PACKED_0 = new ushort[] {
+  private static readonly ushort[] ZZ_ATTRIBUTE_PACKED_0 = [
     10, 0, 1, 9, 5, 1, 1, 9, 2, 1, 1, 9, 6, 1, 1, 9,
     1, 1, 1, 9, 5, 1, 3, 9, 4, 1, 3, 9, 1, 1, 2, 9,
     2, 1, 3, 9, 2, 1, 2, 9, 1, 1, 1, 9, 1, 1, 2, 9,
@@ -531,7 +535,8 @@ class Lexer: Prexonite.Internal.IScanner {
     2, 0, 5, 1, 1, 0, 1, 1, 1, 0, 4, 9, 2, 0, 2, 9,
     2, 1, 5, 9, 4, 0, 1, 9, 1, 0, 3, 9, 1, 0, 2, 1,
     1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 6, 9, 2, 1,
-    1, 0, 1, 1, 2, 0, 1, 9, 1, 1, 1, 9, 2, 1, 6, 0, 0 };
+    1, 0, 1, 1, 2, 0, 1, 9, 1, 1, 1, 9, 2, 1, 6, 0, 0,
+  ];
 
   private static int [] zzUnpackAttribute() {
     int [] result = new int[243];

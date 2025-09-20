@@ -55,7 +55,7 @@ public class CilRuntime
         if(m is PropertyInfo)
         {
             var p = (PropertyInfo) m;
-            return p.GetValue(null, new object[0]);
+            return p.GetValue(null, []);
         }
         else if(m is FieldInfo)
         {

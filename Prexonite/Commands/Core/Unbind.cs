@@ -86,8 +86,6 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
     /// <exception cref = "ArgumentNullException">args is null</exception>
     public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
         foreach (var arg in args)
             Run(sctx, arg);
         return PType.Null.CreatePValue();

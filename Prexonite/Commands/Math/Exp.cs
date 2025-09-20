@@ -94,7 +94,7 @@ public class Exp : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyMethod =
-        typeof (Exp).GetMethod(nameof(RunStatically), new[] {typeof (PValue), typeof (StackContext)})!;
+        typeof (Exp).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

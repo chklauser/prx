@@ -117,8 +117,8 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
                     wait:
                     Select.RunStatically(
-                        _sctxCarrier.StackContext, new[]
-                        {
+                        _sctxCarrier.StackContext,
+                        [
                             new KeyValuePair<Channel?, PValue>
                             (
                                 rset, pfunc(
@@ -148,7 +148,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
                                     })),
                             new KeyValuePair<Channel?, PValue>
                                 (null, PType.Null),
-                        }, false);
+                        ], false);
 
                     //We loop until the dispose command is explicitly given. 
                     //  -> This way, a reset command can be issued after

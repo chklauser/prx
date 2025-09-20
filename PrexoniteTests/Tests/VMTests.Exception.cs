@@ -599,7 +599,7 @@ after:
             Assert.IsTrue(func!.HasCilImplementation, "main must have CIL implementation.");
         }
 
-        ExpectNull(Array.Empty<PValue>());
+        ExpectNull();
     }
 
     [Test]

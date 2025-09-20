@@ -104,7 +104,7 @@ function test1(x)
         var expected = x--;
 
         var fctx =
-            target.Functions["test1"]!.CreateFunctionContext(engine, new PValue[] {x0});
+            target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
 
@@ -230,7 +230,7 @@ function test1(x) does
         var expected = (x0 + 2 + j)/j;
 
         var fctx =
-            target.Functions["test1"]!.CreateFunctionContext(engine, new PValue[] {x0});
+            target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
@@ -266,7 +266,7 @@ function test1(x) does
         const int expected = (2 + x1 + j1)/j1;
 
         var fctx =
-            target.Functions["test1"]!.CreateFunctionContext(engine, new PValue[] {x0});
+            target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
@@ -298,7 +298,7 @@ function fib(n) does
             TestContext.WriteLine("\nFib(" + n + ") do ");
             var expected = _fibonacci(n);
             var fctx =
-                target.Functions["fib"]!.CreateFunctionContext(engine, new PValue[] {n});
+                target.Functions["fib"]!.CreateFunctionContext(engine, [n]);
             engine.Stack.AddLast(fctx);
             var rv = engine.Process();
             Assert.AreEqual(
@@ -352,7 +352,7 @@ function fib(n) does asm
             TestContext.WriteLine("\nFib(" + n + ") do ");
             var expected = _fibonacci(n);
             var fctx =
-                target.Functions["fib"]!.CreateFunctionContext(engine, new PValue[] {n});
+                target.Functions["fib"]!.CreateFunctionContext(engine, [n]);
             engine.Stack.AddLast(fctx);
             var rv = engine.Process();
             Assert.AreEqual(
@@ -443,14 +443,13 @@ function main(aList, max)
         var buffer = new StringBuilder();
         const int max = 20;
         var aList = new List<string>(
-            new[]
-            {
-                GenerateRandomString(5),
+        [
+            GenerateRandomString(5),
                 GenerateRandomString(10),
                 GenerateRandomString(15),
                 GenerateRandomString(3),
                 GenerateRandomString(5),
-            });
+        ]);
 
         foreach (var elem in aList)
             if (buffer.Length + elem.Length < max)
@@ -1019,11 +1018,10 @@ function main(arg)
         Expect(rs + rs, rs);
 
         var lst = new List<PValue>(
-            new PValue[]
-            {
-                GenerateRandomString(2), GenerateRandomString(3),
+        [
+            GenerateRandomString(2), GenerateRandomString(3),
                 GenerateRandomString(4),
-            });
+        ]);
         var ls = lst.Aggregate("", (current, e) => current + (e.Value as string));
         Expect(ls, (PValue) lst);
 
@@ -1365,8 +1363,8 @@ function main(xlst, ylst)
 ");
         var rnd = new Random();
         var sum = 0.0;
-        List<PValue> xlst = new(),
-            ylst = new();
+        List<PValue> xlst = [],
+            ylst = [];
         for (var i = 0; i < 10; i++)
         {
             var x = rnd.Next(3, 50);
@@ -1446,13 +1444,12 @@ function main(xs)
 }
 ");
         var xs = new List<PValue>(
-            new PValue[]
-            {
-                12, //=> 12
+        [
+            12, //=> 12
                 4, //=> 8
                 5, //=> 3
                 13, //=> 15
-            });
+        ]);
 
         Expect(12 + 8 + 3 + 15, PType.List.CreatePValue(xs));
     }

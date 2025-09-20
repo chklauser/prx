@@ -131,7 +131,8 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
 
     static readonly MethodInfo _textWriterWriteLineMethod = typeof (TextWriter).
         GetMethod(
-            "WriteLine", new[] {typeof (string)})!;
+            "WriteLine",
+            [typeof (string)])!;
 
     #endregion
 }

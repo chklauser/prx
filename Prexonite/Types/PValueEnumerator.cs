@@ -92,8 +92,6 @@ public abstract class PValueEnumerator : IEnumerator<PValue>, IObject
     )
     {
         result = null;
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
         if (args.Length != 0)
             return false;
 

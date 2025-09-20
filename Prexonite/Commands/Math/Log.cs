@@ -103,11 +103,11 @@ public class Log : PCommand, ICilCompilerAware
     }
 
     static readonly MethodInfo RunStaticallyNaturalMethod =
-        typeof (Log).GetMethod(nameof(RunStatically), new[] {typeof (PValue), typeof (StackContext)})!;
+        typeof (Log).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
 
     static readonly MethodInfo RunStaticallyAnyMethod =
         typeof (Log).GetMethod(nameof(RunStatically),
-            new[] {typeof (PValue), typeof (PValue), typeof (StackContext)})!;
+            [typeof (PValue), typeof (PValue), typeof (StackContext)])!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

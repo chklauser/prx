@@ -55,7 +55,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         get
         {
             return _mappings.Array == null
-                ? Enumerable.Empty<int>()
+                ? []
                 : Enumerable.Range(_mappings.Offset, _mappings.Count).Select(i => _mappings.Array[i]);
         }
     }

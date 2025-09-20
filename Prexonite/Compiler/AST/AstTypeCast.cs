@@ -49,7 +49,7 @@ public class AstTypecast : AstExpr,
 
     public AstExpr[] Expressions
     {
-        get { return new[] {Subject}; }
+        get { return [Subject]; }
     }
 
     #endregion

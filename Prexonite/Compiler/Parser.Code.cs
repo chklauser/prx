@@ -514,8 +514,8 @@ partial class Parser
             buildBlockTarget.FinishTarget();
             //Run the build block 
             var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
-                Array.Empty<PValue>(),
-                Array.Empty<PVariable>(), true);
+                [],
+                [], true);
             object? token = null;
             try
             {
@@ -958,7 +958,7 @@ partial class Parser
     {
         f.Meta[PFunction.LetKey] = (MetaEntry)
             f.Meta[PFunction.LetKey].List
-                .Union(new[] { (MetaEntry)local })
+                .Union([(MetaEntry)local])
                 .ToArray();
     }
 

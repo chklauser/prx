@@ -44,7 +44,7 @@ public class AstTypecheck : AstExpr,
 
     public AstExpr[] Expressions
     {
-        get { return new[] {_subject}; }
+        get { return [_subject]; }
     }
 
     public AstExpr Subject

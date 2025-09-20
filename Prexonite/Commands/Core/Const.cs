@@ -76,7 +76,7 @@ public class Const : PCommand, ICilCompilerAware
         get
         {
             return _createConstFunctionInfoCache ??= typeof (Const).GetMethod(nameof(CreateConstFunction),
-                new[] {typeof (PValue), typeof (StackContext)})!;
+                [typeof (PValue), typeof (StackContext)])!;
         }
     }
 

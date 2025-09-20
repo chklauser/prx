@@ -376,7 +376,7 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
             case BinaryOperator.DeltaRight:
                 break;
             case BinaryOperator.Coalescence:
-                return Coalescence(position, new[] {left, right});
+                return Coalescence(position, [left, right]);
             case BinaryOperator.Cast:
                 if (right is not AstTypeExpr T)
                 {

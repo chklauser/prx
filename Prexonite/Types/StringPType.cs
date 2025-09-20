@@ -577,7 +577,7 @@ public class StringPType : PType, ICilCompilerAware
             }
             else if (arg.TryConvertTo(sctx, String, useExplicit, out v))
             {
-                sst = new() {(string) v.Value!};
+                sst = [(string)v.Value!];
             }
             else
             {

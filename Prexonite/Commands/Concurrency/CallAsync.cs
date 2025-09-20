@@ -69,7 +69,7 @@ public class CallAsync : PCommand, ICilCompilerAware
             PValue result;
             try
             {
-                result = args[0].IndirectCall(sctx, iargs.ToArray());
+                result = args[0].IndirectCall(sctx, [..iargs]);
             }
             catch (Exception ex)
             {

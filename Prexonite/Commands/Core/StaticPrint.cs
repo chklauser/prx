@@ -160,7 +160,8 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
         typeof (StaticPrint).GetProperty(nameof(Writer))!.GetGetMethod()!;
 
     static readonly MethodInfo _textWriterWriteMethod = typeof (TextWriter).GetMethod(
-        "Write", new[] {typeof (string)})!;
+        "Write",
+        [typeof (string)])!;
 
     internal static string _ToString(CompileTimeValue value)
     {

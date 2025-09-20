@@ -45,7 +45,7 @@ public class AstUsing : AstScopedBlock,
 
     public AstBlock[] Blocks
     {
-        get { return new AstBlock[] {Block}; }
+        get { return [Block]; }
     }
 
     #region IAstHasExpressions Members

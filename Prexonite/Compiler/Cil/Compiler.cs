@@ -594,7 +594,7 @@ public static class Compiler
                         (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
                         entries = entry.List;
                     else
-                        entries = Array.Empty<MetaEntry>();
+                        entries = [];
                     foreach (var t in entries)
                     {
                         var symbolName = t.Text;
@@ -1211,7 +1211,7 @@ public static class Compiler
                     var func = state.Source.ParentApplication.Functions[id!]!;
                     entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
                         ? sharedNamesEntry.List 
-                        : Array.Empty<MetaEntry>();
+                        : [];
                     var hasSharedVariables = entries.Length > 0;
                     if (hasSharedVariables)
                     {
@@ -1620,7 +1620,7 @@ public static class Compiler
     // ReSharper disable InconsistentNaming
 
     public static readonly MethodInfo CreateNativePValue =
-        typeof(CilFunctionContext).GetMethod(nameof(CreateNativePValue), new[] { typeof(object) })
+        typeof(CilFunctionContext).GetMethod(nameof(CreateNativePValue), [typeof(object)])
         ?? throw new PrexoniteException("Cannot find method CilFunctionContext.CreateNativePValue(object).");
 
     internal static readonly MethodInfo GetNullPType =
@@ -1636,17 +1636,17 @@ public static class Compiler
         ?? throw new PrexoniteException("Cannot find property getter for PType.List.");
 
     static ConstructorInfo NewPValueListCtor { get; } =
-        typeof(List<PValue>).GetConstructor(new[] { typeof(IEnumerable<PValue>) })
+        typeof(List<PValue>).GetConstructor([typeof(IEnumerable<PValue>)])
         ?? throw new PrexoniteException("Cannot find constructor for List<PValue>(IEnumerable<PValue>).");
 
     internal static MethodInfo getPTypeNull => GetNullPType;
 
     internal static MethodInfo nullCreatePValue { get; } =
-        typeof(NullPType).GetMethod(nameof(NullPType.CreatePValue), Array.Empty<Type>())
+        typeof(NullPType).GetMethod(nameof(NullPType.CreatePValue), [])
         ?? throw new PrexoniteException("Cannot find method NullPType.CreatePValue().");
 
     public static ConstructorInfo NewPVariableCtor { get; } =
-        typeof(PVariable).GetConstructor(Array.Empty<Type>())
+        typeof(PVariable).GetConstructor([])
         ?? throw new PrexoniteException("Cannot find constructor for PVariable().");
 
     public static MethodInfo GetValueMethod { get; } =
@@ -1683,88 +1683,88 @@ public static class Compiler
 
     public static MethodInfo CreatePValueAsObject { get; } = typeof(
             PType.PrexoniteObjectTypeProxy).GetMethod
-            ("CreatePValue", new[] { typeof(object) })
+            ("CreatePValue", [typeof(object)])
         ?? throw new PrexoniteException("Cannot find method PType.PrexoniteObjectTypeProxy.CreatePValue(object).");
 
 
     public static ConstructorInfo NewPValueKeyValuePair { get; } =
-        typeof(PValueKeyValuePair).GetConstructor(new[] { typeof(PValue), typeof(PValue) })
+        typeof(PValueKeyValuePair).GetConstructor([typeof(PValue), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find constructor for PValueKeyValuePair(PValue, PValue).");
 
     internal static ConstructorInfo NewPValue { get; } =
-        typeof(PValue).GetConstructor(new[] { typeof(object), typeof(PType) })
+        typeof(PValue).GetConstructor([typeof(object), typeof(PType)])
         ?? throw new PrexoniteException("Cannot find constructor for PValue(object, PType).");
 
     public static MethodInfo PVIncrementMethod { get; } =
-        typeof(PValue).GetMethod("Increment", new[] { typeof(StackContext) })
+        typeof(PValue).GetMethod("Increment", [typeof(StackContext)])
         ?? throw new PrexoniteException("Cannot find method PValue.Increment(StackContext).");
 
     public static MethodInfo PVDecrementMethod { get; } =
-        typeof(PValue).GetMethod("Decrement", new[] { typeof(StackContext) })
+        typeof(PValue).GetMethod("Decrement", [typeof(StackContext)])
         ?? throw new PrexoniteException("Cannot find method PValue.Decrement(StackContext).");
 
     public static MethodInfo PVUnaryNegationMethod { get; } =
-        typeof(PValue).GetMethod("UnaryNegation", new[] { typeof(StackContext) })
+        typeof(PValue).GetMethod("UnaryNegation", [typeof(StackContext)])
         ?? throw new PrexoniteException("Cannot find method PValue.UnaryNegation(StackContext).");
 
     public static MethodInfo PVLogicalNotMethod { get; } =
-        typeof(PValue).GetMethod("LogicalNot", new[] { typeof(StackContext) })
+        typeof(PValue).GetMethod("LogicalNot", [typeof(StackContext)])
         ?? throw new PrexoniteException("Cannot find method PValue.LogicalNot(StackContext).");
 
     public static MethodInfo PVAdditionMethod { get; } =
-        typeof(PValue).GetMethod("Addition", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Addition", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Addition(StackContext, PValue).");
 
     public static MethodInfo PVSubtractionMethod { get; } =
-        typeof(PValue).GetMethod("Subtraction", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Subtraction", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Subtraction(StackContext, PValue).");
 
     public static MethodInfo PVMultiplyMethod { get; } =
-        typeof(PValue).GetMethod("Multiply", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Multiply", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Multiply(StackContext, PValue).");
 
     public static MethodInfo PVDivisionMethod { get; } =
-        typeof(PValue).GetMethod("Division", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Division", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Division(StackContext, PValue).");
 
     public static MethodInfo PVModulusMethod { get; } =
-        typeof(PValue).GetMethod("Modulus", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Modulus", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Modulus(StackContext, PValue).");
 
     public static MethodInfo PVBitwiseAndMethod { get; } =
-        typeof(PValue).GetMethod("BitwiseAnd", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("BitwiseAnd", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.BitwiseAnd(StackContext, PValue).");
 
     public static MethodInfo PVBitwiseOrMethod { get; } =
-        typeof(PValue).GetMethod("BitwiseOr", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("BitwiseOr", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.BitwiseOr(StackContext, PValue).");
 
     public static MethodInfo PVExclusiveOrMethod { get; } =
-        typeof(PValue).GetMethod("ExclusiveOr", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("ExclusiveOr", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.ExclusiveOr(StackContext, PValue).");
 
     public static MethodInfo PVEqualityMethod { get; } =
-        typeof(PValue).GetMethod("Equality", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Equality", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Equality(StackContext, PValue).");
 
     public static MethodInfo PVInequalityMethod { get; } =
-        typeof(PValue).GetMethod("Inequality", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("Inequality", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.Inequality(StackContext, PValue).");
 
     public static MethodInfo PVGreaterThanMethod { get; } =
-        typeof(PValue).GetMethod("GreaterThan", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("GreaterThan", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.GreaterThan(StackContext, PValue).");
 
     public static MethodInfo PVLessThanMethod { get; } =
-        typeof(PValue).GetMethod("LessThan", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("LessThan", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.LessThan(StackContext, PValue).");
 
     public static MethodInfo PVGreaterThanOrEqualMethod { get; } =
-        typeof(PValue).GetMethod("GreaterThanOrEqual", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("GreaterThanOrEqual", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.GreaterThanOrEqual(StackContext, PValue).");
 
     public static MethodInfo PVLessThanOrEqualMethod { get; } =
-        typeof(PValue).GetMethod("LessThanOrEqual", new[] { typeof(StackContext), typeof(PValue) })
+        typeof(PValue).GetMethod("LessThanOrEqual", [typeof(StackContext), typeof(PValue)])
         ?? throw new PrexoniteException("Cannot find method PValue.LessThanOrEqual(StackContext, PValue).");
 
     public static MethodInfo PVIsNullMethod { get; } =

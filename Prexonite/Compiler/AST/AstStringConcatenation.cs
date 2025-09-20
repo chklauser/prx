@@ -46,7 +46,7 @@ public class AstStringConcatenation : AstExpr,
     /// <summary>
     ///     The list of arguments for the string concatenation.
     /// </summary>
-    readonly List<AstExpr> _arguments = new();
+    readonly List<AstExpr> _arguments = [];
 
     /// <summary>
     ///     Creates a new AstStringConcatenation AST node.
@@ -64,7 +64,7 @@ public class AstStringConcatenation : AstExpr,
         if (multiConcatPrototype == null)
             throw new ArgumentNullException(nameof(multiConcatPrototype));
             
-        arguments ??= Array.Empty<AstExpr>();
+        arguments ??= [];
 
         _arguments.AddRange(arguments);
         _simpleConcatPrototype = simpleConcatPrototype;
