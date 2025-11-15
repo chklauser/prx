@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Prexonite/Prexonite.csproj" />
+  <Project Path="PrexoniteTests/PrexoniteTests.csproj" />
+  <Project Path="Prx/Prx.csproj" />
+</Solution>
