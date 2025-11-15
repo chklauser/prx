@@ -49,6 +49,8 @@ public class DependingOnConstraint : Constraint
             throw new ArgumentException($"The string {name} is not a valid module name.");
     }
 
+    public override string Description => $"depends on {_dependency}";
+
     public override ConstraintResult ApplyTo<TActual>(TActual actual)
     {
         var actualValue = actual;

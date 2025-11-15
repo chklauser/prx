@@ -1,35 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <DefineConstants>UseIndex</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Version>1.99</Version>
     <Title>Prexonite Scripting Language</Title>
     <PackageDescription>An embeddable scripting language with a focus on meta programming and domain specific languages.</PackageDescription>
     <Description>$(PackageDescription)</Description>
     <Copyright>Christian Klauser © 2021</Copyright>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
-    <IncludeSymbols>true</IncludeSymbols>
-    <IncludeSource>true</IncludeSource>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <RepositoryUrl>https://github.com/chklauser/prx.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-
-    <Product>Prexonite</Product>
-    <Company>$(Product)</Company>
-    <NeutralLanguage>en-US</NeutralLanguage>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\PrexoniteTests\Prexonite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <!-- CUSTOM TASKS -->
@@ -166,7 +147,7 @@
 
   <!-- NUGET References -->
   <ItemGroup>
-    <PackageReference Include="PxCoco" Version="1.98.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.13" />
+    <PackageReference Include="PxCoco" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" />
   </ItemGroup>
 </Project>

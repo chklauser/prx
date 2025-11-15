@@ -25,7 +25,9 @@ public static class ModuleCacheV2
     {
         _trace.TraceEvent(TraceEventType.Information, 0, "Infer sln path");
         var slnCandidate = AppContext.BaseDirectory;
-        while (Directory.Exists(slnCandidate) && !File.Exists(Path.Combine(slnCandidate, "prx.sln")))
+        while (Directory.Exists(slnCandidate) &&
+               !File.Exists(Path.Combine(slnCandidate, "prx.sln")) &&
+               !File.Exists(Path.Combine(slnCandidate, "prx.slnx")))
             slnCandidate = Path.Combine(slnCandidate, @".." + Path.DirectorySeparatorChar);
 
         if (Directory.Exists(slnCandidate))

@@ -1,0 +1,23 @@
+<Project>
+  <!-- Enable centralized package management -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build tools -->
+    <PackageVersion Include="Microsoft.Build.Framework" Version="17.10.4" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.10.4" />
+    <PackageVersion Include="PxCoco" Version="1.98.0" />
+
+    <!-- Runtime dependencies -->
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
+
+    <!-- Test dependencies -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageVersion Include="Moq" Version="4.20.70" />
+    <PackageVersion Include="NUnit" Version="3.14.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
+  </ItemGroup>
+</Project>

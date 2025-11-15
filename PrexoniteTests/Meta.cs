@@ -64,6 +64,8 @@ public static class Meta
 
         #region Overrides of Constraint
 
+        public override string Description => $"meta entry '{_key}' exactly equals {_expectedEntry}";
+
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
             object actualObj = actual;
@@ -95,6 +97,8 @@ public static class Meta
         }
 
         #region Overrides of Constraint
+
+        public override string Description => $"contains meta key '{_key}'";
 
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {

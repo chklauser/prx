@@ -69,7 +69,9 @@ abstract class ScriptedUnitTestContainer : IDisposable
         Root = new NullContext(Engine, Application, []);
 
         var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        while (slnPath != null && Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "prx.sln")))
+        while (slnPath != null && Directory.Exists(slnPath) &&
+               !File.Exists(Path.Combine(slnPath, "prx.sln")) &&
+               !File.Exists(Path.Combine(slnPath, "prx.slnx")))
             slnPath = Path.Combine(slnPath, @".." + Path.DirectorySeparatorChar);
 
         if (slnPath != null && Directory.Exists(slnPath))

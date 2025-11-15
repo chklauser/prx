@@ -6,24 +6,11 @@
 
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
     <AppConfig>config/app.$(Configuration).config</AppConfig>
-    <LangVersion>preview</LangVersion>
-    <Version>1.99</Version>
     <Title>Prexonite CLI</Title>
     <Description>Prexonite command line interpreter and compiler.</Description>
     <Copyright>Christian Klauser © 2020</Copyright>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
-    <IncludeSymbols>true</IncludeSymbols>
-    <IncludeSource>true</IncludeSource>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <RepositoryUrl>https://github.com/chklauser/prx.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-
-    <Product>Prexonite</Product>
-    <Company>$(Product)</Company>
-    <NeutralLanguage>en-US</NeutralLanguage>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <!-- single file app (Release-Mode only) -->
@@ -78,9 +65,5 @@
     <None Include="samples\**\*.pxs" CopyToPublishDirectory="Always" />
   </ItemGroup>
   
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\PrexoniteTests\Prexonite.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
 
 </Project>
