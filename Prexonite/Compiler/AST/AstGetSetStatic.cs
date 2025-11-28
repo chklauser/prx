@@ -122,7 +122,7 @@ public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
     public void DoEmitPartialApplicationCode(CompilerTarget target)
     {
         var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments);
-        var ctorArgc = this.EmitConstructorArguments(target, argv);
+        var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
         if (TypeExpr is AstConstantTypeExpression constTypeExpr)
             target.EmitConstant(constTypeExpr.Position, constTypeExpr.TypeExpression);
         else

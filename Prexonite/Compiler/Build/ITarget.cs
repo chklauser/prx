@@ -68,17 +68,20 @@ public interface ITarget
 
 public static class Target
 {
-    public static void ThrowIfFailed(this ITarget target, ITargetDescription description)
+    extension(ITarget target)
     {
-        if (target == null)
-            throw new ArgumentNullException(nameof(target));
-        if (description == null)
-            throw new ArgumentNullException(nameof(description));
-        if (target.Exception != null)
-            throw target.Exception;
-        else if (target.Messages.Any(m => m.Severity == MessageSeverity.Error))
-            throw new BuildFailureException(description,
-                "There {2} {0} {1} while translating " + description.Name + ".",
-                target.Messages);
+        public void ThrowIfFailed(ITargetDescription description)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+            if (description == null)
+                throw new ArgumentNullException(nameof(description));
+            if (target.Exception != null)
+                throw target.Exception;
+            else if (target.Messages.Any(m => m.Severity == MessageSeverity.Error))
+                throw new BuildFailureException(description,
+                    "There {2} {0} {1} while translating " + description.Name + ".",
+                    target.Messages);
+        }
     }
 }

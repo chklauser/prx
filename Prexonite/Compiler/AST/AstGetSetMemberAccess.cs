@@ -108,7 +108,7 @@ public class AstGetSetMemberAccess(
     {
         var argv =
             AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton().Append(Arguments));
-        var ctorArgc = this.EmitConstructorArguments(target, argv);
+        var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
         target.EmitConstant(Position, (int) Call);
         target.EmitConstant(Position, Id);
         target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);

@@ -261,51 +261,54 @@ public enum SymbolInterpretations
 
 public static class SymbolEntryExtensions
 {
-    public static bool AssociatedWithModule(this SymbolInterpretations symbolInterpretation)
+    extension(SymbolInterpretations symbolInterpretation)
     {
-        switch (symbolInterpretation)
+        public bool AssociatedWithModule()
         {
-            case SymbolInterpretations.Function:
-            case SymbolInterpretations.GlobalObjectVariable:
-            case SymbolInterpretations.GlobalReferenceVariable:
-                return true;
-            case SymbolInterpretations.MacroCommand:
-            case SymbolInterpretations.Command:
-            case SymbolInterpretations.KnownType:
-            case SymbolInterpretations.JumpLabel:
-            case SymbolInterpretations.LocalObjectVariable:
-            case SymbolInterpretations.LocalReferenceVariable:
-            case SymbolInterpretations.Undefined:
-            case SymbolInterpretations.None:
-                return false;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(symbolInterpretation));
+            switch (symbolInterpretation)
+            {
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return true;
+                case SymbolInterpretations.MacroCommand:
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                case SymbolInterpretations.Undefined:
+                case SymbolInterpretations.None:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(symbolInterpretation));
+            }
         }
-    }
 
-    public static SymbolInterpretations ToObjectVariable(this SymbolInterpretations symbolInterpretations)
-    {
-        switch (symbolInterpretations)
+        public SymbolInterpretations ToObjectVariable()
         {
-            case SymbolInterpretations.LocalObjectVariable:
-            case SymbolInterpretations.LocalReferenceVariable:
-                return SymbolInterpretations.LocalObjectVariable;
+            switch (symbolInterpretation)
+            {
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                    return SymbolInterpretations.LocalObjectVariable;
 
-            case SymbolInterpretations.GlobalObjectVariable:
-            case SymbolInterpretations.GlobalReferenceVariable:
-                return SymbolInterpretations.GlobalObjectVariable;
-                
-            case SymbolInterpretations.Function:
-            case SymbolInterpretations.Command:
-            case SymbolInterpretations.MacroCommand:
-                return symbolInterpretations;
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return SymbolInterpretations.GlobalObjectVariable;
 
-            case SymbolInterpretations.KnownType:
-            case SymbolInterpretations.JumpLabel:
-            case SymbolInterpretations.Undefined:
-            case SymbolInterpretations.None:
-            default:
-                throw new ArgumentOutOfRangeException(nameof(symbolInterpretations));
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.MacroCommand:
+                    return symbolInterpretation;
+
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.Undefined:
+                case SymbolInterpretations.None:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(symbolInterpretation));
+            }
         }
     }
 }

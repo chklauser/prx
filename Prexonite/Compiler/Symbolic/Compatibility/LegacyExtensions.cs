@@ -101,50 +101,56 @@ public static class LegacyExtensions
     static readonly SymbolEntryConversion _convertSymbol = new();
 
 
-    public static SymbolEntry ToSymbolEntry(this Symbol symbol)
+    extension(Symbol symbol)
     {
-        return symbol.HandleWith(_convertSymbol, null!);
+        public SymbolEntry ToSymbolEntry()
+        {
+            return symbol.HandleWith(_convertSymbol, null!);
+        }
     }
 
-    public static Symbol ToSymbol(this SymbolEntry entry)
+    extension(SymbolEntry entry)
     {
-        var isDereferenced = false;
-        EntityRef entity; 
-        switch (entry.Interpretation)
+        public Symbol ToSymbol()
         {
-            case SymbolInterpretations.Function:
-                entity = EntityRef.Function.Create(entry.InternalId!, entry.Module!);
-                break;
-            case SymbolInterpretations.Command:
-                entity = EntityRef.Command.Create(entry.InternalId!);
-                break;
-            case SymbolInterpretations.LocalObjectVariable:
-                entity = EntityRef.Variable.Local.Create(entry.InternalId!);
-                break;
-            case SymbolInterpretations.LocalReferenceVariable:
-                entity = EntityRef.Variable.Local.Create(entry.InternalId!);
-                isDereferenced = true;
-                break;
-            case SymbolInterpretations.GlobalObjectVariable:
-                entity = EntityRef.Variable.Global.Create(entry.InternalId!, entry.Module!);
-                break;
-            case SymbolInterpretations.GlobalReferenceVariable:
-                entity = EntityRef.Variable.Global.Create(entry.InternalId!, entry.Module!);
-                isDereferenced = true;
-                break;
-            case SymbolInterpretations.MacroCommand:
-                entity = EntityRef.MacroCommand.Create(entry.InternalId!);
-                break;
-            default:
-                var interpretation = Enum.GetName(typeof (SymbolInterpretations), entry.Interpretation);
-                throw new ArgumentOutOfRangeException(nameof(entry), interpretation,
-                    $"Cannot convert symbol entry {entry} to a symbol.");
-        }
+            var isDereferenced = false;
+            EntityRef entity;
+            switch (entry.Interpretation)
+            {
+                case SymbolInterpretations.Function:
+                    entity = EntityRef.Function.Create(entry.InternalId!, entry.Module!);
+                    break;
+                case SymbolInterpretations.Command:
+                    entity = EntityRef.Command.Create(entry.InternalId!);
+                    break;
+                case SymbolInterpretations.LocalObjectVariable:
+                    entity = EntityRef.Variable.Local.Create(entry.InternalId!);
+                    break;
+                case SymbolInterpretations.LocalReferenceVariable:
+                    entity = EntityRef.Variable.Local.Create(entry.InternalId!);
+                    isDereferenced = true;
+                    break;
+                case SymbolInterpretations.GlobalObjectVariable:
+                    entity = EntityRef.Variable.Global.Create(entry.InternalId!, entry.Module!);
+                    break;
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    entity = EntityRef.Variable.Global.Create(entry.InternalId!, entry.Module!);
+                    isDereferenced = true;
+                    break;
+                case SymbolInterpretations.MacroCommand:
+                    entity = EntityRef.MacroCommand.Create(entry.InternalId!);
+                    break;
+                default:
+                    var interpretation = Enum.GetName(typeof (SymbolInterpretations), entry.Interpretation);
+                    throw new ArgumentOutOfRangeException(nameof(entry), interpretation,
+                        $"Cannot convert symbol entry {entry} to a symbol.");
+            }
 
-        if (isDereferenced)
-            return Symbol.CreateDereference(Symbol.CreateCall(entity, NoSourcePosition.Instance));
-        else
-            return Symbol.CreateCall(entity, NoSourcePosition.Instance);
+            if (isDereferenced)
+                return Symbol.CreateDereference(Symbol.CreateCall(entity, NoSourcePosition.Instance));
+            else
+                return Symbol.CreateCall(entity, NoSourcePosition.Instance);
+        }
     }
 }
 

@@ -120,7 +120,7 @@ public class AstObjectCreation : AstExpr,
     {
         var argv =
             AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments.ToList());
-        var ctorArgc = this.EmitConstructorArguments(target, argv);
+        var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
         if (TypeExpr is AstConstantTypeExpression constType)
             target.EmitConstant(Position, constType.TypeExpression);
         else

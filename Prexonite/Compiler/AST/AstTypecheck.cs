@@ -142,7 +142,7 @@ public class AstTypecheck : AstExpr,
             
         var argv =
             AstPartiallyApplicable.PreprocessPartialApplicationArguments(_subject.Singleton());
-        var ctorArgc = this.EmitConstructorArguments(target, argv);
+        var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
         if (Type is AstConstantTypeExpression constType)
             target.EmitConstant(Position, constType.TypeExpression);
         else

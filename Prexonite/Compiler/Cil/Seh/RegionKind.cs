@@ -36,7 +36,13 @@ enum RegionKind
 
 static class RegionKindExtensions
 {
-    public static bool IsIn(this RegionKind subject, RegionKind mask) => (subject & mask) == subject;
+    extension(RegionKind subject)
+    {
+        public bool IsIn(RegionKind mask) => (subject & mask) == subject;
+    }
 
-    public static bool IsOfKind(this Region? subject, RegionKind mask) => subject != null && subject.Kind.IsIn(mask);
+    extension(Region? subject)
+    {
+        public bool IsOfKind(RegionKind mask) => subject != null && subject.Kind.IsIn(mask);
+    }
 }

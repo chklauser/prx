@@ -51,20 +51,22 @@ public interface ICilHint
     MessageId = nameof(Cil))]
 public static class CilHintExtensions
 {
-    /// <summary>
-    ///     Converts the supplied CIL hint to a meta entry (including the CIL hint key).
-    /// </summary>
-    /// <param name = "hint">The CIL hint to serialize</param>
-    /// <returns>The serialized cil hint.</returns>
-    public static MetaEntry ToMetaEntry(this ICilHint hint)
+    extension(ICilHint hint)
     {
-        var key = hint.CilKey;
-        var fields = hint.GetFields();
+        /// <summary>
+        ///     Converts the supplied CIL hint to a meta entry (including the CIL hint key).
+        /// </summary>
+        /// <returns>The serialized cil hint.</returns>
+        public MetaEntry ToMetaEntry()
+        {
+            var key = hint.CilKey;
+            var fields = hint.GetFields();
 
-        var entry = new MetaEntry[fields.Length + 1];
-        entry[0] = key;
-        Array.Copy(fields, 0, entry, 1, fields.Length);
+            var entry = new MetaEntry[fields.Length + 1];
+            entry[0] = key;
+            Array.Copy(fields, 0, entry, 1, fields.Length);
 
-        return (MetaEntry) entry;
+            return (MetaEntry) entry;
+        }
     }
 }

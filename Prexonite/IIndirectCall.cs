@@ -34,5 +34,8 @@ public interface IIndirectCall
 
 public static class IndirectCallExt
 {
-    public static PValue IndirectCall(this IIndirectCall t, StackContext sctx, PValue[] args) => t.IndirectCall(sctx);
+    extension(IIndirectCall t)
+    {
+        public PValue IndirectCall(StackContext sctx, PValue[] args) => t.IndirectCall(sctx);
+    }
 }

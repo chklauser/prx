@@ -58,28 +58,37 @@ public static class CommandInfo
         return new CachedCommandInfo(obj as ICilCompilerAware, obj as ICilExtension);
     }
 
-    public static ICommandInfo ToCommandInfo(this PCommand command)
+    extension(PCommand command)
     {
-        if (command == null)
-            throw new ArgumentNullException(nameof(command));
+        public ICommandInfo ToCommandInfo()
+        {
+            if (command == null)
+                throw new ArgumentNullException(nameof(command));
 
-        return _toCommandInfo(command);
+            return _toCommandInfo(command);
+        }
     }
 
-    public static ICommandInfo ToCommandInfo(this ICilExtension? cilExtension)
+    extension(ICilExtension? cilExtension)
     {
-        if (cilExtension == null)
-            return new CachedCommandInfo(null, null);
-        else
-            return _toCommandInfo(cilExtension);
+        public ICommandInfo ToCommandInfo()
+        {
+            if (cilExtension == null)
+                return new CachedCommandInfo(null, null);
+            else
+                return _toCommandInfo(cilExtension);
+        }
     }
 
-    public static ICommandInfo ToCommandInfo(this ICilCompilerAware? cilCompilerAware)
+    extension(ICilCompilerAware? cilCompilerAware)
     {
-        if (cilCompilerAware == null)
-            return new CachedCommandInfo(null, null);
-        else
-            return _toCommandInfo(cilCompilerAware);
+        public ICommandInfo ToCommandInfo()
+        {
+            if (cilCompilerAware == null)
+                return new CachedCommandInfo(null, null);
+            else
+                return _toCommandInfo(cilCompilerAware);
+        }
     }
 
     sealed class CachedCommandInfo(ICilCompilerAware? compilerAware, ICilExtension? extension)

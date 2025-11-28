@@ -28,21 +28,23 @@ namespace Prexonite.Compiler;
 
 public static class SourcePositionExtensions
 {
-    public static bool SourcePositionEquals(this ISourcePosition? positionA,
-        ISourcePosition? positionB)
+    extension(ISourcePosition? positionA)
     {
-        if (ReferenceEquals(positionA, null) && ReferenceEquals(positionB, null))
-            return true;
-        else if (ReferenceEquals(positionA, null) || ReferenceEquals(positionB, null))
-            return false;
-        else
-            return positionA.Line == positionB.Line
-                && positionA.Column == positionB.Column
-                && positionA.File.Equals(positionB.File, StringComparison.Ordinal);
-    }
+        public bool SourcePositionEquals(ISourcePosition? positionB)
+        {
+            if (ReferenceEquals(positionA, null) && ReferenceEquals(positionB, null))
+                return true;
+            else if (ReferenceEquals(positionA, null) || ReferenceEquals(positionB, null))
+                return false;
+            else
+                return positionA.Line == positionB.Line
+                    && positionA.Column == positionB.Column
+                    && positionA.File.Equals(positionB.File, StringComparison.Ordinal);
+        }
 
-    public static string GetSourcePositionString(this ISourcePosition position)
-    {
-        return $"{position.Line}: line {position.Line}, col {position.Column}";
+        public string GetSourcePositionString()
+        {
+            return $"{positionA.Line}: line {positionA.Line}, col {positionA.Column}";
+        }
     }
 }

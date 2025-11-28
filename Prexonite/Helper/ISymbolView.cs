@@ -34,14 +34,16 @@ public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: c
 
 public static class SymbolViewExtensions
 {
-    public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue) where T: class
+    extension<T>(ISymbolView<T> view) where T: class
     {
-        return view.TryGet(key, out var result) ? result : defaultValue;
-    }
+        public T GetOrDefault(string key, T defaultValue)
+        {
+            return view.TryGet(key, out var result) ? result : defaultValue;
+        }
 
-    public static bool Contains<T>(this ISymbolView<T> view, string key) where T: class
-    {
-        return view.TryGet(key, out var dummy);
+        public bool Contains(string key)
+        {
+            return view.TryGet(key, out var dummy);
+        }
     }
- 
 }

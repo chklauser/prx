@@ -355,7 +355,7 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         else
         {
             //Use full-blown partial application mechanism for indirect calls.
-            var ctorArgc = this.EmitConstructorArguments(target, argv);
+            var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
             target.EmitCommandCall(Position, ctorArgc, Engine.PartialCallAlias);
         }
     }

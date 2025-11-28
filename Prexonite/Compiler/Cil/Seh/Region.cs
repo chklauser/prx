@@ -30,28 +30,31 @@ namespace Prexonite.Compiler.Cil.Seh;
 
 static class RegionExtensions
 {
-    public static bool IsTryRegion(this Region? region)
+    extension(Region? region)
     {
-        if (region == null)
-            return false;
-        else
-            return region.Kind == RegionKind.Try;
-    }
+        public bool IsTryRegion()
+        {
+            if (region == null)
+                return false;
+            else
+                return region.Kind == RegionKind.Try;
+        }
 
-    public static bool IsCatchRegion(this Region? region)
-    {
-        if (region == null)
-            return false;
-        else
-            return region.Kind == RegionKind.Catch;
-    }
+        public bool IsCatchRegion()
+        {
+            if (region == null)
+                return false;
+            else
+                return region.Kind == RegionKind.Catch;
+        }
 
-    public static bool IsFinallyRegion(this Region? region)
-    {
-        if (region == null)
-            return false;
-        else
-            return region.Kind == RegionKind.Finally;
+        public bool IsFinallyRegion()
+        {
+            if (region == null)
+                return false;
+            else
+                return region.Kind == RegionKind.Finally;
+        }
     }
 }
 

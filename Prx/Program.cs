@@ -336,7 +336,7 @@ static class Program
     static bool _reportErrors(IEnumerable<Message> messages)
     {
         var originalColor = Console.ForegroundColor;
-        var msgBySev = messages.ToGroupedDictionary<MessageSeverity, Message, List<Message>>(m => m.Severity);
+        var msgBySev = messages.ToGroupedDictionary<Message, MessageSeverity, List<Message>>(m => m.Severity);
 #if DEBUG
             _reportWarnings(msgBySev, originalColor);
 #endif

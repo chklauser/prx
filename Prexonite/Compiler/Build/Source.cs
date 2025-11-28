@@ -79,11 +79,14 @@ public static class Source
         return new EmbeddedResourceSource(assembly, name);
     }
 
-    public static async Task<ISource> CacheInMemoryAsync(this ISource source)
+    extension(ISource source)
     {
-        if(!source.TryOpen(out var reader))
-            throw new InvalidOperationException("Unable to open source " + source + " for reading.");
-        var contents = await reader.ReadToEndAsync();
-        return FromString(contents);
+        public async Task<ISource> CacheInMemoryAsync()
+        {
+            if(!source.TryOpen(out var reader))
+                throw new InvalidOperationException("Unable to open source " + source + " for reading.");
+            var contents = await reader.ReadToEndAsync();
+            return FromString(contents);
+        }
     }
 }

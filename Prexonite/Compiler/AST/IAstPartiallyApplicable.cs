@@ -127,7 +127,7 @@ public static class AstPartiallyApplicable
     /// <param name = "node">The <see cref = "AstNode" /> this method operates on.</param>
     /// <param name = "target">The compiler target to compile to.</param>
     /// <param name = "argv">Result of <see cref = "PreprocessPartialApplicationArguments" />.</param>
-    public static int EmitConstructorArguments<T>(this T node, CompilerTarget target,
+    public static int EmitConstructorArguments<T>(T node, CompilerTarget target,
         List<AstExpr> argv) where T : AstNode, IAstPartiallyApplicable
     {
         var mappings8 = new int[argv.Count];
@@ -157,8 +157,8 @@ public static class AstPartiallyApplicable
     ///      name = "arguments" />.Count elements.</param>
     /// <remarks>
     ///     <para>Does not alter <paramref name = "arguments" />.</para>
-    ///     <para><paramref name = "mappings8" /> are not yet packed into 32bit integers. 
-    ///         Use <see cref = "PartialApplicationCommandBase.PackMappings32" /> to pack the 
+    ///     <para><paramref name = "mappings8" /> are not yet packed into 32bit integers.
+    ///         Use <see cref = "PartialApplicationCommandBase.PackMappings32" /> to pack the
     ///         mappings into a more compact format.</para>
     /// </remarks>
     public static void GetMapping(IList<AstExpr> arguments, IList<int> mappings8,
@@ -298,47 +298,64 @@ public static class AstPartiallyApplicable
         argv.RemoveRange(redundantIndex, argv.Count - redundantIndex);
     }
 
-    public static AstExpr ConstFunc(this AstExpr expr)
-    {
-        var constCmd = new AstIndirectCall(expr.Position,PCall.Get, new AstReference(expr.Position,EntityRef.Command.Create(Const.Alias)));
-        constCmd.Arguments.Add(expr);
-        return constCmd;
-    }
-
-    public static AstExpr ConstFunc(this AstExpr expr, object? constantValue)
-    {
-        return expr.Position.ConstFunc(constantValue);
-    }
-
-    public static AstExpr ConstFunc(this ISourcePosition position, object? constantValue)
-    {
-        if (constantValue != null)
-            return
-                new AstConstant(position.File, position.Line, position.Column, constantValue).
-                    ConstFunc();
-        else
-            return new AstNull(position.File, position.Line, position.Column).ConstFunc();
-    }
-
-    public static AstExpr IdFunc(this ISourcePosition node)
-    {
-        return IdFunc(new AstPlaceholder(node.File, node.Line, node.Column, 0));
-    }
-
-    public static AstExpr IdFunc(this AstPlaceholder placeholder)
-    {
-        if (!placeholder.Index.HasValue)
-            throw new ArgumentException(Resources.AstPartiallyApplicable_IdFunc_Placeholder_must_have_its_index_assigned_,
-                nameof(placeholder));
-
-        var call = new AstIndirectCall(placeholder.Position, PCall.Get,
-            new AstReference(placeholder.Position, EntityRef.Command.Create(Id.Alias)));
-        call.Arguments.Add(placeholder.GetCopy());
-        return call;
-    }
-
-    public static bool IsPlaceholder(this AstExpr expression) => 
+    public static bool IsPlaceholder(AstExpr expression) =>
         expression is AstPlaceholder || expression is AstArgumentSplice {IsPlaceholderSplice: true};
 
-    public static bool IsArgumentSplice(this AstExpr expression) => expression is AstArgumentSplice;
+    public static bool IsArgumentSplice(AstExpr expression) => expression is AstArgumentSplice;
+}
+
+public static class AstPartiallyApplicableExtensions
+{
+    extension(AstExpr expr)
+    {
+        public AstExpr ConstFunc()
+        {
+            var constCmd = new AstIndirectCall(expr.Position,PCall.Get, new AstReference(expr.Position,EntityRef.Command.Create(Const.Alias)));
+            constCmd.Arguments.Add(expr);
+            return constCmd;
+        }
+
+        public AstExpr ConstFunc(object? constantValue)
+        {
+            return expr.Position.ConstFunc(constantValue);
+        }
+
+        public bool IsPlaceholder() =>
+            expr is AstPlaceholder || expr is AstArgumentSplice {IsPlaceholderSplice: true};
+
+        public bool IsArgumentSplice() => expr is AstArgumentSplice;
+    }
+
+    extension(ISourcePosition position)
+    {
+        public AstExpr ConstFunc(object? constantValue)
+        {
+            if (constantValue != null)
+                return
+                    new AstConstant(position.File, position.Line, position.Column, constantValue).
+                        ConstFunc();
+            else
+                return new AstNull(position.File, position.Line, position.Column).ConstFunc();
+        }
+
+        public AstExpr IdFunc()
+        {
+            return new AstPlaceholder(position.File, position.Line, position.Column, 0).IdFunc();
+        }
+    }
+
+    extension(AstPlaceholder placeholder)
+    {
+        public AstExpr IdFunc()
+        {
+            if (!placeholder.Index.HasValue)
+                throw new ArgumentException(Resources.AstPartiallyApplicable_IdFunc_Placeholder_must_have_its_index_assigned_,
+                    nameof(placeholder));
+
+            var call = new AstIndirectCall(placeholder.Position, PCall.Get,
+                new AstReference(placeholder.Position, EntityRef.Command.Create(Id.Alias)));
+            call.Arguments.Add(placeholder.GetCopy());
+            return call;
+        }
+    }
 }
