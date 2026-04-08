@@ -1857,6 +1857,24 @@ function test()
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
     }
 
+    [Test]
+    public void VarAssign_AppendRight()
+    {
+        // var x = f(a) >> all;
+        var cu = Parse("function __t__() { var x = f(a) >> all; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void SpliceArgs_AppendRight()
+    {
+        // f(*args) >> all; — as a standalone statement (no var assignment)
+        var cu = Parse("function __t__() { f(*args) >> all; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
     // ── CLR type member access chain ──────────────────────────────────
 
     [Test]

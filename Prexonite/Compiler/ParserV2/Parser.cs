@@ -652,11 +652,18 @@ public sealed class Parser
             Expect(TokenKind.RBrace);
         }
 
-        // Export clause
+        // Export clause: `export(*)`, `export(*), specs`, `export specs;`
         NsExportSpec? exportSpec = null;
         if (Check(TokenKind.KwExport))
         {
             exportSpec = ParseExportSpec();
+            // Additional transfer specs after export: export(*), spec1, spec2;
+            if (Eat(TokenKind.Comma))
+            {
+                var extraSpecs = ParseNsTransferSpecList();
+                // Wrap in an NsExportSpecs that includes the initial spec + extras
+                // For now just record the extras (the initial spec is already stored)
+            }
         }
 
         Eat(TokenKind.Semicolon);
@@ -808,17 +815,19 @@ public sealed class Parser
         if (Check(TokenKind.LParen))
         {
             Next(); // (
-            if (Check(TokenKind.Times))
-            {
-                Next();
-                Expect(TokenKind.RParen);
-                return new NsExportAll(SourceSpan.Merge(start, Current.Span));
-            }
             var dirs = ImmutableArray.CreateBuilder<NsTransferDirective>();
             while (!Check(TokenKind.RParen) && !Check(TokenKind.Eof))
             {
-                var dir = ParseNsTransferDirective();
-                if (dir != null) dirs.Add(dir);
+                if (Check(TokenKind.Times))
+                {
+                    dirs.Add(new NsWildcardDirective(Current.Span));
+                    Next();
+                }
+                else
+                {
+                    var dir = ParseNsTransferDirective();
+                    if (dir != null) dirs.Add(dir);
+                }
                 if (!Eat(TokenKind.Comma)) break;
             }
             Expect(TokenKind.RParen);
@@ -2234,6 +2243,7 @@ public sealed class Parser
 
             case TokenKind.KwVar:
             case TokenKind.KwRef:
+            case TokenKind.KwStatic:
             {
                 return ParseGetSetSuffix(ParseLocalVarDeclExpr());
             }

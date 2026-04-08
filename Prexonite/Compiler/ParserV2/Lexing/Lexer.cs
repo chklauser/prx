@@ -362,7 +362,11 @@ public sealed class Lexer
             int opC2 = Peek2();
             // Only attempt operator-ident for safe cases.
             // Exclude `-` to avoid consuming `(->name)` as an op-ident.
-            if (opC2 != '-' && opC2 != '!' && IsOperatorIdentStart(opC2))
+            // Exclude `-`, `!`, `*` — these commonly appear in non-op-ident parens:
+            // (->) pointer, (!) not-expr, (*args) splice.
+            // The forms (-)  (*) etc. are valid op-idents but are very rare in practice
+            // and the false positive cost is too high.
+            if (opC2 != '-' && opC2 != '!' && opC2 != '*' && IsOperatorIdentStart(opC2))
             {
                 var tok = TryLexOperatorIdent(start);
                 if (tok.HasValue) return tok.Value;
