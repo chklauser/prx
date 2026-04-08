@@ -1860,6 +1860,40 @@ function test()
     // ── CLR type member access chain ──────────────────────────────────
 
     [Test]
+    public void String_InterpolFollowedByCommaArg()
+    {
+        // Two string args: f("$a", "")
+        var cu = Parse("function __t__() { f(\"$a\", \"\"); }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void IsNull_InExpr()
+    {
+        // x is Null — Null is a valid type name
+        AssertExprSx("x is Null", "(is (id \"x\") (type \"null\"))");
+    }
+
+    [Test]
+    public void NotExpr_IfBlock()
+    {
+        // if(not x is Int) { y; } — not + type check + brace block
+        var cu = Parse("function __t__() { if(not x is Int) { var r = 1; } }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void NotIsType_WithBraceBlock()
+    {
+        // if(!x is Int) { y; } — the { must be a block, not a hash literal
+        var cu = Parse("function __t__() { if(!x is Int) { var r = 1; } }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
     public void AsmExpr_MemberAccessChain()
     {
         // asm(ldr.eng).Commands.Contains("x") — member access after asm expr

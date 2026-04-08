@@ -86,8 +86,8 @@ public sealed class Parser
                 => ParseBuildBlock(),
             TokenKind.LBrace
                 => ParseGlobalCode(),
-            // Module meta: identifier or `is` keyword at global scope
-            TokenKind.KwIs
+            // Module meta: identifier or `is`/`add`/`not` keyword at global scope
+            TokenKind.KwIs or TokenKind.KwAdd or TokenKind.KwNot
                 => ParseModuleMeta(),
             TokenKind.Identifier or TokenKind.KwCommand
                 => IsModuleMetaLine() ? ParseModuleMeta() : ParseErrorDecl("Unexpected token"),
@@ -105,7 +105,7 @@ public sealed class Parser
             or TokenKind.RealLike or TokenKind.KwTrue or TokenKind.KwFalse or TokenKind.KwNull
             or TokenKind.Semicolon or TokenKind.KwEnabled or TokenKind.KwDisabled
             or TokenKind.LBrack or TokenKind.LBrace // meta list { ... }
-            or TokenKind.Identifier or TokenKind.Version;
+            or TokenKind.Identifier or TokenKind.Version or TokenKind.NsId;
     }
 
     // ── Function declarations ──────────────────────────────────────────────
@@ -2178,6 +2178,7 @@ public sealed class Parser
             case TokenKind.StringSegmentText:
             case TokenKind.StringSegmentId:
             case TokenKind.StringInterpolStart:
+            case TokenKind.StringEnd: // empty string ""
             {
                 var expr = ParseStringLiteral();
                 return ParseGetSetSuffix(expr);
