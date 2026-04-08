@@ -2373,8 +2373,8 @@ function test()
     [Test]
     public void FunctionDecl_OpIdentName()
     {
-        // function (-)(this, other) = ... — operator overloading
-        var cu = Parse("function (-)(this, other) = this;");
+        // function (-)(a, b) = a; — operator overloading with op-ident name
+        var cu = Parse("function (-)(a, b) = a;");
         Assert.That(cu.Diagnostics, Is.Empty,
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
         var fn = (FunctionDecl)cu.Declarations[0];
@@ -2384,7 +2384,7 @@ function test()
     [Test]
     public void FunctionDecl_OpIdentDotNeg()
     {
-        var cu = Parse("function (-.)(this, other) = this;");
+        var cu = Parse("function (-.)(a, b) = a;");
         Assert.That(cu.Diagnostics, Is.Empty,
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
         var fn = (FunctionDecl)cu.Declarations[0];
@@ -2448,6 +2448,60 @@ function test()
         var cu = Parse("function __t__() { f << x => x + 1; }");
         Assert.That(cu.Diagnostics, Is.Empty,
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // ── Reproduction tests from spec/examples ──────────────────────────
+
+    [Test]
+    public void NestedFunction_OpIdentName()
+    {
+        // function (-.) nested inside another function
+        var cu = Parse("function outer() { function (-.)(a,b) = a; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void DeclareAndChain_WithReturn()
+    {
+        // declare ...; and declare ...; and return x;
+        var cu = Parse("function f() does declare function a; and declare ref b; and return 1;");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void YieldStatement()
+    {
+        // yield inside a for loop
+        var cu = Parse("function f() { for(var i = 0; i < 10; i++) { yield i; } }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void EmptyStringInModuleMeta()
+    {
+        // Appearance "";  — empty string as module meta value
+        var cu = Parse("Appearance \"\";");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var mm = (ModuleMetaDecl)cu.Declarations[0];
+        var entry = (MetaValueEntry)mm.Entry;
+        Assert.That(entry.Key, Is.EqualTo("Appearance"));
+    }
+
+    [Test]
+    public void ThisKeyword_IsWarning()
+    {
+        // `this` is reserved and should produce a warning diagnostic, but parsing continues
+        var cu = Parse("function f() { var x = this; }");
+        Assert.That(cu.Diagnostics, Has.Some.Matches<Diagnostic>(
+            d => d.Severity == DiagnosticSeverity.Warning && d.Message.Contains("this")),
+            "Expected warning for reserved 'this' keyword");
+        // No errors — only warnings
+        Assert.That(cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty,
+            "Should not have errors, only warnings");
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -2675,7 +2729,8 @@ function test()
         var parser = new Parser(lexer);
         var cu = parser.ParseFile();
 
-        Assert.That(cu.Diagnostics, Is.Empty,
-            $"Parse errors in {relativePath}:\n{string.Join("\n", cu.Diagnostics.Select(d => $"  {d.Span}: {d.Message}"))}");
+        var errors = cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+        Assert.That(errors, Is.Empty,
+            $"Parse errors in {relativePath}:\n{string.Join("\n", errors.Select(d => $"  {d.Span}: {d.Message}"))}");
     }
 }

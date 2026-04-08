@@ -316,7 +316,7 @@ public sealed class Parser
 
     bool IsMExprStart()
     {
-        return Current.Kind is TokenKind.StringRaw or TokenKind.StringSegmentText
+        return Current.Kind is TokenKind.StringRaw or TokenKind.StringSegmentText or TokenKind.StringEnd
             or TokenKind.Integer or TokenKind.Real
             or TokenKind.RealLike or TokenKind.Version or TokenKind.KwTrue or TokenKind.KwFalse
             or TokenKind.KwNull or TokenKind.LParen or TokenKind.LBrace
@@ -330,7 +330,8 @@ public sealed class Parser
         var start = Current.Span;
 
         // Atom types: string, int, real, bool, null, version
-        if (Check(TokenKind.StringRaw) || Check(TokenKind.StringSegmentText))
+        if (Check(TokenKind.StringRaw) || Check(TokenKind.StringSegmentText)
+            || Check(TokenKind.StringEnd)) // empty string ""
         {
             // In meta context, parse the string to get its full text
             var strExpr = ParseStringLiteral();
@@ -515,10 +516,10 @@ public sealed class Parser
         {
             Next(); // does
             _lexer.PushMode(LexerMode.Local);
-            var stmt = ParseStatement();
+            var block = ParseStatementBlock(); // supports `and`-chaining
             _lexer.PopMode();
-            var stmtBlock = new Block(stmt.Span, [stmt]);
-            return new FunctionBlockBody(SourceSpan.Merge(start, stmt.Span), FunctionBodyStyle.Does, stmtBlock);
+            Eat(TokenKind.Semicolon);
+            return new FunctionBlockBody(SourceSpan.Merge(start, block.Span), FunctionBodyStyle.Does, block);
         }
 
         if (Check(TokenKind.LBrace))
@@ -2495,6 +2496,17 @@ public sealed class Parser
                 // Lambda: id => ...
                 if (IsLambdaExpression())
                     return ParseLambdaExpr();
+
+                // Reserved keyword: `this` — produces a warning but continues parsing.
+                // `this` is reserved; existing code may still use it as a parameter name.
+                if (Check(TokenKind.KwThis))
+                {
+                    _diagnostics.Add(new Diagnostic(DiagnosticSeverity.Warning, Current.Span,
+                        "Illegal use of reserved keyword 'this'"));
+                    var thisSpan = Current.Span;
+                    Next();
+                    return ParseGetSetSuffix(new NameExpr(thisSpan, "this"));
+                }
 
                 // Identifier-like: name, function call, etc.
                 if (Current.IsIdentifierLike)
