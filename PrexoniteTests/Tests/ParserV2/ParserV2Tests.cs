@@ -1867,6 +1867,15 @@ function test()
     }
 
     [Test]
+    public void ParenConditionalExpr_WithStrings()
+    {
+        // (if(x) "a" else "b") + y — parenthesized conditional with string values
+        var cu = Parse("function __t__() { var z = (if(x) \"a\" else \"b\") + y; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
     public void SpliceArgs_AppendRight()
     {
         // f(*args) >> all; — as a standalone statement (no var assignment)

@@ -1789,12 +1789,13 @@ public sealed class Parser
             Expect(TokenKind.LParen);
             var cond = ParseExpr();
             Expect(TokenKind.RParen);
-            var then = ParseAtomicExpr();
+            // Then and else branches must use ParseExpr to handle nested if/unless
+            var then = ParseExpr();
             Expr elseExpr = new NullLit(Current.Span);
             if (Check(TokenKind.KwElse))
             {
                 Next();
-                elseExpr = ParseExpr(); // must be ParseExpr to handle nested if/unless
+                elseExpr = ParseExpr();
             }
             return new ConditionalExpr(SourceSpan.Merge(start, elseExpr.Span), negated, cond, then, elseExpr);
         }
