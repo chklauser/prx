@@ -2078,6 +2078,121 @@ function test()
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    //  Asm instruction coverage
+    //  One test case per instruction form, verifying parse + AST shape.
+    // ══════════════════════════════════════════════════════════════════════
+
+    static IEnumerable<TestCaseData> AsmInstructionCases()
+    {
+        // Variable declarations
+        yield return new TestCaseData("var x", "(asm-var \"x\")").SetName("Asm_VarDecl");
+        yield return new TestCaseData("var x, y", "(asm-var \"x\" \"y\")").SetName("Asm_VarDeclMulti");
+        yield return new TestCaseData("ref r", "(asm-var ref \"r\")").SetName("Asm_RefDecl");
+
+        // Label
+        yield return new TestCaseData("label myLabel", "(asm-label \"myLabel\")").SetName("Asm_Label");
+
+        // Null group (no arguments)
+        yield return new TestCaseData("ldc.null", "(op \"ldc.null\")").SetName("Asm_Null_LdcNull");
+        yield return new TestCaseData("ret", "(op \"ret\")").SetName("Asm_Null_Ret");
+        yield return new TestCaseData("ret.exit", "(op \"ret.exit\")").SetName("Asm_Null_RetExit");
+        yield return new TestCaseData("ret.set", "(op \"ret.set\")").SetName("Asm_Null_RetSet");
+        yield return new TestCaseData("ret.break", "(op \"ret.break\")").SetName("Asm_Null_RetBreak");
+        yield return new TestCaseData("ret.continue", "(op \"ret.continue\")").SetName("Asm_Null_RetContinue");
+        yield return new TestCaseData("ldr.eng", "(op \"ldr.eng\")").SetName("Asm_Null_LdrEng");
+        yield return new TestCaseData("ldr.app", "(op \"ldr.app\")").SetName("Asm_Null_LdrApp");
+        yield return new TestCaseData("throw", "(op \"throw\")").SetName("Asm_Null_Throw");
+        yield return new TestCaseData("try", "(op \"try\")").SetName("Asm_Null_Try");
+        yield return new TestCaseData("exc", "(op \"exc\")").SetName("Asm_Null_Exc");
+
+        // Op-alias group (no arguments, instruction names that map to operators)
+        yield return new TestCaseData("neg", "(op \"neg\")").SetName("Asm_OpAlias_Neg");
+        yield return new TestCaseData("add", "(op \"add\")").SetName("Asm_OpAlias_Add");
+        yield return new TestCaseData("sub", "(op \"sub\")").SetName("Asm_OpAlias_Sub");
+        yield return new TestCaseData("mul", "(op \"mul\")").SetName("Asm_OpAlias_Mul");
+        yield return new TestCaseData("ceq", "(op \"ceq\")").SetName("Asm_OpAlias_Ceq");
+
+        // Integer group (one signed integer argument)
+        yield return new TestCaseData("ldc.int 42", "(op \"ldc.int\" 42)").SetName("Asm_Int_LdcInt");
+        yield return new TestCaseData("ldc.int -1", "(op \"ldc.int\" -1)").SetName("Asm_Int_LdcIntNeg");
+        yield return new TestCaseData("pop 2", "(op \"pop\" 2)").SetName("Asm_Int_Pop");
+        yield return new TestCaseData("dup 1", "(op \"dup\" 1)").SetName("Asm_Int_Dup");
+        yield return new TestCaseData("ldloci 0", "(op \"ldloci\" 0)").SetName("Asm_Int_Ldloci");
+
+        // Load constant real
+        yield return new TestCaseData("ldc.real 3.14", "(op \"ldc.real\" 3.14)").SetName("Asm_LdcReal");
+
+        // Load constant bool (in asm mode, true/false are identifiers)
+        yield return new TestCaseData("ldc.bool true", "(op \"ldc.bool\" \"true\")").SetName("Asm_LdcBoolTrue");
+        yield return new TestCaseData("ldc.bool false", "(op \"ldc.bool\" \"false\")").SetName("Asm_LdcBoolFalse");
+
+        // Load constant string (id group — string arg parsed as identifier in asm)
+        yield return new TestCaseData("ldc.string hello", "(op \"ldc.string\" \"hello\")").SetName("Asm_IdGroup_LdcString");
+        yield return new TestCaseData("ldloc x", "(op \"ldloc\" \"x\")").SetName("Asm_IdGroup_Ldloc");
+        yield return new TestCaseData("stloc x", "(op \"stloc\" \"x\")").SetName("Asm_IdGroup_Stloc");
+        yield return new TestCaseData("ldglob g", "(op \"ldglob\" \"g\")").SetName("Asm_IdGroup_Ldglob");
+        yield return new TestCaseData("ldr.func f", "(op \"ldr.func\" \"f\")").SetName("Asm_IdGroup_LdrFunc");
+        yield return new TestCaseData("ldr.cmd c", "(op \"ldr.cmd\" \"c\")").SetName("Asm_IdGroup_LdrCmd");
+        yield return new TestCaseData("ldr.type t", "(op \"ldr.type\" \"t\")").SetName("Asm_IdGroup_LdrType");
+        yield return new TestCaseData("newclo f", "(op \"newclo\" \"f\")").SetName("Asm_IdGroup_Newclo");
+        yield return new TestCaseData("inc x", "(op \"inc\" \"x\")").SetName("Asm_IdGroup_Inc");
+
+        // Jump group (one id or integer argument)
+        yield return new TestCaseData("jump myLabel", "(op \"jump\" \"myLabel\")").SetName("Asm_Jump_Symbolic");
+        yield return new TestCaseData("jump 5", "(op \"jump\" 5)").SetName("Asm_Jump_Offset");
+        yield return new TestCaseData("jump.t myLabel", "(op \"jump.t\" \"myLabel\")").SetName("Asm_Jump_True");
+        yield return new TestCaseData("jump.f myLabel", "(op \"jump.f\" \"myLabel\")").SetName("Asm_Jump_False");
+        yield return new TestCaseData("leave myLabel", "(op \"leave\" \"myLabel\")").SetName("Asm_Jump_Leave");
+
+        // Id+arg group (optional @, .N is argument count in detail)
+        yield return new TestCaseData("func.2 myFunc", "(op \"func.2\" \"myFunc\")").SetName("Asm_IdArg_Func");
+        yield return new TestCaseData("cmd.1 myCmd", "(op \"cmd.1\" \"myCmd\")").SetName("Asm_IdArg_Cmd");
+        yield return new TestCaseData("get.1 prop", "(op \"get.1\" \"prop\")").SetName("Asm_IdArg_Get");
+        yield return new TestCaseData("set.2 prop", "(op \"set.2\" \"prop\")").SetName("Asm_IdArg_Set");
+        yield return new TestCaseData("indloc.2 x", "(op \"indloc.2\" \"x\")").SetName("Asm_IdArg_Indloc");
+
+        // Arg group (.N is argument count)
+        yield return new TestCaseData("indarg.2", "(op \"indarg.2\")").SetName("Asm_Arg_Indarg");
+        yield return new TestCaseData("tail.3", "(op \"tail.3\")").SetName("Asm_Arg_Tail");
+        yield return new TestCaseData("newcor.1", "(op \"newcor.1\")").SetName("Asm_Arg_Newcor");
+
+        // Qualid+arg group (.N is argument count)
+        yield return new TestCaseData("sget.1 obj", "(op \"sget.1\" \"obj\")").SetName("Asm_QualidArg_Sget");
+        yield return new TestCaseData("newobj.2 myType", "(op \"newobj.2\" \"myType\")").SetName("Asm_QualidArg_Newobj");
+
+        // Special: nop with optional +data
+        yield return new TestCaseData("nop", "(op \"nop\")").SetName("Asm_Nop");
+
+        // Special: swap
+        yield return new TestCaseData("swap", "(op \"swap\")").SetName("Asm_Swap");
+
+        // Special: rot.N,M
+        yield return new TestCaseData("rot.3, 5", "(op \"rot.3\" 5)").SetName("Asm_Rot");
+
+        // Special: indloci.N index
+        yield return new TestCaseData("indloci.2 0", "(op \"indloci.2\" 0)").SetName("Asm_Indloci");
+    }
+
+    [Test]
+    [TestCaseSource(nameof(AsmInstructionCases))]
+    public void AsmInstruction(string asmCode, string expectedAst)
+    {
+        var source = $"function __t__() {{ asm {{ {asmCode} }} }}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors for `{asmCode}`: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = ((FunctionBlockBody)fn.Body).Statements;
+        var asmStmt = (AsmStmt)body.Statements[0];
+        Assert.That(asmStmt.Instructions.Length, Is.GreaterThan(0),
+            $"No instructions parsed for `{asmCode}`");
+        var actual = Sx(asmStmt.Instructions[0]);
+        Assert.That(actual, Is.EqualTo(expectedAst),
+            $"AST mismatch for `{asmCode}`");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     //  Prx arc — parse every .pxs file in the Prx/ directory tree
     // ══════════════════════════════════════════════════════════════════════
 
