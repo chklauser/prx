@@ -1259,6 +1259,8 @@ public sealed class Parser
         while (Check(TokenKind.KwRef)) { refCount++; Next(); }
         if (Check(TokenKind.KwVar)) { hasVar = true; Next(); }
         else if (Check(TokenKind.KwRef) && refCount == 0) { refCount++; Next(); }
+        // Allow `new` after `var` or `ref`: `var new x`, `ref new x`
+        if (Check(TokenKind.KwNew) && !isNew) { isNew = true; Next(); }
 
         if (!Current.IsIdentifierLike)
         {
@@ -2225,12 +2227,12 @@ public sealed class Parser
                 CallArgs args = CallArgs.Empty;
                 if (Check(TokenKind.LParen))
                     args = ParseCallArgs();
-                return new NewExpr(SourceSpan.Merge(start, Current.Span), type, args);
+                return ParseGetSetSuffix(new NewExpr(SourceSpan.Merge(start, Current.Span), type, args));
             }
 
             case TokenKind.Pointer:
             {
-                return ParseRefExpr();
+                return ParseGetSetSuffix(ParseRefExpr());
             }
 
             case TokenKind.KwThrow:
