@@ -1242,6 +1242,158 @@ public class ParserV2Tests
         Assert.That(cu.Declarations.Length, Is.EqualTo(1));
     }
 
+    [Test]
+    public void InterpreterLine_WithArgs()
+    {
+        var cu = Parse("#!/usr/bin/env prx --flag\nfunction foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.InterpreterLine, Is.EqualTo("/usr/bin/env prx --flag"));
+    }
+
+    [Test]
+    public void InterpreterLine_Absent()
+    {
+        var cu = Parse("function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty);
+        Assert.That(cu.InterpreterLine, Is.Null);
+    }
+
+    // ── Comments ──────────────────────────────────────────────────────────
+
+    [Test]
+    public void Comment_LineComment()
+    {
+        // Line comment should be ignored; function after it is parsed
+        var cu = Parse("// this is a comment\nfunction foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+        Assert.That(((FunctionDecl)cu.Declarations[0]).PrimaryName, Is.EqualTo("foo"));
+    }
+
+    [Test]
+    public void Comment_LineComment_EndOfLine()
+    {
+        // Comment at end of a declaration line
+        var cu = Parse("function foo() {} // end-of-line comment\nfunction bar() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Comment_LineComment_InsideFunction()
+    {
+        var cu = Parse("function foo() {\n  // comment inside body\n  var x = 1;\n}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void Comment_BlockComment()
+    {
+        var cu = Parse("/* block comment */ function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_BlockComment_Multiline()
+    {
+        var cu = Parse("/* multi\n   line\n   comment */ function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_BlockComment_Inline()
+    {
+        // Block comment between tokens on the same line
+        var cu = Parse("function /* surprise */ foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(((FunctionDecl)cu.Declarations[0]).PrimaryName, Is.EqualTo("foo"));
+    }
+
+    [Test]
+    public void Comment_BlockComment_Nested()
+    {
+        // Nested block comments: /* outer /* inner */ outer */
+        var cu = Parse("/* outer /* inner */ still comment */ function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_BlockComment_DeeplyNested()
+    {
+        var cu = Parse("/* l1 /* l2 /* l3 */ l2 */ l1 */ function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_Mixed_LineInsideBlock()
+    {
+        // Line comment inside a block comment — the // doesn't end the block comment
+        var cu = Parse("/* block // not a line comment\n   still block */ function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_Mixed_BlockAfterLine()
+    {
+        // Block comment start after line comment — the /* is part of the line comment
+        var cu = Parse("// line comment /* not a block start\nfunction foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_BlockComment_ContainsStars()
+    {
+        // Block comment with * and ** inside — should not close early
+        var cu = Parse("/*** stars * inside ** here ***/ function foo() {}");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Comment_BlockComment_InsideString()
+    {
+        // /* inside a string is NOT a comment — it's part of the string
+        var cu = Parse("function foo() { var s = \"hello /* not a comment */ world\"; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void Comment_LineComment_InsideString()
+    {
+        // // inside a string is NOT a comment
+        var cu = Parse("function foo() { var s = \"hello // not a comment\"; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void Comment_HashBang_NotAtStart()
+    {
+        // #! only counts as interpreter line at the very start of the file
+        // In the middle, # is an error token
+        var cu = Parse("function foo() {}\n#!/usr/bin/prx");
+        Assert.That(cu.InterpreterLine, Is.Null, "should NOT be an interpreter line");
+    }
+
     // ── 58. String interpolation ───────────────────────────────────────────
 
     [Test]
