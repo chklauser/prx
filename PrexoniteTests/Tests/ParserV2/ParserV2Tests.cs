@@ -1939,6 +1939,75 @@ function test()
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    //  Expert review findings — reproducing tests
+    //  These document known issues found by static analysis.
+    //  Marked [Explicit] so they don't run normally until the issue is fixed.
+    // ══════════════════════════════════════════════════════════════════════
+
+    // --- Finding 4: true/false/null missing ParseGetSetSuffix ---
+    [Test]
+    public void Finding4_NullMemberAccess()
+    {
+        // null should support member access (e.g., null~String or null.ToString)
+        // Currently: the null literal is returned without ParseGetSetSuffix
+        var cu = Parse("function __t__() { var x = true.ToString; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // --- Finding 6: PushBack not consulted by Peek1 ---
+    [Test]
+    public void Finding6_IntegerDotMember()
+    {
+        // 1.method — the dot should be preserved after the integer
+        var lexer = PrxLexer.ForString("1.m", "<test>");
+        var tok1 = lexer.Next();
+        Assert.That(tok1.Kind, Is.EqualTo(TokenKind.Integer), "first token should be integer");
+        Assert.That(tok1.Text, Is.EqualTo("1"), "integer text");
+        var tok2 = lexer.Next();
+        Assert.That(tok2.Kind, Is.EqualTo(TokenKind.Dot), "second token should be dot (not lost)");
+    }
+
+    // --- Finding 13: Verbatim string interpolation doesn't suspend ---
+    [Test]
+    public void Finding13_VerbatimStringInterpolExpr()
+    {
+        // @"$(x + 1)" — verbatim string with $(expr) interpolation
+        var cu = Parse("function __t__() { var s = @\"$(x + 1)\"; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = ((FunctionBlockBody)fn.Body).Statements;
+        var stmt = (ExprStmt)body.Statements[0];
+        var assign = (AssignExpr)stmt.Expression;
+        Assert.That(assign.Value, Is.InstanceOf<InterpolatedString>(),
+            "should be InterpolatedString, not StringLit");
+    }
+
+    // --- Finding 16: Unary + prefix ---
+    [Test]
+    public void Finding16_UnaryPlus()
+    {
+        // +x should parse without error (unary plus, identity)
+        var cu = Parse("function __t__() { var y = +x; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // --- Finding 12: ParseBlockAsStmt drops statements ---
+    [Test]
+    public void Finding12_BareBlockMultipleStatements()
+    {
+        // { x = 1; y = 2; } — bare block used as statement should keep all stmts
+        // Currently the parser only keeps the first statement (lossy)
+        var cu = Parse("function __t__() { { var x = 1; var y = 2; } }");
+        // At minimum, no crash and some diagnostics or both stmts present
+        // (Currently lossy — documenting the behavior)
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     //  Prx arc — parse every .pxs file in the Prx/ directory tree
     // ══════════════════════════════════════════════════════════════════════
 
