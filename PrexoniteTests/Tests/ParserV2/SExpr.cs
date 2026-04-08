@@ -723,7 +723,7 @@ public static class SExpr
 
     static void WriteAsmOpInstr(AsmOpInstr aoi, StringBuilder sb)
     {
-        sb.Append($"(op {QuoteString(aoi.RawOpName)}");
+        sb.Append(aoi.JustEffect ? $"(@op {QuoteString(aoi.RawOpName)}" : $"(op {QuoteString(aoi.RawOpName)}");
         if (aoi.Arg0 != null) { sb.Append(' '); WriteAsmArg(aoi.Arg0, sb); }
         if (aoi.Arg1 != null) { sb.Append(' '); WriteAsmArg(aoi.Arg1, sb); }
         sb.Append(')');

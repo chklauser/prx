@@ -153,6 +153,7 @@ public sealed record AsmOpInstr(
     OpCode? OpCode,
     string RawOpName,
     string? Detail,
+    bool JustEffect,
     AsmArg? Arg0,
     AsmArg? Arg1) : AsmInstr(Span);
 

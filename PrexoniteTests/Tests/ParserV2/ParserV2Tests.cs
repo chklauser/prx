@@ -2171,6 +2171,12 @@ function test()
 
         // Special: indloci.N index
         yield return new TestCaseData("indloci.2 0", "(op \"indloci.2\" 0)").SetName("Asm_Indloci");
+
+        // @ modifier (just-effect: instruction drops its value)
+        yield return new TestCaseData("@func.2 myFunc", "(@op \"func.2\" \"myFunc\")").SetName("Asm_JustEffect_Func");
+        yield return new TestCaseData("@indarg.1", "(@op \"indarg.1\")").SetName("Asm_JustEffect_Indarg");
+        yield return new TestCaseData("@sget.1 obj", "(@op \"sget.1\" \"obj\")").SetName("Asm_JustEffect_Sget");
+        yield return new TestCaseData("@indloci.2 0", "(@op \"indloci.2\" 0)").SetName("Asm_JustEffect_Indloci");
     }
 
     [Test]

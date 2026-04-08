@@ -1589,6 +1589,15 @@ public sealed class Parser
             return new AsmLabelDecl(SourceSpan.Merge(start, Current.Span), name);
         }
 
+        // Optional @ prefix (just-effect: instruction drops its value)
+        // Must be checked before the identifier guard since @ is not IsIdentifierLike
+        bool justEffect = false;
+        if (Check(TokenKind.At))
+        {
+            justEffect = true;
+            Next();
+        }
+
         if (!Current.IsIdentifierLike && Current.Kind is not (TokenKind.Identifier))
         {
             if (Check(TokenKind.Semicolon) || Check(TokenKind.RBrace) || Check(TokenKind.RParen))
@@ -1630,7 +1639,7 @@ public sealed class Parser
             }
         }
 
-        return new AsmOpInstr(SourceSpan.Merge(start, Current.Span), opCode, rawOpName, detail, arg0, arg1);
+        return new AsmOpInstr(SourceSpan.Merge(start, Current.Span), opCode, rawOpName, detail, justEffect, arg0, arg1);
     }
 
     AsmArg? ParseAsmArg()
