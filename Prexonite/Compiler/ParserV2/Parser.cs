@@ -104,7 +104,8 @@ public sealed class Parser
             or TokenKind.Integer or TokenKind.Real
             or TokenKind.RealLike or TokenKind.KwTrue or TokenKind.KwFalse or TokenKind.KwNull
             or TokenKind.Semicolon or TokenKind.KwEnabled or TokenKind.KwDisabled
-            or TokenKind.LBrack; // meta list
+            or TokenKind.LBrack or TokenKind.LBrace // meta list { ... }
+            or TokenKind.Identifier or TokenKind.Version;
     }
 
     // ── Function declarations ──────────────────────────────────────────────
@@ -151,6 +152,13 @@ public sealed class Parser
             }
         }
 
+        // Parameters (come before meta block in the grammar)
+        var parameters = ImmutableArray<FormalParam>.Empty;
+        if (Check(TokenKind.LParen))
+        {
+            parameters = ParseFormalParams();
+        }
+
         // Optional meta block: [is key; ...]
         var meta = ParseMetaBlock();
 
@@ -159,13 +167,6 @@ public sealed class Parser
         if (Check(TokenKind.Identifier) && Current.Text == "import")
         {
             importClause = ParseNsImportClause();
-        }
-
-        // Parameters
-        var parameters = ImmutableArray<FormalParam>.Empty;
-        if (Check(TokenKind.LParen))
-        {
-            parameters = ParseFormalParams();
         }
 
         // Body
@@ -274,7 +275,7 @@ public sealed class Parser
         return Current.Kind is TokenKind.StringRaw or TokenKind.StringSegmentText
             or TokenKind.Integer or TokenKind.Real
             or TokenKind.RealLike or TokenKind.Version or TokenKind.KwTrue or TokenKind.KwFalse
-            or TokenKind.KwNull or TokenKind.LParen
+            or TokenKind.KwNull or TokenKind.LParen or TokenKind.LBrace
             || (Current.IsIdentifierLike && Current.Kind != TokenKind.KwIs
                 && Current.Kind != TokenKind.KwNot && Current.Kind != TokenKind.KwAdd
                 && Current.Kind != TokenKind.KwEnabled && Current.Kind != TokenKind.KwDisabled);
@@ -329,6 +330,22 @@ public sealed class Parser
             return new MExprAtom(sp, null);
         }
 
+        // Brace list form: { mexpr, mexpr, ... }
+        if (Check(TokenKind.LBrace))
+        {
+            var sp = Current.Span;
+            Next(); // {
+            var items = ImmutableArray.CreateBuilder<MExprNode>();
+            while (!Check(TokenKind.RBrace) && !Check(TokenKind.Eof))
+            {
+                items.Add(ParseMExpr());
+                if (!Eat(TokenKind.Comma)) break;
+            }
+            var endSpan = Current.Span;
+            Expect(TokenKind.RBrace);
+            return new MExprList(SourceSpan.Merge(sp, endSpan), "", items.ToImmutable());
+        }
+
         // List form: head(args) or head arg
         if (Current.IsIdentifierLike)
         {
@@ -348,6 +365,13 @@ public sealed class Parser
                 var endSpan = Current.Span;
                 Expect(TokenKind.RParen);
                 return new MExprList(SourceSpan.Merge(headSpan, endSpan), head, args.ToImmutable());
+            }
+
+            // head followed by a single MExpr arg (no parens)
+            if (IsMExprStart())
+            {
+                var arg = ParseMExpr();
+                return new MExprList(SourceSpan.Merge(headSpan, arg.Span), head, [arg]);
             }
 
             // head alone = list with no args
@@ -909,8 +933,11 @@ public sealed class Parser
         Next(); // build
         Eat(TokenKind.KwDoes);
         _lexer.PushMode(LexerMode.Local);
-        var block = ParseBlock();
+        var block = Check(TokenKind.LBrace)
+            ? ParseBlock()
+            : ParseStatementBlock();
         _lexer.PopMode();
+        Eat(TokenKind.Semicolon);
         return new BuildBlockDecl(SourceSpan.Merge(start, block.Span), block);
     }
 
@@ -2083,14 +2110,13 @@ public sealed class Parser
             case TokenKind.Question:
             {
                 Next();
-                // ?n form
+                int? idx = null;
                 if (Check(TokenKind.Integer))
                 {
-                    var idx = ParseIntValue(Current.Text);
+                    idx = ParseIntValue(Current.Text);
                     Next();
-                    return new PlaceholderExpr(SourceSpan.Merge(start, Current.Span), idx);
                 }
-                return new PlaceholderExpr(start, null);
+                return ParseGetSetSuffix(new PlaceholderExpr(SourceSpan.Merge(start, Current.Span), idx));
             }
 
             case TokenKind.LBrack:

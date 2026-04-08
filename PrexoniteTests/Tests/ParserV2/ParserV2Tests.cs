@@ -1673,4 +1673,180 @@ public class ParserV2Tests
         var fn = (FunctionDecl)cu.Declarations[0];
         Assert.That(fn.Parameters.Length, Is.EqualTo(2));
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  End-to-end tests with real .pxs file patterns
+    // ══════════════════════════════════════════════════════════════════════
+
+    [Test]
+    public void E2E_NamespaceWithImportAndDeclare()
+    {
+        // From prx_lib.pxs: namespace with import and declare block
+        var source = @"
+namespace prx.cli
+    import sys.*
+{
+    namespace timer {
+        declare(
+            start = ref command @""timer\start"",
+            stop = ref command @""timer\stop"",
+        );
+    }
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var ns = (NamespaceDecl)cu.Declarations[0];
+        Assert.That(ns.Name.ToString(), Is.EqualTo("prx::cli"));
+        Assert.That(ns.Body.Length, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void E2E_FunctionWithMetaAndPrimeIdentifiers()
+    {
+        // From struct.test.pxs: functions with prime identifiers and metadata
+        var source = @"
+function test_struct[test]
+{
+    function create_test_obj(x)
+    {
+        function m(self,y) = x + y;
+        function m'(self,y) = self.m(y*x);
+        function p(y)[private] = 2*x + 3*y;
+        function m''(self,y) = p(y);
+        return struct;
+    }
+
+    var a = 11;
+    var o1 = new test_obj(a);
+    assert(o1 is not null,""Struct doesn't return null."");
+    assert_eq(o1.m(13),a+13,""Member m"");
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        Assert.That(fn.PrimaryName, Is.EqualTo("test_struct"));
+        Assert.That(fn.Meta.Length, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void E2E_StringInterpolationInAssert()
+    {
+        // From lang-ext.test.pxs: string interpolation with function calls
+        var source = @"
+function test_con[test]
+{
+    var a = 11;
+    var b = 13;
+    var x = kvp(a,b);
+    assert(x is Prexonite::Types::PValueKeyValuePair,""$(boxed(x)) is not a PValueKeyValuePair"");
+    assert_eq(x.Key,a,""Key of $(boxed(x)) doesn't match"");
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void E2E_PartialApplication()
+    {
+        // From prx_lib.pxs: partial application with ? placeholder
+        var source = @"
+function foo()
+{
+    ref green = runInDifferentColor(?, ::ConsoleColor.Green);
+    ref yellow = ?.();
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void E2E_AppendRightChain()
+    {
+        // Common pattern: list >> each(action) >> all
+        var source = @"
+function test()
+{
+    var data = [1, 2, 3];
+    data >> each(i => assert_eq(s.contains(i), true, ""contains($i)"")) >> all;
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void E2E_LambdaAndConditionalRef()
+    {
+        // From prx_lib.pxs: conditional ref declaration with lambdas
+        var source = @"
+function test()
+{
+    ref red =
+        if(supportsColors)
+            f => runInDifferentColor(f, ::ConsoleColor.Red)
+        else
+            f => f.()
+        ;
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void E2E_TryCatchFinally()
+    {
+        var source = @"
+function runSafe()
+{
+    var r;
+    try {
+        r = f();
+    } catch(var e) {
+        println(""Error: $(e)"");
+    } finally {
+        cleanup();
+    }
+    return r;
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void E2E_ModuleMetaBlock()
+    {
+        var source = @"
+Name ""mymodule"";
+Description ""A test module"";
+References { ""dep1"", ""dep2"" };
+build does require(""framework"");
+";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        Assert.That(cu.Declarations.Length, Is.GreaterThanOrEqualTo(3));
+    }
+
+    [Test]
+    public void E2E_ForeachWithLambda()
+    {
+        var source = @"
+function test()
+{
+    var data = [a, b, c, d];
+    foreach(var i in data)
+    {
+        assert_eq(s.contains(i), true, ""contains $i"");
+    }
+}";
+        var cu = Parse(source);
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
 }
