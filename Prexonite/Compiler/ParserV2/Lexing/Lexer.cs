@@ -623,7 +623,7 @@ public sealed class Lexer
                 int c = Advance();
                 if (c == -1 || c == '\n') break;
                 if (c == '"') break;
-                if (c == '\\') { _buf.Append(ProcessEscape()); }
+                if (c == '\\') { { var esc = ProcessEscape(); if (esc != '\xFFFF') _buf.Append(esc); } }
                 else _buf.Append((char)c);
             }
         }
@@ -657,7 +657,7 @@ public sealed class Lexer
             if (c == '\\')
             {
                 Advance(); // consume \
-                _buf.Append(ProcessEscape());
+                { var esc = ProcessEscape(); if (esc != '\xFFFF') _buf.Append(esc); }
                 continue;
             }
             if (c == '$')
@@ -778,7 +778,7 @@ public sealed class Lexer
             't' => '\t',
             'v' => '\v',
             '$' => '$',
-            '&' => '\0', // \& = nothing (stripped)
+            '&' => '\xFFFF', // \& = nothing (sentinel, caller must not append)
             'x' or 'u' or 'U' => ConsumeHexEscape(c),
             _ => (char)c, // unknown escape → literal char
         };

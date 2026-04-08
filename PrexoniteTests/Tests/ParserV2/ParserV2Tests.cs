@@ -1403,4 +1403,274 @@ public class ParserV2Tests
     {
         AssertExprSx("-a + b", "(+ (neg (id \"a\")) (id \"b\"))");
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  GAP COVERAGE — Tasks #3-#10
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ── Task #3: Identifiers with backslash and single-quote ─────────────
+
+    [Test]
+    public void Identifier_WithBackslash()
+    {
+        AssertExprSx(@"\init", "(id \"\\\\init\")");
+    }
+
+    [Test]
+    public void Identifier_WithPrime()
+    {
+        AssertExprSx("m'", "(id \"m'\")");
+    }
+
+    [Test]
+    public void Identifier_WithDoublePrime()
+    {
+        AssertExprSx("m''", "(id \"m''\")");
+    }
+
+    [Test]
+    public void Identifier_BackslashMid()
+    {
+        // Backslash in middle of identifier
+        AssertExprSx(@"test\store", "(id \"test\\\\store\")");
+    }
+
+    // ── Task #4: $"arbitrary id", $@ varargs, $keyword ───────────────────
+
+    [Test]
+    public void DollarString_ArbitraryId()
+    {
+        // $"non standard" produces an Identifier token with the string content
+        AssertExprSx("$\"my identifier\"", "(id \"my identifier\")");
+    }
+
+    [Test]
+    public void DollarKeyword_If()
+    {
+        // $if produces identifier "if" (not the keyword)
+        AssertExprSx("$if", "(id \"if\")");
+    }
+
+    // ── Task #5: All modifying assignment operators ───────────────────────
+
+    [Test]
+    public void Assignment_Sub()
+    {
+        AssertExprSx("x -= 1", "(-= (id \"x\") 1)");
+    }
+
+    [Test]
+    public void Assignment_Mul()
+    {
+        AssertExprSx("x *= 2", "(*= (id \"x\") 2)");
+    }
+
+    [Test]
+    public void Assignment_Div()
+    {
+        AssertExprSx("x /= 2", "(/= (id \"x\") 2)");
+    }
+
+    [Test]
+    public void Assignment_BitAnd()
+    {
+        AssertExprSx("x &= 0xFF", "(&= (id \"x\") 255)");
+    }
+
+    [Test]
+    public void Assignment_BitOr()
+    {
+        AssertExprSx("x |= 1", "(|= (id \"x\") 1)");
+    }
+
+    [Test]
+    public void Assignment_DeltaLeft()
+    {
+        AssertExprSx("x <|= f", "(<<= (id \"x\") (id \"f\"))");
+    }
+
+    [Test]
+    public void Assignment_DeltaRight()
+    {
+        AssertExprSx("x |>= f", "(>>= (id \"x\") (id \"f\"))");
+    }
+
+    // ── Task #6: Operator-as-identifier ──────────────────────────────────
+
+    [Test]
+    public void OpIdent_Plus()
+    {
+        AssertExprSx("(+)", "(id \"(+)\")");
+    }
+
+    [Test]
+    public void OpIdent_Minus()
+    {
+        AssertExprSx("(-)", "(id \"(-)\")");
+    }
+
+    [Test]
+    public void OpIdent_Eq()
+    {
+        AssertExprSx("(==)", "(id \"(==)\")");
+    }
+
+    // ── Task #7: Missing statement forms ─────────────────────────────────
+
+    [Test]
+    public void DoUntilStmt()
+    {
+        // Just verify it parses without errors and produces the right node type
+        var cu = Parse("function __test__() { do { x--; } until (x == 0); }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = (FunctionBlockBody)fn.Body;
+        var stmt = body.Statements.Statements[0];
+        Assert.That(stmt, Is.InstanceOf<WhileStmt>());
+        var ws = (WhileStmt)stmt;
+        Assert.That(ws.IsNegated, Is.True, "until = negated");
+        Assert.That(ws.IsPostCondition, Is.True, "do-until = post-condition");
+    }
+
+    [Test]
+    public void TryFinallyCatch_Reversed()
+    {
+        // finally BEFORE catch — both should be captured regardless of order
+        var cu = Parse("function __test__() { try { a(); } finally { cleanup(); } catch (var e) { handle(); } }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = (FunctionBlockBody)fn.Body;
+        var stmt = body.Statements.Statements[0];
+        Assert.That(stmt, Is.InstanceOf<TryCatchFinallyStmt>());
+        var tcf = (TryCatchFinallyStmt)stmt;
+        Assert.That(tcf.Catch, Is.Not.Null, "catch should be present");
+        Assert.That(tcf.Finally, Is.Not.Null, "finally should be present");
+    }
+
+    [Test]
+    public void NestedFunction_Depth2()
+    {
+        var cu = Parse("function outer() { function inner() { function deepest() { return 0; } } }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var outer = (FunctionDecl)cu.Declarations[0];
+        var outerBody = (FunctionBlockBody)outer.Body;
+        var innerStmt = (NestedFunctionStmt)outerBody.Statements.Statements[0];
+        var innerBody = (FunctionBlockBody)innerStmt.Function.Body;
+        var deepestStmt = innerBody.Statements.Statements[0];
+        Assert.That(deepestStmt, Is.InstanceOf<NestedFunctionStmt>());
+    }
+
+    // ── Task #8: \& string escape ────────────────────────────────────────
+
+    [Test]
+    public void String_BackslashAmpersand()
+    {
+        // \& should produce nothing (empty)
+        var cu = Parse("function __test__() { var s = \"ab\\&cd\"; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = (FunctionBlockBody)fn.Body;
+        var stmt = (ExprStmt)body.Statements.Statements[0];
+        var assign = (AssignExpr)stmt.Expression;
+        var str = (StringLit)assign.Value;
+        Assert.That(str.Value, Is.EqualTo("abcd")); // \& produces nothing
+    }
+
+    // ── Task #9: CLR type with multi-level namespaces ────────────────────
+
+    [Test]
+    public void ClrType_MultiLevel()
+    {
+        // Prexonite::Types::PValueKeyValuePair — verify it parses without error
+        var cu = Parse("function __test__() { var x = y is Prexonite::Types::PValueKeyValuePair; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = (FunctionBlockBody)fn.Body;
+        var stmt = (ExprStmt)body.Statements.Statements[0];
+        var assign = (AssignExpr)stmt.Expression;
+        var check = (TypeCheckExpr)assign.Value;
+        var clrType = (ClrTypeExpr)check.Type;
+        Assert.That(clrType.FullName, Is.EqualTo("Prexonite.Types.PValueKeyValuePair"));
+    }
+
+    [Test]
+    public void ClrType_LeadingDoubleColon()
+    {
+        // Verify ::Console type is parsed
+        var cu = Parse("function __test__() { var x = new ::Console(); }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = (FunctionBlockBody)fn.Body;
+        var stmt = (ExprStmt)body.Statements.Statements[0];
+        var assign = (AssignExpr)stmt.Expression;
+        var newExpr = (NewExpr)assign.Value;
+        Assert.That(newExpr.Type, Is.InstanceOf<ClrTypeExpr>());
+    }
+
+    // ── Task #10: Delta operators ────────────────────────────────────────
+
+    [Test]
+    public void Delta_PostfixLeft()
+    {
+        // x<| with no RHS → postfix unary
+        AssertExprSx("[x <|]", "(list (post<| (id \"x\")))");
+    }
+
+    [Test]
+    public void Delta_PostfixRight()
+    {
+        AssertExprSx("[x |>]", "(list (post|> (id \"x\")))");
+    }
+
+    [Test]
+    public void Delta_Prefix()
+    {
+        AssertExprSx("<| x", "(pre<| (id \"x\"))");
+    }
+
+    [Test]
+    public void Delta_Binary()
+    {
+        AssertExprSx("x <| y", "(<| (id \"x\") (id \"y\"))");
+    }
+
+    // ── Trailing commas ──────────────────────────────────────────────────
+
+    [Test]
+    public void TrailingComma_CallArgs()
+    {
+        // f(a, b,) — trailing comma in call argument list
+        AssertExprSx("f(a, b,)", "(call (id \"f\") (id \"a\") (id \"b\"))");
+    }
+
+    [Test]
+    public void TrailingComma_ListLiteral()
+    {
+        // [1, 2, 3,] — trailing comma in list literal
+        AssertExprSx("[1, 2, 3,]", "(list 1 2 3)");
+    }
+
+    [Test]
+    public void TrailingComma_HashLiteral()
+    {
+        // {a:1, b:2,} — trailing comma in hash literal
+        AssertExprSx("f({a:1, b:2,})", "(call (id \"f\") (hash (kvp (id \"a\") 1) (kvp (id \"b\") 2)))");
+    }
+
+    [Test]
+    public void TrailingComma_FormalParams()
+    {
+        // function foo(x, y,) { } — trailing comma in formal parameter list
+        var cu = Parse("function foo(x, y,) { }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        Assert.That(fn.Parameters.Length, Is.EqualTo(2));
+    }
 }

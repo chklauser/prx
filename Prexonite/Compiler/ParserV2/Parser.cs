@@ -1334,21 +1334,25 @@ public sealed class Parser
         CatchClause? catchClause = null;
         Block? finallyBlock = null;
 
-        if (Check(TokenKind.KwCatch))
+        // catch and finally in either order, each optional (at least one required)
+        for (int i = 0; i < 2; i++)
         {
-            var catchStart = Current.Span;
-            Next(); // catch
-            Expect(TokenKind.LParen);
-            var exVar = ParseExpr();
-            Expect(TokenKind.RParen);
-            var catchBody = Check(TokenKind.LBrace) ? ParseBlock() : ParseStatementBlock();
-            catchClause = new CatchClause(SourceSpan.Merge(catchStart, catchBody.Span), exVar, catchBody);
-        }
-
-        if (Check(TokenKind.KwFinally))
-        {
-            Next();
-            finallyBlock = Check(TokenKind.LBrace) ? ParseBlock() : ParseStatementBlock();
+            if (Check(TokenKind.KwCatch) && catchClause == null)
+            {
+                var catchStart = Current.Span;
+                Next(); // catch
+                Expect(TokenKind.LParen);
+                var exVar = ParseExpr();
+                Expect(TokenKind.RParen);
+                var catchBody = Check(TokenKind.LBrace) ? ParseBlock() : ParseStatementBlock();
+                catchClause = new CatchClause(SourceSpan.Merge(catchStart, catchBody.Span), exVar, catchBody);
+            }
+            else if (Check(TokenKind.KwFinally) && finallyBlock == null)
+            {
+                Next();
+                finallyBlock = Check(TokenKind.LBrace) ? ParseBlock() : ParseStatementBlock();
+            }
+            else break;
         }
 
         if (catchClause == null && finallyBlock == null)
@@ -1674,15 +1678,27 @@ public sealed class Parser
             }
             else if (Check(TokenKind.DeltaRight))
             {
+                var opSpan = Current.Span;
                 Next();
-                var right = ParseAppendRightExpr();
-                left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.DeltaRight, left, right);
+                if (IsExprStart())
+                {
+                    var right = ParseAppendRightExpr();
+                    left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.DeltaRight, left, right);
+                }
+                else
+                    left = new UnaryExpr(SourceSpan.Merge(left.Span, opSpan), UnaryOp.PostDeltaRight, left);
             }
             else // DeltaLeft
             {
+                var opSpan = Current.Span;
                 Next();
-                var right = ParseAppendRightExpr();
-                left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.DeltaLeft, left, right);
+                if (IsExprStart())
+                {
+                    var right = ParseAppendRightExpr();
+                    left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.DeltaLeft, left, right);
+                }
+                else
+                    left = new UnaryExpr(SourceSpan.Merge(left.Span, opSpan), UnaryOp.PostDeltaLeft, left);
             }
         }
         return left;
@@ -1885,8 +1901,8 @@ public sealed class Parser
             TokenKind.BitAnd when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.BitwiseAnd,
             TokenKind.BitOr when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.BitwiseOr,
             TokenKind.Coalescence when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.Coalesce,
-            TokenKind.AppendRight when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.DeltaRight,
-            TokenKind.AppendLeft when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.DeltaLeft,
+            TokenKind.DeltaRight when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.DeltaRight,
+            TokenKind.DeltaLeft when _lexer.Peek().Kind == TokenKind.Assign => AssignOp.DeltaLeft,
             _ => null
         };
 
@@ -2004,6 +2020,18 @@ public sealed class Parser
             Next();
             var operand = ParsePrefixExpr();
             return new UnaryExpr(SourceSpan.Merge(start, operand.Span), UnaryOp.Splice, operand);
+        }
+        if (Check(TokenKind.DeltaLeft))
+        {
+            Next();
+            var operand = ParsePrefixExpr();
+            return new UnaryExpr(SourceSpan.Merge(start, operand.Span), UnaryOp.PreDeltaLeft, operand);
+        }
+        if (Check(TokenKind.DeltaRight))
+        {
+            Next();
+            var operand = ParsePrefixExpr();
+            return new UnaryExpr(SourceSpan.Merge(start, operand.Span), UnaryOp.PreDeltaRight, operand);
         }
 
         return ParsePrimary();
@@ -2598,16 +2626,15 @@ public sealed class Parser
 
         if (Check(TokenKind.NsId))
         {
+            // NsId tokens already have :: consumed (e.g., "Prexonite" from "Prexonite::")
             var parts = ImmutableArray.CreateBuilder<string>();
-            parts.Add(Current.Text); Next();
-            // ::
-            Expect(TokenKind.DoubleColon);
-            if (Current.IsIdentifierLike) { parts.Add(Current.Text); Next(); }
-            while (Check(TokenKind.Dot))
+            while (Check(TokenKind.NsId))
             {
+                parts.Add(Current.Text);
                 Next();
-                if (Current.IsIdentifierLike) { parts.Add(Current.Text); Next(); }
             }
+            // Final part: the actual type name (plain identifier)
+            if (Current.IsIdentifierLike) { parts.Add(Current.Text); Next(); }
             return new ClrTypeExpr(SourceSpan.Merge(start, Current.Span), parts.ToImmutable());
         }
 
@@ -2708,6 +2735,24 @@ public sealed class Parser
     void Error(string message)
     {
         _diagnostics.Add(new Diagnostic(DiagnosticSeverity.Error, Current.Span, message));
+    }
+
+    bool IsExprStart()
+    {
+        return Current.Kind is TokenKind.Identifier or TokenKind.Integer or TokenKind.Real
+            or TokenKind.RealLike or TokenKind.StringRaw or TokenKind.StringSegmentText
+            or TokenKind.StringInterpolStart or TokenKind.StringSegmentId
+            or TokenKind.KwTrue or TokenKind.KwFalse or TokenKind.KwNull
+            or TokenKind.LParen or TokenKind.LBrack or TokenKind.LBrace
+            or TokenKind.Plus or TokenKind.Minus or TokenKind.Times
+            or TokenKind.Inc or TokenKind.Dec or TokenKind.KwNot
+            or TokenKind.KwNew or TokenKind.KwLazy or TokenKind.KwCoroutine
+            or TokenKind.KwThrow or TokenKind.Question or TokenKind.Pointer
+            or TokenKind.Tilde or TokenKind.DoubleColon or TokenKind.NsId
+            or TokenKind.KwVar or TokenKind.KwRef or TokenKind.KwStatic
+            or TokenKind.KwThis or TokenKind.KwAsm or TokenKind.KwIf or TokenKind.KwUnless
+            or TokenKind.DeltaLeft or TokenKind.DeltaRight
+            || Current.IsKeyword;
     }
 
     static int ParseIntValue(string text)
