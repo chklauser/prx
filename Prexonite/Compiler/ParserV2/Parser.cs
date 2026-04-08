@@ -390,6 +390,30 @@ public sealed class Parser
             var headSpan = Current.Span;
             Next();
 
+            // Dot-separated qualified name: psr.ast, prx.cli.io
+            while (Check(TokenKind.Dot) && _lexer.Peek().IsIdentifierLike)
+            {
+                Next(); // .
+                head += "." + Current.Text;
+                Next();
+            }
+            // NsId continuation: Prexonite::Compiler
+            while (Check(TokenKind.NsId))
+            {
+                head += "." + Current.Text;
+                Next();
+            }
+            // /version suffix: prx/1.0
+            if (Check(TokenKind.Div))
+            {
+                Next();
+                if (Check(TokenKind.RealLike) || Check(TokenKind.Version) || Check(TokenKind.Integer))
+                {
+                    head += "/" + Current.Text;
+                    Next();
+                }
+            }
+
             if (Check(TokenKind.LParen))
             {
                 Next(); // (
