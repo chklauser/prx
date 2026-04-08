@@ -71,6 +71,10 @@ public sealed class Parser
 
     Decl ParseDeclaration()
     {
+        // Skip stray semicolons and `and` at declaration level
+        while (Check(TokenKind.Semicolon) || Check(TokenKind.KwAnd)) Next();
+        if (Check(TokenKind.Eof) || Check(TokenKind.RBrace)) return null!;
+
         var tok = Current;
         return tok.Kind switch
         {
@@ -100,7 +104,7 @@ public sealed class Parser
         // Heuristic: at global scope, an identifier followed by a value or `;` is module meta
         // Peek at next token
         var peek = _lexer.Peek();
-        return peek.Kind is TokenKind.StringRaw or TokenKind.StringSegmentText
+        return peek.Kind is TokenKind.StringRaw or TokenKind.StringSegmentText or TokenKind.StringEnd
             or TokenKind.Integer or TokenKind.Real
             or TokenKind.RealLike or TokenKind.KwTrue or TokenKind.KwFalse or TokenKind.KwNull
             or TokenKind.Semicolon or TokenKind.KwEnabled or TokenKind.KwDisabled
@@ -475,6 +479,10 @@ public sealed class Parser
             {
                 isRef = true;
                 Next();
+            }
+            else if (Check(TokenKind.KwVar))
+            {
+                Next(); // var is accepted but doesn't change semantics
             }
             if (!Current.IsIdentifierLike)
             {
@@ -967,6 +975,9 @@ public sealed class Parser
         var items = ImmutableArray.CreateBuilder<DeclareItem>();
         do
         {
+            // Allow trailing comma: `declare var a, b,;`
+            if (Check(TokenKind.Semicolon) || Check(TokenKind.RBrace) || Check(TokenKind.Eof))
+                break;
             if (!Current.IsIdentifierLike)
             {
                 Error($"Expected declaration name, got {Current.Kind}");
@@ -2121,11 +2132,11 @@ public sealed class Parser
             }
             else if (Check(TokenKind.AppendLeft))
             {
-                // expr << (a, b)  or  expr << a
+                // expr << (a, b)  or  expr << a  or  expr << lambda
                 var llStart = Current.Span;
                 Next(); // <<
                 var prependArgs = ImmutableArray.CreateBuilder<Expr>();
-                if (Check(TokenKind.LParen))
+                if (Check(TokenKind.LParen) && !IsLambdaExpression())
                 {
                     Next();
                     while (!Check(TokenKind.RParen) && !Check(TokenKind.Eof))

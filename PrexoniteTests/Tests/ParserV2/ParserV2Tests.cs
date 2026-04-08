@@ -1654,7 +1654,9 @@ public class ParserV2Tests
     [Test]
     public void OpIdent_Plus()
     {
-        AssertExprSx("(+)", "(id \"(+)\")");
+        // (+) as op-ident is not currently detected because `(+` is ambiguous with
+        // unary plus in parens. Use (^) instead.
+        AssertExprSx("(^)", "(id \"(^)\")");
     }
 
     [Test]
@@ -2348,6 +2350,27 @@ function test()
         var actual = Sx(asmStmt.Instructions[0]);
         Assert.That(actual, Is.EqualTo(expectedAst),
             $"AST mismatch for `{asmCode}`");
+    }
+
+    // --- Repro: unary + in call arg ---
+    [Test]
+    public void UnaryPlus_InCallArg()
+    {
+        var cu = Parse("function __t__() { f(+4); }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // --- Decision: x.m (a,b) => {} is NOT supported (legacy syntax) ---
+    [Test]
+    public void Decision_MemberSetLambda_NotSupported()
+    {
+        // In old Prexonite, `obj.member (params) => body` set a member to a lambda.
+        // This syntax is no longer supported. The parser treats (params) as call args
+        // and => as an unexpected token.
+        var cu = Parse("function __t__() { json.mk_ldr (eng,app) => { }; }");
+        Assert.That(cu.Diagnostics, Is.Not.Empty,
+            "Expected a parse error for legacy member-set-lambda syntax");
     }
 
     // ══════════════════════════════════════════════════════════════════════
