@@ -2712,6 +2712,8 @@ public sealed class Parser
 
     static int ParseIntValue(string text)
     {
+        // Strip digit separators (1'000 → 1000)
+        text = text.Replace("'", "");
         if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             return Convert.ToInt32(text, 16);
         return int.TryParse(text, out var v) ? v : 0;

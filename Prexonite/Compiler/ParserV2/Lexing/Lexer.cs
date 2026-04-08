@@ -456,8 +456,9 @@ public sealed class Lexer
             return MakeToken(TokenKind.Integer, _buf.ToString(), start);
         }
 
-        // Integer part
-        while (IsDigit(Peek1())) _buf.Append((char)Advance());
+        // Integer part (digits with optional ' separators: 1'000'000)
+        while (IsDigit(Peek1()) || (Peek1() == '\'' && IsDigit(Peek2())))
+            _buf.Append((char)Advance());
 
         // Check for version literal: d.d.d or d.d.d.d (before checking for real)
         // We need to look ahead further. Strategy: if after int we see "." int "." → version/real

@@ -83,6 +83,13 @@ public class ParserV2Tests
     }
 
     [Test]
+    public void Literal_IntegerWithSeparators()
+    {
+        // 1'000'000 should parse as 1000000
+        AssertExprSx("1'000'000", "1000000");
+    }
+
+    [Test]
     public void Literal_Real()
     {
         AssertExprSx("1.5", "1.5");
