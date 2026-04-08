@@ -1210,15 +1210,21 @@ public sealed class Parser
         if (isLocalVarDecl)
         {
             // Could be var/ref decl or new var decl
-            var expr = ParseLocalVarDeclExpr();
-            if (expr is LocalVarDecl)
+            var expr = ParseGetSetSuffix(ParseLocalVarDeclExpr());
+            if (expr is LocalVarDecl or MemberAccessExpr or MemberCallExpr or IndexExpr)
             {
-                // may have initializer
+                // may have initializer: = expr, += expr, ??= expr, etc.
                 if (Check(TokenKind.Assign))
                 {
                     Next();
                     var rhs = ParseExpr();
                     expr = new AssignExpr(SourceSpan.Merge(expr.Span, rhs.Span), expr, rhs, AssignOp.Assign);
+                }
+                else if (IsCompoundAssign())
+                {
+                    var op = ConsumeCompoundAssign();
+                    var rhs = ParseExpr();
+                    expr = new AssignExpr(SourceSpan.Merge(expr.Span, rhs.Span), expr, rhs, op);
                 }
                 var stmt = new ExprStmt(SourceSpan.Merge(start, Current.Span), expr);
                 Eat(TokenKind.Semicolon);
@@ -2209,7 +2215,7 @@ public sealed class Parser
             case TokenKind.KwVar:
             case TokenKind.KwRef:
             {
-                return ParseLocalVarDeclExpr();
+                return ParseGetSetSuffix(ParseLocalVarDeclExpr());
             }
 
             case TokenKind.KwNew:
@@ -2858,6 +2864,35 @@ public sealed class Parser
     void Error(string message)
     {
         _diagnostics.Add(new Diagnostic(DiagnosticSeverity.Error, Current.Span, message));
+    }
+
+    bool IsCompoundAssign()
+    {
+        return (Current.Kind is TokenKind.Plus or TokenKind.Minus or TokenKind.Times or TokenKind.Div
+            or TokenKind.BitAnd or TokenKind.BitOr or TokenKind.Coalescence
+            or TokenKind.DeltaLeft or TokenKind.DeltaRight or TokenKind.Tilde)
+            && _lexer.Peek().Kind == TokenKind.Assign;
+    }
+
+    AssignOp ConsumeCompoundAssign()
+    {
+        var op = Current.Kind switch
+        {
+            TokenKind.Plus => AssignOp.Add,
+            TokenKind.Minus => AssignOp.Sub,
+            TokenKind.Times => AssignOp.Mul,
+            TokenKind.Div => AssignOp.Div,
+            TokenKind.BitAnd => AssignOp.BitwiseAnd,
+            TokenKind.BitOr => AssignOp.BitwiseOr,
+            TokenKind.Coalescence => AssignOp.Coalesce,
+            TokenKind.DeltaLeft => AssignOp.DeltaLeft,
+            TokenKind.DeltaRight => AssignOp.DeltaRight,
+            TokenKind.Tilde => AssignOp.Cast,
+            _ => AssignOp.Assign
+        };
+        Next(); // operator
+        Next(); // =
+        return op;
     }
 
     bool IsFunctionBodyStart()
