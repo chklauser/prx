@@ -1808,40 +1808,12 @@ public sealed class Parser
     Expr ParseAtomicExpr()
     {
         var left = ParseAppendRightExpr();
-        // then-chain: a then b
-        // delta operators: x |> f, f <| x (binary pipe/delta)
-        while (Check(TokenKind.KwThen) || Check(TokenKind.DeltaRight) || Check(TokenKind.DeltaLeft))
+        // then-chain only (delta moved to its proper precedence level)
+        while (Check(TokenKind.KwThen))
         {
-            if (Check(TokenKind.KwThen))
-            {
-                Next();
-                var right = ParseAppendRightExpr();
-                left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.Then, left, right);
-            }
-            else if (Check(TokenKind.DeltaRight))
-            {
-                var opSpan = Current.Span;
-                Next();
-                if (IsExprStart())
-                {
-                    var right = ParseAppendRightExpr();
-                    left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.DeltaRight, left, right);
-                }
-                else
-                    left = new UnaryExpr(SourceSpan.Merge(left.Span, opSpan), UnaryOp.PostDeltaRight, left);
-            }
-            else // DeltaLeft
-            {
-                var opSpan = Current.Span;
-                Next();
-                if (IsExprStart())
-                {
-                    var right = ParseAppendRightExpr();
-                    left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.DeltaLeft, left, right);
-                }
-                else
-                    left = new UnaryExpr(SourceSpan.Merge(left.Span, opSpan), UnaryOp.PostDeltaLeft, left);
-            }
+            Next();
+            var right = ParseAppendRightExpr();
+            left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.Then, left, right);
         }
         return left;
     }
@@ -1882,14 +1854,73 @@ public sealed class Parser
         return left;
     }
 
+    // Precedence chain (matching old parser):
+    //   and → delta(<|,|>) → | → xor → & → not → ==
+
     Expr ParseAndExpr()
     {
-        var left = ParseNotExpr();
+        var left = ParseDeltaExpr();
         while (Check(TokenKind.KwAnd) && !_suppressAndAsOperator)
         {
             Next();
-            var right = ParseNotExpr();
+            var right = ParseDeltaExpr();
             left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.LogicalAnd, left, right);
+        }
+        return left;
+    }
+
+    Expr ParseDeltaExpr()
+    {
+        var left = ParseBitwiseOrExpr();
+        while (Check(TokenKind.DeltaLeft) || Check(TokenKind.DeltaRight))
+        {
+            var opSpan = Current.Span;
+            var op = Check(TokenKind.DeltaLeft) ? BinaryOp.DeltaLeft : BinaryOp.DeltaRight;
+            var uop = Check(TokenKind.DeltaLeft) ? UnaryOp.PostDeltaLeft : UnaryOp.PostDeltaRight;
+            Next();
+            if (IsExprStart())
+            {
+                var right = ParseBitwiseOrExpr();
+                left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), op, left, right);
+            }
+            else
+                left = new UnaryExpr(SourceSpan.Merge(left.Span, opSpan), uop, left);
+        }
+        return left;
+    }
+
+    Expr ParseBitwiseOrExpr()
+    {
+        var left = ParseXorExpr();
+        while (Check(TokenKind.BitOr))
+        {
+            Next();
+            var right = ParseXorExpr();
+            left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.BitwiseOr, left, right);
+        }
+        return left;
+    }
+
+    Expr ParseXorExpr()
+    {
+        var left = ParseBitwiseAndExpr();
+        while (Check(TokenKind.KwXor))
+        {
+            Next();
+            var right = ParseBitwiseAndExpr();
+            left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.Xor, left, right);
+        }
+        return left;
+    }
+
+    Expr ParseBitwiseAndExpr()
+    {
+        var left = ParseNotExpr();
+        while (Check(TokenKind.BitAnd))
+        {
+            Next();
+            var right = ParseNotExpr();
+            left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.BitwiseAnd, left, right);
         }
         return left;
     }
@@ -1903,32 +1934,7 @@ public sealed class Parser
             var operand = ParseNotExpr();
             return new UnaryExpr(SourceSpan.Merge(start, operand.Span), UnaryOp.LogicalNot, operand);
         }
-        return ParseBitwiseOrExpr();
-    }
-
-    Expr ParseBitwiseOrExpr()
-    {
-        var left = ParseBitwiseAndExpr();
-        while (Check(TokenKind.BitOr) || Check(TokenKind.KwXor))
-        {
-            var op = Check(TokenKind.KwXor) ? BinaryOp.Xor : BinaryOp.BitwiseOr;
-            Next();
-            var right = ParseBitwiseAndExpr();
-            left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), op, left, right);
-        }
-        return left;
-    }
-
-    Expr ParseBitwiseAndExpr()
-    {
-        var left = ParseEqualityExpr();
-        while (Check(TokenKind.BitAnd))
-        {
-            Next();
-            var right = ParseEqualityExpr();
-            left = new BinaryExpr(SourceSpan.Merge(left.Span, right.Span), BinaryOp.BitwiseAnd, left, right);
-        }
-        return left;
+        return ParseEqualityExpr();
     }
 
     Expr ParseEqualityExpr()
@@ -2145,6 +2151,12 @@ public sealed class Parser
             var operand = ParsePrefixExpr();
             return new UnaryExpr(SourceSpan.Merge(start, operand.Span), UnaryOp.Negate, operand);
         }
+        if (Check(TokenKind.Plus))
+        {
+            Next();
+            var operand = ParsePrefixExpr();
+            return new UnaryExpr(SourceSpan.Merge(start, operand.Span), UnaryOp.UnaryPlus, operand);
+        }
         if (Check(TokenKind.Inc))
         {
             Next();
@@ -2205,13 +2217,13 @@ public sealed class Parser
             }
             case TokenKind.KwTrue:
                 Next();
-                return new BoolLit(start, true);
+                return ParseGetSetSuffix(new BoolLit(start, true));
             case TokenKind.KwFalse:
                 Next();
-                return new BoolLit(start, false);
+                return ParseGetSetSuffix(new BoolLit(start, false));
             case TokenKind.KwNull:
                 Next();
-                return new NullLit(start);
+                return ParseGetSetSuffix(new NullLit(start));
 
             case TokenKind.StringRaw:
             case TokenKind.StringSegmentText:

@@ -2007,6 +2007,76 @@ function test()
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
     }
 
+    // --- Finding 7: Whitespace-insensitive compound assignment (ACCEPTED) ---
+    [Test]
+    public void Finding7_SpacedCompoundAssign()
+    {
+        // Decision: `x + = 1` is accepted as equivalent to `x += 1`.
+        // This is intentional: the parser checks Current==Plus && Peek==Assign
+        // regardless of whitespace between them.
+        var cu = Parse("function __t__() { var x = 0; x + = 1; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // --- Finding 9: << single-arg captures full expression (ACCEPTED) ---
+    [Test]
+    public void Finding9_AppendLeftCapture()
+    {
+        // Decision: `f << a + b` is parsed as `f << (a + b)`.
+        // The << operator's single-arg RHS uses ParseExpr, capturing the full expression.
+        var cu = Parse("function __t__() { f << a + b; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // --- Finding 11: Label vs key-value at statement start (ACCEPTED) ---
+    [Test]
+    public void Finding11_LabelVsKeyValue()
+    {
+        // Decision: at statement level, `id:` is always a label, never a key-value pair.
+        // This matches the original Prexonite parser behavior.
+        var cu = Parse("function __t__() { myLabel: var x = 1; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        var body = ((FunctionBlockBody)fn.Body).Statements;
+        Assert.That(body.Statements[0], Is.InstanceOf<LabelStmt>());
+    }
+
+    // --- Precedence fixes: delta, not, xor, | ---
+    [Test]
+    public void Precedence_DeltaTighterThanThen()
+    {
+        // `a then b |> c` should be `a then (b |> c)` — delta tighter than then
+        AssertExprSx("a then b |> c",
+            "(then (id \"a\") (|> (id \"b\") (id \"c\")))");
+    }
+
+    [Test]
+    public void Precedence_NotTighterThanBitwiseOr()
+    {
+        // `not a | b` should be `(not a) | b` — not tighter than |
+        AssertExprSx("not a | b",
+            "(|| (not (id \"a\")) (id \"b\"))");
+    }
+
+    [Test]
+    public void Precedence_XorTighterThanBitwiseOr()
+    {
+        // `a | b xor c` should be `a | (b xor c)` — xor tighter than |
+        AssertExprSx("a | b xor c",
+            "(|| (id \"a\") (xor (id \"b\") (id \"c\")))");
+    }
+
+    [Test]
+    public void Precedence_DeltaTighterThanAnd()
+    {
+        // `a and b |> c` should be `a and (b |> c)` — delta tighter than and
+        AssertExprSx("[a and b |> c]",
+            "(list (and (id \"a\") (|> (id \"b\") (id \"c\"))))");
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     //  Prx arc — parse every .pxs file in the Prx/ directory tree
     // ══════════════════════════════════════════════════════════════════════

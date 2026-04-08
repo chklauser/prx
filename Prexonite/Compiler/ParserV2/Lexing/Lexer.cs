@@ -156,6 +156,12 @@ public sealed class Lexer
 
     int Advance()
     {
+        if (_hasPushBack)
+        {
+            _hasPushBack = false;
+            return _pushBack;
+        }
+
         if (_ch == -2)
         {
             // Initial read
@@ -195,6 +201,8 @@ public sealed class Lexer
     // Peek at current char without consuming
     int Peek1()
     {
+        if (_hasPushBack)
+            return _pushBack;
         if (_ch == -2)
         {
             _ch = _reader.Read();
@@ -556,13 +564,7 @@ public sealed class Lexer
     {
         _pushBack = c;
         _hasPushBack = true;
-        // Also need to undo position tracking — simplest: just track it doesn't affect tokens
-        _col--;
     }
-
-    // Override Peek1 / Advance to handle pushback
-    // (We call Peek1/Advance via different names to avoid confusion — actually we shadow them.)
-    // NOTE: The pushback is only needed for the "1." case above; everything else uses the 2-char buffer.
 
     // ── Identifier / keyword lexing ───────────────────────────────────────
     Token LexIdentOrKeyword(SourcePos start)
@@ -750,6 +752,9 @@ public sealed class Lexer
                 if (n == '(')
                 {
                     Advance();
+                    // Suspend string mode for the interpolated expression
+                    _inString = false;
+                    _suspendedString = true;
                     return MakeToken(TokenKind.StringInterpolStart, "$(", start);
                 }
                 if (IsIdentStart(n))

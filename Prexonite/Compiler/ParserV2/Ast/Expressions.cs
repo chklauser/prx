@@ -93,6 +93,7 @@ public enum BinaryOp
 public enum UnaryOp
 {
     Negate,        // -
+    UnaryPlus,     // +  (identity, no-op semantically but explicit in AST)
     LogicalNot,    // not
     PreIncrement,  // ++x
     PreDecrement,  // --x

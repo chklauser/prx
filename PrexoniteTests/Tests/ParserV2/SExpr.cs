@@ -884,6 +884,7 @@ public static class SExpr
     static string UnaryOpName(UnaryOp op) => op switch
     {
         UnaryOp.Negate => "neg",
+        UnaryOp.UnaryPlus => "pos",
         UnaryOp.LogicalNot => "not",
         UnaryOp.PreIncrement => "pre++",
         UnaryOp.PreDecrement => "pre--",
