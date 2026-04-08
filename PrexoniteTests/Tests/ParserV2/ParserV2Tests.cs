@@ -1857,6 +1857,26 @@ function test()
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
     }
 
+    // ── CLR type member access chain ──────────────────────────────────
+
+    [Test]
+    public void AsmExpr_MemberAccessChain()
+    {
+        // asm(ldr.eng).Commands.Contains("x") — member access after asm expr
+        var cu = Parse("function f() { var x = asm(ldr.eng).Commands.Contains(\"x\"); }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void ClrType_MemberAccessChain()
+    {
+        // System::Environment.OSVersion.Platform — chains through member access
+        var cu = Parse("function __t__() { var x = System::Environment.OSVersion.Platform; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     //  Prx arc — parse every .pxs file in the Prx/ directory tree
     // ══════════════════════════════════════════════════════════════════════

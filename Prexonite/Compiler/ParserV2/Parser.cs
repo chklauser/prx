@@ -2237,7 +2237,7 @@ public sealed class Parser
             {
                 Next();
                 var instrs = ParseAsmBlock();
-                return new AsmExpr(SourceSpan.Merge(start, Current.Span), instrs);
+                return ParseGetSetSuffix(new AsmExpr(SourceSpan.Merge(start, Current.Span), instrs));
             }
 
             case TokenKind.KwLazy:
