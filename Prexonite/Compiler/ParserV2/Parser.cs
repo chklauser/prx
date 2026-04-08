@@ -168,11 +168,32 @@ public sealed class Parser
                 if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
         }
 
-        // Parameters (come before meta block in the grammar)
+        // Parameters — two forms:
+        //   function name(x, y) body       — parenthesized
+        //   function name x y body         — space-separated (no parens)
         var parameters = ImmutableArray<FormalParam>.Empty;
         if (Check(TokenKind.LParen))
         {
             parameters = ParseFormalParams();
+        }
+        else if (Current.IsIdentifierLike && !IsFunctionBodyStart())
+        {
+            // Space-separated params: `function name param1 param2 ... body`
+            var pb = ImmutableArray.CreateBuilder<FormalParam>();
+            while (Current.IsIdentifierLike && !IsFunctionBodyStart()
+                && !Check(TokenKind.LBrack) && !Check(TokenKind.KwNamespace))
+            {
+                var pStart = Current.Span;
+                bool isRef = false;
+                if (Check(TokenKind.KwRef)) { isRef = true; Next(); }
+                else Eat(TokenKind.KwVar);
+                if (!Current.IsIdentifierLike) break;
+                var pName = Current.Text;
+                Next();
+                pb.Add(new FormalParam(SourceSpan.Merge(pStart, Current.Span), isRef, pName));
+                Eat(TokenKind.Comma); // optional comma between params
+            }
+            parameters = pb.ToImmutable();
         }
 
         // Optional meta block: [is key; ...]
@@ -2799,6 +2820,12 @@ public sealed class Parser
     void Error(string message)
     {
         _diagnostics.Add(new Diagnostic(DiagnosticSeverity.Error, Current.Span, message));
+    }
+
+    bool IsFunctionBodyStart()
+    {
+        return Check(TokenKind.LBrace) || Check(TokenKind.KwDoes)
+            || Check(TokenKind.Implementation) || Check(TokenKind.Assign);
     }
 
     bool IsExprStart()
