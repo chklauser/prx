@@ -1654,20 +1654,37 @@ public class ParserV2Tests
     [Test]
     public void OpIdent_Plus()
     {
-        // (+) as op-ident is not currently detected because `(+` is ambiguous with
-        // unary plus in parens. Use (^) instead.
-        AssertExprSx("(^)", "(id \"(^)\")");
+        AssertExprSx("(+)", "(id \"(+)\")");
     }
 
     [Test]
     public void OpIdent_Minus()
     {
-        // (-) as operator-ident is not currently supported because (`(-` is ambiguous
-        // with `(->name)` pointer reference). Use (-.) instead for unary negation op-ident.
-        // (-) is parsed as a parenthesized expression with unary negation applied to nothing,
-        // which will produce an error. This is a known limitation.
-        // Test a different operator-ident instead:
+        AssertExprSx("(-)", "(id \"(-)\")");
+    }
+
+    [Test]
+    public void OpIdent_Star()
+    {
+        AssertExprSx("(*)", "(id \"(*)\")");
+    }
+
+    [Test]
+    public void OpIdent_Div()
+    {
         AssertExprSx("(/)", "(id \"(/)\")");
+    }
+
+    [Test]
+    public void OpIdent_DotNeg()
+    {
+        AssertExprSx("(-.)", "(id \"(-.)\")");
+    }
+
+    [Test]
+    public void OpIdent_DecDec()
+    {
+        AssertExprSx("(--)", "(id \"(--)\")");
     }
 
     [Test]
@@ -2352,6 +2369,38 @@ function test()
             $"AST mismatch for `{asmCode}`");
     }
 
+    // --- Op-ident as function name ---
+    [Test]
+    public void FunctionDecl_OpIdentName()
+    {
+        // function (-)(this, other) = ... — operator overloading
+        var cu = Parse("function (-)(this, other) = this;");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        Assert.That(fn.PrimaryName, Is.EqualTo("(-)"));
+    }
+
+    [Test]
+    public void FunctionDecl_OpIdentDotNeg()
+    {
+        var cu = Parse("function (-.)(this, other) = this;");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+        var fn = (FunctionDecl)cu.Declarations[0];
+        Assert.That(fn.PrimaryName, Is.EqualTo("(-.)"));
+    }
+
+    // --- Lambda with var/ref params ---
+    [Test]
+    public void Lambda_VarRefParams()
+    {
+        // (var x, ref y) => x + y
+        var cu = Parse("function __t__() { var f = (var x, ref y) => x + y; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
     // --- Repro: unary + in call arg ---
     [Test]
     public void UnaryPlus_InCallArg()
@@ -2371,6 +2420,34 @@ function test()
         var cu = Parse("function __t__() { json.mk_ldr (eng,app) => { }; }");
         Assert.That(cu.Diagnostics, Is.Not.Empty,
             "Expected a parse error for legacy member-set-lambda syntax");
+    }
+
+    // --- f << () => {} (replacement syntax for member-set-lambda) ---
+    [Test]
+    public void AppendLeft_EmptyLambda()
+    {
+        // f << () => {} — lambda as single << argument
+        var cu = Parse("function __t__() { f << () => { return 1; }; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void AppendLeft_ParamLambda()
+    {
+        // f << (x, y) => x + y — lambda with params as << argument
+        var cu = Parse("function __t__() { f << (x, y) => x + y; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void AppendLeft_SingleArgLambda()
+    {
+        // f << x => x + 1 — single-arg lambda
+        var cu = Parse("function __t__() { f << x => x + 1; }");
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
     }
 
     // ══════════════════════════════════════════════════════════════════════

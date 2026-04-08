@@ -2136,15 +2136,36 @@ public sealed class Parser
                 var llStart = Current.Span;
                 Next(); // <<
                 var prependArgs = ImmutableArray.CreateBuilder<Expr>();
-                if (Check(TokenKind.LParen) && !IsLambdaExpression())
+                if (IsLambdaExpression())
                 {
-                    Next();
+                    // id => body  or  () => body
+                    prependArgs.Add(ParseExpr());
+                }
+                else if (Check(TokenKind.LParen))
+                {
+                    // Could be (a, b) arg list OR (x, y) => lambda
+                    // Parse the parens content, then check for =>
+                    var parenStart = Current.Span;
+                    Next(); // (
+                    var innerExprs = ImmutableArray.CreateBuilder<Expr>();
                     while (!Check(TokenKind.RParen) && !Check(TokenKind.Eof))
                     {
-                        prependArgs.Add(ParseExpr());
+                        innerExprs.Add(ParseExpr());
                         if (!Eat(TokenKind.Comma)) break;
                     }
                     Expect(TokenKind.RParen);
+
+                    if (Check(TokenKind.Implementation))
+                    {
+                        // Reinterpret as lambda: (params) => body
+                        var lambda = ParseLambdaFromParsedParams(innerExprs.ToImmutable(), parenStart);
+                        prependArgs.Add(lambda);
+                    }
+                    else
+                    {
+                        // Regular append-left arg list
+                        prependArgs.AddRange(innerExprs);
+                    }
                 }
                 else
                 {
@@ -2619,14 +2640,43 @@ public sealed class Parser
                 case NameExpr ne:
                     result.Add(new FormalParam(ne.Span, false, ne.Name));
                     break;
-                case LocalVarDecl lvd when lvd.RefCount > 0 && !lvd.IsNew && !lvd.IsStatic:
+                case LocalVarDecl lvd when !lvd.IsNew && !lvd.IsStatic && lvd.RefCount > 0:
                     result.Add(new FormalParam(lvd.Span, true, lvd.Name));
+                    break;
+                case LocalVarDecl lvd when !lvd.IsNew && !lvd.IsStatic && lvd.HasVar:
+                    result.Add(new FormalParam(lvd.Span, false, lvd.Name));
                     break;
                 default:
                     return null; // can't reinterpret
             }
         }
         return result.ToImmutable();
+    }
+
+    Expr ParseLambdaFromParsedParams(ImmutableArray<Expr> exprs, SourceSpan start)
+    {
+        // Reinterpret parsed expressions as formal params
+        var ps = ImmutableArray.CreateBuilder<FormalParam>();
+        foreach (var e in exprs)
+        {
+            switch (e)
+            {
+                case NameExpr ne:
+                    ps.Add(new FormalParam(ne.Span, false, ne.Name));
+                    break;
+                case LocalVarDecl lvd when lvd.HasVar && lvd.RefCount == 0:
+                    ps.Add(new FormalParam(lvd.Span, false, lvd.Name));
+                    break;
+                case LocalVarDecl lvd when lvd.RefCount > 0:
+                    ps.Add(new FormalParam(lvd.Span, true, lvd.Name));
+                    break;
+                default:
+                    Error($"Cannot use expression as lambda parameter");
+                    ps.Add(new FormalParam(e.Span, false, "<error>"));
+                    break;
+            }
+        }
+        return ParseLambdaBodyFrom(ps.ToImmutable(), start);
     }
 
     LambdaExpr ParseLambdaBodyFrom(ImmutableArray<FormalParam> parameters, SourceSpan start)

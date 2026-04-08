@@ -50,6 +50,9 @@ public sealed class Lexer
     Token _current = Token.Synthetic(TokenKind.Eof);
     Token? _peek;
 
+    // ── token injection queue (for op-ident fallback) ────────────────────
+    readonly Queue<Token> _injectedTokens = new();
+
     // ── string buffer ───────────────────────────────────────────────────────
     readonly StringBuilder _buf = new();
 
@@ -247,6 +250,10 @@ public sealed class Lexer
 
     Token ReadToken()
     {
+        // Drain injected tokens (from op-ident fallback)
+        if (_injectedTokens.Count > 0)
+            return _injectedTokens.Dequeue();
+
         // Pending StringEnd from a flushed text segment
         if (_pendingStringEnd.HasValue)
         {
@@ -368,19 +375,21 @@ public sealed class Lexer
         if (ch == '(' && Peek2() != -1)
         {
             int opC2 = Peek2();
-            // Only attempt operator-ident for safe cases.
-            // Exclude `-` to avoid consuming `(->name)` as an op-ident.
-            // Exclude chars that commonly appear as unary prefixes after `(`:
-            //   `-` (negate, ->pointer), `!` (not), `*` (splice), `+` (unary plus)
-            // The forms (-) (*) (+) etc. ARE valid op-idents but their false-positive
-            // cost for expressions like (->x), (*args), (+4), (!x) is too high.
-            if (opC2 != '-' && opC2 != '!' && opC2 != '*' && opC2 != '+' && IsOperatorIdentStart(opC2))
+            // Only try op-ident for chars where we can safely consume.
+            // Exclude `-`, `+`, `*`, `!`, `/` which commonly appear as unary prefixes
+            // or in expressions like (->x), (*args), (+4), (!x), (//comment).
+            // These excluded forms ARE valid op-idents: (+), (-), (*), (/), (-.), (--)
+            // but they are handled by TryLexOperatorIdent via fallback to LParen + pushback.
+            // Only the NON-excluded chars get the full speculative treatment.
+            if (opC2 is '-' or '+' or '*' or '!' or '/')
             {
-                var tok = TryLexOperatorIdent(start);
-                if (tok.HasValue) return tok.Value;
-                // If TryLex returns null, chars were consumed — can't recover.
-                // Produce LParen as best-effort (the consumed content is lost).
-                return MakeToken(TokenKind.LParen, "(", start);
+                // For these, only match the exact 3-char form (X) using consume+peek.
+                // This avoids breaking (->item), (*args), (+4), (//comment).
+                return TryLexShortOperatorIdent(start, opC2);
+            }
+            else if (IsOperatorIdentStart(opC2))
+            {
+                return TryLexOperatorIdent(start);
             }
         }
 
@@ -830,44 +839,123 @@ public sealed class Lexer
     };
     // Also: (mod) and (xor) are handled via keyword → we just lex the content as-is.
 
-    Token? TryLexOperatorIdent(SourcePos start)
+    /// <summary>
+    /// Handle ambiguous single-char op-idents: (+), (-), (*), (/), (!).
+    /// Consumes `(`, peeks at next char and the char after. If `X)`, match.
+    /// Otherwise return LParen and push back X.
+    /// Also handles (-.) and (--) as 4-char forms.
+    /// </summary>
+    Token TryLexShortOperatorIdent(SourcePos start, int opChar)
     {
-        // Collect "(..." until ")" or end, then check against known forms.
-        // This is called only when Peek1()=='(' and the second char looks like an op.
-        var saved = _buf.ToString();
-        _buf.Clear();
-        _buf.Append('(');
-        Advance(); // consume (
-        while (Peek1() != -1 && Peek1() != ')' && Peek1() != '\n')
-            _buf.Append((char)Advance());
-        if (Peek1() == ')') { _buf.Append(')'); Advance(); }
-        string candidate = _buf.ToString().ToLowerInvariant();
-        // Also handle (mod) and (xor)
-        if (candidate == "(mod)")
+        Advance(); // consume `(`
+        // Now Peek1() = opChar, Peek2() = next char
+        int after = Peek2();
+        if (after == ')')
         {
-            _buf.Clear();
-            return MakeToken(TokenKind.Identifier, OperatorNames.Prexonite.Modulus, start);
+            // Exact 3-char match: (X)
+            Advance(); Advance(); // consume X and )
+            string candidate = "(" + (char)opChar + ")";
+            if (_opIdents.TryGetValue(candidate, out string? name))
+                return MakeToken(TokenKind.Identifier, name, start);
+            // Unknown 3-char form — still return as identifier with the raw text
+            return MakeToken(TokenKind.Identifier, candidate, start);
         }
-        if (candidate == "(xor)")
+        // Check for 4-char forms: (-.) and (--)
+        if (opChar == '-' && (after == '.' || after == '-'))
         {
-            _buf.Clear();
-            return MakeToken(TokenKind.Identifier, OperatorNames.Prexonite.ExclusiveOr, start);
+            // Peek at the char after that — need to consume opChar first
+            Advance(); // consume -
+            int closing = Peek2();
+            if (closing == ')')
+            {
+                Advance(); Advance(); // consume . or - and )
+                string candidate4 = "(" + (char)opChar + (char)after + ")";
+                if (_opIdents.TryGetValue(candidate4, out string? name4))
+                    return MakeToken(TokenKind.Identifier, name4, start);
+                return MakeToken(TokenKind.Identifier, candidate4, start);
+            }
+            // Not a match — push back the `-`
+            PushBack((char)opChar);
+            return MakeToken(TokenKind.LParen, "(", start);
         }
-        if (_opIdents.TryGetValue(candidate, out string? opName))
+        // Not an op-ident. `(` consumed, inner char stays via Peek.
+        return MakeToken(TokenKind.LParen, "(", start);
+    }
+
+    Token TryLexOperatorIdent(SourcePos start)
+    {
+        // Safe approach: consume `(`, then check if the next 1-3 chars form
+        // a known op-ident ending with `)`. If not, return null WITHOUT consuming
+        // the inner chars (they stay in the stream via Peek/pushback).
+        Advance(); // consume `(`
+
+        // Check for `X)` pattern (3-char op-ident)
+        int c1 = Peek1();
+        int c2 = Peek2();
+        if (c2 == ')')
         {
-            _buf.Clear();
-            return MakeToken(TokenKind.Identifier, opName, start);
+            // 3-char form: (X)
+            string candidate3 = "(" + (char)c1 + ")";
+            string lower3 = candidate3.ToLowerInvariant();
+            if (_opIdents.TryGetValue(lower3, out string? opName3))
+            {
+                Advance(); Advance(); // consume X and )
+                return MakeToken(TokenKind.Identifier, opName3, start);
+            }
+            // Not a known 3-char op-ident. `(` consumed, inner stays.
+            return MakeToken(TokenKind.LParen, "(", start);
         }
-        // Not an operator-ident. We've already consumed content through `)`.
-        // Return the consumed content as an error, unless it starts with (- and could be
-        // a regular paren expression. In that case, we need to return LParen and re-inject.
-        // Since we can't un-read, produce an LParen for `(` and treat the rest as tokens
-        // by pushing back via _pushBack for the first char.
-        _buf.Clear();
-        // Best effort: return just the LParen and hope the inner content re-lexes.
-        // The chars between ( and ) were consumed but we can't put them back.
-        // Return error with the full candidate text for diagnostics.
-        return null; // Let caller produce LParen instead
+
+        // Check for `XY)` pattern (4-char op-ident) by consuming X, peeking Y and )
+        if (c1 != -1 && c1 != ')' && c1 != '\n')
+        {
+            Advance(); // consume X
+            int c2a = Peek1();
+            int c3 = Peek2();
+            if (c2a != -1 && c3 == ')')
+            {
+                string candidate4 = "(" + (char)c1 + (char)c2a + ")";
+                string lower4 = candidate4.ToLowerInvariant();
+                if (_opIdents.TryGetValue(lower4, out string? opName4))
+                {
+                    Advance(); Advance(); // consume Y and )
+                    return MakeToken(TokenKind.Identifier, opName4, start);
+                }
+            }
+            // Check for `XYZ)` (5-char op-ident) by consuming Y
+            if (c2a != -1 && c2a != ')' && c2a != '\n')
+            {
+                Advance(); // consume Y
+                int c3a = Peek1();
+                int c4 = Peek2();
+                if (c3a != -1 && c4 == ')')
+                {
+                    string candidate5 = "(" + (char)c1 + (char)c2a + (char)c3a + ")";
+                    string lower5 = candidate5.ToLowerInvariant();
+                    if (lower5 == "(mod)") { Advance(); Advance(); return MakeToken(TokenKind.Identifier, OperatorNames.Prexonite.Modulus, start); }
+                    if (lower5 == "(xor)") { Advance(); Advance(); return MakeToken(TokenKind.Identifier, OperatorNames.Prexonite.ExclusiveOr, start); }
+                    if (_opIdents.TryGetValue(lower5, out string? opName5))
+                    {
+                        Advance(); Advance(); // consume Z and )
+                        return MakeToken(TokenKind.Identifier, opName5, start);
+                    }
+                }
+                // No match for 5-char. We consumed ( X Y. Inject X Y back.
+                _injectedTokens.Enqueue(MakeToken(TokenKind.LParen, "(", start));
+                // Re-lex the consumed X and Y chars
+                var s2 = new string(new[] { (char)c1, (char)c2a });
+                var inner2 = new Lexer(new StringReader(s2), _file);
+                while (true) { var t = inner2.Next(); if (t.Kind == TokenKind.Eof) break; _injectedTokens.Enqueue(t); }
+                // Return first injected token; rest will be drained
+                return _injectedTokens.Dequeue();
+            }
+            // No match for 4-char. We consumed ( X. Push X back.
+            PushBack((char)c1);
+            return MakeToken(TokenKind.LParen, "(", start);
+        }
+
+        // Just `(` with nothing useful after — not an op-ident
+        return MakeToken(TokenKind.LParen, "(", start);
     }
 
     static bool IsOperatorIdentStart(int c)
