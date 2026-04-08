@@ -836,6 +836,7 @@ public sealed class Parser
     {
         var start = Current.Span;
         Next(); // declare
+        Eat(TokenKind.Colon); // optional colon after declare
 
         // Block form: declare { ... }
         if (Check(TokenKind.LBrace))
@@ -1235,6 +1236,13 @@ public sealed class Parser
                     var op = ConsumeCompoundAssign();
                     var rhs = ParseExpr();
                     expr = new AssignExpr(SourceSpan.Merge(expr.Span, rhs.Span), expr, rhs, op);
+                }
+                // Handle >> chaining: `var args >> each(...)`
+                while (Check(TokenKind.AppendRight))
+                {
+                    Next();
+                    var right = ParseExpr();
+                    expr = new AppendRightExpr(SourceSpan.Merge(expr.Span, right.Span), expr, right);
                 }
                 var stmt = new ExprStmt(SourceSpan.Merge(start, Current.Span), expr);
                 Eat(TokenKind.Semicolon);
@@ -2232,6 +2240,9 @@ public sealed class Parser
 
             case TokenKind.KwNew:
             {
+                // Check if `new` is followed by var/ref/static — that's a local var decl with unbinding
+                if (_lexer.Peek().Kind is TokenKind.KwVar or TokenKind.KwRef or TokenKind.KwStatic)
+                    return ParseGetSetSuffix(ParseLocalVarDeclExpr());
                 Next(); // new
                 var type = ParseTypeExpr();
                 CallArgs args = CallArgs.Empty;
