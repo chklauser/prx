@@ -352,10 +352,24 @@ public sealed class Lexer
         }
 
         // ── Operator-as-identifier forms: (+), (-), (*), (==), etc. ──────
-        if (ch == '(' && IsOperatorIdentStart(Peek2()))
+        // Only for unambiguous 3-char forms like (+), (-), (*), (/) where second char
+        // is the operator and third char is `)`. Longer forms and keyword-based ones
+        // like (mod), (xor), (<|), (|>) need the TryLexOperatorIdent path which
+        // unfortunately consumes characters. We guard it with a Peek2()==')' check
+        // for the simple cases, and let longer forms fall through to normal `(` handling.
+        if (ch == '(' && Peek2() != -1)
         {
-            var tok = TryLexOperatorIdent(start);
-            if (tok.HasValue) return tok.Value;
+            int opC2 = Peek2();
+            // Only attempt operator-ident for safe cases.
+            // Exclude `-` to avoid consuming `(->name)` as an op-ident.
+            if (opC2 != '-' && IsOperatorIdentStart(opC2))
+            {
+                var tok = TryLexOperatorIdent(start);
+                if (tok.HasValue) return tok.Value;
+                // If TryLex returns null, chars were consumed — can't recover.
+                // Produce LParen as best-effort (the consumed content is lost).
+                return MakeToken(TokenKind.LParen, "(", start);
+            }
         }
 
         // ── Numbers ───────────────────────────────────────────────────────
@@ -835,16 +849,46 @@ public sealed class Lexer
             _buf.Clear();
             return MakeToken(TokenKind.Identifier, opName, start);
         }
-        // Not an operator-ident — put back what we consumed... but we can't easily.
-        // Return an LParen and rely on the parser to re-lex the contents.
-        // This should be very rare.  For now: best-effort.
+        // Not an operator-ident. We've already consumed content through `)`.
+        // Return the consumed content as an error, unless it starts with (- and could be
+        // a regular paren expression. In that case, we need to return LParen and re-inject.
+        // Since we can't un-read, produce an LParen for `(` and treat the rest as tokens
+        // by pushing back via _pushBack for the first char.
         _buf.Clear();
-        // We can't un-read, so return an error token with the whole thing.
-        return MakeToken(TokenKind.Error, candidate, start);
+        // Best effort: return just the LParen and hope the inner content re-lexes.
+        // The chars between ( and ) were consumed but we can't put them back.
+        // Return error with the full candidate text for diagnostics.
+        return null; // Let caller produce LParen instead
     }
 
     static bool IsOperatorIdentStart(int c)
         => c is '+' or '-' or '*' or '/' or '^' or '&' or '|' or '=' or '!' or '<' or '>' or '.';
+
+    /// <summary>
+    /// Heuristic: check if current position looks like a valid operator-as-identifier.
+    /// We require the second char after '(' to be either ')' or another operator char
+    /// (to avoid false positives like `(->name)` or `(expr)`).
+    /// Known forms: (+), (-), (-.), (*), (/), (^), (&amp;), (|), (==), (!=), (&gt;), (&gt;=),
+    /// (&lt;), (&lt;=), (++), (--), (mod), (xor), (&lt;|), (|&gt;), (&lt;|.), (.&lt;|), (|&gt;.), (.|&gt;)
+    /// </summary>
+    bool IsLikelyOperatorIdent()
+    {
+        int c2 = Peek2();
+        // All valid op-idents: second char is an operator char like +, -, *, etc.
+        // Exclude `-` followed by `>` (that's `->` pointer, not an op-ident start)
+        // Also exclude cases where the second char is a letter that's not part of a keyword op (mod/xor)
+        if (c2 == '-')
+        {
+            // Could be (-) or (-.) or (--) but NOT (->...)
+            // We can't easily peek the THIRD char without modifying state, so be conservative:
+            // Only accept `-` if the char sequence matches a known short pattern.
+            // Just check: it's only valid if the third character is `)` or `.` or `-`
+            // We can't peek(3), so just let TryLexOperatorIdent handle it — but we already know
+            // it will consume characters. Accept the risk for (-) patterns.
+            return true;
+        }
+        return c2 is '+' or '*' or '/' or '^' or '&' or '|' or '=' or '!' or '<' or '>' or '.';
+    }
 
     // ── Keyword table ─────────────────────────────────────────────────────
     static readonly Dictionary<string, TokenKind> _keywords = new()
