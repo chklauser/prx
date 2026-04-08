@@ -668,10 +668,10 @@ public class ParserV2Tests
     [Test]
     public void AsmExpr_Simple()
     {
-        // asm(...) at statement level is parsed as AsmStmt, not AsmExpr.
-        // The S-expr serializer writes "asm" for AsmStmt.
-        AssertStmtSx("asm(ldc.int 5);",
-            "(asm\n  (op \"ldc.int\" 5))");
+        // asm(...) is parsed as an expression (AsmExpr).
+        // asm { } (brace form) is parsed as a statement.
+        AssertExprSx("asm(ldc.int 5)",
+            "(asm-expr\n  (op \"ldc.int\" 5))");
     }
 
     // ── 30. Return/yield ───────────────────────────────────────────────────

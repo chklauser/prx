@@ -1106,7 +1106,10 @@ public sealed class Parser
             TokenKind.KwForeach => ParseForeachStmt(),
             TokenKind.KwTry => ParseTryCatchFinally(),
             TokenKind.KwUsing => ParseUsingStmt(),
-            TokenKind.KwAsm => ParseAsmStmt(),
+            // Empty statement: lone semicolon (e.g., foreach(...);)
+            TokenKind.Semicolon => ParseEmptyStmt(),
+            // Only parse asm { } (brace form) as a statement; asm(...) is an expression
+            TokenKind.KwAsm when _lexer.Peek().Kind == TokenKind.LBrace => ParseAsmStmt(),
             TokenKind.KwReturn => ParseReturnStmt(),
             TokenKind.KwYield => ParseYieldStmt(),
             TokenKind.KwBreak => ParseBreakStmt(),
@@ -1128,6 +1131,13 @@ public sealed class Parser
             TokenKind.Identifier when IsLabelContext() => ParseLabelStmt(),
             _ => ParseSimpleStatement()
         };
+    }
+
+    Stmt ParseEmptyStmt()
+    {
+        var span = Current.Span;
+        Next(); // ;
+        return new ExprStmt(span, new NullLit(span));
     }
 
     Stmt ParseDeclareStmt()
@@ -1767,7 +1777,7 @@ public sealed class Parser
             if (Check(TokenKind.KwElse))
             {
                 Next();
-                elseExpr = ParseAtomicExpr();
+                elseExpr = ParseExpr(); // must be ParseExpr to handle nested if/unless
             }
             return new ConditionalExpr(SourceSpan.Merge(start, elseExpr.Span), negated, cond, then, elseExpr);
         }
