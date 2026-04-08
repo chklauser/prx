@@ -224,7 +224,10 @@ public sealed class Parser
         while (!Check(TokenKind.RBrack) && !Check(TokenKind.Eof))
         {
             var entry = ParseMetaEntry();
-            if (entry != null) entries.Add(entry);
+            if (entry != null)
+                entries.Add(entry);
+            else if (!Check(TokenKind.Semicolon) && !Check(TokenKind.RBrack) && !Check(TokenKind.Eof))
+                Next(); // skip error token to avoid infinite loop
             Eat(TokenKind.Semicolon);
         }
         Expect(TokenKind.RBrack);
