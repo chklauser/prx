@@ -1089,6 +1089,8 @@ public sealed class Parser
             TokenKind.KwContinue => ParseContinueStmt(),
             TokenKind.KwGoto => ParseGotoStmt(),
             TokenKind.KwLet => ParseLetBindingStmt(),
+            // Declare statement (forward declarations inside function bodies)
+            TokenKind.KwDeclare => ParseDeclareStmt(),
             // Nested function declarations
             TokenKind.KwFunction => ParseNestedFunctionStmt(),
             // lazy/coroutine/macro: only treat as function decl if followed by `function` keyword
@@ -1102,6 +1104,13 @@ public sealed class Parser
             TokenKind.Identifier when IsLabelContext() => ParseLabelStmt(),
             _ => ParseSimpleStatement()
         };
+    }
+
+    Stmt ParseDeclareStmt()
+    {
+        // `declare` inside function body (forward declarations)
+        var decl = ParseDeclareDecl();
+        return new ExprStmt(decl.Span, new ErrorNode(decl.Span, "declare-in-body"));
     }
 
     Stmt ParseNestedFunctionStmt()
@@ -2660,9 +2669,13 @@ public sealed class Parser
             {
                 Next(); // [
                 var indices = ImmutableArray.CreateBuilder<Expr>();
-                indices.Add(ParseExpr());
-                while (Eat(TokenKind.Comma))
+                if (!Check(TokenKind.RBrack))
+                {
                     indices.Add(ParseExpr());
+                    while (Eat(TokenKind.Comma))
+                        if (!Check(TokenKind.RBrack))
+                            indices.Add(ParseExpr());
+                }
                 var end = Current.Span;
                 Expect(TokenKind.RBrack);
                 expr = new IndexExpr(SourceSpan.Merge(expr.Span, end), expr, indices.ToImmutable());
@@ -2771,12 +2784,12 @@ public sealed class Parser
                 Next();
                 args.Add(new TypeArgLiteral(sp, v));
             }
-            else if (Check(TokenKind.StringRaw))
+            else if (Check(TokenKind.StringRaw) || Check(TokenKind.StringSegmentText)
+                || Check(TokenKind.StringSegmentId) || Check(TokenKind.StringInterpolStart))
             {
-                var v = Current.Text;
-                var sp = Current.Span;
-                Next();
-                args.Add(new TypeArgLiteral(sp, v));
+                var strExpr = ParseStringLiteral();
+                var text = strExpr is StringLit sl ? sl.Value : "";
+                args.Add(new TypeArgLiteral(strExpr.Span, text));
             }
             else
             {
