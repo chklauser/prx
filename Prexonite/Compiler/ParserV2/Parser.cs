@@ -127,9 +127,9 @@ public sealed class Parser
         string? primaryName = null;
         var aliases = ImmutableArray.CreateBuilder<string>();
 
-        if (Current.IsIdentifierLike || Check(TokenKind.LParen))
+        if ((Current.IsIdentifierLike && !Check(TokenKind.KwAs)) || Check(TokenKind.LParen))
         {
-            if (Current.IsIdentifierLike)
+            if (Current.IsIdentifierLike && !Check(TokenKind.KwAs))
             {
                 primaryName = Current.Text;
                 Next();
@@ -149,7 +149,23 @@ public sealed class Parser
                         break;
                     }
                 }
+                // `as` alias form: name as alias1, alias2
+                if (Check(TokenKind.KwAs))
+                {
+                    Next(); // as
+                    if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
+                    while (Eat(TokenKind.Comma))
+                        if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
+                }
             }
+        }
+        else if (Check(TokenKind.KwAs))
+        {
+            // No primary name, just aliases: `function as alias1, alias2 (...)`
+            Next();
+            if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
+            while (Eat(TokenKind.Comma))
+                if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
         }
 
         // Parameters (come before meta block in the grammar)
@@ -665,6 +681,12 @@ public sealed class Parser
                 Next();
                 hasWildcard = true;
             }
+        }
+        else if (Check(TokenKind.Identifier) && Current.Text == "(*)")
+        {
+            // (*) operator-as-identifier was lexed as a single token — treat as wildcard (*)
+            Next();
+            hasWildcard = true;
         }
         else if (Check(TokenKind.LParen))
         {
@@ -2214,6 +2236,22 @@ public sealed class Parser
                         callArgs = ParseCallArgs();
                 }
                 return ParseGetSetSuffix(new StaticCallExpr(SourceSpan.Merge(start, Current.Span), type, member, callArgs));
+            }
+
+            case TokenKind.NsId:
+            {
+                // CLR type access: Prexonite::Compiler::SymbolEntry.Member(args)
+                var parts = ImmutableArray.CreateBuilder<string>();
+                while (Check(TokenKind.NsId))
+                {
+                    parts.Add(Current.Text);
+                    Next();
+                }
+                // Final type name
+                if (Current.IsIdentifierLike) { parts.Add(Current.Text); Next(); }
+                var clrType = new ClrTypeExpr(SourceSpan.Merge(start, Current.Span), parts.ToImmutable());
+                // CLR types are typically followed by .Member(args) — handle via ParseGetSetSuffix
+                return ParseGetSetSuffix(new StaticCallExpr(clrType.Span, clrType, "", CallArgs.NoCall));
             }
 
             case TokenKind.DoubleColon:

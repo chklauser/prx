@@ -1,5 +1,7 @@
 // Prexonite – ParserV2 – Comprehensive parser tests
 
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -1848,5 +1850,42 @@ function test()
         var cu = Parse(source);
         Assert.That(cu.Diagnostics, Is.Empty,
             $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  Prx arc — parse every .pxs file in the Prx/ directory tree
+    // ══════════════════════════════════════════════════════════════════════
+
+    static string FindRepoRoot()
+    {
+        var dir = TestContext.CurrentContext.TestDirectory;
+        while (dir != null && !File.Exists(Path.Combine(dir, "global.json")))
+            dir = Path.GetDirectoryName(dir);
+        return dir ?? throw new InvalidOperationException("Could not find repo root (global.json)");
+    }
+
+    static IEnumerable<string> PrxSourceFiles()
+    {
+        var root = FindRepoRoot();
+        var prxDir = Path.Combine(root, "Prx");
+        return Directory.EnumerateFiles(prxDir, "*.pxs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.Combine("bin", "")) && !f.Contains(Path.Combine("obj", "")))
+            .Select(f => Path.GetRelativePath(root, f))
+            .OrderBy(f => f);
+    }
+
+    [Test]
+    [TestCaseSource(nameof(PrxSourceFiles))]
+    public void PrxArc_ParsesWithoutErrors(string relativePath)
+    {
+        var root = FindRepoRoot();
+        var fullPath = Path.Combine(root, relativePath);
+        var source = File.ReadAllText(fullPath);
+        var lexer = PrxLexer.ForString(source, relativePath);
+        var parser = new Parser(lexer);
+        var cu = parser.ParseFile();
+
+        Assert.That(cu.Diagnostics, Is.Empty,
+            $"Parse errors in {relativePath}:\n{string.Join("\n", cu.Diagnostics.Select(d => $"  {d.Span}: {d.Message}"))}");
     }
 }
