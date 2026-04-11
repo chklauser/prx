@@ -2516,6 +2516,16 @@ function test()
     }
 
     [Test]
+    public void Debug_LexerInteger42()
+    {
+        // Debug: verify the lexer produces the right token for "42"
+        var lexer = PrxLexer.ForString("42", "<test>");
+        var tok = lexer.Next();
+        Assert.That(tok.Kind, Is.EqualTo(TokenKind.Integer), $"Expected Integer, got {tok.Kind}");
+        Assert.That(tok.Text, Is.EqualTo("42"), $"Expected text '42', got '{tok.Text}'");
+    }
+
+    [Test]
     public void InterpreterLine_NotAtStart()
     {
         // #! after other declarations — should not crash, just be an error

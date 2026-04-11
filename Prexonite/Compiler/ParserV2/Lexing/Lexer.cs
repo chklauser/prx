@@ -159,12 +159,6 @@ public sealed class Lexer
 
     int Advance()
     {
-        if (_hasPushBack)
-        {
-            _hasPushBack = false;
-            return _pushBack;
-        }
-
         if (_ch == -2)
         {
             // Initial read
@@ -204,8 +198,6 @@ public sealed class Lexer
     // Peek at current char without consuming
     int Peek1()
     {
-        if (_hasPushBack)
-            return _pushBack;
         if (_ch == -2)
         {
             _ch = _reader.Read();
@@ -498,7 +490,6 @@ public sealed class Lexer
             if (Peek1() == '\'') { Advance(); continue; }
             _buf.Append((char)Advance());
         }
-            _buf.Append((char)Advance());
 
         // Check for version literal: d.d.d or d.d.d.d (before checking for real)
         // We need to look ahead further. Strategy: if after int we see "." int "." → version/real
@@ -506,19 +497,13 @@ public sealed class Lexer
         {
             // Peek at what follows the dot
             // We'll consume optimistically and classify later
-            _buf.Append((char)Advance()); // .
-            // Could be just ".", "1.0", "1.0e5", "1.0.0" (version)
-            if (!IsDigit(Peek1()))
+            // Check: is "." followed by a digit? If not, it's `integer.member`
+            if (!IsDigit(Peek2()))
             {
-                // "1." followed by non-digit → this is integer + dot operator
-                // Back out the dot: we can't un-read, so return just the integer and re-inject
-                // Actually: return the integer, put the dot back somehow...
-                // Simplest: just return the integer portion and let the "." be re-lexed
-                // But we already consumed the "." — use a one-char pushback trick
-                _buf.Remove(_buf.Length - 1, 1); // remove the dot
-                PushBack('.');
+                // Don't consume the dot — return the integer
                 return MakeToken(TokenKind.Integer, _buf.ToString(), start);
             }
+            _buf.Append((char)Advance()); // consume .
             while (IsDigit(Peek1())) _buf.Append((char)Advance());
             // Now check: exponent → definite real; another "." → version; nothing → realLike
             if (Peek1() == 'e' || Peek1() == 'E')
