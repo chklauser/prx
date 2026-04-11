@@ -125,12 +125,6 @@ public class VMTestsBase
         }
     }
 
-    /// <summary>
-    /// If set, the V2 parser is expected to produce at least this many errors
-    /// for the next compilation (reset after each call).
-    /// </summary>
-    protected int? ExpectedV2Errors { get; set; }
-
     void _compile(Loader ldr, string input)
     {
         try
@@ -153,9 +147,7 @@ public class VMTestsBase
         }
 
         // V2 parser cross-check
-        var ev2 = ExpectedV2Errors;
-        ExpectedV2Errors = null;
-        V2ParseCheck.AssertV2ParseSucceeds(input, ev2);
+        V2ParseCheck.AssertV2ParseSucceeds(input);
     }
 
     protected Loader Compile(string input)

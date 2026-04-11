@@ -131,12 +131,6 @@ public class CompilerTestBase
         TestContext.WriteLine(target.StoreInString());
     }
 
-    /// <summary>
-    /// If set, the V2 parser is expected to produce at least this many errors
-    /// for the next compilation (reset after each call).
-    /// </summary>
-    protected int? ExpectedV2Errors { get; set; }
-
     protected internal Loader _justCompile(string input)
     {
         var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
@@ -144,9 +138,7 @@ public class CompilerTestBase
         ldr.LoadFromString(input);
 
         // V2 parser cross-check
-        var ev2 = ExpectedV2Errors;
-        ExpectedV2Errors = null;
-        V2ParseCheck.AssertV2ParseSucceeds(input, ev2);
+        V2ParseCheck.AssertV2ParseSucceeds(input);
 
         return ldr;
     }
