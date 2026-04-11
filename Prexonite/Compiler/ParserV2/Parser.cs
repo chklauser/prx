@@ -575,9 +575,14 @@ public sealed class Parser
         bool isRef = Check(TokenKind.KwRef);
         Next(); // var or ref
 
-        // Name
+        // Name (or `as` for alias-only form: `var as alias1, alias2;`)
         string? primaryName = null;
-        if (Current.IsIdentifierLike)
+        var aliases = ImmutableArray.CreateBuilder<string>();
+        if (Check(TokenKind.KwAs))
+        {
+            // No primary name — just aliases
+        }
+        else if (Current.IsIdentifierLike)
         {
             primaryName = Current.Text;
             Next();
@@ -587,17 +592,13 @@ public sealed class Parser
             Error("Expected variable name");
         }
 
-        // Aliases: as alias1/alias2
-        var aliases = ImmutableArray.CreateBuilder<string>();
+        // Aliases: as alias1, alias2
         if (Check(TokenKind.KwAs))
         {
             Next();
             if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
-            while (Check(TokenKind.Div))
-            {
-                Next();
+            while (Eat(TokenKind.Comma))
                 if (Current.IsIdentifierLike) { aliases.Add(Current.Text); Next(); }
-            }
         }
 
         // Meta
@@ -988,15 +989,17 @@ public sealed class Parser
             var name = Current.Text;
             Next();
 
+            // Module name: name/module or name/module/version
             string? moduleName = null;
-            if (Check(TokenKind.Div))
+            while (Check(TokenKind.Div))
             {
                 Next();
-                if (Current.IsIdentifierLike || Current.Kind is TokenKind.Real or TokenKind.RealLike or TokenKind.Version)
+                if (Current.IsIdentifierLike || Current.Kind is TokenKind.Real or TokenKind.RealLike or TokenKind.Version or TokenKind.Integer)
                 {
-                    moduleName = Current.Text;
+                    moduleName = (moduleName != null ? moduleName + "/" : "") + Current.Text;
                     Next();
                 }
+                else break;
             }
 
             string? alias = null;

@@ -2504,6 +2504,72 @@ function test()
             "Should not have errors, only warnings");
     }
 
+    // ── Regressions from existing test suite instrumentation ────────────
+
+    [Test]
+    public void GlobalVar_AliasOnlyNoName()
+    {
+        // var as b, c; — global variable with no primary name, only aliases
+        var cu = Parse("var as b, c;");
+        Assert.That(cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void InterpreterLine_NotAtStart()
+    {
+        // #! after other declarations — should not crash, just be an error
+        var cu = Parse("function foo() {}\n#!/usr/bin/env prx --legacy");
+        // This is NOT valid — #! must be at the start. V2 parser should handle gracefully.
+        // Don't require zero errors — just no crash.
+        Assert.That(cu, Is.Not.Null);
+    }
+
+    [Test]
+    public void ModuleName_WithVersion()
+    {
+        // declare function main/testApplication/0.0;
+        var cu = Parse("declare function main/testApplication/0.0;");
+        Assert.That(cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void IntegerSeparator_Trailing()
+    {
+        // 6'000'' — trailing single-quotes as digit separators
+        var cu = Parse("function f() { var x = 6'000''; }");
+        Assert.That(cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void RealSeparator_Trailing()
+    {
+        // 54'08.9 — digit separator in real number
+        var cu = Parse("function f() { var x = 54'08.9; }");
+        Assert.That(cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
+    [Test]
+    public void TryWithoutCatchOrFinally()
+    {
+        // try { } with no catch/finally — should produce an error but not crash
+        var cu = Parse("function f() { try { var x = 1; } }");
+        Assert.That(cu, Is.Not.Null);
+        // The error diagnostic for missing catch/finally is expected
+    }
+
+    [Test]
+    public void CoroutineDecl_FunctionKeyword()
+    {
+        // coroutine function f() { yield 1; } — coroutine with explicit function keyword
+        var cu = Parse("coroutine function f() { yield 1; }");
+        Assert.That(cu.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty,
+            $"Parse errors: {string.Join("; ", cu.Diagnostics.Select(d => d.Message))}");
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     //  Prx arc — parse every .pxs file in the Prx/ directory tree
     // ══════════════════════════════════════════════════════════════════════

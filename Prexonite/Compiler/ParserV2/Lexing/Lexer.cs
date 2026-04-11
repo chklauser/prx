@@ -492,7 +492,12 @@ public sealed class Lexer
         }
 
         // Integer part (digits with optional ' separators: 1'000'000)
-        while (IsDigit(Peek1()) || (Peek1() == '\'' && IsDigit(Peek2())))
+        // Digit separators: ' between/after digits (6'000'') — skip ' in buffer
+        while (IsDigit(Peek1()) || Peek1() == '\'')
+        {
+            if (Peek1() == '\'') { Advance(); continue; }
+            _buf.Append((char)Advance());
+        }
             _buf.Append((char)Advance());
 
         // Check for version literal: d.d.d or d.d.d.d (before checking for real)
