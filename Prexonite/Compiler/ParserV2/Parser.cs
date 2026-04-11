@@ -1511,8 +1511,7 @@ public sealed class Parser
             else break;
         }
 
-        if (catchClause == null && finallyBlock == null)
-            Error("try requires catch and/or finally");
+        // Note: try without catch/finally is valid (bare try block).
 
         return new TryCatchFinallyStmt(SourceSpan.Merge(start, Current.Span), tryBlock, catchClause, finallyBlock);
     }
@@ -2416,6 +2415,12 @@ public sealed class Parser
                 // `(`, it's the member name; otherwise use all as type and no member.
                 Next();
                 var typePartNames = new List<string>();
+                // Consume NsId segments: ::Prexonite::SubNs::Type
+                while (Check(TokenKind.NsId))
+                {
+                    typePartNames.Add(Current.Text);
+                    Next();
+                }
                 if (Current.IsIdentifierLike) { typePartNames.Add(Current.Text); Next(); }
                 while (Check(TokenKind.Dot) && _lexer.Peek().IsIdentifierLike)
                 {
