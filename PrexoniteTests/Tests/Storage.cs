@@ -65,21 +65,23 @@ public class Storage : CompilerTestBase
     public void TestMeta()
     {
         const string input1 =
-            @"
-Name fixture\storage\meta;
-Description ""Contains dummy meta information for a unit test"";
-Author SealedSun;
+            """
 
-Import 
-{
-    System,
-    System::Text
-};
+            Name fixture\storage\meta;
+            Description "Contains dummy meta information for a unit test";
+            Author SealedSun;
 
-Is AsFastAsPossible;
+            Import 
+            {
+                System,
+                System::Text
+            };
 
-Add System::Xml To Imports;
-";
+            Is AsFastAsPossible;
+
+            Add System::Xml To Imports;
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -100,37 +102,39 @@ Add System::Xml To Imports;
     public void TestDeclarations()
     {
         const string input1 =
-            @"
-var obj0;
-var obj1;
-ref func0 
-[
-    Description ""Contains a constant value"";
-    is constant;
-    UsedBy func1;    
-];
+            """
 
-ref func2;
+            var obj0;
+            var obj1;
+            ref func0 
+            [
+                Description "Contains a constant value";
+                is constant;
+                UsedBy func1;    
+            ];
 
-function func1 does asm {}
+            ref func2;
 
-ref func0 [ Add func2 to UsedBy; ];
+            function func1 does asm {}
 
-function func2(arg0, arg1, arg2)
-[
-    Uses { func0, func1 };
-]
-{//line# 20
-    goto L1;
-    L0:;
-    func0();
-    goto LE;
-    L1:;
-    func1();
-    goto L0;
-    LE:;
-}
-";
+            ref func0 [ Add func2 to UsedBy; ];
+
+            function func2(arg0, arg1, arg2)
+            [
+                Uses { func0, func1 };
+            ]
+            {//line# 20
+                goto L1;
+                L0:;
+                func0();
+                goto LE;
+                L1:;
+                func1();
+                goto L0;
+                LE:;
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -176,9 +180,13 @@ coroutine mapf(ref f, xs) does
     {
         var ldr = new Loader(engine, target);
         const string numberToStore = "1234567890";
-        ldr.LoadFromString(@"
-meta_entry " + numberToStore + @";
-");
+        ldr.LoadFromString("""
+
+                           meta_entry 
+                           """ + numberToStore + """
+                                                 ;
+
+                                                 """);
         foreach (var error in ldr.Errors)
             TestContext.WriteLine("ERROR: {0}", error);
         Assert.AreEqual(0, ldr.ErrorCount, "no errors expected");

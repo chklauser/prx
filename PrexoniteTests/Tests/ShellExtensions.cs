@@ -45,14 +45,16 @@ public class ShellExtensions : VMTestsBase
     [Test]
     public void DeltaOperatorLiterals()
     {
-        Compile(@"
-function (<|) {}
-function (<|.) {}
-function (.<|) {}
-function (|>) {}
-function (|>.) {}
-function (.|>) {}
-");
+        Compile("""
+
+                function (<|) {}
+                function (<|.) {}
+                function (.<|) {}
+                function (|>) {}
+                function (|>.) {}
+                function (.|>) {}
+
+                """);
 
         _assertFunctionExists(OperatorNames.Prexonite.BinaryDeltaLeft);
         _assertFunctionExists(OperatorNames.Prexonite.UnaryDeltaLeftPre);
@@ -71,13 +73,15 @@ function (.|>) {}
     [Test]
     public void ResolveBinaryDeltaLeft()
     {
-        Compile(@"
-function (<|)(l,r) = l + "" <| "" + r;
+        Compile("""
 
-function main() {
-    return 1 <| 2;
-}
-");
+                function (<|)(l,r) = l + " <| " + r;
+
+                function main() {
+                    return 1 <| 2;
+                }
+
+                """);
             
         Expect("1 <| 2");
     }
@@ -86,13 +90,15 @@ function main() {
     [Test]
     public void ResolveBinaryDeltaRight()
     {
-        Compile(@"
-function (|>)(l,r) = ""$l |> $r"";
+        Compile("""
 
-function main() {
-    return 1 |> 2;
-}
-");
+                function (|>)(l,r) = "$l |> $r";
+
+                function main() {
+                    return 1 |> 2;
+                }
+
+                """);
             
         Expect("1 |> 2");
     }
@@ -101,13 +107,15 @@ function main() {
     [Test]
     public void ResolveUnaryDeltaLeftPre()
     {
-        Compile(@"
-function (<|.)(x) = ""<| $x"";
+        Compile("""
 
-function main() {
-    return <| 1;
-}
-");
+                function (<|.)(x) = "<| $x";
+
+                function main() {
+                    return <| 1;
+                }
+
+                """);
             
         Expect("<| 1");
     }
@@ -116,13 +124,15 @@ function main() {
     [Test]
     public void ResolveUnaryDeltaLeftPost()
     {
-        Compile(@"
-function (.<|)(x) = ""$x <|"";
+        Compile("""
 
-function main() {
-    return 1 <|;
-}
-");
+                function (.<|)(x) = "$x <|";
+
+                function main() {
+                    return 1 <|;
+                }
+
+                """);
             
         Expect("1 <|");
     }
@@ -131,13 +141,15 @@ function main() {
     [Test]
     public void ResolveUnaryDeltaRightPre()
     {
-        Compile(@"
-function (|>.)(x) = ""|> $x"";
+        Compile("""
 
-function main() {
-    return |> 1;
-}
-");
+                function (|>.)(x) = "|> $x";
+
+                function main() {
+                    return |> 1;
+                }
+
+                """);
             
         Expect("|> 1");
     }
@@ -146,13 +158,15 @@ function main() {
     [Test]
     public void ResolveUnaryDeltaRightPost()
     {
-        Compile(@"
-function (.|>)(x) = ""$x |>"";
+        Compile("""
 
-function main() {
-    return 1 |>;
-}
-");
+                function (.|>)(x) = "$x |>";
+
+                function main() {
+                    return 1 |>;
+                }
+
+                """);
             
         Expect("1 |>");
     }
@@ -160,11 +174,13 @@ function main() {
     [Test]
     public void SingleCharFlagLiteral()
     {
-        Compile(@"
-function main() {
-    return -q;
-}
-");
+        Compile("""
+
+                function main() {
+                    return -q;
+                }
+
+                """);
         Expect("-q");
     }
 
@@ -172,11 +188,13 @@ function main() {
     [Test]
     public void MultiCharFlagLiteral()
     {
-        Compile(@"
-function main() {
-    return -qip;
-}
-");
+        Compile("""
+
+                function main() {
+                    return -qip;
+                }
+
+                """);
         Expect("-qip");
     }
 
@@ -184,42 +202,48 @@ function main() {
     [Test]
     public void LongFlagLiteral()
     {
-        Compile(@"
-function main() {
-    return --query;
-}
-");
+        Compile("""
+
+                function main() {
+                    return --query;
+                }
+
+                """);
         Expect("--query");
     }
 
     [Test]
     public void LongFlagLiteralSingleChar()
     {
-        Compile(@"
-function main() {
-    return --q;
-}
-");
+        Compile("""
+
+                function main() {
+                    return --q;
+                }
+
+                """);
         Expect("--q");
     }
 
     [Test]
     public void LongOptionLiteral()
     {
-        Compile(@"
-function with_string() {
-    return --query-format=""aBc"";
-}
+        Compile("""
 
-function with_expr() {
-    return --query-format=(1 + 2);
-}
+                function with_string() {
+                    return --query-format="aBc";
+                }
 
-function with_var() {
-    var fmt = ""%{Version}"";
-    return --query-format=fmt;
-}
-");
+                function with_expr() {
+                    return --query-format=(1 + 2);
+                }
+
+                function with_var() {
+                    var fmt = "%{Version}";
+                    return --query-format=fmt;
+                }
+
+                """);
         ExpectNamed("with_string", "--query-format=aBc");
         ExpectNamed("with_expr", "--query-format=3");
         ExpectNamed("with_var", "--query-format=%{Version}");
@@ -228,13 +252,15 @@ function with_var() {
     [Test]
     public void PreIncrementInParens()
     {
-        Compile(@"
-function main(x) {
-    var y = --(x);
-    var z = -- x;
-    return x + y + z;
-}
-");
+        Compile("""
+
+                function main(x) {
+                    var y = --(x);
+                    var z = -- x;
+                    return x + y + z;
+                }
+
+                """);
 
         Expect(14 + 13 + 13, 15);
     }
@@ -242,13 +268,15 @@ function main(x) {
     [Test]
     public void UnaryMinusInParens()
     {
-        Compile(@"
-function main(x) {
-    var y = -(x);
-    var z = - x;
-    return x + y - z;
-}
-");
+        Compile("""
+
+                function main(x) {
+                    var y = -(x);
+                    var z = - x;
+                    return x + y - z;
+                }
+
+                """);
         const int x = 15;
         Expect(x + -x - -x, x);
     }
@@ -256,23 +284,27 @@ function main(x) {
     [Test]
     public void FlagLiteralsDisabledInherit()
     {
-        Compile(@"
-FlagLiterals Disabled;
-function main(x){
-    return -x + --x;
-}
-");
+        Compile("""
+
+                FlagLiterals Disabled;
+                function main(x){
+                    return -x + --x;
+                }
+
+                """);
         Expect(-15 + 14, 15);
     }
 
     [Test]
     public void FlagLiteralsDisabled()
     {
-        Compile(@"
-function main(x)[FlagLiterals Disabled]{
-    return -x + --x;
-}
-");
+        Compile("""
+
+                function main(x)[FlagLiterals Disabled]{
+                    return -x + --x;
+                }
+
+                """);
         Expect(-15 + 14, 15);
     }
 
@@ -281,11 +313,13 @@ function main(x)[FlagLiterals Disabled]{
     public void FlagLiteralsEnabled()
     {
         options.FlagLiteralsEnabled = false;
-        Compile(@"
-function main()[FlagLiterals Enabled]{
-    return -x + --x;
-}
-");
+        Compile("""
+
+                function main()[FlagLiterals Enabled]{
+                    return -x + --x;
+                }
+
+                """);
         Expect("-x--x");
     }
 
@@ -293,26 +327,30 @@ function main()[FlagLiterals Enabled]{
     public void FlagLiteralsEnabledInherit()
     {
         options.FlagLiteralsEnabled = false;
-        Compile(@"
-FlagLiterals Enabled;
-function main(){
-    return -x + --x;
-}
-");
+        Compile("""
+
+                FlagLiterals Enabled;
+                function main(){
+                    return -x + --x;
+                }
+
+                """);
         Expect("-x--x");
     }
 
     [Test]
     public void FlagLiteralsDisabledGlobally()
     {
-        Compile(@"
-FlagLiterals Disabled;
-var x = 15;
-var z = -x + --x;
-function main(){
-    return z;
-}
-");
+        Compile("""
+
+                FlagLiterals Disabled;
+                var x = 15;
+                var z = -x + --x;
+                function main(){
+                    return z;
+                }
+
+                """);
         Expect(-15 + 14);
     }
 
@@ -321,43 +359,49 @@ function main(){
     public void FlagLiteralsEnabledGlobally()
     {
         options.FlagLiteralsEnabled = false;
-        Compile(@"
-FlagLiterals Enabled;
-var z = -x + --x;
-function main(){
-    return z;
-}
-");
+        Compile("""
+
+                FlagLiterals Enabled;
+                var z = -x + --x;
+                function main(){
+                    return z;
+                }
+
+                """);
         Expect("-x--x");
     }
 
     [Test]
     public void NullSupportsForeach()
     {
-        Compile(@"
-function main(a){
-    var z = a;
-    foreach(var x in null){
-        z += x;
-    }
-    return z;
-}
-");
+        Compile("""
+
+                function main(a){
+                    var z = a;
+                    foreach(var x in null){
+                        z += x;
+                    }
+                    return z;
+                }
+
+                """);
         Expect(16, 16);
     }
 
     [Test]
     public void SpliceFunctionCall_IndirectCall()
     {
-        Compile(@"
-function f() {
-    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
-}
+        Compile("""
 
-function main(a, xs, b, ys, c){
-    return ->f.(a, *xs, b, *ys, c);
-}
-");
+                function f() {
+                    return call(string_concat(?), [":"], var args >> map(x => "<$x>")); 
+                }
+
+                function main(a, xs, b, ys, c){
+                    return ->f.(a, *xs, b, *ys, c);
+                }
+
+                """);
             
         Expect(":<a><x1><x2><x3><b><y1><y2><y3><c>", 
             "a", _list("x1", "x2", "x3"), "b", _list("y1", "y2", "y3"), "c");
@@ -374,16 +418,18 @@ function main(a, xs, b, ys, c){
     [Test]
     public void SpliceFunctionCall_FullSplice()
     {
-        Compile(@"
-function f() {
-    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
-}
+        Compile("""
 
-function main(xs) {
-    return f(*xs);
-}
+                function f() {
+                    return call(string_concat(?), [":"], var args >> map(x => "<$x>")); 
+                }
 
-");
+                function main(xs) {
+                    return f(*xs);
+                }
+
+
+                """);
         Expect(":<x1><x2><x3>", _list("x1", "x2", "x3"));
         Expect(":<x1>", _list("x1"));
         Expect(":", _list());
@@ -392,15 +438,17 @@ function main(xs) {
     [Test]
     public void SpliceFunctionCall_PrefixSuffix()
     {
-        Compile(@"
-function f() {
-    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
-}
+        Compile("""
 
-function main(xs, ys){
-    return f(*xs, *ys);
-}
-");
+                function f() {
+                    return call(string_concat(?), [":"], var args >> map(x => "<$x>")); 
+                }
+
+                function main(xs, ys){
+                    return f(*xs, *ys);
+                }
+
+                """);
         
         Expect(":<x1><x2><x3><y1><y2><y3>", _list("x1", "x2", "x3"), _list("y1", "y2", "y3"));
         Expect(":<x1><x2><x3>", _list("x1", "x2", "x3"), _list());
@@ -410,15 +458,17 @@ function main(xs, ys){
     [Test]
     public void SpliceFunctionCall_Suffix()
     {
-        Compile(@"
-function f() {
-    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
-}
+        Compile("""
 
-function main(a, b, c, xs) {
-    return f(a, b, c, *xs);
-}
-");
+                function f() {
+                    return call(string_concat(?), [":"], var args >> map(x => "<$x>")); 
+                }
+
+                function main(a, b, c, xs) {
+                    return f(a, b, c, *xs);
+                }
+
+                """);
         
         Expect(":<a><b><c><x1><x2><x3>", "a", "b", "c", _list("x1", "x2", "x3"));
         Expect(":<a><b><c><x1>", "a", "b", "c", _list("x1"));
@@ -428,15 +478,17 @@ function main(a, b, c, xs) {
     [Test]
     public void SpliceFunctionCall_Prefix()
     {
-        Compile(@"
-function f() {
-    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
-}
+        Compile("""
 
-function main(xs, a, b, c) {
-    return f(*xs, a, b, c);
-}
-");
+                function f() {
+                    return call(string_concat(?), [":"], var args >> map(x => "<$x>")); 
+                }
+
+                function main(xs, a, b, c) {
+                    return f(*xs, a, b, c);
+                }
+
+                """);
         
         Expect(":<x1><x2><x3><a><b><c>", _list("x1", "x2", "x3"), "a", "b", "c");
         Expect(":<x1><a><b><c>", _list("x1"), "a", "b", "c");
@@ -450,11 +502,13 @@ function main(xs, a, b, c) {
     [Test]
     public void VarArgsSigil()
     {
-        Compile(@"
-function main(){
-    return call(string_concat(?), ["":""], $@ >> map(x => ""<$x>"")); 
-}
-");
+        Compile("""
+
+                function main(){
+                    return call(string_concat(?), [":"], $@ >> map(x => "<$x>")); 
+                }
+
+                """);
         Expect(":<a><b><c>", "a", "b", "c");
         Expect(":");
     }
@@ -462,23 +516,27 @@ function main(){
     [Test]
     public void VarArgsSigilSplice()
     {
-        Compile(@"
-function main(){
-    return string_concat("":"", *$@);
-}
-");
+        Compile("""
+
+                function main(){
+                    return string_concat(":", *$@);
+                }
+
+                """);
         Expect(":abc", "a", "b", "c");
     }
 
     [Test]
     public void FlowSplice()
     {
-        Compile(@"
-function main(){
-    var xs = var args;
-    return *xs >> foldl(->(+), "":"");
-}
-");
+        Compile("""
+
+                function main(){
+                    var xs = var args;
+                    return *xs >> foldl(->(+), ":");
+                }
+
+                """);
         Expect(":abc", "a", "b", "c");
     }
 
@@ -492,15 +550,17 @@ function main(){
     [Test]
     public void PartialFunctionAtomSplice()
     {
-        Compile(@"
-function f = var args >> map(x => ""<$x>"") >> foldl(->(+), "":"");
+        Compile("""
 
-function main(){
-    var xs = var args;
-    var f1 = f(?, *xs, ?, 0, ?);
-    return f1.(10,20,30);
-}
-");
+                function f = var args >> map(x => "<$x>") >> foldl(->(+), ":");
+
+                function main(){
+                    var xs = var args;
+                    var f1 = f(?, *xs, ?, 0, ?);
+                    return f1.(10,20,30);
+                }
+
+                """);
 
         Expect(":<10><1><2><3><20><0><30>",1,2,3);
     }

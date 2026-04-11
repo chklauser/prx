@@ -30,12 +30,9 @@
 #define UseCil
 //need to change this in VMTestsBase.cs too!
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
@@ -50,12 +47,14 @@ public abstract partial class VMTests
     [Test]
     public void Basic()
     {
-        const string input1 = @"
-function test1
-{
-    var x = 5 + 5;
-}
-";
+        const string input1 = """
+
+                              function test1
+                              {
+                                  var x = 5 + 5;
+                              }
+
+                              """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -81,14 +80,16 @@ function test1
     public void IncDecrement()
     {
         const string input1 =
-            @"
-function test1(x)
-{
-    x++;    
-    x = 2*x++;
-    return x--;
-}
-";
+            """
+
+            function test1(x)
+            {
+                x++;    
+                x = 2*x++;
+                return x--;
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         foreach (var s in ldr.Errors)
@@ -124,14 +125,16 @@ function test1(x)
     public void LateReturnIsIllegal()
     {
         const string input1 =
-            @"
-function test1(x)
-{
-    x*=2;
-    return = x-2;
-    x+=55;
-}
-";
+            """
+
+            function test1(x)
+            {
+                x*=2;
+                return = x-2;
+                x+=55;
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         foreach (var s in ldr.Errors)
@@ -146,22 +149,24 @@ function test1(x)
     public void Return()
     {
         const string input1 =
-            @"
-function twice(v) = 2*v;
-function complicated(x,y) does
-{
-    var z = x*y;
-    x = z-x;
-    y = x+z;
-    //z     := x*y
-    //x     := x*y-x
-    //y     := 2*x*y-x
-    //y+z   := 3*x*y-2*x
-    //y+z   := x*(3*y-2)
-    return y+x;
-    //dummy     
-}
-";
+            """
+
+            function twice(v) = 2*v;
+            function complicated(x,y) does
+            {
+                var z = x*y;
+                x = z-x;
+                y = x+z;
+                //z     := x*y
+                //x     := x*y-x
+                //y     := 2*x*y-x
+                //y+z   := 3*x*y-2*x
+                //y+z   := x*(3*y-2)
+                return y+x;
+                //dummy     
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         foreach (var s in ldr.Errors)
@@ -202,17 +207,19 @@ function complicated(x,y) does
     public void FunctionAndGlobals()
     {
         const string input1 =
-            @"
-var J; //= random();
-function h(x) = x+2+J;
-function test1(x) does
-{
-    J = 0;
-    x = h(J);
-    J = h(7*x);
-    return h(x)/J;
-}
-";
+            """
+
+            var J; //= random();
+            function h(x) = x+2+J;
+            function test1(x) does
+            {
+                J = 0;
+                x = h(J);
+                J = h(7*x);
+                return h(x)/J;
+            }
+
+            """;
         var rnd = new Random();
         var j = rnd.Next(1, 1000);
 
@@ -241,17 +248,19 @@ function test1(x) does
     public void FunctionCallSimple()
     {
         const string input1 =
-            @"
-var J;
-function h(x) = 2+x+J;
-function test1(x) does
-{
-    J = 0;
-    x = h(J);
-    J = h(7*x);
-    return h(x)/J;
-}
-";
+            """
+
+            var J;
+            function h(x) = 2+x+J;
+            function test1(x) does
+            {
+                J = 0;
+                x = h(J);
+                J = h(7*x);
+                return h(x)/J;
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -280,15 +289,17 @@ function test1(x) does
     public void FibRecursion()
     {
         const string input1 =
-            @"
-function fib(n) does
-{
-    if(n <= 2)
-        return 1;
-    else
-        return fib(n-1) + fib(n-2);
-}
-";
+            """
+
+            function fib(n) does
+            {
+                if(n <= 2)
+                    return 1;
+                else
+                    return fib(n-1) + fib(n-2);
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -314,35 +325,37 @@ function fib(n) does
     public void Recursion()
     {
         const string input1 =
-            @"
-function fib(n) does asm
-{
-    //if n <= 2
-    ldloc   n
-    ldc.int 2
-    cle
-    jump.f  else
-    //return 1;
-    ldc.int 1
-    ret.value
-    jump    endif
-    //else do
-    label   else
-    //return = fib(n-1) + fib(n-2);
-    ldloc   n
-    ldc.int 1
-    sub
-    func.1  fib
-    ldloc   n
-    ldc.int 2
-    sub
-    func.1  fib
-    add
-    ret.value
-    
-    label   endif
-}
-";
+            """
+
+            function fib(n) does asm
+            {
+                //if n <= 2
+                ldloc   n
+                ldc.int 2
+                cle
+                jump.f  else
+                //return 1;
+                ldc.int 1
+                ret.value
+                jump    endif
+                //else do
+                label   else
+                //return = fib(n-1) + fib(n-2);
+                ldloc   n
+                ldc.int 1
+                sub
+                func.1  fib
+                ldloc   n
+                ldc.int 2
+                sub
+                func.1  fib
+                add
+                ret.value
+                
+                label   endif
+            }
+
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -377,20 +390,22 @@ function fib(n) does asm
     public void WhileLoop()
     {
         Compile(
-            @"
-var M;
-function modify(x) =  M*x+12;
+            """
 
-function main(newM, iterations)
-{
-    M = newM;
-    var i = 0;
-    var sum = 0;
-    while(i<iterations)       
-        sum = sum + modify(i++);
-    return sum;
-}
-");
+            var M;
+            function modify(x) =  M*x+12;
+
+            function main(newM, iterations)
+            {
+                M = newM;
+                var i = 0;
+                var sum = 0;
+                while(i<iterations)       
+                    sum = sum + modify(i++);
+                return sum;
+            }
+
+            """);
 
         var rnd = new Random();
         var m = rnd.Next(1, 13);
@@ -407,39 +422,41 @@ function main(newM, iterations)
     public void ForLoop()
     {
         Compile(
-            @"
-var theList;
+            """
 
-function getNextElement =
-    if(static index < theList.Count)
-        theList[index++]
-    else 
-        null;
+            var theList;
 
-function print(text) does static buffer.Append(text);
+            function getNextElement =
+                if(static index < theList.Count)
+                    theList[index++]
+                else 
+                    null;
 
-function main(aList, max)
-{
-    theList = aList;
-    declare var print\static\buffer, getNextElement\static\index;
-    print\static\buffer = new Text::StringBuilder;
-    getNextElement\static\index = 0;
-    
-    var cnt = 0;
-    for(var     elem;
-        do      elem = getNextElement;
-        until   elem == null
-       )
-    {
-        var len = elem.Length;
-        if(cnt + len > max)
-            continue;
-        print(elem);
-        cnt += len;
-    }
-    return print\static\buffer.ToString;
-}
-");
+            function print(text) does static buffer.Append(text);
+
+            function main(aList, max)
+            {
+                theList = aList;
+                declare var print\static\buffer, getNextElement\static\index;
+                print\static\buffer = new Text::StringBuilder;
+                getNextElement\static\index = 0;
+                
+                var cnt = 0;
+                for(var     elem;
+                    do      elem = getNextElement;
+                    until   elem == null
+                   )
+                {
+                    var len = elem.Length;
+                    if(cnt + len > max)
+                        continue;
+                    print(elem);
+                    cnt += len;
+                }
+                return print\static\buffer.ToString;
+            }
+
+            """);
         var buffer = new StringBuilder();
         const int max = 20;
         var aList = new List<string>(
@@ -462,13 +479,15 @@ function main(aList, max)
     public void StaticClrCalls()
     {
         Compile(
-            @"
-entry main;
-function main(rawInteger)
-{
-    return System::Int32.Parse(rawInteger);
-}
-");
+            """
+
+            entry main;
+            function main(rawInteger)
+            {
+                return System::Int32.Parse(rawInteger);
+            }
+
+            """);
         var rnd = new Random();
         var expected = rnd.Next(1, 45);
         Expect(expected, expected.ToString());
@@ -478,50 +497,52 @@ function main(rawInteger)
     public void Conditions()
     {
         Compile(
-            @"
-entry conditions;
-var G;
-function action1 does G += ""1"";
-function action2 does G += ""2"";
-function conditions(x,y)
-{
-    G = """";
-    //Simple:
-    if(x)
-        action1;
+            """
 
-    //Simple #2
-    unless(y)
-        {action1;}
-    else
-        action2;
+            entry conditions;
+            var G;
+            function action1 does G += "1";
+            function action2 does G += "2";
+            function conditions(x,y)
+            {
+                G = "";
+                //Simple:
+                if(x)
+                    action1;
 
-    //Constant
-    if(true and true)
-        action1;
-    else
-        action2;
+                //Simple #2
+                unless(y)
+                    {action1;}
+                else
+                    action2;
 
-    //Complex
-    if(x)
-        unless (y)
-            action1;
-        else
-            action2;
-    else
-    {
-        action1;
-        action2;
-    }
+                //Constant
+                if(true and true)
+                    action1;
+                else
+                    action2;
 
-    //Redundant blocks/conditions
-    if(y){}else action2;
-    
-    if(not x){}else{}
+                //Complex
+                if(x)
+                    unless (y)
+                        action1;
+                    else
+                        action2;
+                else
+                {
+                    action1;
+                    action2;
+                }
 
-    return G;
-}
-");
+                //Redundant blocks/conditions
+                if(y){}else action2;
+                
+                if(not x){}else{}
+
+                return G;
+            }
+
+            """);
         const string tt = "1212";
         const string tx = "11112";
         const string xT = "2112";
@@ -541,28 +562,30 @@ function conditions(x,y)
     public void IndexAccess()
     {
         Compile(
-            @"
-declare function print;
-function main(str, idx)
-{
-    var i = 0;
-    
-_while:
-    unless(i < str.Length)
-        goto _endwhile;
-    print(str[i++] + "" "");
-    goto _while;
-_endwhile:
-    return print(""--"" + str[idx]);    
-}
+            """
 
-function print(text) does
-{
-    if (static buffer == null) buffer = """";
-    unless (text == null) buffer += text;
-    return buffer;
-}
-");
+            declare function print;
+            function main(str, idx)
+            {
+                var i = 0;
+                
+            _while:
+                unless(i < str.Length)
+                    goto _endwhile;
+                print(str[i++] + " ");
+                goto _while;
+            _endwhile:
+                return print("--" + str[idx]);    
+            }
+
+            function print(text) does
+            {
+                if (static buffer == null) buffer = "";
+                unless (text == null) buffer += text;
+                return buffer;
+            }
+
+            """);
 
         var str = Guid.NewGuid().ToString("N")[..3];
         var rnd = new Random();
@@ -580,20 +603,22 @@ function print(text) does
     {
         options.RegisterCommands = true;
         Compile(
-            @"
-var buffer;
-function print(text) = buffer.Append = text;
-function work
-{
-    var args;
-    buffer = new System::Text::StringBuilder(args[0]);
-    print(args[1]);
-    print(args[2]);
-    return buffer;
-}
+            """
 
-function main(a,b,c) = work(a,b,c).ToString;
-");
+            var buffer;
+            function print(text) = buffer.Append = text;
+            function work
+            {
+                var args;
+                buffer = new System::Text::StringBuilder(args[0]);
+                print(args[1]);
+                print(args[2]);
+                return buffer;
+            }
+
+            function main(a,b,c) = work(a,b,c).ToString;
+
+            """);
         var a = Guid.NewGuid().ToString("N");
         var b = Guid.NewGuid().ToString("N");
         var c = Guid.NewGuid().ToString("N");
@@ -709,15 +734,17 @@ function main(a,b,c) = work(a,b,c).ToString;
     public void SimpleForeach()
     {
         Compile(
-            @"
-function main(lst)
-{
-    var i = 0;
-    foreach(var e in lst)
-        i++;
-    return i;
-}
-");
+            """
+
+            function main(lst)
+            {
+                var i = 0;
+                foreach(var e in lst)
+                    i++;
+                return i;
+            }
+
+            """);
         Expect(5, PType.List.CreatePValue(new PValue[] {1, 2, 3, 4, 5}));
     }
 
@@ -726,42 +753,44 @@ function main(lst)
     {
         var lst = new SomeSortOfList("The quick brown fox jumps over the lazy dog");
         Compile(
-            @"
-var buffer;
-function print does
-    foreach( var arg in var args)
-        buffer.Append(arg.ToString); 
+            """
 
-function init does
-    buffer = new System::Text::StringBuilder;
+            var buffer;
+            function print does
+                foreach( var arg in var args)
+                    buffer.Append(arg.ToString); 
 
-function printList(lst) does
-{
-    init;
-    foreach( print("" "") in lst);
-    return buffer.ToString;
-}
+            function init does
+                buffer = new System::Text::StringBuilder;
 
-function countList(lst) does
-{
-    var cnt = 0;
-    var state = 0;
-    foreach(var e in lst)
-        if (state == 0)
-            if (e == "">>"")
-                state = 1;
-            else 
-                continue;
-        else if (state == 1)
-            if (e == ""<<"")
-                state = 2;
-            else
-                cnt += e.Length;
-        else
-            continue;
-    return cnt;
-}
-");
+            function printList(lst) does
+            {
+                init;
+                foreach( print(" ") in lst);
+                return buffer.ToString;
+            }
+
+            function countList(lst) does
+            {
+                var cnt = 0;
+                var state = 0;
+                foreach(var e in lst)
+                    if (state == 0)
+                        if (e == ">>")
+                            state = 1;
+                        else 
+                            continue;
+                    else if (state == 1)
+                        if (e == "<<")
+                            state = 2;
+                        else
+                            cnt += e.Length;
+                    else
+                        continue;
+                return cnt;
+            }
+
+            """);
 
         ExpectNamed("printList", lst._PrintList(), sctx.CreateNativePValue(lst));
         ExpectNamed("countList", lst._CountList(), sctx.CreateNativePValue(lst));
@@ -771,25 +800,27 @@ function countList(lst) does
     public void GlobalVarInit()
     {
         Compile(
-            @"
-var buffer = new ::Text::StringBuilder;
-var HW = ""Hello"";
+            """
 
-var HW = HW + "" World"";
+            var buffer = new ::Text::StringBuilder;
+            var HW = "Hello";
 
-function print does foreach (buffer.Append in var args);
+            var HW = HW + " World";
 
-function main(x)
-{
-    if (x >= HW.Length) x = HW.Length -1;
-    for (var i = 0; until i == x; i++)
-    {
-        HW = HW.Insert(i, i.ToString);
-        print("">"", HW);
-    }
-    return buffer.ToString;
-}
-");
+            function print does foreach (buffer.Append in var args);
+
+            function main(x)
+            {
+                if (x >= HW.Length) x = HW.Length -1;
+                for (var i = 0; until i == x; i++)
+                {
+                    HW = HW.Insert(i, i.ToString);
+                    print(">", HW);
+                }
+                return buffer.ToString;
+            }
+
+            """);
         var buffer = new StringBuilder();
         var hw = new StringBuilder("Hello World");
         var rnd = new Random();
@@ -811,58 +842,64 @@ function main(x)
     {
         var ldr =
             Compile(
-                @"
+                """
 
-Add System::Text to Import;
 
-var buffer = new System::Text::StringBuilder;
-function print does foreach( buffer.Append in var args);
+                Add System::Text to Import;
 
-var L1 = ""1o1"";
-var L2;
+                var buffer = new System::Text::StringBuilder;
+                function print does foreach( buffer.Append in var args);
 
-function main(level)
-{
-    unless( level < 1)
-       print(""#1="",L1,"";"");
-    
-    unless (level < 2)
-       print(""#2="",L2,"";"");
+                var L1 = "1o1";
+                var L2;
 
-    declare var L3;
+                function main(level)
+                {
+                    unless( level < 1)
+                       print("#1=",L1,";");
+                    
+                    unless (level < 2)
+                       print("#2=",L2,";");
 
-    unless (level < 3)
-        print(""#3="",L3,"";"");
+                    declare var L3;
 
-    return buffer.ToString; 
-}
-");
+                    unless (level < 3)
+                        print("#3=",L3,";");
+
+                    return buffer.ToString; 
+                }
+
+                """);
 
         Expect("#1=1o1;", 1);
 
         //Continue compilation using the same loader
         Compile(
             ldr,
-            @"
-var L2 = ""2p2"";
+            """
 
-{
-    L1 = ""1o2"";
-    buffer = new System::Text::StringBuilder;
-}
-");
+            var L2 = "2p2";
+
+            {
+                L1 = "1o2";
+                buffer = new System::Text::StringBuilder;
+            }
+
+            """);
         Expect("#1=1o2;#2=2p2;", 2);
 
         //Continue compilation using a different loader
         Compile(
-            @"
-var L3 = ""3z3"";
-var L2 = ""2m3"";
-var L1 = ""1k3"";
+            """
 
-declare var buffer;
-{ buffer = new System::Text::StringBuilder; }
-");
+            var L3 = "3z3";
+            var L2 = "2m3";
+            var L1 = "1k3";
+
+            declare var buffer;
+            { buffer = new System::Text::StringBuilder; }
+
+            """);
 
         Expect("#1=1k3;#2=2m3;#3=3z3;", 3);
     }
@@ -870,29 +907,33 @@ declare var buffer;
     [Test]
     public void UselessBuildBlock()
     {
-        var ldr = Compile(@"
-    var myGlob; var initGlob;
-");
+        var ldr = Compile("""
+
+                              var myGlob; var initGlob;
+
+                          """);
 
         Compile(
             ldr,
-            @"
-build
-{
-    var loc = ""hello"";
-    var kop = 55 * 77;
-    var hup = loc.ToUpper + kop~String;
-    
-    declare var myGlob, initGlob;
-    myGlob = hup.Substring(1);
-    initGlob = 42;
-}
+            """
 
-var myGlob;
-var initGlob = ""init"";
+            build
+            {
+                var loc = "hello";
+                var kop = 55 * 77;
+                var hup = loc.ToUpper + kop~String;
+                
+                declare var myGlob, initGlob;
+                myGlob = hup.Substring(1);
+                initGlob = 42;
+            }
 
-function main = myGlob + initGlob;
-");
+            var myGlob;
+            var initGlob = "init";
+
+            function main = myGlob + initGlob;
+
+            """);
         Expect("ELLO" + 55*77 + "init");
     }
 
@@ -900,99 +941,101 @@ function main = myGlob + initGlob;
     public void References()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var lst) does // (b -> a -> b) -> b -> a -> [b]
-{
-    foreach (var right in lst) left = f(left,right);
-    return left;
-}
+            """
 
-function map(ref f, var lst) does // (a -> b) -> [a] -> [b]
-{
-    var nlst = new List;
-    foreach(var e in lst) nlst.Add = f(e);
-    return nlst;
-}
+            function foldl(ref f, var left, var lst) does // (b -> a -> b) -> b -> a -> [b]
+            {
+                foreach (var right in lst) left = f(left,right);
+                return left;
+            }
 
-var tuple\lst;
-function tuple(x)
-{
-    static idx;
-    declare tuple\lst as lst;
+            function map(ref f, var lst) does // (a -> b) -> [a] -> [b]
+            {
+                var nlst = new List;
+                foreach(var e in lst) nlst.Add = f(e);
+                return nlst;
+            }
 
-    if(idx == null)
-        idx = 0;
+            var tuple\lst;
+            function tuple(x)
+            {
+                static idx;
+                declare tuple\lst as lst;
 
-    var ret = ~List.Create(x, lst[idx++]);
-    unless(idx < lst.Count)
-        idx = null;
-    return ret;
-}
+                if(idx == null)
+                    idx = 0;
 
-ref reduce\f;
-function reduce(x) = reduce\f(x[0], x[1]); // (a -> a -> b) -> (a,a) -> b
+                var ret = ~List.Create(x, lst[idx++]);
+                unless(idx < lst.Count)
+                    idx = null;
+                return ret;
+            }
 
-var chain;
-function chained(x)
-{
-    foreach(ref f in chain) x = f(x);
-    return x;
-}
+            ref reduce\f;
+            function reduce(x) = reduce\f(x[0], x[1]); // (a -> a -> b) -> (a,a) -> b
 
-function add(left, right) = left + right; //a -> a -> a
-function sub(left, right) = left - right;
-function mul(left, right) = left * right;
+            var chain;
+            function chained(x)
+            {
+                foreach(ref f in chain) x = f(x);
+                return x;
+            }
 
-function id(x) = x;                       //a -> a
-function twice(x) = 2*x;
-function binary(x) = 2^x;
+            function add(left, right) = left + right; //a -> a -> a
+            function sub(left, right) = left - right;
+            function mul(left, right) = left * right;
 
-function dummy(x) {}
+            function id(x) = x;                       //a -> a
+            function twice(x) = 2*x;
+            function binary(x) = 2^x;
 
-function assert(actual, expected, msg)
-{
-    if(actual != expected)
-    {
-        throw msg ?? ""Expected $expected, actual $actual"";
-    }
-}
+            function dummy(x) {}
 
-function main()                           // IO() -> IO()
-{
-    //Create [1..10]
-    var lst = new List;
-    for(var i = 1; until i == 11; i++)
-        lst.Add = i;
-    
-    var bin = map(->binary, lst); // 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
-    var bin\sum = foldl(->add, 0, bin); // 2046
-    assert(bin\sum, 2046);
+            function assert(actual, expected, msg)
+            {
+                if(actual != expected)
+                {
+                    throw msg ?? "Expected $expected, actual $actual";
+                }
+            }
 
-    chain = ~List.Create( -> twice, -> twice); //*4
-    var bin\quad = map(->chained, bin); // 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096
+            function main()                           // IO() -> IO()
+            {
+                //Create [1..10]
+                var lst = new List;
+                for(var i = 1; until i == 11; i++)
+                    lst.Add = i;
+                
+                var bin = map(->binary, lst); // 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
+                var bin\sum = foldl(->add, 0, bin); // 2046
+                assert(bin\sum, 2046);
 
-    var twi = map(->twice, lst); // 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
+                chain = ~List.Create( -> twice, -> twice); //*4
+                var bin\quad = map(->chained, bin); // 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096
 
-    tuple\lst = twi;
-    var tup\bin_twi = map(->tuple, bin) >> all; // (2,2), (4,4), (6,8), (8,16), (10,32), (12,64), (14,128), (16,256), (18,512), (20,1024)
-    println(tup\bin_twi);
+                var twi = map(->twice, lst); // 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
 
-    ->reduce\f = ->sub;
-    var tup\bin_twi\sub = map(->reduce, tup\bin_twi) >> all; // 0, 0, 2, 8, 22, 52, 114, 240, 494, 1004
-    assert(tup\bin_twi\sub[0],0);
-    assert(tup\bin_twi\sub[1],0);
-    assert(tup\bin_twi\sub[2],2);
-    assert(tup\bin_twi\sub[9],1004);
-    
-    var tup\bin_twi\sub\sum = foldl(->add, 0 , tup\bin_twi\sub); // 1936
-    assert(tup\bin_twi\sub\sum, 1936);
-    
-    var bin\quad\sum = foldl(->add, 0, bin\quad); // 8184
-    assert(bin\quad\sum,8184);
+                tuple\lst = twi;
+                var tup\bin_twi = map(->tuple, bin) >> all; // (2,2), (4,4), (6,8), (8,16), (10,32), (12,64), (14,128), (16,256), (18,512), (20,1024)
+                println(tup\bin_twi);
 
-    return  (bin\quad\sum - tup\bin_twi\sub\sum)~Int; // 6248
-}
-");
+                ->reduce\f = ->sub;
+                var tup\bin_twi\sub = map(->reduce, tup\bin_twi) >> all; // 0, 0, 2, 8, 22, 52, 114, 240, 494, 1004
+                assert(tup\bin_twi\sub[0],0);
+                assert(tup\bin_twi\sub[1],0);
+                assert(tup\bin_twi\sub[2],2);
+                assert(tup\bin_twi\sub[9],1004);
+                
+                var tup\bin_twi\sub\sum = foldl(->add, 0 , tup\bin_twi\sub); // 1936
+                assert(tup\bin_twi\sub\sum, 1936);
+                
+                var bin\quad\sum = foldl(->add, 0, bin\quad); // 8184
+                assert(bin\quad\sum,8184);
+
+                return  (bin\quad\sum - tup\bin_twi\sub\sum)~Int; // 6248
+            }
+
+            """);
         Expect(6248);
     }
 
@@ -1000,20 +1043,22 @@ function main()                           // IO() -> IO()
     public void TypeIdentification()
     {
         Compile(
-            @"
-function main(arg)
-{
-    var r = """";
-    if(arg is String)
-        var r = arg + arg;
-    else if(arg is List)
-        foreach(var e in arg) var r += e;
-    else if(arg is System::Text::StringBuilder)
-        r = arg.ToString;
+            """
 
-    return r;       
-}
-");
+            function main(arg)
+            {
+                var r = "";
+                if(arg is String)
+                    var r = arg + arg;
+                else if(arg is List)
+                    foreach(var e in arg) var r += e;
+                else if(arg is System::Text::StringBuilder)
+                    r = arg.ToString;
+
+                return r;       
+            }
+
+            """);
         var rs = GenerateRandomString(3);
         Expect(rs + rs, rs);
 
@@ -1033,14 +1078,16 @@ function main(arg)
     public void ClosureCreation()
     {
         Compile(
-            @"
-function clo1 = x => 2*x;
+            """
 
-function clo2(a)
-{
-    return x => a*x;
-}
-");
+            function clo1 = x => 2*x;
+
+            function clo2(a)
+            {
+                return x => a*x;
+            }
+
+            """);
 
         var rnd = new Random();
 
@@ -1085,48 +1132,50 @@ function clo2(a)
     public void Lambda()
     {
         Compile(
-            @"
-function split(ref f, var lst, ref left, ref right)
-{
-    var l;
-    var r;
-    
-    left = new List;
-    right = new List;
-    
-    foreach(var x in lst)
-    {
-        f(x, ->l, ->r);
-        left.Add = l;
-        right.Add = r;
-    }   
-}
+            """
 
-function splitter(ref f, ref g) = (x, ref left, ref right) => { left = f(x); right = g(x); };
+            function split(ref f, var lst, ref left, ref right)
+            {
+                var l;
+                var r;
+                
+                left = new List;
+                right = new List;
+                
+                foreach(var x in lst)
+                {
+                    f(x, ->l, ->r);
+                    left.Add = l;
+                    right.Add = r;
+                }   
+            }
 
-function combine(ref f, left, right)
-{
-    var lst = new List;
-    var max = left.Count;
-    if(right.Count > max)
-        max = right.Count;
-    for(var i = 0; until i == max; i++)
-        lst.Add = f(left[i], right[i]);
-    return lst;
-}
+            function splitter(ref f, ref g) = (x, ref left, ref right) => { left = f(x); right = g(x); };
 
-function main(lst)
-{
-    //Lambda expressions
-    var twi = map( x => 2*x, lst);        
-    var factors;
-    var rests;
-    //using splitter higher order function
-    split( splitter( (x) => (x / 10)~Int, (x) => x mod 10 ), twi, ->factors, ->rests);
-    var tuples = combine( (l,r) => ""("" + l + "","" + r + "")"", factors, rests);
-    return foldl( (l,r) => l + "" "" + r, """", tuples);
-}
-");
+            function combine(ref f, left, right)
+            {
+                var lst = new List;
+                var max = left.Count;
+                if(right.Count > max)
+                    max = right.Count;
+                for(var i = 0; until i == max; i++)
+                    lst.Add = f(left[i], right[i]);
+                return lst;
+            }
+
+            function main(lst)
+            {
+                //Lambda expressions
+                var twi = map( x => 2*x, lst);        
+                var factors;
+                var rests;
+                //using splitter higher order function
+                split( splitter( (x) => (x / 10)~Int, (x) => x mod 10 ), twi, ->factors, ->rests);
+                var tuples = combine( (l,r) => "(" + l + "," + r + ")", factors, rests);
+                return foldl( (l,r) => l + " " + r, "", tuples);
+            }
+
+            """);
         var lst = new int[10];
         var rnd = new Random();
         var sb = new StringBuilder();
@@ -1149,49 +1198,51 @@ function main(lst)
     public void Currying()
     {
         Compile(
-            @"
-function curry(ref f) = a => b => f(a,b);
+            """
 
-function uncurry(ref f) = (a, b) => f(a).(b);
+            function curry(ref f) = a => b => f(a,b);
 
-function map(ref f, lst)
-{
-    var nlst = new List;
-    foreach( var x in lst)
-        nlst.Add = f(x);
-    return nlst;
-}
+            function uncurry(ref f) = (a, b) => f(a).(b);
 
-function elementFeeder(lst) 
-{
-    var i = 0;
-    var len = lst.Count;
-    return () =>
-    {
-        if(i < len)
-            return lst[i++];
-        else
-            return null;
-    };
-}
+            function map(ref f, lst)
+            {
+                var nlst = new List;
+                foreach( var x in lst)
+                    nlst.Add = f(x);
+                return nlst;
+            }
 
-function listDifference(lst) does
-{
-    ref feed = elementFeeder(lst);
-    return (x) => x - feed;
-}
+            function elementFeeder(lst) 
+            {
+                var i = 0;
+                var len = lst.Count;
+                return () =>
+                {
+                    if(i < len)
+                        return lst[i++];
+                    else
+                        return null;
+                };
+            }
 
-function main(lst, s)
-{
-    var add = (x,y) => x+y;
-    ref additions = map(curry( add ),lst); // [ y => _const+y ]
-    ref headComparer = uncurry(->listDifference);    
-    var compared = map( x => headComparer(lst,x), additions(s) );
-    var sb = new ::Text::StringBuilder;
-    foreach(var e in compared) sb.Append("" "" + e);
-    return sb.ToString;
-}
-");
+            function listDifference(lst) does
+            {
+                ref feed = elementFeeder(lst);
+                return (x) => x - feed;
+            }
+
+            function main(lst, s)
+            {
+                var add = (x,y) => x+y;
+                ref additions = map(curry( add ),lst); // [ y => _const+y ]
+                ref headComparer = uncurry(->listDifference);    
+                var compared = map( x => headComparer(lst,x), additions(s) );
+                var sb = new ::Text::StringBuilder;
+                foreach(var e in compared) sb.Append(" " + e);
+                return sb.ToString;
+            }
+
+            """);
         var rnd = new Random();
         var s = rnd.Next(2, 9);
         var plst = new List<PValue>();
@@ -1217,40 +1268,42 @@ function main(lst, s)
     public void NestedFunctions()
     {
         Compile(
-            @"
-function apply(ref f, x) = f(x);
+            """
 
-function main(p)
-{
-    function koo(x)
-    {
-        var q = x.ToString;
-        if(q.Length > 1)
-            return q + ""koo"";
-        else
-            return q;
-    }
-    
-    ref goo;
-    if(p mod 10 == 0)
-        function goo(x) = 2*x;
-    else
-        function goo(x) = 2+x;
+            function apply(ref f, x) = f(x);
 
-    if(p > 50)
-        function koo(x)
-        {
-            var q = x.ToString;
-            q = q+q;
-            if(q.Length mod 2 != 0)
-                return q + ""q"";
-            else
-                return q;
-        }
+            function main(p)
+            {
+                function koo(x)
+                {
+                    var q = x.ToString;
+                    if(q.Length > 1)
+                        return q + "koo";
+                    else
+                        return q;
+                }
+                
+                ref goo;
+                if(p mod 10 == 0)
+                    function goo(x) = 2*x;
+                else
+                    function goo(x) = 2+x;
 
-    return apply( ->koo , goo( p ) );
-}
-");
+                if(p > 50)
+                    function koo(x)
+                    {
+                        var q = x.ToString;
+                        q = q+q;
+                        if(q.Length mod 2 != 0)
+                            return q + "q";
+                        else
+                            return q;
+                    }
+
+                return apply( ->koo , goo( p ) );
+            }
+
+            """);
         var rnd = new Random();
         var ps =
             new[]
@@ -1284,29 +1337,31 @@ function main(p)
     public void DeDereference()
     {
         Compile(
-            @"
-function applyInChain(var chain, var x)
-{
-    var y = x;
-    foreach( ref f in chain)
-        y = f(y);
-    return y;
-}
+            """
 
-function createChain(ref t, var f, var g)
-{
-    t = new List;
-    t[] = f;
-    t[] = g;
-}
+            function applyInChain(var chain, var x)
+            {
+                var y = x;
+                foreach( ref f in chain)
+                    y = f(y);
+                return y;
+            }
 
-function main(var m)
-{
-    ref flst; //Would be easier as { var flst; } but this is a test after all...
-    createChain(->->flst, x => 2*x, x => 2+x);
-    return applyInChain(->flst, m);
-}
-");
+            function createChain(ref t, var f, var g)
+            {
+                t = new List;
+                t[] = f;
+                t[] = g;
+            }
+
+            function main(var m)
+            {
+                ref flst; //Would be easier as { var flst; } but this is a test after all...
+                createChain(->->flst, x => 2*x, x => 2+x);
+                return applyInChain(->flst, m);
+            }
+
+            """);
         var rnd = new Random();
         var m = rnd.Next(3, 500);
         var expected = 2 + 2*m;
@@ -1317,12 +1372,14 @@ function main(var m)
     [Test]
     public void PowerSqrt()
     {
-        Compile(@"
-function main(x,y)
-{
-    return ::Math.Sqrt(x^2 + y^2);
-}
-");
+        Compile("""
+
+                function main(x,y)
+                {
+                    return ::Math.Sqrt(x^2 + y^2);
+                }
+
+                """);
         const double x = 113.0;
         const double y = 13.0;
         Expect(Math.Sqrt(Math.Pow(x, 2) + Math.Pow(y, 2)), x, y);
@@ -1332,35 +1389,37 @@ function main(x,y)
     public void ExplicitIndirectCall()
     {
         Compile(
-            @"
-function map(f, lst)
-{
-    var nlst = new List;
-    foreach( var e in lst)
-        nlst[] = f.(e);
-    return nlst;
-}
+            """
 
-function combine(flst, olst)
-{
-    var nlst = new List;
-    for(var i = 0; until i == flst.Count; i++)
-        nlst[] = flst[i].(olst[i]);
-    return nlst;
-}
+            function map(f, lst)
+            {
+                var nlst = new List;
+                foreach( var e in lst)
+                    nlst[] = f.(e);
+                return nlst;
+            }
+
+            function combine(flst, olst)
+            {
+                var nlst = new List;
+                for(var i = 0; until i == flst.Count; i++)
+                    nlst[] = flst[i].(olst[i]);
+                return nlst;
+            }
 
 
-function main(xlst, ylst)
-{
-    var dx = map( x => y => ::Math.Sqrt(x^2 + y^2), xlst);
-    var d = combine( dx, ylst );
-    var addition = x => y => x+y;
-    var sum = 0;
-    foreach(var e in d)
-        sum = addition.(sum).(e);
-    return sum;
-}
-");
+            function main(xlst, ylst)
+            {
+                var dx = map( x => y => ::Math.Sqrt(x^2 + y^2), xlst);
+                var d = combine( dx, ylst );
+                var addition = x => y => x+y;
+                var sum = 0;
+                foreach(var e in d)
+                    sum = addition.(sum).(e);
+                return sum;
+            }
+
+            """);
         var rnd = new Random();
         var sum = 0.0;
         List<PValue> xlst = [],
@@ -1383,25 +1442,27 @@ function main(xlst, ylst)
     public void ConditionalExpression()
     {
         Compile(
-            @"
-function abs(x) = if(x > 0) x else -x;
-function max(a,b) = if(a > b) a else b;
-var rnd = new System::Random;
-function randomImplementation(fa, fb) = (a,b) => if(rnd.Next(0,2) mod 2 == 0) fa.(a,b) else fb.(a,b);
-function sum(lst)
-{
-    var s = 0;
-    foreach(var e in lst)
-        s += e;
-    return s;
-}
+            """
 
-function main(lst, limit)
-{
-    ref min = randomImplementation((a,b) => if(max(a,b) == a) b else a, (a,b) => if(a < b) a else b);
-    return -sum(all(map(a => min(a, limit), lst)));
-}
-");
+            function abs(x) = if(x > 0) x else -x;
+            function max(a,b) = if(a > b) a else b;
+            var rnd = new System::Random;
+            function randomImplementation(fa, fb) = (a,b) => if(rnd.Next(0,2) mod 2 == 0) fa.(a,b) else fb.(a,b);
+            function sum(lst)
+            {
+                var s = 0;
+                foreach(var e in lst)
+                    s += e;
+                return s;
+            }
+
+            function main(lst, limit)
+            {
+                ref min = randomImplementation((a,b) => if(max(a,b) == a) b else a, (a,b) => if(a < b) a else b);
+                return -sum(all(map(a => min(a, limit), lst)));
+            }
+
+            """);
         var rnd = new Random();
         var lst = new List<PValue>();
         var sum = 0;
@@ -1425,24 +1486,26 @@ function main(lst, limit)
     public void NestedConditionalExpressions()
     {
         Compile(
-            @"
-function main(xs)
-{
-    var ys = [];
-    foreach(var x in xs)
-        ys[] = 
-            if(x mod 2 == 0) if(x > 5)   x
-                             else        x*2
-            else             if(x < 10)  (x+1) / 2
-                             else        x+2
-        ;
-    
-    var s = 0;
-    foreach(var y in ys)   
-        s+=y;
-    return s;
-}
-");
+            """
+
+            function main(xs)
+            {
+                var ys = [];
+                foreach(var x in xs)
+                    ys[] = 
+                        if(x mod 2 == 0) if(x > 5)   x
+                                         else        x*2
+                        else             if(x < 10)  (x+1) / 2
+                                         else        x+2
+                    ;
+                
+                var s = 0;
+                foreach(var y in ys)   
+                    s+=y;
+                return s;
+            }
+
+            """);
         var xs = new List<PValue>(
         [
             12, //=> 12
@@ -1458,35 +1521,37 @@ function main(xs)
     public void GlobalRefAssignment()
     {
         Compile(
-            @"
-var theList;
+            """
 
-function accessor(index) = v => 
-{
-    if(v != null)
-        theList[index] = v;
-    return theList[index];
-};
+            var theList;
 
-ref first = accessor(0);
-ref second = accessor(1);
+            function accessor(index) = v => 
+            {
+                if(v != null)
+                    theList[index] = v;
+                return theList[index];
+            };
 
-function average(lst)
-{
-    var av = 0;
-    foreach(var e in lst)
-        av += e;
-    return (av / lst.Count)~Int;
-}
+            ref first = accessor(0);
+            ref second = accessor(1);
 
-function main(lst)
-{
-    theList = lst;
-    first = 4;
-    second = 7;
-    return ""f$first::$(average(lst))::s$second"";
-}
-");
+            function average(lst)
+            {
+                var av = 0;
+                foreach(var e in lst)
+                    av += e;
+                return (av / lst.Count)~Int;
+            }
+
+            function main(lst)
+            {
+                theList = lst;
+                first = 4;
+                second = 7;
+                return "f$first::$(average(lst))::s$second";
+            }
+
+            """);
         var lst = new List<PValue>();
         var av = 0;
         for (var i = 0; i < 10; i++)
@@ -1503,28 +1568,30 @@ function main(lst)
     public void NoReturnTransformationInInit()
     {
         Compile(
-            @"
-var x = 3;
+            """
 
-function f
-{
-    x = 4;
-}
+            var x = 3;
 
-{
-    x = 5;
-    f();
-}
+            function f
+            {
+                x = 4;
+            }
 
-{
-    x = 6;
-}
+            {
+                x = 5;
+                f();
+            }
 
-function main()
-{
-    return x;
-}
-");
+            {
+                x = 6;
+            }
+
+            function main()
+            {
+                return x;
+            }
+
+            """);
 
         Expect(6);
     }
@@ -1533,23 +1600,25 @@ function main()
     public void FakeSharedCtor()
     {
         Compile(
-            @"
-    function main(x)
-    {
-        function create_obj()
-        {
-            var s = new Structure;
-            s.\(""x"") = x;
-            return s;
-        }
-        function inner()
-        {
-            return (new obj).x + 1;
-        }
+            """
 
-        return inner() * 2;
-    }
-");
+                function main(x)
+                {
+                    function create_obj()
+                    {
+                        var s = new Structure;
+                        s.\("x") = x;
+                        return s;
+                    }
+                    function inner()
+                    {
+                        return (new obj).x + 1;
+                    }
+
+                    return inner() * 2;
+                }
+
+            """);
 
         Expect(12, 5);
         Expect(14, 6);
@@ -1557,14 +1626,16 @@ function main()
 
     public void ConvertListToEnumerableOfT()
     {
-        Compile(@"
-function main()
-{
-    var xs = [1, ""2"", 3, 4.0];
-    var ys = xs~Object<""System.Collections.Generic.IEnumerable`1[System.String0.3]"">;
-    return ys;
-}
-");
+        Compile("""
+
+                function main()
+                {
+                    var xs = [1, "2", 3, 4.0];
+                    var ys = xs~Object<"System.Collections.Generic.IEnumerable`1[System.String0.3]">;
+                    return ys;
+                }
+
+                """);
         Expect(rs =>
         {
             Assert.That(rs,Is.InstanceOf<IEnumerable<string>>());

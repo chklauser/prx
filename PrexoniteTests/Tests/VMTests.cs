@@ -30,10 +30,7 @@
 #define UseCil
 //need to change self in VMTestsBase.cs too!
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using NUnit.Framework;
@@ -54,14 +51,16 @@ namespace PrexoniteTests.Tests
         public virtual void CilVersusInterpreted()
         {
             Compile(
-                @"
-function main()
-{
-    var interpreter_stack = asm(ldr.eng).Stack.Count;
-    println(interpreter_stack);
-    return interpreter_stack == 0;
-}
-");
+                """
+
+                function main()
+                {
+                    var interpreter_stack = asm(ldr.eng).Stack.Count;
+                    println(interpreter_stack);
+                    return interpreter_stack == 0;
+                }
+
+                """);
             Expect(CompileToCil);
         }
 
@@ -70,49 +69,51 @@ function main()
         public void DataStructure()
         {
             Compile(
-                @"
-function chain(lst, serial)
-{
-    var c = new Structure;
-    c.\(""IsSerial"") = if(serial != null) serial else true;
-    c.\(""Functions"") = if(lst != null) lst else new List();
-    function Invoke(self, prev)
-    {
-        var res = prev;
-        if(self.IsSerial)
-        {
-            foreach(var f in self.Functions)
-                prev = f.(prev);
-            return prev;
-        }
-        else
-        {
-            var nlst = new List();
-            foreach(var f in self.Functions)
-                nlst[] = f.(prev);
-            return nlst;
-        }
-    }
+                """
 
-    c.\\(""Invoke"") = ->Invoke;
-    c.\\(""IndirectCall"") = ->Invoke;
-    return c;
-}
+                function chain(lst, serial)
+                {
+                    var c = new Structure;
+                    c.\("IsSerial") = if(serial != null) serial else true;
+                    c.\("Functions") = if(lst != null) lst else new List();
+                    function Invoke(self, prev)
+                    {
+                        var res = prev;
+                        if(self.IsSerial)
+                        {
+                            foreach(var f in self.Functions)
+                                prev = f.(prev);
+                            return prev;
+                        }
+                        else
+                        {
+                            var nlst = new List();
+                            foreach(var f in self.Functions)
+                                nlst[] = f.(prev);
+                            return nlst;
+                        }
+                    }
 
-function main(seed)
-{
-    function sqrt(x) = System::Math.Sqrt(x);
-    ref ch = chain(~List.Create(
-        x => x+2,
-        x => x*2,
-        x => x mod 3,
-        x => (sqrt(x)*10)~Int,
-        x => ""The answer is: "" + x
-    ));
+                    c.\\("Invoke") = ->Invoke;
+                    c.\\("IndirectCall") = ->Invoke;
+                    return c;
+                }
 
-    return ch(seed);
-}
-");
+                function main(seed)
+                {
+                    function sqrt(x) = System::Math.Sqrt(x);
+                    ref ch = chain(~List.Create(
+                        x => x+2,
+                        x => x*2,
+                        x => x mod 3,
+                        x => (sqrt(x)*10)~Int,
+                        x => "The answer is: " + x
+                    ));
+
+                    return ch(seed);
+                }
+
+                """);
             var seed = new Random().Next(400, 500);
             var expected = seed;
             expected = expected + 2;
@@ -127,46 +128,48 @@ function main(seed)
         public void ListConcat()
         {
             Compile(
-                @"
+                """
 
-function foldl(ref f, var left, var lst)
-{
-    foreach(var x in lst)
-        left = f(left, x);
-    return left;   
-}
 
-function map(ref f, lst)
-{
-    var nlst = [];
-    foreach(var x in lst) 
-        nlst += f(x);
-    return nlst;
-}
+                function foldl(ref f, var left, var lst)
+                {
+                    foreach(var x in lst)
+                        left = f(left, x);
+                    return left;   
+                }
 
-function main(lst)
-{
-    var L2 = [];
-    var last = null;
-    foreach(var e in lst)
-    {
-        if(last == null)
-        {
-            last = e;
-        }
-        else
-        {
-            L2 += [[last, e]];
-            last = null;
-        }
-    }
-    
-    function select(index) = map( pair => pair[index], L2 );
-    function toString(obj) = foldl( (l,r) => l + r, """", obj);
+                function map(ref f, lst)
+                {
+                    var nlst = [];
+                    foreach(var x in lst) 
+                        nlst += f(x);
+                    return nlst;
+                }
 
-    return toString( select(0) + select(1) );
-}
-");
+                function main(lst)
+                {
+                    var L2 = [];
+                    var last = null;
+                    foreach(var e in lst)
+                    {
+                        if(last == null)
+                        {
+                            last = e;
+                        }
+                        else
+                        {
+                            L2 += [[last, e]];
+                            last = null;
+                        }
+                    }
+                    
+                    function select(index) = map( pair => pair[index], L2 );
+                    function toString(obj) = foldl( (l,r) => l + r, "", obj);
+
+                    return toString( select(0) + select(1) );
+                }
+
+                """);
             var lst = new List<PValue>();
             var sbo = new StringBuilder();
             var sbe = new StringBuilder();
@@ -187,19 +190,21 @@ function main(lst)
         public void CoroutineSimple()
         {
             Compile(
-                @"
-function main(a,b,c)
-{
-    ref f = coroutine (x,y,z) => 
-    { 
-        yield x; 
-        yield y; 
-        yield z;
-    } for (a,b,c);
+                """
 
-    return f + f + f;
-}
-");
+                function main(a,b,c)
+                {
+                    ref f = coroutine (x,y,z) => 
+                    { 
+                        yield x; 
+                        yield y; 
+                        yield z;
+                    } for (a,b,c);
+
+                    return f + f + f;
+                }
+
+                """);
             Expect("abc", "a", "b", "c");
         }
 
@@ -207,20 +212,22 @@ function main(a,b,c)
         public void CoroutineFunction()
         {
             Compile(
-                @"
-function subrange(lst, index, count) does
-    for(var i = index; i < index+count; i++)
-        yield lst[i];
+                """
 
-function main
-{
-    var f = coroutine -> subrange for ( var args, 2, 3 );
-    var buffer = new System::Text::StringBuilder;
-    foreach(var e in f)
-        buffer.Append(e);
-    return buffer.ToString;
-}
-");
+                function subrange(lst, index, count) does
+                    for(var i = index; i < index+count; i++)
+                        yield lst[i];
+
+                function main
+                {
+                    var f = coroutine -> subrange for ( var args, 2, 3 );
+                    var buffer = new System::Text::StringBuilder;
+                    foreach(var e in f)
+                        buffer.Append(e);
+                    return buffer.ToString;
+                }
+
+                """);
 
             Expect("cde", "a", "b", "c", "d", "e", "f", "g");
         }
@@ -229,64 +236,66 @@ function main
         public void CoroutineComplex()
         {
             Compile(
-                @"
-function map(ref f, var lst) = coroutine () =>
-{
-    foreach(var x in lst)
-        yield f(x);
-};
+                """
 
-function where(ref predicate, var lst) = coroutine()=>
-{
-    foreach(var x in lst)
-        if(predicate(x))
-            yield x;
-};
+                function map(ref f, var lst) = coroutine () =>
+                {
+                    foreach(var x in lst)
+                        yield f(x);
+                };
 
-function limit(n, var lst) = coroutine() =>
-{
-    foreach(var x in lst)
-        if(n-- > 0)
-            yield x;
-};
+                function where(ref predicate, var lst) = coroutine()=>
+                {
+                    foreach(var x in lst)
+                        if(predicate(x))
+                            yield x;
+                };
 
-function skip(n, var lst) = coroutine() =>
-{
-    foreach(var x in lst)
-        if(n-- <= 0)
-            yield x;
-};
+                function limit(n, var lst) = coroutine() =>
+                {
+                    foreach(var x in lst)
+                        if(n-- > 0)
+                            yield x;
+                };
 
-function foldl(ref f, var left, var lst)
-{
-    foreach(var right in lst)
-        left = f(left, right);
-    return left;
-}
+                function skip(n, var lst) = coroutine() =>
+                {
+                    foreach(var x in lst)
+                        if(n-- <= 0)
+                            yield x;
+                };
 
-function curry(ref f) = a => b => f(a,b);
+                function foldl(ref f, var left, var lst)
+                {
+                    foreach(var right in lst)
+                        left = f(left, right);
+                    return left;
+                }
 
-function chain() does
-var args; and return lst =>
-{
-    foreach(ref filter in var args)
-        lst = filter(lst);
-    return lst;
-};
+                function curry(ref f) = a => b => f(a,b);
 
-function main()
-{
-    function toString(lst) = foldl( (l,r) => l + r, """", lst);
-    ref filterChain = chain(
-        curry(->skip)   .(2),
-        curry(->map)    .(x => 3*x),
-        curry(->where)  .(x => x mod 2 == 0),
-        curry(->limit)  .(3)
-    );
+                function chain() does
+                var args; and return lst =>
+                {
+                    foreach(ref filter in var args)
+                        lst = filter(lst);
+                    return lst;
+                };
 
-    return toString(filterChain(var args));
-}
-");
+                function main()
+                {
+                    function toString(lst) = foldl( (l,r) => l + r, "", lst);
+                    ref filterChain = chain(
+                        curry(->skip)   .(2),
+                        curry(->map)    .(x => 3*x),
+                        curry(->where)  .(x => x mod 2 == 0),
+                        curry(->limit)  .(3)
+                    );
+
+                    return toString(filterChain(var args));
+                }
+
+                """);
             var lst = new List<PValue>();
             var buffer = new StringBuilder();
             var nums = 0;
@@ -313,28 +322,30 @@ function main()
         public void CoroutineNoNull()
         {
             Compile(
-                @"
-function main()
-{
-    var c = coroutine() => 
-    {
-        yield 0;
-        yield 1;
-        yield 2;
-        yield 3;
-    };
+                """
 
-    var buffer = new System::Text::StringBuilder;
-    foreach(var ce in c)
-    {
-        buffer.Append(""=>"");
-        buffer.Append(ce);
-        buffer.Append(""\n"");
-    }
+                function main()
+                {
+                    var c = coroutine() => 
+                    {
+                        yield 0;
+                        yield 1;
+                        yield 2;
+                        yield 3;
+                    };
 
-    return buffer.ToString;
-}
-");
+                    var buffer = new System::Text::StringBuilder;
+                    foreach(var ce in c)
+                    {
+                        buffer.Append("=>");
+                        buffer.Append(ce);
+                        buffer.Append("\n");
+                    }
+
+                    return buffer.ToString;
+                }
+
+                """);
             Expect("=>0\n=>1\n=>2\n=>3\n");
         }
 
@@ -342,31 +353,33 @@ function main()
         public void CoroutineRecursive()
         {
             Compile(
-                @"
-coroutine unfolded(lst)
-{
-    foreach(var x in lst)
-        if(x is List || x is ::Prexonite::$Coroutine)
-            foreach(var y in unfolded(x))
-                yield y;
-        else
-            yield x;
-}
+                """
 
-function main()
-{
-    var args;
-    var buffer = new System::Text::StringBuilder();
-    foreach(var a in unfolded(args))
-    {
-        buffer.Append(a);
-        buffer.Append(""."");
-    }
-    if(buffer.Length > 0)
-        buffer.Length -= 1;
-    return buffer.ToString;
-}
-");
+                coroutine unfolded(lst)
+                {
+                    foreach(var x in lst)
+                        if(x is List || x is ::Prexonite::$Coroutine)
+                            foreach(var y in unfolded(x))
+                                yield y;
+                        else
+                            yield x;
+                }
+
+                function main()
+                {
+                    var args;
+                    var buffer = new System::Text::StringBuilder();
+                    foreach(var a in unfolded(args))
+                    {
+                        buffer.Append(a);
+                        buffer.Append(".");
+                    }
+                    if(buffer.Length > 0)
+                        buffer.Length -= 1;
+                    return buffer.ToString;
+                }
+
+                """);
 
             var args = new List<PValue>();
             var sub1 = new List<PValue>();
@@ -398,27 +411,29 @@ function main()
         public void CoroutineFib()
         {
             Compile(
-                @"
-var numbers = [];
+                """
 
-declare function fib;
+                var numbers = [];
 
-ref nextfib = coroutine() =>
-{
-    yield 1;
-    yield 1;
-    for(var i = 3; true; i++)
-        yield fib(i-1) + fib(i-2);
-};
+                declare function fib;
 
-function fib(n)
-{
-    while(numbers.Count < n)
-        numbers[] = nextfib;
+                ref nextfib = coroutine() =>
+                {
+                    yield 1;
+                    yield 1;
+                    for(var i = 3; true; i++)
+                        yield fib(i-1) + fib(i-2);
+                };
 
-    return numbers[n-1];
-}
-");
+                function fib(n)
+                {
+                    while(numbers.Count < n)
+                        numbers[] = nextfib;
+
+                    return numbers[n-1];
+                }
+
+                """);
 
             ExpectNamed("fib", _fibonacci(6), 6);
         }
@@ -427,31 +442,33 @@ function fib(n)
         public void Hashes()
         {
             Compile(
-                @"
-function mapToHash(ref f, xs)
-{
-    var h = {};
-    foreach(var x in xs)
-        h[] = x: f(x);
-    return h;
-}
+                """
 
-coroutine reader(xs) does
-    foreach(var x in xs)
-        yield x;
+                function mapToHash(ref f, xs)
+                {
+                    var h = {};
+                    foreach(var x in xs)
+                        h[] = x: f(x);
+                    return h;
+                }
 
-function main()
-{
-    var h = mapToHash( x => (x+1)*2, var args);
-    ref keys = reader(h.Keys);
-    ref values = reader(h.Values);
+                coroutine reader(xs) does
+                    foreach(var x in xs)
+                        yield x;
 
-    var diff = 0;
-    for(var i = 0; i < h.Count; i++)
-        diff += values - keys;
-    return diff;
-}
-");
+                function main()
+                {
+                    var h = mapToHash( x => (x+1)*2, var args);
+                    ref keys = reader(h.Keys);
+                    ref values = reader(h.Values);
+
+                    var diff = 0;
+                    for(var i = 0; i < h.Count; i++)
+                        diff += values - keys;
+                    return diff;
+                }
+
+                """);
             var xs =
                 new PValue[]
                     {
@@ -466,22 +483,24 @@ function main()
         public void NestedFunctionCrossReference()
         {
             Compile(
-                @"
-function main()
-{
-    function A(xa)
-    {
-        return ""x"" + xa + ""x"";
-    }
+                """
 
-    function B(xb)
-    {
-        return ""b$(xb).$(->A)b"";
-    }
+                function main()
+                {
+                    function A(xa)
+                    {
+                        return "x" + xa + "x";
+                    }
 
-    return B(var args[0]);
-}
-");
+                    function B(xb)
+                    {
+                        return "b$(xb).$(->A)b";
+                    }
+
+                    return B(var args[0]);
+                }
+
+                """);
 
             //#if UseCil
             //            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
@@ -496,25 +515,29 @@ function main()
         public void StructureToString()
         {
             Compile(
-                @"
-function main(x)
-{
-    var s = new Structure;
-    s.\(""value"") = x;
-    s.\\(""ToString"") = self => self.value;
-    return s~String;
-}
-");
+                """
+
+                function main(x)
+                {
+                    var s = new Structure;
+                    s.\("value") = x;
+                    s.\\("ToString") = self => self.value;
+                    return s~String;
+                }
+
+                """);
             Expect("xzzxy", "xzzxy");
         }
 
         [Test]
         public void GlobalVarInitSimple()
         {
-            Compile(@"
-var x = 5;
-function main = x;
-");
+            Compile("""
+
+                    var x = 5;
+                    function main = x;
+
+                    """);
             Expect(5);
 
         }
@@ -523,28 +546,30 @@ function main = x;
         public void GlobalCode()
         {
             Compile(
-                @"
-var price = {};
+                """
 
-{
-    price[""apple""] = 3;
-    price[""juice""] = 4;
-    price[""pencil""] = 1;
-}
+                var price = {};
 
-//In a different file for example
-{
-    price[""apple""] *= 2;
-}
+                {
+                    price["apple"] = 3;
+                    price["juice"] = 4;
+                    price["pencil"] = 1;
+                }
 
-function main(var lst)
-{
-    var sum = 0;
-    foreach(var item in lst)
-        sum += price[item.Key] * item.Value;
-    return sum;
-}
-");
+                //In a different file for example
+                {
+                    price["apple"] *= 2;
+                }
+
+                function main(var lst)
+                {
+                    var sum = 0;
+                    foreach(var item in lst)
+                        sum += price[item.Key] * item.Value;
+                    return sum;
+                }
+
+                """);
             var lst = new List<PValue>(4)
                 {
                     new PValueKeyValuePair("apple", 1),
@@ -560,24 +585,26 @@ function main(var lst)
         public void CoalescenceOperator()
         {
             Compile(
-                @"
-coroutine fetch(xs) does 
-    foreach(var x in xs)
-        yield x;
+                """
 
-coroutine blit(xs, ys) does
-    ref nextY = fetch(ys); and
-    foreach(var x in xs)
-        var y = nextY; and
-        yield x ?? y ?? ""?"";
+                coroutine fetch(xs) does 
+                    foreach(var x in xs)
+                        yield x;
 
-function main()
-{
-    var xs = [6,null,4,null,null,1];
-    var ys = [1,2   ,3,4   ,null,6];
-    return foldl((l,r) => l + ""."" + r, """", blit(xs,ys));
-}        
-");
+                coroutine blit(xs, ys) does
+                    ref nextY = fetch(ys); and
+                    foreach(var x in xs)
+                        var y = nextY; and
+                        yield x ?? y ?? "?";
+
+                function main()
+                {
+                    var xs = [6,null,4,null,null,1];
+                    var ys = [1,2   ,3,4   ,null,6];
+                    return foldl((l,r) => l + "." + r, "", blit(xs,ys));
+                }        
+
+                """);
 
             Expect(".6.2.4.4.?.1");
         }
@@ -586,32 +613,34 @@ function main()
         public void LeftAppendArgument()
         {
             Compile(
-                @"
-coroutine where(ref f, xs) does foreach(var x in xs)
-    if(f(x))
-        yield x;
+                """
 
-coroutine limit(max, xs) does
-    var i = 0; and
-    foreach(var x in xs)
-        if(i++ >= max)
-            break;
-        else
-            yield x;
+                coroutine where(ref f, xs) does foreach(var x in xs)
+                    if(f(x))
+                        yield x;
 
-coroutine skip(cnt, xs) does
-    var i = 0; and
-    foreach(var x in xs)
-        if(i++ >= cnt)
-            yield x;
+                coroutine limit(max, xs) does
+                    var i = 0; and
+                    foreach(var x in xs)
+                        if(i++ >= max)
+                            break;
+                        else
+                            yield x;
 
-coroutine map(ref f, xs) does
-    foreach(var x in xs)
-        yield f(x);
+                coroutine skip(cnt, xs) does
+                    var i = 0; and
+                    foreach(var x in xs)
+                        if(i++ >= cnt)
+                            yield x;
 
-function main(sep) = foldl( (l,r) => $l + "" "" + $r, ""BEGIN"")
-    << limit(3) << map( x => x.Length + sep + x ) << where( x => x.Length >= 3 ) << skip(1) << var args;
-");
+                coroutine map(ref f, xs) does
+                    foreach(var x in xs)
+                        yield f(x);
+
+                function main(sep) = foldl( (l,r) => $l + " " + $r, "BEGIN")
+                    << limit(3) << map( x => x.Length + sep + x ) << where( x => x.Length >= 3 ) << skip(1) << var args;
+
+                """);
 
             Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
@@ -620,37 +649,39 @@ function main(sep) = foldl( (l,r) => $l + "" "" + $r, ""BEGIN"")
         public void RightAppendArgument()
         {
             Compile(
-                @"
-coroutine where(ref f, xs) does foreach(var x in xs)
-    if(f(x))
-        yield x;
+                """
 
-coroutine limit(max, xs) does
-    var i = 0; and
-    foreach(var x in xs)
-        if(i++ >= max)
-            break;
-        else
-            yield x;
+                coroutine where(ref f, xs) does foreach(var x in xs)
+                    if(f(x))
+                        yield x;
 
-coroutine skip(cnt, xs) does
-    var i = 0; and
-    foreach(var x in xs)
-        if(i++ >= cnt)
-            yield x;
+                coroutine limit(max, xs) does
+                    var i = 0; and
+                    foreach(var x in xs)
+                        if(i++ >= max)
+                            break;
+                        else
+                            yield x;
 
-coroutine map(ref f, xs) does
-    foreach(var x in xs)
-        yield f(x);
+                coroutine skip(cnt, xs) does
+                    var i = 0; and
+                    foreach(var x in xs)
+                        if(i++ >= cnt)
+                            yield x;
 
-function main(sep) = 
-    var args >> 
-    skip(1) >> 
-    where( x => x.Length >= 3 ) >> 
-    map( x => x.Length + sep + x ) >> 
-    limit(3) >>
-    foldl( (l,r) => $l + "" "" + $r, ""BEGIN"");
-");
+                coroutine map(ref f, xs) does
+                    foreach(var x in xs)
+                        yield f(x);
+
+                function main(sep) = 
+                    var args >> 
+                    skip(1) >> 
+                    where( x => x.Length >= 3 ) >> 
+                    map( x => x.Length + sep + x ) >> 
+                    limit(3) >>
+                    foldl( (l,r) => $l + " " + $r, "BEGIN");
+
+                """);
 
             Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
@@ -659,16 +690,18 @@ function main(sep) =
         public void CastAssign()
         {
             Compile(
-                @"
-function main(a,b,c)
-{
-    a~=Int;
-    b ~ = Bool;
-    c ~= String;
+                """
 
-    return ((a+10)/5) + (if(b) c*a else c);
-}
-");
+                function main(a,b,c)
+                {
+                    a~=Int;
+                    b ~ = Bool;
+                    c ~= String;
+
+                    return ((a+10)/5) + (if(b) c*a else c);
+                }
+
+                """);
 
             const double a = 2.9;
             const int b = 27;
@@ -681,19 +714,21 @@ function main(a,b,c)
         public void StoreBasic()
         {
             CompileStore(
-                @"
-function main(a,b,c)
-{
-    //string int bool
-    var x = a.Substring(2);
-    var y = b*5;
-    var z = if(c) 
-                ""x""   
-            else 
-                -1;    
-    return ""$(x)$(y)$(z)"";
-}
-");
+                """
+
+                function main(a,b,c)
+                {
+                    //string int bool
+                    var x = a.Substring(2);
+                    var y = b*5;
+                    var z = if(c) 
+                                "x"   
+                            else 
+                                -1;    
+                    return "$(x)$(y)$(z)";
+                }
+
+                """);
 
             Expect("cd50x", "abcd", 10, true);
         }
@@ -726,13 +761,15 @@ function main(a,b)
         public void RotateIns()
         {
             Compile(
-                @"
-function main(a)
-{   
-    var s = new Structure;
-    return s.\(""text"") = a;
-}
-");
+                """
+
+                function main(a)
+                {   
+                    var s = new Structure;
+                    return s.\("text") = a;
+                }
+
+                """);
             Expect("ham", "ham");
         }
 
@@ -748,13 +785,15 @@ function main(a)
         public void DirectTailRecursion()
         {
             Compile(
-                @"
-function fac n r =
-    if(n == 1)
-        r
-    else
-        fac(n-1, n*r);
-");
+                """
+
+                function fac n r =
+                    if(n == 1)
+                        r
+                    else
+                        fac(n-1, n*r);
+
+                """);
 
             ExpectNamed("fac", _fac(6), 6, 1);
         }
@@ -763,15 +802,17 @@ function fac n r =
         public void IsNotSyntax()
         {
             Compile(
-                @"
-function main(a,b)
-{
-    if(a is not String)
-        return a;
-    else
-        return b;
-}
-");
+                """
+
+                function main(a,b)
+                {
+                    if(a is not String)
+                        return a;
+                    else
+                        return b;
+                }
+
+                """);
 
             Expect(125, 125, "s-b-s");
             Expect(125.0, 125.0, "s-b-s");
@@ -783,9 +824,11 @@ function main(a,b)
         public void SuperFastPrintLn()
         {
             //Covers #10
-            Compile(@"
-function main = println;
-");
+            Compile("""
+
+                    function main = println;
+
+                    """);
 
             Expect("");
         }
@@ -793,11 +836,13 @@ function main = println;
         [Test]
         public void UseFunctionMacro()
         {
-            Compile(@"
-macro nothing = null;
+            Compile("""
 
-function main does return nothing;
-");
+                    macro nothing = null;
+
+                    function main does return nothing;
+
+                    """);
 
             ExpectNull();
         }
@@ -806,17 +851,19 @@ function main does return nothing;
         public void MacroTemporaryAllocateFree()
         {
             Compile(
-                @"
-macro acquire_free()
-{
-    var v = context.AllocateTemporaryVariable;
-    var node = new Prexonite::Compiler::Ast::AstConstant(""none"",-1,-1,v);
-    context.FreeTemporaryVariable(v);
-    return node;
-}
+                """
 
-function main = acquire_free;
-");
+                macro acquire_free()
+                {
+                    var v = context.AllocateTemporaryVariable;
+                    var node = new Prexonite::Compiler::Ast::AstConstant("none",-1,-1,v);
+                    context.FreeTemporaryVariable(v);
+                    return node;
+                }
+
+                function main = acquire_free;
+
+                """);
 
             var mainFunc = target.Functions["main"] ?? throw new InvalidOperationException("main not found.");
 
@@ -829,10 +876,12 @@ function main = acquire_free;
         public void ConstantFoldingReferenceEquality()
         {
             Compile(
-                @"
-function interpreted [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
-function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
-");
+                """
+
+                function interpreted [is volatile;] = System::Object.ReferenceEquals("ab", "a" + "b");
+                function compiled [is volatile;] = System::Object.ReferenceEquals("ab", "a" + "b");
+
+                """);
 
             ExpectNamed("interpreted", true);
             ExpectNamed("compiled", true);
@@ -841,12 +890,14 @@ function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" 
         [Test]
         public void UnlessConditionalExpression()
         {
-            Compile(@"
-function main()
-{
-    return unless(true) 1 else 2;
-}
-");
+            Compile("""
+
+                    function main()
+                    {
+                        return unless(true) 1 else 2;
+                    }
+
+                    """);
 
             Expect(2);
         }
@@ -855,13 +906,15 @@ function main()
         public void BuildBlockDoesNotTriggerInitialization()
         {
             Compile(
-                @"
-var flag = true;
+                """
 
-function write does print(var args);
+                var flag = true;
 
-build does write(""nothing"");
-");
+                function write does print(var args);
+
+                build does write("nothing");
+
+                """);
 
             Assert.IsNull((target.Variables["flag"] ?? throw new InvalidOperationException("flag not found.")).Value.Value);
         }
@@ -870,30 +923,32 @@ build does write(""nothing"");
         public void NestedVariableShadowing()
         {
             Compile(
-                @"
-function main(x,y)
-{
-    var a = x;
-    function innerShadow
-    {
-        new var a = y; //variable is new-declared, it should not capture the outer variable
-        return a;
-    }
-    function innerCapture
-    {
-        a = y;
-        return a;
-    }
+                """
 
-    var t1 = a;
-    var k1 = innerShadow;
-    var t2 = a;
-    var k2 = innerCapture;
-    var t3 = a;
+                function main(x,y)
+                {
+                    var a = x;
+                    function innerShadow
+                    {
+                        new var a = y; //variable is new-declared, it should not capture the outer variable
+                        return a;
+                    }
+                    function innerCapture
+                    {
+                        a = y;
+                        return a;
+                    }
 
-    return ""$t1,$k1; $t2,$k2; $t3"";
-}
-");
+                    var t1 = a;
+                    var k1 = innerShadow;
+                    var t2 = a;
+                    var k2 = innerCapture;
+                    var t3 = a;
+
+                    return "$t1,$k1; $t2,$k2; $t3";
+                }
+
+                """);
 
             Expect("x,y; x,y; y", "x", "y");
         }
@@ -902,25 +957,27 @@ function main(x,y)
         public void DeclareNewVarTopLevel()
         {
             Compile(
-                @"
-function main()
-{
-    var buffer = new System::Text::StringBuilder;
-    function print(s) does buffer.Append(s);
-    new var xs = [ 5,7,9,11,13,15 ];
-    var fs = [];
-    foreach(var x in xs)
-    {
-        fs[] = y => ""($(x)->$(y))"";
-        print(""$(new var x)."");
-    }
+                """
 
-    var i = 19;
-    foreach(var f in fs)
-        print(f.(i--));
-    return buffer.ToString;
-}
-");
+                function main()
+                {
+                    var buffer = new System::Text::StringBuilder;
+                    function print(s) does buffer.Append(s);
+                    new var xs = [ 5,7,9,11,13,15 ];
+                    var fs = [];
+                    foreach(var x in xs)
+                    {
+                        fs[] = y => "($(x)->$(y))";
+                        print("$(new var x).");
+                    }
+
+                    var i = 19;
+                    foreach(var f in fs)
+                        print(f.(i--));
+                    return buffer.ToString;
+                }
+
+                """);
 
             const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
             Expect(expected);
@@ -930,19 +987,21 @@ function main()
         public void ObjectCreationFallback()
         {
             Compile(
-                @"
-declare function make_foo as create_foo;
+                """
 
-function main(x,y)
-{
-    var a = new foo(x);
-    function create_bar(z) = ""bar($z)"";
-    var b = new bar(y);
-    return a + b;
-}
+                declare function make_foo as create_foo;
 
-function make_foo(z) = ""foo($z)"";
-");
+                function main(x,y)
+                {
+                    var a = new foo(x);
+                    function create_bar(z) = "bar($z)";
+                    var b = new bar(y);
+                    return a + b;
+                }
+
+                function make_foo(z) = "foo($z)";
+
+                """);
 
             Expect("foo(x)bar(y)", "x", "y");
         }
@@ -950,10 +1009,12 @@ function make_foo(z) = ""foo($z)"";
         [Test] //#19
         public void ObjectIdentity()
         {
-            Compile(@"
-function eq(x) = x == x;
-function neq(x) = x != x;
-");
+            Compile("""
+
+                    function eq(x) = x == x;
+                    function neq(x) = x != x;
+
+                    """);
 
             ExpectNamed("eq", true, new PValue(new(), PType.Object[typeof (object)]));
             ExpectNamed("neq", false, new PValue(new(), PType.Object[typeof (object)]));
@@ -963,9 +1024,11 @@ function neq(x) = x != x;
         public void HexEscapeSequences()
         {
             Compile(
-                @"
-function main = ""\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD"".ToCharArray() >> map(x => x~Int) >> all;
-");
+                """
+
+                function main = "\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD".ToCharArray() >> map(x => x~Int) >> all;
+
+                """);
 
             Expect(new List<PValue> {0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD});
         }
@@ -974,19 +1037,21 @@ function main = ""\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD"".ToCharArray() >
         public void InnerFunctionNamespaceImport()
         {
             Compile(
-                @"
-Import {
-    System,
-    Prexonite
-};
+                """
 
-function main(x)[ Add Prexonite::Types to Import; ]
-{
-    function inner  k => k is ::PValueKeyValuePair;
-    ref lambda =    k => k is ::PValueKeyValuePair;
-    return inner(x) and lambda(x);
-}
-");
+                Import {
+                    System,
+                    Prexonite
+                };
+
+                function main(x)[ Add Prexonite::Types to Import; ]
+                {
+                    function inner  k => k is ::PValueKeyValuePair;
+                    ref lambda =    k => k is ::PValueKeyValuePair;
+                    return inner(x) and lambda(x);
+                }
+
+                """);
 
             Expect(true, new PValueKeyValuePair(1, 2));
             Expect(false, 1);
@@ -995,9 +1060,11 @@ function main(x)[ Add Prexonite::Types to Import; ]
         [Test]
         public void ConditionalExpressionVsKvpPriority()
         {
-            Compile(@"
-function main(x,y,z) = if(x) x else y:z;
-");
+            Compile("""
+
+                    function main(x,y,z) = if(x) x else y:z;
+
+                    """);
 
             Expect(true, true, 1, 2);
         }
@@ -1005,9 +1072,11 @@ function main(x,y,z) = if(x) x else y:z;
         [Test]
         public void KvpSelfPriority()
         {
-            Compile(@"
-function main(x,y,z) = (x : y : z).Key;
-");
+            Compile("""
+
+                    function main(x,y,z) = (x : y : z).Key;
+
+                    """);
 
             Expect(1, 1, 2, 3);
         }
@@ -1035,27 +1104,29 @@ function main(x,y,z) = (x : y : z).Key;
         public void ReturnModes()
         {
             Compile(
-                @"
-function ret_exit()
-{
-    return 5;
-}
+                """
 
-function ret_yield()
-{
-    yield 6;
-}
+                function ret_exit()
+                {
+                    return 5;
+                }
 
-function ret_continue()
-{
-    continue;
-}
+                function ret_yield()
+                {
+                    yield 6;
+                }
 
-function ret_break()
-{
-    break;
-}
-");
+                function ret_continue()
+                {
+                    continue;
+                }
+
+                function ret_break()
+                {
+                    break;
+                }
+
+                """);
 
             _testReturnMode("ret_exit", ReturnMode.Exit, 5);
             _testReturnMode("ret_yield", ReturnMode.Continue, 6);
@@ -1078,40 +1149,42 @@ function ret_break()
         public void FunctionCompositionSyntax()
         {
             Compile(
-                @"
-function closed(x,y) 
-{   
-    var f = x then y;
-    return f.(null);
-}
+                """
 
-function partialLeft(x,y) 
-{   
-    var f = (? then y);
-    f = f.(x);
-    return f.(null);
-}
+                function closed(x,y) 
+                {   
+                    var f = x then y;
+                    return f.(null);
+                }
 
-function partialRight(x,y) 
-{   
-    var f = (x then ?);
-    f = f.(y);
-    return f.(null);
-}
+                function partialLeft(x,y) 
+                {   
+                    var f = (? then y);
+                    f = f.(x);
+                    return f.(null);
+                }
 
-function partialFull(x,y) 
-{   
-    var f = (? then ?);
-    f = f.(x,y);
-    return f.(null);
-}
+                function partialRight(x,y) 
+                {   
+                    var f = (x then ?);
+                    f = f.(y);
+                    return f.(null);
+                }
 
-function chainedPrio(x,y,z) 
-{   
-    var f = x then y then z;
-    return f.(null);
-}
-");
+                function partialFull(x,y) 
+                {   
+                    var f = (? then ?);
+                    f = f.(x,y);
+                    return f.(null);
+                }
+
+                function chainedPrio(x,y,z) 
+                {   
+                    var f = x then y then z;
+                    return f.(null);
+                }
+
+                """);
 
             var x =
                 sctx.CreateNativePValue(
@@ -1136,34 +1209,40 @@ function chainedPrio(x,y,z)
         [Test]
         public void PartialInitialization2()
         {
-            var ldr = Compile(@"
-var x = 5;
+            var ldr = Compile("""
 
-function main(y)
-{
-    return y + x;
-}
-");
+                              var x = 5;
+
+                              function main(y)
+                              {
+                                  return y + x;
+                              }
+
+                              """);
 
             Expect(11, 6);
 
             Compile(ldr,
-                @"
-var x = 17;
-var z = 9;
+                """
 
-function main2(x)
-{
-    return z + main(x);
-}
-");
+                var x = 17;
+                var z = 9;
+
+                function main2(x)
+                {
+                    return z + main(x);
+                }
+
+                """);
 
             ExpectNamed("main2", 20 + 9, 3);
 
-            Compile(ldr, @"
-var x = 22;
-var z = 20;
-");
+            Compile(ldr, """
+
+                         var x = 22;
+                         var z = 20;
+
+                         """);
 
             ExpectNamed("main2", 20 + 22 + 4, 4);
         }
@@ -1172,27 +1251,31 @@ var z = 20;
         public void ArgsFallback()
         {
             CompileInvalid(
-                @"
-function main(args)
-{
-    foreach(var arg in var args)
-        args += arg;
+                """
 
-    return args;
-}
-",
+                function main(args)
+                {
+                    foreach(var arg in var args)
+                        args += arg;
+
+                    return args;
+                }
+
+                """,
                 "main", PFunction.ArgumentListId, "0", "local");
         }
 
         [Test]
         public void ParamDefaultNull()
         {
-            Compile(@"
-function main(x,y)
-{
-    return y;
-}
-");
+            Compile("""
+
+                    function main(x,y)
+                    {
+                        return y;
+                    }
+
+                    """);
 
             ExpectNull("main", "z");
         }
@@ -1200,12 +1283,14 @@ function main(x,y)
         [Test]
         public void VariableDefaultNull()
         {
-            Compile(@"
-function main(x)
-{
-    var y;
-    return y;
-}");
+            Compile("""
+
+                    function main(x)
+                    {
+                        var y;
+                        return y;
+                    }
+                    """);
 
             ExpectNull("main", "z");
         }
@@ -1214,22 +1299,24 @@ function main(x)
         public void LocalRef()
         {
             Compile(
-                @"
-function interpolate(x,y,t, ref result)
-{
-    if(y < x)
-        interpolate(y,x,t,->result);
-    else
-        result = x+(y-x)*t;
-}
+                """
 
-function main(x,t)
-{
-    var y = x*1.5;
-    interpolate(y,x,t,->y);
-    return y;
-}
-");
+                function interpolate(x,y,t, ref result)
+                {
+                    if(y < x)
+                        interpolate(y,x,t,->result);
+                    else
+                        result = x+(y-x)*t;
+                }
+
+                function main(x,t)
+                {
+                    var y = x*1.5;
+                    interpolate(y,x,t,->y);
+                    return y;
+                }
+
+                """);
 
             var x = 22.5;
             var y = x*1.5;
@@ -1245,24 +1332,26 @@ function main(x,t)
             Assert.That(Runtime.LoadGlobalVariableReferenceAsPValueMethod, Is.Not.Null);
 
             Compile(
-                @"
-var result;
+                """
 
-function interpolate(x,y,t, ref result)
-{
-    if(y < x)
-        interpolate(y,x,t,->result);
-    else
-        result = x+(y-x)*t;
-}
+                var result;
 
-function main(x,t)
-{
-    var y = x*1.5;
-    interpolate(y,x,t,result = ?);
-    return result;
-}
-");
+                function interpolate(x,y,t, ref result)
+                {
+                    if(y < x)
+                        interpolate(y,x,t,->result);
+                    else
+                        result = x+(y-x)*t;
+                }
+
+                function main(x,t)
+                {
+                    var y = x*1.5;
+                    interpolate(y,x,t,result = ?);
+                    return result;
+                }
+
+                """);
 
             var x = 22.5;
             var y = x*1.5;
@@ -1275,13 +1364,15 @@ function main(x,t)
         public void RealArithmetic()
         {
             Compile(
-                @"function main(x)
-{
-    var y = x * 2.5;
-    var z = y / 1.4;
-    var a = z^y;
-    return a;
-}");
+                """
+                function main(x)
+                {
+                    var y = x * 2.5;
+                    var z = y / 1.4;
+                    var a = z^y;
+                    return a;
+                }
+                """);
 
             var x = Math.PI;
             var y = x*2.5;
@@ -1294,24 +1385,28 @@ function main(x,t)
         public void AsmLdrApp()
         {
             Compile(
-                @"
-function foo(x) = 2*x;
-function main(x)
-{
-    return asm(ldr.app).Functions[""foo""].(x);
-}");
+                """
+
+                function foo(x) = 2*x;
+                function main(x)
+                {
+                    return asm(ldr.app).Functions["foo"].(x);
+                }
+                """);
             Expect(4, 2);
         }
 
         [Test]
         public void DynamicTypeIsArray()
         {
-            Compile(@"
-function main(x,type)
-{
-    return x is Object<(type + ""[]"")>;
-}
-");
+            Compile("""
+
+                    function main(x,type)
+                    {
+                        return x is Object<(type + "[]")>;
+                    }
+
+                    """);
             Expect(false, 4, "System.String");
             Expect(true, sctx.CreateNativePValue(new[] {1, 2, 3}), "System.Int32");
         }
@@ -1321,16 +1416,18 @@ function main(x,type)
         public void PostIncDecGlobal()
         {
             Compile(
-                @"
-var i = 0;
-function main(x)
-{
-    if(x mod 2 == 0)
-        return i++;
-    else
-        return i--;
-}
-");
+                """
+
+                var i = 0;
+                function main(x)
+                {
+                    if(x mod 2 == 0)
+                        return i++;
+                    else
+                        return i--;
+                }
+
+                """);
             var i = 0;
             Expect(i++, 2);
             Expect(i++, 4);
@@ -1342,16 +1439,18 @@ function main(x)
         public void PreIncDecGlobal()
         {
             Compile(
-                @"
-var i = 0;
-function main(x)
-{
-    if(x mod 2 == 0)
-        return ++i;
-    else
-        return --i;
-}
-");
+                """
+
+                var i = 0;
+                function main(x)
+                {
+                    if(x mod 2 == 0)
+                        return ++i;
+                    else
+                        return --i;
+                }
+
+                """);
             var i = 0;
             Expect(++i, 2);
             Expect(++i, 4);
@@ -1365,20 +1464,22 @@ function main(x)
             engine.RegisterAssembly(typeof (StaticClassMock).Assembly);
 
             Compile(
-                @"
-function main(y,x)
-[ Add PrexoniteTests.Tests to Import; ]
-{
-    for(var i = 0; i < y; i++)
-    {
-        ::StaticClassMock.SomeProperty = x;
-    }
-    if(::StaticClassMock.SomeProperty is not null)
-        return ::StaticClassMock.SomeProperty;
-    else
-        return 5;
-}
-");
+                """
+
+                function main(y,x)
+                [ Add PrexoniteTests.Tests to Import; ]
+                {
+                    for(var i = 0; i < y; i++)
+                    {
+                        ::StaticClassMock.SomeProperty = x;
+                    }
+                    if(::StaticClassMock.SomeProperty is not null)
+                        return ::StaticClassMock.SomeProperty;
+                    else
+                        return 5;
+                }
+
+                """);
             var x = "500";
             Expect(x, 10, x);
         }
@@ -1387,19 +1488,21 @@ function main(y,x)
         public void BitwiseOperators()
         {
             Compile(
-                @"
-function main(x,y,z)
-{
-    var a = x | y | z;
-    var b = x & y;
-    var c = y & z;
-    var d = x & y & z;
-    var e = x xor y;
-    var f = x & y | z;
-    var g = x | y & z;
-    return [a,b,c,d,e,f,g];
-}
-");
+                """
+
+                function main(x,y,z)
+                {
+                    var a = x | y | z;
+                    var b = x & y;
+                    var c = y & z;
+                    var d = x & y & z;
+                    var e = x xor y;
+                    var f = x & y | z;
+                    var g = x | y & z;
+                    return [a,b,c,d,e,f,g];
+                }
+
+                """);
 
             var x = 27;
             var y = 0x113;
@@ -1421,36 +1524,38 @@ function main(x,y,z)
         public void LazyAndOptimization()
         {
             Compile(
-                @"
-var x = true;
-var y = false;
+                """
 
-function main(z)
-{
-    var a = x and 1;
-    var b = x and 0;
-    var c = true and 1;
-    var d = true and 0;
-    var e = y and 1;
-    var f = y and 0;
-    var g = false and 1;
-    var h = false and 0;
-    var i = x and z;
-    var j = y and z;
-    var k = true and z;
-    var l = false and z;
-    
-    var s = ""$(a)$(b)$(c)$(d)$(e)$(f)$(g)$(h)$(i)$(j)$(k)$(l)"";
+                var x = true;
+                var y = false;
 
-    foreach(var p in [a,b,c,d,e,f,g,h,i,j,k,l])
-        if(p is not Bool)
-        {
-            s += "" Detected non-Bool value"";
-            break;
-        }
+                function main(z)
+                {
+                    var a = x and 1;
+                    var b = x and 0;
+                    var c = true and 1;
+                    var d = true and 0;
+                    var e = y and 1;
+                    var f = y and 0;
+                    var g = false and 1;
+                    var h = false and 0;
+                    var i = x and z;
+                    var j = y and z;
+                    var k = true and z;
+                    var l = false and z;
+                    
+                    var s = "$(a)$(b)$(c)$(d)$(e)$(f)$(g)$(h)$(i)$(j)$(k)$(l)";
 
-    return s;
-}");
+                    foreach(var p in [a,b,c,d,e,f,g,h,i,j,k,l])
+                        if(p is not Bool)
+                        {
+                            s += " Detected non-Bool value";
+                            break;
+                        }
+
+                    return s;
+                }
+                """);
 
             const string prefix = "TrueFalseTrueFalseFalseFalseFalseFalse";
             const string valueEqTrue = "TrueFalseTrueFalse";
@@ -1471,36 +1576,38 @@ function main(z)
         public void LazyOrOptimization()
         {
             Compile(
-                @"
-var x = true;
-var y = false;
+                """
 
-function main(z)
-{
-    var a = x or 1;
-    var b = x or 0;
-    var c = true or 1;
-    var d = true or 0;
-    var e = y or 1;
-    var f = y or 0;
-    var g = false or 1;
-    var h = false or 0;
-    var i = x or z;
-    var j = y or z;
-    var k = true or z;
-    var l = false or z;
-    
-    var s = ""$(a)$(b)$(c)$(d)$(e)$(f)$(g)$(h)$(i)$(j)$(k)$(l)"";
+                var x = true;
+                var y = false;
 
-    foreach(var p in [a,b,c,d,e,f,g,h,i,j,k,l])
-        if(p is not Bool)
-        {
-            s += "" Detected non-Bool value"";
-            break;
-        }
+                function main(z)
+                {
+                    var a = x or 1;
+                    var b = x or 0;
+                    var c = true or 1;
+                    var d = true or 0;
+                    var e = y or 1;
+                    var f = y or 0;
+                    var g = false or 1;
+                    var h = false or 0;
+                    var i = x or z;
+                    var j = y or z;
+                    var k = true or z;
+                    var l = false or z;
+                    
+                    var s = "$(a)$(b)$(c)$(d)$(e)$(f)$(g)$(h)$(i)$(j)$(k)$(l)";
 
-    return s;
-}");
+                    foreach(var p in [a,b,c,d,e,f,g,h,i,j,k,l])
+                        if(p is not Bool)
+                        {
+                            s += " Detected non-Bool value";
+                            break;
+                        }
+
+                    return s;
+                }
+                """);
 
             const string prefix = "TrueTrueTrueTrueTrueFalseTrueFalse";
             const string valueEqTrue = "TrueTrueTrueTrue";
@@ -1517,14 +1624,16 @@ function main(z)
         public void StringEscapeCollision()
         {
             Compile(
-                @"
-function main(s)
-{
-    var es = s.Escape;
-    var ues = es.Unescape;
-    return ""$s:$ues:$es"";
-}
-");
+                """
+
+                function main(s)
+                {
+                    var es = s.Escape;
+                    var ues = es.Unescape;
+                    return "$s:$ues:$es";
+                }
+
+                """);
 
             //ä = U+00E4
 
@@ -1544,31 +1653,33 @@ function main(s)
         public void NullStringEscapeSequence()
         {
             Compile(
-                @"
-function main(x,y)
-{
-    var z = x;
-    var z\ = y;
-    var z\t = z\;
+                """
 
-    return ""$z\&_$z\t;$z&:"" + ""\&"".Length;
-}
+                function main(x,y)
+                {
+                    var z = x;
+                    var z\ = y;
+                    var z\t = z\;
 
-function main_vs(x,y)
-{
-    var z = x;
-    var z\ = y;
-    var z\t = z\;
+                    return "$z\&_$z\t;$z&:" + "\&".Length;
+                }
 
-    return @""$z\&_$z\t;$z&:"" + ""\&"".Length;
-}
+                function main_vs(x,y)
+                {
+                    var z = x;
+                    var z\ = y;
+                    var z\t = z\;
 
-function unharmed(x,y)
-{
-    var z\ = x == y;
-    return z\&&true;
-}
-");
+                    return @"$z\&_$z\t;$z&:" + "\&".Length;
+                }
+
+                function unharmed(x,y)
+                {
+                    var z\ = x == y;
+                    return z\&&true;
+                }
+
+                """);
 
             const string expected = "A_B;A&:0";
             const string x = "A";
@@ -1583,15 +1694,17 @@ function unharmed(x,y)
         public void SingleQuotes()
         {
             Compile(
-                @"
-function al'gebra_f(x'') = x'' + 6'000'';
+                """
 
-function main(x,x')
-{
-    var al'gebra = al'gebra_f(x');
-    return ""$x $al'gebra $x':"" + 54'08.9;
-}
-");
+                function al'gebra_f(x'') = x'' + 6'000'';
+
+                function main(x,x')
+                {
+                    var al'gebra = al'gebra_f(x');
+                    return "$x $al'gebra $x':" + 54'08.9;
+                }
+
+                """);
 
             Expect("A 7000 1000:5408.9", "A", 1000);
         }
@@ -1601,15 +1714,17 @@ function main(x,x')
         {
             engine.RegisterAssembly(typeof (StaticClassMock).Assembly);
             Compile(
-                @"
-function main()
-{
-    var x = ""xXx"";
-    var obj = new Prx::Tests::ConstructEcho(-1,x);
-    println(obj);
-    return obj.ToString;
-}
-");
+                """
+
+                function main()
+                {
+                    var x = "xXx";
+                    var obj = new Prx::Tests::ConstructEcho(-1,x);
+                    println(obj);
+                    return obj.ToString;
+                }
+
+                """);
 
             Expect("-1-xXx");
         }
@@ -1618,13 +1733,15 @@ function main()
         public void DuplicatingJustEffectBlockExpression()
         {
             var ldr =
-                Compile(@"
-var s;
-function main()[is volatile;]
-{
-    s = ""BEGIN--"";
-}
-");
+                Compile("""
+
+                        var s;
+                        function main()[is volatile;]
+                        {
+                            s = "BEGIN--";
+                        }
+
+                        """);
             var pos = new SourcePosition("file", -1, -2);
             var mn = ldr.ParentApplication.Module.Name;
             var ct = ldr.FunctionTargets["main"];

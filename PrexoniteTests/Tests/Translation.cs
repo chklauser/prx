@@ -47,24 +47,26 @@ public abstract class Translation : VMTestsBase
     public void SimpleSwitchMetaEntry()
     {
         Compile(
-            @"
-globalSwitch;
-is gloS;
-is not gloS2;
-not glos3;
+            """
 
-function main()[loc]
-{
-    
-}
+            globalSwitch;
+            is gloS;
+            is not gloS2;
+            not glos3;
 
-function main2 [loc2; 
-loc3; 
-not loc4]
-{
-}
+            function main()[loc]
+            {
+                
+            }
 
-");
+            function main2 [loc2; 
+            loc3; 
+            not loc4]
+            {
+            }
+
+
+            """);
 
         var main = target.Functions["main"];
         var main2 = target.Functions["main2"];
@@ -89,13 +91,15 @@ not loc4]
     [Test]
     public void TrailingCommaMetaList()
     {
-        Compile(@"
-glob {1,2,3,};
+        Compile("""
 
-function main [loc {1,2,3,}]
-{}
+                glob {1,2,3,};
 
-");
+                function main [loc {1,2,3,}]
+                {}
+
+
+                """);
 
         var entry = new MetaEntry(["1", "2", "3"]);
 
@@ -109,9 +113,11 @@ function main [loc {1,2,3,}]
     [Test]
     public void TrailingCommaListLiteral()
     {
-        Compile(@"
-function main = [1,2,3,];
-");
+        Compile("""
+
+                function main = [1,2,3,];
+
+                """);
 
         Expect(new List<PValue> {1, 2, 3});
     }
@@ -120,19 +126,21 @@ function main = [1,2,3,];
     public void TrailingCommaHashLiteral()
     {
         Compile(
-            @"
-function main(ks,vs)
-{
-    var h = {1: ""a"", 2: ""b"", 3: ""c"",};
-    var r = """";
-    for(var i = 0; i < ks.Count; i++)
-        if(h.ContainsKey(ks[i]) and h[ks[i]] == vs[i])
-            r += ""1"";
-        else
-            r += ""0"";
-    return r;
-}
-");
+            """
+
+            function main(ks,vs)
+            {
+                var h = {1: "a", 2: "b", 3: "c",};
+                var r = "";
+                for(var i = 0; i < ks.Count; i++)
+                    if(h.ContainsKey(ks[i]) and h[ks[i]] == vs[i])
+                        r += "1";
+                    else
+                        r += "0";
+                return r;
+            }
+
+            """);
 
         Expect("110101", (PValue) new List<PValue> {1, 2, 4, 3, 2, 1},
             (PValue) new List<PValue> {"a", "b", "d", "c", "a", "a"});
@@ -142,13 +150,15 @@ function main(ks,vs)
     public void TrailingArgumentList()
     {
         Compile(
-            @"
-function f(a,b,) = a + 2*b;
-function main(x,y)
-{
-    return f(x,y,);
-}
-");
+            """
+
+            function f(a,b,) = a + 2*b;
+            function main(x,y)
+            {
+                return f(x,y,);
+            }
+
+            """);
 
         Expect(2 + 6, 2, 3);
     }
@@ -158,31 +168,33 @@ function main(x,y)
     {
         var ldr =
             Compile(
-                @"
-function g = 5;
-var f = 7;
+                """
 
-var g[\sps] = 3;
+                function g = 5;
+                var f = 7;
 
-function f as p(x) [\sps]
-{
-    declare var g;
-    return g*x;
-}
+                var g[\sps] = 3;
 
-// At this point, we should have 
-// g    -> function g
-// f    -> variable f
-// p    -> function f
+                function f as p(x) [\sps]
+                {
+                    declare var g;
+                    return g*x;
+                }
 
-function main(x)
-{
-    var f' = f;
+                // At this point, we should have 
+                // g    -> function g
+                // f    -> variable f
+                // p    -> function f
 
-    declare function f;
-    return g + f' + f(x);
-}
-");
+                function main(x)
+                {
+                    var f' = f;
+
+                    declare function f;
+                    return g + f' + f(x);
+                }
+
+                """);
 
         Expect(3*2 + 5 + 7, 2);
         Expect(3*11 + 5 + 7, 11);
@@ -232,49 +244,53 @@ function main(x)
     [Test]
     public void AppendRightLocalFunc()
     {
-        Compile(@"
-function main()
-{
-    var ys = [];
-    coroutine trace(t,xs)
-    {
-        foreach(var x in xs)
-        {
-            ys[] = t:x;
-            yield x;
-        }
-    } 
-    ([1,2]) >> trace(33) >> all >> println;
-    return (var args >> trace(77) >> map(?~String) >> foldl((l,r) => l + "" "" + r, """")) + ys;
-}
-");
+        Compile("""
+
+                function main()
+                {
+                    var ys = [];
+                    coroutine trace(t,xs)
+                    {
+                        foreach(var x in xs)
+                        {
+                            ys[] = t:x;
+                            yield x;
+                        }
+                    } 
+                    ([1,2]) >> trace(33) >> all >> println;
+                    return (var args >> trace(77) >> map(?~String) >> foldl((l,r) => l + " " + r, "")) + ys;
+                }
+
+                """);
         Expect(" 1 2 3 4 5 6 7[ 33: 1, 33: 2, 77: 1, 77: 2, 77: 3, 77: 4, 77: 5, 77: 6, 77: 7 ]",1,2,3,4,5,6,7);
     }
 
     [Test]
     public void TestPsrTestRunSingleTest()
     {
-        Compile(@"function test\run_single_test as run_single_test(testFunc)
-{
-    var t = new Structure;
-    t.\(""test"") = testFunc;
-    try
-    {
-        testFunc.();
-        return true: t;
-    }
-    catch(var e)
-    {
-        t.\(""e"") = e;
-        return false: t;
-    }
-}
+        Compile("""
+                function test\run_single_test as run_single_test(testFunc)
+                {
+                    var t = new Structure;
+                    t.\("test") = testFunc;
+                    try
+                    {
+                        testFunc.();
+                        return true: t;
+                    }
+                    catch(var e)
+                    {
+                        t.\("e") = e;
+                        return false: t;
+                    }
+                }
 
-function main()
-{
-    var tp = run_single_test(() => 15);
-    return ""$(tp.Key):$(tp.Value.test.Id)"";
-}");
+                function main()
+                {
+                    var tp = run_single_test(() => 15);
+                    return "$(tp.Key):$(tp.Value.test.Id)";
+                }
+                """);
 
         Expect("True:main\\0");
     }
@@ -282,17 +298,19 @@ function main()
     [Test]
     public void TestPsrAst3WithPos()
     {
-        Compile(@"
-function ast3\withPos(factory,type) [compiler]
-{
-	var args;
-	var targs = args >> skip(2);
-	
-	if(factory is null)
-		throw ""AST factory cannot be null."";
-		
-	return call\member(factory,type, targs);
-}");
+        Compile("""
+
+                function ast3\withPos(factory,type) [compiler]
+                {
+                	var args;
+                	var targs = args >> skip(2);
+                	
+                	if(factory is null)
+                		throw "AST factory cannot be null.";
+                		
+                	return call\member(factory,type, targs);
+                }
+                """);
         var factory = new Mock<IAstFactory>(MockBehavior.Strict);
         var astPlaceholder = new AstPlaceholder(NoSourcePosition.MissingFileName, NoSourcePosition.Instance.Line, NoSourcePosition.Instance.Column);
         factory.Setup(f => f.Placeholder(It.IsAny<ISourcePosition>(), 5))
@@ -303,134 +321,136 @@ function ast3\withPos(factory,type) [compiler]
     [Test]
     public void TestSysDeclaresMacroCommand()
     {
-        Compile(@"//PRX
+        Compile("""
+                //PRX
 
-Name sys;
+                Name sys;
 
-declare(
-  print = ref command ""print"",
-  println = ref command ""println"",
-  meta = ref command ""meta"",
-  boxed = ref command ""boxed"",
-  concat = ref command ""concat"",
-  map = ref command ""map"",
-  select = ref command ""select"",
-  foldl = ref command ""foldl"",
-  foldr = ref command ""foldr"",
-  dispose = ref command ""dispose"",
-  call = expand macro command ""call"",
-  call\perform = ref command ""call\\perform"",
-  thunk = ref command ""thunk"",
-  asthunk = ref command ""asthunk"",
-  force = ref command ""force"",
-  toseq = ref command ""toseq"",
-  call\member = expand macro command ""call\\member"",
-  call\member\perform = ref command ""call\\member\\perform"",
-  caller = ref command ""caller"",
-  pair = ref command ""pair"",
-  unbind = ref command ""unbind"",
-  sort = ref command ""sort"",
-  orderby = ref command ""orderby"",
-  LoadAssembly = ref command ""LoadAssembly"",
-  debug = ref command ""debug"",
-  setcenter = ref command ""setcenter"",
-  setleft = ref command ""setleft"",
-  setright = ref command ""setright"",
-  all = ref command ""all"",
-  where = ref command ""where"",
-  skip = ref command ""skip"",
-  limit = ref command ""limit"",
-  take = ref command ""take"",
-  abs = ref command ""abs"",
-  ceiling = ref command ""ceiling"",
-  exp = ref command ""exp"",
-  floor = ref command ""floor"",
-  log = ref command ""log"",
-  max = ref command ""max"",
-  min = ref command ""min"",
-  pi = ref command ""pi"",
-  round = ref command ""round"",
-  sin = ref command ""sin"",
-  cos = ref command ""cos"",
-  sqrt = ref command ""sqrt"",
-  tan = ref command ""tan"",
-  char = ref command ""char"",
-  count = ref command ""count"",
-  distinct = ref command ""distinct"",
-  union = ref command ""union"",
-  unique = ref command ""unique"",
-  frequency = ref command ""frequency"",
-  groupby = ref command ""groupby"",
-  intersect = ref command ""intersect"",
-  call\tail = expand macro command ""call\\tail"",
-  call\tail\perform = ref command ""call\\tail\\perform"",
-  list = ref command ""list"",
-  each = ref command ""each"",
-  exists = ref command ""exists"",
-  forall = ref command ""forall"",
-  CompileToCil = ref command ""CompileToCil"",
-  takewhile = ref command ""takewhile"",
-  except = ref command ""except"",
-  range = ref command ""range"",
-  reverse = ref command ""reverse"",
-  headtail = ref command ""headtail"",
-  append = ref command ""append"",
-  sum = ref command ""sum"",
-  contains = ref command ""contains"",
-  chan = ref command ""chan"",
-  call\async = expand macro command ""call\\async"",
-  call\async\perform = ref command ""call\\async\\perform"",
-  async_seq = ref command ""async_seq"",
-  call\sub\perform = ref command ""call\\sub\\perform"",
-  pa\ind = ref command ""pa\\ind"",
-  pa\mem = ref command ""pa\\mem"",
-  pa\ctor = ref command ""pa\\ctor"",
-  pa\check = ref command ""pa\\check"",
-  pa\cast = ref command ""pa\\cast"",
-  pa\smem = ref command ""pa\\smem"",
-  pa\fun\call = ref command ""pa\\fun\\call"",
-  pa\flip\call = ref command ""pa\\flip\\call"",
-  pa\call\star = ref command ""pa\\call\\star"",
-  then = ref command ""then"",
-  id = ref command ""id"",
-  const = ref command ""const"",
-  (+) = ref command ""plus"",
-  (-) = ref command ""minus"",
-  (*) = ref command ""times"",
-  (/) = ref command ""dividedBy"",
-  $mod = ref command ""mod"",
-  (^) = ref command ""raisedTo"",
-  (&) = ref command ""bitwiseAnd"",
-  (|) = ref command ""bitwiseOr"",
-  $xor = ref command ""xor"",
-  (==) = ref command ""isEqualTo"",
-  (!=) = ref command ""isInequalTo"",
-  (>) = ref command ""isGreaterThan"",
-  (>=) = ref command ""isGreaterThanOrEqual"",
-  (<) = ref command ""isLessThan"",
-  (<=) = ref command ""isLessThanOrEqual"",
-  (-.) = ref command ""negation"",
-  $complement = ref command ""complement"",
-  $not = ref command ""not"",
-  create_enumerator = ref command ""create_enumerator"",
-  create_module_name = ref command ""create_module_name"",
-  seqconcat = ref command ""seqconcat"",
-  call\sub = expand macro command ""call\\sub"",
-  call\sub\interpret = expand macro command ""call\\sub\\interpret"",
-  macro\pack = expand macro command ""macro\\pack"",
-  macro\unpack = expand macro command ""macro\\unpack"",
-  macro\reference = expand macro command ""macro\\reference"",
-  call\star = expand macro command ""call\\star"",
-  call\macro = expand macro command ""call\\macro"",
-  call\macro\impl = expand macro command ""call\\macro\\impl"",
-  main = ref function(""main"",""testApplication"",0.0),
-);
+                declare(
+                  print = ref command "print",
+                  println = ref command "println",
+                  meta = ref command "meta",
+                  boxed = ref command "boxed",
+                  concat = ref command "concat",
+                  map = ref command "map",
+                  select = ref command "select",
+                  foldl = ref command "foldl",
+                  foldr = ref command "foldr",
+                  dispose = ref command "dispose",
+                  call = expand macro command "call",
+                  call\perform = ref command "call\\perform",
+                  thunk = ref command "thunk",
+                  asthunk = ref command "asthunk",
+                  force = ref command "force",
+                  toseq = ref command "toseq",
+                  call\member = expand macro command "call\\member",
+                  call\member\perform = ref command "call\\member\\perform",
+                  caller = ref command "caller",
+                  pair = ref command "pair",
+                  unbind = ref command "unbind",
+                  sort = ref command "sort",
+                  orderby = ref command "orderby",
+                  LoadAssembly = ref command "LoadAssembly",
+                  debug = ref command "debug",
+                  setcenter = ref command "setcenter",
+                  setleft = ref command "setleft",
+                  setright = ref command "setright",
+                  all = ref command "all",
+                  where = ref command "where",
+                  skip = ref command "skip",
+                  limit = ref command "limit",
+                  take = ref command "take",
+                  abs = ref command "abs",
+                  ceiling = ref command "ceiling",
+                  exp = ref command "exp",
+                  floor = ref command "floor",
+                  log = ref command "log",
+                  max = ref command "max",
+                  min = ref command "min",
+                  pi = ref command "pi",
+                  round = ref command "round",
+                  sin = ref command "sin",
+                  cos = ref command "cos",
+                  sqrt = ref command "sqrt",
+                  tan = ref command "tan",
+                  char = ref command "char",
+                  count = ref command "count",
+                  distinct = ref command "distinct",
+                  union = ref command "union",
+                  unique = ref command "unique",
+                  frequency = ref command "frequency",
+                  groupby = ref command "groupby",
+                  intersect = ref command "intersect",
+                  call\tail = expand macro command "call\\tail",
+                  call\tail\perform = ref command "call\\tail\\perform",
+                  list = ref command "list",
+                  each = ref command "each",
+                  exists = ref command "exists",
+                  forall = ref command "forall",
+                  CompileToCil = ref command "CompileToCil",
+                  takewhile = ref command "takewhile",
+                  except = ref command "except",
+                  range = ref command "range",
+                  reverse = ref command "reverse",
+                  headtail = ref command "headtail",
+                  append = ref command "append",
+                  sum = ref command "sum",
+                  contains = ref command "contains",
+                  chan = ref command "chan",
+                  call\async = expand macro command "call\\async",
+                  call\async\perform = ref command "call\\async\\perform",
+                  async_seq = ref command "async_seq",
+                  call\sub\perform = ref command "call\\sub\\perform",
+                  pa\ind = ref command "pa\\ind",
+                  pa\mem = ref command "pa\\mem",
+                  pa\ctor = ref command "pa\\ctor",
+                  pa\check = ref command "pa\\check",
+                  pa\cast = ref command "pa\\cast",
+                  pa\smem = ref command "pa\\smem",
+                  pa\fun\call = ref command "pa\\fun\\call",
+                  pa\flip\call = ref command "pa\\flip\\call",
+                  pa\call\star = ref command "pa\\call\\star",
+                  then = ref command "then",
+                  id = ref command "id",
+                  const = ref command "const",
+                  (+) = ref command "plus",
+                  (-) = ref command "minus",
+                  (*) = ref command "times",
+                  (/) = ref command "dividedBy",
+                  $mod = ref command "mod",
+                  (^) = ref command "raisedTo",
+                  (&) = ref command "bitwiseAnd",
+                  (|) = ref command "bitwiseOr",
+                  $xor = ref command "xor",
+                  (==) = ref command "isEqualTo",
+                  (!=) = ref command "isInequalTo",
+                  (>) = ref command "isGreaterThan",
+                  (>=) = ref command "isGreaterThanOrEqual",
+                  (<) = ref command "isLessThan",
+                  (<=) = ref command "isLessThanOrEqual",
+                  (-.) = ref command "negation",
+                  $complement = ref command "complement",
+                  $not = ref command "not",
+                  create_enumerator = ref command "create_enumerator",
+                  create_module_name = ref command "create_module_name",
+                  seqconcat = ref command "seqconcat",
+                  call\sub = expand macro command "call\\sub",
+                  call\sub\interpret = expand macro command "call\\sub\\interpret",
+                  macro\pack = expand macro command "macro\\pack",
+                  macro\unpack = expand macro command "macro\\unpack",
+                  macro\reference = expand macro command "macro\\reference",
+                  call\star = expand macro command "call\\star",
+                  call\macro = expand macro command "call\\macro",
+                  call\macro\impl = expand macro command "call\\macro\\impl",
+                  main = ref function("main","testApplication",0.0),
+                );
 
-function main(x,y)
-{
-    return call\member(x,y);
-}
-");
+                function main(x,y)
+                {
+                    return call\member(x,y);
+                }
+
+                """);
 
         var x = new Mock<ISourcePosition>(MockBehavior.Strict);
         x.SetupGet(s => s.Line).Returns(15);
@@ -440,14 +460,16 @@ function main(x,y)
     [Test]
     public void BlockDeclarationOfMacroCommand()
     {
-        Compile(@"
-declare macro command call\member;
+        Compile("""
 
-function main(x,y)
-{
-    return call\member(x,y);
-}
-");
+                declare macro command call\member;
+
+                function main(x,y)
+                {
+                    return call\member(x,y);
+                }
+
+                """);
         var x = new Mock<ISourcePosition>(MockBehavior.Strict);
         x.SetupGet(s => s.Line).Returns(15);
         Expect(15, sctx.CreateNativePValue(x.Object), "Line");
@@ -456,18 +478,20 @@ function main(x,y)
     [Test]
     public void ReferenceToSymbolWithMessage()
     {
-        var ldr = Compile(@"
-function t1 = 7;
-ref t2 = ->t1;
-declare(
-    t3 = warn(pos(""Translation.cs.pxs"",434,5),""T.tt"",""Hooder"", sym ""t2"")
-);
+        var ldr = Compile("""
 
-function main()
-{
-    return ->t1 == ->t3;
-}
-");
+                          function t1 = 7;
+                          ref t2 = ->t1;
+                          declare(
+                              t3 = warn(pos("Translation.cs.pxs",434,5),"T.tt","Hooder", sym "t2")
+                          );
+
+                          function main()
+                          {
+                              return ->t1 == ->t3;
+                          }
+
+                          """);
 
         Expect(true);
         Assert.That(ldr.Warnings.Count,Is.EqualTo(1));
@@ -477,27 +501,29 @@ function main()
     [Test]
     public void EntityRefToCommand()
     {
-        var ldr = Compile(@"
-function f{}
-var v;
-ref r;
-macro m{}
+        var ldr = Compile("""
 
-function main()
-{   
-    var loc;
-    ref rloc;
-    var sep = ""|"";
-    return """" + entityref_to(f) + sep
-        + entityref_to(v) + sep
-        + entityref_to(->r) + sep
-        + entityref_to(m) + sep
-        + entityref_to(loc) + sep
-        + entityref_to(->rloc) + sep
-        + entityref_to(entityref_to) + sep
-        + entityref_to(print);
-}
-");
+                          function f{}
+                          var v;
+                          ref r;
+                          macro m{}
+
+                          function main()
+                          {   
+                              var loc;
+                              ref rloc;
+                              var sep = "|";
+                              return "" + entityref_to(f) + sep
+                                  + entityref_to(v) + sep
+                                  + entityref_to(->r) + sep
+                                  + entityref_to(m) + sep
+                                  + entityref_to(loc) + sep
+                                  + entityref_to(->rloc) + sep
+                                  + entityref_to(entityref_to) + sep
+                                  + entityref_to(print);
+                          }
+
+                          """);
         var nm = ldr.ParentApplication.Module.Name;
 
         Expect(rv =>
@@ -521,9 +547,11 @@ function main()
     public void NamespaceLookup()
     {
         var ldr = new Loader(options);
-        Compile(ldr, @"
-function f = 17;
-");
+        Compile(ldr, """
+
+                     function f = 17;
+
+                     """);
         if(!ldr.Symbols.TryGet("f",out var f))
             Assert.Fail("Expected module level symbol f to exist.");
 
@@ -533,12 +561,14 @@ function f = 17;
         var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
         ldr.Symbols.Declare(nameof(a),a);
 
-        Compile(ldr, @"
-function main()
-{
-    return a.g;
-}
-");
+        Compile(ldr, """
+
+                     function main()
+                     {
+                         return a.g;
+                     }
+
+                     """);
 
         Expect(17);
     }
@@ -548,9 +578,11 @@ function main()
     {
 
         var ldr = new Loader(options);
-        Compile(ldr, @"
-function f = 17;
-");
+        Compile(ldr, """
+
+                     function f = 17;
+
+                     """);
         if (!ldr.Symbols.TryGet("f", out var f))
             Assert.Fail("Expected module level symbol f to exist.");
 
@@ -566,12 +598,14 @@ function f = 17;
 
         ldr.Symbols.Declare(nameof(b),b);
 
-        Compile(ldr, @"
-function main()
-{
-    return b.a.g;
-}
-");
+        Compile(ldr, """
+
+                     function main()
+                     {
+                         return b.a.g;
+                     }
+
+                     """);
 
         Expect(17);
     }
@@ -581,9 +615,11 @@ function main()
     {
 
         var ldr = new Loader(options);
-        Compile(ldr, @"
-function f = 17;
-");
+        Compile(ldr, """
+
+                     function f = 17;
+
+                     """);
         if (!ldr.Symbols.TryGet("f", out var f))
             Assert.Fail("Expected module level symbol f to exist.");
 
@@ -599,13 +635,15 @@ function f = 17;
 
         ldr.Symbols.Declare(nameof(b), b);
 
-        Compile(ldr, @"
-declare(z = sym(""b"",""a""));
-function main()
-{
-    return z.g;
-}
-");
+        Compile(ldr, """
+
+                     declare(z = sym("b","a"));
+                     function main()
+                     {
+                         return z.g;
+                     }
+
+                     """);
 
         Expect(17);
     }
@@ -613,14 +651,16 @@ function main()
     [Test]
     public void NamespaceDeclaration()
     {
-        var ldr = Compile(@"
-namespace a 
-{
-    function f = 17;
-}
+        var ldr = Compile("""
 
-function main = a.f;
-");
+                          namespace a 
+                          {
+                              function f = 17;
+                          }
+
+                          function main = a.f;
+
+                          """);
         Expect(17);
         Assert.That(ldr.TopLevelSymbols.TryGet("f",out var dummy),Is.False,"Existence of symbol f in the global scope");
     }
@@ -629,14 +669,16 @@ function main = a.f;
     public void SugaredNestedNamespaceDeclaration()
     {
 
-        Compile(@"
-namespace a.b 
-{
-    function f = 17;
-}
+        Compile("""
 
-function main = a.b.f;
-");
+                namespace a.b 
+                {
+                    function f = 17;
+                }
+
+                function main = a.b.f;
+
+                """);
         Expect(17);
     }
 
@@ -644,17 +686,19 @@ function main = a.b.f;
     public void NestedNamespaceDeclaration()
     {
 
-        Compile(@"
-namespace a 
-{
-    namespace b 
-    {
-        function f = 17;
-    }
-}
+        Compile("""
 
-function main = a.b.f;
-");
+                namespace a 
+                {
+                    namespace b 
+                    {
+                        function f = 17;
+                    }
+                }
+
+                function main = a.b.f;
+
+                """);
         Expect(17);
     }
 
@@ -662,16 +706,18 @@ function main = a.b.f;
     public void TopLevelAccessFromNamespace()
     {
 
-        Compile(@"
-function f = 17;
+        Compile("""
 
-namespace a 
-{
-    function g = f;
-}
+                function f = 17;
 
-function main = a.g;
-");
+                namespace a 
+                {
+                    function g = f;
+                }
+
+                function main = a.g;
+
+                """);
         Expect(17);
     }
 
@@ -679,18 +725,20 @@ function main = a.g;
     public void SurroundingAccessFromNamespace()
     {
 
-        Compile(@"
-namespace a 
-{
-    function f = 17;
-    namespace b
-    {
-        function g = f;
-    }
-}
+        Compile("""
 
-function main = a.b.g;
-");
+                namespace a 
+                {
+                    function f = 17;
+                    namespace b
+                    {
+                        function g = f;
+                    }
+                }
+
+                function main = a.b.g;
+
+                """);
         Expect(17);
     }
 
@@ -698,90 +746,100 @@ function main = a.b.g;
     public void Surrounding2AccessFromNamespace()
     {
 
-        Compile(@"
-namespace a 
-{
-    function f = 17;
-    namespace b
-    {
-        namespace c
-        {
-            function g = f;
-        }
-    }
-}
+        Compile("""
 
-function main = a.b.c.g;
-");
+                namespace a 
+                {
+                    function f = 17;
+                    namespace b
+                    {
+                        namespace c
+                        {
+                            function g = f;
+                        }
+                    }
+                }
+
+                function main = a.b.c.g;
+
+                """);
         Expect(17);
     }
 
     [Test]
     public void SugarComposeNamespaces()
     {
-        Compile(@"
-namespace a.b
-{
-    function f = 17;
-}
+        Compile("""
 
-namespace a.c
-{
-    function g = 3;
-}
+                namespace a.b
+                {
+                    function f = 17;
+                }
 
-function main = a.b.f + a.c.g;
-");
+                namespace a.c
+                {
+                    function g = 3;
+                }
+
+                function main = a.b.f + a.c.g;
+
+                """);
         Expect(20);
     }
 
     [Test]
     public void SugarNsOverride()
     {
-        CompileInvalid(@"
-namespace a
-{
-    function b = 13;
-}
+        CompileInvalid("""
 
-namespace a.b
-{
-    function f = 17;
-}
+                       namespace a
+                       {
+                           function b = 13;
+                       }
 
-function main = a.b.f;
-","Expected","namespace","func");
+                       namespace a.b
+                       {
+                           function f = 17;
+                       }
+
+                       function main = a.b.f;
+
+                       ""","Expected","namespace","func");
     }
 
     [Test]
     public void DontReExportSurrounding()
     {
-        CompileInvalid(@"
-function f = 13;
-namespace a 
-{
-    function g = 15;
-}
+        CompileInvalid("""
 
-function main = a.f;
-","symbol","resolve","f");
+                       function f = 13;
+                       namespace a 
+                       {
+                           function g = 15;
+                       }
+
+                       function main = a.f;
+
+                       ""","symbol","resolve","f");
 
     }
 
     [Test]
     public void RestoreExportedOnExtend()
     {
-        Compile(@"
-namespace a {
-    function f = 13;
-}
+        Compile("""
 
-namespace a {
-    function g = f+2;
-}
+                namespace a {
+                    function f = 13;
+                }
 
-function main = a.g;
-");
+                namespace a {
+                    function g = f+2;
+                }
+
+                function main = a.g;
+
+                """);
 
         Expect(13+2);
     }
@@ -789,72 +847,78 @@ function main = a.g;
     [Test]
     public void SuppressRestoreExportedOnExtend()
     {
-        CompileInvalid(@"
-namespace a {
-    function zz_f = 13;
-}
+        CompileInvalid("""
 
-namespace a 
-    import()
-{
-    function g = zz_f+2;
-}
+                       namespace a {
+                           function zz_f = 13;
+                       }
 
-function main = a.g;
-","symbol","resolve","zz_f");
+                       namespace a 
+                           import()
+                       {
+                           function g = zz_f+2;
+                       }
+
+                       function main = a.g;
+
+                       ""","symbol","resolve","zz_f");
     }
 
     [Test]
     public void SimpleNsSugarExtend()
     {
-        Compile(@"
-namespace a.c
-{
-    function f = 17;
-}
+        Compile("""
 
-namespace a
-{
-    namespace c
-    {
-        function g = 2;
-    }
-}
+                namespace a.c
+                {
+                    function f = 17;
+                }
 
-function main = a.c.f + a.c.g;
-");
+                namespace a
+                {
+                    namespace c
+                    {
+                        function g = 2;
+                    }
+                }
+
+                function main = a.c.f + a.c.g;
+
+                """);
         Expect(17+2);
     }
 
     [Test]
     public void SugarNsExtend()
     {
-        Compile(@"
-namespace a
-{
-    function b = 13;
-}
+        Compile("""
 
-namespace a.c
-{
-    function f = 17;
-}
+                namespace a
+                {
+                    function b = 13;
+                }
 
-namespace a
-{
-    function d = 10;
-}
+                namespace a.c
+                {
+                    function f = 17;
+                }
 
-namespace a
-{
-    namespace c
-    {
-        function g = 2;
-    }
-}
+                namespace a
+                {
+                    function d = 10;
+                }
 
-function main = a.b + a.c.f + a.d + a.c.g;
-");
+                namespace a
+                {
+                    namespace c
+                    {
+                        function g = 2;
+                    }
+                }
+
+                function main = a.b + a.c.f + a.d + a.c.g;
+
+                """);
 
         Expect(13 + 17 + 10 + 2);
     }
@@ -864,19 +928,21 @@ function main = a.b + a.c.f + a.d + a.c.g;
     {
         SkipStore = true;
 
-        Compile(@"
-namespace a 
-{
-    function f = 3;
-}
+        Compile("""
 
-namespace b
-{
-    function f = 14;
-}
+                namespace a 
+                {
+                    function f = 3;
+                }
 
-function main = a.f + b.f;
-");
+                namespace b
+                {
+                    function f = 14;
+                }
+
+                function main = a.f + b.f;
+
+                """);
 
         Expect(17);
     }
@@ -884,27 +950,29 @@ function main = a.f + b.f;
     [Test]
     public void ImportBackgroundConflict()
     {
-        Compile(@"
-namespace a {
-    function f = 13;
-    function g = 12;
-    function x = 3;
-}
+        Compile("""
 
-namespace b {
-    var g = 19;
-    declare(f = absolute sym(""a"",""f""));
-    function y = 4;
-}
+                namespace a {
+                    function f = 13;
+                    function g = 12;
+                    function x = 3;
+                }
 
-namespace c
-    import a.*, b.*
-{
-    function s = f + x + y;
-}
+                namespace b {
+                    var g = 19;
+                    declare(f = absolute sym("a","f"));
+                    function y = 4;
+                }
 
-function main = c.s;
-");
+                namespace c
+                    import a.*, b.*
+                {
+                    function s = f + x + y;
+                }
+
+                function main = c.s;
+
+                """);
 
         Expect(4+3+13);
     }
@@ -912,103 +980,113 @@ function main = c.s;
     [Test]
     public void ImportConflict()
     {
-        CompileInvalid(@"
-namespace a 
-{
-    function f = 13;
-}
+        CompileInvalid("""
 
-namespace b
-{
-    var f = 14;
-}
+                       namespace a 
+                       {
+                           function f = 13;
+                       }
 
-namespace c
-    import a.*, b.*
-{
-    function s = f;
-}
+                       namespace b
+                       {
+                           var f = 14;
+                       }
 
-function main = c.s;
-","incompatible","namespace a","namespace b","symbol f");
+                       namespace c
+                           import a.*, b.*
+                       {
+                           function s = f;
+                       }
+
+                       function main = c.s;
+
+                       ""","incompatible","namespace a","namespace b","symbol f");
     }
 
     [Test]
     public void RenameOneAvoidsConflict()
     {
-        Compile(@"
-namespace a 
-{
-    function f = 13;
-}
+        Compile("""
 
-namespace b
-{
-    var f = 14;
-}
+                namespace a 
+                {
+                    function f = 13;
+                }
 
-namespace c
-    import a.*, b(f => z)
-{
-    function s = f + z;
-}
+                namespace b
+                {
+                    var f = 14;
+                }
 
-function main = c.s;
-");
+                namespace c
+                    import a.*, b(f => z)
+                {
+                    function s = f + z;
+                }
+
+                function main = c.s;
+
+                """);
         Expect(13+14);
     }
 
     [Test]
     public void UseMultiplicationAsNamespaceName()
     {
-        Compile(@"
-namespace a.(*).c {
-    function f = 3;
-}
+        Compile("""
 
-namespace b 
-    import a.(*).c.f
-{
-    function g = f;
-}
+                namespace a.(*).c {
+                    function f = 3;
+                }
 
-function main = b.g;
-");
+                namespace b 
+                    import a.(*).c.f
+                {
+                    function g = f;
+                }
+
+                function main = b.g;
+
+                """);
         Expect(3);
     }
 
     [Test]
     public void UseMultiplicationInExplicitTransfer()
     {
-        Compile(@"
-namespace a {
-    function (*) = 3;
-    var gobb = 4;
-}
+        Compile("""
 
-namespace z {
-    function gobb = 5;
-}
+                namespace a {
+                    function (*) = 3;
+                    var gobb = 4;
+                }
 
-namespace b 
-    import a((*)), z(*) // should import only (*) from a, everything from z
-{
-    function g = (*) + gobb;
-}
+                namespace z {
+                    function gobb = 5;
+                }
 
-function main = b.g;
-");
+                namespace b 
+                    import a((*)), z(*) // should import only (*) from a, everything from z
+                {
+                    function g = (*) + gobb;
+                }
+
+                function main = b.g;
+
+                """);
     }
 
     [Test]
     public void ExplicitWildcardTransfer()
     {
-        Compile(@"
-namespace a { function f = 13; }
-namespace b import a(*)
-{ function g = f; }
-function main = b.g;
-");
+        Compile("""
+
+                namespace a { function f = 13; }
+                namespace b import a(*)
+                { function g = f; }
+                function main = b.g;
+
+                """);
 
         Expect(13);
     }
@@ -1016,58 +1094,64 @@ function main = b.g;
     [Test]
     public void DropAvoidsConflict()
     {
-        Compile(@"
-namespace a 
-{
-    function f = 13;
-}
+        Compile("""
 
-namespace b
-{
-    var f = 14;
-    function g = 12;
-}
+                namespace a 
+                {
+                    function f = 13;
+                }
 
-namespace c
-    import 
-        a.*, 
-        b(*, not f)
-{
-    function s = f + g;
-}
+                namespace b
+                {
+                    var f = 14;
+                    function g = 12;
+                }
 
-function main = c.s;
-");
+                namespace c
+                    import 
+                        a.*, 
+                        b(*, not f)
+                {
+                    function s = f + g;
+                }
+
+                function main = c.s;
+
+                """);
         Expect(13 + 12);
     }
 
     [Test]
     public void FunctionScopeImport()
     {
-        Compile(@"
-namespace a
-{
-    function f = 13;
-}
+        Compile("""
 
-function main namespace import a.f = f;
-");
+                namespace a
+                {
+                    function f = 13;
+                }
+
+                function main namespace import a.f = f;
+
+                """);
         Expect(13);
     }
 
     [Test]
     public void ForwardDeclarationAncientSyntax()
     {
-        Compile(@"
-namespace a
-{
-    declare function f;
-    function g(x) = f(x);
-    function f(x) = 2*x;
-}
+        Compile("""
 
-function main(x) = a.g(x);
-");
+                namespace a
+                {
+                    declare function f;
+                    function g(x) = f(x);
+                    function f(x) = 2*x;
+                }
+
+                function main(x) = a.g(x);
+
+                """);
 
         Expect(16,8);
     }
@@ -1075,16 +1159,18 @@ function main(x) = a.g(x);
     [Test]
     public void ForwardDeclarationOldSyntax()
     {
-        Compile(@"
-namespace a
-{
-    declare { function: f };
-    function g(x) = f(x);
-    function f(x) = 2*x;
-}
+        Compile("""
 
-function main(x) = a.g(x);
-");
+                namespace a
+                {
+                    declare { function: f };
+                    function g(x) = f(x);
+                    function f(x) = 2*x;
+                }
+
+                function main(x) = a.g(x);
+
+                """);
 
         Expect(16,8);
     }
@@ -1092,19 +1178,21 @@ function main(x) = a.g(x);
     [Test]
     public void ForwardDeclarationMachineSyntax()
     {
-        Compile(@"
-namespace a
-{
-    // This forward declaration is not taken as relative to the namesapce.
-    // It is intended for machine consumption.
-    declare( f = ref function(""f"",""testApplication"",0.0));
-    function g(x) = f(x);
-}
+        Compile("""
 
-function f(x) = 2*x;
+                namespace a
+                {
+                    // This forward declaration is not taken as relative to the namesapce.
+                    // It is intended for machine consumption.
+                    declare( f = ref function("f","testApplication",0.0));
+                    function g(x) = f(x);
+                }
 
-function main(x) = a.g(x);
-");
+                function f(x) = 2*x;
+
+                function main(x) = a.g(x);
+
+                """);
 
         Expect(16, 8);
     }
@@ -1112,54 +1200,62 @@ function main(x) = a.g(x);
     [Test]
     public void ExportInterferenceWithTimesLiteral()
     {
-        Compile(@"
-namespace a{var g;}
-namespace b{}export(*),a(g);
-");
+        Compile("""
+
+                namespace a{var g;}
+                namespace b{}export(*),a(g);
+
+                """);
     }
 
     [Test]
     public void AlternateExportAllSyntax()
     {
-        Compile(@"
-namespace a{var g;}
-namespace b{}export.*,a(g);
-");
+        Compile("""
+
+                namespace a{var g;}
+                namespace b{}export.*,a(g);
+
+                """);
     }
 
     [Test]
     public void SelfReferenceInVarInit()
     {
-        Compile(@"
-namespace a 
-{
-    var h = 4;
-}
-namespace a{
-    var g = g ?? 15;
-    var h = h ?? 3;
-}
+        Compile("""
 
-function main = a.g+a.h;
-");
+                namespace a 
+                {
+                    var h = 4;
+                }
+                namespace a{
+                    var g = g ?? 15;
+                    var h = h ?? 3;
+                }
+
+                function main = a.g+a.h;
+
+                """);
         Expect(15+4);
     }
 
     [Test]
     public void TopLevelNamespaceImport()
     {
-        Compile(@"
+        Compile("""
 
-namespace a 
-{
-  function f(x) = 2*x;
-}
 
-namespace import a.*;
+                namespace a 
+                {
+                  function f(x) = 2*x;
+                }
 
-function main(y) = f(y + 2);
+                namespace import a.*;
 
-");
+                function main(y) = f(y + 2);
+
+
+                """);
             
         Expect(20, 8);
     }
@@ -1167,25 +1263,27 @@ function main(y) = f(y + 2);
     [Test]
     public void TopLevelNamespaceImportMultiple()
     {
-        Compile(@"
+        Compile("""
 
-namespace a 
-{
-  function f(x) = 2*x;
-}
-namespace b 
-{
-  namespace c
-  {
-    function g(x) = 7 + x;
-  }
-}
 
-namespace import a.*, b.c.g;
+                namespace a 
+                {
+                  function f(x) = 2*x;
+                }
+                namespace b 
+                {
+                  namespace c
+                  {
+                    function g(x) = 7 + x;
+                  }
+                }
 
-function main(y) = f(g(y));
+                namespace import a.*, b.c.g;
 
-");
+                function main(y) = f(g(y));
+
+
+                """);
             
         Expect(20, 3);
     }
@@ -1193,25 +1291,27 @@ function main(y) = f(g(y));
     [Test]
     public void TopLevelImportReplacement()
     {
-        Compile(@"
+        Compile("""
 
-namespace a 
-{
-  function f(x) = 2*x;
-}
 
-namespace b
-{
-  function f(x) = x/2; 
-}
+                namespace a 
+                {
+                  function f(x) = 2*x;
+                }
 
-namespace import a.*;
-// This set of imports should completely replace the other set of imports
-namespace import b.*;
+                namespace b
+                {
+                  function f(x) = x/2; 
+                }
 
-function main(y) = f(y + 2);
+                namespace import a.*;
+                // This set of imports should completely replace the other set of imports
+                namespace import b.*;
 
-");
+                function main(y) = f(y + 2);
+
+
+                """);
             
         Expect(5, 8);
     }
@@ -1219,20 +1319,22 @@ function main(y) = f(y + 2);
     [Test]
     public void TopLevelImportsDoNotShadow()
     {
-        Compile(@"
+        Compile("""
 
-function f(x) = x*2;
 
-namespace a
-{
-  function f(x) = x/2; 
-}
+                function f(x) = x*2;
 
-namespace import a.*;
+                namespace a
+                {
+                  function f(x) = x/2; 
+                }
 
-function main(y) = f(y + 2);
+                namespace import a.*;
 
-");
+                function main(y) = f(y + 2);
+
+
+                """);
             
         Expect(20, 8);
     }
@@ -1240,28 +1342,32 @@ function main(y) = f(y + 2);
     [Test]
     public void TopLevelImportIllegalInNamespace()
     {
-        CompileInvalid(@"
-namespace a 
-{
-    function f(x) = 2*x;
-}
+        CompileInvalid("""
 
-namespace b 
-{
-    namespace import a.f;
-    function g(x) = f(x + 2);
-}
+                       namespace a 
+                       {
+                           function f(x) = 2*x;
+                       }
 
-function main(x) = b.g(3 * x);
-", "namespace", "import", "inside");
+                       namespace b 
+                       {
+                           namespace import a.f;
+                           function g(x) = f(x + 2);
+                       }
+
+                       function main(x) = b.g(3 * x);
+
+                       """, "namespace", "import", "inside");
     }
 
     [Test]
     public void TopLevelImportMustResolveSymbol()
     {
-        CompileInvalid(@"
-namespace import this_symbol_does_not_exist.*;
-", "this_symbol_does_not_exist");
+        CompileInvalid("""
+
+                       namespace import this_symbol_does_not_exist.*;
+
+                       """, "this_symbol_does_not_exist");
     }
 
     [Test]
@@ -1269,20 +1375,24 @@ namespace import this_symbol_does_not_exist.*;
     {
         var plan = Plan.CreateSelfAssembling(StandardLibraryPreference.None);
 
-        plan.Assemble(Source.FromString(@"
-name one;
-namespace a {
-    function b = 15;
-}
-"));
+        plan.Assemble(Source.FromString("""
 
-        var moduleTwoDesc = plan.Assemble(Source.FromString(@"
-name two;
-references {one};
-namespace a {
-    function c =7;
-}
-"));
+                                        name one;
+                                        namespace a {
+                                            function b = 15;
+                                        }
+
+                                        """));
+
+        var moduleTwoDesc = plan.Assemble(Source.FromString("""
+
+                                                            name two;
+                                                            references {one};
+                                                            namespace a {
+                                                                function c =7;
+                                                            }
+
+                                                            """));
 
         var moduleTwo = plan.Build(moduleTwoDesc.Name);
         Assert.That(moduleTwo.Messages.Where(m => m.Severity == MessageSeverity.Error),Is.Empty,"Modules should compile without any error messages.");
@@ -1306,29 +1416,33 @@ namespace a {
         var ldr = new Loader(options);
         var add = new InternalLoadCommand(ldr);
         ldr.ParentEngine.Commands.AddHostCommand("add_internal", add);
-        add.VirtualFiles.Add("f1",@"
-function f1() {
-    println(""f1 called"");
-    // something
-    return 15;
-}
+        add.VirtualFiles.Add("f1","""
 
-//s");
-        Compile(ldr, @"
-declare command add_internal;
+                                  function f1() {
+                                      println("f1 called");
+                                      // something
+                                      return 15;
+                                  }
 
-function f0() {
-    println(""f0 called"");
-    /* something else */
-    return 16;
-}
+                                  //s
+                                  """);
+        Compile(ldr, """
 
-build does add_internal(""f1"");
+                     declare command add_internal;
 
-function main() {
-    return f0 + f1;
-}
-");
+                     function f0() {
+                         println("f0 called");
+                         /* something else */
+                         return 16;
+                     }
+
+                     build does add_internal("f1");
+
+                     function main() {
+                         return f0 + f1;
+                     }
+
+                     """);
 
         Expect(15+16);
     }
@@ -1336,11 +1450,13 @@ function main() {
     [Test]
     public void AssignMetaInBuildBlock()
     {
-        var ldr = Compile(@"
-namespace ns {
-  function fox(){}
-}
-build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(entityref_to(ns.fox).Id);");
+        var ldr = Compile("""
+
+                          namespace ns {
+                            function fox(){}
+                          }
+                          build does asm(ldr.app).Meta["psr.test.run_test"] = new Prexonite::MetaEntry(entityref_to(ns.fox).Id);
+                          """);
 
         var actualFuncId = ldr.ParentApplication.Meta["psr.test.run_test"].Text;
         Assert.That(actualFuncId, Is.Not.Empty);
@@ -1352,14 +1468,16 @@ build does asm(ldr.app).Meta[""psr.test.run_test""] = new Prexonite::MetaEntry(e
     [Test]
     public void DotSeparatedMetaValues()
     {
-        Compile(@"
-name some.module.test;
-references {
-  some.module
-};
+        Compile("""
 
-function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
-");
+                name some.module.test;
+                references {
+                  some.module
+                };
+
+                function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
+
+                """);
 
         var meta = target.Meta;
         Assert.That(meta, Does.ContainKey("name"));
@@ -1379,42 +1497,50 @@ function main[key1 dot.separated.value; key2 value2;key3{a.b,c}] = true;
     [Test]
     public void DotNetStaticPropertyAccess()
     {
-        Compile(@"
-add Prexonite::Compiler to Imports;
-function main {
-    var x = ::SymbolInterpretations.Function;
-    return x;
-}
-");
+        Compile("""
+
+                add Prexonite::Compiler to Imports;
+                function main {
+                    var x = ::SymbolInterpretations.Function;
+                    return x;
+                }
+
+                """);
         Expect(SymbolInterpretations.Function);
     }
 
     [Test]
     public void ErrorSingleColonInMetaValue()
     {
-        CompileInvalid(@"
-// There is a typo in this declaration: single `:` instead of `::`.
-name psr::pattern:test/2.0;
-");
+        CompileInvalid("""
+
+                       // There is a typo in this declaration: single `:` instead of `::`.
+                       name psr::pattern:test/2.0;
+
+                       """);
     }
 
     [Test]
     public void ErrorSingleColonInMetaValue2()
     {
-        CompileInvalid(@"
-// There is a typo in this declaration: single `:` instead of `.` (this can happen on German keyboards)
-name psr.pattern:test/2.0;
-");
+        CompileInvalid("""
+
+                       // There is a typo in this declaration: single `:` instead of `.` (this can happen on German keyboards)
+                       name psr.pattern:test/2.0;
+
+                       """);
     }
 
     [Test]
     public void ErrorDoubleColonInNamespaceDecl()
     {
-        var ldr = CompileInvalid(@"
-namespace a::b {
-  function should_be_illegal = null;
-}
-");
+        var ldr = CompileInvalid("""
+
+                                 namespace a::b {
+                                   function should_be_illegal = null;
+                                 }
+
+                                 """);
             
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
         Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
@@ -1423,17 +1549,19 @@ namespace a::b {
     [Test]
     public void ErrorDoubleColonInNamespaceImport()
     {
-        var ldr = CompileInvalid(@"
-namespace a.b 
-{
-    function f = null;
-}
-namespace a.c 
-    import a::b::f 
-{
-    function should_be_illegal = null;
-}
-");
+        var ldr = CompileInvalid("""
+
+                                 namespace a.b 
+                                 {
+                                     function f = null;
+                                 }
+                                 namespace a.c 
+                                     import a::b::f 
+                                 {
+                                     function should_be_illegal = null;
+                                 }
+
+                                 """);
             
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
         Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
@@ -1443,9 +1571,11 @@ namespace a.c
     public void WarningUnqualifiedNamespace()
     {
         var ldr = new Loader(options);
-        Compile(ldr, @"
-namespace import unknown;
-");
+        Compile(ldr, """
+
+                     namespace import unknown;
+
+                     """);
         Assert.That(ldr.Warnings.Where(m => m.MessageClass == MessageClasses.UnqualifiedImport), Is.Not.Empty);
         Assert.That(ldr.Warnings.Count, Is.EqualTo(1), "Warning count");
     }
@@ -1453,10 +1583,12 @@ namespace import unknown;
     [Test]
     public void ErrorUnresolvedNamespace()
     {
-        var ldr = CompileInvalid(@"
-namespace a {}
-namespace import a.b.c;
-");
+        var ldr = CompileInvalid("""
+
+                                 namespace a {}
+                                 namespace import a.b.c;
+
+                                 """);
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.NamespaceExcepted), Is.Not.Empty);
         Assert.That(ldr.ErrorCount, Is.EqualTo(1));
     }
@@ -1464,14 +1596,16 @@ namespace import a.b.c;
     [Test]
     public void ErrorDoubleColonInGlobalNamespaceImport()
     {
-        var ldr = CompileInvalid(@"
-namespace a.b 
-{
-    function f = null;
-}
-namespace import a::b::f;
-function should_be_illegal = null;
-");
+        var ldr = CompileInvalid("""
+
+                                 namespace a.b 
+                                 {
+                                     function f = null;
+                                 }
+                                 namespace import a::b::f;
+                                 function should_be_illegal = null;
+
+                                 """);
             
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
         Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
@@ -1480,15 +1614,17 @@ function should_be_illegal = null;
     [Test]
     public void ErrorDoubleColonInNamespaceExport()
     {
-        var ldr = CompileInvalid(@"
-namespace b.c.d {
-    function f = null;
-}
-namespace a
-{
-    
-} export b::c;
-");
+        var ldr = CompileInvalid("""
+
+                                 namespace b.c.d {
+                                     function f = null;
+                                 }
+                                 namespace a
+                                 {
+                                     
+                                 } export b::c;
+
+                                 """);
             
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.UnexpectedDoubleColonInNamespaceName), Is.Not.Empty);
         Assert.That(ldr.ErrorCount, Is.EqualTo(1), "Error count");
@@ -1497,21 +1633,23 @@ namespace a
     [Test]
     public void CustomTypeFunctionsInNamespaces()
     {
-        Compile(@"
-namespace a.b.c {
-    function create_pot(x) = ""pot($x)"";
-    function static_call_pot(m, arg) = ""pot.$m($arg)"";
-    function to_pot(x) = ""$x~pot"";
-    function is_pot(x) = x is String and x.Contains(""pot"");
-}
+        Compile("""
 
-function main(x,y) {
-    var p1 = new a.b.c.pot(x);
-    var p2 = y~a.b.c.pot;
-    var z = ~a.b.c.pot.heat(x); 
-    return [p1, p2, z, p1 is a.b.c.pot, 5 is not a.b.c.pot, ""fire"" is not a.b.c.pot];
-}
-");
+                namespace a.b.c {
+                    function create_pot(x) = "pot($x)";
+                    function static_call_pot(m, arg) = "pot.$m($arg)";
+                    function to_pot(x) = "$x~pot";
+                    function is_pot(x) = x is String and x.Contains("pot");
+                }
+
+                function main(x,y) {
+                    var p1 = new a.b.c.pot(x);
+                    var p2 = y~a.b.c.pot;
+                    var z = ~a.b.c.pot.heat(x); 
+                    return [p1, p2, z, p1 is a.b.c.pot, 5 is not a.b.c.pot, "fire" is not a.b.c.pot];
+                }
+
+                """);
         Expect(new List<PValue>
         {
             "pot(X)",
@@ -1526,20 +1664,22 @@ function main(x,y) {
     [Test]
     public void CustomTypeFunctionsWithDotSuffix()
     {
-        Compile(@"
-namespace a.b.c {
-    function create_pot() = ""pot()"";
-    function static_call_pot(m) = ""pot.$m"";
-    function to_pot(x) = ""$x~pot"";
-    function is_pot(x) = x is String and x.Contains(""pot"");
-}
-function main(y) {
-    var p1 = new a.b.c.pot.ToString;
-    var p2 = y~a.b.c.pot.ToString;
-    var z = ~a.b.c.pot.heat.ToString; 
-    return [p1, p2, z, p1 is a.b.c.pot.ToString, 5 is not a.b.c.pot.ToString, ""fire"" is not a.b.c.pot.ToString];
-}
-");
+        Compile("""
+
+                namespace a.b.c {
+                    function create_pot() = "pot()";
+                    function static_call_pot(m) = "pot.$m";
+                    function to_pot(x) = "$x~pot";
+                    function is_pot(x) = x is String and x.Contains("pot");
+                }
+                function main(y) {
+                    var p1 = new a.b.c.pot.ToString;
+                    var p2 = y~a.b.c.pot.ToString;
+                    var z = ~a.b.c.pot.heat.ToString; 
+                    return [p1, p2, z, p1 is a.b.c.pot.ToString, 5 is not a.b.c.pot.ToString, "fire" is not a.b.c.pot.ToString];
+                }
+
+                """);
         Expect(new List<PValue>
         {
             "pot()",
@@ -1555,31 +1695,33 @@ function main(y) {
     [Test]
     public void CustomTypeFunctionsInNamespacesWithTypeArgs()
     {
-        Compile(@"
-namespace a.b.c {
-    function create_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = ""pot`$nT<$T1,$T2>($x)"";
-    function static_call_pot(nT, T1, T2, m, arg)[pxs\supportsTypeArguments] = ""pot`$nT<$T1,$T2>.$m($arg)"";
-    function to_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = ""$x~pot`$nT<$T1,$T2>"";
-    function is_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = x is String 
-        and x.Contains(""pot"") 
-        and x.Contains(T1) 
-        and x.Contains(T2);
-}
+        Compile("""
 
-function main(x,y) {
-    var p1 = new a.b.c.pot<""a"", ""b"">(x);
-    var p2 = y~a.b.c.pot<""c"", ""d"">;
-    var z = ~a.b.c.pot<""e"", ""f"">.heat(x); 
-    return [p1, p2, z,
-        // should match 
-        p1 is a.b.c.pot<""a"", ""b"">,
-        // should not match => eval to true 
-        p2 is not a.b.c.pot<""c"", ""zz"">,
-        // should not match => eval to true 
-        ""fire"" is not a.b.c.pot
-    ];
-}
-");
+                namespace a.b.c {
+                    function create_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = "pot`$nT<$T1,$T2>($x)";
+                    function static_call_pot(nT, T1, T2, m, arg)[pxs\supportsTypeArguments] = "pot`$nT<$T1,$T2>.$m($arg)";
+                    function to_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = "$x~pot`$nT<$T1,$T2>";
+                    function is_pot(nT, T1, T2, x)[pxs\supportsTypeArguments] = x is String 
+                        and x.Contains("pot") 
+                        and x.Contains(T1) 
+                        and x.Contains(T2);
+                }
+
+                function main(x,y) {
+                    var p1 = new a.b.c.pot<"a", "b">(x);
+                    var p2 = y~a.b.c.pot<"c", "d">;
+                    var z = ~a.b.c.pot<"e", "f">.heat(x); 
+                    return [p1, p2, z,
+                        // should match 
+                        p1 is a.b.c.pot<"a", "b">,
+                        // should not match => eval to true 
+                        p2 is not a.b.c.pot<"c", "zz">,
+                        // should not match => eval to true 
+                        "fire" is not a.b.c.pot
+                    ];
+                }
+
+                """);
         Expect(new List<PValue>
         {
             "pot`2<a,b>(X)",
@@ -1594,41 +1736,47 @@ function main(x,y) {
     [Test]
     public void QuestionMarkSpliceIsInvalid()
     {
-        var ldr = CompileInvalid(@"
-function main = println(?*);
-");
+        var ldr = CompileInvalid("""
+
+                                 function main = println(?*);
+
+                                 """);
         Assert.That(ldr.Errors.Where(m => m.MessageClass == MessageClasses.IncompleteBinaryOperation), Is.Not.Empty);
     }
 
     [Test]
     public void LhsInParentheses()
     {
-        Compile(@"
-function f(x) = 2*x;
-function main(x,y) {
-    (var z) = x;
-    ((var u)) = y;
-    (x)++;
-    ((y))--;
-    var v = (z) >> f;
-    return ""x=$x y=$y z=$z u=$u v=$v""; 
-}
-");
+        Compile("""
+
+                function f(x) = 2*x;
+                function main(x,y) {
+                    (var z) = x;
+                    ((var u)) = y;
+                    (x)++;
+                    ((y))--;
+                    var v = (z) >> f;
+                    return "x=$x y=$y z=$z u=$u v=$v"; 
+                }
+
+                """);
         Expect("x=6 y=8 z=5 u=9 v=10", 5, 9);
     }
 
     [Test]
     public void NamespaceReExportBracesOptional()
     {
-        Compile(@"
-namespace source {
-    function f = ""f"";
-}
+        Compile("""
 
-namespace target export source(*);
+                namespace source {
+                    function f = "f";
+                }
 
-function main() = target.f;
-");
+                namespace target export source(*);
+
+                function main() = target.f;
+
+                """);
         
         Expect("f");
     }

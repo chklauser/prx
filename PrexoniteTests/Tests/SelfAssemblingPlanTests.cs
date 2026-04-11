@@ -200,12 +200,14 @@ public class SelfAssemblingPlanTests
         const string path = "find_me.pxs";
         using (MockFile(path, "name the_module/5.4.3.2;"))
         {
-            var desc = Sam.AssembleAsync(Source.FromString(@"
-name finder;
-references {
-    ""./find_me.pxs""
-};
-"), CancellationToken.None).Result;
+            var desc = Sam.AssembleAsync(Source.FromString("""
+
+                                                           name finder;
+                                                           references {
+                                                               "./find_me.pxs"
+                                                           };
+
+                                                           """), CancellationToken.None).Result;
             Assert.That(desc, Is.Not.Null);
             Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
             Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new(0,0))));
@@ -224,12 +226,14 @@ references {
         const string path = "found.pxs";
         using (MockFile(path, "name found;"))
         {
-            var desc = Sam.AssembleAsync(Source.FromString(@"
-name finder;
-references {
-    found
-};
-"), CancellationToken.None).Result;
+            var desc = Sam.AssembleAsync(Source.FromString("""
+
+                                                           name finder;
+                                                           references {
+                                                               found
+                                                           };
+
+                                                           """), CancellationToken.None).Result;
             Assert.That(desc, Is.Not.Null);
             Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
             Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new(0, 0))));
@@ -248,12 +252,14 @@ references {
         const string path = "hay/stack.pxs";
         using (MockFile(path, "name hay::stack;"))
         {
-            var desc = Sam.AssembleAsync(Source.FromString(@"
-name finder;
-references {
-    hay::stack
-};
-"), CancellationToken.None).Result;
+            var desc = Sam.AssembleAsync(Source.FromString("""
+
+                                                           name finder;
+                                                           references {
+                                                               hay::stack
+                                                           };
+
+                                                           """), CancellationToken.None).Result;
             Assert.That(desc, Is.Not.Null);
             Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
             Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new(0, 0))));
@@ -272,12 +278,14 @@ references {
         const string path = "hay/stack/lazy/impl.pxs";
         using (MockFile(path, "name hay::stack::lazy::impl;"))
         {
-            var desc = Sam.AssembleAsync(Source.FromString(@"
-name finder;
-references {
-    hay::stack::lazy::impl
-};
-"), CancellationToken.None).Result;
+            var desc = Sam.AssembleAsync(Source.FromString("""
+
+                                                           name finder;
+                                                           references {
+                                                               hay::stack::lazy::impl
+                                                           };
+
+                                                           """), CancellationToken.None).Result;
             Assert.That(desc, Is.Not.Null);
             Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
             Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new(0, 0))));
@@ -297,12 +305,14 @@ references {
         const string path = "hay.stack/lazy/impl.pxs";
         using (MockFile(path, "name hay::stack::lazy::impl;"))
         {
-            var desc = Sam.AssembleAsync(Source.FromString(@"
-name finder;
-references {
-    hay::stack::lazy::impl
-};
-"), CancellationToken.None).Result;
+            var desc = Sam.AssembleAsync(Source.FromString("""
+
+                                                           name finder;
+                                                           references {
+                                                               hay::stack::lazy::impl
+                                                           };
+
+                                                           """), CancellationToken.None).Result;
             Assert.That(desc, Is.Not.Null);
             Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
             Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new(0, 0))));
@@ -321,12 +331,14 @@ references {
         const string path = "hay.stack.lazy.impl.pxs";
         using (MockFile(path, "name hay::stack::lazy::impl;"))
         {
-            var desc = Sam.AssembleAsync(Source.FromString(@"
-name finder;
-references {
-    hay::stack::lazy::impl
-};
-"), CancellationToken.None).Result;
+            var desc = Sam.AssembleAsync(Source.FromString("""
+
+                                                           name finder;
+                                                           references {
+                                                               hay::stack::lazy::impl
+                                                           };
+
+                                                           """), CancellationToken.None).Result;
             Assert.That(desc, Is.Not.Null);
             Assert.That(desc.BuildMessages, Is.Empty, "Should not have build (error) messages");
             Assert.That(desc.Name, Is.EqualTo(new ModuleName("finder", new(0, 0))));

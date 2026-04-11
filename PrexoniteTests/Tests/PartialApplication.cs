@@ -378,14 +378,16 @@ public abstract class PartialApplication : VMTestsBase
     public void IndBasicExplicit()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = proc(?0,?1,?2);
-    return pa.(x,y,z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = proc(?0,?1,?2);
+                return pa.(x,y,z);
+            }
+
+            """);
 
         Expect("a=1, b=2, c=3", 1, 2, 3);
     }
@@ -394,14 +396,16 @@ function main(x,y,z)
     public void IndBasicImplicit()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = proc(?,?,?);
-    return pa.(x,y,z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = proc(?,?,?);
+                return pa.(x,y,z);
+            }
+
+            """);
 
         Expect("a=1, b=2, c=3", 1, 2, 3);
     }
@@ -410,14 +414,16 @@ function main(x,y,z)
     public void BasicDefaultToNull()
     {
         Compile(
-            @"
-function main(x)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$(c is null)"";
-    var pa = proc(?,?,?);
-    return pa.(x);
-}
-");
+            """
+
+            function main(x)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$(c is null)";
+                var pa = proc(?,?,?);
+                return pa.(x);
+            }
+
+            """);
 
         Expect("a=1, b=, c=" + sctx.CreateNativePValue(true).CallToString(sctx), 1);
     }
@@ -426,14 +432,16 @@ function main(x)
     public void AsLoadReferenceNotation()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = proc(?);
-    return pa.(x,y,z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = proc(?);
+                return pa.(x,y,z);
+            }
+
+            """);
 
         Expect("a=1, b=2, c=3", 1, 2, 3);
     }
@@ -442,14 +450,16 @@ function main(x,y,z)
     public void BasicExcess()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = proc(?2);
-    return pa.(x,y,z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = proc(?2);
+                return pa.(x,y,z);
+            }
+
+            """);
 
         Expect("a=3, b=1, c=2", 1, 2, 3);
     }
@@ -458,14 +468,16 @@ function main(x,y,z)
     public void MissingMapped()
     {
         Compile(
-            @"
-function main(x)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = proc(?1,?2);
-    return pa.(x);
-}
-");
+            """
+
+            function main(x)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = proc(?1,?2);
+                return pa.(x);
+            }
+
+            """);
 
         Expect("a=, b=, c=1", 1, 2, 3);
     }
@@ -474,14 +486,16 @@ function main(x)
     public void PartialCallOperatorSimple()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = ?.();
-    return pa.(->proc, x, y);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = ?.();
+                return pa.(->proc, x, y);
+            }
+
+            """);
 
         Expect("a=1, b=2, c=", 1, 2, 3);
     }
@@ -490,14 +504,16 @@ function main(x,y,z)
     public void PartialCallOperator()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
-    var pa = ?2.(?1,?0);
-    return pa.(x, y, ->proc, z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                function proc(a,b,c) = "a=$a, b=$b, c=$c";
+                var pa = ?2.(?1,?0);
+                return pa.(x, y, ->proc, z);
+            }
+
+            """);
 
         Expect("a=2, b=1, c=3", 1, 2, 3);
     }
@@ -506,13 +522,15 @@ function main(x,y,z)
     [Test]
     public void MemberSimpleGet()
     {
-        Compile(@"
-function main(x,y,z)
-{
-    var pa = x.m(?,y);
-    return pa.(z);
-}
-");
+        Compile("""
+
+                function main(x,y,z)
+                {
+                    var pa = x.m(?,y);
+                    return pa.(z);
+                }
+
+                """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
@@ -524,13 +542,15 @@ function main(x,y,z)
     [Test]
     public void MemberSimpleGetIndex()
     {
-        Compile(@"
-function main(x,y,z)
-{
-    var pa = x[y,?];
-    return pa.(z);
-}
-");
+        Compile("""
+
+                function main(x,y,z)
+                {
+                    var pa = x[y,?];
+                    return pa.(z);
+                }
+
+                """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("", [2, 3], call: PCall.Get, returns: 11);
@@ -542,13 +562,15 @@ function main(x,y,z)
     [Test]
     public void MemberSubjectGet()
     {
-        Compile(@"
-function main(x,y,z)
-{
-    var pa = ?.m(z,?);
-    return pa.(x,y);
-}
-");
+        Compile("""
+
+                function main(x,y,z)
+                {
+                    var pa = ?.m(z,?);
+                    return pa.(x,y);
+                }
+
+                """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
@@ -560,13 +582,15 @@ function main(x,y,z)
     [Test]
     public void MemberOperatorGet()
     {
-        Compile(@"
-function main(x,y,z)
-{
-    var pa = ?.m;
-    return pa.(x,z,y);
-}
-");
+        Compile("""
+
+                function main(x,y,z)
+                {
+                    var pa = ?.m;
+                    return pa.(x,z,y);
+                }
+
+                """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
@@ -578,13 +602,15 @@ function main(x,y,z)
     [Test]
     public void MemberOperatorSet()
     {
-        Compile(@"
-function main(x,y,z)
-{
-    var pa = ?.m = ?;
-    return pa.(x,z,y);
-}
-");
+        Compile("""
+
+                function main(x,y,z)
+                {
+                    var pa = ?.m = ?;
+                    return pa.(x,z,y);
+                }
+
+                """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("m", [3, 2], call: PCall.Set, returns: 11);
@@ -597,13 +623,15 @@ function main(x,y,z)
     public void MemberSetSimple()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = x.m(?) = ?;
-    return pa.(z,y);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = x.m(?) = ?;
+                return pa.(z,y);
+            }
+
+            """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("m", [3, 2], call: PCall.Set, returns: 11);
@@ -615,13 +643,15 @@ function main(x,y,z)
     [Test]
     public void MemberSetIndex()
     {
-        Compile(@"
-function main(x,y,z)
-{
-    var pa = x[?] = ?;
-    return pa.(z,y);
-}
-");
+        Compile("""
+
+                function main(x,y,z)
+                {
+                    var pa = x[?] = ?;
+                    return pa.(z,y);
+                }
+
+                """);
 
         var x = new MemberCallable {Name = "x"};
         x.Expect("", [3, 2], call: PCall.Set, returns: 11);
@@ -634,13 +664,15 @@ function main(x,y,z)
     public void Construct1()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = new List(?2,?1);
-    return pa.(x,y,z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = new List(?2,?1);
+                return pa.(x,y,z);
+            }
+
+            """);
         PValue x = 1;
         PValue y = 2;
         PValue z = 3;
@@ -651,15 +683,17 @@ function main(x,y,z)
     public void ConstructCustomFallback()
     {
         Compile(
-            @"
-function create_box(a,b,c) = [a, c, b];
+            """
 
-function main(x,y,z)
-{
-    var pa = new box(?2);
-    return pa.(x,y,z);
-}
-");
+            function create_box(a,b,c) = [a, c, b];
+
+            function main(x,y,z)
+            {
+                var pa = new box(?2);
+                return pa.(x,y,z);
+            }
+
+            """);
 
 
         PValue x = 1;
@@ -672,13 +706,15 @@ function main(x,y,z)
     public void ConstructDynamicType()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = new Object<(""System.$x"")>(y,?0,?0);
-    return pa.(z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = new Object<("System.$x")>(y,?0,?0);
+                return pa.(z);
+            }
+
+            """);
 
         Expect(new DateTime(2010, 10, 10), nameof(DateTime), 2010, 10);
     }
@@ -687,13 +723,15 @@ function main(x,y,z)
     public void TypeCast()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ?~Int;
-    return pa.(x) + pa.(y,z);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ?~Int;
+                return pa.(x) + pa.(y,z);
+            }
+
+            """);
 
         Expect(5, "2", 3.0, "sixteen");
     }
@@ -702,13 +740,15 @@ function main(x,y,z)
     public void DynamicTypeCast()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ?~Object<(x)>;
-    return pa.(y) is Object<(x)>;
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ?~Object<(x)>;
+                return pa.(y) is Object<(x)>;
+            }
+
+            """);
 
         Expect(true, "Prexonite.StackContext", sctx.CreateNativePValue(sctx));
     }
@@ -717,13 +757,15 @@ function main(x,y,z)
     public void DynamicTypeCheck()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ? is Object<(x)>;
-    return pa.(y~Object<(x)>);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ? is Object<(x)>;
+                return pa.(y~Object<(x)>);
+            }
+
+            """);
 
         Expect(true, "Prexonite.StackContext", sctx.CreateNativePValue(sctx));
     }
@@ -732,14 +774,16 @@ function main(x,y,z)
     public void TypeCheck()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ? is String;
-    function i(b) = if(b) ""T"" else ""_"";
-    return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ? is String;
+                function i(b) = if(b) "T" else "_";
+                return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
+            }
+
+            """);
         Expect("T_T", "I'm", 'a', nameof(String));
     }
 
@@ -747,14 +791,16 @@ function main(x,y,z)
     public void NegativeTypeCheck()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ? is not String;
-    function i(b) = if(b) ""T"" else ""_"";
-    return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ? is not String;
+                function i(b) = if(b) "T" else "_";
+                return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
+            }
+
+            """);
         Expect("_T_", "I'm", 'a', nameof(String));
     }
 
@@ -762,15 +808,17 @@ function main(x,y,z)
     public void NullCheck()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ? is null;
-    var pa2 = ? is not null;
-    function i(b) = if(b) ""T"" else ""_"";
-    return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x)) + i(pa2.(x)) + i(pa2.(y)) + i(pa2.(z,x));
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ? is null;
+                var pa2 = ? is not null;
+                function i(b) = if(b) "T" else "_";
+                return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x)) + i(pa2.(x)) + i(pa2.(y)) + i(pa2.(z,x));
+            }
+
+            """);
 
         Expect("_T_T_T", "I'm", PType.Null, 1);
     }
@@ -779,14 +827,16 @@ function main(x,y,z)
     public void StaticCall()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = System::Int32.Parse(?);
-    var pa2 = System::Int32.MaxValue(?);
-    return pa2.() - pa.(x);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = System::Int32.Parse(?);
+                var pa2 = System::Int32.MaxValue(?);
+                return pa2.() - pa.(x);
+            }
+
+            """);
 
         Expect(int.MaxValue - 255, "255");
     }
@@ -795,14 +845,16 @@ function main(x,y,z)
     public void DynamicStaticCall()
     {
         Compile(
-            @"
-function main(x,y,z)
-{
-    var pa = ~Object<(y)>.Parse(?);
-    var pa2 = ~Object<(y)>.MaxValue(?);
-    return pa2.() - pa.(x);
-}
-");
+            """
+
+            function main(x,y,z)
+            {
+                var pa = ~Object<(y)>.Parse(?);
+                var pa2 = ~Object<(y)>.MaxValue(?);
+                return pa2.() - pa.(x);
+            }
+
+            """);
 
         Expect(int.MaxValue - 255, "255", "System.Int32");
     }
@@ -811,24 +863,26 @@ function main(x,y,z)
     public void FlippedFunctionalCall()
     {
         Compile(
-            @"
-function echo(a,b,c) = 
-    var args 
-    >> map(x => if(x is null) ""-"" else x) 
-    >> foldl(? + ?,"""");
+            """
 
-function main(a,c,d)
-{
-    var pa = echo(?,""b"");
-    var pa2 = echo(?,""k"",""L"");
-    return 
-        ([  pa.(a),     pa2.(a),
-            pa.(),      pa2.(),
-            pa.(a,c,d), pa2.(a,c,d)
-        ])
-        >> foldl(""$(?)|$(?)"","""");
-}
-");
+            function echo(a,b,c) = 
+                var args 
+                >> map(x => if(x is null) "-" else x) 
+                >> foldl(? + ?,"");
+
+            function main(a,c,d)
+            {
+                var pa = echo(?,"b");
+                var pa2 = echo(?,"k","L");
+                return 
+                    ([  pa.(a),     pa2.(a),
+                        pa.(),      pa2.(),
+                        pa.(a,c,d), pa2.(a,c,d)
+                    ])
+                    >> foldl("$(?)|$(?)","");
+            }
+
+            """);
         var paCtors = target.Functions["main"]!
             .Code.Where(ins => ins.OpCode == OpCode.cmd)
             .Select(ins => new { ins, id = ins.Id })
@@ -851,15 +905,17 @@ function main(a,c,d)
     public void LazyPartialAnd()
     {
         Compile(
-            @"function main(x,y,z,k)
-{
-    var bot = ""⊥"";
-    function supply(f) = f.(bot,bot,k,bot,bot);
-    function shorten(v) = if(v) ""1"" else ""0"";
-    var ps = [(x or y) and ?2, x and y and z and ?2, true and ?2, false and ?2];
+            """
+            function main(x,y,z,k)
+            {
+                var bot = "⊥";
+                function supply(f) = f.(bot,bot,k,bot,bot);
+                function shorten(v) = if(v) "1" else "0";
+                var ps = [(x or y) and ?2, x and y and z and ?2, true and ?2, false and ?2];
 
-    return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"""");
-}");
+                return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"");
+            }
+            """);
 
         Func<bool, bool, bool, bool, string> main =
             (x, y, z, k) =>
@@ -882,15 +938,17 @@ function main(a,c,d)
     public void LazyPartialOr()
     {
         Compile(
-            @"function main(x,y,z,k)
-{
-    var bot = ""⊥"";
-    function supply(f) = f.(bot,bot,k,bot,bot);
-    function shorten(v) = if(v) ""1"" else ""0"";
-    var ps = [(x and y) or ?2, x or y or z or ?2, true or ?2, false or ?2];
+            """
+            function main(x,y,z,k)
+            {
+                var bot = "⊥";
+                function supply(f) = f.(bot,bot,k,bot,bot);
+                function shorten(v) = if(v) "1" else "0";
+                var ps = [(x and y) or ?2, x or y or z or ?2, true or ?2, false or ?2];
 
-    return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"""");
-}");
+                return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"");
+            }
+            """);
 
         Func<bool, bool, bool, bool, string> main =
             (x, y, z, k) =>
@@ -922,19 +980,21 @@ function main(a,c,d)
     public void LazyPartialCoalescence()
     {
         Compile(
-            @"function main(x,y,z,k)
-{
-    var bot = ""⊥"";
-    function supply(f) = f.(bot,bot,k,bot,bot);
-    function shorten(v) = if(v is not null) ""1"" else ""0"";
-    var p1 = (x ?? y) ?? ?2;
-    var p2 = x ?? y ?? z ?? ?2;
-    var p3 = 1 ?? ?2;
-    var p4 = null ?? ?2;
-    var ps = [p1, p2, p3, p4];
+            """
+            function main(x,y,z,k)
+            {
+                var bot = "⊥";
+                function supply(f) = f.(bot,bot,k,bot,bot);
+                function shorten(v) = if(v is not null) "1" else "0";
+                var p1 = (x ?? y) ?? ?2;
+                var p2 = x ?? y ?? z ?? ?2;
+                var p3 = 1 ?? ?2;
+                var p4 = null ?? ?2;
+                var ps = [p1, p2, p3, p4];
 
-    return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"""");
-}");
+                return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"");
+            }
+            """);
 
         Func<bool, bool, bool, bool, string> main =
             (x, y, z, k) =>

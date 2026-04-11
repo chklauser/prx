@@ -44,35 +44,37 @@ public abstract partial class VMTests
     public void UnusedTry()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function main()
-{
-    var xs = [0];
-    try
-    {
-        for(var i = 0; i < 5; i++)
-            xs[] = i;
-    }
-    catch(var exc)
-    {
-        xs[] = exc;
-    }
-    finally
-    {
-        xs[] = ""--"";
-    }
+            function foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
+            }
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
 
-    return tos(xs);
-}
-");
+            function main()
+            {
+                var xs = [0];
+                try
+                {
+                    for(var i = 0; i < 5; i++)
+                        xs[] = i;
+                }
+                catch(var exc)
+                {
+                    xs[] = exc;
+                }
+                finally
+                {
+                    xs[] = "--";
+                }
+
+                return tos(xs);
+            }
+
+            """);
 
         Expect("001234--");
     }
@@ -81,28 +83,30 @@ function main()
     public void UnusedSimpleTry()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function main()
-{
-    var xs = [0];
-    try
-    {
-        for(var i = 0; i < 5; i++)
-            xs[] = i;
-    }
-    xs[] = ""--"";
+            function foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
+            }
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
 
-    return tos(xs);
-}
-");
+            function main()
+            {
+                var xs = [0];
+                try
+                {
+                    for(var i = 0; i < 5; i++)
+                        xs[] = i;
+                }
+                xs[] = "--";
+
+                return tos(xs);
+            }
+
+            """);
 
         Expect("001234--");
     }
@@ -111,28 +115,30 @@ function main()
     public void IgnoreTry()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function main()
-{
-    var xs = [0];
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            xs[] = i;
-            if(i == 3)
-                throw i; //Should be ignored
-        }catch(var exc){}
-    return tos(xs);
-}
-");
+            function foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
+            }
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
+
+            function main()
+            {
+                var xs = [0];
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        xs[] = i;
+                        if(i == 3)
+                            throw i; //Should be ignored
+                    }catch(var exc){}
+                return tos(xs);
+            }
+
+            """);
 
         Expect("012345");
     }
@@ -141,31 +147,33 @@ function main()
     public void FinallyTry()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-var xs = [0];
-function main()
-{
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            if(i == 3)
-                throw i;
-        }
-        finally
-        {
-            xs[] = i;
-        }
-    return tos(xs);
-}
-");
+            function foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
+            }
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
+
+            var xs = [0];
+            function main()
+            {
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        if(i == 3)
+                            throw i;
+                    }
+                    finally
+                    {
+                        xs[] = i;
+                    }
+                return tos(xs);
+            }
+
+            """);
         try
         {
             Expect("012345");
@@ -188,25 +196,27 @@ function main()
     public void CatchTry()
     {
         Compile(
-            @"
-function main()
-{
-    var xs = [0];
-    for(var i = 1; i < 4; i++)
-        try
-        {
-            if(i == 2)
-                throw i;
-            xs[] = i;
-        }
-        catch(var exc)
-        {
-            println(""(""+exc+"")"");
-            xs[] = 2;
-        }
-    return xs.ToString;
-}
-");
+            """
+
+            function main()
+            {
+                var xs = [0];
+                for(var i = 1; i < 4; i++)
+                    try
+                    {
+                        if(i == 2)
+                            throw i;
+                        xs[] = i;
+                    }
+                    catch(var exc)
+                    {
+                        println("("+exc+")");
+                        xs[] = 2;
+                    }
+                return xs.ToString;
+            }
+
+            """);
         Expect("[ 0, 1, 2, 3 ]");
     }
 
@@ -214,29 +224,31 @@ function main()
     public void CatchFinallyTry()
     {
         Compile(
-            @"
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function main()
-{
-    var xs = [0];
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            if(i == 3)
-                throw i; //Should be ignored
-        }
-        catch(var exc)
-        {   
-            xs[] = exc.Message;
-        }
-        finally
-        {
-            xs[] = i;
-        }
-    return tos(xs);
-}
-");
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
+
+            function main()
+            {
+                var xs = [0];
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        if(i == 3)
+                            throw i; //Should be ignored
+                    }
+                    catch(var exc)
+                    {   
+                        xs[] = exc.Message;
+                    }
+                    finally
+                    {
+                        xs[] = i;
+                    }
+                return tos(xs);
+            }
+
+            """);
         Expect("0123345");
     }
 
@@ -244,43 +256,45 @@ function main()
     public void NestedTries()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function main()  [store_debug_implementation enabled;]
-{
-    var xs = [0];
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            try
+            function foldl(ref f, var left, var xs)
             {
-                if(i mod 2 == 0)
-                    throw i; //Should be ignored
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
             }
-            catch(var exc)
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
+
+            function main()  [store_debug_implementation enabled;]
             {
-                if(exc.Message == ""4"")
-                    throw exc;
+                var xs = [0];
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        try
+                        {
+                            if(i mod 2 == 0)
+                                throw i; //Should be ignored
+                        }
+                        catch(var exc)
+                        {
+                            if(exc.Message == "4")
+                                throw exc;
+                        }
+                    }
+                    catch(var exc)
+                    {
+                        xs[] = i;
+                    }
+                    finally
+                    {
+                        xs[] = i;
+                    }
+                return tos(xs);
             }
-        }
-        catch(var exc)
-        {
-            xs[] = i;
-        }
-        finally
-        {
-            xs[] = i;
-        }
-    return tos(xs);
-}
-");
+
+            """);
         try
         {
             Expect("0123445");
@@ -295,38 +309,40 @@ function main()  [store_debug_implementation enabled;]
     public void CrossFunctionTry()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function process(i) does
-    if(i == 3)
-        throw i;
+            function foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
+            }
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
 
-function main()
-{
-    var xs = [0];
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            process(i);
-        }
-        catch(var exc)
-        {   
-            xs[] = exc.Message;
-        }
-        finally
-        {
-            xs[] = i;
-        }
-    return tos(xs);
-}
-");
+            function process(i) does
+                if(i == 3)
+                    throw i;
+
+            function main()
+            {
+                var xs = [0];
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        process(i);
+                    }
+                    catch(var exc)
+                    {   
+                        xs[] = exc.Message;
+                    }
+                    finally
+                    {
+                        xs[] = i;
+                    }
+                return tos(xs);
+            }
+
+            """);
         Expect("0123345");
     }
 
@@ -334,44 +350,46 @@ function main()
     public void HandledSurfaceTry()
     {
         Compile(
-            @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
-function tos(xs) = foldl((a,b) => a + b,"""",xs);
+            """
 
-function process(i) does try
-{
-    if(i == 3)
-        throw i;
-}
-catch(var exc)
-{
-    throw exc.Message + ""i"";
-}
+            function foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left,right);
+                return left;
+            }
+            function tos(xs) = foldl((a,b) => a + b,"",xs);
 
-function main()
-{
-    var xs = [0];
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            process(i);
-        }
-        catch(var exc)
-        {   
-            xs[] = exc.Message;
-        }
-        finally
-        {
-            xs[] = i;
-        }
-    return tos(xs);
-}
-");
+            function process(i) does try
+            {
+                if(i == 3)
+                    throw i;
+            }
+            catch(var exc)
+            {
+                throw exc.Message + "i";
+            }
+
+            function main()
+            {
+                var xs = [0];
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        process(i);
+                    }
+                    catch(var exc)
+                    {   
+                        xs[] = exc.Message;
+                    }
+                    finally
+                    {
+                        xs[] = i;
+                    }
+                return tos(xs);
+            }
+
+            """);
         Expect("01233i45");
     }
 
@@ -379,37 +397,39 @@ function main()
     public void CrossForeachTryCatch()
     {
         Compile(
-            @"
-coroutine mayFail
-{
-    yield 1;
-    yield 2;
-    throw ""I failed"";
-    yield 3;
-}
+            """
 
-function main(sum)
-{
-    try
-	{
-        ref mightFail = mayFail;
-		foreach(var sourceFile in [4,5,6])
-		{
-			sum+=sourceFile + mightFail;
-		}
-	}
-	catch(var exc)
-	{
-        println(exc);
-        sum*=2;
-	}
-	finally
-	{
-        sum*=10;        
-	}
-    return sum;
-}
-");
+            coroutine mayFail
+            {
+                yield 1;
+                yield 2;
+                throw "I failed";
+                yield 3;
+            }
+
+            function main(sum)
+            {
+                try
+            	{
+                    ref mightFail = mayFail;
+            		foreach(var sourceFile in [4,5,6])
+            		{
+            			sum+=sourceFile + mightFail;
+            		}
+            	}
+            	catch(var exc)
+            	{
+                    println(exc);
+                    sum*=2;
+            	}
+            	finally
+            	{
+                    sum*=10;        
+            	}
+                return sum;
+            }
+
+            """);
         Expect((1 + 4 + 2 + 5 + 1)*20, 1);
     }
 
@@ -417,21 +437,23 @@ function main(sum)
     public void HarmlessTryFinally()
     {
         Compile(
-            @"
-function main
-{
-    var r;
-    try
-    {
-        r = ""NO_ERROR"";
-    }
-    finally
-    {
-        r += "", REALLY"";
-    }
-    return r;
-}
-");
+            """
+
+            function main
+            {
+                var r;
+                try
+                {
+                    r = "NO_ERROR";
+                }
+                finally
+                {
+                    r += ", REALLY";
+                }
+                return r;
+            }
+
+            """);
         Expect("NO_ERROR, REALLY");
     }
 
@@ -439,42 +461,44 @@ function main
     public void TryCatchInFinally()
     {
         Compile(
-            @"
-function mightFail(x)
-{
-    throw ""I don't like $x."";
-}
+            """
 
-var sb = new System::Text::StringBuilder;
+            function mightFail(x)
+            {
+                throw "I don't like $x.";
+            }
 
-function print does foreach(sb.Append in var args);
-function println does foreach(sb.AppendLine in var args);
+            var sb = new System::Text::StringBuilder;
 
-function main()
-{
-    var xs;
-    try
-    {
-        xs = [];
-            foreach(var a in var args) 
-                xs[] = mightFail(a);
-    }
-    finally
-    {
-        xs = [];
-            foreach(var a in var args)
-                xs[] = ""NP($a)"";
-            
-    }
-    catch(var exc)
-    {
-        print = ""EXC($(exc.Message))"";
-    }
+            function print does foreach(sb.Append in var args);
+            function println does foreach(sb.AppendLine in var args);
 
-    print(foldl((l,r) => l + "" "" + r, "" BEGIN"", xs)); 
-    return sb.ToString;
-}
-");
+            function main()
+            {
+                var xs;
+                try
+                {
+                    xs = [];
+                        foreach(var a in var args) 
+                            xs[] = mightFail(a);
+                }
+                finally
+                {
+                    xs = [];
+                        foreach(var a in var args)
+                            xs[] = "NP($a)";
+                        
+                }
+                catch(var exc)
+                {
+                    print = "EXC($(exc.Message))";
+                }
+
+                print(foldl((l,r) => l + " " + r, " BEGIN", xs)); 
+                return sb.ToString;
+            }
+
+            """);
 
         var xs = new List<PValue> {4, "Hello", 3.4};
 
@@ -485,15 +509,17 @@ function main()
     public void ReturnFromForeach()
     {
         Compile(
-            @"
-function main(xs)
-{
-    foreach(var x in xs)
-        if(x > 5)
-            return x;
-    return -1;
-}
-");
+            """
+
+            function main(xs)
+            {
+                foreach(var x in xs)
+                    if(x > 5)
+                        return x;
+                return -1;
+            }
+
+            """);
         var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
 
         Expect(7, xs);
@@ -503,22 +529,24 @@ function main(xs)
     public void ForeachLastInConditionCil()
     {
         Compile(
-            @"
-function main(cond, xs)
-{
-    var z = 0;
-    if(cond)
-    {
-        foreach(var x in xs)
-            z += x;
-    }
-    else
-    {
-        z = 5;
-    }
-    return z;
-}
-");
+            """
+
+            function main(cond, xs)
+            {
+                var z = 0;
+                if(cond)
+                {
+                    foreach(var x in xs)
+                        z += x;
+                }
+                else
+                {
+                    z = 5;
+                }
+                return z;
+            }
+
+            """);
 
         if (CompileToCil)
         {
@@ -536,19 +564,21 @@ function main(cond, xs)
     public void ReturnContinueFormTryFinally()
     {
         Compile(
-            @"
-function main()
-{
-    try
-    {
-        continue;
-    } 
-    finally
-    {
+            """
 
-    }
-}
-");
+            function main()
+            {
+                try
+                {
+                    continue;
+                } 
+                finally
+                {
+
+                }
+            }
+
+            """);
 
         var func = target.Functions["main"];
 
@@ -575,21 +605,23 @@ function main()
     public void JumpToAfterEmptyFinally()
     {
         Compile(
-            @"
-function main()
-{
-    try
-    {
-        goto after;
-        goto fin;
-    } 
-    finally
-    {
-        fin:
-    }
-after:
-}
-");
+            """
+
+            function main()
+            {
+                try
+                {
+                    goto after;
+                    goto fin;
+                } 
+                finally
+                {
+                    fin:
+                }
+            after:
+            }
+
+            """);
 
         var func = target.Functions["main"];
 
@@ -606,24 +638,26 @@ after:
     public void ReturnFromFinally()
     {
         Compile(
-            @"
-var t = """";
-function trace x = t += x;
+            """
 
-function main(x)
-{
-    try {
-        trace(""t"");
-    } finally {
-        if(x)
-            yield t;
-        else 
-            trace(""n"");
-    }
+            var t = "";
+            function trace x = t += x;
 
-    return t;
-}
-");
+            function main(x)
+            {
+                try {
+                    trace("t");
+                } finally {
+                    if(x)
+                        yield t;
+                    else 
+                        trace("n");
+                }
+
+                return t;
+            }
+
+            """);
 
         var mainTable = target.Functions["main"]!.Meta;
 
@@ -641,21 +675,23 @@ function main(x)
     public void BreakFromProtected()
     {
         Compile(
-            @"
-var t = """";
-function trace x=t+=x;
-function main()
-{
-    try{
-        trace(""t"");
-        break;
-    }catch(var exc) {
-        trace(""c"");
-    }
-    
-    return t;
-}
-");
+            """
+
+            var t = "";
+            function trace x=t+=x;
+            function main()
+            {
+                try{
+                    trace("t");
+                    break;
+                }catch(var exc) {
+                    trace("c");
+                }
+                
+                return t;
+            }
+
+            """);
 
         ExpectNull();
         Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"]!.Value).Value!,
@@ -666,16 +702,18 @@ function main()
     public void TryAsLastStatement()
     {
         Compile(
-            @"
-var t;
-function main(x)
-{
-    try {
-        t = ""t"";  
-    } finally {
-        t += ""f"";
-    }
-}");
+            """
+
+            var t;
+            function main(x)
+            {
+                try {
+                    t = "t";  
+                } finally {
+                    t += "f";
+                }
+            }
+            """);
 
         ExpectNull();
         Assert.IsTrue((bool) target.Variables["t"]!.Value.Equality(sctx, "tf").Value!,
@@ -686,45 +724,47 @@ function main(x)
     public void EndFinallies()
     {
         Compile(
-            @"
-var t = """";
-function trace x=t+=x;
-function main(x,y)
-{
-    try {
-        trace(""t1"");
-    } finally {
-        goto endfinally1;
-        trace(""f1"");
-endfinally1:
-    }
+            """
 
-    trace(""e1"");
+            var t = "";
+            function trace x=t+=x;
+            function main(x,y)
+            {
+                try {
+                    trace("t1");
+                } finally {
+                    goto endfinally1;
+                    trace("f1");
+            endfinally1:
+                }
 
-    try {
-        trace(""t2"");
-    } finally {
-        if(x)
-            goto endfinally2;    
-        trace(""f2"");
-endfinally2:
-    }
+                trace("e1");
 
-    trace(""e2"");
-    try {
-        trace(""t3"");
-    } finally {
-        if(not y)
-            goto endfinally3;    
-        trace(""f3"");
-endfinally3:
-    }
+                try {
+                    trace("t2");
+                } finally {
+                    if(x)
+                        goto endfinally2;    
+                    trace("f2");
+            endfinally2:
+                }
 
-    trace(""e3"");
+                trace("e2");
+                try {
+                    trace("t3");
+                } finally {
+                    if(not y)
+                        goto endfinally3;    
+                    trace("f3");
+            endfinally3:
+                }
 
-    return t;
-}
-");
+                trace("e3");
+
+                return t;
+            }
+
+            """);
         if (CompileToCil)
         {
             Assert.IsNotNull(target.Functions["main"], "function main must exist.");
@@ -738,43 +778,45 @@ endfinally3:
     public void ReturnFromCatch()
     {
         Compile
-        (@"
+        ("""
 
-var lastCode = -1;
-var buffer = new System::Text::StringBuilder;
-function green f => f.();
-var errors = [];
-var ldrErrors = [""error1"",""error2""];
 
-function main()
-{
-    try 
-    {
-        var exc = null;
-        lastCode = buffer.ToString; //Save the code for error reporting            
-    } 
-    catch(exc)
-    {
-        //Exceptions are truly exceptional, so they should be printed
-        // out right away.
-        green = () =>
-		{
-			println(exc);
-			exc = null;
-			foreach(var err in errors)
-				println(err);
-		};
-		return false;
-    }
-    finally
-    {
-        //Save errors for review and clean up.
-        buffer.Length = 0;
-        errors = ~List.CreateFromList(ldrErrors);            
-    }
-    println(errors.Count);
-    return errors.Count == 0;
-}");
+         var lastCode = -1;
+         var buffer = new System::Text::StringBuilder;
+         function green f => f.();
+         var errors = [];
+         var ldrErrors = ["error1","error2"];
+
+         function main()
+         {
+             try 
+             {
+                 var exc = null;
+                 lastCode = buffer.ToString; //Save the code for error reporting            
+             } 
+             catch(exc)
+             {
+                 //Exceptions are truly exceptional, so they should be printed
+                 // out right away.
+                 green = () =>
+         		{
+         			println(exc);
+         			exc = null;
+         			foreach(var err in errors)
+         				println(err);
+         		};
+         		return false;
+             }
+             finally
+             {
+                 //Save errors for review and clean up.
+                 buffer.Length = 0;
+                 errors = ~List.CreateFromList(ldrErrors);            
+             }
+             println(errors.Count);
+             return errors.Count == 0;
+         }
+         """);
 
         Expect(false);
     }

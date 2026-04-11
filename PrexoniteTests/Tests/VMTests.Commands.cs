@@ -45,39 +45,41 @@ public abstract partial class VMTests : VMTestsBase
     public void MapCommandImplementation()
     {
         Compile(
-            @"
-function my_map(ref f, var lst)
-{
-    var nlst = [];
-    foreach(var x in lst)
-        nlst[] = f(x);
-    return nlst;
-}
+            """
 
-function foldl(ref f, var left, lst)
-{
-    foreach(var right in lst)
-        left = f(left,right);
-    return left;
-}
+            function my_map(ref f, var lst)
+            {
+                var nlst = [];
+                foreach(var x in lst)
+                    nlst[] = f(x);
+                return nlst;
+            }
 
-function main()
-{
-    var args;
-    var k = 1;
-    var ver1 =    map( x => x + 1,   args);
-    var ver2 = my_map( x => x + k++, args);
+            function foldl(ref f, var left, lst)
+            {
+                foreach(var right in lst)
+                    left = f(left,right);
+                return left;
+            }
 
-    ref y = coroutine() =>
-    {
-        foreach(var yy in ver1)
-            yield yy;
-    };
+            function main()
+            {
+                var args;
+                var k = 1;
+                var ver1 =    map( x => x + 1,   args);
+                var ver2 = my_map( x => x + k++, args);
 
-    var diff = map( x => x - y, ver2);
-    return foldl( (l,r) => l + r, """",diff);
-}
-");
+                ref y = coroutine() =>
+                {
+                    foreach(var yy in ver1)
+                        yield yy;
+                };
+
+                var diff = map( x => x - y, ver2);
+                return foldl( (l,r) => l + r, "",diff);
+            }
+
+            """);
 
         Expect("01234", 1, 2, 3, 4, 5);
     }
@@ -85,15 +87,17 @@ function main()
     [Test]
     public void FlatMapImplementation()
     {
-        Compile(@"
-function main() {
-    coroutine f(n) {
-        for(var i = 1; i <= n; i++)
-            yield i;
-    }
-    return var args >> flat_map(f(?), [1,0], []) >> foldl( (l,r) => l + "","" + r, """");
-}
-");
+        Compile("""
+
+                function main() {
+                    coroutine f(n) {
+                        for(var i = 1; i <= n; i++)
+                            yield i;
+                    }
+                    return var args >> flat_map(f(?), [1,0], []) >> foldl( (l,r) => l + "," + r, "");
+                }
+
+                """);
             
         Expect(",1,1,2,3,1,2,3,4", 3,4);
     }
@@ -102,20 +106,22 @@ function main() {
     public void FoldLCommandImplementation()
     {
         Compile(
-            @"
-function my_foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left, right);
-    return left;
-}
+            """
 
-function main()
-{
-    var sum = my_foldl( (l,r) => l + r, 0, var args) + 13;
-    return foldl( (l,r) => l - r, sum, var args);
-}
-");
+            function my_foldl(ref f, var left, var xs)
+            {
+                foreach(var right in xs)
+                    left = f(left, right);
+                return left;
+            }
+
+            function main()
+            {
+                var sum = my_foldl( (l,r) => l + r, 0, var args) + 13;
+                return foldl( (l,r) => l - r, sum, var args);
+            }
+
+            """);
 
         Expect(13, 4, 5, 6, 7);
     }
@@ -124,20 +130,22 @@ function main()
     public void CallCommandImplementation()
     {
         Compile(
-            @"
-function sum()
-{
-    var s = 0;
-    foreach(var x in var args)
-        s += x~Int;
-    return s;
-}
+            """
 
-function main()
-{
-    return call(->call, [->sum], var args);
-}
-");
+            function sum()
+            {
+                var s = 0;
+                foreach(var x in var args)
+                    s += x~Int;
+                return s;
+            }
+
+            function main()
+            {
+                return call(->call, [->sum], var args);
+            }
+
+            """);
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -158,20 +166,22 @@ function main()
     public void CallCommandImplementationForPa()
     {
         Compile(
-            @"
-function sum()
-{
-    var s = 0;
-    foreach(var x in var args)
-        s += x~Int;
-    return s;
-}
+            """
 
-function main()
-{
-    return call(call(?), [sum(?)], var args);
-}
-");
+            function sum()
+            {
+                var s = 0;
+                foreach(var x in var args)
+                    s += x~Int;
+                return s;
+            }
+
+            function main()
+            {
+                return call(call(?), [sum(?)], var args);
+            }
+
+            """);
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -192,22 +202,24 @@ function main()
     public void PartialCallCommand()
     {
         Compile(
-            @"
-function sum()
-{
-    var s = 0;
-    foreach(var x in var args)
-        s += x~Int;
-    return s;
-}
+            """
 
-function main()
-{
-    var f = call(call(?), [?], ?);
-    println(var x = f.(sum(?), var args));
-    return x;
-}
-");
+            function sum()
+            {
+                var s = 0;
+                foreach(var x in var args)
+                    s += x~Int;
+                return s;
+            }
+
+            function main()
+            {
+                var f = call(call(?), [?], ?);
+                println(var x = f.(sum(?), var args));
+                return x;
+            }
+
+            """);
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -228,22 +240,24 @@ function main()
     public void PartialCallCommandPa()
     {
         Compile(
-            @"
-function sum()
-{
-    var s = 0;
-    foreach(var x in var args)
-        s += x~Int;
-    return s;
-}
+            """
 
-function main()
-{
-    var f = call(call(sum(?),?), ?);
-    println(var x = f.(var args));
-    return x;
-}
-");
+            function sum()
+            {
+                var s = 0;
+                foreach(var x in var args)
+                    s += x~Int;
+                return s;
+            }
+
+            function main()
+            {
+                var f = call(call(sum(?),?), ?);
+                println(var x = f.(var args));
+                return x;
+            }
+
+            """);
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -268,16 +282,18 @@ function main()
         obj.Expect("", [4, "a"], PCall.Set);
 
         Compile(
-            @"
-function main(obj, x, xs, y1, y2)
-{
-    var f1 = call\member(?,""m"",[?],?);
-    var f2 = call\member(?,?,?) = [?];
+            """
 
-    f1.(obj,x,xs);
-    f2.(obj,"""",y1, y2);
-}
-");
+            function main(obj, x, xs, y1, y2)
+            {
+                var f1 = call\member(?,"m",[?],?);
+                var f2 = call\member(?,?,?) = [?];
+
+                f1.(obj,x,xs);
+                f2.(obj,"",y1, y2);
+            }
+
+            """);
         ExpectNull(sctx.CreateNativePValue(obj), 1, (PValue) new List<PValue> {2, 3},
             (PValue) new List<PValue> {4}, "a");
         obj.AssertCalledAll();
@@ -287,39 +303,41 @@ function main(obj, x, xs, y1, y2)
     public void CallTailImplementation()
     {
         Compile(
-            @"
-ref check_stack;
+            """
 
-var result;
+            ref check_stack;
 
-function factorial(n,r)
-{
-    r ??= 1;
-    if(n <= 1)
-    {
-        check_stack();
-        result = r;
-    }
-    else
-    {
-        call\tail(factorial(?,?),[n-1,r*n]);
-    }
-}
+            var result;
 
-function tailed(ref f, n)[is volatile;]
-{
-    return f(n);
-}
+            function factorial(n,r)
+            {
+                r ??= 1;
+                if(n <= 1)
+                {
+                    check_stack();
+                    result = r;
+                }
+                else
+                {
+                    call\tail(factorial(?,?),[n-1,r*n]);
+                }
+            }
 
-function main(check, n)
-{
-    ->check_stack = check;
-    
-    var f = call\tail(factorial(?,?),[?]);
-    tailed(f, n);
-    return result;
-}
-");
+            function tailed(ref f, n)[is volatile;]
+            {
+                return f(n);
+            }
+
+            function main(check, n)
+            {
+                ->check_stack = check;
+                
+                var f = call\tail(factorial(?,?),[?]);
+                tailed(f, n);
+                return result;
+            }
+
+            """);
 
         var check = new PValue(new ProvidedFunction((s, _) =>
             {
@@ -359,30 +377,32 @@ function main(check, n)
     public void CallAsyncCommandImplementation()
     {
         Compile(
-            @"
-function fib_rec(n, /*lazy*/ fibT, ref combine) = 
-    if(n <= 0) 0 else if(n <= 2) 1 else combine(force(fibT).(n-1), force(fibT).(n-2));
+            """
 
-function main(n,m, i)
-{
-    //Simple, background
-    let simple_fib = fib_rec(?, simple_fib, ? + ?);
-    var f1 = call\async(fib_rec(?),[?, simple_fib, ? + ?]);
-    println(var c1 = f1.(n));
-    
-    //Recursive, background
-    let rec_fib = call\async(fib_rec(?), [?, rec_fib, (ca,cb) => ca.receive + cb.receive]);
-    var f2 = force(rec_fib);
-    println(var c2 = f2.(m));
+            function fib_rec(n, /*lazy*/ fibT, ref combine) = 
+                if(n <= 0) 0 else if(n <= 2) 1 else combine(force(fibT).(n-1), force(fibT).(n-2));
 
-    //No lazyness involved
-    function sfib(n) = if(n <= 0) 0 else if(n <= 2) 1 else sfib(n-1) + sfib(n-2);
-    var c3 = call\async(sfib(?),[i]);
+            function main(n,m, i)
+            {
+                //Simple, background
+                let simple_fib = fib_rec(?, simple_fib, ? + ?);
+                var f1 = call\async(fib_rec(?),[?, simple_fib, ? + ?]);
+                println(var c1 = f1.(n));
+                
+                //Recursive, background
+                let rec_fib = call\async(fib_rec(?), [?, rec_fib, (ca,cb) => ca.receive + cb.receive]);
+                var f2 = force(rec_fib);
+                println(var c2 = f2.(m));
 
-    println(var r = [c1.receive, c2.receive, c3.receive]);
-    return r;
-}
-");
+                //No lazyness involved
+                function sfib(n) = if(n <= 0) 0 else if(n <= 2) 1 else sfib(n-1) + sfib(n-2);
+                var c3 = call\async(sfib(?),[i]);
+
+                println(var r = [c1.receive, c2.receive, c3.receive]);
+                return r;
+            }
+
+            """);
         //fib 8 = 21
         //fib 7 = 13
         //fib 6 = 8
@@ -393,26 +413,28 @@ function main(n,m, i)
     public void UnbindCommandImplementation()
     {
         Compile(
-            @"
-function main()
-{
-    var buffer = new System::Text::StringBuilder;
-    function print(s) does buffer.Append(s);
-    var xs = [ 5,7,9,11,13,15 ];
-    var fs = [];
-    foreach(var x in xs)
-    {
-        fs[] = y => ""($(x)->$(y))"";
-        unbind(->x);
-        print(""$(x)."");
-    }
+            """
 
-    var i = 19;
-    foreach(var f in fs)
-        print(f.(i--));
-    return buffer.ToString;
-}
-");
+            function main()
+            {
+                var buffer = new System::Text::StringBuilder;
+                function print(s) does buffer.Append(s);
+                var xs = [ 5,7,9,11,13,15 ];
+                var fs = [];
+                foreach(var x in xs)
+                {
+                    fs[] = y => "($(x)->$(y))";
+                    unbind(->x);
+                    print("$(x).");
+                }
+
+                var i = 19;
+                foreach(var f in fs)
+                    print(f.(i--));
+                return buffer.ToString;
+            }
+
+            """);
 
         const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
         Expect(expected);
@@ -422,18 +444,20 @@ function main()
     public void ListSort()
     {
         Compile(
-            @"
-function main() = 
-    [ ""f"", ""A"", ""x"", ""a"", ""h"", ""g"", ""H"", ""A"", ""f"", ""X"", ""F"", ""G"" ] >>
-    sort
-    ( 
-        (a,b) =>
-            a.ToLower.CompareTo(b.ToLower),
-        (a,b) =>
-            -(a.CompareTo(b))
-    ) >>
-    foldl( (l,r) => l + "","" + r, """");
-");
+            """
+
+            function main() = 
+                [ "f", "A", "x", "a", "h", "g", "H", "A", "f", "X", "F", "G" ] >>
+                sort
+                ( 
+                    (a,b) =>
+                        a.ToLower.CompareTo(b.ToLower),
+                    (a,b) =>
+                        -(a.CompareTo(b))
+                ) >>
+                foldl( (l,r) => l + "," + r, "");
+
+            """);
 
         Expect(",A,A,a,F,f,f,G,g,H,h,X,x");
     }
@@ -441,9 +465,11 @@ function main() =
     [Test]
     public void MathPiWorksInCil()
     {
-        Compile(@"
-function main = pi;
-");
+        Compile("""
+
+                function main = pi;
+
+                """);
 
         Expect(Math.PI);
     }
@@ -451,7 +477,7 @@ function main = pi;
     [Test]
     public void ReverseCmd()
     {
-        Compile(@"function main = [1,2,3,4,5] >> reverse >> foldl((a,b) => a + b,"""");");
+        Compile("""function main = [1,2,3,4,5] >> reverse >> foldl((a,b) => a + b,"");""");
 
         Expect("54321");
     }
@@ -460,12 +486,14 @@ function main = pi;
     public void AsyncSeqSemantics()
     {
         Compile(
-            @"
-function main(xs)
-{
-    return foldl((a,b) => a + "">"" + b, """") << async_seq(xs);
-}
-");
+            """
+
+            function main(xs)
+            {
+                return foldl((a,b) => a + ">" + b, "") << async_seq(xs);
+            }
+
+            """);
 
         Expect(">1>2>3", (PValue) new List<PValue> {1, 2, 3});
     }
@@ -476,14 +504,16 @@ function main(xs)
     public void CallStarSimple()
     {
         Compile(
-            @"
-function main(x, xs)
-{
-    var f = call\star(call([?],?),?,[?]);
-    println(var x = f.(xs,x));
-    return x;
-}
-");
+            """
+
+            function main(x, xs)
+            {
+                var f = call\star(call([?],?),?,[?]);
+                println(var x = f.(xs,x));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
     }
@@ -492,14 +522,16 @@ function main(x, xs)
     public void CallStarAllArgumentsUndirected()
     {
         Compile(
-            @"
-function main(x, xs)
-{
-    var f = call\star(call([?],?),?,?);
-    println(var x = f.(xs,x));
-    return x;
-}
-");
+            """
+
+            function main(x, xs)
+            {
+                var f = call\star(call([?],?),?,?);
+                println(var x = f.(xs,x));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {3},
             (PValue) new List<PValue> {1, 2});
@@ -509,14 +541,16 @@ function main(x, xs)
     public void CallStarAllArgumentsDirected()
     {
         Compile(
-            @"
-function main(x, y, z)
-{
-    var f = call\star(call([?],?),[?,?],[?]);
-    println(var x = f.(x,y,z));
-    return x;
-}
-");
+            """
+
+            function main(x, y, z)
+            {
+                var f = call\star(call([?],?),[?,?],[?]);
+                println(var x = f.(x,y,z));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, 1, 2, 3);
     }
@@ -525,14 +559,16 @@ function main(x, y, z)
     public void CallStarCustom()
     {
         Compile(
-            @"
-function main(x, xs)
-{
-    var f = call\star(2,call(?),[?],?,[?]);
-    println(var x = f.(xs,x));
-    return x;
-}
-");
+            """
+
+            function main(x, xs)
+            {
+                var f = call\star(2,call(?),[?],?,[?]);
+                println(var x = f.(xs,x));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
     }
@@ -541,13 +577,15 @@ function main(x, xs)
     public void CallStarAllArgumentsCall()
     {
         Compile(
-            @"
-function main(x, xs1,xs2)
-{
-    println(var x = call\star(call([?],?),[xs1,xs2], x));
-    return x;
-}
-");
+            """
+
+            function main(x, xs1,xs2)
+            {
+                println(var x = call\star(call([?],?),[xs1,xs2], x));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {3}, 1, 2);
     }
@@ -556,14 +594,16 @@ function main(x, xs1,xs2)
     public void CallStarMapped()
     {
         Compile(
-            @"
-function main(x, xs)
-{
-    var f = call\star(call([?],?),?1,[?0]);
-    println(var x = f.(x, xs));
-    return x;
-}
-");
+            """
+
+            function main(x, xs)
+            {
+                var f = call\star(call([?],?),?1,[?0]);
+                println(var x = f.(x, xs));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
     }
@@ -573,14 +613,16 @@ function main(x, xs)
     public void CallStarCustomMapped()
     {
         Compile(
-            @"
-function main(x, xs)
-{
-    var f = call\star(2, call(?), [?], ?1, [?0]);
-    println(var x = f.(x, xs));
-    return x;
-}
-");
+            """
+
+            function main(x, xs)
+            {
+                var f = call\star(2, call(?), [?], ?1, [?0]);
+                println(var x = f.(x, xs));
+                return x;
+            }
+
+            """);
 
         Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
     }
@@ -591,26 +633,28 @@ function main(x, xs)
     public void CreateEnumeratorCommand()
     {
         Compile(
-            @"
-function main(xs)
-{
-    var s = new Structure;
-    var cM = 0;
-    var cC = 0;
-    var cD = 0;
-    s.\\(""GetEnumerator"") = () =>
-    {
-        var e = xs.GetEnumerator;
-        return new enumerator(
-            () => {cM++; return e.MoveNext;},
-            () => {cC++; return e.Current; },
-            () => {cD++; dispose(e);       },
-        );
-    };
+            """
 
-    return ""M$cM.C$cC.D$cD: "" + foldl(?+?,"""",s) + "" :M$cM.C$cC.D$cD"";
-}
-");
+            function main(xs)
+            {
+                var s = new Structure;
+                var cM = 0;
+                var cC = 0;
+                var cD = 0;
+                s.\\("GetEnumerator") = () =>
+                {
+                    var e = xs.GetEnumerator;
+                    return new enumerator(
+                        () => {cM++; return e.MoveNext;},
+                        () => {cC++; return e.Current; },
+                        () => {cD++; dispose(e);       },
+                    );
+                };
+
+                return "M$cM.C$cC.D$cD: " + foldl(?+?,"",s) + " :M$cM.C$cC.D$cD";
+            }
+
+            """);
 
         Expect("M0.C0.D0: abc :M4.C3.D1", (PValue) new List<PValue> {"a", "b", "c"});
     }
@@ -619,14 +663,16 @@ function main(xs)
     public void ListExceptCommand()
     {
         Compile(
-            @"
-function main(xs,ys)
-{
-    xs >> except(ys) >> all >> var r;
-    println(""RESULT = "",r);
-    return r;
-}
-");
+            """
+
+            function main(xs,ys)
+            {
+                xs >> except(ys) >> all >> var r;
+                println("RESULT = ",r);
+                return r;
+            }
+
+            """);
         PValue a = 11, b = 13, c = 17, d = 19;
         var xs = (PValue) new List<PValue> {a, c, d};
         var ys = (PValue) new List<PValue> {a, b};
@@ -638,14 +684,16 @@ function main(xs,ys)
     public void AppendCommand()
     {
         Compile(
-            @"
-function main(xs,ys)
-{
-    append(xs,ys) >> all >> var r;
-    println(""RESULT = "",r);
-    return r;
-}
-");
+            """
+
+            function main(xs,ys)
+            {
+                append(xs,ys) >> all >> var r;
+                println("RESULT = ",r);
+                return r;
+            }
+
+            """);
         PValue a = 11, b = 13, c = 17, d = 19;
         var xs = (PValue) new List<PValue> {a, c, d};
         var ys = (PValue) new List<PValue> {a, b};

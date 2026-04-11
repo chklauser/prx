@@ -48,26 +48,28 @@ public abstract partial class VMTests
     public void CallSubMacroCommandNested()
     {
         CompileInvalid(
-            @"
-function main(xs)
-{
-    var zs = [];
-    function f(x) 
-    {
-        if(x mod 2 == 0)
-            continue;
-        if(x > 6)
-            break;
-        return x*3+1;
-    }
-    foreach(var x in xs)
-    {
-        zs[] = call\sub(f(?),[x]);
-    }
+            """
 
-    return zs.ToString();
-}
-",
+            function main(xs)
+            {
+                var zs = [];
+                function f(x) 
+                {
+                    if(x mod 2 == 0)
+                        continue;
+                    if(x > 6)
+                        break;
+                    return x*3+1;
+                }
+                foreach(var x in xs)
+                {
+                    zs[] = call\sub(f(?),[x]);
+                }
+
+                return zs.ToString();
+            }
+
+            """,
             CallSub.Alias, "expression");
 
         //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -78,26 +80,28 @@ function main(xs)
     public void CallSubMacroCommandTopLevel()
     {
         Compile(
-            @"
-var zs = [];
-function main(x1,x2,x3)
-{
-    function f(x) 
-    {
-        if(x mod 2 == 0)
-            continue;
-        if(x > 6)
-            break;
-        return x*3+1;
-    }
-    
-    zs[] = call\sub(f(?),[x1]);
-    zs[] = call\sub(f(?),[x2]);
-    call\sub(f(?),[x3]);
+            """
 
-    return zs.ToString();
-}
-");
+            var zs = [];
+            function main(x1,x2,x3)
+            {
+                function f(x) 
+                {
+                    if(x mod 2 == 0)
+                        continue;
+                    if(x > 6)
+                        break;
+                    return x*3+1;
+                }
+                
+                zs[] = call\sub(f(?),[x1]);
+                zs[] = call\sub(f(?),[x2]);
+                call\sub(f(?),[x3]);
+
+                return zs.ToString();
+            }
+
+            """);
         Func<List<PValue>> getZs = () =>
         {
             var pv = target.Variables["zs"]!.Value.Value as List<PValue>;
@@ -130,18 +134,20 @@ function main(x1,x2,x3)
     public void CallSubMinimal()
     {
         Compile(
-            @"
-function f(x)
-{
-    return x;
-}
+            """
 
-function main()
-{
-    call\sub(f(?),[2]);   
-    return 2; 
-}
-");
+            function f(x)
+            {
+                return x;
+            }
+
+            function main()
+            {
+                call\sub(f(?),[2]);   
+                return 2; 
+            }
+
+            """);
 
         Expect(2);
     }
@@ -150,21 +156,23 @@ function main()
     public void CallSubMinimalReturn()
     {
         Compile(
-            @"
-function f()
-{
-    return 1;
-}
+            """
 
-function main()
-{
-    var zs = [];
-    asm{nop nop nop}
-    zs[] = call\sub(f(?));   
-    asm{nop nop nop}
-    return zs[0];
-}
-");
+            function f()
+            {
+                return 1;
+            }
+
+            function main()
+            {
+                var zs = [];
+                asm{nop nop nop}
+                zs[] = call\sub(f(?));   
+                asm{nop nop nop}
+                return zs[0];
+            }
+
+            """);
 
         Expect(1);
     }
@@ -173,26 +181,28 @@ function main()
     public void CallSubOfPartial()
     {
         CompileInvalid(
-            @"
-function main(xs,y)
-{
-    var zs = [];
-    function f(x,y) 
-    {
-        if(x mod 2 == 0)
-            continue;
-        if(x > y)
-            break;
-        return x*3+1;
-    }
-    foreach(var x in xs)
-    {
-        zs[] = call\sub(f(?,y),[x]);
-    }
+            """
 
-    return zs.ToString();
-}
-",
+            function main(xs,y)
+            {
+                var zs = [];
+                function f(x,y) 
+                {
+                    if(x mod 2 == 0)
+                        continue;
+                    if(x > y)
+                        break;
+                    return x*3+1;
+                }
+                foreach(var x in xs)
+                {
+                    zs[] = call\sub(f(?,y),[x]);
+                }
+
+                return zs.ToString();
+            }
+
+            """,
             CallSub.Alias, "expression");
 
         //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -204,26 +214,28 @@ function main(xs,y)
     public void CaptureUnmentionedMacroVariable()
     {
         Compile(
-            @"
-    macro echo() 
-    {
-        var f = (x) => 
-            if(context is null)
-                ""context is null""
-            else if(context.LocalSymbols.TryGet(x, ref r))
-                var r
-            else
-                ""cannot resolve $x"";
-        println(f.(""x""));
-    }
+            """
 
-    function main()
-    {
-        var x = 15;
-        echo;
-        return x;
-    }
-");
+                macro echo() 
+                {
+                    var f = (x) => 
+                        if(context is null)
+                            "context is null"
+                        else if(context.LocalSymbols.TryGet(x, ref r))
+                            var r
+                        else
+                            "cannot resolve $x";
+                    println(f.("x"));
+                }
+
+                function main()
+                {
+                    var x = 15;
+                    echo;
+                    return x;
+                }
+
+            """);
         var clo = target.Functions["echo\\0"];
         Assert.IsNotNull(clo, "Closure must exist.");
         Assert.IsTrue(clo!.Meta.ContainsKey(PFunction.SharedNamesKey));
@@ -238,33 +250,35 @@ function main(xs,y)
     public void MacroTransport()
     {
         Compile(
-            @"
-macro echo(lst)
-{
-    lst = macro\unpack(lst);
-    return new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
-        context.Invocation.Line,context.Invocation.Column,sum(lst) + lst.Count); 
-}
+            """
 
-macro gen(n)
-{
-    n = n.Constant~Int;
-    var id = macro\pack(1.to(n) >> all);
-    var idConst = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
-        context.Invocation.Line,context.Invocation.Column, id);
-    return call\macro([echo(idConst)]);
-}
+            macro echo(lst)
+            {
+                lst = macro\unpack(lst);
+                return new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+                    context.Invocation.Line,context.Invocation.Column,sum(lst) + lst.Count); 
+            }
 
-function main()
-{
-    return gen(4);
-}
+            macro gen(n)
+            {
+                n = n.Constant~Int;
+                var id = macro\pack(1.to(n) >> all);
+                var idConst = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+                    context.Invocation.Line,context.Invocation.Column, id);
+                return call\macro([echo(idConst)]);
+            }
 
-function main2()
-{
-    return gen(5);
-}
-");
+            function main()
+            {
+                return gen(4);
+            }
+
+            function main2()
+            {
+                return gen(5);
+            }
+
+            """);
 
         Expect(1 + 2 + 3 + 4 + 4);
         ExpectNamed("main2", 1 + 2 + 3 + 4 + 5 + 5);
@@ -274,50 +288,52 @@ function main2()
     public void CallMacroOnFunction()
     {
         Compile(
-            @"
-macro __append(con)
-{
-    var c = con.Constant + ""__"";
+            """
 
-    if(context.IsJustEffect)
-        c += ""je"";
+            macro __append(con)
+            {
+                var c = con.Constant + "__";
 
-    if(context.Call~Int == Prexonite::Types::PCall.Set~Int)
-        c += ""="";
+                if(context.IsJustEffect)
+                    c += "je";
 
-    var con = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
-        context.Invocation.Line,context.Invocation.Column,c);
-    return con;
-}
+                if(context.Call~Int == Prexonite::Types::PCall.Set~Int)
+                    c += "=";
 
-macro __surround(con, idx)
-{
-    var idx = idx.Constant~Int;
-    con.Constant = ""__"" + con.Constant;
-    return [ call\macro([__append],[con])
-           , call\macro([__append(con)])
-           , call\macro([__append = con])
-           , call\macro([__append,true],[con])
-           , call\macro([__append,false],[con])
-           , call\macro([__append(con),true])
-           , call\macro([__append(con),false])
-           , call\macro([__append = con, true])
-           , call\macro([__append = con, false]) ][idx];
-}
+                var con = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+                    context.Invocation.Line,context.Invocation.Column,c);
+                return con;
+            }
 
-function main(x,y)
-{
-    return  [ x + __surround(""xXx"", 0) + y
-            , x + __surround(""xXx"", 1) + y
-            , x + __surround(""xXx"", 2) + y
-            , x + __surround(""xXx"", 3) + y
-            , x + __surround(""xXx"", 4) + y
-            , x + __surround(""xXx"", 5) + y
-            , x + __surround(""xXx"", 6) + y
-            , x + __surround(""xXx"", 7) + y
-            , x + __surround(""xXx"", 8) + y];
-}
-");
+            macro __surround(con, idx)
+            {
+                var idx = idx.Constant~Int;
+                con.Constant = "__" + con.Constant;
+                return [ call\macro([__append],[con])
+                       , call\macro([__append(con)])
+                       , call\macro([__append = con])
+                       , call\macro([__append,true],[con])
+                       , call\macro([__append,false],[con])
+                       , call\macro([__append(con),true])
+                       , call\macro([__append(con),false])
+                       , call\macro([__append = con, true])
+                       , call\macro([__append = con, false]) ][idx];
+            }
+
+            function main(x,y)
+            {
+                return  [ x + __surround("xXx", 0) + y
+                        , x + __surround("xXx", 1) + y
+                        , x + __surround("xXx", 2) + y
+                        , x + __surround("xXx", 3) + y
+                        , x + __surround("xXx", 4) + y
+                        , x + __surround("xXx", 5) + y
+                        , x + __surround("xXx", 6) + y
+                        , x + __surround("xXx", 7) + y
+                        , x + __surround("xXx", 8) + y];
+            }
+
+            """);
 
         Expect(new List<PValue>
         {
@@ -347,81 +363,83 @@ function main(x,y)
     public void PartialCallMacroOnFunction()
     {
         Compile(
-            @"
-macro __append(con)
-{
-    var c = con.Constant + ""__"";
+            """
 
-    if(context.IsJustEffect)
-        c += ""je"";
+            macro __append(con)
+            {
+                var c = con.Constant + "__";
 
-    if(context.Call~Int == Prexonite::Types::PCall.Set~Int)
-        c += ""="";
+                if(context.IsJustEffect)
+                    c += "je";
 
-    var con = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
-        context.Invocation.Line,context.Invocation.Column,c);
-    return con;
-}
+                if(context.Call~Int == Prexonite::Types::PCall.Set~Int)
+                    c += "=";
 
-macro __surround\create_pa(con, idx)
-{
-    var idx = idx.Constant~Int;
-    con.Constant = ""__"" + con.Constant;
-    var f = [ call\macro([?],[?])                       // 20
-            , call\macro([__append(?0)])
-            , call\macro([__append = ?0])                // 22
-            , call\macro([__append,?],[con])
-            , call\macro([?,?],[?])
-            , call\macro([__append(con),?])             // 25
-            , call\macro([__append(?0),?])
-            , call\macro([__append = ?0, ?])             // 27
-            , call\macro([__append = con, ?]) ][idx];
+                var con = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+                    context.Invocation.Line,context.Invocation.Column,c);
+                return con;
+            }
 
-    var fc = macro\pack(f);
-    return new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
-        context.Invocation.Line,context.Invocation.Column,fc);
-}
+            macro __surround\create_pa(con, idx)
+            {
+                var idx = idx.Constant~Int;
+                con.Constant = "__" + con.Constant;
+                var f = [ call\macro([?],[?])                       // 20
+                        , call\macro([__append(?0)])
+                        , call\macro([__append = ?0])                // 22
+                        , call\macro([__append,?],[con])
+                        , call\macro([?,?],[?])
+                        , call\macro([__append(con),?])             // 25
+                        , call\macro([__append(?0),?])
+                        , call\macro([__append = ?0, ?])             // 27
+                        , call\macro([__append = con, ?]) ][idx];
 
-macro __surround(con, idx)
-{
-    var i = idx.Constant~Int;                                           //37
-    var fc = call\macro([__surround\create_pa(con, idx)]).Expression;
-    var f = macro\unpack(fc.Constant~Int);
-    if(i == 0)
-        return f.(macro\reference(__append),con);
-    else if(i == 1)
-        return f.(con);
-    else if(i == 2)
-        return f.(con);
-    else if(i == 3)
-        return f.(true);
-    else if(i == 4)
-        return f.(macro\reference(__append),false,con);
-    else if(i == 5)                                                 // 50
-        return f.(true);
-    else if(i == 6)
-        return f.(con, false);
-    else if(i == 7)
-        return f.(con,true);
-    else if(i == 8)
-        return f.(false);
-    else
-        throw ""ZOMG! (invalid index to macro __surround)"";
-} // 60
+                var fc = macro\pack(f);
+                return new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+                    context.Invocation.Line,context.Invocation.Column,fc);
+            }
 
-function main(x,y)
-{
-    return  [ x + __surround(""xXx"", 0) + y
-            , x + __surround(""xXx"", 1) + y
-            , x + __surround(""xXx"", 2) + y
-            , x + __surround(""xXx"", 3) + y
-            , x + __surround(""xXx"", 4) + y
-            , x + __surround(""xXx"", 5) + y
-            , x + __surround(""xXx"", 6) + y // 70
-            , x + __surround(""xXx"", 7) + y // 71
-            , x + __surround(""xXx"", 8) + y]; // 72
-}
-");
+            macro __surround(con, idx)
+            {
+                var i = idx.Constant~Int;                                           //37
+                var fc = call\macro([__surround\create_pa(con, idx)]).Expression;
+                var f = macro\unpack(fc.Constant~Int);
+                if(i == 0)
+                    return f.(macro\reference(__append),con);
+                else if(i == 1)
+                    return f.(con);
+                else if(i == 2)
+                    return f.(con);
+                else if(i == 3)
+                    return f.(true);
+                else if(i == 4)
+                    return f.(macro\reference(__append),false,con);
+                else if(i == 5)                                                 // 50
+                    return f.(true);
+                else if(i == 6)
+                    return f.(con, false);
+                else if(i == 7)
+                    return f.(con,true);
+                else if(i == 8)
+                    return f.(false);
+                else
+                    throw "ZOMG! (invalid index to macro __surround)";
+            } // 60
+
+            function main(x,y)
+            {
+                return  [ x + __surround("xXx", 0) + y
+                        , x + __surround("xXx", 1) + y
+                        , x + __surround("xXx", 2) + y
+                        , x + __surround("xXx", 3) + y
+                        , x + __surround("xXx", 4) + y
+                        , x + __surround("xXx", 5) + y
+                        , x + __surround("xXx", 6) + y // 70
+                        , x + __surround("xXx", 7) + y // 71
+                        , x + __surround("xXx", 8) + y]; // 72
+            }
+
+            """);
 
         Expect(new List<PValue>
         {
@@ -440,43 +458,45 @@ function main(x,y)
     [Test]
     public void AstIsExpand()
     {
-        Compile(@"
-var uniq\\node_t6;
+        Compile("""
 
-function ast_is_Expand(node_arg)
-{asm{
-var tmpp0
-/* 00 */ ldloc node_arg
-/* 01 */ cmd.1 boxed
-/* 02 */ get.0 Type
-/* 03 */ dup 1
-/* 04 */ stloc tmpp0
-/* 05 */ check.const ""Object(\""Prexonite.Types.ObjectPType\"")""
-/* 06 */ jump.t 9
-/* 07 */ ldc.bool false
-/* 08 */ ret.value
-/* 09 */ ldglob uniq\\node_t6
-/* 10 */ check.null
-/* 11 */ jump.f 15
-/* 12 */ ldc.string ""Prexonite.Compiler.Ast.AstExpand""
-/* 13 */ sget.1 ""Object(\""System.Type\"")::GetType""
-/* 14 */ stglob uniq\\node_t6
-/* 15 */ ldglob uniq\\node_t6
-/* 16 */ ldloc tmpp0
-/* 17 */ get.0 ClrType
-/* 18 */ get.1 IsAssignableFrom
-/* 19 */ jump.f 26
-/* 20 */ ldloc node_arg
-/* 21 */ get.0 CheckForPlaceholders
-/* 22 */ cmd.1 $not
-/* 23 */ jump.f 26
-/* 24 */ ldc.bool true
-/* 25 */ jump 27
-/* 26 */ ldc.bool false
-/* 27 */ ret.value
-/* 28 */ }}
+                var uniq\\node_t6;
 
-function main(n) = ast_is_Expand(n);");
+                function ast_is_Expand(node_arg)
+                {asm{
+                var tmpp0
+                /* 00 */ ldloc node_arg
+                /* 01 */ cmd.1 boxed
+                /* 02 */ get.0 Type
+                /* 03 */ dup 1
+                /* 04 */ stloc tmpp0
+                /* 05 */ check.const "Object(\"Prexonite.Types.ObjectPType\")"
+                /* 06 */ jump.t 9
+                /* 07 */ ldc.bool false
+                /* 08 */ ret.value
+                /* 09 */ ldglob uniq\\node_t6
+                /* 10 */ check.null
+                /* 11 */ jump.f 15
+                /* 12 */ ldc.string "Prexonite.Compiler.Ast.AstExpand"
+                /* 13 */ sget.1 "Object(\"System.Type\")::GetType"
+                /* 14 */ stglob uniq\\node_t6
+                /* 15 */ ldglob uniq\\node_t6
+                /* 16 */ ldloc tmpp0
+                /* 17 */ get.0 ClrType
+                /* 18 */ get.1 IsAssignableFrom
+                /* 19 */ jump.f 26
+                /* 20 */ ldloc node_arg
+                /* 21 */ get.0 CheckForPlaceholders
+                /* 22 */ cmd.1 $not
+                /* 23 */ jump.f 26
+                /* 24 */ ldc.bool true
+                /* 25 */ jump 27
+                /* 26 */ ldc.bool false
+                /* 27 */ ret.value
+                /* 28 */ }}
+
+                function main(n) = ast_is_Expand(n);
+                """);
 
         Expect(true,
             sctx.CreateNativePValue(new AstExpand(NoSourcePosition.Instance,

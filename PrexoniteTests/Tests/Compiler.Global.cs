@@ -41,20 +41,22 @@ public class CompilerTestBaseGlobal : CompilerTestBase
     public void Empty()
     {
         _compile(
-            @"
-//Hello World
+            """
 
-/* this is // a 
-multi line // comment */
+            //Hello World
 
-//*/ this is single line
+            /* this is // a 
+            multi line // comment */
 
-///* this too
+            //*/ this is single line
 
-/* multiline
- multiline 
-//*/// single line
-");
+            ///* this too
+
+            /* multiline
+             multiline 
+            //*/// single line
+
+            """);
     }
 
     [Test]
@@ -62,30 +64,32 @@ multi line // comment */
     {
         var ldr =
             _compile(
-                @"
-//This is a text fixture for metadata
+                """
 
-//Simple
-Name	metadata\Fixture;
-Description Not_yet_very_useful;
-Version	6;
-TheSwitch True;
+                //This is a text fixture for metadata
 
-Debugging enabled;
-Optimization disabled;
-Is Cached;
-Is Not Final;
+                //Simple
+                Name	metadata\Fixture;
+                Description Not_yet_very_useful;
+                Version	6;
+                TheSwitch True;
 
-//The following metadata is checked in other tests
+                Debugging enabled;
+                Optimization disabled;
+                Is Cached;
+                Is Not Final;
 
-Add System to Import;
-Add System::Text to Import;
-Add {
-	System::Xml,
-	Prexonite,
-	System::Xml::Xsl
-} to Imports;
-");
+                //The following metadata is checked in other tests
+
+                Add System to Import;
+                Add System::Text to Import;
+                Add {
+                	System::Xml,
+                	Prexonite,
+                	System::Xml::Xsl
+                } to Imports;
+
+                """);
 
         Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -176,14 +180,16 @@ Add {
         Assert.AreEqual("elem6", target.Meta["MyList"].List[5].Text);
 
         const string input4 =
-            @"Import 
-{
-    System,
-    System::Text
-};
+            """
+            Import 
+            {
+                System,
+                System::Text
+            };
 
-Add System::Xml to Imports;
-";
+            Add System::Xml to Imports;
+
+            """;
         ldr.LoadFromString(input4);
         Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilator of input4");
         Assert.IsTrue(target.Meta.ContainsKey("Import"), "Import missing");
@@ -319,10 +325,12 @@ Add System::Xml to Imports;
     [Test]
     public void Unicode()
     {
-        _compile(@"
-Name Überreden;
-Description ""Künste des Überredens von Krähen."";
-");
+        _compile("""
+
+                 Name Überreden;
+                 Description "Künste des Überredens von Krähen.";
+
+                 """);
 
         Assert.AreEqual("Überreden", target.Meta["Name"].Text);
         Assert.AreEqual("Künste des Überredens von Krähen.", target.Meta["Description"].Text);
@@ -331,9 +339,11 @@ Description ""Künste des Überredens von Krähen."";
     [Test]
     public void InterpreterLineAtBeginning()
     {
-        var ldr = _compile(@"#!/usr/bin/env prx --legacy
-SomeOtherSettings ""Are Valid"";
-");
+        var ldr = _compile("""
+                           #!/usr/bin/env prx --legacy
+                           SomeOtherSettings "Are Valid";
+
+                           """);
             
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
@@ -349,9 +359,11 @@ SomeOtherSettings ""Are Valid"";
     {
         const string previousInterpreterLine = "/usr/bin/prx";
         target.Meta[Application.InterpreterLineKey] = previousInterpreterLine;
-        var loader1 = _compile(@"
-SomeOtherSettings ""Are Valid"";
-");
+        var loader1 = _compile("""
+
+                               SomeOtherSettings "Are Valid";
+
+                               """);
         var storedRepr = loader1.StoreInString();
         Assert.That(storedRepr, Does.StartWith($"#!{previousInterpreterLine}\n"));
             
@@ -370,9 +382,11 @@ SomeOtherSettings ""Are Valid"";
     [Test]
     public void DotSeparatedMetaWithAnyIdElements()
     {
-        _compile(@"
-key1 $""0"".$""0"";
-");
+        _compile("""
+
+                 key1 $"0".$"0";
+
+                 """);
         Assert.That(target.Meta, Does.ContainKey("key1"));
         Assert.That(target.Meta["key1"], Is.EqualTo(new MetaEntry("0.0")));
     }
@@ -381,14 +395,16 @@ key1 $""0"".$""0"";
     public void InterpreterLineAfterNoise()
     {
 
-        var ldr = _compile(@"
-// this comment precedes the interpreter line; won't work in POSIX shells of course
-// It's not technically necessary to support this, but it would be more difficult to detect and forbid
-// it than to just tolerate it
-#!/usr/bin/env prx --legacy
+        var ldr = _compile("""
 
-SomeOtherSettings ""Are Valid"";
-");
+                           // this comment precedes the interpreter line; won't work in POSIX shells of course
+                           // It's not technically necessary to support this, but it would be more difficult to detect and forbid
+                           // it than to just tolerate it
+                           #!/usr/bin/env prx --legacy
+
+                           SomeOtherSettings "Are Valid";
+
+                           """);
             
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
@@ -402,9 +418,11 @@ SomeOtherSettings ""Are Valid"";
     [Test]
     public void InterpreterLineAfterOtherGlobalDeclsIsIllegal()
     {
-        var ldr = _justCompile(@"SomeOtherSettings ""Are Valid"";
-#!/usr/bin/env prx --legacy
-");
+        var ldr = _justCompile("""
+                               SomeOtherSettings "Are Valid";
+                               #!/usr/bin/env prx --legacy
+
+                               """);
             
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
             
@@ -422,9 +440,11 @@ SomeOtherSettings ""Are Valid"";
         target.Meta[Application.InterpreterLineKey] = previousInterpreterLine;
             
         // Now we load some more code (e.g., via `build does add`). Its interpreter line should be silently ignored.
-        var ldr = _compile(@"#!/usr/bin/env prx --legacy
-SomeOtherSettings ""Are Valid"";
-");
+        var ldr = _compile("""
+                           #!/usr/bin/env prx --legacy
+                           SomeOtherSettings "Are Valid";
+
+                           """);
             
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey("SomeOtherSettings"));
         Assert.That(ldr.ParentApplication.Meta, Does.ContainKey(Application.InterpreterLineKey));
@@ -442,10 +462,12 @@ SomeOtherSettings ""Are Valid"";
     [Test]
     public void ExpressionFunctions()
     {
-        const string input1 = @"
-function twice(x) = 2*x;
-function megabyte = 1024*1024;
-";
+        const string input1 = """
+
+                              function twice(x) = 2*x;
+                              function megabyte = 1024*1024;
+
+                              """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -454,12 +476,14 @@ function megabyte = 1024*1024;
 
         //check "twice"
         var actual = target.Functions["twice"]!.Code;
-        var expected = GetInstructions(@"
-ldc.int 2
-ldloc x
-mul
-ret.value
-");
+        var expected = GetInstructions("""
+
+                                       ldc.int 2
+                                       ldloc x
+                                       mul
+                                       ret.value
+
+                                       """);
 
         TestContext.Write(target.StoreInString());
 
@@ -476,10 +500,12 @@ ret.value
 
         //check "megabyte"
         actual = target.Functions["megabyte"]!.Code;
-        expected = GetInstructions(@"
-ldc.int 1048576
-ret.value
-");
+        expected = GetInstructions("""
+
+                                   ldc.int 1048576
+                                   ret.value
+
+                                   """);
 
         Assert.AreEqual(
             expected.Count,
@@ -501,154 +527,160 @@ ret.value
     public void AssemblerOptimization()
     {
         _compile(
-            @"
-function main does asm
-{
-    var x
+            """
 
-//Constant Jump ITarget Propagation
-    
-            ldloc   x
-            jump.t  a
+            function main does asm
+            {
+                var x
 
-            ldloc   x
-            jump.f  b
+            //Constant Jump ITarget Propagation
+                
+                        ldloc   x
+                        jump.t  a
 
-            ldloc   x
-            jump    c
+                        ldloc   x
+                        jump.f  b
 
-            nop
-            nop
+                        ldloc   x
+                        jump    c
 
-label   a   jump    a2
-label   b   jump    b2
-label   c   jump    c2
+                        nop
+                        nop
 
-label   a2  nop+a
-label   b2  nop+b
-label   c2  jump    c3
+            label   a   jump    a2
+            label   b   jump    b2
+            label   c   jump    c2
 
-            nop
-            nop
+            label   a2  nop+a
+            label   b2  nop+b
+            label   c2  jump    c3
 
-label   c3  nop+c
+                        nop
+                        nop
 
-            nop
-            nop
-    
-            jump    CJRI
+            label   c3  nop+c
 
-//Conditional Jump ReInversion
+                        nop
+                        nop
+                
+                        jump    CJRI
 
-label  CJRI jump.f  d
-            jump    de
-label   d   nop+d
-            nop
-label   de  nop+de
+            //Conditional Jump ReInversion
 
-            nop
-            nop
+            label  CJRI jump.f  d
+                        jump    de
+            label   d   nop+d
+                        nop
+            label   de  nop+de
 
-            jump    e
-            jump    ee
-label   e   nop+e
-            nop
-label   ee  nop+ee
+                        nop
+                        nop
 
-            nop
-            nop
+                        jump    e
+                        jump    ee
+            label   e   nop+e
+                        nop
+            label   ee  nop+ee
 
-            jump.t  f
-            jump    fe
-label   f   nop+f
-            nop
-label   fe  nop+fe
+                        nop
+                        nop
 
-            nop
-            nop
+                        jump.t  f
+                        jump    fe
+            label   f   nop+f
+                        nop
+            label   fe  nop+fe
 
-}
-");
+                        nop
+                        nop
+
+            }
+
+            """);
 
         Expect(
-            @"
-            var x
+            """
 
-            ldloc   x
-            jump.t  a2
+                        var x
 
-            ldloc   x
-            jump.f  b2
+                        ldloc   x
+                        jump.t  a2
 
-            ldloc   x
-            jump    c3
+                        ldloc   x
+                        jump.f  b2
 
-            nop
-            nop
+                        ldloc   x
+                        jump    c3
 
-label   a   jump    a2
-label   b   jump    b2
-label   c   jump    c2
+                        nop
+                        nop
 
-label   a2  nop+a
-label   b2  nop+b
-label   c2  jump    c3
+            label   a   jump    a2
+            label   b   jump    b2
+            label   c   jump    c2
 
-            nop
-            nop
+            label   a2  nop+a
+            label   b2  nop+b
+            label   c2  jump    c3
 
-label   c3  nop+c
+                        nop
+                        nop
 
-            nop
-            nop
+            label   c3  nop+c
 
-//Conditional Jump ReInversion
+                        nop
+                        nop
 
-            jump.t  de
-            nop+d
-            nop
-label   de  nop+de
+            //Conditional Jump ReInversion
 
-            nop
-            nop
+                        jump.t  de
+                        nop+d
+                        nop
+            label   de  nop+de
 
-            jump    e
-            jump    ee
-label   e   nop+e
-            nop
-label   ee  nop+ee
+                        nop
+                        nop
 
-            nop
-            nop
+                        jump    e
+                        jump    ee
+            label   e   nop+e
+                        nop
+            label   ee  nop+ee
 
-            jump.f  fe
-            nop+f
-            nop
-label   fe  nop+fe
+                        nop
+                        nop
 
-            nop
-            nop
-");
+                        jump.f  fe
+                        nop+f
+                        nop
+            label   fe  nop+fe
+
+                        nop
+                        nop
+
+            """);
     }
 
     [Test]
     public void EmptyAsmFunction()
     {
         const string input1 =
-            @"
-//minimalistic
-function func1 does asm {} 
+            """
 
-//normal
-function func2(param1, param2, param3) does asm
-{  /* a comment */  } 
+            //minimalistic
+            function func1 does asm {} 
 
-//*bling-bling*
-function func3(param1, param2)
-    [ Add System::IO to Imports; ] does asm
-{ 
+            //normal
+            function func2(param1, param2, param3) does asm
+            {  /* a comment */  } 
 
-    }";
+            //*bling-bling*
+            function func3(param1, param2)
+                [ Add System::IO to Imports; ] does asm
+            { 
+
+                }
+            """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -675,13 +707,15 @@ function func3(param1, param2)
     [Test]
     public void AsmLocalVariableDeclaration()
     {
-        const string input1 = @"
-function func1() does asm
-{
-    var loc1
-    ref loc2
-}
-";
+        const string input1 = """
+
+                              function func1() does asm
+                              {
+                                  var loc1
+                                  ref loc2
+                              }
+
+                              """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -704,48 +738,50 @@ function func1() does asm
     public void AsmNullInstructions()
     {
         const string input1 =
-            @"
-function func1() does asm
-{
-    //Instructions in the null group
-    nop             //0
-    ldc.null        //1
-    nop             //2
-    nop             //3
-    neg             //4
-    not             //5
-    add             //6
-    sub             //7
-    mul             //8
-    div             //9
-    mod             //10
-    pow             //11
-    ceq             //12
-    cne             //13
-    cgt             //14
-    cge             //15
-    clt             //16
-    cle             //17
-    or              //18
-    and             //19
-    xor             //20
-    check.arg       //21
-    cast . arg      //22
-    ldr.eng         //23
-    ldr. app        //24
-    ret.exit        //25
-    ret.break       //26
-    ret.continue    //27
-    ret.set         //28
-    ret.value       //29
+            """
 
-    //Aliases
-    continue        //30
-    break           //31
-    ret             //32
-    exit            //33
-}
-";
+            function func1() does asm
+            {
+                //Instructions in the null group
+                nop             //0
+                ldc.null        //1
+                nop             //2
+                nop             //3
+                neg             //4
+                not             //5
+                add             //6
+                sub             //7
+                mul             //8
+                div             //9
+                mod             //10
+                pow             //11
+                ceq             //12
+                cne             //13
+                cgt             //14
+                cge             //15
+                clt             //16
+                cle             //17
+                or              //18
+                and             //19
+                xor             //20
+                check.arg       //21
+                cast . arg      //22
+                ldr.eng         //23
+                ldr. app        //24
+                ret.exit        //25
+                ret.break       //26
+                ret.continue    //27
+                ret.set         //28
+                ret.value       //29
+
+                //Aliases
+                continue        //30
+                break           //31
+                ret             //32
+                exit            //33
+            }
+
+            """;
 
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
@@ -834,24 +870,26 @@ function func1() does asm
     public void AsmIdInstructions()
     {
         const string input1 =
-            @"
-var glob1;
-function func1 does asm
-{
-    var    loc1
-    ldc.string      ""Hello World""
-    ldr.func        func1
-    ldr.glob        glob1
-    ldr.loc         loc1
-    ldr.type        Int
-    ldloc           loc1
-    stloc           loc1
-    ldglob          glob1
-    stglob          glob1
-    check.const     Int
-    cast.const      Int
-}
-";
+            """
+
+            var glob1;
+            function func1 does asm
+            {
+                var    loc1
+                ldc.string      "Hello World"
+                ldr.func        func1
+                ldr.glob        glob1
+                ldr.loc         loc1
+                ldr.type        Int
+                ldloc           loc1
+                stloc           loc1
+                ldglob          glob1
+                stglob          glob1
+                check.const     Int
+                cast.const      Int
+            }
+
+            """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -900,19 +938,21 @@ function func1 does asm
     public void AsmSpecialInstructions()
     {
         const string input1 =
-            @"
-function func1(param1)  [ key value; ] does asm
-{
-    rot.2,3
-    swap
-    ldc.real    -2.53e-3
-    ldc.real    2.5
-    ldc.bool    false
-    ldc.bool    TrUe
-    indarg.3
-    inda.0
-}
-";
+            """
+
+            function func1(param1)  [ key value; ] does asm
+            {
+                rot.2,3
+                swap
+                ldc.real    -2.53e-3
+                ldc.real    2.5
+                ldc.bool    false
+                ldc.bool    TrUe
+                indarg.3
+                inda.0
+            }
+
+            """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -954,20 +994,22 @@ function func1(param1)  [ key value; ] does asm
     public void AsmIdArgInstructions()
     {
         const string input1 =
-            @"
-function func1 does asm
-{
-    newobj.1    ""Object(\""System.Text.StringBuilder\"")""
-    newtype.1   ""Object""
-    get.3       ToString
-    set.2       __\defaultIndex
-    new.1       ""Object(\""System.DateTime\"")""
-    sget.10     ""Object(\""System.Console\"")::WriteLine""
-    sset.1      ""Object(\""System.Console\"")::ForegroundColor""
-    indloc.2    aFunction
-    indglob.3   anotherFunction
-}
-";
+            """
+
+            function func1 does asm
+            {
+                newobj.1    "Object(\"System.Text.StringBuilder\")"
+                newtype.1   "Object"
+                get.3       ToString
+                set.2       __\defaultIndex
+                new.1       "Object(\"System.DateTime\")"
+                sget.10     "Object(\"System.Console\")::WriteLine"
+                sset.1      "Object(\"System.Console\")::ForegroundColor"
+                indloc.2    aFunction
+                indglob.3   anotherFunction
+            }
+
+            """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -1019,17 +1061,19 @@ function func1 does asm
     public void AsmIntInstructions()
     {
         const string input1 =
-            @"
-function func1 does asm
-{
-    ldc.int 1           //0
-    ldc.int -58416325   //1
-    pop     1           //2
-    pop     10          //3
-    dup     2           //4
-    dup     10          //5
-}
-";
+            """
+
+            function func1 does asm
+            {
+                ldc.int 1           //0
+                ldc.int -58416325   //1
+                pop     1           //2
+                pop     10          //3
+                dup     2           //4
+                dup     10          //5
+            }
+
+            """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -1062,30 +1106,32 @@ function func1 does asm
     public void AsmLabelsAndJumps()
     {
         const string input1 =
-            @"
-function func1 does asm
-{
-    jump        14
-    ldc.bool    true
-    jump.t      14
-    jump.f      5
-    
-    //a while loop
-    var i
-    ldc.int     5
-    stloc       i
-    label       while0
-    ldloc       i
-    ldc.int     0
-    cgt
-    jump.f      endwhile0
-    ldloc       i
-    sget.1      ""Object(\""System.Console\"")::WriteLine""
-    dec         i
-    jump        while0
-    label       endwhile0
-}
-";
+            """
+
+            function func1 does asm
+            {
+                jump        14
+                ldc.bool    true
+                jump.t      14
+                jump.f      5
+                
+                //a while loop
+                var i
+                ldc.int     5
+                stloc       i
+                label       while0
+                ldloc       i
+                ldc.int     0
+                cgt
+                jump.f      endwhile0
+                ldloc       i
+                sget.1      "Object(\"System.Console\")::WriteLine"
+                dec         i
+                jump        while0
+                label       endwhile0
+            }
+
+            """;
         var opt = new LoaderOptions(engine, target);
         opt.UseIndicesLocally = false;
         var ldr = new Loader(opt);
@@ -1114,13 +1160,15 @@ function func1 does asm
     [Test]
     public void AsmBugNullFollwedByInteger()
     {
-        _compile(@"
-function main does asm
-{
-    add
-    pop 1    
-}
-");
+        _compile("""
+
+                 function main does asm
+                 {
+                     add
+                     pop 1    
+                 }
+
+                 """);
     }
 
     #endregion
@@ -1128,14 +1176,16 @@ function main does asm
     [Test]
     public void GlobalVariableShadowId()
     {
-        var ldr = _compile(@"
-var a;
+        var ldr = _compile("""
 
-var as b, c;
+                           var a;
 
-var d as e, f;
+                           var as b, c;
 
-");
+                           var d as e, f;
+
+
+                           """);
 
         Assert.IsTrue(target.Variables.ContainsKey("a"), "Variable a must exist.");
         Assert.IsFalse(target.Variables.ContainsKey("b"), "No Variable b must exist.");
@@ -1191,9 +1241,11 @@ var d as e, f;
     [Test]
     public void ModuleNameOverride()
     {
-        var ldr = _compile(@"
-declare function main/the_module/0.1;
-");
+        var ldr = _compile("""
+
+                           declare function main/the_module/0.1;
+
+                           """);
         var mainSym = LookupSymbolEntry(ldr.Symbols, "main");
         Assert.That(mainSym.InternalId,Is.EqualTo("main"));
         Assert.That(mainSym.Interpretation,Is.EqualTo(SymbolInterpretations.Function));
@@ -1203,10 +1255,12 @@ declare function main/the_module/0.1;
     [Test]
     public void ManyDecls()
     {
-        _compile(@"
-declare function main/testApplication/0.0;
-declare command print,println,meta,boxed,concat,map,select,foldl,foldr,dispose,call\perform,thunk,asthunk,force,toseq,call\member\perform,caller,pair,unbind,sort,orderby,LoadAssembly,debug,setcenter,setleft,setright,all,where,skip,limit,take,abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan,char,count,distinct,union,unique,frequency,groupby,intersect,call\tail\perform,list,each,exists,forall,CompileToCil,takewhile,except,range,reverse,headtail,append,sum,contains,chan,call\async\perform,async_seq,call\sub\perform,pa\ind,pa\mem,pa\ctor,pa\check,pa\cast,pa\smem,pa\fun\call,pa\flip\call,pa\call\star,then,id,const,(+),(-),(*),(/),$mod,(^),(&),(|),$xor,(==),(!=),(>),(>=),(<),(<=),(-.),$complement,$not,create_enumerator,create_module_name,seqconcat;
-declare macro command call,call\member,call\tail,call\async,call\sub,call\sub\interpret,macro\pack,macro\unpack,macro\reference,call\star,call\macro,call\macro\impl;
-");
+        _compile("""
+
+                 declare function main/testApplication/0.0;
+                 declare command print,println,meta,boxed,concat,map,select,foldl,foldr,dispose,call\perform,thunk,asthunk,force,toseq,call\member\perform,caller,pair,unbind,sort,orderby,LoadAssembly,debug,setcenter,setleft,setright,all,where,skip,limit,take,abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan,char,count,distinct,union,unique,frequency,groupby,intersect,call\tail\perform,list,each,exists,forall,CompileToCil,takewhile,except,range,reverse,headtail,append,sum,contains,chan,call\async\perform,async_seq,call\sub\perform,pa\ind,pa\mem,pa\ctor,pa\check,pa\cast,pa\smem,pa\fun\call,pa\flip\call,pa\call\star,then,id,const,(+),(-),(*),(/),$mod,(^),(&),(|),$xor,(==),(!=),(>),(>=),(<),(<=),(-.),$complement,$not,create_enumerator,create_module_name,seqconcat;
+                 declare macro command call,call\member,call\tail,call\async,call\sub,call\sub\interpret,macro\pack,macro\unpack,macro\reference,call\star,call\macro,call\macro\impl;
+
+                 """);
     }
 }

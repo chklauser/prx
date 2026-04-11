@@ -40,11 +40,13 @@ public class CilCompilerTests : VMTestsBase
     [Test]
     public void SetCilHintTest()
     {
-        Compile(@"
-function main() {
-    foreach(var x in var args)
-        println(x);
-}");
+        Compile("""
+
+                function main() {
+                    foreach(var x in var args)
+                        println(x);
+                }
+                """);
 
         var main = target.Functions["main"] ?? throw new InvalidOperationException("main missing");
 
@@ -143,30 +145,32 @@ function main() {
     public void UnbindCommandTest()
     {
         Compile(
-            @"
-function main()
-{
-    var result = [];
-    var x = 1;
-    ref y = ->x;
-    result[] = x == 1;
-    result[] = ->x == ->y;
-    new var x;
-    result[] = x == 1;
-    result[] = not System::Object.ReferenceEquals(->x,  ->y);
-    
-    result[] = var x == new var x;
-    result[] = x == 1;
-    result[] = not System::Object.ReferenceEquals(->x,  ->y);
+            """
 
-    //behave like ordinary command
-    result[] = unbind(->x) is null;
-    result[] = x == 1;
-    result[] = not System::Object.ReferenceEquals(->x,  ->y);
-    
-    return result;
-}
-");
+            function main()
+            {
+                var result = [];
+                var x = 1;
+                ref y = ->x;
+                result[] = x == 1;
+                result[] = ->x == ->y;
+                new var x;
+                result[] = x == 1;
+                result[] = not System::Object.ReferenceEquals(->x,  ->y);
+                
+                result[] = var x == new var x;
+                result[] = x == 1;
+                result[] = not System::Object.ReferenceEquals(->x,  ->y);
+
+                //behave like ordinary command
+                result[] = unbind(->x) is null;
+                result[] = x == 1;
+                result[] = not System::Object.ReferenceEquals(->x,  ->y);
+                
+                return result;
+            }
+
+            """);
         _expectCil();
         Expect(Enumerable.Range(1, 10).Select(_ => (PValue) true).ToList());
     }
@@ -175,14 +179,16 @@ function main()
     public void IndexAssign()
     {
         Compile(
-            @"
-function main()
-{
-    var results = [];
-    results[] = true;
-    return results;
-}
-");
+            """
+
+            function main()
+            {
+                var results = [];
+                results[] = true;
+                return results;
+            }
+
+            """);
         _expectCil();
         Expect((List<PValue>)[(PValue) true]);
     }
@@ -192,21 +198,23 @@ function main()
     public void JumpBreaksCilExtensions()
     {
         Compile(
-            @"
-function main(b)
-{asm{
-                ldloc b
-                ldc.int 4
-                cmd.2 (==)
-                jump.f L_else 
-label L_if      ldc.string ""IF""
-                jump L_endif
-label L_else    ldc.string ""ELSE""
-label L_endif   ldc.string ""-branch""
-                cmd.2 (+)
-                ret
-}}
-");
+            """
+
+            function main(b)
+            {asm{
+                            ldloc b
+                            ldc.int 4
+                            cmd.2 (==)
+                            jump.f L_else 
+            label L_if      ldc.string "IF"
+                            jump L_endif
+            label L_else    ldc.string "ELSE"
+            label L_endif   ldc.string "-branch"
+                            cmd.2 (+)
+                            ret
+            }}
+
+            """);
         Assert.AreEqual(1, _getCilHints(target.Functions["main"]!, true).Length);
         _expectCil();
         Expect("IF-branch", 4);
@@ -218,25 +226,27 @@ label L_endif   ldc.string ""-branch""
     public void TryCatchFinallyCompiles()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main()
-{
-    try {
-        trace(""t"");
-        throw ""e"";
-    }catch(var exc){
-        trace(""c"");
-        trace(exc.Message);
-    }finally{
-        trace(""f"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main()
+            {
+                try {
+                    trace("t");
+                    throw "e";
+                }catch(var exc){
+                    trace("c");
+                    trace(exc.Message);
+                }finally{
+                    trace("f");
+                }
+
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("tfce");
     }
@@ -255,23 +265,25 @@ function main()
         Assert.Throws<PrexoniteRuntimeException>(() =>
         {
             Compile(
-                @"
-var t = """";
-function trace(x) = t+=x;
+                """
 
-function main(x)
-{
-    try {
-        trace(""t"");
-        if(x)
-            throw ""e"";
-    }finally{
-        trace(""f"");
-    }
+                var t = "";
+                function trace(x) = t+=x;
 
-    return t;
-}
-");
+                function main(x)
+                {
+                    try {
+                        trace("t");
+                        if(x)
+                            throw "e";
+                    }finally{
+                        trace("f");
+                    }
+
+                    return t;
+                }
+
+                """);
             _expectCil();
             Expect("tf", true);
         });
@@ -281,24 +293,26 @@ function main(x)
     public void TryCatchCondCompiles()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x)
-{
-    try {
-        trace(""t"");
-        if(x)
-            throw ""e"";
-    }catch(var exc){
-        trace(""c"");
-        trace(exc.Message);
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x)
+            {
+                try {
+                    trace("t");
+                    if(x)
+                        throw "e";
+                }catch(var exc){
+                    trace("c");
+                    trace(exc.Message);
+                }
+
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("tce", true);
     }
@@ -307,28 +321,30 @@ function main(x)
     public void CatchInFinally1()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x)
-{
-    try {
-        try {
-            trace(""t"");
-            if(x)
-                throw ""e"";
-        }catch(var exc){
-            trace(""c"");
-            trace(exc.Message);
-        }
-    } finally {
-        trace(""f"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x)
+            {
+                try {
+                    try {
+                        trace("t");
+                        if(x)
+                            throw "e";
+                    }catch(var exc){
+                        trace("c");
+                        trace(exc.Message);
+                    }
+                } finally {
+                    trace("f");
+                }
+
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("tcef", true);
     }
@@ -337,27 +353,29 @@ function main(x)
     public void CatchInFinally2()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x)
-{
-    try {
-        try {
-            trace(""t"");
-            throw ""e"";
-        }catch(var exc){
-            if(x)
-                trace(""x"");
-        }
-    } finally {
-        trace(""f"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x)
+            {
+                try {
+                    try {
+                        trace("t");
+                        throw "e";
+                    }catch(var exc){
+                        if(x)
+                            trace("x");
+                    }
+                } finally {
+                    trace("f");
+                }
+
+                return t;
+            }
+
+            """);
 
         _expectCil();
         Expect("txf", true);
@@ -367,29 +385,31 @@ function main(x)
     public void CatchInFinally3()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x)
-{
-    try {
-        try {
-            trace(""t"");
-            throw ""e"";
-        }catch(var exc){
-            if(x)
-                trace(""x"");
-        }
-    } catch(var exc){
-        trace(""e"");
-    } finally {
-        trace(""f"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x)
+            {
+                try {
+                    try {
+                        trace("t");
+                        throw "e";
+                    }catch(var exc){
+                        if(x)
+                            trace("x");
+                    }
+                } catch(var exc){
+                    trace("e");
+                } finally {
+                    trace("f");
+                }
+
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("txf", true);
     }
@@ -398,36 +418,38 @@ function main(x)
     public void CatchInFinally4()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x)  [store_debug_implementation enabled;]
-{
-    for(var i = 1; i < 6; i++)
-        try
-        {
-            try
+            var t = "";
+            function trace(x) = t+=x;
+
+            function main(x)  [store_debug_implementation enabled;]
             {
-                throw i;
+                for(var i = 1; i < 6; i++)
+                    try
+                    {
+                        try
+                        {
+                            throw i;
+                        }
+                        catch(var exc)
+                        {
+                            if(x)
+                                throw exc;
+                        }
+                    }
+                    catch(var exc)
+                    {
+                        trace("e");
+                    }
+                    finally
+                    {
+                        trace("f");
+                    }
+                return t;
             }
-            catch(var exc)
-            {
-                if(x)
-                    throw exc;
-            }
-        }
-        catch(var exc)
-        {
-            trace(""e"");
-        }
-        finally
-        {
-            trace(""f"");
-        }
-    return t;
-}
-");
+
+            """);
         _expectCil();
         Expect("fefefefefe", true);
     }
@@ -436,31 +458,33 @@ function main(x)  [store_debug_implementation enabled;]
     public void CatchInFinally5()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x,y)  [store_debug_implementation enabled;]
-{
-    try
-    {
-        try
-        {
-            throw ""i""; //this must be a throw; won't work with trace
-        }
-        catch(var exc)
-        {
-            if(not x) //needs to be false (it's a runtime error after all)
-                throw exc;
-        }
-    } //must be a nested block
-    finally
-    {
-        trace(""f"");
-    }
-    return t;
-}
-");
+            var t = "";
+            function trace(x) = t+=x;
+
+            function main(x,y)  [store_debug_implementation enabled;]
+            {
+                try
+                {
+                    try
+                    {
+                        throw "i"; //this must be a throw; won't work with trace
+                    }
+                    catch(var exc)
+                    {
+                        if(not x) //needs to be false (it's a runtime error after all)
+                            throw exc;
+                    }
+                } //must be a nested block
+                finally
+                {
+                    trace("f");
+                }
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("f", true, true);
     }
@@ -469,26 +493,28 @@ function main(x,y)  [store_debug_implementation enabled;]
     public void TryCatchFinallyCondCompiles()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x) //[store_debug_implementation enabled;]
-{
-    try {
-        trace(""t"");
-        if(x)
-            throw ""e"";
-    }catch(var exc){
-        trace(""c"");
-        trace(exc.Message);
-    }finally{
-        trace(""f"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x) //[store_debug_implementation enabled;]
+            {
+                try {
+                    trace("t");
+                    if(x)
+                        throw "e";
+                }catch(var exc){
+                    trace("c");
+                    trace(exc.Message);
+                }finally{
+                    trace("f");
+                }
+
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("tfce", true);
     }
@@ -499,34 +525,36 @@ function main(x) //[store_debug_implementation enabled;]
         Assert.Throws<PrexoniteRuntimeException>(() =>
         {
             Compile(
-                @"
-var t = """";
-function trace(x) = t+=x;
+                """
 
-function main(x) //[store_debug_implementation enabled;]
-{
-    try {
-        trace(""t"");
-        goto L1;
-        trace(""z"");
-    } finally {
-        trace(""f"");
-    }
+                var t = "";
+                function trace(x) = t+=x;
 
-    try {
-        trace(""g"");
-        try {
-L1:         trace(""b"");
-        } finally {
-            trace(""r"");
-        }
-    } finally {
-        trace(""v"");
-    }
+                function main(x) //[store_debug_implementation enabled;]
+                {
+                    try {
+                        trace("t");
+                        goto L1;
+                        trace("z");
+                    } finally {
+                        trace("f");
+                    }
 
-    return t;
-}
-");
+                    try {
+                        trace("g");
+                        try {
+                L1:         trace("b");
+                        } finally {
+                            trace("r");
+                        }
+                    } finally {
+                        trace("v");
+                    }
+
+                    return t;
+                }
+
+                """);
             _expectSehDeficiency();
             Expect("undefined", true);
         }, @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
@@ -536,35 +564,37 @@ L1:         trace(""b"");
     public void TryFinallyShadowingNoBridge()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-//This tets is expected not to compile to CIL
-function main(x) //[store_debug_implementation enabled;]
-{
-    try {
-        trace(""t"");
-        goto L1;
-        trace(""z"");
-    } finally {
-        trace(""f"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    try {
-        trace(""g"");
-L1:     try {
-            trace(""b"");
-        } finally {
-            trace(""r"");
-        }
-    } finally {
-        trace(""v"");
-    }
+            //This tets is expected not to compile to CIL
+            function main(x) //[store_debug_implementation enabled;]
+            {
+                try {
+                    trace("t");
+                    goto L1;
+                    trace("z");
+                } finally {
+                    trace("f");
+                }
 
-    return t;
-}
-");
+                try {
+                    trace("g");
+            L1:     try {
+                        trace("b");
+                    } finally {
+                        trace("r");
+                    }
+                } finally {
+                    trace("v");
+                }
+
+                return t;
+            }
+
+            """);
         _expectSehDeficiency();
         Expect("tbrv", true);
     }
@@ -573,35 +603,37 @@ L1:     try {
     public void TryFinallyShadowingBridge()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x) //[store_debug_implementation enabled;]
-{
-    try {
-        trace(""k"");
-        try {
-            trace(""t"");
-            goto L1;
-            trace(""z"");
-        } finally {
-            trace(""f"");
-        }
-    
-        trace(""g"");
-L1:     try {
-            trace(""b"");
-        } finally {
-            trace(""r"");
-        }
-    } finally {
-        trace(""v"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x) //[store_debug_implementation enabled;]
+            {
+                try {
+                    trace("k");
+                    try {
+                        trace("t");
+                        goto L1;
+                        trace("z");
+                    } finally {
+                        trace("f");
+                    }
+                
+                    trace("g");
+            L1:     try {
+                        trace("b");
+                    } finally {
+                        trace("r");
+                    }
+                } finally {
+                    trace("v");
+                }
+
+                return t;
+            }
+
+            """);
         _expectCil();
         Expect("ktfbrv", true);
     }
@@ -610,23 +642,25 @@ L1:     try {
     public void ReturnFromFinally()
     {
         Compile(
-            @"
-var t = """";
-function trace(x) = t+=x;
+            """
 
-function main(x) //[store_debug_implementation enabled;]
-{
-    try {
-        trace(""k"");
-    } finally {
-        trace(""f"");
-        return t;
-        trace(""v"");
-    }
+            var t = "";
+            function trace(x) = t+=x;
 
-    return t;
-}
-");
+            function main(x) //[store_debug_implementation enabled;]
+            {
+                try {
+                    trace("k");
+                } finally {
+                    trace("f");
+                    return t;
+                    trace("v");
+                }
+
+                return t;
+            }
+
+            """);
         _expectSehDeficiency();
         Expect("kf", true);
     }
@@ -649,15 +683,17 @@ function main(x) //[store_debug_implementation enabled;]
     public void MinimalTryCatch()
     {
         Compile(
-            @"
-var t; 
-function trace(x) = t+=x~String; 
-function main(x) [store_debug_implementation enabled;]
-{
-    try {trace(1);}
-    finally{trace(2);}
-    return t;
-}");
+            """
+
+            var t; 
+            function trace(x) = t+=x~String; 
+            function main(x) [store_debug_implementation enabled;]
+            {
+                try {trace(1);}
+                finally{trace(2);}
+                return t;
+            }
+            """);
 
         Expect("12", true);
     }
