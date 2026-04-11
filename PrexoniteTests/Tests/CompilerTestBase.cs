@@ -32,6 +32,7 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using PrexoniteTests.Tests.ParserV2;
 using Prx.Tests;
 
 namespace PrexoniteTests.Tests;
@@ -130,11 +131,23 @@ public class CompilerTestBase
         TestContext.WriteLine(target.StoreInString());
     }
 
+    /// <summary>
+    /// If set, the V2 parser is expected to produce at least this many errors
+    /// for the next compilation (reset after each call).
+    /// </summary>
+    protected int? ExpectedV2Errors { get; set; }
+
     protected internal Loader _justCompile(string input)
     {
         var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
         var ldr = new Loader(opt);
         ldr.LoadFromString(input);
+
+        // V2 parser cross-check
+        var ev2 = ExpectedV2Errors;
+        ExpectedV2Errors = null;
+        V2ParseCheck.AssertV2ParseSucceeds(input, ev2);
+
         return ldr;
     }
 
