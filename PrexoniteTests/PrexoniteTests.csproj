@@ -3,8 +3,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsTestProject>true</IsTestProject>
-    <!-- Override assembly key file location for this project -->
-    <AssemblyOriginatorKeyFile>Prexonite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

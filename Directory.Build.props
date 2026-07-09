@@ -24,8 +24,5 @@
     <IncludeSource>true</IncludeSource>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <!-- Assembly signing -->
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)PrexoniteTests\Prexonite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 </Project>
