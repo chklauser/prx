@@ -1,8 +1,5 @@
 
 trigger:
-  paths:
-    exclude:
-    - PxCoco/*
   tags:
     include:
       - 'v.*'

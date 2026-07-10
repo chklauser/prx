@@ -2,58 +2,40 @@ using System;
 
 namespace at.jku.ssw.Coco
 {
-    public class GeneratorOptions
+    public sealed class GeneratorOptions
     {
         public GeneratorOptions(Action<string> writeMessage, Action<string> writeError)
         {
-            WriteMessage = writeMessage;
-            WriteError = writeError;
+            WriteMessage = writeMessage ?? throw new ArgumentNullException(nameof(writeMessage));
+            WriteError = writeError ?? throw new ArgumentNullException(nameof(writeError));
         }
 
-        public string SrcName { get; set; }
-
-        /// <summary>
-        /// <list type="table">
-        ///     <item>
-        ///         <term>F</term>
-        ///         <description>list first/follow sets</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>G</term>
-        ///         <description>print syntax graph</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>I</term>
-        ///         <description>trace computation of first sets</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>J</term>
-        ///         <description>list ANY and SYNC sets</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>P</term>
-        ///         <description>print statistics</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>S</term>
-        ///         <description>list symbol table</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>X</term>
-        ///         <description>list cross reference table</description>
-        ///     </item>
-        /// </list>
-        /// </summary>
-        public string DirectDebugTrace { get; set; }
-        public string FrameDirectoryPath { get; set; }
+        public string Grammar { get; set; }
+        public string SourceName { get; set; }
+        public string ParserFrame { get; set; }
+        public string ParserFrameName { get; set; }
+        public string ScannerFrame { get; set; }
         public string Namespace { get; set; }
+        public bool GenerateScanner { get; set; } = true;
         public bool DirectDebug { get; set; }
+        public string DirectDebugTrace { get; set; }
+        public Action<string> WriteMessage { get; }
+        public Action<string> WriteError { get; }
+    }
 
-        /// <summary>
-        /// Optional. The path to use as the root for relative file names in <c>#line</c> directives.
-        /// </summary>
-        public string RelativePathRoot { get; set; }
-        public Action<string> WriteMessage { get; set; }
-        public Action<string> WriteError { get; set; }
+    public sealed class GenerationResult
+    {
+        public GenerationResult(bool success, string parser, string scanner, string trace)
+        {
+            Success = success;
+            Parser = parser;
+            Scanner = scanner;
+            Trace = trace;
+        }
+
+        public bool Success { get; }
+        public string Parser { get; }
+        public string Scanner { get; }
+        public string Trace { get; }
     }
 }

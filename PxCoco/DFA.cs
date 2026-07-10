@@ -29,6 +29,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Collections;
+using System.Globalization;
 
 namespace at.jku.ssw.Coco {
 
@@ -292,8 +293,8 @@ public class DFA {
 	public State firstState;
 	public State lastState;   // last allocated state
 	public int lastSimState;  // last non melted state
-	public FileStream fram;   // scanner frame input
-	public StreamWriter gen;  // generated scanner file
+	public TextReader fram;   // scanner frame input
+	public TextWriter gen;  // generated scanner source
 	public Symbol curSy;      // current token to be recognized (in FindTrans)
 	public Node curGraph;     // start of graph for current token (in FindTrans)
 	public bool ignoreCase;   // true if input should be treated case-insensitively
@@ -304,6 +305,11 @@ public class DFA {
 	Tab        tab;
 	Errors     errors;
 	TextWriter trace;
+	StringBuilder generatedSource;
+
+	public string Frame { get; set; }
+	public string FrameName { get; set; } = "Scanner.frame";
+	public string GeneratedSource => generatedSource?.ToString();
 
 	//---------- Output primitives
 	private string Ch(int ch) {
@@ -770,18 +776,18 @@ public class DFA {
 	void CopyFramePart(string stop) {
 		char startCh = stop[0];
 		int endOfStopString = stop.Length-1;
-		int ch = fram.ReadByte();
+		int ch = fram.Read();
 		while (ch != EOF)
 			if (ch == startCh) {
 				int i = 0;
 				do {
 					if (i == endOfStopString) return; // stop[0..i] found
-					ch = fram.ReadByte(); i++;
+					ch = fram.Read(); i++;
 				} while (ch == stop[i]);
 				// stop[0..i-1] found; continue with last read character
 				gen.Write(stop.Substring(0, i));
 			} else {
-				gen.Write((char)ch); ch = fram.ReadByte();
+				gen.Write((char)ch); ch = fram.Read();
 			}
 		throw new FatalError("incomplete or corrupt scanner frame file");
 	}
@@ -868,28 +874,14 @@ public class DFA {
 	}
 	
 	void OpenGen(bool backUp) { /* pdt */
-		try {
-			string fn = tab.srcDir + "Scanner.cs"; /* pdt */
-			if (File.Exists(fn) && backUp) File.Copy(fn, fn + ".old", true);
-			gen = new StreamWriter(new FileStream(fn, FileMode.Create)); /* pdt */
-		} catch (IOException) {
-			throw new FatalError("Cannot generate scanner file");
-		}
+		generatedSource = new StringBuilder();
+		gen = new StringWriter(generatedSource, CultureInfo.InvariantCulture);
 	}
 
 	public void WriteScanner() {
 		int i;
-		string fr = tab.srcDir + "Scanner.frame";  /* pdt */
-		if (!File.Exists(fr)) {
-			if (tab.frameDir != null)
-				fr = tab.frameDir.Trim() + Path.DirectorySeparatorChar + "Scanner.frame";
-			if (!File.Exists(fr)) throw new FatalError("Cannot find Scanner.frame");
-		}
-		try {
-			fram = new FileStream(fr, FileMode.Open, FileAccess.Read, FileShare.Read);
-		} catch (FileNotFoundException) {
-			throw new FatalError("Cannot open Scanner.frame.");
-		}
+		if (Frame == null) throw new FatalError("Cannot find Scanner.frame");
+		fram = new StringReader(Frame);
 		OpenGen(true); /* pdt */
 		if (dirtyDFA) MakeDeterministic();
 		CopyFramePart("-->begin");
@@ -945,7 +937,7 @@ public class DFA {
 			WriteState(state);
 		CopyFramePart("$$$");
 		if (tab.nsName != null && tab.nsName.Length > 0) gen.Write("}");
-		gen.Close();
+		gen.Flush();
 	}
 	
 	public DFA (Parser parser) {

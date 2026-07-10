@@ -8,13 +8,9 @@ on:
     tags-ignore:  
       - '**'
     paths-ignore:
-      - PxCoco/**
-      - .github/workflows/PxCoco*
       - .github/workflows/PrxRelease*
   pull_request:
     paths-ignore:
-      - PxCoco/**
-      - .github/workflows/PxCoco*
       - .github/workflows/PrxRelease*
 
 jobs:

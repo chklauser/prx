@@ -1,6 +1,6 @@
-This folder contains the complete Prexonite Script File grammar, divided into several files. 
-Since PxCoco (the compiler-compiler) cannot work on multiple files, these grammar fragments 
-are assembled into a file called \Prexonite\Prexonite__gen.atg which is then passed to PxCoco. 
-So if you want to modify the grammar, do so in the original files here and not the generated one.
+This folder contains the complete Prexonite Script File grammar, divided into several files.
+The files are supplied to the PxCoco incremental source generator as AdditionalFiles. PxCoco
+orders and merges the fragments in memory, then adds the generated parser directly to the
+compilation. To change the grammar, edit the fragments in this folder and rebuild.
 
 The generated parser has a code-behind file called Compiler\Parser.Code.cs.

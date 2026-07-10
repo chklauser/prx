@@ -4,10 +4,6 @@ trigger:
   branches:
     include: 
     - '*'
-  paths:
-    exclude:
-    - PxCoco/*
-
 pr: none
 
 stages:

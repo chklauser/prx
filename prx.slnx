@@ -3,4 +3,5 @@
   <Project Path="PrexoniteTests/PrexoniteTests.csproj" />
   <Project Path="PrexoniteTests.Generators/PrexoniteTests.Generators.csproj" />
   <Project Path="Prx/Prx.csproj" />
+  <Project Path="PxCoco/PxCoco.csproj" />
 </Solution>
