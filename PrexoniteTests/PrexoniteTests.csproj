@@ -8,6 +8,9 @@
   <ItemGroup>
     <PackageReference Include="System.Text.RegularExpressions" />
     <ProjectReference Include="..\Prexonite\Prexonite.csproj" />
+    <ProjectReference Include="..\PrexoniteTests.Generators\PrexoniteTests.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
     <PackageReference Include="NUnit" />
@@ -15,31 +18,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- These files might not exist initially, so we track the by hand. 
-         To make this compatible with the implicit Compile rule, we have to remove the items first,
-         otherwise, the tool will complain about duplicate items. -->
-    <Compile Remove="Tests\Configurations\PsrUnitTests.cs" />
-    <Compile Remove="Tests\Configurations\VMTestConfigurations.cs" />
-    <Compile Include="Tests\Configurations\PsrUnitTests.cs" />
-    <Compile Include="Tests\Configurations\VMTestConfigurations.cs" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <TextTemplate Include="**\*.tt" />
+    <AdditionalFiles Include="psr-tests\testconfig.json" />
+    <AdditionalFiles Include="psr-tests\_2\testconfig.json" />
   </ItemGroup>
   
   <ItemGroup>
     <Folder Include="psr-tests\_2" />
   </ItemGroup>
   
-  <!-- Text Template -->
-  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
-    <!-- https://notquitepure.info/2018/12/12/T4-Templates-at-Build-Time-With-Dotnet-Core/ -->
-    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tool run t4 -I=%(TextTemplate.RelativeDir) %(TextTemplate.Identity)" />
-  </Target>
-
-  <Target Name="TextTemplateClean" AfterTargets="Clean">
-    <Delete Files="@(Generated)" />
-  </Target>
-
 </Project>

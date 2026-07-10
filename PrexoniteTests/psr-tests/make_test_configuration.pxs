@@ -11,10 +11,6 @@ namespace prx.test.make_test_configuration
 
     function under_test = "under_test";
     function test_dependencies = "test_dependencies";
-    function config_file_separator = "|";
-    function config_section_separator = ">";
-    function config_dependency_separator = "<";
-
     function create_config(testUnits, deps, testCases)
     {
         var s = new Structure;
@@ -67,57 +63,125 @@ namespace prx.test.make_test_configuration
         return new config(testUnits, deps, testCases);
     }
 
-    function write_deplist(textWriter, deps /* ~String:[String] */)
+    function write_json_string(writer, value)[import System]
     {
-    	textWriter.Write(deps.Key);
-    	if(deps.Value.Count > 0){
-    		foreach(var d in deps.Value)
-    			textWriter.Write("$(config_dependency_separator)$(d)");
-    	}
+        var backslash = ::Convert.ToChar(92);
+        var quote = ::Convert.ToChar(34);
+        writer.Write(quote);
+        foreach(var character in value.ToCharArray)
+        {
+            var code = ::Convert.ToInt32(character);
+            if(code == 34 or code == 92)
+            {
+                writer.Write(backslash);
+                writer.Write(character);
+            }
+            else if(code == 8 or code == 9 or code == 10 or code == 12 or code == 13)
+            {
+                writer.Write(backslash);
+                writer.Write(::Convert.ToChar(if(code == 8) 98
+                    else if(code == 9) 116
+                    else if(code == 10) 110
+                    else if(code == 12) 102
+                    else 114));
+            }
+            else if(code < 32)
+            {
+                writer.Write(backslash);
+                writer.Write("u");
+                writer.Write(code.ToString("x4"));
+            }
+            else
+                writer.Write(character);
+        }
+        writer.Write(quote);
     }
 
-    //write_config writes the configuration <config> to the supplied <textWriter>.
-    //  - textWriter, an object that behaves like a System.IO.TextWriter
-    //  - config, [test_file_name:{under_test,deps,test_cases}]
-    function write_config(textWriter, config)
+    function write_property_name(writer, name)
     {
+        write_json_string(writer, name);
+        writer.Write(":");
+    }
+
+    function write_dependencies(writer, name, dependencies)
+    {
+        write_property_name(writer, name);
+        writer.Write("[");
+        var dependencySeparator = "";
+        foreach(var dependency in dependencies)
+        {
+            writer.Write(dependencySeparator);
+            dependencySeparator = ",";
+            writer.Write("{");
+            write_property_name(writer, "file");
+            write_json_string(writer, dependency.Key);
+            writer.Write(",");
+            write_property_name(writer, "dependencies");
+            writer.Write("[");
+            var fileSeparator = "";
+            foreach(var dependencyFile in dependency.Value)
+            {
+                writer.Write(fileSeparator);
+                fileSeparator = ",";
+                write_json_string(writer, dependencyFile);
+            }
+            writer.Write("]}");
+        }
+        writer.Write("]");
+    }
+
+    // write_config writes version 1 of the JSON test configuration.
+    //  - writer, an object that behaves like a System.IO.TextWriter
+    //  - config, [test_file_name:{under_test,deps,test_cases}]
+    function write_config(writer, config)
+    {
+        writer.Write("{");
+        write_property_name(writer, "version");
+        writer.Write("1,");
+        write_property_name(writer, "suites");
+        writer.Write("[");
+        var suiteSeparator = "";
         foreach(var kvp in config)
         {
-            textWriter.Write(kvp.Key);
-            textWriter.Write(config_section_separator);
-            foreach(var d in kvp.Value.under_test){
-                textWriter.Write(config_file_separator);
-    			write_deplist(textWriter, d);
-    		}
-            textWriter.Write(config_section_separator);
-            foreach(var d in kvp.Value.deps){
-                textWriter.Write(config_file_separator);
-    			write_deplist(textWriter, d);
-    		}
-            textWriter.Write(config_section_separator);
-            foreach(var d in kvp.Value.test_cases)
-                textWriter.Write("$(config_file_separator)$(d)");
-            textWriter.WriteLine;
+            writer.Write(suiteSeparator);
+            suiteSeparator = ",";
+            writer.Write("{");
+            write_property_name(writer, "file");
+            write_json_string(writer, kvp.Key);
+            writer.Write(",");
+            write_dependencies(writer, "unitsUnderTest", kvp.Value.under_test);
+            writer.Write(",");
+            write_dependencies(writer, "testDependencies", kvp.Value.deps);
+            writer.Write(",");
+            write_property_name(writer, "tests");
+            writer.Write("[");
+            var testSeparator = "";
+            foreach(var testCase in kvp.Value.test_cases)
+            {
+                writer.Write(testSeparator);
+                testSeparator = ",";
+                write_json_string(writer, testCase);
+            }
+            writer.Write("]}");
         }
+        writer.Write("]}");
     }
 
     function write_config_file(file_name, config)[import {System::IO, System::Text}]
     {
-        using(var tw = new ::StreamWriter(
-                new ::FileStream(file_name,::FileMode.Create,::FileAccess.Write),
+        using(var writer = new ::StreamWriter(
+                new ::FileStream(file_name, ::FileMode.Create, ::FileAccess.Write),
                 ::Encoding.UTF8))
-            write_config(tw, config);
+            write_config(writer, config);
     }
 
-    function to_config(config)
+    function to_config(config)[import System::IO]
     {
-        var s;
-        using(var sw = new ::StringWriter)
+        using(var writer = new ::StringWriter)
         {
-            write_config(sw,config);
-            s = sw.ToString;
+            write_config(writer, config);
+            return writer.ToString;
         }
-        return s;
     }
 
     function get_config(path) =
@@ -125,46 +189,10 @@ namespace prx.test.make_test_configuration
 
     function main(path)
     {
-        write_config_file("testconfig.txt",get_config(path));
+        write_config_file("testconfig.json",get_config(path));
     }
 
-    function read_deps(s)
-    {
-    	var ds = s.Split(config_dependency_separator);
-    	return ds[0]:(ds >> skip(1) >> all);
-    }
-
-    function read_config(textReader)
-    {
-        var config = [];
-        var line;
-        for(; do line = textReader.ReadLine; while line is not null and line.Length > 0)
-        {
-            var fs = line.Split(config_section_separator);
-            if(fs.Count != 3)
-                continue;
-
-            config[] = fs[0]: new config(
-                (fs[1].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
-                (fs[2].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
-                (fs[3].Split(config_file_separator) >> skip(1) >> all),
-            );
-        }
-    	return config;
-    }
-
-    function read_config_file(fileName)[import {System::IO, System::Text}]
-    {
-        var c;
-        using(var tr = new ::StreamReader(
-                new ::FileStream(fileName, ::FileMode.Open, ::FileAccess.Read),
-                ::Encoding.UTF8))
-            c = read_config(tr);
-
-        return c;
-    }
-
-} export(main, write_config_file, get_config, read_config, read_config_file, to_config, write_config, 
+} export(main, write_config_file, get_config, to_config, write_config, 
          create_config, get_test_file_names);
 
 function main = prx.test.make_test_configuration.main(*var args);

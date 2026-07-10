@@ -120,7 +120,7 @@ Embedded scripts in `prxlib/`:
 - **Grammar Assembly**: `.atg` fragments merged via MSBuild into `Prexonite__gen.atg`
 - **Parser Generation**: PxCoco generates `Parser.cs` from grammar
 - **Lexer Generation**: CSFlex generates `Lexer.cs` from `Prexonite.lex`
-- **T4 Templates**: Some code generation via TextTemplatingFileGenerator
+- **Test fixture generation**: `PrexoniteTests.Generators` generates NUnit fixtures from the JSON test configurations
 
 # Meta-Programming Features
 

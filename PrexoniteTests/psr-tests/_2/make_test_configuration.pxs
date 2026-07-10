@@ -13,12 +13,6 @@ namespace psr.test.make_test_configuration
     function get_test_file_names(path,pattern)[import System::IO] =
         ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
 
-    function under_test = "under_test";
-    function test_dependencies = "test_dependencies";
-    function config_file_separator = "|";
-    function config_section_separator = ">";
-    function config_dependency_separator = "<";
-
     function create_config(testCases)
     {
         var s = new Structure;
@@ -53,38 +47,94 @@ namespace psr.test.make_test_configuration
         return new config(testCases);
     }
 
-    //write_config writes the configuration <config> to the supplied <textWriter>.
-    //  - textWriter, an object that behaves like a System.IO.TextWriter
-    //  - config, [test_file_name:{test_cases}]
-    function write_config(textWriter, config)
+    function write_json_string(writer, value)[import System]
     {
+        var backslash = ::Convert.ToChar(92);
+        var quote = ::Convert.ToChar(34);
+        writer.Write(quote);
+        foreach(var character in value.ToCharArray)
+        {
+            var code = ::Convert.ToInt32(character);
+            if(code == 34 or code == 92)
+            {
+                writer.Write(backslash);
+                writer.Write(character);
+            }
+            else if(code == 8 or code == 9 or code == 10 or code == 12 or code == 13)
+            {
+                writer.Write(backslash);
+                writer.Write(::Convert.ToChar(if(code == 8) 98
+                    else if(code == 9) 116
+                    else if(code == 10) 110
+                    else if(code == 12) 102
+                    else 114));
+            }
+            else if(code < 32)
+            {
+                writer.Write(backslash);
+                writer.Write("u");
+                writer.Write(code.ToString("x4"));
+            }
+            else
+                writer.Write(character);
+        }
+        writer.Write(quote);
+    }
+
+    function write_property_name(writer, name)
+    {
+        write_json_string(writer, name);
+        writer.Write(":");
+    }
+
+    // write_config writes version 2 of the JSON test configuration.
+    //  - writer, an object that behaves like a System.IO.TextWriter
+    //  - config, [test_file_name:{test_cases}]
+    function write_config(writer, config)
+    {
+        writer.Write("{");
+        write_property_name(writer, "version");
+        writer.Write("2,");
+        write_property_name(writer, "suites");
+        writer.Write("[");
+        var suiteSeparator = "";
         foreach(var kvp in config)
         {
-            textWriter.Write(kvp.Key);
-            textWriter.Write(config_section_separator);
-            foreach(var d in kvp.Value.test_cases)
-                textWriter.Write("$(config_file_separator)$(d)");
-            textWriter.WriteLine;
+            writer.Write(suiteSeparator);
+            suiteSeparator = ",";
+            writer.Write("{");
+            write_property_name(writer, "file");
+            write_json_string(writer, kvp.Key);
+            writer.Write(",");
+            write_property_name(writer, "tests");
+            writer.Write("[");
+            var testSeparator = "";
+            foreach(var testCase in kvp.Value.test_cases)
+            {
+                writer.Write(testSeparator);
+                testSeparator = ",";
+                write_json_string(writer, testCase);
+            }
+            writer.Write("]}");
         }
+        writer.Write("]}");
     }
 
     function write_config_file(file_name, config)[import {System::IO, System::Text}]
     {
-        using(var tw = new ::StreamWriter(
-                new ::FileStream(file_name,::FileMode.Create,::FileAccess.Write),
+        using(var writer = new ::StreamWriter(
+                new ::FileStream(file_name, ::FileMode.Create, ::FileAccess.Write),
                 ::Encoding.UTF8))
-            write_config(tw, config);
+            write_config(writer, config);
     }
 
-    function to_config(config)
+    function to_config(config)[import System::IO]
     {
-        var s;
-        using(var sw = new ::StringWriter)
+        using(var writer = new ::StringWriter)
         {
-            write_config(sw,config);
-            s = sw.ToString;
+            write_config(writer, config);
+            return writer.ToString;
         }
-        return s;
     }
 
     function get_config(path) =
@@ -92,38 +142,10 @@ namespace psr.test.make_test_configuration
 
     function main(path)
     {
-        write_config_file("testconfig.txt",get_config(path));
+        write_config_file("testconfig.json",get_config(path));
     }
 
-    function read_config(textReader)
-    {
-        var config = [];
-        var line;
-        for(; do line = textReader.ReadLine; while line is not null and line.Length > 0)
-        {
-            var fs = line.Split(config_section_separator);
-            if(fs.Count != 2)
-                throw "Unexpected number of sections (separated by '$(config_section_separator)'). Expected 2. Line: $line";
-
-            config[] = fs[0]: new config(
-                (fs[1].Split(config_file_separator) >> skip(1) >> to_list),
-            );
-        }
-        return config;
-    }
-
-    function read_config_file(fileName)[import {System::IO, System::Text}]
-    {
-        var c;
-        using(var tr = new ::StreamReader(
-                new ::FileStream(fileName, ::FileMode.Open, ::FileAccess.Read),
-                ::Encoding.UTF8))
-            c = read_config(tr);
-
-        return c;
-    }
-
-} export(main, write_config_file, get_config, read_config, read_config_file, to_config, write_config, 
+} export(main, write_config_file, get_config, to_config, write_config, 
          create_config, get_test_file_names, create_source_file);
 
 Entry make_test_configuration\main;
