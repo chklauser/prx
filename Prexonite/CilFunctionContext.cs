@@ -1,31 +1,46 @@
-
-
 using System.Diagnostics;
 using System.Reflection;
 
 namespace Prexonite;
 
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-     MessageId = "Cil"), DebuggerStepThrough]
+[
+    SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil"
+    ),
+    DebuggerStepThrough
+]
 public sealed class CilFunctionContext : StackContext
 {
     public static CilFunctionContext New(StackContext caller, PFunction originalImplementation)
     {
         if (originalImplementation == null)
             throw new ArgumentNullException(nameof(originalImplementation));
-        return new(caller.ParentEngine, originalImplementation.ParentApplication, originalImplementation.ImportedNamespaces);
+        return new(
+            caller.ParentEngine,
+            originalImplementation.ParentApplication,
+            originalImplementation.ImportedNamespaces
+        );
     }
 
-    internal static MethodInfo NewMethod { get; } = typeof (CilFunctionContext).GetMethod(
-        nameof(New),
-        [typeof (StackContext), typeof (PFunction)])!;
+    internal static MethodInfo NewMethod { get; } =
+        typeof(CilFunctionContext).GetMethod(
+            nameof(New),
+            [typeof(StackContext), typeof(PFunction)]
+        )!;
 
-    CilFunctionContext(Engine parentEngine, Application parentApplication,
-        SymbolCollection importedNamespaces)
+    CilFunctionContext(
+        Engine parentEngine,
+        Application parentApplication,
+        SymbolCollection importedNamespaces
+    )
     {
         ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-        ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-        ImportedNamespaces = importedNamespaces ?? throw new ArgumentNullException(nameof(importedNamespaces));
+        ParentApplication =
+            parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+        ImportedNamespaces =
+            importedNamespaces ?? throw new ArgumentNullException(nameof(importedNamespaces));
     }
 
     /// <summary>

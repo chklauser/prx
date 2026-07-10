@@ -26,33 +26,27 @@ using System;
 
 namespace CSFlex
 {
+    /**
+     * This Exception is used in class CharClasses.
+     *
+     * @author Gerwin Klein
+     * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:47 $
+     * @author Jonathan Gilbert
+     * @version CSFlex 1.4
+     */
+    public class CharClassException : RuntimeException
+    {
+        /**
+         * Creates a new CharClassException without message
+         */
+        public CharClassException() { }
 
-
-
-/**
- * This Exception is used in class CharClasses.
- *
- * @author Gerwin Klein
- * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:47 $
- * @author Jonathan Gilbert
- * @version CSFlex 1.4
- */
-public class CharClassException: RuntimeException {
-
-  /**
-   * Creates a new CharClassException without message
-   */
-  public CharClassException() {
-  }
-
-
-  /**
-   * Creates a new CharClassException with the specified message
-   *
-   * @param message   the error description presented to the user.
-   */
-  public CharClassException(String message) : base(message) {
-  }
-
-}
+        /**
+         * Creates a new CharClassException with the specified message
+         *
+         * @param message   the error description presented to the user.
+         */
+        public CharClassException(String message)
+            : base(message) { }
+    }
 }

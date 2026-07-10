@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -8,9 +6,7 @@ public class Each : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Each()
-    {
-    }
+    Each() { }
 
     public static Each Instance { get; } = new();
 

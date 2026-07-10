@@ -1,5 +1,3 @@
-
-
 using System.Globalization;
 using System.Text;
 using Prexonite;
@@ -23,13 +21,13 @@ partial class Lexer
     Token tok(int kind, string val)
     {
         var t = new Token
-            {
-                kind = kind,
-                val = val,
-                pos = yychar,
-                line = yyline,
-                col = yycolumn,
-            };
+        {
+            kind = kind,
+            val = val,
+            pos = yychar,
+            line = yyline,
+            col = yycolumn,
+        };
 
         return t;
     }
@@ -93,7 +91,6 @@ partial class Lexer
     int _peekIndex = NO_PEEK;
 
     const int NO_PEEK = -1;
-
 
     internal void _InjectToken(Token c)
     {
@@ -222,7 +219,6 @@ partial class Lexer
                 case "export":
                     return Parser._export;
             }
-
         //Local only
         else if (isLocal)
             switch (word)
@@ -257,10 +253,10 @@ partial class Lexer
                     return Parser._else;
                 case "new":
                     return Parser._new;
-                    /* //Not currently used.
-                case "from":
-                    return Parser._from;
-                //*/
+                /* //Not currently used.
+            case "from":
+                return Parser._from;
+            //*/
                 case "do":
                     return Parser._do;
                 case "while":
@@ -296,14 +292,22 @@ partial class Lexer
         var kind = sequence.Substring(1, 1);
         sequence = sequence[2..];
         if (
-            !int.TryParse(sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var utf32))
+            !int.TryParse(
+                sequence,
+                NumberStyles.HexNumber,
+                CultureInfo.InvariantCulture,
+                out var utf32
+            )
+        )
             throw new PrexoniteException(
                 string.Format(
                     "Invalid escape sequence \\{3}{0} on line {1} in {2}.",
                     sequence,
                     yyline,
                     File,
-                    kind));
+                    kind
+                )
+            );
         try
         {
             return char.ConvertFromUtf32(utf32);
@@ -311,13 +315,16 @@ partial class Lexer
         catch (ArgumentOutOfRangeException ex)
         {
             throw new PrexoniteException(
-                "Failed to convert string escape sequence " + sequence +
-                $" to string on line {yyline} in {File}", ex);
+                "Failed to convert string escape sequence "
+                    + sequence
+                    + $" to string on line {yyline} in {File}",
+                ex
+            );
         }
     }
 
     /// <summary>
-    ///     Takes a raw smart string identifier and splits any \& sequences into the buffer, 
+    ///     Takes a raw smart string identifier and splits any \& sequences into the buffer,
     ///     returning the actual identifier. The part clipped off is returned seperately (excluding the \&)
     /// </summary>
     /// <param name = "rawIdentifier">a $identifier as it was recognized by the lexer (including the $).</param>

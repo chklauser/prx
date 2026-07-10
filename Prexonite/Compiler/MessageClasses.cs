@@ -1,4 +1,3 @@
-﻿
 namespace Prexonite.Compiler;
 
 public static class MessageClasses
@@ -39,7 +38,8 @@ public static class MessageClasses
     public const string UnexpectedWildcard = "P.UnexpectedWildcard";
     public const string QualifiedIdPartsAfterWildcard = "P.QualifiedIdPartsAfterWildcard";
     public const string NonTopLevelNamespaceImport = "P.NonTopLevelNamespaceImport";
-    public const string UnexpectedDoubleColonInNamespaceName = "P.UnexpectedDoubleColonInNamespaceName";
+    public const string UnexpectedDoubleColonInNamespaceName =
+        "P.UnexpectedDoubleColonInNamespaceName";
     public const string IncompleteBinaryOperation = "P.IncompleteBinaryOperation";
     public const string ShiftedSymbolRequired = "P.ShiftedSymbolRequired";
     public const string TypeArgumentsNotSupported = "P.TypeArgumentsNotSupported";
@@ -108,5 +108,4 @@ public static class MessageClasses
     public const string SubAsExpressionInLoop = "D.SubAsExpressionInLoop";
 
     #endregion
-
 }

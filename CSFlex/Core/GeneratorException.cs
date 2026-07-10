@@ -24,20 +24,17 @@
 
 namespace CSFlex
 {
-
-
-/**
- * Thrown when code generation has to be aborted.
- *
- * @author Gerwin Klein
- * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:48 $
- * @author Jonathan Gilbert
- * @version CSFlex
- */
-public class GeneratorException: RuntimeException {
-
-  public GeneratorException() : base("Generation aborted") {
-  }
-
-}
+    /**
+     * Thrown when code generation has to be aborted.
+     *
+     * @author Gerwin Klein
+     * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:48 $
+     * @author Jonathan Gilbert
+     * @version CSFlex
+     */
+    public class GeneratorException : RuntimeException
+    {
+        public GeneratorException()
+            : base("Generation aborted") { }
+    }
 }

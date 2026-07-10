@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstArgumentSplice : AstExpr, IAstHasExpressions
@@ -14,7 +12,6 @@ public class AstArgumentSplice : AstExpr, IAstHasExpressions
         ArgumentList = argumentList ?? throw new ArgumentNullException(nameof(argumentList));
     }
 
-
     protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
     {
         _throwSyntaxNotSupported();
@@ -23,7 +20,8 @@ public class AstArgumentSplice : AstExpr, IAstHasExpressions
     void _throwSyntaxNotSupported()
     {
         throw new PartialApplicationSyntaxNotSupportedException(
-            $"This syntax does not support argument slices (*some_expr). (Position {File}:{Line} col {Column})");
+            $"This syntax does not support argument slices (*some_expr). (Position {File}:{Line} col {Column})"
+        );
     }
 
     public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
@@ -40,11 +38,20 @@ public class AstArgumentSplice : AstExpr, IAstHasExpressions
 
     public bool IsPlaceholderSplice => ArgumentList is AstPlaceholder;
 
-    public static void ReportNotSupported(AstNode splice, CompilerTarget target, StackSemantics semantics)
+    public static void ReportNotSupported(
+        AstNode splice,
+        CompilerTarget target,
+        StackSemantics semantics
+    )
     {
-        target.Loader.ReportMessage(Message.Error(
-            // Resources.AstNode__argumentSpliceNotSupportedInThisPosition
-            "Argument splice not supported in this position.", splice.Position, MessageClasses.ArgumentSpliceNotSupported));
+        target.Loader.ReportMessage(
+            Message.Error(
+                // Resources.AstNode__argumentSpliceNotSupportedInThisPosition
+                "Argument splice not supported in this position.",
+                splice.Position,
+                MessageClasses.ArgumentSpliceNotSupported
+            )
+        );
         if (semantics == StackSemantics.Value)
         {
             target.Factory.Null(splice.Position).EmitValueCode(target);

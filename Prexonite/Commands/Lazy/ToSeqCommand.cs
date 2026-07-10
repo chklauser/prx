@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Lazy;
@@ -8,9 +6,7 @@ public class ToSeqCommand : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    ToSeqCommand()
-    {
-    }
+    ToSeqCommand() { }
 
     public static ToSeqCommand Instance { get; } = new();
 
@@ -18,16 +14,17 @@ public class ToSeqCommand : CoroutineCommand, ICilCompilerAware
 
     #region Overrides of CoroutineCommand
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    public static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier getSctx,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    public static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier getSctx, PValue[] args)
     {
         if (args == null)
             throw new ArgumentNullException(nameof(args));
@@ -79,8 +76,11 @@ public class ToSeqCommand : CoroutineCommand, ICilCompilerAware
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion

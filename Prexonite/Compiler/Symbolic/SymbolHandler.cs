@@ -1,5 +1,3 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Properties;
 
@@ -13,8 +11,11 @@ public abstract class SymbolHandler<TArg, TResult> : ISymbolHandler<TArg, TResul
     {
         throw new NotSupportedException(
             string.Format(
-                Resources.SymbolHandler_CannotHandleSymbolOfType, GetType().Name,
-                self.GetType().Name));
+                Resources.SymbolHandler_CannotHandleSymbolOfType,
+                GetType().Name,
+                self.GetType().Name
+            )
+        );
     }
 
     [PublicAPI]

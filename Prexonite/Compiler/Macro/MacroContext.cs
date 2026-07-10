@@ -1,5 +1,3 @@
-﻿
-
 using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
@@ -17,7 +15,7 @@ public class MacroContext : IMessageSink
     readonly MacroSession _session;
 
     /// <summary>
-    /// In order to ensure that the macro doesn't pop too many blocks, 
+    /// In order to ensure that the macro doesn't pop too many blocks,
     /// we need to remember the current block when the context was created.
     /// That block can not be popped via the context.
     /// </summary>
@@ -41,7 +39,7 @@ public class MacroContext : IMessageSink
         _sentinelBlock = session.Target.CurrentBlock;
     }
 
-    #region Accessors 
+    #region Accessors
 
     [PublicAPI]
     public bool SuppressDefaultExpression { get; set; }
@@ -99,16 +97,20 @@ public class MacroContext : IMessageSink
     {
         if (block == null)
             throw new ArgumentNullException(nameof(block));
-        if(!ReferenceEquals(block.LexicalScope, CurrentBlock))
-            throw new PrexoniteException("The block pushed by the macro is not a direct lexical child of the currently enclosing scope.");
+        if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
+            throw new PrexoniteException(
+                "The block pushed by the macro is not a direct lexical child of the currently enclosing scope."
+            );
         _session.Target.BeginBlock(block);
     }
 
     [PublicAPI]
     public AstScopedBlock PopBlock()
     {
-        if(ReferenceEquals(_session.Target.CurrentBlock,_sentinelBlock))
-            throw new PrexoniteException("A macro cannot pop lexical scopes that it didn't push itself.");
+        if (ReferenceEquals(_session.Target.CurrentBlock, _sentinelBlock))
+            throw new PrexoniteException(
+                "A macro cannot pop lexical scopes that it didn't push itself."
+            );
         return _session.Target.EndBlock();
     }
 
@@ -160,7 +162,7 @@ public class MacroContext : IMessageSink
     #endregion
 
     #region Compiler interaction
-        
+
     [PublicAPI]
     public IAstFactory Factory => _session.Factory;
 
@@ -169,8 +171,8 @@ public class MacroContext : IMessageSink
     /// </summary>
     /// <returns>The (physical) id of a free temporary variable.</returns>
     /// <remarks>
-    ///     If a temporary variable is not freed during a macro expansion session, 
-    ///     it will no longer be considered a temporary variable and cannot be freed in 
+    ///     If a temporary variable is not freed during a macro expansion session,
+    ///     it will no longer be considered a temporary variable and cannot be freed in
     ///     subsequent expansions
     /// </remarks>
     [PublicAPI]
@@ -198,12 +200,20 @@ public class MacroContext : IMessageSink
     /// <remarks>
     ///     Issuing an error message does not automatically abort execution of the macro.
     /// </remarks>
-    [PublicAPI,Obsolete("Use ReportMessage(Message) instead. Always pass message classes, especially with warnings and infos.")]
-    public void ReportMessage(MessageSeverity severity, string message,
-        ISourcePosition? position = null)
+    [
+        PublicAPI,
+        Obsolete(
+            "Use ReportMessage(Message) instead. Always pass message classes, especially with warnings and infos."
+        )
+    ]
+    public void ReportMessage(
+        MessageSeverity severity,
+        string message,
+        ISourcePosition? position = null
+    )
     {
         position ??= Invocation.Position;
-        _session.Target.Loader.ReportMessage(Message.Create(severity, message, position,null));
+        _session.Target.Loader.ReportMessage(Message.Create(severity, message, position, null));
     }
 
     /// <summary>

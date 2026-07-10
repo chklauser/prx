@@ -1,5 +1,3 @@
-
-
 using NUnit.Framework;
 using Prexonite;
 
@@ -10,9 +8,7 @@ namespace PrexoniteTests.Tests;
 public class RandomAccessQueue
 {
     [SetUp]
-    public void Setup()
-    {
-    }
+    public void Setup() { }
 
     [Test]
     public void Count()

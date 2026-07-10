@@ -50,20 +50,21 @@ public sealed class CustomResolver
         }
         else if (_interpreted != null)
         {
-            var presult = _interpreted.IndirectCall
-            (
+            var presult = _interpreted.IndirectCall(
                 t.Loader,
                 t.Loader.CreateNativePValue(t),
-                t.Loader.CreateNativePValue(unresolved));
+                t.Loader.CreateNativePValue(unresolved)
+            );
             if (presult.Type is ObjectPType)
-                return (AstExpr) presult.Value!;
+                return (AstExpr)presult.Value!;
             else
                 return null;
         }
         else
         {
             throw new InvalidOperationException(
-                "Invalid custom resolver. No implementation provided.");
+                "Invalid custom resolver. No implementation provided."
+            );
         }
     }
 }

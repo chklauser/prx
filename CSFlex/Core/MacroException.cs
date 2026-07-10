@@ -26,33 +26,28 @@ using System;
 
 namespace CSFlex
 {
+    /**
+     * This Exception is used in the macro expander to report cycles or
+     * undefined macro usages.
+     *
+     * @author Gerwin Klein
+     * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:48 $
+     * @author Jonathan Gilbert
+     * @version CSFlex 1.4
+     */
+    public class MacroException : RuntimeException
+    {
+        /**
+         * Creates a new MacroException without message
+         */
+        public MacroException() { }
 
-
-/**
- * This Exception is used in the macro expander to report cycles or
- * undefined macro usages.
- *
- * @author Gerwin Klein
- * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:48 $
- * @author Jonathan Gilbert
- * @version CSFlex 1.4
- */
-public class MacroException: RuntimeException {
-
-  /**
-   * Creates a new MacroException without message
-   */
-  public MacroException() {
-  }
-
-
-  /**
-   * Creates a new MacroException with the specified message
-   *
-   * @param message   the error description presented to the user.
-   */
-  public MacroException(String message) : base(message) {
-  }
-
-}
+        /**
+         * Creates a new MacroException with the specified message
+         *
+         * @param message   the error description presented to the user.
+         */
+        public MacroException(String message)
+            : base(message) { }
+    }
 }

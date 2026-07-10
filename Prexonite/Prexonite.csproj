@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <DefineConstants>UseIndex</DefineConstants>
   </PropertyGroup>
@@ -14,12 +13,35 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="Compiler\Prexonite.lex" CSFlexOutput="Prexonite.Compiler.Lexer.g.cs" />
-    <AdditionalFiles Include="Compiler\Grammar\Header.atg" PxCocoGrammar="Prexonite" PxCocoOrder="10" />
-    <AdditionalFiles Include="Compiler\Grammar\Scanner.atg" PxCocoGrammar="Prexonite" PxCocoOrder="20" />
-    <AdditionalFiles Include="Compiler\Grammar\Parser*.atg" PxCocoGrammar="Prexonite" PxCocoOrder="30" />
-    <AdditionalFiles Include="Compiler\Grammar\Footer.atg" PxCocoGrammar="Prexonite" PxCocoOrder="40" />
-    <AdditionalFiles Include="PTypeExpression.atg" PxCocoGrammar="PTypeExpression" PxCocoOrder="10" />
+    <AdditionalFiles
+      Include="Compiler\Prexonite.lex"
+      CSFlexOutput="Prexonite.Compiler.Lexer.g.cs"
+    />
+    <AdditionalFiles
+      Include="Compiler\Grammar\Header.atg"
+      PxCocoGrammar="Prexonite"
+      PxCocoOrder="10"
+    />
+    <AdditionalFiles
+      Include="Compiler\Grammar\Scanner.atg"
+      PxCocoGrammar="Prexonite"
+      PxCocoOrder="20"
+    />
+    <AdditionalFiles
+      Include="Compiler\Grammar\Parser*.atg"
+      PxCocoGrammar="Prexonite"
+      PxCocoOrder="30"
+    />
+    <AdditionalFiles
+      Include="Compiler\Grammar\Footer.atg"
+      PxCocoGrammar="Prexonite"
+      PxCocoOrder="40"
+    />
+    <AdditionalFiles
+      Include="PTypeExpression.atg"
+      PxCocoGrammar="PTypeExpression"
+      PxCocoOrder="10"
+    />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="PxCocoGrammar" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="PxCocoOrder" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="CSFlexOutput" />
@@ -34,7 +56,7 @@
     <EmbeddedResource Include="prxlib\prx.v2.prelude.pxs" />
     <EmbeddedResource Include="prxlib\sys.pxs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <!-- Generate the Properties/Resources.Designer.cs file from the default translations in Resources.resx -->
     <EmbeddedResource Update="Properties/Resources.resx">
@@ -50,12 +72,16 @@
 
   <!-- NUGET References -->
   <ItemGroup>
-    <ProjectReference Include="..\CSFlex\CSFlex.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\PxCoco\PxCoco.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference
+      Include="..\CSFlex\CSFlex.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
+    <ProjectReference
+      Include="..\PxCoco\PxCoco.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" />
   </ItemGroup>
 </Project>

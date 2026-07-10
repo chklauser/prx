@@ -1,5 +1,3 @@
-﻿
-
 using System.Text;
 
 namespace Prexonite.Compiler.Build;
@@ -13,19 +11,34 @@ public class BuildFailureException : BuildException
         var e = 0;
         foreach (var message in messages)
         {
-            if(message.Severity == MessageSeverity.Error)
+            if (message.Severity == MessageSeverity.Error)
                 e++;
         }
-        return string.Format(messageFormat, e, e == 1 ? "error" : "errors", e == 1 ? "was" : "were");
+        return string.Format(
+            messageFormat,
+            e,
+            e == 1 ? "error" : "errors",
+            e == 1 ? "was" : "were"
+        );
     }
 
-    public BuildFailureException(ITargetDescription? target, string messageFormat, IEnumerable<Message> messages) : base(_makeErrorMessage(messages, messageFormat),target)
+    public BuildFailureException(
+        ITargetDescription? target,
+        string messageFormat,
+        IEnumerable<Message> messages
+    )
+        : base(_makeErrorMessage(messages, messageFormat), target)
     {
         Messages.AddRange(messages);
     }
 
-    public BuildFailureException(ITargetDescription? target, string messageFormat, IEnumerable<Message> messages, Exception inner)
-        : base(_makeErrorMessage(messages, messageFormat), target,inner)
+    public BuildFailureException(
+        ITargetDescription? target,
+        string messageFormat,
+        IEnumerable<Message> messages,
+        Exception inner
+    )
+        : base(_makeErrorMessage(messages, messageFormat), target, inner)
     {
         Messages.AddRange(messages);
     }

@@ -1,5 +1,3 @@
-
-
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class Meta : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    Meta()
-    {
-    }
+    Meta() { }
 
     public static Meta Instance { get; } = new();
 
@@ -31,7 +27,9 @@ public class Meta : PCommand, ICilCompilerAware
 
         state.EmitLoadLocal(state.SctxLocal);
         state.EmitLoadArg(CompilerState.ParamSourceIndex);
-        var getMeta = typeof (PFunction).GetProperty(nameof(Meta))?.GetGetMethod() ?? throw new InvalidOperationException("PFunction.Meta getter is missing.");
+        var getMeta =
+            typeof(PFunction).GetProperty(nameof(Meta))?.GetGetMethod()
+            ?? throw new InvalidOperationException("PFunction.Meta getter is missing.");
         state.Il.EmitCall(OpCodes.Callvirt, getMeta, null);
         state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.CreateNativePValue, null);
     }
@@ -53,7 +51,8 @@ public class Meta : PCommand, ICilCompilerAware
 
         if (sctx is not FunctionContext fctx)
             throw new PrexoniteException(
-                "The meta command uses dynamic features and can therefor only be called from a Prexonite function.");
+                "The meta command uses dynamic features and can therefor only be called from a Prexonite function."
+            );
 
         return fctx.CreateNativePValue(fctx.Implementation.Meta);
     }

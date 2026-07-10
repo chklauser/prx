@@ -1,4 +1,3 @@
-
 #region
 
 using Prexonite.Compiler.Cil;
@@ -12,9 +11,7 @@ public class BoolPType : PType, ICilCompilerAware
 {
     #region Singleton
 
-    BoolPType()
-    {
-    }
+    BoolPType() { }
 
     static BoolPType()
     {
@@ -35,7 +32,7 @@ public class BoolPType : PType, ICilCompilerAware
     public static PValue CreateValue(object? value)
     {
         if (value is bool)
-            return CreateValue((bool) value);
+            return CreateValue((bool)value);
         else
             return new(value != null, Bool);
     }
@@ -44,7 +41,11 @@ public class BoolPType : PType, ICilCompilerAware
 
     #region Access interface implementation
 
-    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (args.Length <= 0)
         {
@@ -63,8 +64,7 @@ public class BoolPType : PType, ICilCompilerAware
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         //Try CLR dynamic call
@@ -73,9 +73,14 @@ public class BoolPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        if (Object[typeof (bool)].TryStaticCall(sctx, args, call, id, out result))
+        if (Object[typeof(bool)].TryStaticCall(sctx, args, call, id, out result))
             return true;
 
         return false;
@@ -86,25 +91,25 @@ public class BoolPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (target is ObjectPType)
-            return
-                Object[typeof (bool)].TryConvertTo(
-                    sctx, subject, target, useExplicit, out result);
+            return Object[typeof(bool)]
+                .TryConvertTo(sctx, subject, target, useExplicit, out result);
 
         result = null;
 
         switch (target)
         {
             case IntPType _ when useExplicit:
-                result = (bool) subject.Value! ? 1 : 0;
+                result = (bool)subject.Value! ? 1 : 0;
                 break;
             case RealPType _ when useExplicit:
-                result = (bool) subject.Value! ? 1.0 : 0.0;
+                result = (bool)subject.Value! ? 1.0 : 0.0;
                 break;
             case StringPType _ when useExplicit:
-                result = (bool) subject.Value! ? bool.TrueString : bool.FalseString;
+                result = (bool)subject.Value! ? bool.TrueString : bool.FalseString;
                 break;
             default:
                 return false;
@@ -117,11 +122,12 @@ public class BoolPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (subject.Type is ObjectPType objTy && objTy.ClrType == typeof (bool))
-            result = (bool) subject.Value!;
+        if (subject.Type is ObjectPType objTy && objTy.ClrType == typeof(bool))
+            result = (bool)subject.Value!;
         else if (useExplicit && subject.Type is StringPType)
         {
             if (bool.TryParse(subject.Value as string, out var parsed))
@@ -151,7 +157,7 @@ public class BoolPType : PType, ICilCompilerAware
             case BuiltIn.Real:
             case BuiltIn.Int:
             case BuiltIn.Bool:
-                value = (bool) operand.Value!;
+                value = (bool)operand.Value!;
                 return true;
             case BuiltIn.String:
                 if (!bool.TryParse(operand.Value as string, out value))
@@ -163,7 +169,7 @@ public class BoolPType : PType, ICilCompilerAware
             case BuiltIn.Object:
                 if (operand.TryConvertTo(sctx, Bool, out var asBool))
                 {
-                    value = (bool) asBool.Value!;
+                    value = (bool)asBool.Value!;
                     return true;
                 }
                 break;
@@ -176,70 +182,112 @@ public class BoolPType : PType, ICilCompilerAware
     }
 
     public override bool BitwiseAnd(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (_tryConvertToBool(sctx, leftOperand, out var left) &&
-            _tryConvertToBool(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToBool(sctx, leftOperand, out var left)
+            && _tryConvertToBool(sctx, rightOperand, out var right)
+        )
             result = left & right;
         return result != null;
     }
 
     public override bool BitwiseOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (_tryConvertToBool(sctx, leftOperand, out var left) &&
-            _tryConvertToBool(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToBool(sctx, leftOperand, out var left)
+            && _tryConvertToBool(sctx, rightOperand, out var right)
+        )
             result = left | right;
         return result != null;
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (_tryConvertToBool(sctx, leftOperand, out var left) &&
-            _tryConvertToBool(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToBool(sctx, leftOperand, out var left)
+            && _tryConvertToBool(sctx, rightOperand, out var right)
+        )
             result = left == right;
         return result != null;
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (_tryConvertToBool(sctx, leftOperand, out var left) &&
-            _tryConvertToBool(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToBool(sctx, leftOperand, out var left)
+            && _tryConvertToBool(sctx, rightOperand, out var right)
+        )
             result = left != right;
         return result != null;
     }
 
     public override bool ExclusiveOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
-        if (_tryConvertToBool(sctx, leftOperand, out var left) &&
-            _tryConvertToBool(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToBool(sctx, leftOperand, out var left)
+            && _tryConvertToBool(sctx, rightOperand, out var right)
+        )
             result = left ^ right;
         return result != null;
     }
 
-    public override bool LogicalNot(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool LogicalNot(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        result = !(bool) operand.Value!;
+        result = !(bool)operand.Value!;
         return true;
     }
 
-    public override bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool OnesComplement(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        result = !(bool) operand.Value!; //Identical to LogicalNot
+        result = !(bool)operand.Value!; //Identical to LogicalNot
         return true;
     }
 
-    public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool UnaryNegation(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        result = !(bool) operand.Value!; //Identical to UnaryNegation
+        result = !(bool)operand.Value!; //Identical to UnaryNegation
         return true;
     }
 

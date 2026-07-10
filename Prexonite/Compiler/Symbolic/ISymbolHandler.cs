@@ -1,4 +1,3 @@
-
 namespace Prexonite.Compiler.Symbolic;
 
 public interface ISymbolHandler<in TArg, out TResult>

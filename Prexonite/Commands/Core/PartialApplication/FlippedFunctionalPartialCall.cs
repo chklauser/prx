@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 /// <summary>
@@ -30,20 +28,28 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
 
     PValue[] _getEffectiveArgs(ReadOnlySpan<PValue> args)
     {
-        var effectiveArgs =
-            new PValue[System.Math.Max(args.Length, 1) + _closedArguments.Length];
+        var effectiveArgs = new PValue[System.Math.Max(args.Length, 1) + _closedArguments.Length];
         if (args.Length > 0 && args[0] != null)
             effectiveArgs[0] = args[0];
         else
             effectiveArgs[0] = PType.Null;
         Array.Copy(_closedArguments, 0, effectiveArgs, 1, _closedArguments.Length);
-        args[System.Math.Min(1, args.Length)..].CopyTo(effectiveArgs.AsSpan(_closedArguments.Length + 1, System.Math.Max(args.Length - 1, 0)));
+        args[System.Math.Min(1, args.Length)..]
+            .CopyTo(
+                effectiveArgs.AsSpan(
+                    _closedArguments.Length + 1,
+                    System.Math.Max(args.Length - 1, 0)
+                )
+            );
         return effectiveArgs;
     }
 
-    public bool TryDefer(StackContext sctx, PValue[] args,
-        [NotNullWhen(true)] out StackContext? partialApplicationContext, 
-        [NotNullWhen(false)] out PValue? result)
+    public bool TryDefer(
+        StackContext sctx,
+        PValue[] args,
+        [NotNullWhen(true)] out StackContext? partialApplicationContext,
+        [NotNullWhen(false)] out PValue? result
+    )
     {
         var effectiveArgs = _getEffectiveArgs(args);
 
@@ -61,10 +67,12 @@ public class FlippedFunctionalPartialCall : IMaybeStackAware
             }
 
             if (raw is IMaybeStackAware partialApplication)
-                return partialApplication.TryDefer(sctx,
+                return partialApplication.TryDefer(
+                    sctx,
                     effectiveArgs,
                     out partialApplicationContext,
-                    out result);
+                    out result
+                );
         }
 
         result = _subject.IndirectCall(sctx, effectiveArgs);

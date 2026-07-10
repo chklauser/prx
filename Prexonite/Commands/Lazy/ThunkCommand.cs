@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class ThunkCommand : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    ThunkCommand()
-    {
-    }
+    ThunkCommand() { }
 
     public static ThunkCommand Instance { get; } = new();
 
@@ -25,7 +21,6 @@ public class ThunkCommand : PCommand, ICilCompilerAware
     // ReSharper disable MemberCanBePrivate.Global
     // Part of CIL compiler infrastructure.
     public static PValue RunStatically(StackContext sctx, PValue[] args)
-
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -42,12 +37,11 @@ public class ThunkCommand : PCommand, ICilCompilerAware
 
     internal static PValue _EnforceThunk(PValue value)
     {
-        if (value.Type.Equals(PType.Object[typeof (Thunk)]))
+        if (value.Type.Equals(PType.Object[typeof(Thunk)]))
             return value;
         else
             return PType.Object.CreatePValue(Thunk.NewValue(value));
     }
-
 
     CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
     {
@@ -56,8 +50,11 @@ public class ThunkCommand : PCommand, ICilCompilerAware
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 }
 
@@ -113,7 +110,7 @@ public class Thunk : IIndirectCall, IObject
     BlackHole _blackHole;
 
     (PValue Expr, PValue[] Parameters)? impl;
-    
+
     PValue? _value;
     Exception? _exception;
 
@@ -121,8 +118,10 @@ public class Thunk : IIndirectCall, IObject
 
     Thunk(PValue expr, PValue[] parameters)
     {
-        impl = (expr ?? throw new ArgumentNullException(nameof(expr)),
-            parameters ?? throw new ArgumentNullException(nameof(parameters)));
+        impl = (
+            expr ?? throw new ArgumentNullException(nameof(expr)),
+            parameters ?? throw new ArgumentNullException(nameof(parameters))
+        );
     }
 
     Thunk(PValue value)
@@ -147,7 +146,7 @@ public class Thunk : IIndirectCall, IObject
 
     public PValue Force(StackContext sctx)
     {
-        return ((IIndirectCall) this).IndirectCall(sctx);
+        return ((IIndirectCall)this).IndirectCall(sctx);
     }
 
     public bool IsEvaluated => _value != null;
@@ -157,8 +156,7 @@ public class Thunk : IIndirectCall, IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;
@@ -230,7 +228,6 @@ public class Thunk : IIndirectCall, IObject
                 throw new PrexoniteException("Thunk must have an implementation or a a value.");
             }
             Debug.Unindent();
-
 
             if (_value.Value is Thunk t)
             {

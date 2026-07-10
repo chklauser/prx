@@ -30,7 +30,7 @@ public class CommandTable : SymbolTable<PCommand>
     }
 
     /// <summary>
-    ///     Adds a fallback command info to the command table. This will be returned by <see cref = "TryGetInfo" /> if 
+    ///     Adds a fallback command info to the command table. This will be returned by <see cref = "TryGetInfo" /> if
     ///     no corresponding command is stored in the table at the moment.
     /// </summary>
     /// <param name = "id">The id of the command to provide fallback info for.</param>
@@ -40,7 +40,8 @@ public class CommandTable : SymbolTable<PCommand>
         if (id == null)
             throw new ArgumentNullException(nameof(id));
 
-        _fallbackCommandInfos[id] = commandInfo ?? throw new ArgumentNullException(nameof(commandInfo));
+        _fallbackCommandInfos[id] =
+            commandInfo ?? throw new ArgumentNullException(nameof(commandInfo));
     }
 
     /// <summary>
@@ -112,9 +113,10 @@ public class CommandTable : SymbolTable<PCommand>
     [NotNull]
     public override PCommand? this[string key]
     {
-        get => TryGetValue(key, out var cmd) 
-            ? cmd 
-            : throw new PrexoniteException($"Cannot find command {key}.");
+        get =>
+            TryGetValue(key, out var cmd)
+                ? cmd
+                : throw new PrexoniteException($"Cannot find command {key}.");
         set
         {
             if (value != null && !_commandGroups.ContainsKey(key))
@@ -139,7 +141,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "alias">The alias that shall refer to the supplied command.</param>
     /// <param name = "command">A command instance.</param>
-    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" />
     ///     or <paramref name = "command" /> is null.</exception>
     public void AddUserCommand(string alias, PCommand command)
     {
@@ -156,7 +158,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "alias">The alias that shall refer to the supplied command.</param>
     /// <param name = "action">An action to be turned into a command.</param>
-    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" />
     ///     or <paramref name = "action" /> is null.</exception>
     public void AddUserCommand(string alias, PCommandAction action)
     {
@@ -172,7 +174,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "alias">The alias that shall refer to the supplied command.</param>
     /// <param name = "action">An action to be turned into a command.</param>
-    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" />
     ///     or <paramref name = "action" /> is null.</exception>
     public void AddUserCommand(string alias, ICommand action)
     {
@@ -244,7 +246,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "alias">The alias that shall refer to the supplied command.</param>
     /// <param name = "command">A command instance.</param>
-    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" />
     ///     or <paramref name = "command" /> is null.</exception>
     public void AddHostCommand(string alias, PCommand command)
     {
@@ -261,7 +263,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "alias">The alias that shall refer to the supplied command.</param>
     /// <param name = "action">An action to be turned into a command.</param>
-    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" />
     ///     or <paramref name = "action" /> is null.</exception>
     public void AddHostCommand(string alias, PCommandAction action)
     {
@@ -277,7 +279,7 @@ public class CommandTable : SymbolTable<PCommand>
     /// </summary>
     /// <param name = "alias">The alias that shall refer to the supplied command.</param>
     /// <param name = "action">An action to be turned into a command.</param>
-    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+    /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" />
     ///     or <paramref name = "action" /> is null.</exception>
     public void AddHostCommand(string alias, ICommand action)
     {
@@ -320,7 +322,7 @@ public class CommandTable : SymbolTable<PCommand>
         CopyTo(commands, 0);
         foreach (var (alias, _) in commands)
         {
-            if(removeFromGroup(alias, groups) is (true, PCommandGroups.None))
+            if (removeFromGroup(alias, groups) is (true, PCommandGroups.None))
                 Remove(alias);
         }
     }
@@ -329,8 +331,11 @@ public class CommandTable : SymbolTable<PCommand>
     {
         return _commandGroups
             .Where(kvp => (kvp.Value & group) != 0)
-            .SelectMaybe(kvp => this[kvp.Key] is { } cmd 
-                ? (KeyValuePair<string, PCommand>?)new KeyValuePair<string, PCommand>(kvp.Key, cmd)
-                : null);
+            .SelectMaybe(kvp =>
+                this[kvp.Key] is { } cmd
+                    ? (KeyValuePair<string, PCommand>?)
+                        new KeyValuePair<string, PCommand>(kvp.Key, cmd)
+                    : null
+            );
     }
 }

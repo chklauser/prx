@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using System.Collections.Generic;
 using Prexonite.Commands;
@@ -22,23 +20,22 @@ namespace Prexonite.Compiler.Macro.Commands
             get { return _instance; }
         }
 
-        private Reference() : base(Alias)
-        {
-        }
+        private Reference()
+            : base(Alias) { }
 
         public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands(Loader ldr)
         {
-            yield return
-                new KeyValuePair<string, PCommand>(Impl.Alias, new Impl(ldr));
+            yield return new KeyValuePair<string, PCommand>(Impl.Alias, new Impl(ldr));
         }
 
         #endregion
 
         private class Impl : PCommand
         {
-// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
+            // ReSharper disable MemberHidesStaticFromOuterClass // not an issue
             public const string Alias = Reference.Alias + @"\impl";
-// ReSharper restore MemberHidesStaticFromOuterClass
+
+            // ReSharper restore MemberHidesStaticFromOuterClass
 
             private readonly Loader _loader;
 
@@ -52,11 +49,12 @@ namespace Prexonite.Compiler.Macro.Commands
             public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
             {
                 if (args.Length < 3)
-                    throw new PrexoniteException(string.Format(
-                        "{0} requires at least 3 arguments.", Alias));
+                    throw new PrexoniteException(
+                        string.Format("{0} requires at least 3 arguments.", Alias)
+                    );
 
                 var id = args[0].CallToString(sctx);
-                var interpretation = (SymbolInterpretations) args[1].Value!;
+                var interpretation = (SymbolInterpretations)args[1].Value!;
                 var module = args[2].Value as ModuleName;
                 if (module == null)
                 {
@@ -64,7 +62,9 @@ namespace Prexonite.Compiler.Macro.Commands
                     if (moduleRaw != null)
                     {
                         if (!ModuleName.TryParse(moduleRaw, out module))
-                            throw new PrexoniteException("Invalid module name \"" + moduleRaw + "\".");
+                            throw new PrexoniteException(
+                                "Invalid module name \"" + moduleRaw + "\"."
+                            );
                     }
                 }
 
@@ -72,25 +72,39 @@ namespace Prexonite.Compiler.Macro.Commands
                 {
                     case SymbolInterpretations.Function:
                         PFunction? func;
-                        if(module == null)
+                        if (module == null)
                         {
-                            throw new PrexoniteException(string.Format("Cannot create reference to function {0}. Module name is missing.", id));
+                            throw new PrexoniteException(
+                                string.Format(
+                                    "Cannot create reference to function {0}. Module name is missing.",
+                                    id
+                                )
+                            );
                         }
-                        else if(sctx.ParentApplication.TryGetFunction(id,module, out func))
+                        else if (sctx.ParentApplication.TryGetFunction(id, module, out func))
                         {
                             return sctx.CreateNativePValue(func);
                         }
                         else
                         {
                             throw new PrexoniteException(
-                                string.Format("Cannot create reference to function {0} from module {1}. Function or module is missing from context.", id, module));
+                                string.Format(
+                                    "Cannot create reference to function {0} from module {1}. Function or module is missing from context.",
+                                    id,
+                                    module
+                                )
+                            );
                         }
                     case SymbolInterpretations.MacroCommand:
                         return sctx.CreateNativePValue(_loader.MacroCommands[id]);
                     default:
                         throw new PrexoniteException(
-                            string.Format("Unknown macro interpretation {0} in {1}.",
-                                Enum.GetName(typeof (SymbolInterpretations), interpretation), Alias));
+                            string.Format(
+                                "Unknown macro interpretation {0} in {1}.",
+                                Enum.GetName(typeof(SymbolInterpretations), interpretation),
+                                Alias
+                            )
+                        );
                 }
             }
 
@@ -107,7 +121,9 @@ namespace Prexonite.Compiler.Macro.Commands
                     Message.Error(
                         string.Format(Resources.Reference_requires_at_least_one_argument, Alias),
                         context.Invocation.Position,
-                        MessageClasses.ReferenceUsage));
+                        MessageClasses.ReferenceUsage
+                    )
+                );
                 return;
             }
 
@@ -116,26 +132,41 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        string.Format(Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation, Alias),
-                        context.Invocation.Position, MessageClasses.ReferenceUsage));
+                        string.Format(
+                            Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation,
+                            Alias
+                        ),
+                        context.Invocation.Position,
+                        MessageClasses.ReferenceUsage
+                    )
+                );
             }
             else
             {
-                context.Block.Expression = _assembleImplCall(context, prototype.Entity.ToSymbolEntry(),
-                                                             prototype.Position);
+                context.Block.Expression = _assembleImplCall(
+                    context,
+                    prototype.Entity.ToSymbolEntry(),
+                    prototype.Position
+                );
             }
         }
 
-        private static AstGetSet _assembleImplCall(MacroContext context, SymbolEntry implementationSymbolEntry,
-                                                   ISourcePosition position)
+        private static AstGetSet _assembleImplCall(
+            MacroContext context,
+            SymbolEntry implementationSymbolEntry,
+            ISourcePosition position
+        )
         {
             var internalId = context.CreateConstant(implementationSymbolEntry.InternalId!);
             var interpretation = implementationSymbolEntry.Interpretation.ToExpr(position);
             var moduleNameOpt = context.CreateConstantOrNull(implementationSymbolEntry.Module);
-            var implCall = context.Factory.IndirectCall(context.Invocation.Position,
-                                                        context.Factory.Reference(context.Invocation.Position,
-                                                                                  EntityRef.Command.Create(
-                                                                                      Impl.Alias)));
+            var implCall = context.Factory.IndirectCall(
+                context.Invocation.Position,
+                context.Factory.Reference(
+                    context.Invocation.Position,
+                    EntityRef.Command.Create(Impl.Alias)
+                )
+            );
             implCall.Arguments.Add(internalId);
             implCall.Arguments.Add(interpretation);
             implCall.Arguments.Add(moduleNameOpt);

@@ -1,4 +1,3 @@
-
 namespace Prexonite;
 
 public interface INamed<out T>

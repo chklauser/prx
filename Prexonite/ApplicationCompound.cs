@@ -5,8 +5,7 @@ namespace Prexonite;
 
 public abstract class ApplicationCompound : ICollection<Application>, IObject
 {
-    static readonly ObjectPType _compoundType =
-        PType.Object[typeof (ApplicationCompound)];
+    static readonly ObjectPType _compoundType = PType.Object[typeof(ApplicationCompound)];
 
     public abstract CentralCache Cache { get; internal set; }
 
@@ -28,7 +27,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
 
     public bool Contains(Application application)
     {
-        return TryGetApplication(application.Module.Name, out var currentApplication) 
+        return TryGetApplication(application.Module.Name, out var currentApplication)
             && Equals(application, currentApplication);
     }
 
@@ -55,8 +54,7 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         return tryDynamicCall(sctx, args, call, id, out result);
@@ -69,7 +67,10 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
         return new ApplicationCompoundImpl();
     }
 
-    public abstract bool TryGetApplication(ModuleName moduleName, [NotNullWhen(true)] out Application? application);
+    public abstract bool TryGetApplication(
+        ModuleName moduleName,
+        [NotNullWhen(true)] out Application? application
+    );
 
     internal abstract void _Unlink(Application application);
     internal abstract void _Link(Application application);
@@ -77,8 +78,13 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
 
     public abstract bool Contains(ModuleName moduleName);
 
-    bool tryDynamicCall(StackContext sctx, ReadOnlySpan<PValue> args, PCall call,
-        string id, [NotNullWhen(true)] out PValue? result)
+    bool tryDynamicCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         switch (id.ToUpperInvariant())
         {
@@ -101,8 +107,16 @@ public abstract class ApplicationCompound : ICollection<Application>, IObject
                 }
                 goto default;
             default:
-                return _compoundType.TryDynamicCall(sctx, sctx.CreateNativePValue(this), args,
-                    call, id, out result, out _, true);
+                return _compoundType.TryDynamicCall(
+                    sctx,
+                    sctx.CreateNativePValue(this),
+                    args,
+                    call,
+                    id,
+                    out result,
+                    out _,
+                    true
+                );
         }
     }
 }

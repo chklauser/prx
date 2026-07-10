@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 using System;
@@ -29,7 +28,10 @@ static class Program
 
     public static void Main(string[] args)
     {
-        Console.CancelKeyPress += delegate { Environment.Exit(1); };
+        Console.CancelKeyPress += delegate
+        {
+            Environment.Exit(1);
+        };
         var prexoniteConsole = new PrexoniteConsole(true);
 
         //Let the exceptions surface so they can more easily be debugged
@@ -49,8 +51,8 @@ static class Program
         catch (Exception ex)
         {
 #if DEBUG
-                _dummyUsageOf(ex);
-                throw;
+            _dummyUsageOf(ex);
+            throw;
 #else
             Console.WriteLine(ex);
 #endif
@@ -66,9 +68,7 @@ static class Program
     }
 
     // ReSharper disable once UnusedParameter.Local
-    static void _dummyUsageOf(object any)
-    {
-    }
+    static void _dummyUsageOf(object any) { }
 
     static void _runApplication(Engine engine, Application app, IEnumerable<string> args)
     {
@@ -89,52 +89,54 @@ static class Program
 
         //prx.exe provides these three additional commands for high speed access to a stopwatch from your script code
         var timer = new Stopwatch();
-        engine.Commands.AddHostCommand
-        (
+        engine.Commands.AddHostCommand(
             @"timer\start",
-            new DelegatePCommand
-            (
+            new DelegatePCommand(
                 delegate
                 {
                     timer.Start();
                     return PType.Null;
-                }));
+                }
+            )
+        );
 
-        engine.Commands.AddHostCommand
-        (
+        engine.Commands.AddHostCommand(
             @"timer\stop",
-            new DelegatePCommand
-            (
+            new DelegatePCommand(
                 delegate
                 {
                     timer.Stop();
                     return (double)timer.ElapsedMilliseconds;
-                }));
+                }
+            )
+        );
 
-        engine.Commands.AddHostCommand
-        (
+        engine.Commands.AddHostCommand(
             @"timer\reset",
-            new DelegatePCommand
-            (
+            new DelegatePCommand(
                 delegate
                 {
                     timer.Reset();
                     return PType.Null;
-                }));
+                }
+            )
+        );
 
-        engine.Commands.AddHostCommand
-        (
+        engine.Commands.AddHostCommand(
             @"timer\elapsed",
-            new DelegatePCommand
-            (
-                delegate { return (double)timer.ElapsedMilliseconds; }));
+            new DelegatePCommand(
+                delegate
+                {
+                    return (double)timer.ElapsedMilliseconds;
+                }
+            )
+        );
 
         #endregion
 
         #region Stack Manipulation commands
 
-        engine.Commands.AddHostCommand
-        (
+        engine.Commands.AddHostCommand(
             @"__replace_call",
             delegate(StackContext sctx, PValue[] cargs)
             {
@@ -145,9 +147,9 @@ static class Program
                 var e = sctx.ParentEngine;
 
                 if (cargs.Length < 1)
-                    throw new PrexoniteException
-                    (
-                        "__replace_call requires the context or function to be replaced.");
+                    throw new PrexoniteException(
+                        "__replace_call requires the context or function to be replaced."
+                    );
 
                 var carg = cargs[0];
                 var rargs = new PValue[cargs.Length - 1];
@@ -159,13 +161,16 @@ static class Program
                 {
                     case PType.BuiltIn.String:
                         if (
-                            !sctx.ParentApplication.Functions.TryGetValue
-                            (
-                                (string)carg.Value!, out f))
-                            throw new PrexoniteException
-                            (
-                                "Cannot replace call to " + carg +
-                                " because no such function exists.");
+                            !sctx.ParentApplication.Functions.TryGetValue(
+                                (string)carg.Value!,
+                                out f
+                            )
+                        )
+                            throw new PrexoniteException(
+                                "Cannot replace call to "
+                                    + carg
+                                    + " because no such function exists."
+                            );
 
                         rctx = f.CreateFunctionContext(e, rargs);
                         break;
@@ -176,8 +181,7 @@ static class Program
                             f = (PFunction)carg.Value!;
                             rctx = f.CreateFunctionContext(e, rargs);
                         }
-                        else if (clrType == typeof(Closure) &&
-                                 clrType != typeof(Continuation))
+                        else if (clrType == typeof(Closure) && clrType != typeof(Continuation))
                         {
                             var c = (Closure)carg.Value!;
                             rctx = c.CreateFunctionContext(sctx, rargs);
@@ -189,8 +193,7 @@ static class Program
                         break;
                 }
                 if (rctx == null)
-                    throw new PrexoniteException("Cannot replace a context based on " +
-                        carg);
+                    throw new PrexoniteException("Cannot replace a context based on " + carg);
 
                 var node = e.Stack.Last;
                 do
@@ -206,7 +209,8 @@ static class Program
                 } while ((node = node?.Previous) != null);
 
                 return PType.Null.CreatePValue();
-            });
+            }
+        );
 
         #endregion
 
@@ -218,8 +222,8 @@ static class Program
 
         #region Create benchmark command
 
-        engine.Commands.AddHostCommand
-        ("createBenchmark",
+        engine.Commands.AddHostCommand(
+            "createBenchmark",
             delegate(StackContext sctx, PValue[] cargs)
             {
                 if ((StackContext?)sctx == null)
@@ -246,23 +250,35 @@ static class Program
                 }
 
                 return sctx.CreateNativePValue(new Benchmark(teng, tit));
-            });
+            }
+        );
 
         #endregion
 
         var prxPath = GetPrxPath();
-            
+
         #region Self-assembling build plan reference
 
-        engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, _) => sctx.CreateNativePValue(plan));
-        engine.Commands.AddHostCommand(@"host\prx_path", (sctx, _) => sctx.CreateNativePValue(prxPath));
+        engine.Commands.AddHostCommand(
+            @"host\self_assembling_build_plan",
+            (sctx, _) => sctx.CreateNativePValue(plan)
+        );
+        engine.Commands.AddHostCommand(
+            @"host\prx_path",
+            (sctx, _) => sctx.CreateNativePValue(prxPath)
+        );
 
         #endregion
 
         (Application Application, ITarget Target)? result;
         try
         {
-            var entryDesc = plan.AssembleAsync(Source.FromEmbeddedResource(Assembly.GetAssembly(typeof(Program))!, PrxScriptFileName)).Result;
+            var entryDesc = plan.AssembleAsync(
+                Source.FromEmbeddedResource(
+                    Assembly.GetAssembly(typeof(Program))!,
+                    PrxScriptFileName
+                )
+            ).Result;
             result = plan.Load(entryDesc.Name);
         }
         catch (BuildFailureException e)
@@ -270,19 +286,19 @@ static class Program
             _reportErrors(e.Messages);
             Console.WriteLine(e);
 #if DEBUG
-                throw;
+            throw;
 #else
             result = null;
 #endif
         }
         catch (BuildException e)
         {
-            if(e.RelatedTarget != null)
+            if (e.RelatedTarget != null)
                 _reportErrors(e.RelatedTarget.BuildMessages);
 
             Console.WriteLine(e);
 #if DEBUG
-                throw;
+            throw;
 #else
             result = null;
 #endif
@@ -291,7 +307,7 @@ static class Program
         {
             Console.WriteLine(e);
 #if DEBUG
-                throw;
+            throw;
 #else
             result = null;
 #endif
@@ -300,21 +316,22 @@ static class Program
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         if (((Application, ITarget)?)result == null)
             return null;
-        else if (_reportErrors(result.Value.Target.Messages)) 
+        else if (_reportErrors(result.Value.Target.Messages))
             return null;
-            
+
         var app = result.Value.Application;
         app.Meta[nameof(Version)] = Assembly.GetExecutingAssembly().GetName().Version!.ToString();
         return app;
-
     }
 
     static bool _reportErrors(IEnumerable<Message> messages)
     {
         var originalColor = Console.ForegroundColor;
-        var msgBySev = messages.ToGroupedDictionary<Message, MessageSeverity, List<Message>>(m => m.Severity);
+        var msgBySev = messages.ToGroupedDictionary<Message, MessageSeverity, List<Message>>(m =>
+            m.Severity
+        );
 #if DEBUG
-            _reportWarnings(msgBySev, originalColor);
+        _reportWarnings(msgBySev, originalColor);
 #endif
         if (msgBySev.TryGetValue(MessageSeverity.Error, out var errors) && errors.Count > 0)
         {
@@ -337,7 +354,10 @@ static class Program
         }
     }
 
-    static void _reportWarnings(IDictionary<MessageSeverity, List<Message>> messages, ConsoleColor originalColor)
+    static void _reportWarnings(
+        IDictionary<MessageSeverity, List<Message>> messages,
+        ConsoleColor originalColor
+    )
     {
         try
         {

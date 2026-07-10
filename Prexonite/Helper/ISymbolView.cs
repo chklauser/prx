@@ -1,8 +1,7 @@
-﻿
-
 namespace Prexonite;
 
-public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: class
+public interface ISymbolView<T> : IEnumerable<KeyValuePair<string, T>>
+    where T : class
 {
     bool TryGet(string id, [NotNullWhen(true)] out T? value);
     bool IsEmpty { get; }
@@ -10,7 +9,8 @@ public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>> where T: c
 
 public static class SymbolViewExtensions
 {
-    extension<T>(ISymbolView<T> view) where T: class
+    extension<T>(ISymbolView<T> view)
+        where T : class
     {
         public T GetOrDefault(string key, T defaultValue)
         {

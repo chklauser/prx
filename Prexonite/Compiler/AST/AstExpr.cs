@@ -1,21 +1,15 @@
-﻿namespace Prexonite.Compiler.Ast;
+namespace Prexonite.Compiler.Ast;
 
 public abstract class AstExpr : AstNode
 {
     protected AstExpr(ISourcePosition position)
-        : base(position)
-    {
-    }
+        : base(position) { }
 
     internal AstExpr(Parser p)
-        : base(p)
-    {
-    }
+        : base(p) { }
 
     protected AstExpr(string file, int line, int column)
-        : base(file, line, column)
-    {
-    }
+        : base(file, line, column) { }
 
     #region Implementation of AstExpr
 
@@ -32,5 +26,4 @@ public abstract class AstExpr : AstNode
     public abstract bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr);
 
     #endregion
-
 }

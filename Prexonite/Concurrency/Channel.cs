@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Concurrency;
@@ -13,8 +11,7 @@ public sealed class Channel : IObject, IDisposable
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;

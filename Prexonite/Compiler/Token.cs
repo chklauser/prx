@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Compiler;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -12,9 +10,7 @@ class Token
     internal int col;
     internal Token? next;
 
-    public Token()
-    {
-    }
+    public Token() { }
 
     public Token(Token next)
     {
@@ -28,12 +24,12 @@ class Token
 
     public string ToString(bool includePosition)
     {
-        return
-            string.Format(
-                "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
-                val,
-                Enum.GetName(typeof (Parser.Terminals), (Parser.Terminals) kind),
-                line,
-                col);
+        return string.Format(
+            "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
+            val,
+            Enum.GetName(typeof(Parser.Terminals), (Parser.Terminals)kind),
+            line,
+            col
+        );
     }
 }

@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Compiler.Ast;
 
 //[System.Diagnostics.DebuggerNonUserCode()]
@@ -14,9 +12,7 @@ public class AstAsmInstruction : AstNode
     }
 
     internal AstAsmInstruction(Parser p, Instruction instruction)
-        : this(p.scanner.File, p.t.line, p.t.col, instruction)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, instruction) { }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {

@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class Ceiling : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Ceiling()
-    {
-    }
+    Ceiling() { }
 
     public static Ceiling Instance { get; } = new();
 
@@ -40,7 +36,7 @@ public class Ceiling : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(PValue arg0, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
+        var x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value!;
 
         return System.Math.Ceiling(x);
     }
@@ -69,9 +65,10 @@ public class Ceiling : PCommand, ICilCompilerAware
         }
     }
 
-    static readonly MethodInfo RunStaticallyMethod =
-        typeof (Ceiling).GetMethod(nameof(RunStatically),
-            [typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyMethod = typeof(Ceiling).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

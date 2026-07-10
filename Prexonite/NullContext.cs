@@ -1,24 +1,25 @@
-
-
 namespace Prexonite;
 
 public class NullContext : StackContext
 {
     public NullContext(StackContext parentCtx)
-        : this(parentCtx.ParentEngine, parentCtx.ParentApplication, parentCtx.ImportedNamespaces
-        )
-    {
-    }
+        : this(parentCtx.ParentEngine, parentCtx.ParentApplication, parentCtx.ImportedNamespaces)
+    { }
 
-    public NullContext(Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces)
+    public NullContext(
+        Engine parentEngine,
+        Application parentApplication,
+        IEnumerable<string> importedNamespaces
+    )
     {
         if (importedNamespaces == null)
             throw new ArgumentNullException(nameof(importedNamespaces));
 
         ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-        ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-        ImportedNamespaces = importedNamespaces as SymbolCollection ??
-            new SymbolCollection(importedNamespaces);
+        ParentApplication =
+            parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+        ImportedNamespaces =
+            importedNamespaces as SymbolCollection ?? new SymbolCollection(importedNamespaces);
     }
 
     /// <summary>

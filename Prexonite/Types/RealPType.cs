@@ -1,4 +1,3 @@
-
 #region
 
 using System.Globalization;
@@ -20,9 +19,7 @@ public class RealPType : PType, ICilCompilerAware
         Instance = new();
     }
 
-    RealPType()
-    {
-    }
+    RealPType() { }
 
     #endregion
 
@@ -35,14 +32,18 @@ public class RealPType : PType, ICilCompilerAware
 
     public PValue CreatePValue(float value)
     {
-        return new((double) value, Instance);
+        return new((double)value, Instance);
     }
 
     #endregion
 
     #region Access interface implementation
 
-    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (args.Length <= 1)
         {
@@ -58,23 +59,27 @@ public class RealPType : PType, ICilCompilerAware
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         if (Engine.StringsAreEqual(id, nameof(ToString)) && args.Length == 0)
         {
             args = new[] { sctx.CreateNativePValue(CultureInfo.InvariantCulture) };
         }
-        Object[typeof (double)].TryDynamicCall(sctx, subject, args, call, id, out result);
+        Object[typeof(double)].TryDynamicCall(sctx, subject, args, call, id, out result);
 
         return result != null;
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        Object[typeof (double)].TryStaticCall(sctx, args, call, id, out result);
+        Object[typeof(double)].TryStaticCall(sctx, args, call, id, out result);
 
         return result != null;
     }
@@ -84,7 +89,8 @@ public class RealPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
@@ -92,17 +98,17 @@ public class RealPType : PType, ICilCompilerAware
         {
             if (target is ObjectPType)
             {
-                result = Type.GetTypeCode(((ObjectPType) target).ClrType) switch
+                result = Type.GetTypeCode(((ObjectPType)target).ClrType) switch
                 {
-                    TypeCode.Byte => CreateObject((byte) (double) subject.Value!),
-                    TypeCode.SByte => CreateObject((sbyte) (double) subject.Value!),
-                    TypeCode.Int32 => CreateObject((int) (double) subject.Value!),
-                    TypeCode.UInt32 => CreateObject((uint) (double) subject.Value!),
-                    TypeCode.Int16 => CreateObject((short) (double) subject.Value!),
-                    TypeCode.UInt16 => CreateObject((ushort) (double) subject.Value!),
-                    TypeCode.Int64 => CreateObject((long) (double) subject.Value!),
-                    TypeCode.UInt64 => CreateObject((ulong) (double) subject.Value!),
-                    TypeCode.Single => CreateObject((float) (double) subject.Value!),
+                    TypeCode.Byte => CreateObject((byte)(double)subject.Value!),
+                    TypeCode.SByte => CreateObject((sbyte)(double)subject.Value!),
+                    TypeCode.Int32 => CreateObject((int)(double)subject.Value!),
+                    TypeCode.UInt32 => CreateObject((uint)(double)subject.Value!),
+                    TypeCode.Int16 => CreateObject((short)(double)subject.Value!),
+                    TypeCode.UInt16 => CreateObject((ushort)(double)subject.Value!),
+                    TypeCode.Int64 => CreateObject((long)(double)subject.Value!),
+                    TypeCode.UInt64 => CreateObject((ulong)(double)subject.Value!),
+                    TypeCode.Single => CreateObject((float)(double)subject.Value!),
                     _ => result,
                 };
             }
@@ -112,17 +118,19 @@ public class RealPType : PType, ICilCompilerAware
         if (result == null)
         {
             if (target is StringPType)
-                result = String.CreatePValue(((double)subject.Value!).ToString(CultureInfo.InvariantCulture));
+                result = String.CreatePValue(
+                    ((double)subject.Value!).ToString(CultureInfo.InvariantCulture)
+                );
             else if (target is RealPType)
-                result = Real.CreatePValue((double) subject.Value!);
+                result = Real.CreatePValue((double)subject.Value!);
             else if (target is BoolPType)
-                result = Bool.CreatePValue(Math.Abs((double) subject.Value!) < double.Epsilon);
+                result = Bool.CreatePValue(Math.Abs((double)subject.Value!) < double.Epsilon);
             else if (target is ObjectPType objectType)
             {
                 result = Type.GetTypeCode(objectType.ClrType) switch
                 {
-                    TypeCode.Double => CreateObject((double) subject.Value!),
-                    TypeCode.Decimal => CreateObject((decimal) subject.Value!),
+                    TypeCode.Double => CreateObject((double)subject.Value!),
+                    TypeCode.Decimal => CreateObject((decimal)subject.Value!),
                     TypeCode.Object => new(subject.Value, Object[typeof(object)]),
                     _ => result,
                 };
@@ -136,7 +144,8 @@ public class RealPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         var subjectType = subject.Type;
@@ -156,10 +165,10 @@ public class RealPType : PType, ICilCompilerAware
                 {
                     case TypeCode.Decimal:
                     case TypeCode.Char:
-                        result = (double) subject.Value!;
+                        result = (double)subject.Value!;
                         break;
                     case TypeCode.Boolean:
-                        result = (bool) subject.Value! ? 1.0 : 0.0;
+                        result = (bool)subject.Value! ? 1.0 : 0.0;
                         break;
                 }
 
@@ -178,7 +187,7 @@ public class RealPType : PType, ICilCompilerAware
                     case TypeCode.UInt64:
                     case TypeCode.Single:
                     case TypeCode.Double:
-                        result = (double) subject.Value!;
+                        result = (double)subject.Value!;
                         break;
                 }
             }
@@ -193,7 +202,11 @@ public class RealPType : PType, ICilCompilerAware
     }
 
     static bool _tryConvertToReal(
-        StackContext sctx, PValue operand, out double value, bool allowNull)
+        StackContext sctx,
+        PValue operand,
+        out double value,
+        bool allowNull
+    )
     {
         value = double.NaN; //should never surface as value is only used if the method returns true
 
@@ -206,7 +219,7 @@ public class RealPType : PType, ICilCompilerAware
             case BuiltIn.Object:
                 if (operand.TryConvertTo(sctx, Real, out var pvRight))
                 {
-                    value = (double) pvRight.Value!;
+                    value = (double)pvRight.Value!;
                     return true;
                 }
                 break;
@@ -219,96 +232,144 @@ public class RealPType : PType, ICilCompilerAware
     }
 
     public override bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
             result = left + right;
 
         return result != null;
     }
 
     public override bool Subtraction(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
             result = left - right;
 
         return result != null;
     }
 
     public override bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
-            result = left*right;
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
+            result = left * right;
 
         return result != null;
     }
 
     public override bool Division(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
-            result = left/right;
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
+            result = left / right;
 
         return result != null;
     }
 
     public override bool Modulus(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
-            result = left%right;
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
+            result = left % right;
 
         return result != null;
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left, false) &&
-            _tryConvertToReal(sctx, rightOperand, out var right, false))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left, false)
+            && _tryConvertToReal(sctx, rightOperand, out var right, false)
+        )
             result = Math.Abs(left - right) < double.Epsilon;
 
         return result != null;
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left, false) &&
-            _tryConvertToReal(sctx, rightOperand, out var right, false))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left, false)
+            && _tryConvertToReal(sctx, rightOperand, out var right, false)
+        )
             result = Math.Abs(left - right) >= double.Epsilon;
 
         return result != null;
     }
 
     public override bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
             result = left > right;
 
         return result != null;
@@ -318,24 +379,33 @@ public class RealPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
             result = left >= right;
 
         return result != null;
     }
 
     public override bool LessThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
             result = left < right;
 
         return result != null;
@@ -345,18 +415,25 @@ public class RealPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
-        if (_tryConvertToReal(sctx, leftOperand, out var left) &&
-            _tryConvertToReal(sctx, rightOperand, out var right))
+        if (
+            _tryConvertToReal(sctx, leftOperand, out var left)
+            && _tryConvertToReal(sctx, rightOperand, out var right)
+        )
             result = left <= right;
 
         return result != null;
     }
 
-    public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool UnaryNegation(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         if (_tryConvertToReal(sctx, operand, out var op))
@@ -365,7 +442,11 @@ public class RealPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool Increment(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         if (_tryConvertToReal(sctx, operand, out var op))
@@ -374,7 +455,11 @@ public class RealPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool Decrement(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         if (_tryConvertToReal(sctx, operand, out var op))

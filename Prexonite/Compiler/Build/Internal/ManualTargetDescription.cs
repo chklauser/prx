@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -9,6 +7,7 @@ namespace Prexonite.Compiler.Build.Internal;
 class ManualTargetDescription : ITargetDescription
 {
     readonly ISource _source;
+
     /// <summary>
     /// The file name for symbols derived from the supplied reader. Can be null.
     /// </summary>
@@ -17,7 +16,13 @@ class ManualTargetDescription : ITargetDescription
 
     readonly List<Message>? _buildMessages;
 
-    internal ManualTargetDescription(ModuleName moduleName, ISource source, string? fileName, IEnumerable<ModuleName> dependencies, IEnumerable<Message>? buildMessages = null)
+    internal ManualTargetDescription(
+        ModuleName moduleName,
+        ISource source,
+        string? fileName,
+        IEnumerable<ModuleName> dependencies,
+        IEnumerable<Message>? buildMessages = null
+    )
     {
         if (moduleName == null)
             throw new ArgumentNullException(nameof(moduleName));
@@ -29,47 +34,60 @@ class ManualTargetDescription : ITargetDescription
         _dependencies = new(moduleName);
         _dependencies.AddRange(dependencies);
         if (buildMessages != null)
-            _buildMessages = [..buildMessages];
+            _buildMessages = [.. buildMessages];
     }
 
     public IReadOnlyCollection<ModuleName> Dependencies => _dependencies;
 
     public ModuleName Name { get; }
 
-    public IReadOnlyList<Message> BuildMessages => (IReadOnlyList<Message>?)_buildMessages ?? DefaultModuleTarget.NoMessages;
+    public IReadOnlyList<Message> BuildMessages =>
+        (IReadOnlyList<Message>?)_buildMessages ?? DefaultModuleTarget.NoMessages;
 
-    public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
+    public Task<ITarget> BuildAsync(
+        IBuildEnvironment build,
+        IDictionary<ModuleName, Task<ITarget>> dependencies,
+        CancellationToken token
+    )
     {
         return Task.Factory.StartNew(
             () =>
             {
-                var ldr = build.CreateLoader(new(null, null)
-                {
-                    EnforceDeterministicCodeOrder = true,
-                });
+                var ldr = build.CreateLoader(
+                    new(null, null) { EnforceDeterministicCodeOrder = true }
+                );
 
-                var aggregateMessages = dependencies.Values
-                    .SelectMany(t => t.Result.Messages);
-                var aggregateExceptions = dependencies.Values
-                    .Select(t => t.Result.Exception)
+                var aggregateMessages = dependencies.Values.SelectMany(t => t.Result.Messages);
+                var aggregateExceptions = dependencies
+                    .Values.Select(t => t.Result.Exception)
                     .OfType<Exception>();
                 if (dependencies.Values.All(t => t.Result.IsSuccessful))
                 {
                     try
                     {
                         if (!_source.TryOpen(out var reader))
-                            throw new BuildFailureException(this,
+                            throw new BuildFailureException(
+                                this,
                                 $"The source for target {Name} could not be opened.",
-                                []);
+                                []
+                            );
                         using (reader)
                         {
                             token.ThrowIfCancellationRequested();
-                            Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Building {0}.", this);
-                            // Hand compilation off to loader. 
-                            // If the description is backed by a file, allow inclusion of 
+                            Plan.Trace.TraceEvent(
+                                TraceEventType.Information,
+                                0,
+                                "Building {0}.",
+                                this
+                            );
+                            // Hand compilation off to loader.
+                            // If the description is backed by a file, allow inclusion of
                             // other files via relative paths.
                             FileInfo? fsContext;
-                            if (_fileName != null && (fsContext = new(_fileName)) is {DirectoryName: not null})
+                            if (
+                                _fileName != null
+                                && (fsContext = new(_fileName)) is { DirectoryName: not null }
+                            )
                             {
                                 ldr.LoadPaths.Push(fsContext.DirectoryName);
                             }
@@ -80,10 +98,21 @@ class ManualTargetDescription : ITargetDescription
                             ldr.LoadFromReader(reader, _fileName);
                             if (ldr.ErrorCount > 0 || ldr.Warnings.Count > 0)
                             {
-                                Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Build of {0} completed with {1} error(s) and {2} warning(s).", 
-                                    this, ldr.ErrorCount, ldr.Warnings.Count);
+                                Plan.Trace.TraceEvent(
+                                    TraceEventType.Error,
+                                    0,
+                                    "Build of {0} completed with {1} error(s) and {2} warning(s).",
+                                    this,
+                                    ldr.ErrorCount,
+                                    ldr.Warnings.Count
+                                );
                             }
-                            foreach (var msg in ldr.Infos.Append(ldr.Warnings).Append(ldr.Errors).OrderBy(m => m))
+                            foreach (
+                                var msg in ldr
+                                    .Infos.Append(ldr.Warnings)
+                                    .Append(ldr.Errors)
+                                    .OrderBy(m => m)
+                            )
                             {
                                 var evType = msg.Severity switch
                                 {
@@ -100,29 +129,60 @@ class ManualTargetDescription : ITargetDescription
                                 ldr.LoadPaths.Pop();
                             }
 
-                            Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Done with building {0}, wrapping result in target.", this);
+                            Plan.Trace.TraceEvent(
+                                TraceEventType.Verbose,
+                                0,
+                                "Done with building {0}, wrapping result in target.",
+                                this
+                            );
                         }
 
                         // ReSharper disable PossibleMultipleEnumeration
-                        return DefaultModuleTarget._FromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
+                        return DefaultModuleTarget._FromLoader(
+                            ldr,
+                            aggregateExceptions.ToArray(),
+                            aggregateMessages
+                        );
                     }
                     catch (Exception e)
                     {
-                        Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Exception while building {0}, constructing failure result. Exception: {1}", this, e);
-                        return DefaultModuleTarget._FromLoader(ldr, Extensions.Append(aggregateExceptions, e).ToArray(),
-                            aggregateMessages);
+                        Plan.Trace.TraceEvent(
+                            TraceEventType.Error,
+                            0,
+                            "Exception while building {0}, constructing failure result. Exception: {1}",
+                            this,
+                            e
+                        );
+                        return DefaultModuleTarget._FromLoader(
+                            ldr,
+                            Extensions.Append(aggregateExceptions, e).ToArray(),
+                            aggregateMessages
+                        );
                         // ReSharper restore PossibleMultipleEnumeration
                     }
                 }
                 else
                 {
-                    Plan.Trace.TraceEvent(TraceEventType.Error, 0,
+                    Plan.Trace.TraceEvent(
+                        TraceEventType.Error,
+                        0,
                         "Not all dependencies of {0} were built successfully. Waiting for other dependencies to finish and then return a failed target. Failed dependencies: {1}",
-                        this, dependencies.Where(d => !d.Value.Result.IsSuccessful).Select(d => d.Key).ToEnumerationString());
+                        this,
+                        dependencies
+                            .Where(d => !d.Value.Result.IsSuccessful)
+                            .Select(d => d.Key)
+                            .ToEnumerationString()
+                    );
                     Task.WaitAll(dependencies.Values.ToArray<Task>());
-                    return DefaultModuleTarget._FromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
+                    return DefaultModuleTarget._FromLoader(
+                        ldr,
+                        aggregateExceptions.ToArray(),
+                        aggregateMessages
+                    );
                 }
-            }, token);
+            },
+            token
+        );
     }
 
     public override string ToString()

@@ -1,5 +1,3 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 
@@ -9,24 +7,26 @@ public class Limit : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Limit()
-    {
-    }
+    Limit() { }
 
     public static Limit Instance { get; } = new();
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier ctxCarrier,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier ctxCarrier,
+        PValue[] args
+    )
     {
         if (ctxCarrier == null)
             throw new ArgumentNullException(nameof(ctxCarrier));
@@ -38,7 +38,7 @@ public class Limit : CoroutineCommand, ICilCompilerAware
 
         var i = 0;
         var sctx = ctxCarrier.StackContext;
-        var count = (int) args[0].ConvertTo(sctx, PType.Int, true).Value!;
+        var count = (int)args[0].ConvertTo(sctx, PType.Int, true).Value!;
 
         for (var j = 1; j < args.Length; j++)
         {

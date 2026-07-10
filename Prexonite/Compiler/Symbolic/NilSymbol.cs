@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Symbolic;
@@ -9,9 +7,12 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
 {
     #region Overrides of Symbol
 
-    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    public override TResult HandleWith<TArg, TResult>(
+        ISymbolHandler<TArg, TResult> handler,
+        TArg argument
+    )
     {
-        return handler.HandleNil(this,argument);
+        return handler.HandleNil(this, argument);
     }
 
     public override bool TryGetNilSymbol([NotNullWhen(true)] out NilSymbol? nilSymbol)
@@ -22,8 +23,10 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
 
     public override bool Equals(Symbol? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return other is NilSymbol otherRef && Equals(otherRef);
     }
 
@@ -48,8 +51,10 @@ public sealed class NilSymbol : Symbol, IEquatable<NilSymbol>
 
     public bool Equals(NilSymbol? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return true;
     }
 

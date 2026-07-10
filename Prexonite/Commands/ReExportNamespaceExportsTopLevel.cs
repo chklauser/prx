@@ -11,10 +11,14 @@ public class ReExportNamespaceExportsTopLevel(Loader loader) : ICommand
     {
         if (args.Length < 1)
         {
-            throw new PrexoniteException("Re-exporting namespace export at the top level requires at least one argument.");
+            throw new PrexoniteException(
+                "Re-exporting namespace export at the top level requires at least one argument."
+            );
         }
 
-        var nsPathBuf = Map._ToEnumerable(sctx, args[0]).Select(x => x.CallToString(sctx)).ToImmutableArray();
+        var nsPathBuf = Map._ToEnumerable(sctx, args[0])
+            .Select(x => x.CallToString(sctx))
+            .ToImmutableArray();
         if (nsPathBuf.Length == 0)
         {
             return PType.Null;
@@ -25,9 +29,14 @@ public class ReExportNamespaceExportsTopLevel(Loader loader) : ICommand
 
         while (nsPath.Length > 0)
         {
-            if (!currentScope.TryGet(nsPath[0], out var resolved) || !resolved.TryGetNamespaceSymbol(out var resolvedNs))
+            if (
+                !currentScope.TryGet(nsPath[0], out var resolved)
+                || !resolved.TryGetNamespaceSymbol(out var resolvedNs)
+            )
             {
-                throw new PrexoniteException($"Cannot find '{nsPath[0]}' of namespace '{string.Join(".", nsPathBuf)}'.");
+                throw new PrexoniteException(
+                    $"Cannot find '{nsPath[0]}' of namespace '{string.Join(".", nsPathBuf)}'."
+                );
             }
 
             currentScope = resolvedNs.Namespace;

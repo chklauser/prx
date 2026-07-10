@@ -1,4 +1,3 @@
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstExplicitLabel : AstNode
@@ -12,9 +11,7 @@ public class AstExplicitLabel : AstNode
     }
 
     internal AstExplicitLabel(Parser p, string label)
-        : this(p.scanner.File, p.t.line, p.t.col, label)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, label) { }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {

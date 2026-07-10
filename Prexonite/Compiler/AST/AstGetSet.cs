@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Text;
 
@@ -7,9 +5,8 @@ namespace Prexonite.Compiler.Ast;
 
 public abstract class AstGetSet : AstExpr, IAstHasExpressions
 {
-    protected AstGetSet(ISourcePosition position) : base(position)
-    {
-    }
+    protected AstGetSet(ISourcePosition position)
+        : base(position) { }
 
     public abstract ArgumentsProxy Arguments { [DebuggerNonUserCode] get; }
 
@@ -33,8 +30,12 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
             var arg = Arguments[i];
             if (arg == null)
                 throw new PrexoniteException(
-                    "Invalid (null) argument in GetSet node (" + ToString() +
-                    ") detected at position " + Arguments.IndexOf(arg) + ".");
+                    "Invalid (null) argument in GetSet node ("
+                        + ToString()
+                        + ") detected at position "
+                        + Arguments.IndexOf(arg)
+                        + "."
+                );
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
                 Arguments[i] = oArg;
@@ -53,14 +54,12 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
         EmitArguments(target, duplicateLast, DefaultAdditionalArguments);
     }
 
-    protected void EmitArguments(CompilerTarget target, bool duplicateLast,
-        int additionalArguments)
+    protected void EmitArguments(CompilerTarget target, bool duplicateLast, int additionalArguments)
     {
         object? lastArg = null;
         foreach (AstExpr expr in Arguments)
         {
-            Debug.Assert(expr != null,
-                "Argument list of get-set-complex contains null reference");
+            Debug.Assert(expr != null, "Argument list of get-set-complex contains null reference");
             if (ReferenceEquals(lastArg, expr))
                 target.EmitDuplicate(Position);
             else
@@ -130,8 +129,9 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
     public virtual NodeApplicationState CheckNodeApplicationState()
     {
         return new(
-            Arguments.Any(AstPartiallyApplicable.IsPlaceholder), 
-            Arguments.Any(AstPartiallyApplicable.IsArgumentSplice));
+            Arguments.Any(AstPartiallyApplicable.IsPlaceholder),
+            Arguments.Any(AstPartiallyApplicable.IsArgumentSplice)
+        );
     }
 
     public abstract AstGetSet GetCopy();
@@ -139,8 +139,7 @@ public abstract class AstGetSet : AstExpr, IAstHasExpressions
     public override string ToString()
     {
         string typeName;
-        var name = Enum.GetName(typeof (PCall), Call);
-        return
-            $"{name?.ToLowerInvariant() ?? "-"}: {((typeName = GetType().Name).StartsWith(nameof(AstGetSet)) ? typeName[9..] : typeName)}";
+        var name = Enum.GetName(typeof(PCall), Call);
+        return $"{name?.ToLowerInvariant() ?? "-"}: {((typeName = GetType().Name).StartsWith(nameof(AstGetSet)) ? typeName[9..] : typeName)}";
     }
 }

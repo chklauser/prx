@@ -1,12 +1,14 @@
-
-
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
 
 sealed class VersionConflictException : Exception
 {
-    public VersionConflictException(ModuleName existingModule, ModuleName newModule, ModuleName offendingModule)
+    public VersionConflictException(
+        ModuleName existingModule,
+        ModuleName newModule,
+        ModuleName offendingModule
+    )
     {
         ExistingModule = existingModule;
         NewModule = newModule;

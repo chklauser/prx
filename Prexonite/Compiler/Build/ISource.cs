@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Build;
 
 public interface ISource

@@ -11,7 +11,8 @@ public abstract class BuiltInTypeCommandBase : PartialMacroCommand
     protected abstract string OperationName { get; }
     public string RegistryId { get; }
 
-    protected BuiltInTypeCommandBase(string id, string registryId) : base(id)
+    protected BuiltInTypeCommandBase(string id, string registryId)
+        : base(id)
     {
         RegistryId = registryId;
     }
@@ -19,19 +20,24 @@ public abstract class BuiltInTypeCommandBase : PartialMacroCommand
     [PublicAPI]
     public const string SupportsTypeArgumentsId = @"pxs\supportsTypeArguments";
 
-    protected static bool SupportsFeature<T>(Loader ldr, AstNode node, string metaSwitchId) where T: MacroCommand
+    protected static bool SupportsFeature<T>(Loader ldr, AstNode node, string metaSwitchId)
+        where T : MacroCommand
     {
-        if (node is AstExpand {Entity: {} entityRef})
+        if (node is AstExpand { Entity: { } entityRef })
         {
-            if (entityRef.TryGetMacroCommand(out var mCmdRef) 
+            if (
+                entityRef.TryGetMacroCommand(out var mCmdRef)
                 && mCmdRef.TryGetEntity(ldr, out var entity)
-                && entity is { Value: MacroCommand mCmd })
+                && entity is { Value: MacroCommand mCmd }
+            )
             {
                 return mCmd is T;
             }
-            else if (entityRef.TryGetFunction(out var funcRef)
-                     && funcRef.TryGetEntity(ldr, out var funcValue)
-                     && funcValue is {Value: PFunction func})
+            else if (
+                entityRef.TryGetFunction(out var funcRef)
+                && funcRef.TryGetEntity(ldr, out var funcValue)
+                && funcValue is { Value: PFunction func }
+            )
             {
                 return func.Meta[metaSwitchId].Switch;
             }
@@ -40,11 +46,13 @@ public abstract class BuiltInTypeCommandBase : PartialMacroCommand
                 return false;
             }
         }
-        else if (node is AstIndirectCall {Subject: AstReference {Entity: { } callRef}})
+        else if (node is AstIndirectCall { Subject: AstReference { Entity: { } callRef } })
         {
-            if (callRef.TryGetFunction(out var funcRef)
+            if (
+                callRef.TryGetFunction(out var funcRef)
                 && funcRef.TryGetEntity(ldr, out var funcValue)
-                && funcValue is {Value: PFunction func})
+                && funcValue is { Value: PFunction func }
+            )
             {
                 return func.Meta[metaSwitchId].Switch;
             }
@@ -58,8 +66,8 @@ public abstract class BuiltInTypeCommandBase : PartialMacroCommand
             return false;
         }
     }
-        
-    public static bool SupportsTypeArguments(Loader ldr, AstNode node) => 
+
+    public static bool SupportsTypeArguments(Loader ldr, AstNode node) =>
         SupportsFeature<BuiltInTypeCommandBase>(ldr, node, SupportsTypeArgumentsId);
 
     protected sealed override void DoExpand(MacroContext context)
@@ -73,29 +81,49 @@ public abstract class BuiltInTypeCommandBase : PartialMacroCommand
                 NumAdditionalArguments + 1,
                 context.Invocation.Arguments.Count
             );
-            context.ReportMessage(Message.Error(message, context.Invocation.Position, IncompleteMessageClass));
+            context.ReportMessage(
+                Message.Error(message, context.Invocation.Position, IncompleteMessageClass)
+            );
             return;
         }
 
-        if (context.GetOptimizedNode(context.Invocation.Arguments[0]) is not AstConstant {Constant: int arity})
+        if (
+            context.GetOptimizedNode(context.Invocation.Arguments[0])
+            is not AstConstant { Constant: int arity }
+        )
         {
-            context.ReportMessage(Message.Error(string.Format(Resources.BuiltInTypeCommandBase_DoExpand_0_for_type_1_requires_an_arity_integer_as_the_first_argument, "Static call", RegistryId), context.Invocation.Position, MessageClasses.IncompleteBuiltinStaticCall));
+            context.ReportMessage(
+                Message.Error(
+                    string.Format(
+                        Resources.BuiltInTypeCommandBase_DoExpand_0_for_type_1_requires_an_arity_integer_as_the_first_argument,
+                        "Static call",
+                        RegistryId
+                    ),
+                    context.Invocation.Position,
+                    MessageClasses.IncompleteBuiltinStaticCall
+                )
+            );
             return;
         }
-            
+
         var typeArguments = context.Invocation.Arguments.Skip(1).Take(arity);
         var typeExpr = new AstDynamicTypeExpression(context.Invocation.Position, RegistryId);
         typeExpr.Arguments.AddRange(typeArguments);
 
-        Instantiate(context, typeExpr,
+        Instantiate(
+            context,
+            typeExpr,
             context.Invocation.Arguments.Skip(1 + arity).Take(NumAdditionalArguments),
-            context.Invocation.Arguments.Skip(1 + arity + NumAdditionalArguments));
+            context.Invocation.Arguments.Skip(1 + arity + NumAdditionalArguments)
+        );
     }
 
-    protected abstract void Instantiate(MacroContext context, 
+    protected abstract void Instantiate(
+        MacroContext context,
         AstDynamicTypeExpression typeExpr,
-        IEnumerable<AstExpr> additionalArguments, 
-        IEnumerable<AstExpr> operationArguments);
+        IEnumerable<AstExpr> additionalArguments,
+        IEnumerable<AstExpr> operationArguments
+    );
 
     protected override bool DoExpandPartialApplication(MacroContext context)
     {

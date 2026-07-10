@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Commands.Core;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Modular;
@@ -27,7 +25,7 @@ public interface IAstPartiallyApplicable
     }
 
     /// <summary>
-    ///     Checks the node's immediate child nodes for <see cref="AstPlaceholder"/>s and 
+    ///     Checks the node's immediate child nodes for <see cref="AstPlaceholder"/>s and
     ///     <see cref="AstArgumentSplice"/>s.
     /// </summary>
     NodeApplicationState CheckNodeApplicationState();
@@ -48,9 +46,10 @@ public struct NodeApplicationState : IEquatable<NodeApplicationState>
     public bool HasArgumentSplices { get; }
     public static NodeApplicationState Closed = new(false, false);
 
-    public NodeApplicationState WithPlaceholders(bool newHasPlaceholders) => 
+    public NodeApplicationState WithPlaceholders(bool newHasPlaceholders) =>
         new(newHasPlaceholders, HasArgumentSplices);
-    public NodeApplicationState WithArgumentSpliced(bool newHasArgumentSplices) => 
+
+    public NodeApplicationState WithArgumentSpliced(bool newHasArgumentSplices) =>
         new(HasPlaceholders, newHasArgumentSplices);
 
     public NodeApplicationState(bool hasPlaceholders, bool hasArgumentSplices)
@@ -61,13 +60,15 @@ public struct NodeApplicationState : IEquatable<NodeApplicationState>
 
     public bool Equals(NodeApplicationState other)
     {
-        return HasPlaceholders == other.HasPlaceholders && HasArgumentSplices == other.HasArgumentSplices;
+        return HasPlaceholders == other.HasPlaceholders
+            && HasArgumentSplices == other.HasArgumentSplices;
     }
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        return obj is NodeApplicationState && Equals((NodeApplicationState) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        return obj is NodeApplicationState && Equals((NodeApplicationState)obj);
     }
 
     public override int GetHashCode()
@@ -103,8 +104,8 @@ public static class AstPartiallyApplicable
     /// <param name = "node">The <see cref = "AstNode" /> this method operates on.</param>
     /// <param name = "target">The compiler target to compile to.</param>
     /// <param name = "argv">Result of <see cref = "PreprocessPartialApplicationArguments" />.</param>
-    public static int EmitConstructorArguments<T>(T node, CompilerTarget target,
-        List<AstExpr> argv) where T : AstNode, IAstPartiallyApplicable
+    public static int EmitConstructorArguments<T>(T node, CompilerTarget target, List<AstExpr> argv)
+        where T : AstNode, IAstPartiallyApplicable
     {
         var mappings8 = new int[argv.Count];
         var closedArguments = new List<AstExpr>(argv.Count);
@@ -137,8 +138,11 @@ public static class AstPartiallyApplicable
     ///         Use <see cref = "PartialApplicationCommandBase.PackMappings32" /> to pack the
     ///         mappings into a more compact format.</para>
     /// </remarks>
-    public static void GetMapping(IList<AstExpr> arguments, IList<int> mappings8,
-        List<AstExpr> closedArguments)
+    public static void GetMapping(
+        IList<AstExpr> arguments,
+        IList<int> mappings8,
+        List<AstExpr> closedArguments
+    )
     {
         for (var i = 0; i < arguments.Count; i++)
         {
@@ -166,7 +170,8 @@ public static class AstPartiallyApplicable
     /// <param name = "arguments">Arguments for the partial call (including things like the call subject)</param>
     /// <returns>A preprocessed copy of the supplied arguments, ready for <see cref = "EmitConstructorArguments{T}" />.</returns>
     public static List<AstExpr> PreprocessPartialApplicationArguments(
-        IEnumerable<AstExpr> arguments)
+        IEnumerable<AstExpr> arguments
+    )
     {
         var processedArgv = arguments.ToList();
         var placeholders = processedArgv.MapMaybe(n => n as AstPlaceholder).ToList();
@@ -187,15 +192,17 @@ public static class AstPartiallyApplicable
     }
 
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    static void _removeRedundantPlaceholders(List<AstExpr> argv,
-        IEnumerable<AstPlaceholder> placeholders)
+    static void _removeRedundantPlaceholders(
+        List<AstExpr> argv,
+        IEnumerable<AstPlaceholder> placeholders
+    )
     {
-        //Placeholders are redundant iff they map an open argument that would be supplied 
+        //Placeholders are redundant iff they map an open argument that would be supplied
         //  by the excess arguments mechanism anyway.
         //
         //      println(x,?0)
-        //  Here the mapping of the first argument is redundant because the first excess 
-        //  argument would be mapped to that same position anyway. 
+        //  Here the mapping of the first argument is redundant because the first excess
+        //  argument would be mapped to that same position anyway.
         //
         //      println(?1,x,?3,?0,?2)
         //  Here only the last ?2 is redundant.
@@ -222,7 +229,7 @@ public static class AstPartiallyApplicable
         if (numUsages.Contains(0))
             return;
 
-        //Redundant placeholders only occur in a placeholder-only postfix with strictly 
+        //Redundant placeholders only occur in a placeholder-only postfix with strictly
         //  ascending indices, that have not been mapped before. Find that postfix
         var lastIndex = int.MaxValue;
         int postfixIndex;
@@ -257,7 +264,7 @@ public static class AstPartiallyApplicable
         var excessIndex = numUsages.Length - 1;
         for (redundantIndex = argv.Count - 1; postfixIndex <= redundantIndex; redundantIndex--)
         {
-            var placeholder = (AstPlaceholder) argv[redundantIndex];
+            var placeholder = (AstPlaceholder)argv[redundantIndex];
             Debug.Assert(placeholder.Index != null);
 
             //find next potential excess argument
@@ -275,7 +282,8 @@ public static class AstPartiallyApplicable
     }
 
     public static bool IsPlaceholder(AstExpr expression) =>
-        expression is AstPlaceholder || expression is AstArgumentSplice {IsPlaceholderSplice: true};
+        expression is AstPlaceholder
+        || expression is AstArgumentSplice { IsPlaceholderSplice: true };
 
     public static bool IsArgumentSplice(AstExpr expression) => expression is AstArgumentSplice;
 }
@@ -286,7 +294,11 @@ public static class AstPartiallyApplicableExtensions
     {
         public AstExpr ConstFunc()
         {
-            var constCmd = new AstIndirectCall(expr.Position,PCall.Get, new AstReference(expr.Position,EntityRef.Command.Create(Const.Alias)));
+            var constCmd = new AstIndirectCall(
+                expr.Position,
+                PCall.Get,
+                new AstReference(expr.Position, EntityRef.Command.Create(Const.Alias))
+            );
             constCmd.Arguments.Add(expr);
             return constCmd;
         }
@@ -297,7 +309,7 @@ public static class AstPartiallyApplicableExtensions
         }
 
         public bool IsPlaceholder() =>
-            expr is AstPlaceholder || expr is AstArgumentSplice {IsPlaceholderSplice: true};
+            expr is AstPlaceholder || expr is AstArgumentSplice { IsPlaceholderSplice: true };
 
         public bool IsArgumentSplice() => expr is AstArgumentSplice;
     }
@@ -307,9 +319,12 @@ public static class AstPartiallyApplicableExtensions
         public AstExpr ConstFunc(object? constantValue)
         {
             if (constantValue != null)
-                return
-                    new AstConstant(position.File, position.Line, position.Column, constantValue).
-                        ConstFunc();
+                return new AstConstant(
+                    position.File,
+                    position.Line,
+                    position.Column,
+                    constantValue
+                ).ConstFunc();
             else
                 return new AstNull(position.File, position.Line, position.Column).ConstFunc();
         }
@@ -325,11 +340,16 @@ public static class AstPartiallyApplicableExtensions
         public AstExpr IdFunc()
         {
             if (!placeholder.Index.HasValue)
-                throw new ArgumentException(Resources.AstPartiallyApplicable_IdFunc_Placeholder_must_have_its_index_assigned_,
-                    nameof(placeholder));
+                throw new ArgumentException(
+                    Resources.AstPartiallyApplicable_IdFunc_Placeholder_must_have_its_index_assigned_,
+                    nameof(placeholder)
+                );
 
-            var call = new AstIndirectCall(placeholder.Position, PCall.Get,
-                new AstReference(placeholder.Position, EntityRef.Command.Create(Id.Alias)));
+            var call = new AstIndirectCall(
+                placeholder.Position,
+                PCall.Get,
+                new AstReference(placeholder.Position, EntityRef.Command.Create(Id.Alias))
+            );
             call.Arguments.Add(placeholder.GetCopy());
             return call;
         }

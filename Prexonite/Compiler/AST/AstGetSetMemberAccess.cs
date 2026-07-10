@@ -1,5 +1,3 @@
-
-
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast;
@@ -12,9 +10,7 @@ public class AstGetSetMemberAccess(
     PCall call,
     AstExpr subject,
     string id
-)
-    : AstGetSetImplBase(file, line, column, call),
-        IAstPartiallyApplicable
+) : AstGetSetImplBase(file, line, column, call), IAstPartiallyApplicable
 {
     public string Id { get; set; } = id;
     public AstExpr Subject { get; set; } = subject;
@@ -32,11 +28,8 @@ public class AstGetSetMemberAccess(
     }
 
     [PublicAPI]
-    public AstGetSetMemberAccess(
-        string file, int line, int column, AstExpr subject, string id)
-        : this(file, line, column, PCall.Get, subject, id)
-    {
-    }
+    public AstGetSetMemberAccess(string file, int line, int column, AstExpr subject, string id)
+        : this(file, line, column, PCall.Get, subject, id) { }
 
     public override int DefaultAdditionalArguments => base.DefaultAdditionalArguments + 1;
 
@@ -74,7 +67,7 @@ public class AstGetSetMemberAccess(
 
     public override string ToString()
     {
-        var name = Enum.GetName(typeof (PCall), Call);
+        var name = Enum.GetName(typeof(PCall), Call);
         return $"{name?.ToLowerInvariant() ?? "-"}: ({Subject}).{Id}{ArgumentsToString()}";
     }
 
@@ -82,10 +75,11 @@ public class AstGetSetMemberAccess(
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
     {
-        var argv =
-            AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton().Append(Arguments));
+        var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(
+            Subject.Singleton().Append(Arguments)
+        );
         var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
-        target.EmitConstant(Position, (int) Call);
+        target.EmitConstant(Position, (int)Call);
         target.EmitConstant(Position, Id);
         target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);
     }

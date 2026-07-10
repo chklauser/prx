@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 
 namespace Prexonite;
@@ -69,7 +67,7 @@ public abstract class PFunctionTable : ICollection<PFunction>
     /// <param name="arrayIndex">The index at which to put the first function.</param>
     /// <remarks>The order in which functions are written to the array is not specified.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="array"/> is null</exception>
-    /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is negative or not 
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is negative or not
     /// all functions fit into the remaining portion of the array.</exception>
     public abstract void CopyTo(PFunction[] array, int arrayIndex);
 
@@ -88,7 +86,7 @@ public abstract class PFunctionTable : ICollection<PFunction>
     /// </summary>
     /// <param name="item">The function to remove.</param>
     /// <returns>True if the function was removed; false otherwise</returns>
-    /// <remarks>This function returning false can mean that a) the table contains no function 
+    /// <remarks>This function returning false can mean that a) the table contains no function
     /// in that slot or b) that the function in that slot is different from the supplied function.</remarks>
     /// <exception cref="ArgumentNullException">item</exception>
     public abstract bool Remove(PFunction? item);

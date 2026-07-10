@@ -1,4 +1,3 @@
-﻿
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define UseIndex
 #endif
@@ -19,8 +18,7 @@ namespace Prexonite.Compiler;
 
 public class CompilerTarget : IHasMetaTable
 {
-    readonly LinkedList<AddressChangeHook> _addressChangeHooks =
-        new();
+    readonly LinkedList<AddressChangeHook> _addressChangeHooks = new();
 
     public ICollection<AddressChangeHook> AddressChangeHooks => _addressChangeHooks;
 
@@ -68,13 +66,14 @@ public class CompilerTarget : IHasMetaTable
     ///     Releases the macro session acquired via <see cref = "AcquireMacroSession" />. Will dispose of the session, if no other release is pending.
     /// </summary>
     /// <param name = "acquiredSession">A session previously acquired through <see cref = "AcquireMacroSession" />.</param>
-// ReSharper disable UnusedParameter.Global
+    // ReSharper disable UnusedParameter.Global
     public void ReleaseMacroSession(MacroSession acquiredSession)
-// ReSharper restore UnusedParameter.Global
+    // ReSharper restore UnusedParameter.Global
     {
         if (_macroSession != acquiredSession)
             throw new InvalidOperationException(
-                "Invalid call to CompilerTarget.ReleaseMacroSession. Trying to release macro session that doesn't match.");
+                "Invalid call to CompilerTarget.ReleaseMacroSession. Trying to release macro session that doesn't match."
+            );
         _macroSessionReferenceCounter--;
         if (_macroSessionReferenceCounter <= 0)
         {
@@ -100,7 +99,12 @@ public class CompilerTarget : IHasMetaTable
 
     [PublicAPI]
     [DebuggerStepThrough]
-    public CompilerTarget(Loader loader, PFunction? function, CompilerTarget? parentTarget = null, ISourcePosition? position = null)
+    public CompilerTarget(
+        Loader loader,
+        PFunction? function,
+        CompilerTarget? parentTarget = null,
+        ISourcePosition? position = null
+    )
     {
         if (loader == null)
             throw new ArgumentNullException(nameof(loader));
@@ -108,15 +112,19 @@ public class CompilerTarget : IHasMetaTable
         if (!ReferenceEquals(function.ParentApplication, loader.ParentApplication))
             throw new ArgumentException(
                 Resources.CompilerTarget_Cannot_create_for_foreign_function,
-                nameof(function));
+                nameof(function)
+            );
 
         Loader = loader;
         Function = function;
         ParentTarget = parentTarget;
         ImportScope = SymbolStore.Create(parentTarget?.Symbols ?? loader.Symbols);
-        Ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  
+        Ast = AstBlock.CreateRootBlock(
+            position ?? new SourcePosition("", -1, -1),
             SymbolStore.Create(ImportScope),
-            AstBlock.RootBlockName, Guid.NewGuid().ToString("N"));
+            AstBlock.RootBlockName,
+            Guid.NewGuid().ToString("N")
+        );
     }
 
     #endregion
@@ -139,9 +147,15 @@ public class CompilerTarget : IHasMetaTable
 
         foreach (var localRefId in MacroAliases.Aliases())
         {
-            Ast.Symbols.Declare(localRefId,
+            Ast.Symbols.Declare(
+                localRefId,
                 Symbol.CreateDereference(
-                    Symbol.CreateCall(EntityRef.Variable.Local.Create(localRefId), NoSourcePosition.Instance)));
+                    Symbol.CreateCall(
+                        EntityRef.Variable.Local.Create(localRefId),
+                        NoSourcePosition.Instance
+                    )
+                )
+            );
             OuterVariables.Add(localRefId);
             //remember: outer variables are not added as local variables
         }
@@ -162,8 +176,12 @@ public class CompilerTarget : IHasMetaTable
     /// <summary>
     ///     The boolean compiler meta key indicates that a function is part of the compiler and might not work outside of the original loader environment.
     /// </summary>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Metakey")] public const string CompilerMetakey = "compiler";
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Metakey"
+    )]
+    public const string CompilerMetakey = "compiler";
 
     class ProvidedValue : IIndirectCall
     {
@@ -191,7 +209,7 @@ public class CompilerTarget : IHasMetaTable
     /// <returns>A PVariable object that contains a reference to the supplied value (needs to be de-referenced)</returns>
     public static PVariable CreateReadonlyVariable(PValue value)
     {
-        return new() {Value = PType.Object.CreatePValue(new ProvidedValue(value))};
+        return new() { Value = PType.Object.CreatePValue(new ProvidedValue(value)) };
     }
 
     #region Temporary variables
@@ -220,8 +238,12 @@ public class CompilerTarget : IHasMetaTable
     public void FreeTemporaryVariable(string temporaryVariableId)
     {
         if (!_usedTemporaryVariables.Contains(temporaryVariableId))
-            throw new PrexoniteException("The variable " + temporaryVariableId +
-                " is not a temporary variable managed by " + this);
+            throw new PrexoniteException(
+                "The variable "
+                    + temporaryVariableId
+                    + " is not a temporary variable managed by "
+                    + this
+            );
 
         _usedTemporaryVariables.Remove(temporaryVariableId);
         _freeTemporaryVariables.Push(temporaryVariableId);
@@ -230,8 +252,12 @@ public class CompilerTarget : IHasMetaTable
     public void PromoteTemporaryVariable(string temporaryVariableId)
     {
         if (!_usedTemporaryVariables.Contains(temporaryVariableId))
-            throw new PrexoniteException("The variable " + temporaryVariableId +
-                " is not a temporary variable managed by " + this);
+            throw new PrexoniteException(
+                "The variable "
+                    + temporaryVariableId
+                    + " is not a temporary variable managed by "
+                    + this
+            );
 
         _usedTemporaryVariables.Remove(temporaryVariableId);
     }
@@ -384,7 +410,7 @@ public class CompilerTarget : IHasMetaTable
     public AstScopedBlock BeginBlock()
     {
         // ReSharper disable once IntroduceOptionalParameters.Global
-        return BeginBlock((string?) null);
+        return BeginBlock((string?)null);
     }
 
     [DebuggerStepThrough]
@@ -437,8 +463,7 @@ public class CompilerTarget : IHasMetaTable
         for (i = 0; i < code.Count; i++)
         {
             var ins = code[i];
-            if ((ins.IsJump || ins.OpCode == OpCode.leave)
-                && ins.Arguments > index) //decrementing target addresses pointing 
+            if ((ins.IsJump || ins.OpCode == OpCode.leave) && ins.Arguments > index) //decrementing target addresses pointing
                 //behind the removed instruction
                 code[i] = ins.With(arguments: ins.Arguments - count);
         }
@@ -458,14 +483,13 @@ public class CompilerTarget : IHasMetaTable
                 block.EndTry -= count;
 
             if (!block.IsValid)
-                throw new PrexoniteException
-                (
-                    "The try-catch-finally block (" + block +
-                    ") is not valid after optimization.");
+                throw new PrexoniteException(
+                    "The try-catch-finally block (" + block + ") is not valid after optimization."
+                );
 
             modifiedBlocks[i++] = block;
         }
-        Function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry) modifiedBlocks;
+        Function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry)modifiedBlocks;
 
         //Change custom addresses into this code (e.g., cil compiler hints)
         foreach (var hook in _addressChangeHooks)
@@ -489,8 +513,7 @@ public class CompilerTarget : IHasMetaTable
     public void RequireOuterVariable(string id)
     {
         if (ParentTarget == null)
-            throw new PrexoniteException(
-                "Cannot require outer variable from top-level function.");
+            throw new PrexoniteException("Cannot require outer variable from top-level function.");
 
         OuterVariables.Add(id);
         //Make parent functions hand down the variable, even if they don't use them themselves.
@@ -501,15 +524,18 @@ public class CompilerTarget : IHasMetaTable
         {
             var func = T.Function;
             // ReSharper disable RedundantJumpStatement
-            if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
-                T.OuterVariables.Contains(id))
+            if (
+                func.Variables.Contains(id)
+                || func.Parameters.Contains(id)
+                || T.OuterVariables.Contains(id)
+            )
                 return; //Parent can supply the variable/parameter. Stop search here.
             else if (T.ParentTarget != null)
                 T.RequireOuterVariable(id); //Order parent function to request outer variable
             else
-                throw new PrexoniteException
-                (
-                    $"{Function} references outer variable {id} which cannot be supplied by top-level function {func}");
+                throw new PrexoniteException(
+                    $"{Function} references outer variable {id} which cannot be supplied by top-level function {func}"
+                );
             // ReSharper restore RedundantJumpStatement
         }
     }
@@ -522,13 +548,14 @@ public class CompilerTarget : IHasMetaTable
             return false;
 
         //Check parents
-        for (var parent = ParentTarget;
-             parent != null;
-             parent = parent.ParentTarget)
+        for (var parent = ParentTarget; parent != null; parent = parent.ParentTarget)
         {
             func = parent.Function;
-            if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
-                parent.OuterVariables.Contains(id))
+            if (
+                func.Variables.Contains(id)
+                || func.Parameters.Contains(id)
+                || parent.OuterVariables.Contains(id)
+            )
                 return true;
         }
         return false;
@@ -546,31 +573,32 @@ public class CompilerTarget : IHasMetaTable
     internal Func<Parser, IList<AstExpr>> _ToCaptureByValue(IEnumerable<string> keepByRef)
     {
         keepByRef = new HashSet<string>(keepByRef);
-        var toPromote =
-            OuterVariables.Except(keepByRef).ToList();
+        var toPromote = OuterVariables.Except(keepByRef).ToList();
 
         //Declare locally, remove from outer variables and add as parameter to the end
         var exprs = new List<Func<Parser, AstExpr>>();
         foreach (var outer in toPromote)
         {
-            if(Symbols.TryGet(outer, out var sym))
+            if (Symbols.TryGet(outer, out var sym))
                 Symbols.Declare(outer, sym);
             OuterVariables.Remove(outer);
             Function.Parameters.Add(outer);
             {
                 //Copy the value for capture by value in closure
                 var byValOuter = outer;
-                exprs.Add(
-                    p =>
-                    {
-                        var pos = p.GetPosition();
-                        return Factory.IndirectCall(pos,
-                            Factory.Reference(pos,
-                                Loader.Cache.EntityRefs.GetCached(
-                                    EntityRef.Variable.Local.Create(
-                                        byValOuter))));
-                    }
-                );
+                exprs.Add(p =>
+                {
+                    var pos = p.GetPosition();
+                    return Factory.IndirectCall(
+                        pos,
+                        Factory.Reference(
+                            pos,
+                            Loader.Cache.EntityRefs.GetCached(
+                                EntityRef.Variable.Local.Create(byValOuter)
+                            )
+                        )
+                    );
+                });
             }
         }
 
@@ -632,9 +660,15 @@ public class CompilerTarget : IHasMetaTable
     }
 
     [DebuggerStepThrough]
-    public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName? moduleName)
+    public void Emit(
+        ISourcePosition position,
+        OpCode code,
+        int arguments,
+        string id,
+        ModuleName? moduleName
+    )
     {
-        Emit(position, new Instruction(code,arguments,id,moduleName));
+        Emit(position, new Instruction(code, arguments, id, moduleName));
     }
 
     #endregion //Low Level
@@ -729,8 +763,12 @@ public class CompilerTarget : IHasMetaTable
     }
 
     [DebuggerStepThrough]
-    public void EmitStaticGetCall(ISourcePosition position, int args, string callExpr,
-        bool justEffect)
+    public void EmitStaticGetCall(
+        ISourcePosition position,
+        int args,
+        string callExpr,
+        bool justEffect
+    )
     {
         Emit(position, Instruction.CreateStaticGetCall(args, callExpr, justEffect));
     }
@@ -742,15 +780,24 @@ public class CompilerTarget : IHasMetaTable
     }
 
     [DebuggerStepThrough]
-    public void EmitStaticGetCall(ISourcePosition position, int args, string typeId,
-        string memberId, bool justEffect)
+    public void EmitStaticGetCall(
+        ISourcePosition position,
+        int args,
+        string typeId,
+        string memberId,
+        bool justEffect
+    )
     {
         Emit(position, Instruction.CreateStaticGetCall(args, typeId, memberId, justEffect));
     }
 
     [DebuggerStepThrough]
-    public void EmitStaticGetCall(ISourcePosition position, int args, string typeId,
-        string memberId)
+    public void EmitStaticGetCall(
+        ISourcePosition position,
+        int args,
+        string typeId,
+        string memberId
+    )
     {
         EmitStaticGetCall(position, args, typeId, memberId, false);
     }
@@ -784,12 +831,18 @@ public class CompilerTarget : IHasMetaTable
     #region Functions/Commands
 
     [DebuggerStepThrough]
-    public void EmitFunctionCall(ISourcePosition position, int args,string id, ModuleName? moduleName, bool justEffect = false)
+    public void EmitFunctionCall(
+        ISourcePosition position,
+        int args,
+        string id,
+        ModuleName? moduleName,
+        bool justEffect = false
+    )
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
 
-        if(moduleName == Loader.ParentApplication.Module.Name)
+        if (moduleName == Loader.ParentApplication.Module.Name)
             moduleName = null;
         Emit(position, Instruction.CreateFunctionCall(args, id, justEffect, moduleName));
     }
@@ -915,7 +968,7 @@ public class CompilerTarget : IHasMetaTable
     /// The scope that import directives transfer their symbols into. Lies between the function's local scope and the surrounding scope.
     /// </summary>
     /// <remarks>
-    /// This means that imported symbols shadow the surrounding context but 
+    /// This means that imported symbols shadow the surrounding context but
     /// any local definitions (even when provided by the compiler) precede imported symbols.
     /// </remarks>
     public SymbolStore ImportScope { get; }
@@ -962,7 +1015,7 @@ public class CompilerTarget : IHasMetaTable
         }
     }
 
-    readonly SymbolTable<int> _labels = new(); 
+    readonly SymbolTable<int> _labels = new();
 
     public bool TryResolveLabel(string label, out int address)
     {
@@ -979,9 +1032,9 @@ public class CompilerTarget : IHasMetaTable
 
     /// <summary>
     ///     <para>Adds a new label entry to the self table and resolves any symbolic jumps to this label.</para>
-    ///     <para>If the destination is an unconditional jump, it's destination address will 
+    ///     <para>If the destination is an unconditional jump, it's destination address will
     ///         used instead of the supplied address.</para>
-    ///     <para>If the last instruction was a jump (conditional or unconditional) to this label, it 
+    ///     <para>If the last instruction was a jump (conditional or unconditional) to this label, it
     ///         is considered redundant and will be removed.</para>
     /// </summary>
     /// <param name = "position">The position in source code where this label originated.</param>
@@ -991,8 +1044,10 @@ public class CompilerTarget : IHasMetaTable
     public void EmitLabel(ISourcePosition position, string label, int address)
     {
         //Safety check
-        Debug.Assert(!_labels.ContainsKey(label),
-            $"Error, label {label} defined multiple times in {Function}, {position.File}");
+        Debug.Assert(
+            !_labels.ContainsKey(label),
+            $"Error, label {label} defined multiple times in {Function}, {position.File}"
+        );
 
         //resolve any unresolved jumps);
         var resolved = new List<int>();
@@ -1001,7 +1056,7 @@ public class CompilerTarget : IHasMetaTable
             var ins = Code[idx];
             if (Engine.StringsAreEqual(ins.Id, label))
             {
-                //Found a matching unresolved 
+                //Found a matching unresolved
 
                 //else
                 {
@@ -1070,11 +1125,19 @@ public class CompilerTarget : IHasMetaTable
                 pos = new SourcePosition("-unknown-", -1, -1);
             else
                 pos = Ast[0].Position;
-            Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                string.Format(
-                    Resources.CompilerTarget_ParameterNameReserved,
-                    Function.LogicalId, PFunction.ArgumentListId,
-                    Function.Parameters.IndexOf(PFunction.ArgumentListId)), pos,MessageClasses.ParameterNameReserved));
+            Loader.ReportMessage(
+                Message.Create(
+                    MessageSeverity.Error,
+                    string.Format(
+                        Resources.CompilerTarget_ParameterNameReserved,
+                        Function.LogicalId,
+                        PFunction.ArgumentListId,
+                        Function.Parameters.IndexOf(PFunction.ArgumentListId)
+                    ),
+                    pos,
+                    MessageClasses.ParameterNameReserved
+                )
+            );
         }
 
         _DetermineSharedNames();
@@ -1093,8 +1156,8 @@ public class CompilerTarget : IHasMetaTable
         //nops used by try-catch-finally with degenerate finally clauses
 
 #if UseIndex
-            if (Loader.Options.UseIndicesLocally)
-                _byIndex();
+        if (Loader.Options.UseIndicesLocally)
+            _byIndex();
 #endif
 
         _useInternalIdsWherePossible();
@@ -1107,7 +1170,7 @@ public class CompilerTarget : IHasMetaTable
     {
         // This method looks at instructions that refer to entities using a module-qualified name.
         //  If the module the target entity resides in is the same module as the one that contains
-        //  this function, we have an internal reference. 
+        //  this function, we have an internal reference.
         // Internal references are much easier to handle for both the CIL compiler and the interpreter.
         // We thus replace module-aware references with internal references.
 
@@ -1126,7 +1189,10 @@ public class CompilerTarget : IHasMetaTable
                 case OpCode.decglob:
                 case OpCode.func:
                 case OpCode.indglob:
-                    if (inst.ModuleName != null && inst.ModuleName.Equals(Loader.ParentApplication.Module.Name))
+                    if (
+                        inst.ModuleName != null
+                        && inst.ModuleName.Equals(Loader.ParentApplication.Module.Name)
+                    )
                         code[i] = inst.WithModuleName(null);
                     break;
             }
@@ -1140,7 +1206,7 @@ public class CompilerTarget : IHasMetaTable
         foreach (var outerVar in OuterVariables)
             outerVars[i++] = outerVar;
         if (i > 0)
-            Function.Meta[PFunction.SharedNamesKey] = (MetaEntry) outerVars;
+            Function.Meta[PFunction.SharedNamesKey] = (MetaEntry)outerVars;
     }
 
     #region Check unresolved Instructions
@@ -1149,10 +1215,11 @@ public class CompilerTarget : IHasMetaTable
     {
         //Check for unresolved instructions
         if (_unresolvedInstructions.Count > 0)
-            throw new PrexoniteException
-            (
-                "The instruction [ " + Function.Code[_unresolvedInstructions.First()] +
-                " ] has not been resolved.");
+            throw new PrexoniteException(
+                "The instruction [ "
+                    + Function.Code[_unresolvedInstructions.First()]
+                    + " ] has not been resolved."
+            );
     }
 
     #endregion
@@ -1184,9 +1251,9 @@ public class CompilerTarget : IHasMetaTable
                 addresses[current.Arguments] = true;
                 //Check for loop (uncond. jump targets another unconditional jump already visited
                 if (addresses[target.Arguments])
-                    throw new PrexoniteException
-                    (
-                        "Infinite loop in unconditional jump sequence detected.");
+                    throw new PrexoniteException(
+                        "Infinite loop in unconditional jump sequence detected."
+                    );
                 //Propagate address
                 current = current.With(arguments: target.Arguments, id: target.Id);
 
@@ -1209,25 +1276,22 @@ public class CompilerTarget : IHasMetaTable
 
     static bool _targetIsInRange(Instruction jump, int count)
     {
-        return jump.Arguments >= 0
-            && jump.Arguments < count;
+        return jump.Arguments >= 0 && jump.Arguments < count;
     }
 
     static bool _isValidJump(Instruction jump, int count)
     {
-        return
-            (jump.OpCode == OpCode.jump ||
-                jump.OpCode == OpCode.jump_f ||
-                jump.OpCode == OpCode.jump_t ||
-                jump.OpCode == OpCode.leave)
-            && _targetIsInRange(jump, count);
+        return (
+                jump.OpCode == OpCode.jump
+                || jump.OpCode == OpCode.jump_f
+                || jump.OpCode == OpCode.jump_t
+                || jump.OpCode == OpCode.leave
+            ) && _targetIsInRange(jump, count);
     }
 
     static bool _isValidUnconditionalJump(Instruction jump, int count)
     {
-        return
-            jump.OpCode == OpCode.jump
-            && _targetIsInRange(jump, count);
+        return jump.OpCode == OpCode.jump && _targetIsInRange(jump, count);
     }
 
     #endregion
@@ -1238,7 +1302,7 @@ public class CompilerTarget : IHasMetaTable
     ///     Detects and removes consecutive unconditional jumps.
     /// </summary>
     /// <remarks>
-    ///     <para>Since all jumps targeting unconditional jumps have been redirected by 
+    ///     <para>Since all jumps targeting unconditional jumps have been redirected by
     ///         <see cref = "_unconditionalJumpTargetPropagation" />, unconditional jumps that are preceded by an unconditional jump can no longer be reached directly.</para>
     ///     <code>
     ///         jump.f b
@@ -1314,10 +1378,9 @@ public class CompilerTarget : IHasMetaTable
                     //  jump.t n
                     //  label n
                     //  ...
-                    throw new PrexoniteException
-                    (
-                        "Redundant conditional jump to following instruction at address " +
-                        i);
+                    throw new PrexoniteException(
+                        "Redundant conditional jump to following instruction at address " + i
+                    );
                 }
             }
         }
@@ -1356,14 +1419,18 @@ public class CompilerTarget : IHasMetaTable
             /*  jump.f  after
              *  jump    somewhere
              *  label   after
-             * 
+             *
              * is equal to
-             * 
+             *
              *  jump.t  somewhere
              */
             if (condJ.IsConditionalJump)
             {
-                code[i] = new(Instruction.InvertJumpCondition(condJ.OpCode), uncondJ.Arguments, uncondJ.Id);
+                code[i] = new(
+                    Instruction.InvertJumpCondition(condJ.OpCode),
+                    uncondJ.Arguments,
+                    uncondJ.Id
+                );
                 RemoveInstructionAt(i + 1);
             }
             else
@@ -1386,64 +1453,68 @@ public class CompilerTarget : IHasMetaTable
 
 #if UseIndex
 
-        /// <summary>
-        ///     Replaces by-name opcodes with by-index ones. Ignores variables with no mapping.
-        /// </summary>
-        private void _byIndex()
+    /// <summary>
+    ///     Replaces by-name opcodes with by-index ones. Ignores variables with no mapping.
+    /// </summary>
+    private void _byIndex()
+    {
+        //Exclude the initialization function from this optimization
+        // as its table keeps changing as more code files are loaded into the VM.
+        if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
+            return;
+
+        var code = Function.Code;
+
+        Function.Declaration.CreateLocalVariableMapping();
+        var map = Function.LocalVariableMapping;
+        if (map == null)
+            throw new PrexoniteException(
+                "Local variable mapping of function " + Function.Id + " does not exist."
+            );
+
+        for (var i = 0; i < code.Count; i++)
         {
-            //Exclude the initialization function from this optimization
-            // as its table keeps changing as more code files are loaded into the VM.
-            if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
-                return;
-
-            var code = Function.Code;
-
-            Function.Declaration.CreateLocalVariableMapping();
-            var map = Function.LocalVariableMapping;
-            if (map == null)
-                throw new PrexoniteException("Local variable mapping of function " + Function.Id +
-                    " does not exist.");
-
-            for (var i = 0; i < code.Count; i++)
+            var ins = code[i];
+            OpCode nopc;
+            int idx;
+            switch (ins.OpCode)
             {
-                var ins = code[i];
-                OpCode nopc;
-                int idx;
-                switch (ins.OpCode)
-                {
-                    case OpCode.ldloc:
-                        nopc = OpCode.ldloci;
-                        goto replaceInt;
-                    case OpCode.stloc:
-                        nopc = OpCode.stloci;
-                        goto replaceInt;
-                    case OpCode.incloc:
-                        nopc = OpCode.incloci;
-                        goto replaceInt;
-                    case OpCode.decloc:
-                        nopc = OpCode.decloci;
-                        goto replaceInt;
-                    case OpCode.ldr_loc:
-                        nopc = OpCode.ldr_loci;
-                        replaceInt:
-                        if (ins.Id == null)
-                            throw new PrexoniteException(
-                                String.Format(
-                                    "Invalid instruction ({1}) in function {0}. Id missing.",
-                                    Function.Id, ins));
-                        if (!map.TryGetValue(ins.Id, out idx))
-                            continue;
-                        code[i] = new Instruction(nopc, idx);
-                        break;
-                    case OpCode.indloc:
-                        if (!map.TryGetValue(ins.Id!, out idx))
-                            continue;
-                        var argc = ins.Arguments;
-                        code[i] = Instruction.CreateIndLocI(idx, argc, ins.JustEffect);
-                        break;
-                }
+                case OpCode.ldloc:
+                    nopc = OpCode.ldloci;
+                    goto replaceInt;
+                case OpCode.stloc:
+                    nopc = OpCode.stloci;
+                    goto replaceInt;
+                case OpCode.incloc:
+                    nopc = OpCode.incloci;
+                    goto replaceInt;
+                case OpCode.decloc:
+                    nopc = OpCode.decloci;
+                    goto replaceInt;
+                case OpCode.ldr_loc:
+                    nopc = OpCode.ldr_loci;
+                    replaceInt:
+                    if (ins.Id == null)
+                        throw new PrexoniteException(
+                            String.Format(
+                                "Invalid instruction ({1}) in function {0}. Id missing.",
+                                Function.Id,
+                                ins
+                            )
+                        );
+                    if (!map.TryGetValue(ins.Id, out idx))
+                        continue;
+                    code[i] = new Instruction(nopc, idx);
+                    break;
+                case OpCode.indloc:
+                    if (!map.TryGetValue(ins.Id!, out idx))
+                        continue;
+                    var argc = ins.Arguments;
+                    code[i] = Instruction.CreateIndLocI(idx, argc, ins.JustEffect);
+                    break;
             }
         }
+    }
 
 #endif
 
@@ -1459,14 +1530,11 @@ public class CompilerTarget : IHasMetaTable
     public string GenerateLocalId(string? prefix)
     {
         prefix ??= "";
-        return
-            Function.Id + "\\" + prefix +
-            _nestedIdCounter++;
+        return Function.Id + "\\" + prefix + _nestedIdCounter++;
     }
 
     public ModuleName? ToInternalModule(ModuleName moduleName)
     {
         return moduleName == Function.ParentApplication.Module.Name ? null : moduleName;
     }
-
 }

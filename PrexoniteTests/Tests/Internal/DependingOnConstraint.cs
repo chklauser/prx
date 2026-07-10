@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using System.Linq;
 using NUnit.Framework.Constraints;
@@ -12,12 +10,14 @@ public class DependingOnConstraint : Constraint
 {
     readonly ModuleName _dependency;
 
-    public DependingOnConstraint(ModuleName dependency) : base(dependency)
+    public DependingOnConstraint(ModuleName dependency)
+        : base(dependency)
     {
         _dependency = dependency;
     }
 
-    public DependingOnConstraint(string name) : base(name)
+    public DependingOnConstraint(string name)
+        : base(name)
     {
         if (ModuleName.TryParse(name, out var moduleName))
             _dependency = moduleName;
@@ -35,6 +35,7 @@ public class DependingOnConstraint : Constraint
 
     bool _matches(object actualValue)
     {
-        return actualValue is ITargetDescription desc && desc.Dependencies.Any(n => n.Equals(_dependency));
+        return actualValue is ITargetDescription desc
+            && desc.Dependencies.Any(n => n.Equals(_dependency));
     }
 }

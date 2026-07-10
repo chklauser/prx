@@ -1,16 +1,10 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast;
 
 public abstract class AstGetSetImplBase : AstGetSet
 {
-    public override ArgumentsProxy Arguments
-    {
-        [DebuggerNonUserCode]
-        get;
-    }
+    public override ArgumentsProxy Arguments { [DebuggerNonUserCode] get; }
 
     #region IAstHasExpressions Members
 
@@ -23,9 +17,7 @@ public abstract class AstGetSetImplBase : AstGetSet
     #endregion
 
     protected AstGetSetImplBase(string file, int line, int column, PCall call)
-        : this(new SourcePosition(file,line,column), call)
-    {
-    }
+        : this(new SourcePosition(file, line, column), call) { }
 
     protected AstGetSetImplBase(ISourcePosition position, PCall call)
         : base(position)
@@ -35,7 +27,5 @@ public abstract class AstGetSetImplBase : AstGetSet
     }
 
     internal AstGetSetImplBase(Parser p, PCall call)
-        : this(p.scanner.File, p.t.line, p.t.col, call)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, call) { }
 }

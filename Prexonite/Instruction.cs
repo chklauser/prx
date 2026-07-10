@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
@@ -23,34 +21,34 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
 
     //Common arguments
     /// <summary>
-    ///     One of the instructions operands. Arguments is commonly used to hold the number of arguments take from 
-    ///     the stack. The field is also used to store other integer 
+    ///     One of the instructions operands. Arguments is commonly used to hold the number of arguments take from
+    ///     the stack. The field is also used to store other integer
     ///     operands like the target of a jump or the number of values to rotate, pop or duplicate from the stack.
     /// </summary>
     public readonly int Arguments;
 
     /// <summary>
-    ///     One of the instructions operands. Id is commonly used to store identifiers but also more 
+    ///     One of the instructions operands. Id is commonly used to store identifiers but also more
     ///     general call targets or type expressions.
     /// </summary>
     public readonly string? Id;
 
     /// <summary>
-    /// One of the instruction operands. The Name is used for cross-module references 
+    /// One of the instruction operands. The Name is used for cross-module references
     /// to functions and variables.
     /// </summary>
     public readonly ModuleName? ModuleName;
 
     /// <summary>
-    ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
-    ///     to store a boxed double value. The VM however uses this field to cache constant data 
+    ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real
+    ///     to store a boxed double value. The VM however uses this field to cache constant data
     ///     like evaluated type expressions or resolved call targets.
     /// </summary>
     public object? GenericArgument;
 
     /// <summary>
     ///     The just effect flag prevents certain operations from pushing their result back on the stack.
-    ///     This is useful in situations where only the side effect of an operation but not it's return value 
+    ///     This is useful in situations where only the side effect of an operation but not it's return value
     ///     is interesting, eliminating the need for an additional pop instruction.
     /// </summary>
     // ReSharper disable FieldCanBeMadeReadOnly.Global
@@ -72,11 +70,10 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// </remarks>
     [PublicAPI]
     public Instruction(OpCode opCode)
-// ReSharper disable RedundantArgumentDefaultValue // need to keep the defaults for overload resolution
-        : this(opCode, default,default(int))
-// ReSharper restore RedundantArgumentDefaultValue
-    {
-    }
+        // ReSharper disable RedundantArgumentDefaultValue // need to keep the defaults for overload resolution
+        : this(opCode, default, default(int))
+    // ReSharper restore RedundantArgumentDefaultValue
+    { }
 
     /// <summary>
     ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
@@ -87,11 +84,10 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
     public Instruction(OpCode opCode, string id)
-// ReSharper disable RedundantArgumentDefaultValue // need to keep the default(int) for overload resolution
-        : this(opCode,id,default)
-// ReSharper restore RedundantArgumentDefaultValue
-    {
-    }
+        // ReSharper disable RedundantArgumentDefaultValue // need to keep the default(int) for overload resolution
+        : this(opCode, id, default)
+    // ReSharper restore RedundantArgumentDefaultValue
+    { }
 
     /// <summary>
     ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
@@ -102,9 +98,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
     public Instruction(OpCode opCode, int arguments)
-        : this(opCode, default, arguments)
-    {
-    }
+        : this(opCode, default, arguments) { }
 
     /// <summary>
     ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
@@ -116,9 +110,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
     public Instruction(OpCode opCode, int arguments, string? id)
-        : this(opCode, id, arguments)
-    {
-    }
+        : this(opCode, id, arguments) { }
 
     /// <summary>
     ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
@@ -131,9 +123,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
     public Instruction(OpCode opCode, int arguments, string? id, bool justEffect)
-        : this(opCode, id, arguments, justEffect)
-    {
-    }
+        : this(opCode, id, arguments, justEffect) { }
 
     /// <summary>
     ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
@@ -146,9 +136,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
     public Instruction(OpCode opCode, int arguments, string? id, ModuleName? moduleName)
-        : this(opCode, id, arguments, default, moduleName)
-    {
-    }
+        : this(opCode, id, arguments, default, moduleName) { }
 
     /// <summary>
     ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
@@ -161,7 +149,13 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <remarks>
     ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
     /// </remarks>
-    public Instruction(OpCode opCode, string? id = default, int arguments = default, bool justEffect = false, ModuleName? moduleName = default)
+    public Instruction(
+        OpCode opCode,
+        string? id = default,
+        int arguments = default,
+        bool justEffect = false,
+        ModuleName? moduleName = default
+    )
     {
         OpCode = opCode;
         Arguments = arguments;
@@ -212,10 +206,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
 
     public static Instruction CreateConstant(double r)
     {
-        var ins = new Instruction(OpCode.ldc_real)
-        {
-            GenericArgument = r,
-        };
+        var ins = new Instruction(OpCode.ldc_real) { GenericArgument = r };
         return ins;
     }
 
@@ -273,7 +264,11 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     }
 
     public static Instruction CreateStaticGetCall(
-        int args, string typeId, string memberId, bool justEffect)
+        int args,
+        string typeId,
+        string memberId,
+        bool justEffect
+    )
     {
         return CreateStaticGetCall(args, typeId + "::" + memberId, justEffect);
     }
@@ -283,8 +278,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         return CreateStaticGetCall(arguments, typeId, memberId, false);
     }
 
-    public static Instruction CreateStaticGetCall(
-        int arguments, string callExpr, bool justEffect)
+    public static Instruction CreateStaticGetCall(int arguments, string callExpr, bool justEffect)
     {
         return new(OpCode.sget, arguments, callExpr, justEffect);
     }
@@ -299,9 +293,14 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         return new(OpCode.sset, arguments, callExpr);
     }
 
-    public static Instruction CreateFunctionCall(int arguments, string id, bool justEffect, ModuleName? moduleName)
+    public static Instruction CreateFunctionCall(
+        int arguments,
+        string id,
+        bool justEffect,
+        ModuleName? moduleName
+    )
     {
-        if(id == null)
+        if (id == null)
             throw new ArgumentNullException(nameof(id));
         return new(OpCode.func, id, arguments, justEffect, moduleName);
     }
@@ -331,12 +330,21 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         return CreateLocalIndirectCall(arguments, id, false);
     }
 
-    public static Instruction CreateGlobalIndirectCall(int arguments, string id, ModuleName moduleName, bool justEffect)
+    public static Instruction CreateGlobalIndirectCall(
+        int arguments,
+        string id,
+        ModuleName moduleName,
+        bool justEffect
+    )
     {
         return new(OpCode.indglob, id, arguments, justEffect, moduleName);
     }
 
-    public static Instruction CreateGlobalIndirectCall(int arguments, string id, ModuleName moduleName)
+    public static Instruction CreateGlobalIndirectCall(
+        int arguments,
+        string id,
+        ModuleName moduleName
+    )
     {
         return CreateGlobalIndirectCall(arguments, id, moduleName, false);
     }
@@ -355,12 +363,18 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     {
         if (index > ushort.MaxValue)
             throw new ArgumentOutOfRangeException(
-                nameof(index), index, "index must fit into an unsigned short integer.");
+                nameof(index),
+                index,
+                "index must fit into an unsigned short integer."
+            );
         if (arguments > ushort.MaxValue)
             throw new ArgumentOutOfRangeException(
-                nameof(arguments), arguments, "arguments must fit into an unsigned short integer.");
-        var idx = (ushort) index;
-        var argc = (ushort) arguments;
+                nameof(arguments),
+                arguments,
+                "arguments must fit into an unsigned short integer."
+            );
+        var idx = (ushort)index;
+        var argc = (ushort)arguments;
 
         return new(OpCode.indloci, (argc << 16) | idx, null, justEffect);
     }
@@ -450,15 +464,12 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
 
     public static Instruction CreateRotate(int rotations, int values)
     {
-        rotations = (values + rotations)%values;
+        rotations = (values + rotations) % values;
 
         if (rotations == 0)
             return new(OpCode.nop);
 
-        var ins = new Instruction(OpCode.rot, rotations)
-        {
-            GenericArgument = values,
-        };
+        var ins = new Instruction(OpCode.rot, rotations) { GenericArgument = values };
         return ins;
     }
 
@@ -495,15 +506,20 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         else if (jump == OpCode.jump_f)
             return OpCode.jump_t;
         else
-            throw new ArgumentException("The passed opcode must be a conditional jump.", nameof(jump));
+            throw new ArgumentException(
+                "The passed opcode must be a conditional jump.",
+                nameof(jump)
+            );
     }
 
     public bool IsFunctionExit
     {
         [DebuggerStepThrough]
         get =>
-            OpCode == OpCode.ret_value || OpCode == OpCode.ret_exit ||
-            OpCode == OpCode.ret_continue || OpCode == OpCode.ret_break;
+            OpCode == OpCode.ret_value
+            || OpCode == OpCode.ret_exit
+            || OpCode == OpCode.ret_continue
+            || OpCode == OpCode.ret_break;
     }
 
     #endregion
@@ -542,7 +558,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         }
 
         string? escModuleName;
-        if(ModuleName != null)
+        if (ModuleName != null)
         {
             escModuleName = StringPType.ToIdOrLiteral(ModuleName.Id) + "," + ModuleName.Version;
         }
@@ -614,7 +630,9 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                     //LOAD CONSTANT . REAL
                     case OpCode.ldc_real:
                         buffer.Append(" ");
-                        buffer.Append(((double?)GenericArgument ?? 0.0).ToString(CultureInfo.InvariantCulture));
+                        buffer.Append(
+                            ((double?)GenericArgument ?? 0.0).ToString(CultureInfo.InvariantCulture)
+                        );
                         return;
                     //LOAD CONSTANT . BOOL
                     case OpCode.ldc_bool:
@@ -643,12 +661,12 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                             buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
 
 #if DEBUG //Save some pace in the release build.
-                                if (Id != null)
-                                {
-                                    buffer.Append(" /* ");
-                                    buffer.Append(Id);
-                                    buffer.Append(" */");
-                                }
+                            if (Id != null)
+                            {
+                                buffer.Append(" /* ");
+                                buffer.Append(Id);
+                                buffer.Append(" */");
+                            }
 #endif
                         }
                         else
@@ -729,7 +747,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                             buffer.Append(escId);
                         }
 #if Verbose
-                            buffer.Append(" /*-------------------------------------*/");
+                        buffer.Append(" /*-------------------------------------*/");
 #endif
                         break;
                 }
@@ -750,8 +768,10 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <param name="other">An object to compare with this object.</param>
     public bool Equals(Instruction? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
 
         if (other.OpCode != OpCode)
             return false;
@@ -779,9 +799,9 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
             case OpCode.ldc_real:
                 if (!(other.GenericArgument is double))
                     return false;
-// ReSharper disable CompareOfFloatsByEqualityOperator // Instructions either have the same literal or they don't
+                // ReSharper disable CompareOfFloatsByEqualityOperator // Instructions either have the same literal or they don't
                 return (double?)GenericArgument == (double?)other.GenericArgument;
-// ReSharper restore CompareOfFloatsByEqualityOperator
+            // ReSharper restore CompareOfFloatsByEqualityOperator
             //INTEGER INSTRUCTIONS
             case OpCode.ldc_bool:
             case OpCode.ldc_int:
@@ -834,18 +854,16 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
             case OpCode.sget:
             case OpCode.sset:
             case OpCode.indloc:
-                return
-                    Arguments == other.Arguments &&
-                    Engine.StringsAreEqual(Id, other.Id) &&
-                    JustEffect == other.JustEffect;
+                return Arguments == other.Arguments
+                    && Engine.StringsAreEqual(Id, other.Id)
+                    && JustEffect == other.JustEffect;
             //ID+ARG+MODULE INSTRUCTIONS
             case OpCode.func:
             case OpCode.indglob:
-                return
-                    Arguments == other.Arguments &&
-                    Engine.StringsAreEqual(Id, other.Id) &&
-                    JustEffect == other.JustEffect &&
-                    Equals(ModuleName, other.ModuleName);
+                return Arguments == other.Arguments
+                    && Engine.StringsAreEqual(Id, other.Id)
+                    && JustEffect == other.JustEffect
+                    && Equals(ModuleName, other.ModuleName);
             //MODULE INSTRUCTIONS
             case OpCode.ldr_mod:
                 return Equals(ModuleName, other.ModuleName);
@@ -853,20 +871,17 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
             case OpCode.indarg:
             case OpCode.newcor:
             case OpCode.tail:
-                return
-                    Arguments == other.Arguments &&
-                    JustEffect == other.JustEffect;
+                return Arguments == other.Arguments && JustEffect == other.JustEffect;
             case OpCode.rot:
-                return
-                    Arguments == other.Arguments &&
-                    (int?)GenericArgument == (int?)other.GenericArgument;
+                return Arguments == other.Arguments
+                    && (int?)GenericArgument == (int?)other.GenericArgument;
             default:
                 throw new PrexoniteException("Invalid opcode " + OpCode);
         }
     }
 
     /// <summary>
-    /// Serves as a hash function for a particular type. 
+    /// Serves as a hash function for a particular type.
     /// </summary>
     /// <returns>
     /// A hash code for the current <see cref="T:System.Object"/>.
@@ -877,10 +892,10 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         unchecked
         {
             var result = OpCode.GetHashCode();
-            result = (result*397) ^ Arguments;
-            result = (result*397) ^ (Id != null ? Id.GetHashCode() : 0);
-            result = (result*397) ^ (ModuleName != null ? ModuleName.GetHashCode() : 0);
-            result = (result*397) ^ JustEffect.GetHashCode();
+            result = (result * 397) ^ Arguments;
+            result = (result * 397) ^ (Id != null ? Id.GetHashCode() : 0);
+            result = (result * 397) ^ (ModuleName != null ? ModuleName.GetHashCode() : 0);
+            result = (result * 397) ^ JustEffect.GetHashCode();
             return result;
         }
     }
@@ -922,7 +937,7 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
     /// <returns>A shallow clone of the instruction</returns>
     public Instruction Clone()
     {
-        return (Instruction) MemberwiseClone();
+        return (Instruction)MemberwiseClone();
     }
 
     #endregion
@@ -1037,16 +1052,39 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
         }
     }
 
-    public Instruction With(OpCode? opCode = null, int? arguments = null, string? id = null, bool? justEffect = null, ModuleName? moduleName = null)
+    public Instruction With(
+        OpCode? opCode = null,
+        int? arguments = null,
+        string? id = null,
+        bool? justEffect = null,
+        ModuleName? moduleName = null
+    )
     {
-        return new(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName ?? ModuleName);
+        return new(
+            opCode ?? OpCode,
+            id ?? Id,
+            arguments ?? Arguments,
+            justEffect ?? JustEffect,
+            moduleName ?? ModuleName
+        );
     }
 
-    public Instruction WithModuleName(ModuleName? moduleName, OpCode? opCode = null, int? arguments = null,
-        string? id = null, bool? justEffect = null)
+    public Instruction WithModuleName(
+        ModuleName? moduleName,
+        OpCode? opCode = null,
+        int? arguments = null,
+        string? id = null,
+        bool? justEffect = null
+    )
     {
         // This variant is necessary to allow the module name to be set to null
-        return new(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName);
+        return new(
+            opCode ?? OpCode,
+            id ?? Id,
+            arguments ?? Arguments,
+            justEffect ?? JustEffect,
+            moduleName
+        );
     }
 }
 
@@ -1103,21 +1141,25 @@ public enum OpCode
     ldr_app, //ldr.app       loads a reference to the current application
     ldr_eng, //ldr.eng       loads a reference to the current engine
     ldr_type, //ldr.type      loads a reference to a type (from a type expression)
-    ldr_mod, //ldr.mod      loads a module name 
+    ldr_mod, //ldr.mod      loads a module name
+
     // Variables (6)
     //  - local
     ldloc, //ldloc         loads the value of a local variable by name
     stloc, //stloc         stores a value into a local variable by name
     ldloci, //ldloci       loads the value of a local variable by index
     stloci, //stloci       stores a value into a local variable by index
+
     //  - global
     ldglob, //ldglob        loads the value of a global variable
     stglob, //stglob        stores a value into a global variable
+
     //Construction (4)
     newobj, //newobj        creates a new instance of a specified type
     newtype, //newtype       creates a new type instance
     newclo, //newclo        creates a new closure
     newcor, //newcor        creates a new coroutine
+
     //Operators (23)
     //  - unary
     incloc, //incloc        unary local increment operator by name
@@ -1128,50 +1170,74 @@ public enum OpCode
     decloci, //incloci     unary local decrement operator by index
     neg, //neg           unary negation operator
     not, //not           unary logical not operator
+
     //  - addition
     add, //add           binary addition operator
     sub, //sub           binary subtraction operator
+
     //  - multiplication
     mul, //mul           binary multiplication operator
     div, //div           binary division operator
     mod, //mod           binary modulus operator
+
     //  - exponential
     pow, //pow           binary power operator
+
     //  - comparision
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(ceq))] ceq, //ceq           binary equality operator
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(ceq)
+    )]
+    ceq, //ceq           binary equality operator
     cne, //cne           binary inequality operator
     clt, //clt           binary less-than operator
     cle, //cle           binary less-than-or-equal operator
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(cgt))] cgt, //cgt           binary greater-than operator
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(cge))] cge, //cge           binary greater-than-or-equal operator
+
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(cgt)
+    )]
+    cgt, //cgt           binary greater-than operator
+
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(cge)
+    )]
+    cge, //cge           binary greater-than-or-equal operator
+
     //  - bitwise
     or, //or            binary bitwise or operator
     and, //and           binary bitwise and operator
     xor, //xor           binary bitwise exclusive or operator
+
     //Type check + cast (5)
     check_const, //check         type check (type as operand)
     check_arg, //check         type check (type on stack)
     check_null, //check.null   check for null
     cast_const, //cast          explicit type cast (type as operand)
     cast_arg, //cast          explicit type cast (type on stack)
+
     //Object access (4)
     get, //get           performs a get call
     set, //set           performs a set call
     sget, //sget          performs a static get call
     sset, //sset          performs a static set call
+
     //Calls (4)
     func, //func          performs a function call
     cmd, //cmd           performs a command call
     indarg, //indarg        performs an indirect call on an operand
     tail,
+
     //tail            performs an indirect call (tries to turn it into an optimized tail call)
     //Indirect calls (3)
     indloc, //indloc        performs an indirect call on a local variable by name
     indloci, //indloci      performs an indriect call on a local variable by index
     indglob, //indglob       performs an indirect call on a global variable
+
     //Flow control (13)
     jump, //jump          jumps to an address
     jump_t, //jump.t        jumps to an address if a condition is true
@@ -1182,9 +1248,11 @@ public enum OpCode
     ret_continue, //ret.continue  exits the function in continue mode
     ret_set, //ret.set       grabs the return value from the stack and stores it
     @throw,
+
     //throw         Throws one argument (string or exception) from the stack as an exception.
     @try, //try            Initializes a try-finally-[catch] block
     leave,
+
     //leave         jumps depending on whether the context is currently in exception handling mode or not.
     exc, //exc              Pushes the current exception on top of the stack.
 

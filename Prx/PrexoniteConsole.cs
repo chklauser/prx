@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,14 +9,10 @@ using Resources = Prx.Properties.Resources;
 
 namespace Prx;
 
-public class PrexoniteConsole : SuperConsole,
-    ICommand,
-    IObject
+public class PrexoniteConsole : SuperConsole, ICommand, IObject
 {
     public PrexoniteConsole(bool colorfulConsole)
-        : base(colorfulConsole)
-    {
-    }
+        : base(colorfulConsole) { }
 
     public PValue? Tab { get; set; }
 
@@ -32,19 +26,25 @@ public class PrexoniteConsole : SuperConsole,
         return OnTab(attr, pref, root, sctx);
     }
 
-    public virtual IEnumerable<string> OnTab(string attr, string pref, string root,
-        StackContext? callingSctx)
+    public virtual IEnumerable<string> OnTab(
+        string attr,
+        string pref,
+        string root,
+        StackContext? callingSctx
+    )
     {
         if (callingSctx == null)
-            throw new ArgumentNullException(nameof(callingSctx),
-                Resources.PrexoniteConsole_OnTab_RequiresSctx);
+            throw new ArgumentNullException(
+                nameof(callingSctx),
+                Resources.PrexoniteConsole_OnTab_RequiresSctx
+            );
         if (Tab is { IsNull: false })
         {
             var plst = Tab.IndirectCall(callingSctx, pref, root);
-            plst.ConvertTo(callingSctx, PType.Object[typeof (IEnumerable)], true);
-            foreach (var o in (IEnumerable) plst.Value!)
+            plst.ConvertTo(callingSctx, PType.Object[typeof(IEnumerable)], true);
+            foreach (var o in (IEnumerable)plst.Value!)
             {
-                yield return ((PValue) o).CallToString(callingSctx);
+                yield return ((PValue)o).CallToString(callingSctx);
             }
         }
     }
@@ -78,8 +78,7 @@ public class PrexoniteConsole : SuperConsole,
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;
@@ -99,7 +98,8 @@ public class PrexoniteConsole : SuperConsole,
                 else
                 {
                     throw new PrexoniteException(
-                        "You cannot perform a set call with no arguments.");
+                        "You cannot perform a set call with no arguments."
+                    );
                 }
                 break;
             case "readline":

@@ -1,5 +1,3 @@
-
-
 using System;
 using Prexonite;
 using Prexonite.Types;

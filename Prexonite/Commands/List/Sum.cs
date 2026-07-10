@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -8,9 +6,7 @@ public class Sum : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    Sum()
-    {
-    }
+    Sum() { }
 
     public static Sum Instance { get; } = new();
 

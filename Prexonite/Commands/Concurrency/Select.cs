@@ -1,5 +1,3 @@
-
-
 using Prexonite.Commands.Core;
 using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
@@ -11,9 +9,7 @@ public class Select : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    Select()
-    {
-    }
+    Select() { }
 
     public static Select Instance { get; } = new();
 
@@ -30,7 +26,7 @@ public class Select : PCommand, ICilCompilerAware
     {
         bool performSubCall;
         if (args.Length > 0 && args[0].Type.ToBuiltIn() == PType.BuiltIn.Bool)
-            performSubCall = (bool) args[0].Value!;
+            performSubCall = (bool)args[0].Value!;
         else
             performSubCall = false;
 
@@ -41,15 +37,21 @@ public class Select : PCommand, ICilCompilerAware
             rawCases.AddRange(set);
         }
 
-        var appCases =
-            rawCases.Select(c => _isApplicable(sctx, c)).Where(x => x != null).OfType<PValue>().Select(_extract).
-                ToArray();
+        var appCases = rawCases
+            .Select(c => _isApplicable(sctx, c))
+            .Where(x => x != null)
+            .OfType<PValue>()
+            .Select(_extract)
+            .ToArray();
 
         return RunStatically(sctx, appCases, performSubCall);
     }
 
-    public static PValue RunStatically(StackContext sctx,
-        KeyValuePair<Channel?, PValue>[] appCases, bool performSubCall)
+    public static PValue RunStatically(
+        StackContext sctx,
+        KeyValuePair<Channel?, PValue>[] appCases,
+        bool performSubCall
+    )
     {
         //Check if there data is already available (i.e. if the select can be processed non-blocking)
         foreach (var kvp in appCases)
@@ -85,37 +87,44 @@ public class Select : PCommand, ICilCompilerAware
         }
     }
 
-    static PValue _invokeHandler(StackContext sctx, PValue handler, PValue? datum,
-        bool performSubCall)
+    static PValue _invokeHandler(
+        StackContext sctx,
+        PValue handler,
+        PValue? datum,
+        bool performSubCall
+    )
     {
-        var handlerArgv = datum != null ? new[] {datum} : Array.Empty<PValue>();
+        var handlerArgv = datum != null ? new[] { datum } : Array.Empty<PValue>();
         return performSubCall
-            ? CallSubPerform.RunStatically(sctx, handler, handlerArgv,
-                useIndirectCallAsFallback: true)
+            ? CallSubPerform.RunStatically(
+                sctx,
+                handler,
+                handlerArgv,
+                useIndirectCallAsFallback: true
+            )
             : handler.IndirectCall(sctx, handlerArgv.AsSpan());
     }
 
-    static readonly PType _chanType = PType.Object[typeof (Channel)];
+    static readonly PType _chanType = PType.Object[typeof(Channel)];
 
     static PValue? _isApplicable(StackContext sctx, PValue selectCase)
     {
         if (selectCase.Type == PValueKeyValuePair.ObjectType)
         {
-            var kvp = (PValueKeyValuePair) selectCase.Value!;
+            var kvp = (PValueKeyValuePair)selectCase.Value!;
             var key = kvp.Key;
             if (key.Type == _chanType)
                 return selectCase;
             else
             {
                 if (key.Type.ToBuiltIn() == PType.BuiltIn.Bool)
-                    if ((bool) key.Value!)
+                    if ((bool)key.Value!)
                         return kvp.Value;
                     else
                         return null;
                 else if (key.Value == null)
                     return null;
-                else if (Runtime.ExtractBool(key.IndirectCall(sctx),
-                             sctx))
+                else if (Runtime.ExtractBool(key.IndirectCall(sctx), sctx))
                     return kvp.Value;
                 else
                     return null;
@@ -131,28 +140,30 @@ public class Select : PCommand, ICilCompilerAware
     {
         if (c.Type == PValueKeyValuePair.ObjectType)
         {
-            var kvp = (PValueKeyValuePair) c.Value!;
+            var kvp = (PValueKeyValuePair)c.Value!;
 
             if (kvp.Value.Type == PValueKeyValuePair.ObjectType)
             {
-                kvp = (PValueKeyValuePair) kvp.Value.Value!;
+                kvp = (PValueKeyValuePair)kvp.Value.Value!;
             }
 
             var key = kvp.Key;
 
             if (key.Type == _chanType)
-                return new((Channel) kvp.Key.Value!, kvp.Value);
+                return new((Channel)kvp.Key.Value!, kvp.Value);
             else if (key.Value == null)
                 return new(null, kvp.Value);
             else
                 throw new PrexoniteException(
-                    "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] ). Offending value " +
-                    c.Value);
+                    "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] ). Offending value "
+                        + c.Value
+                );
         }
         else if (c.Type == _chanType)
         {
             throw new PrexoniteException(
-                "Missing handler in select clause. Syntax: select( [channel: handler] ) or select( [cond:channel:handler] )");
+                "Missing handler in select clause. Syntax: select( [channel: handler] ) or select( [cond:channel:handler] )"
+            );
         }
         else
         {
@@ -161,8 +172,11 @@ public class Select : PCommand, ICilCompilerAware
         }
     }
 
-    static void _split(IEnumerable<KeyValuePair<Channel?, PValue>> cases,
-        out Channel[] channels, out PValue[] handlers)
+    static void _split(
+        IEnumerable<KeyValuePair<Channel?, PValue>> cases,
+        out Channel[] channels,
+        out PValue[] handlers
+    )
     {
         var chanCases = cases.Where(kvp => kvp.Key != null).ToArray();
         var count = chanCases.Length;
@@ -186,8 +200,11 @@ public class Select : PCommand, ICilCompilerAware
 
     public void ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion

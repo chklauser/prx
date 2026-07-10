@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialCallStar : PartialApplicationBase
@@ -17,9 +15,7 @@ public class PartialCallStar : PartialApplicationBase
     readonly int _undirectedArgc;
 
     public PartialCallStar(int[] mappings, PValue[] closedArguments)
-        : this(new ArraySegment<int>(mappings), closedArguments)
-    {
-    }
+        : this(new ArraySegment<int>(mappings), closedArguments) { }
 
     public PartialCallStar(ArraySegment<int> mappings, PValue[] closedArguments)
         : base(_splitOffWrappingDirectives(ref mappings), closedArguments, 1)
@@ -35,30 +31,35 @@ public class PartialCallStar : PartialApplicationBase
     /// </summary>
     /// <param name = "rawMapping">[In] The combined mapping (unpacked); [Out] The list wrapping directives</param>
     /// <returns>The actual argument mapping. <see cref = "PartialApplicationBase.Mappings" />.</returns>
-    static ArraySegment<int> _splitOffWrappingDirectives(
-        ref ArraySegment<int> rawMapping)
+    static ArraySegment<int> _splitOffWrappingDirectives(ref ArraySegment<int> rawMapping)
     {
         if (rawMapping.Array == null)
         {
             return ArraySegment<int>.Empty;
         }
-        
+
         var dirCount = rawMapping.Array[rawMapping.Offset + rawMapping.Count - 1];
-        var actualMapping = new ArraySegment<int>(rawMapping.Array, rawMapping.Offset,
-            rawMapping.Count - dirCount - 1);
+        var actualMapping = new ArraySegment<int>(
+            rawMapping.Array,
+            rawMapping.Offset,
+            rawMapping.Count - dirCount - 1
+        );
         rawMapping = new(rawMapping.Array, rawMapping.Offset + actualMapping.Count, dirCount);
         return actualMapping;
     }
 
     #region Overrides of PartialApplicationBase
 
-    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-        PValue[] arguments)
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments, PValue[] arguments)
     {
         var effectiveArguments = new PValue[_getEffectiveArgc(arguments.Length)];
         var effIdx = 0;
         var argIdx = 0;
-        for (var i = _wrappingDirectives.Offset; i < _wrappingDirectives.Offset + _wrappingDirectives.Count; i++)
+        for (
+            var i = _wrappingDirectives.Offset;
+            i < _wrappingDirectives.Offset + _wrappingDirectives.Count;
+            i++
+        )
         {
             var directive = _wrappingDirectives.Array![i];
 
@@ -82,11 +83,17 @@ public class PartialCallStar : PartialApplicationBase
             }
         }
 
-        System.Diagnostics.Debug.Assert(effectiveArguments.Length - effIdx ==
-            arguments.Length - argIdx);
+        System.Diagnostics.Debug.Assert(
+            effectiveArguments.Length - effIdx == arguments.Length - argIdx
+        );
 
-        Array.Copy(arguments, argIdx, effectiveArguments, effIdx,
-            effectiveArguments.Length - effIdx);
+        Array.Copy(
+            arguments,
+            argIdx,
+            effectiveArguments,
+            effIdx,
+            effectiveArguments.Length - effIdx
+        );
 
         return nonArguments[0].IndirectCall(sctx, effectiveArguments);
     }
@@ -102,7 +109,11 @@ public class PartialCallStar : PartialApplicationBase
         directedArgc = 0;
         undirectedArgc = 0;
 
-        for (var i = _wrappingDirectives.Offset; i < _wrappingDirectives.Offset + _wrappingDirectives.Count; i++)
+        for (
+            var i = _wrappingDirectives.Offset;
+            i < _wrappingDirectives.Offset + _wrappingDirectives.Count;
+            i++
+        )
         {
             var directive = _wrappingDirectives.Array![i];
             System.Diagnostics.Debug.Assert(directive != 0);

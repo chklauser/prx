@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Commands.Core.Operators;
 
@@ -8,23 +6,19 @@ namespace Prexonite.Compiler.Ast;
 public class AstForLoop : AstLoop
 {
     public AstForLoop(ISourcePosition position, AstBlock parentBlock)
-        : this(position, new(
+        : this(
             position,
-            new AstScopedBlock(
-                position, 
-                parentBlock, prefix: "init"),
-            prefix:"next"))
-    {
-    }
+            new(position, new AstScopedBlock(position, parentBlock, prefix: "init"), prefix: "next")
+        ) { }
 
     /// <summary>
     /// This constructor should only be called from the public constructor.
-    /// It is just here to wire up the loop block to be a sub block of the 
-    /// initialization and next iteration blocks. (So that symbols declared in 
+    /// It is just here to wire up the loop block to be a sub block of the
+    /// initialization and next iteration blocks. (So that symbols declared in
     /// initialization are available in the loop body)
     /// </summary>
     /// <param name="position">The source position for this node and all block nodes.</param>
-    /// <param name="nextBlock">The block reserved for the "next iteration" code. 
+    /// <param name="nextBlock">The block reserved for the "next iteration" code.
     /// It's parent block must be the initialization block.</param>
     AstForLoop(ISourcePosition position, AstScopedBlock nextBlock)
         : base(position, nextBlock)
@@ -47,8 +41,10 @@ public class AstForLoop : AstLoop
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Value)
-            throw new NotSupportedException("For loops don't produce values and can thus not be emitted with value semantics.");
+        if (stackSemantics == StackSemantics.Value)
+            throw new NotSupportedException(
+                "For loops don't produce values and can thus not be emitted with value semantics."
+            );
 
         if (!IsInitialized)
             throw new PrexoniteException("AstForLoop requires Condition to be set.");
@@ -69,13 +65,11 @@ public class AstForLoop : AstLoop
         if (condition is AstConstant constCond)
         {
             if (
-                !constCond.ToPValue(target).TryConvertTo(
-                    target.Loader,
-                    PType.Bool,
-                    out var condValue))
-            {
-            }
-            else if ((bool) condValue.Value! == IsPositive)
+                !constCond
+                    .ToPValue(target)
+                    .TryConvertTo(target.Loader, PType.Bool, out var condValue)
+            ) { }
+            else if ((bool)condValue.Value! == IsPositive)
                 conditionIsConstant = true;
             else
             {
@@ -139,8 +133,7 @@ public class AstForLoop : AstLoop
                 NextIteration.EmitValueCode(target);
                 target.EndBlock();
                 target.EmitLabel(Position, conditionLabel);
-                AstLazyLogical.EmitJumpCondition(
-                    target, condition, Block.BeginLabel, IsPositive);
+                AstLazyLogical.EmitJumpCondition(target, condition, Block.BeginLabel, IsPositive);
                 target.EndBlock();
             }
         }
@@ -174,12 +167,7 @@ public class AstForLoop : AstLoop
     {
         get
         {
-            var blocks = new List<AstBlock>(base.Blocks)
-            {
-                Initialize,
-                NextIteration,
-                Block,
-            };
+            var blocks = new List<AstBlock>(base.Blocks) { Initialize, NextIteration, Block };
             return blocks.ToArray();
         }
     }

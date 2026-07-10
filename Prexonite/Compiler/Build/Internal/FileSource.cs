@@ -1,5 +1,3 @@
-﻿
-
 using System.Text;
 
 namespace Prexonite.Compiler.Build.Internal;
@@ -24,7 +22,7 @@ public class FileSource : ISource
 
     public bool TryOpen([NotNullWhen(true)] out TextReader? reader)
     {
-        if(!File.Exists)
+        if (!File.Exists)
         {
             reader = null;
             return false;
@@ -32,7 +30,7 @@ public class FileSource : ISource
 
         try
         {
-            reader = new StreamReader(File.FullName,Encoding);
+            reader = new StreamReader(File.FullName, Encoding);
             return true;
         }
         catch (FileNotFoundException)

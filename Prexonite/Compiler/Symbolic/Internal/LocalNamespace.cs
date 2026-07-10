@@ -1,13 +1,13 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic.Internal;
 
 /// <summary>
-/// A module-local namespace declaration. 
+/// A module-local namespace declaration.
 /// Inherits symbols from namespaces with the same name exported from referenced modules.
 /// </summary>
 /// <remarks>
-/// To create a new instance, use <see cref="ModuleLevelView.CreateLocalNamespace"/> on any of 
+/// To create a new instance, use <see cref="ModuleLevelView.CreateLocalNamespace"/> on any of
 /// the module level view associated with the module that the namespace is supposed to be local to.
 /// </remarks>
 public abstract class LocalNamespace : Namespace
@@ -23,7 +23,7 @@ public abstract class LocalNamespace : Namespace
     public abstract string? Prefix { get; set; }
 
     /// <summary>
-    /// Uses the <see cref="Prefix"/> to derive a physical name for a given logical name. 
+    /// Uses the <see cref="Prefix"/> to derive a physical name for a given logical name.
     /// </summary>
     /// <param name="logicalName">The logical name to derive a physical name from.</param>
     /// <returns>A physical name, related to the logical name provided.</returns>
@@ -34,13 +34,14 @@ public abstract class LocalNamespace : Namespace
             throw new ArgumentNullException(nameof(logicalName));
         if (Prefix == null)
             throw new InvalidOperationException(
-                "Cannot derive physical name before a prefix has been assigned to the namespace.");
+                "Cannot derive physical name before a prefix has been assigned to the namespace."
+            );
 
         return Prefix + "\\" + logicalName;
     }
 
     #endregion
-        
+
     #region Exports (logical namespace)
 
     /// <summary>
@@ -68,5 +69,4 @@ public abstract class LocalNamespace : Namespace
     public abstract void DeclareExports(IEnumerable<KeyValuePair<string, Symbol>> exportScope);
 
     #endregion
-
 }

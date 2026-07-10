@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 using System.Diagnostics;
@@ -28,9 +27,13 @@ public sealed class CompilerState : StackContext
     public string EffectiveArgumentsListId =>
         _effectiveArgumentsListId ??= PFunction.ArgumentListId;
 
-    public CompilerState
-    (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass pass,
-        FunctionLinking linking)
+    public CompilerState(
+        PFunction source,
+        Engine targetEngine,
+        ILGenerator il,
+        CompilerPass pass,
+        FunctionLinking linking
+    )
     {
         Source = source ?? throw new ArgumentNullException(nameof(source));
         Linking = linking;
@@ -81,17 +84,22 @@ public sealed class CompilerState : StackContext
 
     #region Accessors
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Argc")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Argc"
+    )]
     public LocalBuilder ArgcLocal => _argcLocal ??= Il.DeclareLocal(typeof(int));
 
     LocalBuilder? _argcLocal;
 
     public PFunction Source { get; }
 
-    [SuppressMessage("Microsoft.Naming",
+    [SuppressMessage(
+        "Microsoft.Naming",
         "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Argv")]
+        MessageId = "Argv"
+    )]
     public LocalBuilder ArgvLocal => _argvLocal ??= Il.DeclareLocal(typeof(PValue[]));
     private LocalBuilder? _argvLocal;
 
@@ -123,7 +131,7 @@ public sealed class CompilerState : StackContext
     /// <summary>
     ///     <para>The local variable that holds arrays of shared variables immediately before closure instantiation</para>
     /// </summary>
-    public LocalBuilder SharedLocal => _sharedLocal ??= Il.DeclareLocal(typeof (PVariable[]));
+    public LocalBuilder SharedLocal => _sharedLocal ??= Il.DeclareLocal(typeof(PVariable[]));
 
     LocalBuilder? _sharedLocal;
 
@@ -138,10 +146,12 @@ public sealed class CompilerState : StackContext
     /// </summary>
     public LocalBuilder[] TempLocals
     {
-        get => _tempLocals ?? throw new InvalidOperationException("TempLocals have not been computed yet.");
+        get =>
+            _tempLocals
+            ?? throw new InvalidOperationException("TempLocals have not been computed yet.");
         internal set => _tempLocals = value;
     }
-    
+
     LocalBuilder[]? _tempLocals;
 
     /// <summary>
@@ -173,7 +183,7 @@ public sealed class CompilerState : StackContext
     ///     <para>Is not guaranteed to retain its value across instructions</para>
     /// </summary>
     public LocalBuilder PartialApplicationMappingLocal =>
-        _partialApplicationMapping ??= Il.DeclareLocal(typeof (int[]));
+        _partialApplicationMapping ??= Il.DeclareLocal(typeof(int[]));
 
     /// <summary>
     ///     Represents the engine this context is part of.
@@ -237,8 +247,11 @@ public sealed class CompilerState : StackContext
     ///     <para>Emits the shortest possible ldc.i4 opcode.</para>
     /// </summary>
     /// <param name = "i"></param>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Ldc")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Ldc"
+    )]
     public void EmitLdcI4(int i)
     {
         switch (i)
@@ -275,7 +288,7 @@ public sealed class CompilerState : StackContext
                 break;
             default:
                 if (i is >= sbyte.MinValue and <= sbyte.MaxValue)
-                    Il.Emit(OpCodes.Ldc_I4_S, (sbyte) i);
+                    Il.Emit(OpCodes.Ldc_I4_S, (sbyte)i);
                 else
                     Il.Emit(OpCodes.Ldc_I4, i);
                 break;
@@ -287,8 +300,11 @@ public sealed class CompilerState : StackContext
     ///     passed to methods. Use <see cref = "ReadArgv" /> to load that array onto the stack.
     /// </summary>
     /// <param name = "argc">The number of arguments to load from the stack.</param>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Argv")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Argv"
+    )]
     public void FillArgv(int argc)
     {
         if (argc == 0)
@@ -299,7 +315,7 @@ public sealed class CompilerState : StackContext
         {
             //Instantiate array -> argv
             EmitLdcI4(argc);
-            Il.Emit(OpCodes.Newarr, typeof (PValue));
+            Il.Emit(OpCodes.Newarr, typeof(PValue));
             EmitStoreLocal(ArgvLocal);
 
             for (var i = argc - 1; i >= 0; i--)
@@ -320,8 +336,11 @@ public sealed class CompilerState : StackContext
     ///     Load previously prepared argument array (<see cref = "FillArgv" />) onto the stack.
     /// </summary>
     /// <param name = "argc">The number of elements in that argument array.</param>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Argv")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Argv"
+    )]
     public void ReadArgv(int argc)
     {
         if (argc == 0)
@@ -356,7 +375,7 @@ public sealed class CompilerState : StackContext
                 break;
             default:
                 if (index < byte.MaxValue)
-                    Il.Emit(OpCodes.Ldarg_S, (byte) index);
+                    Il.Emit(OpCodes.Ldarg_S, (byte)index);
                 else
                     Il.Emit(OpCodes.Ldarg, index);
                 break;
@@ -398,7 +417,7 @@ public sealed class CompilerState : StackContext
                 // if (index < byte.MaxValue)
                 //     Il.Emit(OpCodes.Ldloc_S, (byte) index);
                 // else
-                    Il.Emit(OpCodes.Ldloc, index);
+                Il.Emit(OpCodes.Ldloc, index);
                 break;
         }
     }
@@ -426,7 +445,7 @@ public sealed class CompilerState : StackContext
                 break;
             default:
                 if (index < byte.MaxValue)
-                    Il.Emit(OpCodes.Stloc_S, (byte) index);
+                    Il.Emit(OpCodes.Stloc_S, (byte)index);
                 else
                     Il.Emit(OpCodes.Stloc, index);
                 break;
@@ -436,20 +455,22 @@ public sealed class CompilerState : StackContext
     public void EmitStoreTemp(int i)
     {
         if (i >= TempLocals.Length)
-            throw new ArgumentOutOfRangeException
-            (
-                nameof(i), i,
-                "This particular cil implementation does not use that many temporary variables.");
+            throw new ArgumentOutOfRangeException(
+                nameof(i),
+                i,
+                "This particular cil implementation does not use that many temporary variables."
+            );
         EmitStoreLocal(TempLocals[i]);
     }
 
     public void EmitLoadTemp(int i)
     {
         if (i >= TempLocals.Length)
-            throw new ArgumentOutOfRangeException
-            (
-                nameof(i), i,
-                "This particular cil implementation does not use that many temporary variables.");
+            throw new ArgumentOutOfRangeException(
+                nameof(i),
+                i,
+                "This particular cil implementation does not use that many temporary variables."
+            );
         EmitLoadLocal(TempLocals[i]);
     }
 
@@ -460,13 +481,13 @@ public sealed class CompilerState : StackContext
     /// <param name="moduleName">The name of the module that defines the global variable. May be null to indicate an internal variable.</param>
     public void EmitLoadGlobalValue(string id, ModuleName? moduleName)
     {
-        EmitLoadGlobalReference(id,moduleName);
+        EmitLoadGlobalReference(id, moduleName);
         Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
     }
 
     public void EmitLoadGlobalRefAsPValue(EntityRef.Variable.Global globalVariable)
     {
-        EmitLoadGlobalRefAsPValue(globalVariable.Id,globalVariable.ModuleName);
+        EmitLoadGlobalRefAsPValue(globalVariable.Id, globalVariable.ModuleName);
     }
 
     /// <summary>
@@ -578,28 +599,28 @@ public sealed class CompilerState : StackContext
 
     public void EmitWrapBool()
     {
-        Il.Emit(OpCodes.Box, typeof (bool));
+        Il.Emit(OpCodes.Box, typeof(bool));
         Il.EmitCall(OpCodes.Call, Compiler.GetBoolPType, null);
         Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
     }
 
     public void EmitWrapReal()
     {
-        Il.Emit(OpCodes.Box, typeof (double));
+        Il.Emit(OpCodes.Box, typeof(double));
         Il.EmitCall(OpCodes.Call, Compiler.GetRealPType, null);
         Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
     }
 
     public void EmitWrapInt()
     {
-        Il.Emit(OpCodes.Box, typeof (int));
+        Il.Emit(OpCodes.Box, typeof(int));
         Il.EmitCall(OpCodes.Call, Compiler.GetIntPType, null);
         Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
     }
 
     public void EmitWrapChar()
     {
-        Il.Emit(OpCodes.Box, typeof (char));
+        Il.Emit(OpCodes.Box, typeof(char));
         Il.EmitCall(OpCodes.Call, Compiler.GetCharPType, null);
         Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
     }
@@ -612,9 +633,11 @@ public sealed class CompilerState : StackContext
         var virtualInstruction = new Instruction(OpCode.cast_const, typeExpr);
         var cf = cilT?.CheckQualification(virtualInstruction) ?? CompilationFlags.IsCompatible;
 
-        if ((cf & CompilationFlags.HasCustomImplementation) ==
-            CompilationFlags.HasCustomImplementation &&
-            cilT != null)
+        if (
+            (cf & CompilationFlags.HasCustomImplementation)
+                == CompilationFlags.HasCustomImplementation
+            && cilT != null
+        )
         {
             cilT.ImplementInCil(this, virtualInstruction);
         }
@@ -636,7 +659,10 @@ public sealed class CompilerState : StackContext
     }
 
     static readonly MethodInfo _pTypeConstructMethod =
-        typeof (PType).GetMethod(nameof(PType.Construct), [typeof (StackContext), typeof (PValue[])]) ?? throw new InvalidOperationException("Method PType.Construct(StackContext, PValue[]) is missing.");
+        typeof(PType).GetMethod(nameof(PType.Construct), [typeof(StackContext), typeof(PValue[])])
+        ?? throw new InvalidOperationException(
+            "Method PType.Construct(StackContext, PValue[]) is missing."
+        );
 
     public void EmitLoadClrType(Type T)
     {
@@ -645,7 +671,10 @@ public sealed class CompilerState : StackContext
     }
 
     static readonly MethodInfo _typeGetTypeFromHandle =
-        typeof (Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof (RuntimeTypeHandle)]) ?? throw new InvalidOperationException("Method Type.GetTypeFromHandle(RuntimeTypeHandle) is missing.");
+        typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)])
+        ?? throw new InvalidOperationException(
+            "Method Type.GetTypeFromHandle(RuntimeTypeHandle) is missing."
+        );
 
     #region Early bound command call
 
@@ -677,17 +706,16 @@ public sealed class CompilerState : StackContext
     /// <param name = "justEffect">Indicates whether or not to ignore the return value.</param>
     public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect)
     {
-        var run =
-            target.GetMethod("RunStatically", [typeof (StackContext), typeof (PValue[])]);
+        var run = target.GetMethod("RunStatically", [typeof(StackContext), typeof(PValue[])]);
 
         if (run == null)
-            throw new PrexoniteException
-            (
-                $"{target} does not provide a static method RunStatically(StackContext, PValue[])");
-        if (run.ReturnType != typeof (PValue))
-            throw new PrexoniteException
-            (
-                $"{target}'s RunStatically method does not return PValue but {run.ReturnType}.");
+            throw new PrexoniteException(
+                $"{target} does not provide a static method RunStatically(StackContext, PValue[])"
+            );
+        if (run.ReturnType != typeof(PValue))
+            throw new PrexoniteException(
+                $"{target}'s RunStatically method does not return PValue but {run.ReturnType}."
+            );
         FillArgv(argc);
 
         EmitLoadLocal(SctxLocal);
@@ -718,40 +746,51 @@ public sealed class CompilerState : StackContext
         Il.EmitCall(OpCodes.Call, Runtime.ConstructPTypeAsPValueMethod, null);
     }
 
-    public bool TryGetStaticallyLinkedFunction(ModuleName moduleName, string id, [NotNullWhen(true)] out MethodInfo? targetMethod)
+    public bool TryGetStaticallyLinkedFunction(
+        ModuleName moduleName,
+        string id,
+        [NotNullWhen(true)] out MethodInfo? targetMethod
+    )
     {
         targetMethod = null;
-        return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
-            Pass.Implementations.TryGetValue(moduleName, id, out targetMethod);
+        return (Linking & FunctionLinking.Static) == FunctionLinking.Static
+            && Pass.Implementations.TryGetValue(moduleName, id, out targetMethod);
     }
 
     public void EmitCommandCall(Instruction ins)
     {
         var argc = ins.Arguments;
-        var id = ins.Id ?? throw new PrexoniteException($"Command call instruction has no id: {ins}");
+        var id =
+            ins.Id ?? throw new PrexoniteException($"Command call instruction has no id: {ins}");
         var justEffect = ins.JustEffect;
         ICilCompilerAware? aware = null;
         CompilationFlags flags;
         if (
-            TargetEngine.Commands.TryGetValue(id, out var cmd) &&
-            (aware = cmd as ICilCompilerAware) != null)
+            TargetEngine.Commands.TryGetValue(id, out var cmd)
+            && (aware = cmd as ICilCompilerAware) != null
+        )
             flags = aware.CheckQualification(ins);
         else
             flags = CompilationFlags.IsCompatible;
 
         if (
             (
-                (flags & CompilationFlags.PrefersCustomImplementation) ==
-                CompilationFlags.PrefersCustomImplementation ||
-                (flags & CompilationFlags.RequiresCustomImplementation)
-                == CompilationFlags.RequiresCustomImplementation
-            ) && aware != null)
+                (flags & CompilationFlags.PrefersCustomImplementation)
+                    == CompilationFlags.PrefersCustomImplementation
+                || (flags & CompilationFlags.RequiresCustomImplementation)
+                    == CompilationFlags.RequiresCustomImplementation
+            )
+            && aware != null
+        )
         {
             //Let the command handle the call
             aware.ImplementInCil(this, ins);
         }
-        else if (cmd != null 
-                 && (flags & CompilationFlags.PrefersRunStatically) == CompilationFlags.PrefersRunStatically)
+        else if (
+            cmd != null
+            && (flags & CompilationFlags.PrefersRunStatically)
+                == CompilationFlags.PrefersRunStatically
+        )
         {
             //Emit a static call to $commandType$.RunStatically
             EmitEarlyBoundCommandCall(cmd.GetType(), ins);
@@ -776,7 +815,13 @@ public sealed class CompilerState : StackContext
 
         var thisModule = Source.ParentApplication.Module.Name;
 
-        if (TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out var staticTargetMethod))
+        if (
+            TryGetStaticallyLinkedFunction(
+                moduleName ?? thisModule,
+                internalId,
+                out var staticTargetMethod
+            )
+        )
         {
             //Link function statically
             FillArgv(argc);
@@ -828,19 +873,19 @@ public sealed class CompilerState : StackContext
         var thisModule = Source.ParentApplication.Module.Name;
 
         MethodInfo runtimeMethod;
-        if(TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out _))
+        if (TryGetStaticallyLinkedFunction(moduleName ?? thisModule, internalId, out _))
         {
             Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             runtimeMethod = Runtime.NewClosureMethodStaticallyBound;
         }
-        else if(moduleName == null || Equals(moduleName, thisModule)) // module-internal function reference
+        else if (moduleName == null || Equals(moduleName, thisModule)) // module-internal function reference
         {
-            Il.Emit(OpCodes.Ldstr,internalId);
+            Il.Emit(OpCodes.Ldstr, internalId);
             runtimeMethod = Runtime.NewClosureMethodLateBound;
         }
         else // cross-module function reference
         {
-            Il.Emit(OpCodes.Ldstr,internalId);
+            Il.Emit(OpCodes.Ldstr, internalId);
             EmitModuleName(moduleName);
             runtimeMethod = Runtime.NewClosureMethodCrossModule;
         }
@@ -857,9 +902,7 @@ public sealed class CompilerState : StackContext
     public static void EmitLoadAppRefAsPValue(CompilerState state)
     {
         state.EmitLoadLocal(state.SctxLocal);
-        state.Il.EmitCall
-        (
-            OpCodes.Call, Runtime.LoadApplicationReferenceMethod, null);
+        state.Il.EmitCall(OpCodes.Call, Runtime.LoadApplicationReferenceMethod, null);
     }
 
     public void EmitLoadCmdRefAsPValue(string id)
@@ -879,7 +922,7 @@ public sealed class CompilerState : StackContext
             Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[moduleName ?? thisModule, internalId]);
             EmitVirtualCall(Compiler.CreateNativePValue);
         }
-        else  if(moduleName == null || Equals(moduleName, thisModule)) // module-internal function reference
+        else if (moduleName == null || Equals(moduleName, thisModule)) // module-internal function reference
         {
             // dynamically linked, same module
             Il.Emit(OpCodes.Ldstr, internalId);
@@ -888,7 +931,7 @@ public sealed class CompilerState : StackContext
         else
         {
             //Cross-module reference, dynamically linked
-            Il.Emit(OpCodes.Ldstr,internalId);
+            Il.Emit(OpCodes.Ldstr, internalId);
             EmitModuleName(moduleName);
             EmitCall(Runtime.LoadFunctionReferenceMethod);
         }
@@ -898,7 +941,7 @@ public sealed class CompilerState : StackContext
     {
         EmitLoadLocal(SctxLocal);
         Il.Emit(OpCodes.Ldstr, id);
-        if(moduleName == null || Equals(moduleName,Source.ParentApplication.Module.Name))
+        if (moduleName == null || Equals(moduleName, Source.ParentApplication.Module.Name))
         {
             EmitCall(Runtime.LoadGlobalReferenceAsPValueInternalMethod);
         }
@@ -913,7 +956,9 @@ public sealed class CompilerState : StackContext
     {
         if (Symbols[id] is not { Local: { } local })
         {
-            throw new PrexoniteException($"Internal error: unexpectedly can't find symbol for local variable {id}.");
+            throw new PrexoniteException(
+                $"Internal error: unexpectedly can't find symbol for local variable {id}."
+            );
         }
         EmitLoadLocal(local);
         Il.EmitCall(OpCodes.Call, Runtime.WrapPVariableMethod, null);
@@ -963,7 +1008,7 @@ public sealed class CompilerState : StackContext
     internal void _EmitAssignReturnMode(ReturnMode returnMode)
     {
         EmitLoadArg(ParamReturnModeIndex);
-        EmitLdcI4((int) returnMode);
+        EmitLdcI4((int)returnMode);
         Il.Emit(OpCodes.Stind_I4);
     }
 
@@ -975,20 +1020,27 @@ public sealed class CompilerState : StackContext
         Il.Emit(OpCodes.Stind_Ref);
     }
 
-    static readonly Lazy<ConstructorInfo[]> _versionCtors = new(() =>
-    {
-        var cs = new ConstructorInfo[3];
-        cs[0] = 
-            typeof (Version).GetConstructor([typeof (int), typeof (int)]) 
-            ?? throw new InvalidOperationException("Version(int,int) constructor is missing.");
-        cs[1] =
-            typeof (Version).GetConstructor([typeof (int), typeof (int), typeof (int)])
-            ?? throw new InvalidOperationException("Version(int,int,int) constructor is missing.");
-        cs[2] =
-            typeof (Version).GetConstructor([typeof (int), typeof (int), typeof (int), typeof (int)])
-            ?? throw new InvalidOperationException("Version(int,int,int,int) constructor is missing.");
-        return cs;
-    },LazyThreadSafetyMode.None);
+    static readonly Lazy<ConstructorInfo[]> _versionCtors = new(
+        () =>
+        {
+            var cs = new ConstructorInfo[3];
+            cs[0] =
+                typeof(Version).GetConstructor([typeof(int), typeof(int)])
+                ?? throw new InvalidOperationException("Version(int,int) constructor is missing.");
+            cs[1] =
+                typeof(Version).GetConstructor([typeof(int), typeof(int), typeof(int)])
+                ?? throw new InvalidOperationException(
+                    "Version(int,int,int) constructor is missing."
+                );
+            cs[2] =
+                typeof(Version).GetConstructor([typeof(int), typeof(int), typeof(int), typeof(int)])
+                ?? throw new InvalidOperationException(
+                    "Version(int,int,int,int) constructor is missing."
+                );
+            return cs;
+        },
+        LazyThreadSafetyMode.None
+    );
 
     public void EmitVersion(Version version)
     {
@@ -996,11 +1048,9 @@ public sealed class CompilerState : StackContext
         EmitLdcI4(version.Minor);
         //major.minor.build.revision
         var offset =
-            version.Revision >= 0
-                ? 2
-                : version.Build >= 0
-                    ? 1
-                    : 0;
+            version.Revision >= 0 ? 2
+            : version.Build >= 0 ? 1
+            : 0;
         Il.Emit(OpCodes.Newobj, _versionCtors.Value[offset]);
     }
 
@@ -1021,12 +1071,12 @@ public sealed class CompilerState : StackContext
         EmitLoadLocal(SctxLocal);
         Il.Emit(OpCodes.Ldstr, moduleName.Id);
         EmitVersion(moduleName.Version);
-        EmitCall(Runtime.LoadModuleNameMethod); 
+        EmitCall(Runtime.LoadModuleNameMethod);
     }
 
     public void EmitLoadFuncRefAsPValue(EntityRef.Function function)
     {
-        EmitLoadFuncRefAsPValue(function.Id,function.ModuleName);
+        EmitLoadFuncRefAsPValue(function.Id, function.ModuleName);
     }
 
     public void EmitLoadCmdRefAsPValue(EntityRef.Command command)

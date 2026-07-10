@@ -1,10 +1,6 @@
-﻿
-
 using Prexonite.Modular;
 
-namespace Prexonite.Compiler.Modular
-{
-}
+namespace Prexonite.Compiler.Modular { }
 
 namespace Prexonite.Compiler.Build
 {
@@ -14,7 +10,11 @@ namespace Prexonite.Compiler.Build
 
         IReadOnlyList<Message> BuildMessages { get; }
 
-        Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
+        Task<ITarget> BuildAsync(
+            IBuildEnvironment build,
+            IDictionary<ModuleName, Task<ITarget>> dependencies,
+            CancellationToken token
+        );
 
         IEnumerable<ModuleName> IDependent<ModuleName>.GetDependencies() => Dependencies;
     }

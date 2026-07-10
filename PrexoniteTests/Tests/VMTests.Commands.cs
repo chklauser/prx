@@ -1,4 +1,3 @@
-﻿
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
@@ -55,7 +54,8 @@ public abstract partial class VMTests : VMTestsBase
                 return foldl( (l,r) => l + r, "",diff);
             }
 
-            """);
+            """
+        );
 
         Expect("01234", 1, 2, 3, 4, 5);
     }
@@ -63,19 +63,21 @@ public abstract partial class VMTests : VMTestsBase
     [Test]
     public void FlatMapImplementation()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main() {
-                    coroutine f(n) {
-                        for(var i = 1; i <= n; i++)
-                            yield i;
-                    }
-                    return var args >> flat_map(f(?), [1,0], []) >> foldl( (l,r) => l + "," + r, "");
+            function main() {
+                coroutine f(n) {
+                    for(var i = 1; i <= n; i++)
+                        yield i;
                 }
+                return var args >> flat_map(f(?), [1,0], []) >> foldl( (l,r) => l + "," + r, "");
+            }
 
-                """);
-            
-        Expect(",1,1,2,3,1,2,3,4", 3,4);
+            """
+        );
+
+        Expect(",1,1,2,3,1,2,3,4", 3, 4);
     }
 
     [Test]
@@ -97,7 +99,8 @@ public abstract partial class VMTests : VMTestsBase
                 return foldl( (l,r) => l - r, sum, var args);
             }
 
-            """);
+            """
+        );
 
         Expect(13, 4, 5, 6, 7);
     }
@@ -121,7 +124,8 @@ public abstract partial class VMTests : VMTestsBase
                 return call(->call, [->sum], var args);
             }
 
-            """);
+            """
+        );
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -132,10 +136,11 @@ public abstract partial class VMTests : VMTestsBase
 
         Expect(
             a + b + c + d + e + f + g,
-            PType.List.CreatePValue(new PValue[] {a, b, c}),
-            PType.List.CreatePValue(new PValue[] {d, e}),
-            PType.List.CreatePValue(new PValue[] {f}),
-            PType.List.CreatePValue(new PValue[] {g}));
+            PType.List.CreatePValue(new PValue[] { a, b, c }),
+            PType.List.CreatePValue(new PValue[] { d, e }),
+            PType.List.CreatePValue(new PValue[] { f }),
+            PType.List.CreatePValue(new PValue[] { g })
+        );
     }
 
     [Test]
@@ -157,7 +162,8 @@ public abstract partial class VMTests : VMTestsBase
                 return call(call(?), [sum(?)], var args);
             }
 
-            """);
+            """
+        );
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -168,10 +174,11 @@ public abstract partial class VMTests : VMTestsBase
 
         Expect(
             a + b + c + d + e + f + g,
-            PType.List.CreatePValue(new PValue[] {a, b, c}),
-            PType.List.CreatePValue(new PValue[] {d, e}),
-            PType.List.CreatePValue(new PValue[] {f}),
-            PType.List.CreatePValue(new PValue[] {g}));
+            PType.List.CreatePValue(new PValue[] { a, b, c }),
+            PType.List.CreatePValue(new PValue[] { d, e }),
+            PType.List.CreatePValue(new PValue[] { f }),
+            PType.List.CreatePValue(new PValue[] { g })
+        );
     }
 
     [Test]
@@ -195,7 +202,8 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -206,10 +214,11 @@ public abstract partial class VMTests : VMTestsBase
 
         Expect(
             a + b + c + d + e + f + g,
-            PType.List.CreatePValue(new PValue[] {a, b, c}),
-            PType.List.CreatePValue(new PValue[] {d, e}),
-            PType.List.CreatePValue(new PValue[] {f}),
-            PType.List.CreatePValue(new PValue[] {g}));
+            PType.List.CreatePValue(new PValue[] { a, b, c }),
+            PType.List.CreatePValue(new PValue[] { d, e }),
+            PType.List.CreatePValue(new PValue[] { f }),
+            PType.List.CreatePValue(new PValue[] { g })
+        );
     }
 
     [Test]
@@ -233,7 +242,8 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
         const int a = 3;
         const int b = 7;
         const int c = 9;
@@ -244,16 +254,17 @@ public abstract partial class VMTests : VMTestsBase
 
         Expect(
             a + b + c + d + e + f + g,
-            PType.List.CreatePValue(new PValue[] {a, b, c}),
-            PType.List.CreatePValue(new PValue[] {d, e}),
-            PType.List.CreatePValue(new PValue[] {f}),
-            PType.List.CreatePValue(new PValue[] {g}));
+            PType.List.CreatePValue(new PValue[] { a, b, c }),
+            PType.List.CreatePValue(new PValue[] { d, e }),
+            PType.List.CreatePValue(new PValue[] { f }),
+            PType.List.CreatePValue(new PValue[] { g })
+        );
     }
 
     [Test]
     public void CallMemberCommandImplementation()
     {
-        var obj = new MemberCallable {Name = "obj"};
+        var obj = new MemberCallable { Name = "obj" };
         obj.Expect("m", [1, 2, 3], PCall.Get, 6);
         obj.Expect("", [4, "a"], PCall.Set);
 
@@ -269,9 +280,15 @@ public abstract partial class VMTests : VMTestsBase
                 f2.(obj,"",y1, y2);
             }
 
-            """);
-        ExpectNull(sctx.CreateNativePValue(obj), 1, (PValue) new List<PValue> {2, 3},
-            (PValue) new List<PValue> {4}, "a");
+            """
+        );
+        ExpectNull(
+            sctx.CreateNativePValue(obj),
+            1,
+            (PValue)new List<PValue> { 2, 3 },
+            (PValue)new List<PValue> { 4 },
+            "a"
+        );
         obj.AssertCalledAll();
     }
 
@@ -313,27 +330,36 @@ public abstract partial class VMTests : VMTestsBase
                 return result;
             }
 
-            """);
+            """
+        );
 
-        var check = new PValue(new ProvidedFunction((s, _) =>
-            {
-                if (s.ParentEngine.Stack.Count > 2)
+        var check = new PValue(
+            new ProvidedFunction(
+                (s, _) =>
                 {
-                    foreach (var stackContext in s.ParentEngine.Stack)
-                        TestContext.WriteLine(" - " + stackContext);
+                    if (s.ParentEngine.Stack.Count > 2)
+                    {
+                        foreach (var stackContext in s.ParentEngine.Stack)
+                            TestContext.WriteLine(" - " + stackContext);
 
-                    throw new PrexoniteException("Stack size is not constant.");
+                        throw new PrexoniteException("Stack size is not constant.");
+                    }
+
+                    return PType.Null;
                 }
-
-                return PType.Null;
-            }),
-            PType.Object[typeof(IIndirectCall)]);
+            ),
+            PType.Object[typeof(IIndirectCall)]
+        );
 
         var fac = target.Functions["factorial"];
-        Assert.IsTrue(fac!.Meta[PFunction.VolatileKey].Switch,
-            "The factorial function should be volatile.");
-        Assert.IsTrue(fac.Meta[PFunction.DeficiencyKey].Text.Contains(Engine.Call_TailAlias),
-            "Deficiency of factorial function must mention " + Engine.Call_TailAlias);
+        Assert.IsTrue(
+            fac!.Meta[PFunction.VolatileKey].Switch,
+            "The factorial function should be volatile."
+        );
+        Assert.IsTrue(
+            fac.Meta[PFunction.DeficiencyKey].Text.Contains(Engine.Call_TailAlias),
+            "Deficiency of factorial function must mention " + Engine.Call_TailAlias
+        );
 
         Expect(1, check, 1);
         //Expect(40320,check,8);
@@ -378,11 +404,12 @@ public abstract partial class VMTests : VMTestsBase
                 return r;
             }
 
-            """);
+            """
+        );
         //fib 8 = 21
         //fib 7 = 13
         //fib 6 = 8
-        Expect(new List<PValue> {8, 13, 21}, 6, 7, 8);
+        Expect(new List<PValue> { 8, 13, 21 }, 6, 7, 8);
     }
 
     [Test]
@@ -410,7 +437,8 @@ public abstract partial class VMTests : VMTestsBase
                 return buffer.ToString;
             }
 
-            """);
+            """
+        );
 
         const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
         Expect(expected);
@@ -433,7 +461,8 @@ public abstract partial class VMTests : VMTestsBase
                 ) >>
                 foldl( (l,r) => l + "," + r, "");
 
-            """);
+            """
+        );
 
         Expect(",A,A,a,F,f,f,G,g,H,h,X,x");
     }
@@ -441,11 +470,13 @@ public abstract partial class VMTests : VMTestsBase
     [Test]
     public void MathPiWorksInCil()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main = pi;
+            function main = pi;
 
-                """);
+            """
+        );
 
         Expect(Math.PI);
     }
@@ -469,9 +500,10 @@ public abstract partial class VMTests : VMTestsBase
                 return foldl((a,b) => a + ">" + b, "") << async_seq(xs);
             }
 
-            """);
+            """
+        );
 
-        Expect(">1>2>3", (PValue) new List<PValue> {1, 2, 3});
+        Expect(">1>2>3", (PValue)new List<PValue> { 1, 2, 3 });
     }
 
     #region Call\*
@@ -489,9 +521,10 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
+        Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
     }
 
     [Test]
@@ -507,10 +540,14 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {3},
-            (PValue) new List<PValue> {1, 2});
+        Expect(
+            new List<PValue> { 1, 2, 3 },
+            (PValue)new List<PValue> { 3 },
+            (PValue)new List<PValue> { 1, 2 }
+        );
     }
 
     [Test]
@@ -526,9 +563,10 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, 1, 2, 3);
+        Expect(new List<PValue> { 1, 2, 3 }, 1, 2, 3);
     }
 
     [Test]
@@ -544,9 +582,10 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
+        Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
     }
 
     [Test]
@@ -561,9 +600,10 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {3}, 1, 2);
+        Expect(new List<PValue> { 1, 2, 3 }, (PValue)new List<PValue> { 3 }, 1, 2);
     }
 
     [Test]
@@ -579,11 +619,11 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
+        Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
     }
-
 
     [Test]
     public void CallStarCustomMapped()
@@ -598,9 +638,10 @@ public abstract partial class VMTests : VMTestsBase
                 return x;
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
+        Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
     }
 
     #endregion
@@ -630,9 +671,10 @@ public abstract partial class VMTests : VMTestsBase
                 return "M$cM.C$cC.D$cD: " + foldl(?+?,"",s) + " :M$cM.C$cC.D$cD";
             }
 
-            """);
+            """
+        );
 
-        Expect("M0.C0.D0: abc :M4.C3.D1", (PValue) new List<PValue> {"a", "b", "c"});
+        Expect("M0.C0.D0: abc :M4.C3.D1", (PValue)new List<PValue> { "a", "b", "c" });
     }
 
     [Test]
@@ -648,12 +690,16 @@ public abstract partial class VMTests : VMTestsBase
                 return r;
             }
 
-            """);
-        PValue a = 11, b = 13, c = 17, d = 19;
-        var xs = (PValue) new List<PValue> {a, c, d};
-        var ys = (PValue) new List<PValue> {a, b};
+            """
+        );
+        PValue a = 11,
+            b = 13,
+            c = 17,
+            d = 19;
+        var xs = (PValue)new List<PValue> { a, c, d };
+        var ys = (PValue)new List<PValue> { a, b };
 
-        Expect(new List<PValue> {c, d}, xs, ys);
+        Expect(new List<PValue> { c, d }, xs, ys);
     }
 
     [Test]
@@ -669,11 +715,15 @@ public abstract partial class VMTests : VMTestsBase
                 return r;
             }
 
-            """);
-        PValue a = 11, b = 13, c = 17, d = 19;
-        var xs = (PValue) new List<PValue> {a, c, d};
-        var ys = (PValue) new List<PValue> {a, b};
+            """
+        );
+        PValue a = 11,
+            b = 13,
+            c = 17,
+            d = 19;
+        var xs = (PValue)new List<PValue> { a, c, d };
+        var ys = (PValue)new List<PValue> { a, b };
 
-        Expect(new List<PValue> {a, c, d, a, b}, xs, ys);
+        Expect(new List<PValue> { a, c, d, a, b }, xs, ys);
     }
 }

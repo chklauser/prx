@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -11,9 +9,7 @@ public class Chan : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    Chan()
-    {
-    }
+    Chan() { }
 
     public static Chan Instance { get; } = new();
 
@@ -35,17 +31,18 @@ public class Chan : PCommand, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    static readonly ConstructorInfo _channelCtor =
-        typeof (Channel).GetConstructor([])!;
+    static readonly ConstructorInfo _channelCtor = typeof(Channel).GetConstructor([])!;
 
-    static readonly ConstructorInfo _newPValue =
-        typeof (PValue).GetConstructor([typeof (object), typeof (PType)])!;
+    static readonly ConstructorInfo _newPValue = typeof(PValue).GetConstructor([
+        typeof(object),
+        typeof(PType),
+    ])!;
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
         state.EmitIgnoreArguments(ins.Arguments);
         state.Il.Emit(OpCodes.Newobj, _channelCtor);
-        PType.PrexoniteObjectTypeProxy._ImplementInCil(state, typeof (Channel));
+        PType.PrexoniteObjectTypeProxy._ImplementInCil(state, typeof(Channel));
         state.Il.Emit(OpCodes.Newobj, _newPValue);
     }
 

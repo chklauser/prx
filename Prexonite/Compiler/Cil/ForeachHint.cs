@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 using System.Collections;
@@ -10,10 +9,13 @@ namespace Prexonite.Compiler.Cil;
 
 public class ForeachHint : ICilHint
 {
-    public ForeachHint
-    (
-        string enumVar, int castAddress, int getCurrentAddress, int moveNextAddress,
-        int disposeAddress)
+    public ForeachHint(
+        string enumVar,
+        int castAddress,
+        int getCurrentAddress,
+        int moveNextAddress,
+        int disposeAddress
+    )
     {
         EnumVar = enumVar;
         DisposeAddress = disposeAddress;
@@ -80,16 +82,20 @@ public class ForeachHint : ICilHint
     internal static readonly MethodInfo MoveNextMethod =
         typeof(IEnumerator).GetMethod("MoveNext")
         ?? throw new InvalidOperationException(
-            $"{nameof(IEnumerator)}.{nameof(IEnumerator.MoveNext)} method not found.");
+            $"{nameof(IEnumerator)}.{nameof(IEnumerator.MoveNext)} method not found."
+        );
 
     internal static readonly MethodInfo GetCurrentMethod =
         typeof(IEnumerator<PValue>).GetProperty(nameof(IEnumerator<PValue>.Current))!.GetGetMethod()
         ?? throw new InvalidOperationException(
-            $"{nameof(IEnumerator)}.{nameof(IEnumerator.Current)} property getter not found.");
+            $"{nameof(IEnumerator)}.{nameof(IEnumerator.Current)} property getter not found."
+        );
 
-    internal static readonly MethodInfo DisposeMethod = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose))
+    internal static readonly MethodInfo DisposeMethod =
+        typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose))
         ?? throw new InvalidOperationException(
-            $"{nameof(IDisposable)}.{nameof(IDisposable.Dispose)} method not found.");
+            $"{nameof(IDisposable)}.{nameof(IDisposable.Dispose)} method not found."
+        );
 
     #endregion
 }

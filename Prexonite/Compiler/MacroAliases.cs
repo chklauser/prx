@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Compiler;
 
 public static class MacroAliases

@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -46,12 +44,14 @@ public class CompilerTestBase
 
     protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
     {
-        Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
-            $"Expected to find symbol {symbolicId} but there is no such entry.");
+        Assert.IsTrue(
+            store.TryGet(symbolicId, out var symbol),
+            $"Expected to find symbol {symbolicId} but there is no such entry."
+        );
         return symbol!.ToSymbolEntry();
     }
 
-    protected  List<Instruction> GetInstructions(string assemblerCode)
+    protected List<Instruction> GetInstructions(string assemblerCode)
     {
         var app = new Application("getInstructions");
         var opt = new LoaderOptions(engine, app);
@@ -85,7 +85,7 @@ public class CompilerTestBase
 
         _writeErrorsWarnings(ldr);
 
-        Assert.That(ldr.ErrorCount,Is.GreaterThan(0),"Expected code to contain errors.");
+        Assert.That(ldr.ErrorCount, Is.GreaterThan(0), "Expected code to contain errors.");
         return ldr;
     }
 
@@ -108,7 +108,7 @@ public class CompilerTestBase
 
     protected internal Loader _justCompile(string input)
     {
-        var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+        var opt = new LoaderOptions(engine, target) { UseIndicesLocally = false };
         var ldr = new Loader(opt);
         ldr.LoadFromString(input);
         return ldr;
@@ -133,7 +133,11 @@ public class CompilerTestBase
         Expect(function.Code, assemblerCode, function.Id);
     }
 
-    protected internal void Expect(List<Instruction> actual, string assemblerCode, string functionName)
+    protected internal void Expect(
+        List<Instruction> actual,
+        string assemblerCode,
+        string functionName
+    )
     {
         var expected = GetInstructions(assemblerCode);
         int i;
@@ -143,8 +147,11 @@ public class CompilerTestBase
                 Assert.AreEqual(
                     expected.Count,
                     actual.Count,
-                    "Expected and actual instruction count missmatch detected at actual instruction " +
-                    actual[i] + " in function " + functionName);
+                    "Expected and actual instruction count missmatch detected at actual instruction "
+                        + actual[i]
+                        + " in function "
+                        + functionName
+                );
             Assert.AreEqual(
                 expected[i],
                 actual[i],
@@ -153,26 +160,32 @@ public class CompilerTestBase
                     i,
                     expected.Count,
                     actual.Count,
-                    functionName));
+                    functionName
+                )
+            );
         }
         Assert.AreEqual(
             expected.Count,
             actual.Count,
-            "Expected and actual instruction count missmatch" +
-            (i < expected.Count ? " detected at expected instruction " + expected[i] : ""));
+            "Expected and actual instruction count missmatch"
+                + (i < expected.Count ? " detected at expected instruction " + expected[i] : "")
+        );
     }
 
-    protected internal static void _expectSharedVariables(
-        PFunction func, params string[] shared)
+    protected internal static void _expectSharedVariables(PFunction func, params string[] shared)
     {
         _expectSharedVariables_(func, shared);
     }
 
     protected internal void _expectSharedVariables(string funcId, params string[] shared)
     {
-        _expectSharedVariables_(target.Functions[funcId] ??
-            throw new InvalidOperationException($"Function {funcId} does not exist in target."),
-            shared);
+        _expectSharedVariables_(
+            target.Functions[funcId]
+                ?? throw new InvalidOperationException(
+                    $"Function {funcId} does not exist in target."
+                ),
+            shared
+        );
     }
 
     protected internal static void _expectSharedVariables_(PFunction func, string[] shared)
@@ -190,13 +203,18 @@ public class CompilerTestBase
             shared.Length,
             entries?.Length,
             "The function {0} is expected to have a different number of shared variables.",
-            func.Id);
+            func.Id
+        );
         for (var i = 0; i < entries!.Length; i++)
             Assert.IsTrue(
-                Engine.StringsAreEqual(shared[i], (MetaEntry?)entries[i] == null ? "" : entries[i].Text),
+                Engine.StringsAreEqual(
+                    shared[i],
+                    (MetaEntry?)entries[i] == null ? "" : entries[i].Text
+                ),
                 "The function {0} is expected to require sharing of variable {1}.",
                 func.Id,
-                shared[i]);
+                shared[i]
+            );
     }
 
     #endregion

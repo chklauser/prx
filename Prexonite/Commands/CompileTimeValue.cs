@@ -1,5 +1,3 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
@@ -54,7 +52,7 @@ public struct CompileTimeValue
     {
         if (Value is EntityRef er)
         {
-            entry = (SymbolEntry) er;
+            entry = (SymbolEntry)er;
             return true;
         }
         else
@@ -83,7 +81,7 @@ public struct CompileTimeValue
                 result = PType.Null;
                 break;
             case CompileTimeInterpretation.String:
-                result = (string) Value!;
+                result = (string)Value!;
                 break;
             case CompileTimeInterpretation.Int:
                 TryGetInt(out var value);
@@ -107,8 +105,8 @@ public struct CompileTimeValue
     public bool TryGetString([NotNullWhen(true)] out string? value)
     {
         value = null;
-        return Interpretation == CompileTimeInterpretation.String &&
-            (value = Value as string) != null;
+        return Interpretation == CompileTimeInterpretation.String
+            && (value = Value as string) != null;
     }
 
     /// <summary>
@@ -143,8 +141,8 @@ public struct CompileTimeValue
     public bool TryGetCommandReference([NotNullWhen(true)] out EntityRef.Command? command)
     {
         command = null;
-        return Interpretation == CompileTimeInterpretation.CommandReference &&
-            (command = Value as EntityRef.Command) != null;
+        return Interpretation == CompileTimeInterpretation.CommandReference
+            && (command = Value as EntityRef.Command) != null;
     }
 
     /// <summary>
@@ -155,8 +153,8 @@ public struct CompileTimeValue
     public bool TryGetFunctionReference([NotNullWhen(true)] out EntityRef.Function? func)
     {
         func = null;
-        return Interpretation == CompileTimeInterpretation.FunctionReference &&
-            (func = Value as EntityRef.Function) != null;
+        return Interpretation == CompileTimeInterpretation.FunctionReference
+            && (func = Value as EntityRef.Function) != null;
     }
 
     /// <summary>
@@ -164,11 +162,13 @@ public struct CompileTimeValue
     /// </summary>
     /// <param name="localVariable"> </param>
     /// <returns>True if the conversion succeeded; false otherwise</returns>
-    public bool TryGetLocalVariableReference([NotNullWhen(true)] out EntityRef.Variable.Local? localVariable)
+    public bool TryGetLocalVariableReference(
+        [NotNullWhen(true)] out EntityRef.Variable.Local? localVariable
+    )
     {
         localVariable = null;
-        return Interpretation == CompileTimeInterpretation.LocalVariableReference &&
-            (localVariable = Value as EntityRef.Variable.Local) != null;
+        return Interpretation == CompileTimeInterpretation.LocalVariableReference
+            && (localVariable = Value as EntityRef.Variable.Local) != null;
     }
 
     /// <summary>
@@ -176,11 +176,13 @@ public struct CompileTimeValue
     /// </summary>
     /// <param name="globalVariable"> </param>
     /// <returns>True if the conversion succeeded; false otherwise</returns>
-    public bool TryGetGlobalVariableReference([NotNullWhen(true)] out EntityRef.Variable.Global? globalVariable)
+    public bool TryGetGlobalVariableReference(
+        [NotNullWhen(true)] out EntityRef.Variable.Global? globalVariable
+    )
     {
         globalVariable = null;
-        return Interpretation == CompileTimeInterpretation.GlobalVariableReference &&
-            (globalVariable = Value as EntityRef.Variable.Global) != null;
+        return Interpretation == CompileTimeInterpretation.GlobalVariableReference
+            && (globalVariable = Value as EntityRef.Variable.Global) != null;
     }
 
     #endregion
@@ -196,14 +198,20 @@ public struct CompileTimeValue
     /// <param name="internalModule"> The module the instruction lives in. Necessary to create absolute entity references.</param>
     /// <param name = "compileTimeValue">The parsed compile time value, if parsing was successful; undefined otherwise</param>
     /// <returns>True if parsing was successful; false otherwise</returns>
-    public static bool TryParse(Instruction instruction, IDictionary<int, string> localVariableMapping, CentralCache cache, ModuleName internalModule, out CompileTimeValue compileTimeValue)
+    public static bool TryParse(
+        Instruction instruction,
+        IDictionary<int, string> localVariableMapping,
+        CentralCache cache,
+        ModuleName internalModule,
+        out CompileTimeValue compileTimeValue
+    )
     {
         var argc = instruction.Arguments;
         switch (instruction)
         {
             case { OpCode: OpCode.ldc_int }:
                 compileTimeValue.Interpretation = CompileTimeInterpretation.Int;
-                compileTimeValue.Value = (int?) argc;
+                compileTimeValue.Value = (int?)argc;
                 return true;
             case { OpCode: OpCode.ldc_real }:
                 compileTimeValue = default;
@@ -220,28 +228,32 @@ public struct CompileTimeValue
                 compileTimeValue.Interpretation = CompileTimeInterpretation.Null;
                 compileTimeValue.Value = null;
                 return true;
-            case { OpCode: OpCode.ldr_loc, Id: {} varId }:
-                compileTimeValue.Interpretation =
-                    CompileTimeInterpretation.LocalVariableReference;
+            case { OpCode: OpCode.ldr_loc, Id: { } varId }:
+                compileTimeValue.Interpretation = CompileTimeInterpretation.LocalVariableReference;
                 compileTimeValue.Value = cache[EntityRef.Variable.Local.Create(varId)];
                 return true;
             case { OpCode: OpCode.ldr_loci }:
                 if (!localVariableMapping.TryGetValue(argc, out var id))
                     goto default;
-                compileTimeValue.Interpretation =
-                    CompileTimeInterpretation.LocalVariableReference;
+                compileTimeValue.Interpretation = CompileTimeInterpretation.LocalVariableReference;
                 compileTimeValue.Value = cache[EntityRef.Variable.Local.Create(id)];
                 return true;
-            case { OpCode: OpCode.ldr_glob, Id: {} varId }:
-                compileTimeValue.Interpretation =
-                    CompileTimeInterpretation.GlobalVariableReference;
-                compileTimeValue.Value = cache[EntityRef.Variable.Global.Create(varId, instruction.ModuleName ?? internalModule)];
+            case { OpCode: OpCode.ldr_glob, Id: { } varId }:
+                compileTimeValue.Interpretation = CompileTimeInterpretation.GlobalVariableReference;
+                compileTimeValue.Value = cache[
+                    EntityRef.Variable.Global.Create(
+                        varId,
+                        instruction.ModuleName ?? internalModule
+                    )
+                ];
                 return true;
-            case { OpCode: OpCode.ldr_func, Id: {} funcId }:
+            case { OpCode: OpCode.ldr_func, Id: { } funcId }:
                 compileTimeValue.Interpretation = CompileTimeInterpretation.FunctionReference;
-                compileTimeValue.Value = cache[EntityRef.Function.Create(funcId, instruction.ModuleName ?? internalModule)];
+                compileTimeValue.Value = cache[
+                    EntityRef.Function.Create(funcId, instruction.ModuleName ?? internalModule)
+                ];
                 return true;
-            case { OpCode: OpCode.ldr_cmd, Id: {} cmdId }:
+            case { OpCode: OpCode.ldr_cmd, Id: { } cmdId }:
                 compileTimeValue.Interpretation = CompileTimeInterpretation.CommandReference;
                 compileTimeValue.Value = cache[EntityRef.Command.Create(cmdId)];
                 return true;
@@ -269,12 +281,25 @@ public struct CompileTimeValue
     /// <param name="cache">The cache to use. See <see cref="StackContext"/> or <see cref="Module"/> on how to get one.</param>
     /// <param name="internalModule">The module that contains the instructions.</param>
     /// <returns>the compile time values in the order they appear in the code (the "right" order).</returns>
-    public static CompileTimeValue[] ParseSequenceReverse(IList<Instruction> instructions,
-        IDictionary<int, string> localVariableMapping, int offset, CentralCache cache, ModuleName internalModule)
+    public static CompileTimeValue[] ParseSequenceReverse(
+        IList<Instruction> instructions,
+        IDictionary<int, string> localVariableMapping,
+        int offset,
+        CentralCache cache,
+        ModuleName internalModule
+    )
     {
         var compileTimeValues = new LinkedList<CompileTimeValue>();
-        while (0 <= offset &&
-               TryParse(instructions[offset--], localVariableMapping, cache, internalModule, out var compileTimeValue))
+        while (
+            0 <= offset
+            && TryParse(
+                instructions[offset--],
+                localVariableMapping,
+                cache,
+                internalModule,
+                out var compileTimeValue
+            )
+        )
             compileTimeValues.AddFirst(compileTimeValue);
         return compileTimeValues.ToArray();
     }

@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Ast;
 
 /// <summary>
@@ -9,7 +7,8 @@ namespace Prexonite.Compiler.Ast;
 /// </summary>
 public class AstPostExpression : AstExpr
 {
-    public AstPostExpression(ISourcePosition position, AstExpr expression, AstNode action) : base(position)
+    public AstPostExpression(ISourcePosition position, AstExpr expression, AstNode action)
+        : base(position)
     {
         Expression = expression ?? throw new ArgumentNullException(nameof(expression));
         Action = action ?? throw new ArgumentNullException(nameof(action));
@@ -28,17 +27,20 @@ public class AstPostExpression : AstExpr
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((AstPostExpression) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != GetType())
+            return false;
+        return Equals((AstPostExpression)obj);
     }
 
     public override int GetHashCode()
     {
         unchecked
         {
-            return (Expression.GetHashCode()*397) ^ Action.GetHashCode();
+            return (Expression.GetHashCode() * 397) ^ Action.GetHashCode();
         }
     }
 
@@ -47,7 +49,7 @@ public class AstPostExpression : AstExpr
     protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
     {
         Expression.EmitCode(target, semantics);
-        Action.EmitCode(target,StackSemantics.Effect);
+        Action.EmitCode(target, StackSemantics.Effect);
         // At this point, the value of the expression remains on the stack.
     }
 

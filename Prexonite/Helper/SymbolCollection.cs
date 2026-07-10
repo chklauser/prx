@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using System.Diagnostics;
 
@@ -10,7 +8,8 @@ public class SymbolCollection(int capacity) : ICollection<string>
 {
     readonly HashSet<string> _set = new(capacity, StringComparer.OrdinalIgnoreCase);
 
-    public SymbolCollection() : this(0)
+    public SymbolCollection()
+        : this(0)
     {
         _set = new(0, StringComparer.OrdinalIgnoreCase);
     }
@@ -54,7 +53,7 @@ public class SymbolCollection(int capacity) : ICollection<string>
         {
             return false;
         }
-        
+
         return _set.Remove(item);
     }
 

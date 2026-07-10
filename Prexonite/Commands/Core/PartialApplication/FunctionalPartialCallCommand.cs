@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection;
 using Prexonite.Compiler.Cil;
 
@@ -11,9 +9,7 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
 
     public static FunctionalPartialCallCommand Instance { get; } = new();
 
-    FunctionalPartialCallCommand()
-    {
-    }
+    FunctionalPartialCallCommand() { }
 
     public const string Alias = @"pa\fun\call";
 
@@ -40,15 +36,27 @@ public class FunctionalPartialCallCommand : PCommand, ICilExtension
     {
         get
         {
-            return _functionPartialCallCtorCache ??= typeof (FunctionalPartialCall).GetConstructor([typeof (PValue), typeof (PValue[]),
-                ])
-                ?? throw new InvalidOperationException($"Could not find constructor for {nameof(FunctionalPartialCall)} with (PValue, PValue[]).");
+            return _functionPartialCallCtorCache ??=
+                typeof(FunctionalPartialCall).GetConstructor([typeof(PValue), typeof(PValue[])])
+                ?? throw new InvalidOperationException(
+                    $"Could not find constructor for {nameof(FunctionalPartialCall)} with (PValue, PValue[])."
+                );
         }
     }
 
-    void ICilExtension.Implement(CompilerState state, Instruction ins,
-        CompileTimeValue[] staticArgv, int dynamicArgc)
+    void ICilExtension.Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
-        FlippedFunctionalPartialCallCommand._ImplementCtorCall(state, ins, staticArgv, dynamicArgc, functionPartialCallCtor);
+        FlippedFunctionalPartialCallCommand._ImplementCtorCall(
+            state,
+            ins,
+            staticArgv,
+            dynamicArgc,
+            functionPartialCallCtor
+        );
     }
 }

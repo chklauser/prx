@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialTypeCheck : PartialApplicationBase
@@ -12,8 +10,7 @@ public class PartialTypeCheck : PartialApplicationBase
         _ptype = ptype;
     }
 
-    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-        PValue[] arguments)
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments, PValue[] arguments)
     {
         return nonArguments[0].Type.Equals(_ptype);
     }

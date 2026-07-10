@@ -1,5 +1,3 @@
-﻿
-
 using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -13,40 +11,53 @@ public static class LegacyExtensions
     {
         public SymbolEntry HandleReference(ReferenceSymbol self, object argument)
         {
-            throw new SymbolConversionException(Resources.SymbolEntryConversion_BareReference,self);
+            throw new SymbolConversionException(
+                Resources.SymbolEntryConversion_BareReference,
+                self
+            );
         }
 
         public SymbolEntry HandleNamespace(NamespaceSymbol self, object argument)
         {
-            throw new SymbolConversionException(Resources.SymbolEntryConversion_Namespace,self);
+            throw new SymbolConversionException(Resources.SymbolEntryConversion_Namespace, self);
         }
 
         public SymbolEntry HandleNil(NilSymbol self, object argument)
         {
-            throw new SymbolConversionException(Resources.SymbolEntryConversion_Nil,self);
+            throw new SymbolConversionException(Resources.SymbolEntryConversion_Nil, self);
         }
 
         public SymbolEntry HandleExpand(ExpandSymbol self, object argument)
         {
             SymbolEntry symEn;
-            if (self.InnerSymbol.TryGetReferenceSymbol(out var refSym) && (symEn = refSym.Entity.ToSymbolEntry()).Interpretation == SymbolInterpretations.MacroCommand)
+            if (
+                self.InnerSymbol.TryGetReferenceSymbol(out var refSym)
+                && (symEn = refSym.Entity.ToSymbolEntry()).Interpretation
+                    == SymbolInterpretations.MacroCommand
+            )
             {
                 return symEn;
             }
             else
             {
-                throw new SymbolConversionException(Resources.SymbolEntryConversion_ExpansionSymbolTooComplex,self);
+                throw new SymbolConversionException(
+                    Resources.SymbolEntryConversion_ExpansionSymbolTooComplex,
+                    self
+                );
             }
         }
 
         public SymbolEntry HandleMessage(MessageSymbol self, object argument)
         {
-            throw new SymbolConversionException(Resources.SymbolEntryConversion_MessageSymbol_cannot_be_converted_to_SymbolEntry, self);
+            throw new SymbolConversionException(
+                Resources.SymbolEntryConversion_MessageSymbol_cannot_be_converted_to_SymbolEntry,
+                self
+            );
         }
 
         public SymbolEntry HandleDereference(DereferenceSymbol self, object argument)
         {
-            if(self.InnerSymbol.TryGetReferenceSymbol(out var refSym))
+            if (self.InnerSymbol.TryGetReferenceSymbol(out var refSym))
             {
                 var sym = refSym.Entity.ToSymbolEntry();
                 if (sym.Interpretation != SymbolInterpretations.MacroCommand)
@@ -55,7 +66,7 @@ public static class LegacyExtensions
             else
             {
                 // double deref is for ref locals and ref globals
-                if(self.InnerSymbol.TryGetDereferenceSymbol(out var innerDerefSym))
+                if (self.InnerSymbol.TryGetDereferenceSymbol(out var innerDerefSym))
                 {
                     var baseEntry = innerDerefSym.ToSymbolEntry();
                     switch (baseEntry.Interpretation)
@@ -68,14 +79,13 @@ public static class LegacyExtensions
                 }
             }
             throw new SymbolConversionException(
-                Resources.
-                    SymbolEntryConversion_No_arbirtrary_dereference,
-                self);
+                Resources.SymbolEntryConversion_No_arbirtrary_dereference,
+                self
+            );
         }
     }
 
     static readonly SymbolEntryConversion _convertSymbol = new();
-
 
     extension(Symbol symbol)
     {
@@ -117,13 +127,21 @@ public static class LegacyExtensions
                     entity = EntityRef.MacroCommand.Create(entry.InternalId!);
                     break;
                 default:
-                    var interpretation = Enum.GetName(typeof (SymbolInterpretations), entry.Interpretation);
-                    throw new ArgumentOutOfRangeException(nameof(entry), interpretation,
-                        $"Cannot convert symbol entry {entry} to a symbol.");
+                    var interpretation = Enum.GetName(
+                        typeof(SymbolInterpretations),
+                        entry.Interpretation
+                    );
+                    throw new ArgumentOutOfRangeException(
+                        nameof(entry),
+                        interpretation,
+                        $"Cannot convert symbol entry {entry} to a symbol."
+                    );
             }
 
             if (isDereferenced)
-                return Symbol.CreateDereference(Symbol.CreateCall(entity, NoSourcePosition.Instance));
+                return Symbol.CreateDereference(
+                    Symbol.CreateCall(entity, NoSourcePosition.Instance)
+                );
             else
                 return Symbol.CreateCall(entity, NoSourcePosition.Instance);
         }

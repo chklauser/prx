@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -31,12 +29,17 @@ public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
 
     #region Overrides of Symbol
 
-    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    public override TResult HandleWith<TArg, TResult>(
+        ISymbolHandler<TArg, TResult> handler,
+        TArg argument
+    )
     {
         return handler.HandleReference(this, argument);
     }
 
-    public override bool TryGetReferenceSymbol([NotNullWhen(true)] out ReferenceSymbol? referenceSymbol)
+    public override bool TryGetReferenceSymbol(
+        [NotNullWhen(true)] out ReferenceSymbol? referenceSymbol
+    )
     {
         referenceSymbol = this;
         return true;
@@ -46,15 +49,19 @@ public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
 
     public bool Equals(ReferenceSymbol? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return Equals(Entity, other.Entity);
     }
 
     public override bool Equals(Symbol? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
         return obj is ReferenceSymbol && Equals((ReferenceSymbol)obj);
     }
 

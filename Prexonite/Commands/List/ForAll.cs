@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands.List;
 
 public class ForAll : PCommand
@@ -21,8 +19,10 @@ public class ForAll : PCommand
             {
                 eargs[0] = value;
                 var result = f.IndirectCall(sctx, eargs);
-                if (!result.TryConvertTo(sctx, PType.Bool, true, out var existence) ||
-                    !(bool) existence.Value!)
+                if (
+                    !result.TryConvertTo(sctx, PType.Bool, true, out var existence)
+                    || !(bool)existence.Value!
+                )
                     return false;
             }
         }

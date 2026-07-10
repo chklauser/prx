@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Properties;
 
 namespace Prexonite.Modular;
 
 /// <summary>
-/// Identifies a Prexonite module. Consists of an identifier and 
+/// Identifies a Prexonite module. Consists of an identifier and
 /// a version number (major.minor.build.revision).
 /// </summary>
 [DebuggerDisplay("{Id}/{Version}")]
@@ -29,16 +29,21 @@ public sealed class ModuleName : IEquatable<ModuleName>
     public ModuleName(string id, Version version)
     {
         if (string.IsNullOrEmpty(id))
-            throw new ArgumentException(Resources.ModuleName_Module_id_cannot_be_null_or_empty_,nameof(id));
+            throw new ArgumentException(
+                Resources.ModuleName_Module_id_cannot_be_null_or_empty_,
+                nameof(id)
+            );
 
         if (version == null)
             throw new ArgumentNullException(nameof(version));
 
 #if !DEBUG
-// ReSharper disable PossibleNullReferenceException
-        if (id.Contains("/") || id.Any(char.IsWhiteSpace)) 
-            throw new ArgumentException("A module id cannot contain commas (U+002C), slashes (U+002F) or whitespace (Unicode general category Zs)");
-// ReSharper restore PossibleNullReferenceException
+        // ReSharper disable PossibleNullReferenceException
+        if (id.Contains("/") || id.Any(char.IsWhiteSpace))
+            throw new ArgumentException(
+                "A module id cannot contain commas (U+002C), slashes (U+002F) or whitespace (Unicode general category Zs)"
+            );
+        // ReSharper restore PossibleNullReferenceException
 #endif
 
         Id = id;
@@ -54,8 +59,10 @@ public sealed class ModuleName : IEquatable<ModuleName>
     /// <param name="other">An object to compare with this object.</param>
     public bool Equals(ModuleName? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return Engine.StringsAreEqual(other.Id, Id) && Equals(other.Version, Version);
     }
 
@@ -68,14 +75,17 @@ public sealed class ModuleName : IEquatable<ModuleName>
     /// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>. </param><filterpriority>2</filterpriority>
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != typeof (ModuleName)) return false;
-        return Equals((ModuleName) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != typeof(ModuleName))
+            return false;
+        return Equals((ModuleName)obj);
     }
 
     /// <summary>
-    /// Serves as a hash function for a particular type. 
+    /// Serves as a hash function for a particular type.
     /// </summary>
     /// <returns>
     /// A hash code for the current <see cref="T:System.Object"/>.
@@ -85,7 +95,7 @@ public sealed class ModuleName : IEquatable<ModuleName>
     {
         unchecked
         {
-            return (Id.GetHashCode()*397) ^ Version.GetHashCode();
+            return (Id.GetHashCode() * 397) ^ Version.GetHashCode();
         }
     }
 
@@ -110,11 +120,11 @@ public sealed class ModuleName : IEquatable<ModuleName>
     /// <param name="rawName">The string that contains a module name in one of the supported formats.</param>
     /// <param name="name">Will contain the parsed module name on success; null on failure.</param>
     /// <returns>True when the string was successfully parsed; false otherwise</returns>
-    /// <remarks>Valid formats are: 
+    /// <remarks>Valid formats are:
     /// <para>"Name.With.Dots"</para>
-    /// <para>"Name"</para> 
+    /// <para>"Name"</para>
     /// <para>"Name, 1.0"</para>
-    /// <para>"Name.Dots, 1.2.4"</para> 
+    /// <para>"Name.Dots, 1.2.4"</para>
     /// </remarks>
     public static bool TryParse(string rawName, [NotNullWhen(true)] out ModuleName? name)
     {
@@ -127,36 +137,36 @@ public sealed class ModuleName : IEquatable<ModuleName>
     /// <param name="entry">The meta entry that contains a module name in one of the supported formats.</param>
     /// <param name="name">Will contain the parsed module name on success; null on failure.</param>
     /// <returns>True when the meta entry was successfully parsed; false otherwise</returns>
-    /// <remarks>Valid formats are: 
+    /// <remarks>Valid formats are:
     /// <para>"Name.With.Dots"</para>
-    /// <para>Name</para> 
+    /// <para>Name</para>
     /// <para>"Name, 1.0"</para>
-    /// <para>{"Name.Dots"}</para> 
-    /// <para>{Name,"1.0.0"}</para> 
+    /// <para>{"Name.Dots"}</para>
+    /// <para>{Name,"1.0.0"}</para>
     /// <para>{Name,{"1","2","3","4"}}</para>
     /// </remarks>
     public static bool TryParse(MetaEntry entry, [NotNullWhen(true)] out ModuleName? name)
     {
         name = null;
-        if(entry == null)
+        if (entry == null)
             return false;
 
-        if(entry.IsSwitch)
+        if (entry.IsSwitch)
             return false;
 
         string id;
         string? rawVersion = null;
-        if(entry.IsText)
+        if (entry.IsText)
         {
             id = entry.Text;
             int idx;
-            if((idx = id.LastIndexOf('/')) > 0 && idx < id.Length)
+            if ((idx = id.LastIndexOf('/')) > 0 && idx < id.Length)
             {
                 rawVersion = id[(idx + 1)..].Trim();
                 id = id[..idx].Trim();
             }
         }
-        else if(entry.IsList)
+        else if (entry.IsList)
         {
             var lst = entry.List;
             var c = lst.Length;
@@ -184,9 +194,9 @@ public sealed class ModuleName : IEquatable<ModuleName>
                     {
                         lst = lst[1].List;
                         var c2 = lst.Length;
-                        if(c2 is <= 0 or > 4)
+                        if (c2 is <= 0 or > 4)
                             return false;
-                        if(!lst.All(_isText))
+                        if (!lst.All(_isText))
                             return false;
                         rawVersion = lst.Foldr1((l, r) => l + "." + r)!;
                     }
@@ -201,19 +211,19 @@ public sealed class ModuleName : IEquatable<ModuleName>
         }
         else
         {
-            throw new PrexoniteException("Cannot parse meta entry of type " + Enum.GetName(typeof(MetaEntry.Type), entry.EntryType));
+            throw new PrexoniteException(
+                "Cannot parse meta entry of type "
+                    + Enum.GetName(typeof(MetaEntry.Type), entry.EntryType)
+            );
         }
 
-        if(id.Length == 0 
-           || id.Any(char.IsWhiteSpace)
-           || rawVersion is {Length: 0})
+        if (id.Length == 0 || id.Any(char.IsWhiteSpace) || rawVersion is { Length: 0 })
             return false;
 
         Version? v;
         if (rawVersion == null)
             v = ZeroVersion;
-        else
-        if (!Version.TryParse(rawVersion, out v))
+        else if (!Version.TryParse(rawVersion, out v))
             return false;
         else
         {

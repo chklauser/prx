@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using System.Diagnostics;
 using System.Text;
@@ -7,23 +5,30 @@ using Prexonite.Compiler.Symbolic;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstBlock : AstExpr,
-    IList<AstNode>, IAstHasExpressions
+public class AstBlock : AstExpr, IList<AstNode>, IAstHasExpressions
 {
     #region Construction
 
-    protected AstBlock(ISourcePosition position, SymbolStore symbols, string? uid = null, string? prefix = null)
+    protected AstBlock(
+        ISourcePosition position,
+        SymbolStore symbols,
+        string? uid = null,
+        string? prefix = null
+    )
         : base(position)
     {
         _prefix = (prefix ?? DefaultPrefix) + "\\";
-        BlockUid = string.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
+        BlockUid = string.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid;
         Symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
     }
 
-    protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string? prefix = null, string? uid = null)
-        : this(position, _deriveSymbolStore(lexicalScope),uid, prefix)
-    {   
-    }
+    protected AstBlock(
+        ISourcePosition position,
+        AstBlock lexicalScope,
+        string? prefix = null,
+        string? uid = null
+    )
+        : this(position, _deriveSymbolStore(lexicalScope), uid, prefix) { }
 
     static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
     {
@@ -81,8 +86,7 @@ public class AstBlock : AstExpr,
 
     #region Tail call optimization
 
-    static void tail_call_optimize_expressions_of_nested_block(
-        IAstHasExpressions hasExpressions)
+    static void tail_call_optimize_expressions_of_nested_block(IAstHasExpressions hasExpressions)
     {
         foreach (var expression in hasExpressions.Expressions)
         {
@@ -104,8 +108,12 @@ public class AstBlock : AstExpr,
 
             switch (stmt)
             {
-                case AstReturn {Expression: null} ret when (ret.ReturnVariant == ReturnVariant.Exit ||
-                    ret.ReturnVariant == ReturnVariant.Continue) && _statements[i - 1] is AstGetSet:
+                case AstReturn { Expression: null } ret
+                    when (
+                        ret.ReturnVariant == ReturnVariant.Exit
+                        || ret.ReturnVariant == ReturnVariant.Continue
+                    )
+                        && _statements[i - 1] is AstGetSet:
                     //NOTE: Aggressive TCO disabled
 
                     //ret.Expression = getset;
@@ -219,7 +227,7 @@ public class AstBlock : AstExpr,
     {
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
-        
+
         _statements.AddRange(collection);
     }
 
@@ -252,7 +260,7 @@ public class AstBlock : AstExpr,
     public bool IsReadOnly
     {
         [DebuggerStepThrough]
-        get => ((IList<AstNode>) _statements).IsReadOnly;
+        get => ((IList<AstNode>)_statements).IsReadOnly;
     }
 
     [DebuggerStepThrough]
@@ -306,7 +314,7 @@ public class AstBlock : AstExpr,
     {
         get
         {
-            if(Expression == null)
+            if (Expression == null)
                 return [];
             else
                 return [Expression];
@@ -333,8 +341,13 @@ public class AstBlock : AstExpr,
         return false;
     }
 
-    public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
+    public static AstBlock CreateRootBlock(
+        ISourcePosition position,
+        SymbolStore symbols,
+        string prefix,
+        string uid
+    )
     {
-        return new(position,symbols,uid, prefix);
+        return new(position, symbols, uid, prefix);
     }
 }

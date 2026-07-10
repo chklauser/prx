@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Symbolic;
 
 public class MergedNamespace(SymbolStore exportScope) : Namespace

@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Symbolic;
@@ -9,8 +7,7 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
 {
     public override string ToString()
     {
-        return
-            $"{Enum.GetName(typeof(MessageSeverity), Message.Severity)}({Message.MessageClass}) {InnerSymbol}";
+        return $"{Enum.GetName(typeof(MessageSeverity), Message.Severity)}({Message.MessageClass}) {InnerSymbol}";
     }
 
     internal static MessageSymbol _Create(Message message, Symbol inner, ISourcePosition? position)
@@ -35,8 +32,10 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
 
     public override bool Equals(Symbol? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return other is MessageSymbol otherMessage && Equals(otherMessage);
     }
 
@@ -44,7 +43,7 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
     {
         unchecked
         {
-            return (base.GetHashCode()*397) ^ Message.GetHashCode();
+            return (base.GetHashCode() * 397) ^ Message.GetHashCode();
         }
     }
 
@@ -52,12 +51,15 @@ public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
 
     public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition? newPosition = null)
     {
-        return new MessageSymbol(newPosition ?? Position, Message,newInnerSymbol);
+        return new MessageSymbol(newPosition ?? Position, Message, newInnerSymbol);
     }
 
     #endregion
 
-    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    public override TResult HandleWith<TArg, TResult>(
+        ISymbolHandler<TArg, TResult> handler,
+        TArg argument
+    )
     {
         return handler.HandleMessage(this, argument);
     }

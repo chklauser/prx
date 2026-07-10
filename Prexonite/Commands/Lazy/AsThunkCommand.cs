@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Lazy;
@@ -12,9 +10,7 @@ public class AsThunkCommand : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    AsThunkCommand()
-    {
-    }
+    AsThunkCommand() { }
 
     public static AsThunkCommand Instance { get; } = new();
 
@@ -29,7 +25,8 @@ public class AsThunkCommand : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        if (sctx == null) throw new ArgumentNullException(nameof(sctx));
+        if (sctx == null)
+            throw new ArgumentNullException(nameof(sctx));
         if (args == null || args.Length == 0 || args[0] == null)
             throw new PrexoniteException("The asThunk command requires a value.");
 
@@ -47,8 +44,11 @@ public class AsThunkCommand : PCommand, ICilCompilerAware
 
     public void ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion

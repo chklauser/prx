@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
@@ -12,7 +10,6 @@ public abstract class Lazy : VMTestsBase
     {
         CompileToCil = false;
     }
-
 
     [Test]
     public void SingularThunk()
@@ -28,7 +25,8 @@ public abstract class Lazy : VMTestsBase
                 return t.force;
             }
 
-            """);
+            """
+        );
         const int n = 77;
         Expect(n, n);
     }
@@ -49,12 +47,13 @@ public abstract class Lazy : VMTestsBase
                 return t.force;
             }
 
-            """);
+            """
+        );
         const int x1 = 15;
         const int x2 = 17;
         const int y1 = 5;
         const int y2 = -8;
-        const int dot = x1*x2 + y1*y2;
+        const int dot = x1 * x2 + y1 * y2;
         Expect(dot, x1, y1, x2, y2);
     }
 
@@ -79,7 +78,8 @@ public abstract class Lazy : VMTestsBase
                 return t5.force;
             }
 
-            """);
+            """
+        );
 
         Expect(15, 15);
     }
@@ -117,9 +117,10 @@ public abstract class Lazy : VMTestsBase
                 return result.force;
             }
 
-            """);
+            """
+        );
 
-        Expect(3*4, 4);
+        Expect(3 * 4, 4);
     }
 
     [Test]
@@ -138,10 +139,11 @@ public abstract class Lazy : VMTestsBase
                 return foldl((acc,z) => acc + z.force,"",ys);
             }
 
-            """);
+            """
+        );
 
-        var xs = new List<PValue> {1, 2, 3};
-        Expect("123", (PValue) xs);
+        var xs = new List<PValue> { 1, 2, 3 };
+        Expect("123", (PValue)xs);
     }
 
     [Test]
@@ -212,15 +214,15 @@ public abstract class Lazy : VMTestsBase
                     >> foldl((a,b) => a + b,seed);
             }
 
-            """);
+            """
+        );
 
-        var xs = new List<PValue> {"a", "b", "c"};
-        var ys = new List<PValue> {1, 2, 3};
+        var xs = new List<PValue> { "a", "b", "c" };
+        var ys = new List<PValue> { 1, 2, 3 };
         const string seed = ">>";
 
-        Expect(">>abc123", (PValue) xs, (PValue) ys, seed);
+        Expect(">>abc123", (PValue)xs, (PValue)ys, seed);
     }
-
 
     [Test]
     public void SimpleLetBindingStmt()
@@ -254,7 +256,8 @@ public abstract class Lazy : VMTestsBase
             }
 
 
-            """);
+            """
+        );
 
         Expect("<<xxx", "x", 3);
     }
@@ -291,7 +294,8 @@ public abstract class Lazy : VMTestsBase
                  return foldl((a,b) => a + b,"<<") << take(n) << to_seq << fib;
             }
 
-            """);
+            """
+        );
 
         Expect("<<11235813", 7);
     }
@@ -313,7 +317,8 @@ public abstract class Lazy : VMTestsBase
                 return d.();
             }
 
-            """);
+            """
+        );
 
         Expect(8, 3);
     }
@@ -332,7 +337,8 @@ public abstract class Lazy : VMTestsBase
                 return foldl((a,b) => a + b, "<<") << take(n) << toseq(flip);
             }
 
-            """);
+            """
+        );
 
         Expect("<<101010", 6);
     }

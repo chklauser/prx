@@ -23,113 +23,122 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 namespace CSFlex
 {
+    /**
+     * Enumerates the states of a StateSet.
+     *
+     * @author Gerwin Klein
+     * @version JFlex 1.4, $Revision: 2.2 $, $Date: 2004/04/12 10:07:47 $
+     * @author Jonathan Gilbert
+     * @version CSFlex 1.4
+     */
+    public sealed class StateSetEnumerator
+    {
+        private readonly bool DEBUG = false;
 
-/**
- * Enumerates the states of a StateSet.
- *
- * @author Gerwin Klein
- * @version JFlex 1.4, $Revision: 2.2 $, $Date: 2004/04/12 10:07:47 $
- * @author Jonathan Gilbert
- * @version CSFlex 1.4
- */
-public sealed class StateSetEnumerator {
+        private int index;
+        private int offset;
+        private long mask;
 
-  private readonly bool DEBUG = false;
+        //private int current;
+        private long[] bits;
 
-  private int index;
-  private int offset;
-  private long mask;
+        /**
+         * creates a new StateSetEnumerator that is not yet associated
+         * with a StateSet. hasMoreElements() and nextElement() will
+         * throw NullPointerException when used before reset()
+         */
+        public StateSetEnumerator() { }
 
-  //private int current;
-  private long [] bits;
+        public StateSetEnumerator(StateSet states)
+        {
+            reset(states);
+        }
 
-  /**
-   * creates a new StateSetEnumerator that is not yet associated
-   * with a StateSet. hasMoreElements() and nextElement() will
-   * throw NullPointerException when used before reset()
-   */
-  public StateSetEnumerator() {
-  }
+        public void reset(StateSet states)
+        {
+            bits = states.bits;
+            index = 0;
+            offset = 0;
+            mask = 1;
+            //current = 0;
 
-  public StateSetEnumerator(StateSet states) {
-    reset(states);
-  }
+            while (index < bits.Length && bits[index] == 0)
+                index++;
 
-  public void reset(StateSet states) {
-    bits    = states.bits;
-    index   = 0;
-    offset  = 0;
-    mask    = 1;
-    //current = 0;
+            if (index >= bits.Length)
+                return;
 
-    while (index < bits.Length && bits[index] == 0)
-      index++;
+            while (offset <= StateSet.MASK && ((bits[index] & mask) == 0))
+            {
+                mask <<= 1;
+                offset++;
+            }
+        }
 
-    if (index >= bits.Length) return;
+        private void advance()
+        {
+            if (DEBUG)
+                Out.dump("Advancing, at start, index = " + index + ", offset = " + offset); //$NON-NLS-1$ //$NON-NLS-2$
 
-    while (offset <= StateSet.MASK && ((bits[index] & mask) == 0)) {
-      mask<<= 1;
-      offset++;
+            // cache fields in local variable for faster access
+            int _index = this.index;
+            int _offset = this.offset;
+            long _mask = this.mask;
+            long[] _bits = this.bits;
+
+            long bi = _bits[_index];
+
+            do
+            {
+                _offset++;
+                _mask <<= 1;
+            } while (_offset <= StateSet.MASK && ((bi & _mask) == 0));
+
+            if (_offset > StateSet.MASK)
+            {
+                int length = _bits.Length;
+
+                do _index++;
+                while (_index < length && _bits[_index] == 0);
+
+                if (_index >= length)
+                {
+                    this.index = length; // indicates "no more elements"
+                    return;
+                }
+
+                _offset = 0;
+                _mask = 1;
+                bi = _bits[_index];
+
+                // terminates, because bi != 0
+                while ((bi & _mask) == 0)
+                {
+                    _mask <<= 1;
+                    _offset++;
+                }
+            }
+
+            // write back cached values
+            this.index = _index;
+            this.mask = _mask;
+            this.offset = _offset;
+        }
+
+        public bool hasMoreElements()
+        {
+            if (DEBUG)
+                Out.dump("hasMoreElements, index = " + index + ", offset = " + offset); //$NON-NLS-1$ //$NON-NLS-2$
+            return index < bits.Length;
+        }
+
+        public int nextElement()
+        {
+            if (DEBUG)
+                Out.dump("nextElement, index = " + index + ", offset = " + offset); //$NON-NLS-1$ //$NON-NLS-2$
+            int x = (index << StateSet.BITS) + offset;
+            advance();
+            return x;
+        }
     }
-  }
-
-  private void advance() {
-
-    if (DEBUG) Out.dump("Advancing, at start, index = "+index+", offset = "+offset); //$NON-NLS-1$ //$NON-NLS-2$
-
-    // cache fields in local variable for faster access
-    int  _index   = this.index;
-    int  _offset  = this.offset;
-    long _mask    = this.mask;
-    long [] _bits = this.bits;
-
-    long bi = _bits[_index];
-
-    do {
-      _offset++;
-      _mask<<= 1;
-    } while (_offset <= StateSet.MASK && ((bi & _mask) == 0));
-
-    if (_offset > StateSet.MASK) {
-      int length = _bits.Length;
-
-      do
-        _index++;
-      while (_index < length && _bits[_index] == 0);
-
-      if (_index >= length) {
-        this.index = length; // indicates "no more elements"
-        return;
-      }
-
-      _offset = 0;
-      _mask = 1;
-      bi = _bits[_index];
-
-      // terminates, because bi != 0
-      while ((bi & _mask) == 0) {
-        _mask<<= 1;
-        _offset++;
-      }
-    }
-
-    // write back cached values
-    this.index  = _index;
-    this.mask   = _mask;
-    this.offset = _offset;
-  }
-
-  public bool hasMoreElements() {
-    if (DEBUG) Out.dump("hasMoreElements, index = "+index+", offset = "+offset); //$NON-NLS-1$ //$NON-NLS-2$
-    return index < bits.Length;
-  }
-
-  public int nextElement() {
-    if (DEBUG) Out.dump("nextElement, index = "+index+", offset = "+offset); //$NON-NLS-1$ //$NON-NLS-2$
-    int x = (index << StateSet.BITS) + offset;
-    advance();
-    return x;
-  }
-
-}
 }

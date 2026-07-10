@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands;
 
 /// <summary>
@@ -14,8 +12,9 @@ public abstract class PCommand : IIndirectCall
     /// <param name = "args">The arguments to be passed to the command.</param>
     /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
     public abstract PValue Run(StackContext sctx, ReadOnlySpan<PValue> args);
-    
-    public PValue Run(StackContext sctx, params PValue[] args) => Run(sctx, new ReadOnlySpan<PValue>(args));
+
+    public PValue Run(StackContext sctx, params PValue[] args) =>
+        Run(sctx, new ReadOnlySpan<PValue>(args));
 
     #region IIndirectCall Members
 

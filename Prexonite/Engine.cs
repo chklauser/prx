@@ -13,8 +13,8 @@ using Prexonite.Compiler.Internal;
 using Char = Prexonite.Commands.Core.Char;
 using Debug = Prexonite.Commands.Core.Debug;
 using Range = Prexonite.Commands.List.Range;
-using TypeExpressionScanner = Prexonite.Internal.Scanner;
 using TypeExpressionParser = Prexonite.Internal.Parser;
+using TypeExpressionScanner = Prexonite.Internal.Scanner;
 
 namespace Prexonite;
 
@@ -35,8 +35,7 @@ public partial class Engine
     /// <remarks>
     ///     The current implementation is <strong>case-insensitive</strong>
     /// </remarks>
-    public static readonly StringComparer DefaultStringComparer =
-        StringComparer.OrdinalIgnoreCase;
+    public static readonly StringComparer DefaultStringComparer = StringComparer.OrdinalIgnoreCase;
 
     /// <summary>
     ///     This method is used throughout the whole Prexonite VM to compare strings.
@@ -144,12 +143,12 @@ public partial class Engine
         {
             if (clrType == null)
                 throw new ArgumentNullException(nameof(clrType));
-            if ((object) type == null)
+            if ((object)type == null)
                 throw new ArgumentNullException(nameof(type));
             if (_outer._pTypeMap.ContainsKey(clrType))
                 throw new InvalidOperationException(
-                    "A mapping for the CLR Type " + clrType.FullName +
-                    " already exists");
+                    "A mapping for the CLR Type " + clrType.FullName + " already exists"
+                );
             _outer._pTypeMap.Add(clrType, type);
         }
 
@@ -182,7 +181,7 @@ public partial class Engine
     readonly SymbolTable<Type> _pTypeRegistry;
 
     /// <summary>
-    ///     Provides access to the dictionary of <see cref = "PType">PTypes</see> registered 
+    ///     Provides access to the dictionary of <see cref = "PType">PTypes</see> registered
     ///     for recognition in type expressions.
     /// </summary>
     /// <seealso cref = "PTypeRegistryIterator" />
@@ -270,13 +269,12 @@ public partial class Engine
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
-            var literals =
-                (PTypeLiteralAttribute[])
-                type.GetCustomAttributes(typeof (PTypeLiteralAttribute), false);
+            var literals = (PTypeLiteralAttribute[])
+                type.GetCustomAttributes(typeof(PTypeLiteralAttribute), false);
             if (literals.Length == 0)
                 throw new PrexoniteException(
-                    "Supplied PType " + type +
-                    " does not have any PTypeLiteral attributes.");
+                    "Supplied PType " + type + " does not have any PTypeLiteral attributes."
+                );
             foreach (var literal in literals)
                 Add(literal.Literal, type);
         }
@@ -288,7 +286,7 @@ public partial class Engine
         /// <param name = "type">A <see cref = "Type" /> that inherits from <see cref = "PType" />.</param>
         /// <remarks>
         ///     If the type has a <see cref = "PTypeLiteralAttribute" /> applied to it,
-        ///     you might want to use the overload <see cref = "Add(Type)" /> which automatically 
+        ///     you might want to use the overload <see cref = "Add(Type)" /> which automatically
         ///     registers the type.
         /// </remarks>
         public void Add(string name, Type type)
@@ -297,13 +295,13 @@ public partial class Engine
                 throw new ArgumentNullException(nameof(name));
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
-            
+
             if (!PType.IsPType(type))
                 throw new ArgumentException("ClrType " + type + " is not a PType.");
             if (_outer._pTypeRegistry.TryGetValue(name, out var value))
                 throw new ArgumentException(
-                    "The registry already contains an entry " + name + " => " +
-                    value + ".");
+                    "The registry already contains an entry " + name + " => " + value + "."
+                );
             _outer._pTypeRegistry.Add(name, type);
         }
 
@@ -378,41 +376,39 @@ public partial class Engine
     {
         if (!PType.IsPType(ptypeClrType))
             throw new ArgumentException(
-                "Cannot construct PType. ClrType " + ptypeClrType.ClrType +
-                " is not a PType.");
+                "Cannot construct PType. ClrType " + ptypeClrType.ClrType + " is not a PType."
+            );
 
         //Performance optimizations
         var clrType = ptypeClrType.ClrType;
-        if (clrType == typeof (IntPType))
+        if (clrType == typeof(IntPType))
             return PType.Int;
-        if (clrType == typeof (RealPType))
+        if (clrType == typeof(RealPType))
             return PType.Real;
-        if (clrType == typeof (BoolPType))
+        if (clrType == typeof(BoolPType))
             return PType.Bool;
-        if (clrType == typeof (StringPType))
+        if (clrType == typeof(StringPType))
             return PType.String;
-        if (clrType == typeof (NullPType))
+        if (clrType == typeof(NullPType))
             return PType.Null;
-        if (clrType == typeof (ObjectPType) && args.Length > 0 && args[0].Type == PType.String)
-            return PType.Object[sctx, (string) args[0].Value!];
-        if (clrType == typeof (ListPType))
+        if (clrType == typeof(ObjectPType) && args.Length > 0 && args[0].Type == PType.String)
+            return PType.Object[sctx, (string)args[0].Value!];
+        if (clrType == typeof(ListPType))
             return PType.List;
-        if (clrType == typeof (HashPType))
+        if (clrType == typeof(HashPType))
             return PType.Hash;
-        if (clrType == typeof (CharPType))
+        if (clrType == typeof(CharPType))
             return PType.Char;
-        if (clrType == typeof (StructurePType))
+        if (clrType == typeof(StructurePType))
             return PType.Structure;
 
-        var result =
-            ptypeClrType.Construct(sctx, [PType.Object.CreatePValue(args)]);
+        var result = ptypeClrType.Construct(sctx, [PType.Object.CreatePValue(args)]);
         if (result == null || result.IsNull)
-            throw new PrexoniteException(
-                "Could not construct PType (resulted in null reference)");
+            throw new PrexoniteException("Could not construct PType (resulted in null reference)");
         if (!PType.IsPType(result))
             throw new PrexoniteException(
-                "Could not construct PType (" + result.ClrType +
-                " is not a PType).");
+                "Could not construct PType (" + result.ClrType + " is not a PType)."
+            );
         return (PType)result.Value!;
     }
 
@@ -423,13 +419,14 @@ public partial class Engine
     /// <param name = "typeName">The type's name.</param>
     /// <param name = "args">An array of type arguments.</param>
     /// <returns>The created <see cref = "PType" /> instance.</returns>
-    /// <exception cref = "SymbolNotFoundException"><paramref name = "typeName" /> cannot be found in the 
+    /// <exception cref = "SymbolNotFoundException"><paramref name = "typeName" /> cannot be found in the
     ///     <see cref = "PTypeRegistry" />.</exception>
     public PType CreatePType(StackContext sctx, string typeName, PValue[] args)
     {
         if (!PTypeRegistry.TryGet(typeName, out var type))
             throw new SymbolNotFoundException(
-                "PTypeRegistry does not hold a record for \"" + typeName + "\".");
+                "PTypeRegistry does not hold a record for \"" + typeName + "\"."
+            );
         return CreatePType(sctx, type, args);
     }
 
@@ -441,12 +438,12 @@ public partial class Engine
     /// <returns>The created <see cref = "PType" /> instance.</returns>
     /// <remarks>
     ///     <para>
-    ///         While it may seem convenient to use this overload, bear in mind this it 
-    ///         requires a fully featured parser to translate the supplied string 
+    ///         While it may seem convenient to use this overload, bear in mind this it
+    ///         requires a fully featured parser to translate the supplied string
     ///         to a <see cref = "PType" /> instance.
     ///     </para>
     ///     <para>
-    ///         You are advised to stick with the other overloads unless you get such 
+    ///         You are advised to stick with the other overloads unless you get such
     ///         an expression from a third source (e.g., a configuration file or an <see cref = "Instruction" />).
     ///     </para>
     /// </remarks>
@@ -457,8 +454,8 @@ public partial class Engine
         parser.Parse();
         if (parser.errors.count > 0 || ReferenceEquals(parser.LastType, null))
             throw new PrexoniteException(
-                "Could not construct PType. (Errors in PType expression: " + expression +
-                ")");
+                "Could not construct PType. (Errors in PType expression: " + expression + ")"
+            );
         else
             return parser.LastType;
     }
@@ -558,34 +555,34 @@ public partial class Engine
         _pTypeMap = new();
         PTypeMap = new(this);
         //int
-        PTypeMap[typeof (int)] = PType.Int;
-        PTypeMap[typeof (long)] = PType.Int;
-        PTypeMap[typeof (short)] = PType.Int;
-        PTypeMap[typeof (byte)] = PType.Int;
+        PTypeMap[typeof(int)] = PType.Int;
+        PTypeMap[typeof(long)] = PType.Int;
+        PTypeMap[typeof(short)] = PType.Int;
+        PTypeMap[typeof(byte)] = PType.Int;
 
 #if UseNonCTSIntegers
-            PTypeMap[typeof(uint)]      = IntPType.Instance;
-            PTypeMap[typeof(ulong)]     = IntPType.Instance;
-            PTypeMap[typeof(ushort)]    = IntPType.Instance;
-            PTypeMap[typeof(sbyte)]     = IntPType.Instance;
+        PTypeMap[typeof(uint)] = IntPType.Instance;
+        PTypeMap[typeof(ulong)] = IntPType.Instance;
+        PTypeMap[typeof(ushort)] = IntPType.Instance;
+        PTypeMap[typeof(sbyte)] = IntPType.Instance;
 #endif
 
         //char
-        PTypeMap[typeof (char)] = PType.Char;
+        PTypeMap[typeof(char)] = PType.Char;
 
         //bool
-        PTypeMap[typeof (bool)] = PType.Bool;
+        PTypeMap[typeof(bool)] = PType.Bool;
 
         //real
-        PTypeMap[typeof (float)] = PType.Real;
-        PTypeMap[typeof (double)] = PType.Real;
+        PTypeMap[typeof(float)] = PType.Real;
+        PTypeMap[typeof(double)] = PType.Real;
 
         //string
-        PTypeMap[typeof (string)] = PType.String;
+        PTypeMap[typeof(string)] = PType.String;
 
-        PTypeMap[typeof (List<PValue>)] = PType.List;
-        PTypeMap[typeof (PValue[])] = PType.List;
-        PTypeMap[typeof (PValueHashtable)] = PType.Hash;
+        PTypeMap[typeof(List<PValue>)] = PType.List;
+        PTypeMap[typeof(PValue[])] = PType.List;
+        PTypeMap[typeof(PValueHashtable)] = PType.Hash;
 
         //Registry
         _pTypeRegistry = new();
@@ -608,8 +605,7 @@ public partial class Engine
         _registeredAssemblies = new();
         var prexoniteAssembly = Assembly.GetAssembly(typeof(Engine))!;
         _registeredAssemblies.Add(prexoniteAssembly);
-        foreach (
-            var assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
+        foreach (var assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
             _registeredAssemblies.Add(Assembly.Load(assName.FullName));
 
         //Commands
@@ -774,12 +770,18 @@ public partial class Engine
         Commands.AddEngineCommand(PartialTypeCheckAlias, PartialTypeCheckCommand.Instance);
         Commands.AddEngineCommand(PartialTypeCastAlias, PartialTypecastCommand.Instance);
         Commands.AddEngineCommand(PartialStaticCallAlias, PartialStaticCallCommand.Instance);
-        Commands.AddEngineCommand(FunctionalPartialCallCommand.Alias,
-            FunctionalPartialCallCommand.Instance);
-        Commands.AddEngineCommand(FlippedFunctionalPartialCallCommand.Alias,
-            FlippedFunctionalPartialCallCommand.Instance);
-        Commands.AddEngineCommand(PartialCallStarImplCommand.Alias,
-            PartialCallStarImplCommand.Instance);
+        Commands.AddEngineCommand(
+            FunctionalPartialCallCommand.Alias,
+            FunctionalPartialCallCommand.Instance
+        );
+        Commands.AddEngineCommand(
+            FlippedFunctionalPartialCallCommand.Alias,
+            FlippedFunctionalPartialCallCommand.Instance
+        );
+        Commands.AddEngineCommand(
+            PartialCallStarImplCommand.Alias,
+            PartialCallStarImplCommand.Instance
+        );
 
         Commands.AddEngineCommand(ThenAlias, ThenCommand.Instance);
 
@@ -811,7 +813,6 @@ public partial class Engine
         _registeredAssemblies = prototype._registeredAssemblies.Clone();
         Commands = new();
         Commands.AddRange(prototype.Commands);
-            
     }
 
     /// <summary>
@@ -865,8 +866,8 @@ public partial class Engine
     public const string DisposeAlias = "dispose";
 
     /// <summary>
-    ///     Alias used for the <c>call</c> command (macro). 
-    ///     If you intend to refer to the <see cref = "Call" /> command, 
+    ///     Alias used for the <c>call</c> command (macro).
+    ///     If you intend to refer to the <see cref = "Call" /> command,
     ///     use <see cref = "Call.Alias" />.
     /// </summary>
     public const string CallAlias = "call";
@@ -892,8 +893,8 @@ public partial class Engine
     public const string SelectAlias = "select";
 
     /// <summary>
-    ///     Alias used for the <c>callmember</c> command (macro). 
-    ///     If you intend to refer to the <see cref = "Call_Member" /> command, 
+    ///     Alias used for the <c>callmember</c> command (macro).
+    ///     If you intend to refer to the <see cref = "Call_Member" /> command,
     ///     use <see cref = "Call_Member.Alias" />.
     /// </summary>
     public const string Call_MemberAlias = @"call\member";
@@ -1082,7 +1083,7 @@ public partial class Engine
 
     /// <summary>
     ///     Alias used for the call\tail command.
-    ///     If you intend to refer to the <see cref = "Call_Tail" /> command, 
+    ///     If you intend to refer to the <see cref = "Call_Tail" /> command,
     ///     use <see cref = "Call_Tail.Alias" />.
     /// </summary>
     public const string Call_TailAlias = @"call\tail";
@@ -1110,8 +1111,12 @@ public partial class Engine
     /// <summary>
     ///     Alias used for the CompileToCil command.
     /// </summary>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")] public const string CompileToCilAlias = nameof(CompileToCil);
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil"
+    )]
+    public const string CompileToCilAlias = nameof(CompileToCil);
 
     /// <summary>
     ///     Alias used for the TakeWhile command.
@@ -1180,8 +1185,8 @@ public partial class Engine
 
     #region Version
 
-    public static Version PrexoniteVersion => typeof (Engine).Assembly.GetName().Version 
-        ?? new Version(0,0);
+    public static Version PrexoniteVersion =>
+        typeof(Engine).Assembly.GetName().Version ?? new Version(0, 0);
 
     #endregion
 }

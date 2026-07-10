@@ -1,15 +1,11 @@
-
 namespace Prexonite.Compiler.Ast;
 
-public class AstThrow : AstExpr,
-    IAstHasExpressions
+public class AstThrow : AstExpr, IAstHasExpressions
 {
     public required AstExpr Expression;
 
     public AstThrow(string file, int line, int column)
-        : base(file, line, column)
-    {
-    }
+        : base(file, line, column) { }
 
     #region IAstHasExpressions Members
 
@@ -42,9 +38,9 @@ public class AstThrow : AstExpr,
             throw new PrexoniteException("Expression must be assigned.");
 
         Expression.EmitValueCode(target);
-        target.Emit(Position,OpCode.@throw);
+        target.Emit(Position, OpCode.@throw);
 
         if (stackSemantics == StackSemantics.Value)
-            target.Emit(Position,OpCode.ldc_null);
+            target.Emit(Position, OpCode.ldc_null);
     }
 }

@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class Cos : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Cos()
-    {
-    }
+    Cos() { }
 
     public static Cos Instance { get; } = new();
 
@@ -40,7 +36,7 @@ public class Cos : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(PValue arg0, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
+        var x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value!;
 
         return System.Math.Cos(x);
     }
@@ -69,8 +65,10 @@ public class Cos : PCommand, ICilCompilerAware
         }
     }
 
-    static readonly MethodInfo RunStaticallyMethod =
-        typeof (Cos).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyMethod = typeof(Cos).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

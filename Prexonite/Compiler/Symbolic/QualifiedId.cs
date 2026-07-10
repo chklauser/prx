@@ -1,15 +1,16 @@
-﻿
-
 using System.Collections;
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Symbolic;
 
-public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<QualifiedId>, IComparable<QualifiedId>
+public readonly struct QualifiedId
+    : IReadOnlyList<string>,
+        IEquatable<QualifiedId>,
+        IComparable<QualifiedId>
 {
     public void ToString(TextWriter writer)
     {
-        if(_elements == null)
+        if (_elements == null)
             return;
 
         var isFirst = true;
@@ -36,17 +37,18 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
 
     readonly string[]? _elements;
 
-    public QualifiedId(params string[]? elements) : this()
+    public QualifiedId(params string[]? elements)
+        : this()
     {
 #if DEBUG
-            if (elements != null)
+        if (elements != null)
+        {
+            for (var i = 0; i < elements.Length; i++)
             {
-                for (var i = 0; i < elements.Length; i++)
-                {
-                    if (elements[i] == null)
-                        throw new ArgumentException($"Element of qualified id at index {i} is null.");
-                }
+                if (elements[i] == null)
+                    throw new ArgumentException($"Element of qualified id at index {i} is null.");
             }
+        }
 #endif
         _elements = elements;
     }
@@ -70,19 +72,21 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
         get
         {
             if (_elements == null)
-                throw new IndexOutOfRangeException("Index into qualified id is out of range. (Empty qualified id)");
+                throw new IndexOutOfRangeException(
+                    "Index into qualified id is out of range. (Empty qualified id)"
+                );
             return _elements[index];
         }
     }
 
     public QualifiedId ExtendedWith(string suffix)
     {
-        if(_elements == null || _elements.Length == 0)
+        if (_elements == null || _elements.Length == 0)
             return new(suffix);
         else
         {
             var next = new string[_elements.Length + 1];
-            Array.Copy(_elements,next, _elements.Length);
+            Array.Copy(_elements, next, _elements.Length);
             next[^1] = suffix;
             return new(next);
         }
@@ -91,14 +95,15 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
     public QualifiedId WithSuffixDropped(int count)
     {
         var thisCount = Count;
-        if(count > thisCount || count < 0)
+        if (count > thisCount || count < 0)
             throw new IndexOutOfRangeException(
-                $"Cannot drop {count} parts from a qualified id consisting of {thisCount} parts.");
+                $"Cannot drop {count} parts from a qualified id consisting of {thisCount} parts."
+            );
         if (count == 0 || _elements == null)
             return this;
 
         var ps = new string[thisCount - count];
-        Array.Copy(_elements,0,ps,0,ps.Length);
+        Array.Copy(_elements, 0, ps, 0, ps.Length);
         return new(ps);
     }
 
@@ -107,7 +112,8 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
         var thisCount = Count;
         if (count > thisCount || count < 0)
             throw new IndexOutOfRangeException(
-                $"Cannot drop {count} parts from a qualified id consisting of {thisCount} parts.");
+                $"Cannot drop {count} parts from a qualified id consisting of {thisCount} parts."
+            );
         if (count == 0 || _elements == null)
             return this;
 
@@ -135,7 +141,7 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
             // differ at the end than at the beginning
             for (var i = _elements.Length - 1; i >= 0; i--)
             {
-                if (!Engine.StringsAreEqual(_elements[i],other._elements[i]))
+                if (!Engine.StringsAreEqual(_elements[i], other._elements[i]))
                     return false;
             }
 
@@ -160,9 +166,9 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
             // must compare element by element
             for (var i = 0; i < thisLen && i < otherLen; i++)
             {
-// ReSharper disable PossibleNullReferenceException
+                // ReSharper disable PossibleNullReferenceException
                 var r = StringComparer.OrdinalIgnoreCase.Compare(_elements[i], other._elements[i]);
-// ReSharper restore PossibleNullReferenceException
+                // ReSharper restore PossibleNullReferenceException
                 if (r != 0)
                     return r;
             }
@@ -174,7 +180,8 @@ public readonly struct QualifiedId : IReadOnlyList<string>, IEquatable<Qualified
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(null, obj))
+            return false;
         return obj is QualifiedId id && Equals(id);
     }
 

@@ -1,11 +1,11 @@
-
-
 namespace Prexonite.Compiler.Ast;
 
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Coroutine))]
-public class AstCreateCoroutine : AstExpr,
-    IAstHasExpressions
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = nameof(Coroutine)
+)]
+public class AstCreateCoroutine : AstExpr, IAstHasExpressions
 {
     public ArgumentsProxy Arguments { get; }
 
@@ -27,7 +27,7 @@ public class AstCreateCoroutine : AstExpr,
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Effect)
+        if (stackSemantics == StackSemantics.Effect)
             return;
 
         if (Expression == null)
@@ -37,7 +37,7 @@ public class AstCreateCoroutine : AstExpr,
         foreach (var argument in _arguments)
             argument.EmitValueCode(target);
 
-        target.Emit(Position,OpCode.newcor, _arguments.Count);
+        target.Emit(Position, OpCode.newcor, _arguments.Count);
     }
 
     #region AstExpr Members
@@ -51,8 +51,12 @@ public class AstCreateCoroutine : AstExpr,
         {
             if (arg == null)
                 throw new PrexoniteException(
-                    "Invalid (null) argument in CreateCoroutine node (" + ToString() +
-                    ") detected at position " + _arguments.IndexOf(null!) + ".");
+                    "Invalid (null) argument in CreateCoroutine node ("
+                        + ToString()
+                        + ") detected at position "
+                        + _arguments.IndexOf(null!)
+                        + "."
+                );
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
             {

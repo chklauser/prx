@@ -1,20 +1,16 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstUsing : AstScopedBlock,
-    IAstHasBlocks
+public class AstUsing : AstScopedBlock, IAstHasBlocks
 {
     const string LabelPrefix = "using";
 
-    public AstUsing(ISourcePosition p, 
-        AstBlock lexicalScope)
+    public AstUsing(ISourcePosition p, AstBlock lexicalScope)
         : base(p, lexicalScope)
     {
-        Block = new(p, this,prefix:LabelPrefix);
+        Block = new(p, this, prefix: LabelPrefix);
     }
 
     #region IAstHasBlocks Members
@@ -28,15 +24,15 @@ public class AstUsing : AstScopedBlock,
 
     public override AstExpr[] Expressions
     {
-        get 
-        { 
+        get
+        {
             var b = base.Expressions;
             if (ResourceExpression != null)
             {
                 var r = new AstExpr[b.Length + 1];
                 b.CopyTo(r, 0);
                 r[b.Length] = ResourceExpression;
-                
+
                 return r;
             }
             else
@@ -58,8 +54,10 @@ public class AstUsing : AstScopedBlock,
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Value)
-            throw new NotSupportedException("Using blocks do not produce values and can thus not be used as expressions.");
+        if (stackSemantics == StackSemantics.Value)
+            throw new NotSupportedException(
+                "Using blocks do not produce values and can thus not be used as expressions."
+            );
 
         if (ResourceExpression == null)
             throw new PrexoniteException("AstUsing requires Expression to be initialized.");
@@ -68,7 +66,11 @@ public class AstUsing : AstScopedBlock,
         var vContainer = Block.CreateLabel("container");
         target.Function.Variables.Add(vContainer);
         //Try block => Container = {Expression}; {Block};
-        var setCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer),PCall.Set);
+        var setCont = target.Factory.Call(
+            Position,
+            EntityRef.Variable.Local.Create(vContainer),
+            PCall.Set
+        );
         setCont.Arguments.Add(ResourceExpression);
 
         var getCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer));

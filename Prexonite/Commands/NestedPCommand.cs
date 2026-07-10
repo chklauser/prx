@@ -1,9 +1,7 @@
-
-
 namespace Prexonite.Commands;
 
 /// <summary>
-///     Implementation of <see cref = "PCommand" /> that forwards the run call to 
+///     Implementation of <see cref = "PCommand" /> that forwards the run call to
 ///     a class that implements <see cref = "ICommand" />.
 /// </summary>
 /// <seealso cref = "PCommand" />

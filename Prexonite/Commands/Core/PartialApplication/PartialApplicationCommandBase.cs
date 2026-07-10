@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -9,9 +7,11 @@ namespace Prexonite.Commands.Core.PartialApplication;
 
 public abstract class PartialApplicationCommandBase : PCommand
 {
-    protected static readonly MethodInfo ExtractMappings32Method = typeof (PartialApplicationCommandBase)
-        .GetMethod(nameof(ExtractMappings32), [typeof (int[])]) 
-        ?? throw new InvalidOperationException("Method PartialApplicationCommandBase.ExtractMappings32 not found.");
+    protected static readonly MethodInfo ExtractMappings32Method =
+        typeof(PartialApplicationCommandBase).GetMethod(nameof(ExtractMappings32), [typeof(int[])])
+        ?? throw new InvalidOperationException(
+            "Method PartialApplicationCommandBase.ExtractMappings32 not found."
+        );
 
     /// <summary>
     ///     Calculates how many Int32 arguments are needed to encode <paramref name = "countMapppings" /> mappings, including the number that indicates how many mappings there are
@@ -20,7 +20,7 @@ public abstract class PartialApplicationCommandBase : PCommand
     /// <returns>The number of Int32 values needed to encode the mappings.</returns>
     protected static int CountInt32Required(int countMapppings)
     {
-        return (countMapppings + 1 + 3)/4;
+        return (countMapppings + 1 + 3) / 4;
     }
 
     /// <summary>
@@ -29,17 +29,22 @@ public abstract class PartialApplicationCommandBase : PCommand
     [StructLayout(LayoutKind.Explicit)]
     struct ExplicitInt32
     {
-        [FieldOffset(0)] public int Int;
+        [FieldOffset(0)]
+        public int Int;
 
         // overlapped bytes (little-endian)
         // ReSharper disable FieldCanBeMadeReadOnly.Local
-        [FieldOffset(0)] public sbyte Byte0;
+        [FieldOffset(0)]
+        public sbyte Byte0;
 
-        [FieldOffset(1)] public sbyte Byte1;
+        [FieldOffset(1)]
+        public sbyte Byte1;
 
-        [FieldOffset(2)] public sbyte Byte2;
+        [FieldOffset(2)]
+        public sbyte Byte2;
 
-        [FieldOffset(3)] public sbyte Byte3;
+        [FieldOffset(3)]
+        public sbyte Byte3;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
     }
 
@@ -96,7 +101,7 @@ public abstract class PartialApplicationCommandBase : PCommand
     // ReSharper disable UnusedMember.Global
     //used via CIL compilation
     public static int[]? ExtractMappings32(int[] rawInput)
-        // ReSharper restore UnusedMember.Global
+    // ReSharper restore UnusedMember.Global
     {
         if (rawInput.Length == 0)
             return [];
@@ -150,44 +155,49 @@ public abstract class PartialApplicationCommandBase : PCommand
         while (mappingIndex < mappings.Length)
         {
             //byte 0
-            packed[packedIndex] |= (mappings[mappingIndex] << 0*8) & (0xFF << 0*8);
+            packed[packedIndex] |= (mappings[mappingIndex] << 0 * 8) & (0xFF << 0 * 8);
             mappingIndex++;
 
             //byte 1
             if (mappings.Length <= mappingIndex)
                 break;
-            packed[packedIndex] |= (mappings[mappingIndex] << 1*8) & (0xFF << 1*8);
+            packed[packedIndex] |= (mappings[mappingIndex] << 1 * 8) & (0xFF << 1 * 8);
             mappingIndex++;
 
             //byte 2
             if (mappings.Length <= mappingIndex)
                 break;
-            packed[packedIndex] |= (mappings[mappingIndex] << 2*8) & (0xFF << 2*8);
+            packed[packedIndex] |= (mappings[mappingIndex] << 2 * 8) & (0xFF << 2 * 8);
             mappingIndex++;
 
             //byte 3
             if (mappings.Length <= mappingIndex)
                 break;
-            packed[packedIndex] |= (mappings[mappingIndex] << 3*8) & (0xFF << 3*8);
+            packed[packedIndex] |= (mappings[mappingIndex] << 3 * 8) & (0xFF << 3 * 8);
             mappingIndex++;
 
             packedIndex++;
         }
 
-        System.Diagnostics.Debug.Assert(mappingIndex == mappings.Length,
-            "Not all mappings were encoded");
+        System.Diagnostics.Debug.Assert(
+            mappingIndex == mappings.Length,
+            "Not all mappings were encoded"
+        );
 
         //pack total number of mappings as the last byte
-        packed[^1] |= (mappings.Length << 3*8) & (0xFF << 3*8);
+        packed[^1] |= (mappings.Length << 3 * 8) & (0xFF << 3 * 8);
 
         return packed;
     }
 }
 
-public abstract class PartialApplicationCommandBase<TParam> : PartialApplicationCommandBase<TParam, TParam>
+public abstract class PartialApplicationCommandBase<TParam>
+    : PartialApplicationCommandBase<TParam, TParam>
     where TParam : notnull;
-public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam> : PartialApplicationCommandBase,
-    ICilExtension
+
+public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam>
+    : PartialApplicationCommandBase,
+        ICilExtension
     where TRuntimeParam : notnull
     where TCompileParam : notnull
 {
@@ -202,7 +212,7 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
         {
             if (!arguments[i].TryConvertTo(sctx, PType.Int, out var value))
                 break; //stop at the first non-integer
-            mappingCandidates.AddFirst((int) value.Value!);
+            mappingCandidates.AddFirst((int)value.Value!);
         }
 
         //TODO: (Ticket #105) Improve interpreted runtime by only converting as many arguments as indicated by the mapping
@@ -212,7 +222,9 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
         var countMappingArgs = CountInt32Required(mappings.Length);
         var closedArgv = arguments[..^countMappingArgs].ToArray();
 
-        return sctx.CreateNativePValue(CreatePartialApplication(sctx, mappings, closedArgv, parameter));
+        return sctx.CreateNativePValue(
+            CreatePartialApplication(sctx, mappings, closedArgv, parameter)
+        );
     }
 
     /// <summary>
@@ -224,8 +236,12 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
     /// <param name = "closedArguments">Already provided (closed) arguments.</param>
     /// <param name = "parameter">The custom parameter extracted by <see cref = "FilterRuntimeArguments" />.</param>
     /// <returns>The object that represents the partial application. The application is completed when calling that object indirectly.</returns>
-    protected abstract IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, TRuntimeParam parameter);
+    protected abstract IIndirectCall CreatePartialApplication(
+        StackContext sctx,
+        int[] mappings,
+        PValue[] closedArguments,
+        TRuntimeParam parameter
+    );
 
     /// <summary>
     ///     <para>Extracts a custom parameter from the arguments supplied to the constructor at runtime.</para>
@@ -251,8 +267,10 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
     protected virtual ConstructorInfo GetConstructorCtor(TCompileParam parameter)
     {
         var ty = GetPartialCallRepresentationType(parameter);
-        return ty.GetConstructor([typeof (int[]), typeof (PValue[])]) 
-            ?? throw new PrexoniteException($"Type {ty} does not have a constructor with the signature (int[], PValue[])");
+        return ty.GetConstructor([typeof(int[]), typeof(PValue[])])
+            ?? throw new PrexoniteException(
+                $"Type {ty} does not have a constructor with the signature (int[], PValue[])"
+            );
     }
 
     /// <summary>
@@ -280,13 +298,18 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
         return !mappings.Contains(0);
     }
 
-    public virtual void Implement(CompilerState state, Instruction ins,
-        CompileTimeValue[] staticArgv, int dynamicArgc)
+    public virtual void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         var staticArguments = staticArgv.AsSpan();
         if (!FilterCompileTimeArguments(ref staticArguments, out var parameter))
             throw new PrexoniteException(
-                "Internal CIL compiler error. Tried to implement invalid CIL extension call.");
+                "Internal CIL compiler error. Tried to implement invalid CIL extension call."
+            );
 
         var mappingCandidates = new LinkedList<int>();
         for (var i = staticArguments.Length - 1; i >= 0; i--)
@@ -304,7 +327,7 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
         for (var i = 0; i < additionalClosedArgc; i++)
             staticArguments[i].EmitLoadAsPValue(state);
 
-        //Save closed arguments 
+        //Save closed arguments
         var argc = dynamicArgc + additionalClosedArgc;
         state.FillArgv(argc);
 
@@ -313,7 +336,7 @@ public abstract class PartialApplicationCommandBase<TRuntimeParam, TCompileParam
 
         //Create array for packed mappings
         state.EmitLdcI4(packed.Length);
-        state.Il.Emit(OpCodes.Newarr, typeof (int));
+        state.Il.Emit(OpCodes.Newarr, typeof(int));
 
         //Populate packed mappings array
         for (var i = 0; i < packed.Length; i++)

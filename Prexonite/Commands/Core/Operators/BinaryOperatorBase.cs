@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -18,8 +16,12 @@ public abstract class BinaryOperatorBase : PCommand, ICilExtension
     /// </summary>
     protected abstract MethodInfo OperationMethod { get; }
 
-    public virtual void Implement(CompilerState state, Instruction ins,
-        CompileTimeValue[] staticArgv, int dynamicArgc)
+    public virtual void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         if (dynamicArgc >= 2)
         {
@@ -36,8 +38,10 @@ public abstract class BinaryOperatorBase : PCommand, ICilExtension
         }
         else
         {
-            if (staticArgv[0].TryGetConstant(out var left)
-                && staticArgv[1].TryGetConstant(out var right))
+            if (
+                staticArgv[0].TryGetConstant(out var left)
+                && staticArgv[1].TryGetConstant(out var right)
+            )
             {
                 //Both operands are constants (remember: static args can also be references)
                 //=> Apply the operator at compile time.
@@ -45,25 +49,26 @@ public abstract class BinaryOperatorBase : PCommand, ICilExtension
                 switch (result.Type.ToBuiltIn())
                 {
                     case PType.BuiltIn.Real:
-                        state.EmitLoadRealAsPValue((double) result.Value!);
+                        state.EmitLoadRealAsPValue((double)result.Value!);
                         break;
                     case PType.BuiltIn.Int:
-                        state.EmitLoadIntAsPValue((int) result.Value!);
+                        state.EmitLoadIntAsPValue((int)result.Value!);
                         break;
                     case PType.BuiltIn.String:
-                        state.EmitLoadStringAsPValue((string) result.Value!);
+                        state.EmitLoadStringAsPValue((string)result.Value!);
                         break;
                     case PType.BuiltIn.Null:
                         state.EmitLoadNullAsPValue();
                         break;
                     case PType.BuiltIn.Bool:
-                        state.EmitLoadBoolAsPValue((bool) result.Value!);
+                        state.EmitLoadBoolAsPValue((bool)result.Value!);
                         break;
                     default:
                         throw new PrexoniteException(
-                            $"The operation {GetType().FullName} is no implemented correctly. Given {left} and {right} it results in the non-constant {result}");
+                            $"The operation {GetType().FullName} is no implemented correctly. Given {left} and {right} it results in the non-constant {result}"
+                        );
                 }
-                return; //We've already emitted the result. 
+                return; //We've already emitted the result.
             }
             else
             {

@@ -1,5 +1,3 @@
-﻿
-
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
@@ -10,28 +8,16 @@ namespace Prexonite.Compiler.Build;
 public interface ITarget
 {
     [PublicAPI]
-    Module Module
-    {
-        get;
-    }
+    Module Module { get; }
 
     [PublicAPI]
-    IReadOnlyCollection<IResourceDescriptor> Resources
-    {
-        get;
-    }
+    IReadOnlyCollection<IResourceDescriptor> Resources { get; }
 
     [PublicAPI]
-    SymbolStore Symbols
-    {
-        get;
-    }
+    SymbolStore Symbols { get; }
 
     [PublicAPI]
-    ModuleName Name
-    {
-        get;
-    }
+    ModuleName Name { get; }
 
     [PublicAPI]
     IReadOnlyCollection<Message> Messages { get; }
@@ -55,9 +41,11 @@ public static class Target
             if (target.Exception != null)
                 throw target.Exception;
             else if (target.Messages.Any(m => m.Severity == MessageSeverity.Error))
-                throw new BuildFailureException(description,
+                throw new BuildFailureException(
+                    description,
                     "There {2} {0} {1} while translating " + description.Name + ".",
-                    target.Messages);
+                    target.Messages
+                );
         }
     }
 }

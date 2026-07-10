@@ -26,9 +26,13 @@ public class ModuleSymbolTable<T> : IModuleSymbolTable<T>
 
     class ModuleSymbolTableEqualityComparer : IEqualityComparer<(ModuleName ModuleName, string Id)>
     {
-        public bool Equals((ModuleName ModuleName, string Id) x, (ModuleName ModuleName, string Id) y)
+        public bool Equals(
+            (ModuleName ModuleName, string Id) x,
+            (ModuleName ModuleName, string Id) y
+        )
         {
-            return x.ModuleName == y.ModuleName && Engine.DefaultStringComparer.Compare(x.Id, y.Id) == 0;
+            return x.ModuleName == y.ModuleName
+                && Engine.DefaultStringComparer.Compare(x.Id, y.Id) == 0;
         }
 
         public int GetHashCode((ModuleName, string) obj)
@@ -97,7 +101,8 @@ public class ModuleSymbolTable<T> : IModuleSymbolTable<T>
 
     public int Count => _inner.Count;
 
-    public bool IsReadOnly => ((IDictionary<(ModuleName ModuleName, string Id), T>)_inner).IsReadOnly;
+    public bool IsReadOnly =>
+        ((IDictionary<(ModuleName ModuleName, string Id), T>)_inner).IsReadOnly;
 
     public void Add((ModuleName ModuleName, string Id) key, T value)
     {
@@ -114,7 +119,10 @@ public class ModuleSymbolTable<T> : IModuleSymbolTable<T>
         return _inner.Remove(key);
     }
 
-    public bool TryGetValue((ModuleName ModuleName, string Id) key, [MaybeNullWhen(false)] out T value)
+    public bool TryGetValue(
+        (ModuleName ModuleName, string Id) key,
+        [MaybeNullWhen(false)] out T value
+    )
     {
         return _inner.TryGetValue(key, out value);
     }

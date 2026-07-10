@@ -1,7 +1,6 @@
-
 namespace Prexonite.Compiler.Symbolic.Internal;
 
-abstract class WrapTransparentlyHandler : ISymbolHandler<object,Symbol>
+abstract class WrapTransparentlyHandler : ISymbolHandler<object, Symbol>
 {
     #region Implementation of ISymbolHandler<in object,out Symbol>
 
@@ -31,6 +30,7 @@ abstract class WrapTransparentlyHandler : ISymbolHandler<object,Symbol>
     {
         return Wrap(self);
     }
+
     public Symbol HandleNamespace(NamespaceSymbol self, object argument)
     {
         return Wrap(self);

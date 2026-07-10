@@ -1,5 +1,3 @@
-
-
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast;
@@ -30,7 +28,9 @@ public sealed class AstGetSetNewDecl : AstGetSet
         get
         {
             var expr = Expression;
-            return expr == null ? base.Expressions : Extensions.Append(base.Expressions, expr).ToArray();
+            return expr == null
+                ? base.Expressions
+                : Extensions.Append(base.Expressions, expr).ToArray();
         }
     }
 
@@ -43,13 +43,16 @@ public sealed class AstGetSetNewDecl : AstGetSet
         _ensureValid();
         //create command call
         //  unbind(->variable)
-        var unlinkCall = new AstIndirectCall(Position, PCall.Get,
-            new AstReference(Position, EntityRef.Command.Create(Engine.UnbindAlias)));
+        var unlinkCall = new AstIndirectCall(
+            Position,
+            PCall.Get,
+            new AstReference(Position, EntityRef.Command.Create(Engine.UnbindAlias))
+        );
         var targetRef = new AstReference(Position, EntityRef.Variable.Local.Create(Id));
         unlinkCall.Arguments.Add(targetRef);
 
         //Optimize call and emit code
-        var call = (AstExpr) unlinkCall;
+        var call = (AstExpr)unlinkCall;
         _OptimizeNode(target, ref call);
         call.EmitEffectCode(target);
     }
@@ -79,7 +82,7 @@ public sealed class AstGetSetNewDecl : AstGetSet
         _emitNewDeclareCode(target);
         if (Expression != null)
             Expression.EmitCode(target, stackSemantics);
-        else if(_arguments != null)
+        else if (_arguments != null)
         {
             // Make sure effects of attached expressions are compiled
             // This branch is unlikely to be ever taken. It is just there
@@ -91,7 +94,7 @@ public sealed class AstGetSetNewDecl : AstGetSet
 
     public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
-        var wrappedExpr = (AstExpr?) Expression;
+        var wrappedExpr = (AstExpr?)Expression;
         if (wrappedExpr != null)
         {
             _OptimizeNode(target, ref wrappedExpr);
@@ -126,12 +129,14 @@ public sealed class AstGetSetNewDecl : AstGetSet
     {
         get
         {
-            if (Expression != null) 
+            if (Expression != null)
                 return Expression.Arguments;
             else if (_arguments != null)
                 return _arguments;
             else
-                throw new InvalidOperationException($"The new-decl expression for {Id} is invalid.");
+                throw new InvalidOperationException(
+                    $"The new-decl expression for {Id} is invalid."
+                );
         }
     }
 

@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Modular;
 using Prexonite.Properties;
 
@@ -7,7 +5,8 @@ namespace Prexonite.Compiler.Ast;
 
 public sealed class AstReference : AstExpr
 {
-    public AstReference(ISourcePosition position, EntityRef entity) : base(position)
+    public AstReference(ISourcePosition position, EntityRef entity)
+        : base(position)
     {
         Entity = entity ?? throw new ArgumentNullException(nameof(entity));
     }
@@ -20,7 +19,10 @@ public sealed class AstReference : AstExpr
     {
         #region Implementation of IEntityRefMatcher<in Tuple<AstReference,CompilerTarget>,out object>
 
-        public object? OnFunction(EntityRef.Function function, Tuple<AstReference, CompilerTarget> argument)
+        public object? OnFunction(
+            EntityRef.Function function,
+            Tuple<AstReference, CompilerTarget> argument
+        )
         {
             var refNode = argument.Item1;
             var target = argument.Item2;
@@ -28,7 +30,10 @@ public sealed class AstReference : AstExpr
             return null;
         }
 
-        public object? OnCommand(EntityRef.Command command, Tuple<AstReference, CompilerTarget> argument)
+        public object? OnCommand(
+            EntityRef.Command command,
+            Tuple<AstReference, CompilerTarget> argument
+        )
         {
             var target = argument.Item2;
             var refNode = argument.Item1;
@@ -36,7 +41,10 @@ public sealed class AstReference : AstExpr
             return null;
         }
 
-        public object? OnMacroCommand(EntityRef.MacroCommand macroCommand, Tuple<AstReference, CompilerTarget> argument)
+        public object? OnMacroCommand(
+            EntityRef.MacroCommand macroCommand,
+            Tuple<AstReference, CompilerTarget> argument
+        )
         {
             // Currently illegal.
             //  => Emit ldc.null instead
@@ -47,24 +55,33 @@ public sealed class AstReference : AstExpr
             return null;
         }
 
-        public object? OnLocalVariable(EntityRef.Variable.Local variable, Tuple<AstReference, CompilerTarget> argument)
+        public object? OnLocalVariable(
+            EntityRef.Variable.Local variable,
+            Tuple<AstReference, CompilerTarget> argument
+        )
         {
             argument.Item2.Emit(argument.Item1.Position, OpCode.ldr_loc, variable.Id);
             return null;
         }
 
-        public object? OnGlobalVariable(EntityRef.Variable.Global variable, Tuple<AstReference, CompilerTarget> argument)
+        public object? OnGlobalVariable(
+            EntityRef.Variable.Global variable,
+            Tuple<AstReference, CompilerTarget> argument
+        )
         {
             argument.Item2.Emit(
-                argument.Item1.Position, OpCode.ldr_glob, variable.Id, variable.ModuleName);
+                argument.Item1.Position,
+                OpCode.ldr_glob,
+                variable.Id,
+                variable.ModuleName
+            );
             return null;
         }
 
         #endregion
     }
 
-    static readonly EmitLoadReferenceHandler _emitLoadReference =
-        new();
+    static readonly EmitLoadReferenceHandler _emitLoadReference = new();
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics semantics)
     {
@@ -76,7 +93,7 @@ public sealed class AstReference : AstExpr
             case StackSemantics.Effect:
                 // Even though no code would be generated, we still want to catch
                 // references to macro commands.
-                if(Entity.TryGetMacroCommand(out _))
+                if (Entity.TryGetMacroCommand(out _))
                 {
                     target.Loader.ReportMessage(_macroCommandErrorMessage(Position));
                 }
@@ -106,7 +123,9 @@ public sealed class AstReference : AstExpr
     static Message _macroCommandErrorMessage(ISourcePosition position)
     {
         return Message.Error(
-            Resources.AstReference_MacroCommandReferenceNotPossible, position,
-            MessageClasses.CannotCreateReference);
+            Resources.AstReference_MacroCommandReferenceNotPossible,
+            position,
+            MessageClasses.CannotCreateReference
+        );
     }
 }

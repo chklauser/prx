@@ -1,5 +1,3 @@
-﻿
-
 using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
@@ -15,9 +13,8 @@ public class CallSubInterpret : MacroCommand
 
     public static CallSubInterpret Instance { get; } = new();
 
-    CallSubInterpret() : base(Alias)
-    {
-    }
+    CallSubInterpret()
+        : base(Alias) { }
 
     #endregion
 
@@ -29,8 +26,11 @@ public class CallSubInterpret : MacroCommand
         {
             context.ReportMessage(
                 Message.Error(
-                    string.Format(Resources.CallSubInterpret_OneArgument, Alias), context.Invocation.Position,
-                    MessageClasses.SubUsage));
+                    string.Format(Resources.CallSubInterpret_OneArgument, Alias),
+                    context.Invocation.Position,
+                    MessageClasses.SubUsage
+                )
+            );
             return;
         }
 
@@ -39,8 +39,14 @@ public class CallSubInterpret : MacroCommand
             context.ReportMessage(
                 Message.Error(
                     string.Format(
-                        Resources.CallSubInterpret_asExpressionInLoop, CallSub.Alias, Alias),
-                    context.Invocation.Position, MessageClasses.SubAsExpressionInLoop));
+                        Resources.CallSubInterpret_asExpressionInLoop,
+                        CallSub.Alias,
+                        Alias
+                    ),
+                    context.Invocation.Position,
+                    MessageClasses.SubAsExpressionInLoop
+                )
+            );
             return;
         }
 
@@ -58,9 +64,10 @@ public class CallSubInterpret : MacroCommand
         var retValueV = resultV;
         _extractReturnValue(context, resultV, retValueV);
 
-// ReSharper disable ImplicitlyCapturedClosure // perfectly safe as neither lambda survives the method
-        Func<AstGetSet> retValue = () => context.CreateCall(EntityRef.Variable.Local.Create(retValueV));
-// ReSharper restore ImplicitlyCapturedClosure
+        // ReSharper disable ImplicitlyCapturedClosure // perfectly safe as neither lambda survives the method
+        Func<AstGetSet> retValue = () =>
+            context.CreateCall(EntityRef.Variable.Local.Create(retValueV));
+        // ReSharper restore ImplicitlyCapturedClosure
 
         //Break and Continue behave differently outside loop blocks
         _determineActions(context, retValue, out var contStmt, out var breakStmt);
@@ -74,8 +81,12 @@ public class CallSubInterpret : MacroCommand
         context.FreeTemporaryVariable(resultV);
     }
 
-    static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSet> retVar,
-        AstNode contStmt, AstNode breakStmt)
+    static void _genChecks(
+        MacroContext context,
+        [InstantHandle] Func<AstGetSet> retVar,
+        AstNode contStmt,
+        AstNode breakStmt
+    )
     {
         var inv = context.Invocation;
 
@@ -100,17 +111,25 @@ public class CallSubInterpret : MacroCommand
         context.Block.Add(checkCont);
     }
 
-    static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSet> retValue,
-        out AstNode contStmt, out AstNode breakStmt)
+    static void _determineActions(
+        MacroContext context,
+        [InstantHandle] Func<AstGetSet> retValue,
+        out AstNode contStmt,
+        out AstNode breakStmt
+    )
     {
         var inv = context.Invocation;
         var bl = context.CurrentLoopBlock;
         if (bl == null)
         {
             contStmt = new AstReturn(inv.File, inv.Line, inv.Column, ReturnVariant.Continue)
-                {Expression = retValue()};
+            {
+                Expression = retValue(),
+            };
             breakStmt = new AstReturn(inv.File, inv.Line, inv.Column, ReturnVariant.Break)
-                {Expression = retValue()};
+            {
+                Expression = retValue(),
+            };
         }
         else
         {
@@ -119,46 +138,61 @@ public class CallSubInterpret : MacroCommand
         }
     }
 
-    static void _extractReturnValue(MacroContext context, string resultV,
-        string retValueV)
+    static void _extractReturnValue(MacroContext context, string resultV, string retValueV)
     {
-        var getRetValue =
-            context.CreateGetSetMember(
-                context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get, "Value");
-        var setRetValue = context.CreateCall(EntityRef.Variable.Local.Create(retValueV), PCall.Set, getRetValue);
+        var getRetValue = context.CreateGetSetMember(
+            context.CreateCall(EntityRef.Variable.Local.Create(resultV)),
+            PCall.Get,
+            "Value"
+        );
+        var setRetValue = context.CreateCall(
+            EntityRef.Variable.Local.Create(retValueV),
+            PCall.Set,
+            getRetValue
+        );
         context.Block.Add(setRetValue);
     }
 
-    static void _extractReturnVariant(MacroContext context, string resultV,
-        string retVarV)
+    static void _extractReturnVariant(MacroContext context, string resultV, string retVarV)
     {
         var inv = context.Invocation;
-        var intT = new AstConstantTypeExpression(inv.File, inv.Line, inv.Column,
-            IntPType.Literal);
-        var getRetVar =
-            context.CreateGetSetMember(context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get,
-                "Key");
+        var intT = new AstConstantTypeExpression(inv.File, inv.Line, inv.Column, IntPType.Literal);
+        var getRetVar = context.CreateGetSetMember(
+            context.CreateCall(EntityRef.Variable.Local.Create(resultV)),
+            PCall.Get,
+            "Key"
+        );
         var asInt = new AstTypecast(inv.Position, getRetVar, intT);
-        var setRetVar = context.CreateCall(EntityRef.Variable.Local.Create(retVarV), PCall.Set, asInt);
+        var setRetVar = context.CreateCall(
+            EntityRef.Variable.Local.Create(retVarV),
+            PCall.Set,
+            asInt
+        );
         context.Block.Add(setRetVar);
     }
 
     static void _storeResult(MacroContext context, string resultV)
     {
         var computeKvp = context.Invocation.Arguments[0];
-        var setResult = context.CreateCall(EntityRef.Variable.Local.Create(resultV), PCall.Set, computeKvp);
+        var setResult = context.CreateCall(
+            EntityRef.Variable.Local.Create(resultV),
+            PCall.Set,
+            computeKvp
+        );
         context.Block.Add(setResult);
     }
 
     #endregion
 
-    static AstExpr _genCompare(MacroContext context, AstExpr retVar,
-        ReturnVariant expected)
+    static AstExpr _genCompare(MacroContext context, AstExpr retVar, ReturnVariant expected)
     {
         var inv = context.Invocation;
-        AstExpr expectedNode = new AstConstant(inv.File,
-            inv.Line,
-            inv.Column, (int) expected);
-        return context.Factory.BinaryOperation(inv.Position, retVar, BinaryOperator.Equality, expectedNode);
+        AstExpr expectedNode = new AstConstant(inv.File, inv.Line, inv.Column, (int)expected);
+        return context.Factory.BinaryOperation(
+            inv.Position,
+            retVar,
+            BinaryOperator.Equality,
+            expectedNode
+        );
     }
 }

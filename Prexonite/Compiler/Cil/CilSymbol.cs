@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 using System.Diagnostics;
@@ -26,7 +25,7 @@ public class CilSymbol
         {
             throw new PrexoniteException("Internal error: CilSymbol is not bound to a variable.");
         }
-        
+
         switch (Kind)
         {
             case SymbolKind.Local:
@@ -37,7 +36,9 @@ public class CilSymbol
                 state.Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
                 break;
             default:
-                throw new PrexoniteException("Internal error: cannot emit load for enumeration variable.");
+                throw new PrexoniteException(
+                    "Internal error: cannot emit load for enumeration variable."
+                );
         }
     }
 }

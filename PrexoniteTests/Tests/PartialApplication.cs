@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -20,13 +18,15 @@ public abstract class PartialApplication : VMTestsBase
         int[] mappings,
         PValue[] closedArguments,
         int theNonArgumentPrefix
-    )
-        : PartialApplicationBase(mappings, closedArguments, theNonArgumentPrefix)
+    ) : PartialApplicationBase(mappings, closedArguments, theNonArgumentPrefix)
     {
         #region Overrides of PartialApplicationBase
 
-        protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-            PValue[] arguments)
+        protected override PValue Invoke(
+            StackContext sctx,
+            PValue[] nonArguments,
+            PValue[] arguments
+        )
         {
             var temp = InvokeImpl;
             return temp?.Invoke(sctx, nonArguments, arguments) ?? PType.Null;
@@ -37,21 +37,27 @@ public abstract class PartialApplication : VMTestsBase
         #endregion
     }
 
-
     public class RoundtripPartialApplicationCommandMock : PartialApplicationCommandBase<object>
     {
         #region Overrides of PartialApplicationCommandBase
 
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx1,
-            int[] mappings, PValue[] closedArguments, object parameter)
+        protected override IIndirectCall CreatePartialApplication(
+            StackContext sctx1,
+            int[] mappings,
+            PValue[] closedArguments,
+            object parameter
+        )
         {
             return new PartialApplicationImplMock
-                {Mappings = mappings, ClosedArguments = closedArguments};
+            {
+                Mappings = mappings,
+                ClosedArguments = closedArguments,
+            };
         }
 
         protected override Type GetPartialCallRepresentationType(object parameter)
         {
-            return typeof (PartialApplicationImplMock);
+            return typeof(PartialApplicationImplMock);
         }
 
         #endregion
@@ -61,9 +67,15 @@ public abstract class PartialApplication : VMTestsBase
     {
         public required int[] Mappings { get; init; }
         public required PValue[] ClosedArguments { get; init; }
-        
+
         [PublicAPI]
-        public Func<int[], PValue[], StackContext, ReadOnlyMemory<PValue>, PValue>? IndirectCallImpl { get; set; }
+        public Func<
+            int[],
+            PValue[],
+            StackContext,
+            ReadOnlyMemory<PValue>,
+            PValue
+        >? IndirectCallImpl { get; set; }
 
         #region Implementation of IIndirectCall
 
@@ -72,7 +84,12 @@ public abstract class PartialApplication : VMTestsBase
             var indirectCallImpl = IndirectCallImpl;
             return indirectCallImpl == null
                 ? PType.Null
-                : indirectCallImpl(Mappings, ClosedArguments, sctx, args.ToImmutableArray().AsMemory());
+                : indirectCallImpl(
+                    Mappings,
+                    ClosedArguments,
+                    sctx,
+                    args.ToImmutableArray().AsMemory()
+                );
         }
 
         #endregion
@@ -84,8 +101,8 @@ public abstract class PartialApplication : VMTestsBase
     public void ZeroArgumentsPassed()
     {
         const int nonArgc = 2;
-        var closedArguments = new PValue[] {1, 2};
-        var mappings = new[] {-1, 1, -1, 2, -2};
+        var closedArguments = new PValue[] { 1, 2 };
+        var mappings = new[] { -1, 1, -1, 2, -2 };
         var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
         Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
@@ -102,21 +119,38 @@ public abstract class PartialApplication : VMTestsBase
                 if (i == 1)
                     Assert.AreEqual(closedArguments[1], args[i], "Closed argument expected.");
                 else
-                    Assert.IsNull(args[i].Value,
-                        $"Effective argument at position {i} is not {{Null}}");
+                    Assert.IsNull(
+                        args[i].Value,
+                        $"Effective argument at position {i} is not {{Null}}"
+                    );
 
-            Assert.AreSame(PType.Null.CreatePValue(), nonArgs[0],
-                "Open argument #1 expected at non-arg position 0.");
-            Assert.AreSame(closedArguments[0], nonArgs[1],
-                "Closed argument #1 expected at non-arg position 1.");
+            Assert.AreSame(
+                PType.Null.CreatePValue(),
+                nonArgs[0],
+                "Open argument #1 expected at non-arg position 0."
+            );
+            Assert.AreSame(
+                closedArguments[0],
+                nonArgs[1],
+                "Closed argument #1 expected at non-arg position 1."
+            );
 
             //check args
-            Assert.AreSame(PType.Null.CreatePValue(), args[0],
-                "Open argument #1 expected at position 0.");
-            Assert.AreSame(closedArguments[1], args[1],
-                "Closed argument #2 expected at position 1.");
-            Assert.AreSame(PType.Null.CreatePValue(), args[2],
-                "Open argument #2 expected at position 2.");
+            Assert.AreSame(
+                PType.Null.CreatePValue(),
+                args[0],
+                "Open argument #1 expected at position 0."
+            );
+            Assert.AreSame(
+                closedArguments[1],
+                args[1],
+                "Closed argument #2 expected at position 1."
+            );
+            Assert.AreSame(
+                PType.Null.CreatePValue(),
+                args[2],
+                "Open argument #2 expected at position 2."
+            );
 
             return 77;
         };
@@ -129,12 +163,12 @@ public abstract class PartialApplication : VMTestsBase
     public void ExactArgumentsPassed()
     {
         const int nonArgc = 2;
-        var closedArguments = new PValue[] {1, 2};
-        var mappings = new[] {-1, 1, -1, 2, -2};
+        var closedArguments = new PValue[] { 1, 2 };
+        var mappings = new[] { -1, 1, -1, 2, -2 };
         var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
         Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
-        var callArgs = new PValue[] {"a", "b"};
+        var callArgs = new PValue[] { "a", "b" };
 
         pa.InvokeImpl = (ctx, nonArgs, args) =>
         {
@@ -145,15 +179,24 @@ public abstract class PartialApplication : VMTestsBase
             Assert.AreEqual(mappings.Length - nonArgc, args.Length);
 
             //check non-args
-            Assert.AreSame(callArgs[0], nonArgs[0],
-                "Open argument #1 expected at non-arg position 0.");
-            Assert.AreSame(closedArguments[0], nonArgs[1],
-                "Closed argument #1 expected at non-arg position 1.");
+            Assert.AreSame(
+                callArgs[0],
+                nonArgs[0],
+                "Open argument #1 expected at non-arg position 0."
+            );
+            Assert.AreSame(
+                closedArguments[0],
+                nonArgs[1],
+                "Closed argument #1 expected at non-arg position 1."
+            );
 
             //check args
             Assert.AreSame(callArgs[0], args[0], "Open argument #1 expected at position 0.");
-            Assert.AreSame(closedArguments[1], args[1],
-                "Closed argument #2 expected at position 1.");
+            Assert.AreSame(
+                closedArguments[1],
+                args[1],
+                "Closed argument #2 expected at position 1."
+            );
             Assert.AreSame(callArgs[1], args[2], "Open argument #2 expected at position 2.");
 
             return 77;
@@ -167,12 +210,12 @@ public abstract class PartialApplication : VMTestsBase
     public void TooManyArgumentsPassed()
     {
         const int nonArgc = 2;
-        var closedArguments = new PValue[] {1, 2};
-        var mappings = new[] {-1, 1, -1, 2, -2};
+        var closedArguments = new PValue[] { 1, 2 };
+        var mappings = new[] { -1, 1, -1, 2, -2 };
         var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
         Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
-        var callArgs = new PValue[] {"a", "b", "c", "d", "e", "f", "g"};
+        var callArgs = new PValue[] { "a", "b", "c", "d", "e", "f", "g" };
 
         pa.InvokeImpl = (ctx, nonArgs, args) =>
         {
@@ -181,27 +224,42 @@ public abstract class PartialApplication : VMTestsBase
             Assert.IsNotNull(args);
             Assert.AreEqual(nonArgc, nonArgs.Length, "unexpected number of non-arguments");
             Assert.AreEqual(
-                mappings.Length - nonArgc + callArgs.Length -
-                mappings.Where(x => x < 0).Distinct().Count(), args.Length,
-                "unexpected number of effective arguments");
+                mappings.Length
+                    - nonArgc
+                    + callArgs.Length
+                    - mappings.Where(x => x < 0).Distinct().Count(),
+                args.Length,
+                "unexpected number of effective arguments"
+            );
 
             //check non-args
-            Assert.AreSame(callArgs[0], nonArgs[0],
-                "Open argument #1 expected at non-arg position 0.");
-            Assert.AreSame(closedArguments[0], nonArgs[1],
-                "Closed argument #1 expected at non-arg position 1.");
+            Assert.AreSame(
+                callArgs[0],
+                nonArgs[0],
+                "Open argument #1 expected at non-arg position 0."
+            );
+            Assert.AreSame(
+                closedArguments[0],
+                nonArgs[1],
+                "Closed argument #1 expected at non-arg position 1."
+            );
 
             //check args
             Assert.AreSame(callArgs[0], args[0], "Open argument #1 expected at position 0.");
-            Assert.AreSame(closedArguments[1], args[1],
-                "Closed argument #2 expected at position 1.");
+            Assert.AreSame(
+                closedArguments[1],
+                args[1],
+                "Closed argument #2 expected at position 1."
+            );
             Assert.AreSame(callArgs[1], args[2], "Open argument #2 expected at position 2.");
 
             //check excess args
             for (var i = 3; i < args.Length; i++)
                 Assert.AreSame(
-                    callArgs[i - (3 - 2)], args[i],
-                    $"Excess arguments don't match at position {i}");
+                    callArgs[i - (3 - 2)],
+                    args[i],
+                    $"Excess arguments don't match at position {i}"
+                );
 
             return 77;
         };
@@ -214,12 +272,12 @@ public abstract class PartialApplication : VMTestsBase
     public void NoPrefix()
     {
         const int nonArgc = 0;
-        var closedArguments = new PValue[] {1, 2};
-        var mappings = new[] {-1, 1, -1, 2, -2};
+        var closedArguments = new PValue[] { 1, 2 };
+        var mappings = new[] { -1, 1, -1, 2, -2 };
         var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
         Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
-        var callArgs = new PValue[] {"a", "b", "c", "d", "e", "f", "g"};
+        var callArgs = new PValue[] { "a", "b", "c", "d", "e", "f", "g" };
 
         pa.InvokeImpl = (ctx, nonArgs, args) =>
         {
@@ -228,27 +286,42 @@ public abstract class PartialApplication : VMTestsBase
             Assert.IsNotNull(args);
             Assert.AreEqual(nonArgc, nonArgs.Length, "unexpected number of non-arguments");
             Assert.AreEqual(
-                mappings.Length - nonArgc + callArgs.Length -
-                mappings.Where(x => x < 0).Distinct().Count(), args.Length,
-                "unexpected number of effective arguments");
+                mappings.Length
+                    - nonArgc
+                    + callArgs.Length
+                    - mappings.Where(x => x < 0).Distinct().Count(),
+                args.Length,
+                "unexpected number of effective arguments"
+            );
 
             //check non-args
 
             //check args
-            Assert.AreSame(callArgs[0], args[0],
-                "Open argument #1 expected at non-arg position 0.");
-            Assert.AreSame(closedArguments[0], args[1],
-                "Closed argument #1 expected at non-arg position 1.");
+            Assert.AreSame(
+                callArgs[0],
+                args[0],
+                "Open argument #1 expected at non-arg position 0."
+            );
+            Assert.AreSame(
+                closedArguments[0],
+                args[1],
+                "Closed argument #1 expected at non-arg position 1."
+            );
             Assert.AreSame(callArgs[0], args[2], "Open argument #1 expected at position 2.");
-            Assert.AreSame(closedArguments[1], args[3],
-                "Closed argument #2 expected at position 3.");
+            Assert.AreSame(
+                closedArguments[1],
+                args[3],
+                "Closed argument #2 expected at position 3."
+            );
             Assert.AreSame(callArgs[1], args[4], "Open argument #2 expected at position 4.");
 
             //check excess args
             for (var i = 5; i < args.Length; i++)
                 Assert.AreSame(
-                    callArgs[i - (5 - 2)], args[i],
-                    $"Excess arguments don't match at position {i}");
+                    callArgs[i - (5 - 2)],
+                    args[i],
+                    $"Excess arguments don't match at position {i}"
+                );
 
             return 77;
         };
@@ -266,7 +339,7 @@ public abstract class PartialApplication : VMTestsBase
         var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
         Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
-        var callArgs = new PValue[] {"a", "b", "c", "d", "e", "f", "g"};
+        var callArgs = new PValue[] { "a", "b", "c", "d", "e", "f", "g" };
 
         pa.InvokeImpl = (ctx, nonArgs, args) =>
         {
@@ -275,20 +348,33 @@ public abstract class PartialApplication : VMTestsBase
             Assert.IsNotNull(args);
             Assert.AreEqual(nonArgc, nonArgs.Length, "number of non-arguments");
             Assert.AreEqual(
-                mappings.Length - nonArgc + callArgs.Length
-                - mappings.Where(x => x < 0).Distinct().Count(), args.Length,
-                "number of effective arguments");
+                mappings.Length
+                    - nonArgc
+                    + callArgs.Length
+                    - mappings.Where(x => x < 0).Distinct().Count(),
+                args.Length,
+                "number of effective arguments"
+            );
 
             //check non-args
-            Assert.AreSame(callArgs[0], nonArgs[0],
-                "Open argument #1 expected at non-arg position 0.");
-            Assert.AreSame(callArgs[1], nonArgs[1],
-                "Open argument #2 expected at non-arg position 1.");
+            Assert.AreSame(
+                callArgs[0],
+                nonArgs[0],
+                "Open argument #1 expected at non-arg position 0."
+            );
+            Assert.AreSame(
+                callArgs[1],
+                nonArgs[1],
+                "Open argument #2 expected at non-arg position 1."
+            );
 
             //check args
             for (var i = 0; i < 5; i++)
-                Assert.AreSame(callArgs[i + 2], args[i],
-                    $"Open argument #{i + 3} expected at arg position {i}.");
+                Assert.AreSame(
+                    callArgs[i + 2],
+                    args[i],
+                    $"Open argument #{i + 3} expected at arg position {i}."
+                );
 
             return 77;
         };
@@ -300,27 +386,25 @@ public abstract class PartialApplication : VMTestsBase
     [Test]
     public void PackRoundtrip32()
     {
-        var mappings = new[]
-        {
-            1, -8, 2, -13, 3, -5, 4, 5,
-        };
+        var mappings = new[] { 1, -8, 2, -13, 3, -5, 4, 5 };
 
         var packed = PartialApplicationCommandBase.PackMappings32(mappings);
         Assert.IsNotNull(packed);
-        Assert.IsTrue(packed.Length <= mappings.Length,
-            "Packed length must not be longer than mappings length");
+        Assert.IsTrue(
+            packed.Length <= mappings.Length,
+            "Packed length must not be longer than mappings length"
+        );
 
-
-        var packedPValues = packed.Select(i => (PValue) i);
-        var closedArguments = new PValue[] {"a", "b", "c", "d", "e"};
+        var packedPValues = packed.Select(i => (PValue)i);
+        var closedArguments = new PValue[] { "a", "b", "c", "d", "e" };
         var argv = closedArguments.Append(packedPValues);
         var roundtripCommandMock = new RoundtripPartialApplicationCommandMock();
         var mockP = roundtripCommandMock.Run(sctx, argv.ToArray());
 
         Assert.IsNotNull(mockP.Value);
-        Assert.IsAssignableFrom(typeof (PartialApplicationImplMock), mockP.Value);
+        Assert.IsAssignableFrom(typeof(PartialApplicationImplMock), mockP.Value);
 
-        var mock = (PartialApplicationImplMock) mockP.Value!;
+        var mock = (PartialApplicationImplMock)mockP.Value!;
 
         Assert.IsNotNull(mock.Mappings, "Mappings must no be null");
         Assert.AreEqual(mappings.Length, mock.Mappings.Length, "Mappings lengths don't match");
@@ -331,22 +415,22 @@ public abstract class PartialApplication : VMTestsBase
             var mappingE = mappings[i];
             var mappingA = mock.Mappings[i];
 
-            Assert.AreEqual(mappingE, mappingA,
-                $"The mappings at index {i} are not equal.");
+            Assert.AreEqual(mappingE, mappingA, $"The mappings at index {i} are not equal.");
         }
 
         Assert.IsNotNull(mock.ClosedArguments, "Closed arguments must not be null");
         Assert.AreEqual(
-            closedArguments.Length, mock.ClosedArguments.Length,
-            "Closed arguments lengths don't match");
+            closedArguments.Length,
+            mock.ClosedArguments.Length,
+            "Closed arguments lengths don't match"
+        );
         //check closed arguments);
         for (var i = 0; i < closedArguments.Length; i++)
         {
             var caE = closedArguments[i];
             var caA = mock.ClosedArguments[i];
 
-            Assert.AreSame(caE, caA,
-                $"The closed arguments at index {i} are not the same.");
+            Assert.AreSame(caE, caA, $"The closed arguments at index {i} are not the same.");
         }
     }
 
@@ -363,7 +447,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x,y,z);
             }
 
-            """);
+            """
+        );
 
         Expect("a=1, b=2, c=3", 1, 2, 3);
     }
@@ -381,7 +466,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x,y,z);
             }
 
-            """);
+            """
+        );
 
         Expect("a=1, b=2, c=3", 1, 2, 3);
     }
@@ -399,7 +485,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x);
             }
 
-            """);
+            """
+        );
 
         Expect("a=1, b=, c=" + sctx.CreateNativePValue(true).CallToString(sctx), 1);
     }
@@ -417,7 +504,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x,y,z);
             }
 
-            """);
+            """
+        );
 
         Expect("a=1, b=2, c=3", 1, 2, 3);
     }
@@ -435,7 +523,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x,y,z);
             }
 
-            """);
+            """
+        );
 
         Expect("a=3, b=1, c=2", 1, 2, 3);
     }
@@ -453,7 +542,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x);
             }
 
-            """);
+            """
+        );
 
         Expect("a=, b=, c=1", 1, 2, 3);
     }
@@ -471,7 +561,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(->proc, x, y);
             }
 
-            """);
+            """
+        );
 
         Expect("a=1, b=2, c=", 1, 2, 3);
     }
@@ -489,26 +580,28 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x, y, ->proc, z);
             }
 
-            """);
+            """
+        );
 
         Expect("a=2, b=1, c=3", 1, 2, 3);
     }
 
-
     [Test]
     public void MemberSimpleGet()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y,z)
-                {
-                    var pa = x.m(?,y);
-                    return pa.(z);
-                }
+            function main(x,y,z)
+            {
+                var pa = x.m(?,y);
+                return pa.(z);
+            }
 
-                """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
@@ -518,17 +611,19 @@ public abstract class PartialApplication : VMTestsBase
     [Test]
     public void MemberSimpleGetIndex()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y,z)
-                {
-                    var pa = x[y,?];
-                    return pa.(z);
-                }
+            function main(x,y,z)
+            {
+                var pa = x[y,?];
+                return pa.(z);
+            }
 
-                """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("", [2, 3], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
@@ -538,17 +633,19 @@ public abstract class PartialApplication : VMTestsBase
     [Test]
     public void MemberSubjectGet()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y,z)
-                {
-                    var pa = ?.m(z,?);
-                    return pa.(x,y);
-                }
+            function main(x,y,z)
+            {
+                var pa = ?.m(z,?);
+                return pa.(x,y);
+            }
 
-                """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
@@ -558,17 +655,19 @@ public abstract class PartialApplication : VMTestsBase
     [Test]
     public void MemberOperatorGet()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y,z)
-                {
-                    var pa = ?.m;
-                    return pa.(x,z,y);
-                }
+            function main(x,y,z)
+            {
+                var pa = ?.m;
+                return pa.(x,z,y);
+            }
 
-                """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("m", [3, 2], call: PCall.Get, returns: 11);
 
         Expect(11, sctx.CreateNativePValue(x), 2, 3);
@@ -578,17 +677,19 @@ public abstract class PartialApplication : VMTestsBase
     [Test]
     public void MemberOperatorSet()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y,z)
-                {
-                    var pa = ?.m = ?;
-                    return pa.(x,z,y);
-                }
+            function main(x,y,z)
+            {
+                var pa = ?.m = ?;
+                return pa.(x,z,y);
+            }
 
-                """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("m", [3, 2], call: PCall.Set, returns: 11);
 
         Expect(2, sctx.CreateNativePValue(x), 2, 3);
@@ -607,9 +708,10 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(z,y);
             }
 
-            """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("m", [3, 2], call: PCall.Set, returns: 11);
 
         Expect(2, sctx.CreateNativePValue(x), 2, 3);
@@ -619,17 +721,19 @@ public abstract class PartialApplication : VMTestsBase
     [Test]
     public void MemberSetIndex()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y,z)
-                {
-                    var pa = x[?] = ?;
-                    return pa.(z,y);
-                }
+            function main(x,y,z)
+            {
+                var pa = x[?] = ?;
+                return pa.(z,y);
+            }
 
-                """);
+            """
+        );
 
-        var x = new MemberCallable {Name = "x"};
+        var x = new MemberCallable { Name = "x" };
         x.Expect("", [3, 2], call: PCall.Set, returns: 11);
 
         Expect(2, sctx.CreateNativePValue(x), 2, 3);
@@ -648,11 +752,12 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x,y,z);
             }
 
-            """);
+            """
+        );
         PValue x = 1;
         PValue y = 2;
         PValue z = 3;
-        Expect(new List<PValue> {z, y, x}, x, y, z);
+        Expect(new List<PValue> { z, y, x }, x, y, z);
     }
 
     [Test]
@@ -669,13 +774,13 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x,y,z);
             }
 
-            """);
-
+            """
+        );
 
         PValue x = 1;
         PValue y = 2;
         PValue z = 3;
-        Expect(new List<PValue> {z, y, x}, x, y, z);
+        Expect(new List<PValue> { z, y, x }, x, y, z);
     }
 
     [Test]
@@ -690,7 +795,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(z);
             }
 
-            """);
+            """
+        );
 
         Expect(new DateTime(2010, 10, 10), nameof(DateTime), 2010, 10);
     }
@@ -707,7 +813,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(x) + pa.(y,z);
             }
 
-            """);
+            """
+        );
 
         Expect(5, "2", 3.0, "sixteen");
     }
@@ -724,7 +831,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(y) is Object<(x)>;
             }
 
-            """);
+            """
+        );
 
         Expect(true, "Prexonite.StackContext", sctx.CreateNativePValue(sctx));
     }
@@ -741,7 +849,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa.(y~Object<(x)>);
             }
 
-            """);
+            """
+        );
 
         Expect(true, "Prexonite.StackContext", sctx.CreateNativePValue(sctx));
     }
@@ -759,7 +868,8 @@ public abstract class PartialApplication : VMTestsBase
                 return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
             }
 
-            """);
+            """
+        );
         Expect("T_T", "I'm", 'a', nameof(String));
     }
 
@@ -776,7 +886,8 @@ public abstract class PartialApplication : VMTestsBase
                 return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
             }
 
-            """);
+            """
+        );
         Expect("_T_", "I'm", 'a', nameof(String));
     }
 
@@ -794,7 +905,8 @@ public abstract class PartialApplication : VMTestsBase
                 return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x)) + i(pa2.(x)) + i(pa2.(y)) + i(pa2.(z,x));
             }
 
-            """);
+            """
+        );
 
         Expect("_T_T_T", "I'm", PType.Null, 1);
     }
@@ -812,7 +924,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa2.() - pa.(x);
             }
 
-            """);
+            """
+        );
 
         Expect(int.MaxValue - 255, "255");
     }
@@ -830,7 +943,8 @@ public abstract class PartialApplication : VMTestsBase
                 return pa2.() - pa.(x);
             }
 
-            """);
+            """
+        );
 
         Expect(int.MaxValue - 255, "255", "System.Int32");
     }
@@ -858,7 +972,8 @@ public abstract class PartialApplication : VMTestsBase
                     >> foldl("$(?)|$(?)","");
             }
 
-            """);
+            """
+        );
         var paCtors = target.Functions["main"]!
             .Code.Where(ins => ins.OpCode == OpCode.cmd)
             .Select(ins => new { ins, id = ins.Id })
@@ -867,14 +982,14 @@ public abstract class PartialApplication : VMTestsBase
             .Distinct()
             .ToImmutableArray();
 
-        Assert.AreEqual(0, paCtors.Count(),
-            "Should not use the following partial application constructors: " +
-            paCtors.ToEnumerationString());
+        Assert.AreEqual(
+            0,
+            paCtors.Count(),
+            "Should not use the following partial application constructors: "
+                + paCtors.ToEnumerationString()
+        );
 
-        Expect("|" +
-            "ab|akL|" +
-            "-b|-kL|" +
-            "abcd|akLcd", "a", "c", "d");
+        Expect("|" + "ab|akL|" + "-b|-kL|" + "abcd|akLcd", "a", "c", "d");
     }
 
     [Test]
@@ -891,20 +1006,19 @@ public abstract class PartialApplication : VMTestsBase
 
                 return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"");
             }
-            """);
+            """
+        );
 
-        Func<bool, bool, bool, bool, string> main =
-            (x, y, z, k) =>
-            {
-                var ps = new[] {(x || y) && k, x && y && z && k, k, false};
-                var ps2 = from p in ps
-                    select p ? "1" : "0";
-                return ps2.Aggregate((a, b) => a + b);
-            };
-        var pFalse = (PValue) false;
-        var pTrue = (PValue) true;
-        var p0 = (PValue) 0;
-        var p1 = (PValue) 1;
+        Func<bool, bool, bool, bool, string> main = (x, y, z, k) =>
+        {
+            var ps = new[] { (x || y) && k, x && y && z && k, k, false };
+            var ps2 = from p in ps select p ? "1" : "0";
+            return ps2.Aggregate((a, b) => a + b);
+        };
+        var pFalse = (PValue)false;
+        var pTrue = (PValue)true;
+        var p0 = (PValue)0;
+        var p1 = (PValue)1;
 
         BoolTable4(main, pTrue, pFalse);
         BoolTable4(main, p1, p0);
@@ -924,20 +1038,19 @@ public abstract class PartialApplication : VMTestsBase
 
                 return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"");
             }
-            """);
+            """
+        );
 
-        Func<bool, bool, bool, bool, string> main =
-            (x, y, z, k) =>
-            {
-                var ps = new[] {x && y || k, x || y || z || k, true, k};
-                var ps2 = from p in ps
-                    select p ? "1" : "0";
-                return ps2.Aggregate((a, b) => a + b);
-            };
-        var pFalse = (PValue) false;
-        var pTrue = (PValue) true;
-        var p0 = (PValue) 0;
-        var p1 = (PValue) 1;
+        Func<bool, bool, bool, bool, string> main = (x, y, z, k) =>
+        {
+            var ps = new[] { x && y || k, x || y || z || k, true, k };
+            var ps2 = from p in ps select p ? "1" : "0";
+            return ps2.Aggregate((a, b) => a + b);
+        };
+        var pFalse = (PValue)false;
+        var pTrue = (PValue)true;
+        var p0 = (PValue)0;
+        var p1 = (PValue)1;
 
         Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
         Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);
@@ -970,24 +1083,23 @@ public abstract class PartialApplication : VMTestsBase
 
                 return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"");
             }
-            """);
+            """
+        );
 
-        Func<bool, bool, bool, bool, string> main =
-            (x, y, z, k) =>
-            {
-                var xO = x ? new object() : null;
-                var yO = y ? new object() : null;
-                var zO = z ? new object() : null;
-                var kO = k ? new object() : null;
-                var ps = new[] {(xO ?? yO) ?? kO, xO ?? yO ?? zO ?? kO, new object(), kO};
-                var ps2 = from p in ps
-                    select p != null ? "1" : "0";
-                return ps2.Aggregate((a, b) => a + b);
-            };
+        Func<bool, bool, bool, bool, string> main = (x, y, z, k) =>
+        {
+            var xO = x ? new object() : null;
+            var yO = y ? new object() : null;
+            var zO = z ? new object() : null;
+            var kO = k ? new object() : null;
+            var ps = new[] { (xO ?? yO) ?? kO, xO ?? yO ?? zO ?? kO, new object(), kO };
+            var ps2 = from p in ps select p != null ? "1" : "0";
+            return ps2.Aggregate((a, b) => a + b);
+        };
         var pFalse = PType.Null;
-        var pTrue = (PValue) "";
+        var pTrue = (PValue)"";
         var p0 = PType.Null;
-        var p1 = (PValue) 0;
+        var p1 = (PValue)0;
 
         BoolTable4(main, pTrue, pFalse);
         BoolTable4(main, p1, p0);

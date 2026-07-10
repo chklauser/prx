@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using System.Diagnostics;
 
@@ -44,7 +42,7 @@ public class RandomAccessQueue<T> : IList<T>
     /// </summary>
     /// <param name = "capacity">The initial capacity of the queue.</param>
     /// <remarks>
-    ///     Although the queue increases the size of it's data store as required, setting an 
+    ///     Although the queue increases the size of it's data store as required, setting an
     ///     initial capacity can reduce the number of resize operations, when filling the queue.
     /// </remarks>
     [DebuggerStepThrough]
@@ -210,10 +208,7 @@ public class RandomAccessQueue<T> : IList<T>
     [DebuggerStepThrough]
     public int IndexOf(T item)
     {
-        var normal = _store.IndexOf(
-            item,
-            _front,
-            normalCount());
+        var normal = _store.IndexOf(item, _front, normalCount());
         if (normal < 0 && isWrapped())
             return _store.IndexOf(item, 0, wrappedCount());
         else
@@ -302,7 +297,8 @@ public class RandomAccessQueue<T> : IList<T>
         var idx = arrayIndex;
         if (array.Length < Count)
             throw new ArgumentOutOfRangeException(
-                "The supplied array is not big enough for " + Count + " elements.");
+                "The supplied array is not big enough for " + Count + " elements."
+            );
 
         foreach (var t in this)
             array[idx++] = t;

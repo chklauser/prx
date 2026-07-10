@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
@@ -34,12 +32,13 @@ public static class BuildExtensions
 
         public Task<Application> LoadAsync(ModuleName name)
         {
-            return plan.LoadAsync(name, CancellationToken.None).ContinueWith(tt =>
-            {
-                var result = tt.Result;
-                result.Item2.ThrowIfFailed(plan.TargetDescriptions[name]);
-                return result.Item1;
-            });
+            return plan.LoadAsync(name, CancellationToken.None)
+                .ContinueWith(tt =>
+                {
+                    var result = tt.Result;
+                    result.Item2.ThrowIfFailed(plan.TargetDescriptions[name]);
+                    return result.Item1;
+                });
         }
     }
 

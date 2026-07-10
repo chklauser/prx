@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast;
@@ -11,15 +9,12 @@ public class AstLogicalOr : AstLazyLogical, IAstPartiallyApplicable
         int line,
         int column,
         AstExpr leftCondition,
-        AstExpr rightCondition)
-        : base(file, line, column, leftCondition, rightCondition)
-    {
-    }
+        AstExpr rightCondition
+    )
+        : base(file, line, column, leftCondition, rightCondition) { }
 
     internal AstLogicalOr(Parser p, AstExpr leftCondition, AstExpr rightCondition)
-        : base(p, leftCondition, rightCondition)
-    {
-    }
+        : base(p, leftCondition, rightCondition) { }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
@@ -47,8 +42,7 @@ public class AstLogicalOr : AstLazyLogical, IAstPartiallyApplicable
         }
     }
 
-    protected override void DoEmitCode(CompilerTarget target, string trueLabel,
-        string falseLabel)
+    protected override void DoEmitCode(CompilerTarget target, string trueLabel, string falseLabel)
     {
         var labelNs = @"Or\" + Guid.NewGuid().ToString("N");
         var nextLabel = @"Next\" + labelNs;
@@ -75,8 +69,7 @@ public class AstLogicalOr : AstLazyLogical, IAstPartiallyApplicable
 
     protected override bool ShortcircuitValue => true;
 
-    protected override AstExpr CreatePrefix(ISourcePosition position,
-        IEnumerable<AstExpr> clauses)
+    protected override AstExpr CreatePrefix(ISourcePosition position, IEnumerable<AstExpr> clauses)
     {
         return CreateDisjunction(position, clauses);
     }

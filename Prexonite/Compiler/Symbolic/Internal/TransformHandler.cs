@@ -1,7 +1,6 @@
-
 namespace Prexonite.Compiler.Symbolic.Internal;
 
-public abstract class TransformHandler<TArg> : SymbolHandler<TArg,Symbol>
+public abstract class TransformHandler<TArg> : SymbolHandler<TArg, Symbol>
 {
     #region Overrides of SymbolHandler<TArg,Symbol>
 

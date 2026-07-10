@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
 
@@ -20,11 +20,11 @@ public interface ISelfAssemblingPlan : IPlan
     IList<string> SearchPaths { get; }
 
     /// <summary>
-    /// Reads self-assembly instructions in the header of the provided source 
-    /// file and creates the corresponding build target descriptions. 
+    /// Reads self-assembly instructions in the header of the provided source
+    /// file and creates the corresponding build target descriptions.
     /// Does not build any targets.
     /// </summary>
-    /// <param name="source">The source from which to read the self-assembly 
+    /// <param name="source">The source from which to read the self-assembly
     /// instructions</param>
     /// <param name="token">The cancellation token for this asynchronous operation.</param>
     /// <returns>A task that represents the build plan assembly in progress.</returns>
@@ -39,7 +39,7 @@ public interface ISelfAssemblingPlan : IPlan
 
     /// <summary>
     /// <para>Offers a module in source form to the self-assembling build plan.</para>
-    /// <para>Unlike <see cref="SelfAssemblingPlan.AssembleAsync"/>, this method does <em>not</em> search the file system for dependencies. It simply takes note of 
+    /// <para>Unlike <see cref="SelfAssemblingPlan.AssembleAsync"/>, this method does <em>not</em> search the file system for dependencies. It simply takes note of
     /// them, expecting the user of the build plan to make sure that all dependencies are met in the end.</para>
     /// </summary>
     /// <param name="source">The source text to read. Must be a module.</param>

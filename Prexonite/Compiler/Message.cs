@@ -1,12 +1,15 @@
-﻿
-
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler;
 
 public class Message : IEquatable<Message>, IComparable<Message>
 {
-    public static Message Create(MessageSeverity severity, [LocalizationRequired] string text, ISourcePosition position, string? messageClass)
+    public static Message Create(
+        MessageSeverity severity,
+        [LocalizationRequired] string text,
+        ISourcePosition position,
+        string? messageClass
+    )
     {
         return new(severity, text, position, messageClass);
     }
@@ -24,8 +27,12 @@ public class Message : IEquatable<Message>, IComparable<Message>
     public int Column => Position.Column;
     public ISourcePosition Position { get; }
 
-    Message(MessageSeverity severity, string text, ISourcePosition position,
-        string? messageClass = null)
+    Message(
+        MessageSeverity severity,
+        string text,
+        ISourcePosition position,
+        string? messageClass = null
+    )
     {
         Text = text ?? throw new ArgumentNullException();
         Position = position;
@@ -33,17 +40,29 @@ public class Message : IEquatable<Message>, IComparable<Message>
         MessageClass = messageClass;
     }
 
-    public static Message Error([LocalizationRequired] string message, ISourcePosition position, string? messageClass)
+    public static Message Error(
+        [LocalizationRequired] string message,
+        ISourcePosition position,
+        string? messageClass
+    )
     {
         return Create(MessageSeverity.Error, message, position, messageClass);
     }
 
-    public static Message Warning([LocalizationRequired] string message, ISourcePosition position, string? messageClass)
+    public static Message Warning(
+        [LocalizationRequired] string message,
+        ISourcePosition position,
+        string? messageClass
+    )
     {
         return Create(MessageSeverity.Warning, message, position, messageClass);
     }
 
-    public static Message Info([LocalizationRequired] string message, ISourcePosition position, string? messageClass)
+    public static Message Info(
+        [LocalizationRequired] string message,
+        ISourcePosition position,
+        string? messageClass
+    )
     {
         return Create(MessageSeverity.Info, message, position, messageClass);
     }
@@ -58,7 +77,7 @@ public class Message : IEquatable<Message>, IComparable<Message>
         var r = string.Compare(File, other.File, StringComparison.Ordinal);
         if (r != 0)
             return r;
-            
+
         r = Line.CompareTo(other.Line);
         if (r != 0)
             return r;
@@ -87,22 +106,30 @@ public class Message : IEquatable<Message>, IComparable<Message>
     {
         if (position == null)
             throw new ArgumentNullException(nameof(position));
-        return new(Severity,Text,position,MessageClass);
+        return new(Severity, Text, position, MessageClass);
     }
 
     public bool Equals(Message? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return string.Equals(Text, other.Text) && Equals(Position, other.Position) && Severity == other.Severity && string.Equals(MessageClass, other.MessageClass);
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
+        return string.Equals(Text, other.Text)
+            && Equals(Position, other.Position)
+            && Severity == other.Severity
+            && string.Equals(MessageClass, other.MessageClass);
     }
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((Message) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != GetType())
+            return false;
+        return Equals((Message)obj);
     }
 
     [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract")]
@@ -111,12 +138,10 @@ public class Message : IEquatable<Message>, IComparable<Message>
         unchecked
         {
             var hashCode = Text != null ? Text.GetHashCode() : 0;
-            hashCode = (hashCode*397) ^ (Position != null ? Position.GetHashCode() : 0);
-            hashCode = (hashCode*397) ^ (int) Severity;
-            hashCode = (hashCode*397) ^ (MessageClass != null ? MessageClass.GetHashCode() : 0);
+            hashCode = (hashCode * 397) ^ (Position != null ? Position.GetHashCode() : 0);
+            hashCode = (hashCode * 397) ^ (int)Severity;
+            hashCode = (hashCode * 397) ^ (MessageClass != null ? MessageClass.GetHashCode() : 0);
             return hashCode;
         }
     }
-
-
 }

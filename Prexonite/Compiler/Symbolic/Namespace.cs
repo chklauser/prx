@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 
 namespace Prexonite.Compiler.Symbolic;
 
@@ -12,6 +12,7 @@ public abstract class Namespace : ISymbolView<Symbol>, IObject
     public abstract IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator();
     public abstract bool IsEmpty { get; }
     public abstract bool TryGet(string id, [NotNullWhen(true)] out Symbol? value);
+
     public bool TryDynamicCall(
         StackContext sctx,
         ReadOnlySpan<PValue> args,
@@ -24,7 +25,9 @@ public abstract class Namespace : ISymbolView<Symbol>, IObject
         {
             if (args.Length < 1 || args[0] == null || args[0].IsNull)
             {
-                throw new PrexoniteException("Namespace.TryGet(id, ref symbol) requires a non-null id.");
+                throw new PrexoniteException(
+                    "Namespace.TryGet(id, ref symbol) requires a non-null id."
+                );
             }
 
             var found = TryGet(args[0].CallToString(sctx), out var symbol);

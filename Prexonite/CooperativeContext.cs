@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite;
@@ -14,8 +12,7 @@ public class CooperativeContext : StackContext, IDisposable
         return $"Cooperative managed method({_existingMethod})";
     }
 
-    public CooperativeContext(StackContext sctx,
-        Func<Action<PValue>, IEnumerable<bool>> methodCtor)
+    public CooperativeContext(StackContext sctx, Func<Action<PValue>, IEnumerable<bool>> methodCtor)
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

@@ -10,6 +10,7 @@ namespace Prexonite.Compiler.Internal;
 sealed class PathSet : ICollection<string>
 {
     readonly HashSet<string> _paths = new();
+
     public IEnumerator<string> GetEnumerator()
     {
         return _paths.GetEnumerator();

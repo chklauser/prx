@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
@@ -11,7 +9,7 @@ namespace Prexonite.Compiler.Macro.Commands;
 /// placeholders occur in list literals.
 /// </summary>
 /// <remarks>
-/// <para>In the following example, <c>pcw</c> is a <see cref="PartialCallWrapper"/> 
+/// <para>In the following example, <c>pcw</c> is a <see cref="PartialCallWrapper"/>
 /// for the <see cref="Call"/> command.</para>
 /// <code>pcw(f(?),?,[1,?,2])</code>
 /// <para>becomes</para>
@@ -20,11 +18,11 @@ namespace Prexonite.Compiler.Macro.Commands;
 /// <code>pcw(f(?),x,[1,2,3])</code>
 /// <para>becomes</para>
 /// <code>call(f(?),x,[1,2,3])</code>
-/// <para>In most cases, <see cref="PartialCallWrapper"/> can be used directly, just by supplying the 
+/// <para>In most cases, <see cref="PartialCallWrapper"/> can be used directly, just by supplying the
 /// underlying call implementation (doesn't need to be a command).</para>
 /// <para> In case your call\* has special
 /// requirement (e.g., like call\member, it has the member id as an additional parameter), you can
-/// inherit from <see cref="PartialCallWrapper"/> and override <see cref="GetTrivialPartialApplication"/>, 
+/// inherit from <see cref="PartialCallWrapper"/> and override <see cref="GetTrivialPartialApplication"/>,
 /// <see cref="GetCallArguments"/> and <see cref="GetPassThroughArguments"/>.</para>
 /// </remarks>
 public class PartialCallWrapper : PartialMacroCommand
@@ -38,7 +36,8 @@ public class PartialCallWrapper : PartialMacroCommand
     public PartialCallWrapper(string alias, EntityRef callImplementation)
         : base(alias)
     {
-        CallImplementation = callImplementation ?? throw new ArgumentNullException(nameof(callImplementation));
+        CallImplementation =
+            callImplementation ?? throw new ArgumentNullException(nameof(callImplementation));
     }
 
     #region Overrides of MacroCommand
@@ -57,9 +56,11 @@ public class PartialCallWrapper : PartialMacroCommand
             return;
         }
 
-        if (context.Invocation.Arguments.Count == 1
+        if (
+            context.Invocation.Arguments.Count == 1
             && context.Invocation.Arguments[0] is AstPlaceholder p
-            && p.Index.GetValueOrDefault(0) == 0)
+            && p.Index.GetValueOrDefault(0) == 0
+        )
         {
             // call(?0) ⇒ call\perform(?0)
 
@@ -71,10 +72,11 @@ public class PartialCallWrapper : PartialMacroCommand
         {
             // no placeholders, invoke call\perform directly
 
-            var call = context.Factory.IndirectCall(context.Invocation.Position,
-                context.Factory.Reference(context.Invocation.Position,
-                    CallImplementation),
-                context.Call);
+            var call = context.Factory.IndirectCall(
+                context.Invocation.Position,
+                context.Factory.Reference(context.Invocation.Position, CallImplementation),
+                context.Call
+            );
             call.Arguments.AddRange(GetCallArguments(context));
             context.Block.Expression = call;
             return;
@@ -84,16 +86,27 @@ public class PartialCallWrapper : PartialMacroCommand
         //  Note: this is a get-call in all cases, because we are computing a partial application
         //  whether the programmer wrote a get or a set call needs to be captured by concrete
         //  implementations of partial call wrapers (see Call_Member)
-        var inv = context.Factory.Expand(context.Invocation.Position, EntityRef.MacroCommand.Create(CallStar.Instance.Id));
-            
+        var inv = context.Factory.Expand(
+            context.Invocation.Position,
+            EntityRef.MacroCommand.Create(CallStar.Instance.Id)
+        );
+
         // Protect the first two arguments
         inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
 
         // Indicate the kind of call by passing `call\perform(?)`, a partial application of call
-        var paCall = context.Factory.Call(context.Invocation.Position, CallImplementation, context.Call,
-            new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, 0));
-                
+        var paCall = context.Factory.Call(
+            context.Invocation.Position,
+            CallImplementation,
+            context.Call,
+            new AstPlaceholder(
+                context.Invocation.File,
+                context.Invocation.Line,
+                context.Invocation.Column,
+                0
+            )
+        );
+
         inv.Arguments.Add(paCall);
 
         // Pass all the other arguments through
@@ -109,14 +122,22 @@ public class PartialCallWrapper : PartialMacroCommand
     /// <returns>A trivial partial application of the call implementation.</returns>
     protected virtual AstGetSet GetTrivialPartialApplication(MacroContext context)
     {
-        var cp = context.Factory.Call(context.Invocation.Position, CallImplementation, context.Call,
-            new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, 0));
+        var cp = context.Factory.Call(
+            context.Invocation.Position,
+            CallImplementation,
+            context.Call,
+            new AstPlaceholder(
+                context.Invocation.File,
+                context.Invocation.Line,
+                context.Invocation.Column,
+                0
+            )
+        );
         return cp;
     }
 
     /// <summary>
-    /// Provides access to the call arguments, including the call target and any other 
+    /// Provides access to the call arguments, including the call target and any other
     /// parameters (like the member id for call\member).
     /// </summary>
     /// <param name="context">The context from which to derive the arguments.</param>
@@ -132,10 +153,10 @@ public class PartialCallWrapper : PartialMacroCommand
     /// <param name="context"></param>
     /// <returns></returns>
     /// <remarks>
-    /// <para>For call and call\async, for instance, two arguments need to be passed to call\star 
-    /// unprocessed: the reference to the call implementation (<c>call(?)</c> or <c>call\async(?)</c>) 
+    /// <para>For call and call\async, for instance, two arguments need to be passed to call\star
+    /// unprocessed: the reference to the call implementation (<c>call(?)</c> or <c>call\async(?)</c>)
     /// and the call target.</para>
-    /// <para>In the case of <c>call\member</c>, however, there is an additional argument to be 
+    /// <para>In the case of <c>call\member</c>, however, there is an additional argument to be
     /// protected: the member id.</para></remarks>
     protected virtual int GetPassThroughArguments(MacroContext context)
     {

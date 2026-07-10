@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Macro;
 using Prexonite.Modular;
 
@@ -7,7 +5,8 @@ namespace Prexonite.Compiler.Ast;
 
 public class AstExpand : AstGetSetImplBase, IAstPartiallyApplicable
 {
-    public AstExpand(ISourcePosition position, EntityRef entity, PCall call) : base(position, call)
+    public AstExpand(ISourcePosition position, EntityRef entity, PCall call)
+        : base(position, call)
     {
         Entity = entity;
     }
@@ -16,12 +15,16 @@ public class AstExpand : AstGetSetImplBase, IAstPartiallyApplicable
 
     protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        throw new NotSupportedException("Macro expansion requires a different mechanism. Use AstGetSet.EmitCode instead.");
+        throw new NotSupportedException(
+            "Macro expansion requires a different mechanism. Use AstGetSet.EmitCode instead."
+        );
     }
 
     protected override void EmitSetCode(CompilerTarget target)
     {
-        throw new NotSupportedException("Macro expansion requires a different mechanism. Use AstGetSet.EmitCode instead.");
+        throw new NotSupportedException(
+            "Macro expansion requires a different mechanism. Use AstGetSet.EmitCode instead."
+        );
     }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -71,7 +74,6 @@ public class AstExpand : AstGetSetImplBase, IAstPartiallyApplicable
 
     public override string ToString()
     {
-        return
-            $"expand {(Enum.GetName(typeof(PCall), Call) ?? "-").ToLowerInvariant()}: {Entity}({ArgumentsToString()})";
+        return $"expand {(Enum.GetName(typeof(PCall), Call) ?? "-").ToLowerInvariant()}: {Entity}({ArgumentsToString()})";
     }
 }

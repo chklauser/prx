@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection.Emit;
 
 namespace Prexonite.Compiler.Cil;

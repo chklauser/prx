@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands.Core;
 
 /// <summary>

@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler;
@@ -9,7 +7,7 @@ namespace Prexonite
     namespace Compiler
     {
         /// <summary>
-        ///     Thrown when the compiler detected an invalid state. 
+        ///     Thrown when the compiler detected an invalid state.
         ///     You must consider both the <see cref = "Loader" /> and the <see cref = "Application" /> to be corrupt.
         /// </summary>
         public class FatalCompilerException : PrexoniteException
@@ -24,18 +22,14 @@ namespace Prexonite
             /// <summary>
             ///     Creates a new instance of <see cref = "FatalCompilerException" />.
             /// </summary>
-            public FatalCompilerException()
-            {
-            }
+            public FatalCompilerException() { }
 
             /// <summary>
             ///     Creates a new instance of <see cref = "FatalCompilerException" /> with a custom message.
             /// </summary>
             /// <param name = "message">The message to report.</param>
             public FatalCompilerException(string message)
-                : base(message)
-            {
-            }
+                : base(message) { }
 
             /// <summary>
             ///     Creates a new instance of <see cref = "FatalCompilerException" /> with a custom message and and an inner exception.
@@ -43,9 +37,7 @@ namespace Prexonite
             /// <param name = "message">The message to report.</param>
             /// <param name = "inner">The exception that caused this exception.</param>
             public FatalCompilerException(string message, Exception inner)
-                : base(message, inner)
-            {
-            }
+                : base(message, inner) { }
         }
     }
 
@@ -60,18 +52,14 @@ namespace Prexonite
         /// <summary>
         ///     Creates a new instance of <see cref = "PrexoniteException" />.
         /// </summary>
-        public PrexoniteException()
-        {
-        }
+        public PrexoniteException() { }
 
         /// <summary>
         ///     Creates a new instance of <see cref = "PrexoniteException" /> with a custom message.
         /// </summary>
         /// <param name = "message">The custom message.</param>
         public PrexoniteException(string message)
-            : base(message)
-        {
-        }
+            : base(message) { }
 
         /// <summary>
         ///     Creates a new instance of <see cref = "PrexoniteException" /> with a custom message as well as an inner exception.
@@ -79,9 +67,7 @@ namespace Prexonite
         /// <param name = "message">The custom message.</param>
         /// <param name = "innerException">The inner exception.</param>
         public PrexoniteException(string message, Exception? innerException)
-            : base(message, innerException)
-        {
-        }
+            : base(message, innerException) { }
     }
 
     /// <summary>
@@ -98,9 +84,7 @@ namespace Prexonite
         /// </summary>
         /// <param name = "message">A custom message</param>
         protected PrexoniteRuntimeException(string message)
-            : base(message)
-        {
-        }
+            : base(message) { }
 
         /// <summary>
         ///     Creates a new instance of PrexoniteRuntimeException without a stack trace and a custom message.
@@ -108,9 +92,7 @@ namespace Prexonite
         /// <param name = "message">A custom message</param>
         /// <param name = "innerException">The inner exception</param>
         protected PrexoniteRuntimeException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
+            : base(message, innerException) { }
 
         /// <summary>
         ///     Provides access to the stack trace recorded when creating the exception.
@@ -119,7 +101,10 @@ namespace Prexonite
         public string? PrexoniteStackTrace { get; }
 
         PrexoniteRuntimeException(
-            string message, Exception? innerException, string? prexoniteStackTrace)
+            string message,
+            Exception? innerException,
+            string? prexoniteStackTrace
+        )
             : base(message, innerException)
         {
             PrexoniteStackTrace = prexoniteStackTrace;
@@ -134,7 +119,10 @@ namespace Prexonite
         /// <param name = "innerException">The inner exception.</param>
         /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
-            StackContext esctx, string? message, Exception? innerException)
+            StackContext esctx,
+            string? message,
+            Exception? innerException
+        )
         {
             if (esctx == null)
                 throw new ArgumentNullException(nameof(esctx));
@@ -175,8 +163,12 @@ namespace Prexonite
                         var sm = SourceMapping.Load(fctx.Implementation);
                         if (sm.TryGetValue(pointer, out var pos))
                         {
-                            builder.AppendFormat(" (in {0}, on line {1}, col {2})", pos.File,
-                                pos.Line, pos.Column);
+                            builder.AppendFormat(
+                                " (in {0}, on line {1}, col {2})",
+                                pos.File,
+                                pos.Line,
+                                pos.Column
+                            );
                         }
                     }
                 }
@@ -194,7 +186,9 @@ namespace Prexonite
         /// <param name = "message">The custom message to be displayed.</param>
         /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
-            StackContext sctx, string message)
+            StackContext sctx,
+            string message
+        )
         {
             return CreateRuntimeException(sctx, message, null);
         }
@@ -207,7 +201,9 @@ namespace Prexonite
         /// <param name = "innerException">The inner exception.</param>
         /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
-            StackContext sctx, Exception innerException)
+            StackContext sctx,
+            Exception innerException
+        )
         {
             return CreateRuntimeException(sctx, innerException.Message, innerException);
         }
@@ -226,8 +222,8 @@ namespace Prexonite
         ///     the inner exception of the returned <see cref = "PrexoniteRuntimeException" /> contains relevant information.
         /// </summary>
         /// <remarks>
-        ///     The method replaces <see cref = "PrexoniteRuntimeException" />s as well as 
-        ///     <see cref = "TargetInvocationException" />s with their inner exceptions (unless they are null). 
+        ///     The method replaces <see cref = "PrexoniteRuntimeException" />s as well as
+        ///     <see cref = "TargetInvocationException" />s with their inner exceptions (unless they are null).
         ///     In some cases, a new <see cref = "PrexoniteRuntimeException" /> instance is created.
         /// </remarks>
         /// <param name = "pExc">Any <see cref = "PrexoniteRuntimeException" />.</param>
@@ -256,7 +252,7 @@ namespace Prexonite
 
             //if (ReferenceEquals(lastExc, pExc))
             //    return pExc; //Use lowest prexonite runtime exception
-            //else 
+            //else
             //    //Construct new runtime exception
             //    return
             //        new PrexoniteRuntimeException(exc.Message, exc, pExc._prexoniteStackTrace);
@@ -267,28 +263,39 @@ namespace Prexonite
             _unpack(pExc, out var lowestException, out var lowestRuntimeException);
 
             //Check if something changed
-            if (ReferenceEquals(lowestException, pExc.InnerException) &&
-                ReferenceEquals(lowestRuntimeException, pExc))
+            if (
+                ReferenceEquals(lowestException, pExc.InnerException)
+                && ReferenceEquals(lowestRuntimeException, pExc)
+            )
                 return pExc;
 
-            return new(lowestException.Message, lowestException,
-                lowestRuntimeException.PrexoniteStackTrace);
+            return new(
+                lowestException.Message,
+                lowestException,
+                lowestRuntimeException.PrexoniteStackTrace
+            );
         }
 
-        static void _unpack(PrexoniteRuntimeException originalException,
-            out Exception lowestException, out PrexoniteRuntimeException lowestRuntimeException)
+        static void _unpack(
+            PrexoniteRuntimeException originalException,
+            out Exception lowestException,
+            out PrexoniteRuntimeException lowestRuntimeException
+        )
         {
             Exception exc = originalException;
             TargetInvocationException? targetInvocationExc = null;
             lowestRuntimeException = originalException;
 
             while (
-                (exc is PrexoniteRuntimeException ||
-                    (targetInvocationExc = exc as TargetInvocationException) != null)
-                        && exc.InnerException != null)
+                (
+                    exc is PrexoniteRuntimeException
+                    || (targetInvocationExc = exc as TargetInvocationException) != null
+                )
+                && exc.InnerException != null
+            )
             {
                 if (targetInvocationExc == null)
-                    lowestRuntimeException = (PrexoniteRuntimeException) exc;
+                    lowestRuntimeException = (PrexoniteRuntimeException)exc;
                 exc = exc.InnerException;
             }
 
@@ -299,53 +306,35 @@ namespace Prexonite
 
     public class InvalidCallException : PrexoniteException
     {
-        public InvalidCallException()
-        {
-        }
+        public InvalidCallException() { }
 
         public InvalidCallException(string message)
-            : base(message)
-        {
-        }
+            : base(message) { }
 
         public InvalidCallException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
+            : base(message, innerException) { }
     }
 
     public class InvalidConversionException : PrexoniteException
     {
-        public InvalidConversionException()
-        {
-        }
+        public InvalidConversionException() { }
 
         public InvalidConversionException(string message)
-            : base(message)
-        {
-        }
+            : base(message) { }
 
         public InvalidConversionException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
+            : base(message, innerException) { }
     }
 
     public class SymbolNotFoundException : PrexoniteException
     {
-        public SymbolNotFoundException()
-        {
-        }
+        public SymbolNotFoundException() { }
 
         public SymbolNotFoundException(string message)
-            : base(message)
-        {
-        }
+            : base(message) { }
 
         public SymbolNotFoundException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
+            : base(message, inner) { }
     }
 
     public class ExecutionProhibitedException : PrexoniteException
@@ -356,18 +345,12 @@ namespace Prexonite
         // and
         //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
         //
-        public ExecutionProhibitedException()
-        {
-        }
+        public ExecutionProhibitedException() { }
 
         public ExecutionProhibitedException(string message)
-            : base(message)
-        {
-        }
+            : base(message) { }
 
         public ExecutionProhibitedException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
+            : base(message, inner) { }
     }
 }

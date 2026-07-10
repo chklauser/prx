@@ -1,5 +1,3 @@
-
-
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Internal;
@@ -16,7 +14,11 @@ class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
     {
         throw new ErrorMessageException(
             Message.Error(
-                $"Unknown entity reference type {entity.GetType().Name} encountered in MExpr serialization.", position, MessageClasses.UnknownEntityRefType));
+                $"Unknown entity reference type {entity.GetType().Name} encountered in MExpr serialization.",
+                position,
+                MessageClasses.UnknownEntityRefType
+            )
+        );
     }
 
     public const string FunctionHead = "function";
@@ -25,20 +27,27 @@ class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
     public const string GlobalVariableHead = "var";
     public const string MacroCommandModifierHead = "macro";
 
-    MExpr _serializeRefWithModule(ISourcePosition position, string head,
-        string id, ModuleName moduleName)
+    MExpr _serializeRefWithModule(
+        ISourcePosition position,
+        string head,
+        string id,
+        ModuleName moduleName
+    )
     {
-        return new MExpr.MList(position, head,
-        [
-            new MExpr.MAtom(position, id),
+        return new MExpr.MList(
+            position,
+            head,
+            [
+                new MExpr.MAtom(position, id),
                 new MExpr.MAtom(position, moduleName.Id),
                 new MExpr.MAtom(position, moduleName.Version),
-        ]);
+            ]
+        );
     }
 
     MExpr _serializeRef(ISourcePosition position, string head, string id)
     {
-        return new MExpr.MList(position, head, [new MExpr.MAtom(position,id)]);
+        return new MExpr.MList(position, head, [new MExpr.MAtom(position, id)]);
     }
 
     public override MExpr OnFunction(EntityRef.Function function, ISourcePosition position)
@@ -51,19 +60,40 @@ class EntityRefMExprSerializer : EntityRefMatcher<ISourcePosition, MExpr>
         return _serializeRef(position, CommandHead, command.Id);
     }
 
-    protected override MExpr OnMacroCommand(EntityRef.MacroCommand macroCommand, ISourcePosition position)
+    protected override MExpr OnMacroCommand(
+        EntityRef.MacroCommand macroCommand,
+        ISourcePosition position
+    )
     {
-        return new MExpr.MList(position,MacroCommandModifierHead,_serializeRef(position,CommandHead,macroCommand.Id));
+        return new MExpr.MList(
+            position,
+            MacroCommandModifierHead,
+            _serializeRef(position, CommandHead, macroCommand.Id)
+        );
     }
 
-    protected override MExpr OnLocalVariable(EntityRef.Variable.Local variable, ISourcePosition position)
+    protected override MExpr OnLocalVariable(
+        EntityRef.Variable.Local variable,
+        ISourcePosition position
+    )
     {
-        return new MExpr.MList(position,LocalVariableHead, [new MExpr.MAtom(position, variable.Id), new MExpr.MAtom(position,variable.Index),
-        ]);
+        return new MExpr.MList(
+            position,
+            LocalVariableHead,
+            [new MExpr.MAtom(position, variable.Id), new MExpr.MAtom(position, variable.Index)]
+        );
     }
 
-    protected override MExpr OnGlobalVariable(EntityRef.Variable.Global variable, ISourcePosition position)
+    protected override MExpr OnGlobalVariable(
+        EntityRef.Variable.Global variable,
+        ISourcePosition position
+    )
     {
-        return _serializeRefWithModule(position, GlobalVariableHead, variable.Id, variable.ModuleName);
+        return _serializeRefWithModule(
+            position,
+            GlobalVariableHead,
+            variable.Id,
+            variable.ModuleName
+        );
     }
 }

@@ -1,11 +1,9 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler;
 
 /// <summary>
-///     A method that modifies the supplied 
+///     A method that modifies the supplied
 ///     <see cref = "CompilerTarget" /> when invoked prior to optimization and code generation.
 /// </summary>
 /// <param name = "target">The <see cref = "CompilerTarget" /> of the function to be modified.</param>
@@ -53,7 +51,7 @@ public sealed class CompilerHook
     public bool IsInterpreted => _interpreted != null;
 
     /// <summary>
-    ///     Executes the compiler hook (either calls the managed 
+    ///     Executes the compiler hook (either calls the managed
     ///     delegate or indirectly calls the <see cref = "PValue" /> in the context of the <see cref = "Loader" />.)
     /// </summary>
     /// <param name = "target">The compiler target to modify.</param>
@@ -65,9 +63,7 @@ public sealed class CompilerHook
             if (IsManaged)
                 _managed(target);
             else
-                _interpreted.IndirectCall(
-                    target.Loader,
-                    target.Loader.CreateNativePValue(target));
+                _interpreted.IndirectCall(target.Loader, target.Loader.CreateNativePValue(target));
         }
         finally
         {

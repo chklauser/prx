@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -10,19 +8,15 @@ namespace Prexonite.Commands.List;
 /// </summary>
 public class Range : CoroutineCommand, ICilCompilerAware
 {
-    Range()
-    {
-    }
+    Range() { }
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return coroutineRunStatically(sctxCarrier, args);
     }
 
     //function range(index, count, xs) = xs >> skip(index) >> limit(count);
-    static IEnumerable<PValue> coroutineRunStatically(ContextCarrier sctxCarrier,
-        PValue[] args)
+    static IEnumerable<PValue> coroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -30,12 +24,13 @@ public class Range : CoroutineCommand, ICilCompilerAware
             throw new ArgumentNullException(nameof(args));
         if (args.Length < 3)
             throw new PrexoniteException(
-                "The command range requires at least 3 arguments: [index], [count] and the [list].");
+                "The command range requires at least 3 arguments: [index], [count] and the [list]."
+            );
 
         var sctx = sctxCarrier.StackContext;
 
-        var skipCount = (int) args[0].ConvertTo(sctx, PType.Int, true).Value!;
-        var returnCount = (int) args[1].ConvertTo(sctx, PType.Int, true).Value!;
+        var skipCount = (int)args[0].ConvertTo(sctx, PType.Int, true).Value!;
+        var returnCount = (int)args[1].ConvertTo(sctx, PType.Int, true).Value!;
         var index = 0;
 
         for (var i = 2; i < args.Length; i++)

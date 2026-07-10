@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -11,6 +9,7 @@ public abstract class SymbolOrigin
     public abstract string Description { get; }
 
     public abstract ISourcePosition Position { get; }
+
     public override string ToString()
     {
         return $"{Description} in {Position}";
@@ -28,8 +27,13 @@ public abstract class SymbolOrigin
             }
 
             // Flatten merged scopes
-            return new MergedScope(origins.SelectMany(x => 
-                x is MergedScope mergedScope ? mergedScope._origins : x.Singleton()).ToArray());
+            return new MergedScope(
+                origins
+                    .SelectMany(x =>
+                        x is MergedScope mergedScope ? mergedScope._origins : x.Singleton()
+                    )
+                    .ToArray()
+            );
         }
 
         readonly SymbolOrigin[] _origins;
@@ -38,9 +42,11 @@ public abstract class SymbolOrigin
         {
             if (origins == null)
                 throw new ArgumentNullException(nameof(origins));
-                
-            if(origins.Length < 2)
-                throw new ArgumentException("Merged scope origin must be composed of at least two origins.");
+
+            if (origins.Length < 2)
+                throw new ArgumentException(
+                    "Merged scope origin must be composed of at least two origins."
+                );
             _origins = origins;
         }
 
@@ -78,8 +84,10 @@ public abstract class SymbolOrigin
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
             return obj is NamespaceImport otherImport && _equals(otherImport);
         }
 
@@ -120,16 +128,18 @@ public abstract class SymbolOrigin
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
             return obj is ModuleTopLevel otherTopLevel && _equals(otherTopLevel);
         }
 
         public override int GetHashCode()
         {
-// ReSharper disable ConditionIsAlwaysTrueOrFalse
+            // ReSharper disable ConditionIsAlwaysTrueOrFalse
             return ModuleName != null ? ModuleName.GetHashCode() : 0;
-// ReSharper restore ConditionIsAlwaysTrueOrFalse
+            // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
     }
 

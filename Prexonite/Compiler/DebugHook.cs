@@ -1,5 +1,3 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
@@ -84,18 +82,25 @@ public static class DebugHook
                     for (var j = 0; j < stmt.Arguments.Count; j++)
                     {
                         AstReference? refNode;
-                        if (stmt.Arguments[j] is AstIndirectCall arg && (refNode = arg.Subject as AstReference) != null)
+                        if (
+                            stmt.Arguments[j] is AstIndirectCall arg
+                            && (refNode = arg.Subject as AstReference) != null
+                        )
                         {
-                            var printlnCall = t.Factory.Call(stmt.Position,
-                                EntityRef.Command.Create(Engine.PrintLineAlias));
-                            var concatCall = t.Factory.Call(stmt.Position,
-                                EntityRef.Command.Create(Engine.ConcatenateAlias));
-                            var consts =
-                                new AstConstant(
-                                    stmt.File,
-                                    stmt.Line,
-                                    stmt.Column,
-                                    string.Concat("DEBUG ", refNode.Entity, " = "));
+                            var printlnCall = t.Factory.Call(
+                                stmt.Position,
+                                EntityRef.Command.Create(Engine.PrintLineAlias)
+                            );
+                            var concatCall = t.Factory.Call(
+                                stmt.Position,
+                                EntityRef.Command.Create(Engine.ConcatenateAlias)
+                            );
+                            var consts = new AstConstant(
+                                stmt.File,
+                                stmt.Line,
+                                stmt.Column,
+                                string.Concat("DEBUG ", refNode.Entity, " = ")
+                            );
                             concatCall.Arguments.Add(consts);
                             concatCall.Arguments.Add(arg);
                             printlnCall.Arguments.Add(concatCall);
@@ -103,7 +108,7 @@ public static class DebugHook
                             block.Insert(i, printlnCall);
                             i += 1;
                         } //end if arg not null
-                    } //end for arguments             
+                    } //end for arguments
                 } //end if debugging
 
                 continue;
@@ -113,12 +118,13 @@ public static class DebugHook
             if (block[i] is AstCondition cond)
             {
                 AstReference? refNode;
-                if (cond.Condition is AstIndirectCall expr 
-                    && (refNode = expr.Subject as AstReference) != null 
-                    && refNode.Entity.TryGetCommand(out var cmd) 
-                    && Engine.StringsAreEqual(cmd.Id,Engine.DebugAlias) )
-                    cond.Condition =
-                        new AstConstant(expr.File, expr.Line, expr.Column, debugging);
+                if (
+                    cond.Condition is AstIndirectCall expr
+                    && (refNode = expr.Subject as AstReference) != null
+                    && refNode.Entity.TryGetCommand(out var cmd)
+                    && Engine.StringsAreEqual(cmd.Id, Engine.DebugAlias)
+                )
+                    cond.Condition = new AstConstant(expr.File, expr.Line, expr.Column, debugging);
             }
 
             //Recursively replace 'debug' in nested blocks.
@@ -131,6 +137,9 @@ public static class DebugHook
     [ContractAnnotation("=>true,stmt:notnull;=>false,stmt:canbenull")]
     static bool _isDebugCall(AstGetSet? stmt)
     {
-        return stmt != null && stmt.TryMatchCall(out var entityRef) && entityRef.TryGetCommand(out var cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
+        return stmt != null
+            && stmt.TryMatchCall(out var entityRef)
+            && entityRef.TryGetCommand(out var cmdRef)
+            && Engine.StringsAreEqual(cmdRef.Id, Engine.DebugAlias);
     }
 }

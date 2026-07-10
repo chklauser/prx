@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Macro.Commands;
@@ -12,9 +10,8 @@ public class CallSub : MacroCommand
 
     public static CallSub Instance { get; } = new();
 
-    CallSub() : base(Alias)
-    {
-    }
+    CallSub()
+        : base(Alias) { }
 
     #endregion
 
@@ -22,12 +19,18 @@ public class CallSub : MacroCommand
 
     protected override void DoExpand(MacroContext context)
     {
-        var perform =
-            context.Factory.Call(context.Invocation.Position, EntityRef.Command.Create(Engine.CallSubPerformAlias),
-                PCall.Get, context.Invocation.Arguments.ToArray());
-        var interpret = context.Factory.Expand(context.Invocation.Position,
-            EntityRef.MacroCommand.Create(CallSubInterpret.Alias), context.Invocation.Call);
-            
+        var perform = context.Factory.Call(
+            context.Invocation.Position,
+            EntityRef.Command.Create(Engine.CallSubPerformAlias),
+            PCall.Get,
+            context.Invocation.Arguments.ToArray()
+        );
+        var interpret = context.Factory.Expand(
+            context.Invocation.Position,
+            EntityRef.MacroCommand.Create(CallSubInterpret.Alias),
+            context.Invocation.Call
+        );
+
         interpret.Arguments.Add(perform);
 
         context.Block.Expression = interpret;

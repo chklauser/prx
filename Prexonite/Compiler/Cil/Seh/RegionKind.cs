@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Cil.Seh;
 
 [Flags]

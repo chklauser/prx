@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Ast;
 using Prexonite.Properties;
 
@@ -9,8 +7,11 @@ class ParserAstFactory : AstFactoryBase
 {
     readonly Parser _parser;
 
-    protected override AstBlock CurrentBlock => _parser.CurrentBlock ??
-        throw new PrexoniteException("Internal error: current block cannot be accessed on the top level.");
+    protected override AstBlock CurrentBlock =>
+        _parser.CurrentBlock
+        ?? throw new PrexoniteException(
+            "Internal error: current block cannot be accessed on the top level."
+        );
 
     protected override AstGetSet CreateNullNode(ISourcePosition position)
     {
@@ -30,9 +31,12 @@ class ParserAstFactory : AstFactoryBase
         if (_parser.target == null)
         {
             ReportMessage(
-                Message.Error(Resources.ParserAstFactory_RequireOuterVariable_Outside_function,
+                Message.Error(
+                    Resources.ParserAstFactory_RequireOuterVariable_Outside_function,
                     _parser.GetPosition(),
-                    MessageClasses.ParserInternal));
+                    MessageClasses.ParserInternal
+                )
+            );
         }
         else
         {
@@ -52,7 +56,9 @@ class ParserAstFactory : AstFactoryBase
             var compilerTarget = _parser.target;
             if (compilerTarget == null)
             {
-                throw new InvalidOperationException("Internal parser error. Cannot access compilation target on top level.");
+                throw new InvalidOperationException(
+                    "Internal parser error. Cannot access compilation target on top level."
+                );
             }
             else
             {

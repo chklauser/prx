@@ -1,5 +1,3 @@
-
-
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Properties;
@@ -18,35 +16,33 @@ namespace Prexonite.Commands.Core;
 ///         while(n > 4)
 ///         println(n--);
 ///         }
-///     
+///
 ///         f1();
 ///         println(n); //"4"
-/// 
+///
 ///         n = 13;
 ///         unbind(->n);
 ///         f1();
 ///         println(n); //"13"
-///         }</code>After the call to unbind, $n does no longer 
-///     refer to the same variable as the closure but 
+///         }</code>After the call to unbind, $n does no longer
+///     refer to the same variable as the closure but
 ///     still represents the same value.
 /// </example>
 /// <remarks>
-///     <para>What unbind does, is to copy the contents of the 
-///         supplied variable to a new memory location and associate 
-///         all references <b>inside the calling function</b> with this 
-///         new memory location. Should a function create two closures before 
-///         calling unbind on a shared variable, those two closures will still 
-///         use the same memory location. Only the references in the calling 
+///     <para>What unbind does, is to copy the contents of the
+///         supplied variable to a new memory location and associate
+///         all references <b>inside the calling function</b> with this
+///         new memory location. Should a function create two closures before
+///         calling unbind on a shared variable, those two closures will still
+///         use the same memory location. Only the references in the calling
 ///         function change.</para>
-///     <para>Important: that the value of the variable remains untouched. 
-///         The <see cref = "PValue" /> object reference is just copied to 
+///     <para>Important: that the value of the variable remains untouched.
+///         The <see cref = "PValue" /> object reference is just copied to
 ///         the new memory location.</para>
 /// </remarks>
 public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
 {
-    Unbind()
-    {
-    }
+    Unbind() { }
 
     public static Unbind Instance { get; } = new();
 
@@ -69,7 +65,7 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
 
     /// <summary>
     ///     Executes the unbind command on a <see cref = "PValue" /> argument.
-    ///     The argument must either be the variable's name as a string or a 
+    ///     The argument must either be the variable's name as a string or a
     ///     reference to the <see cref = "PVariable" /> object.
     /// </summary>
     /// <param name = "sctx">The <see cref = "FunctionContext" /> to modify.</param>
@@ -91,18 +87,18 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
             throw new PrexoniteException("The unbind command cannot process Null.");
 
         if (sctx is not FunctionContext fctx)
-            throw new PrexoniteException(
-                "The unbind command can only work on function contexts.");
+            throw new PrexoniteException("The unbind command can only work on function contexts.");
 
         string? id;
 
         if (arg.Type is ObjectPType && arg.Value is PVariable)
         {
             //Variable reference
-            id = (from pair in fctx.LocalVariables
-                    where ReferenceEquals(pair.Value, arg.Value)
-                    select pair.Key
-                ).FirstOrDefault();
+            id = (
+                from pair in fctx.LocalVariables
+                where ReferenceEquals(pair.Value, arg.Value)
+                select pair.Key
+            ).FirstOrDefault();
         }
         else
         {
@@ -111,7 +107,7 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
 
         if (id != null && fctx.LocalVariables.TryGetValue(id, out var existing))
         {
-            var unbound = new PVariable {Value = existing.Value};
+            var unbound = new PVariable { Value = existing.Value };
             fctx.ReplaceLocalVariable(id, unbound);
         }
 
@@ -137,25 +133,37 @@ public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
     bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
     {
         return dynamicArgc == 0
-            &&
-            staticArgv.All(
-                arg => arg.Interpretation == CompileTimeInterpretation.LocalVariableReference);
+            && staticArgv.All(arg =>
+                arg.Interpretation == CompileTimeInterpretation.LocalVariableReference
+            );
     }
 
-    void ICilExtension.Implement(CompilerState state, Instruction ins,
-        CompileTimeValue[] staticArgv, int dynamicArgc)
+    void ICilExtension.Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         foreach (var compileTimeValue in staticArgv)
         {
             if (!compileTimeValue.TryGetLocalVariableReference(out var local))
                 throw new ArgumentException(
                     Resources.Unbind_OnlyWorksForLocalVariables,
-                    nameof(staticArgv));
+                    nameof(staticArgv)
+                );
 
-            if (!state.Symbols.TryGetValue(local.Id, out var cilSymbol) ||
-                cilSymbol.Kind != SymbolKind.LocalRef)
+            if (
+                !state.Symbols.TryGetValue(local.Id, out var cilSymbol)
+                || cilSymbol.Kind != SymbolKind.LocalRef
+            )
                 throw new PrexoniteException(
-                    string.Format("CIL implementation of {1} cannot find local explicit variable {0}", local.Id, GetType().FullName));
+                    string.Format(
+                        "CIL implementation of {1} cannot find local explicit variable {0}",
+                        local.Id,
+                        GetType().FullName
+                    )
+                );
 
             //Create new PVariable
             state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPVariableCtor);

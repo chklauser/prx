@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -21,13 +19,31 @@ public class AstCreateClosure : AstExpr
         if (stackSemantics == StackSemantics.Effect)
             return;
 
-        if (target.Loader.ParentApplication.TryGetFunction(Implementation.Id, Implementation.ModuleName, out var targetFunction)
-            && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry)
+        if (
+            target.Loader.ParentApplication.TryGetFunction(
+                Implementation.Id,
+                Implementation.ModuleName,
+                out var targetFunction
+            )
+            && (
+                !targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry)
                 || !sharedNamesEntry.IsList
-                || sharedNamesEntry.List.Length == 0))
-            target.Emit(Position,OpCode.ldr_func, Implementation.Id, target.ToInternalModule(Implementation.ModuleName));
+                || sharedNamesEntry.List.Length == 0
+            )
+        )
+            target.Emit(
+                Position,
+                OpCode.ldr_func,
+                Implementation.Id,
+                target.ToInternalModule(Implementation.ModuleName)
+            );
         else
-            target.Emit(Position,OpCode.newclo, Implementation.Id, target.ToInternalModule(Implementation.ModuleName));
+            target.Emit(
+                Position,
+                OpCode.newclo,
+                Implementation.Id,
+                target.ToInternalModule(Implementation.ModuleName)
+            );
     }
 
     #region AstExpr Members

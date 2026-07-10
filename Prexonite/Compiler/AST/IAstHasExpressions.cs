@@ -1,4 +1,3 @@
-
 namespace Prexonite.Compiler.Ast;
 
 public interface IAstHasExpressions

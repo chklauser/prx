@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -7,11 +5,7 @@ namespace Prexonite.Compiler.Build;
 
 public interface IBuildEnvironment : IDisposable
 {
-
-    SymbolStore ExternalSymbols
-    {
-        get;
-    }
+    SymbolStore ExternalSymbols { get; }
 
     Module Module { get; }
 

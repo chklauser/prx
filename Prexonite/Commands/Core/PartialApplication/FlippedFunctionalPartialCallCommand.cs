@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -12,9 +10,7 @@ public class FlippedFunctionalPartialCallCommand : PCommand, ICilExtension
 
     public static FlippedFunctionalPartialCallCommand Instance { get; } = new();
 
-    FlippedFunctionalPartialCallCommand()
-    {
-    }
+    FlippedFunctionalPartialCallCommand() { }
 
     public const string Alias = @"pa\flip\call";
 
@@ -41,22 +37,36 @@ public class FlippedFunctionalPartialCallCommand : PCommand, ICilExtension
     {
         get
         {
-            return _functionPartialCallCtorCache ??= typeof(FlippedFunctionalPartialCall).GetConstructor([typeof(PValue), typeof(PValue[]),
-            ]) ?? throw new InvalidOperationException(
-                $"Could not find constructor for {nameof(FlippedFunctionalPartialCall)} with (PValue, PValue[]).");
+            return _functionPartialCallCtorCache ??=
+                typeof(FlippedFunctionalPartialCall).GetConstructor([
+                    typeof(PValue),
+                    typeof(PValue[]),
+                ])
+                ?? throw new InvalidOperationException(
+                    $"Could not find constructor for {nameof(FlippedFunctionalPartialCall)} with (PValue, PValue[])."
+                );
         }
     }
 
-    void ICilExtension.Implement(CompilerState state, Instruction ins,
-        CompileTimeValue[] staticArgv, int dynamicArgc)
+    void ICilExtension.Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         _ImplementCtorCall(state, ins, staticArgv, dynamicArgc, functionPartialCallCtor);
     }
 
-    internal static void _ImplementCtorCall(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-        int dynamicArgc, ConstructorInfo partialCallCtor)
+    internal static void _ImplementCtorCall(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc,
+        ConstructorInfo partialCallCtor
+    )
     {
-//the call subject is not part of argv
+        //the call subject is not part of argv
         var argc = staticArgv.Length + dynamicArgc - 1;
 
         if (argc == 0)

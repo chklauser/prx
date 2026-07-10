@@ -1,5 +1,3 @@
-
-
 using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
@@ -12,8 +10,8 @@ namespace PrexoniteTests.Tests;
 public class Storage : CompilerTestBase
 {
     const string _storedShouldBeEqual =
-        "Since the in-memory and the restored application are the same, they should" +
-        " result in the same serialized form.";
+        "Since the in-memory and the restored application are the same, they should"
+        + " result in the same serialized form.";
 
     [Test]
     public void TestEmpty()
@@ -32,16 +30,17 @@ public class Storage : CompilerTestBase
         reldr.LoadFromString(stored);
         reldr.Options.TargetApplication!.StoreInString();
 
-        Assert.That(stored,
-            Is.EqualTo(stored).Using((IEqualityComparer<string>) Engine.DefaultStringComparer),
-            _storedShouldBeEqual);
+        Assert.That(
+            stored,
+            Is.EqualTo(stored).Using((IEqualityComparer<string>)Engine.DefaultStringComparer),
+            _storedShouldBeEqual
+        );
     }
 
     [Test]
     public void TestMeta()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             Name fixture\storage\meta;
             Description "Contains dummy meta information for a unit test";
@@ -69,16 +68,17 @@ public class Storage : CompilerTestBase
         reldr.LoadFromString(stored);
         reldr.Options.TargetApplication!.StoreInString();
 
-        Assert.That(stored,
+        Assert.That(
+            stored,
             Is.EqualTo(stored).Using((IEqualityComparer<string>)Engine.DefaultStringComparer),
-            _storedShouldBeEqual);
+            _storedShouldBeEqual
+        );
     }
 
     [Test]
     public void TestDeclarations()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             var obj0;
             var obj1;
@@ -132,23 +132,25 @@ public class Storage : CompilerTestBase
 
 #if Compressed
 
-        [Test]
-        public void CompressNoException()
-        {
-            Loader ldr = _compile(@"
+    [Test]
+    public void CompressNoException()
+    {
+        Loader ldr = _compile(
+            @"
 
 coroutine mapf(ref f, xs) does
     foreach(var x in xs)
         yield a => f(a,x);
 
 
-");
-            using (MemoryStream mstr = new MemoryStream())
-            {
-                ldr.StoreCompressed(mstr);
-                Assert.Greater(mstr.Length, 10f);
-            }
+"
+        );
+        using (MemoryStream mstr = new MemoryStream())
+        {
+            ldr.StoreCompressed(mstr);
+            Assert.Greater(mstr.Length, 10f);
         }
+    }
 #endif
 
     [Test]
@@ -156,13 +158,17 @@ coroutine mapf(ref f, xs) does
     {
         var ldr = new Loader(engine, target);
         const string numberToStore = "1234567890";
-        ldr.LoadFromString("""
+        ldr.LoadFromString(
+            """
 
-                           meta_entry 
-                           """ + numberToStore + """
-                                                 ;
+            meta_entry 
+            """
+                + numberToStore
+                + """
+                ;
 
-                                                 """);
+                """
+        );
         foreach (var error in ldr.Errors)
             TestContext.WriteLine("ERROR: {0}", error);
         Assert.AreEqual(0, ldr.ErrorCount, "no errors expected");

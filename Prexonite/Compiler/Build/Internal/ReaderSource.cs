@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Build.Internal;
 
 class ReaderSource : ISource, IDisposable
@@ -16,12 +14,12 @@ class ReaderSource : ISource, IDisposable
     public bool TryOpen([NotNullWhen(true)] out TextReader? reader)
     {
         var r = _reader;
-        if(r == null)
+        if (r == null)
         {
             reader = null;
             return false;
-        }  
-        else if(Interlocked.CompareExchange(ref _reader,null,r) == r)
+        }
+        else if (Interlocked.CompareExchange(ref _reader, null, r) == r)
         {
             reader = r;
             return true;

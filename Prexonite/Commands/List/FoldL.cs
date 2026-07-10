@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -19,16 +17,18 @@ public class FoldL : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    FoldL()
-    {
-    }
+    FoldL() { }
 
     public static FoldL Instance { get; } = new();
 
     #endregion
 
     public static PValue Run(
-        StackContext sctx, IIndirectCall f, PValue left, IEnumerable<PValue> source)
+        StackContext sctx,
+        IIndirectCall f,
+        PValue left,
+        IEnumerable<PValue> source
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));

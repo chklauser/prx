@@ -1,5 +1,3 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Commands.Core;
 using Prexonite.Properties;
@@ -7,21 +5,18 @@ using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast;
 
-public abstract class AstLazyLogical : AstExpr,
-    IAstHasExpressions
+public abstract class AstLazyLogical : AstExpr, IAstHasExpressions
 {
-    internal AstLazyLogical(
-        Parser p, AstExpr leftExpression, AstExpr rightExpression)
-        : this(p.scanner.File, p.t.line, p.t.col, leftExpression, rightExpression)
-    {
-    }
+    internal AstLazyLogical(Parser p, AstExpr leftExpression, AstExpr rightExpression)
+        : this(p.scanner.File, p.t.line, p.t.col, leftExpression, rightExpression) { }
 
     protected AstLazyLogical(
         string file,
         int line,
         int column,
         AstExpr leftExpression,
-        AstExpr rightExpression)
+        AstExpr rightExpression
+    )
         : base(file, line, column)
     {
         AddExpression(leftExpression);
@@ -70,7 +65,10 @@ public abstract class AstLazyLogical : AstExpr,
                 target.Loader.ReportMessage(
                     Message.Error(
                         Resources.AstLazyLogical_EmitCode_PureChainsExpected,
-                        Position, MessageClasses.OnlyLastOperandPartialInLazy));
+                        Position,
+                        MessageClasses.OnlyLastOperandPartialInLazy
+                    )
+                );
                 target.EmitJump(Position, trueLabel);
                 return;
             }
@@ -81,12 +79,10 @@ public abstract class AstLazyLogical : AstExpr,
             }
         }
 
-
         DoEmitCode(target, trueLabel, falseLabel);
     }
 
-    protected abstract void DoEmitCode(CompilerTarget target, string trueLabel,
-        string falseLabel);
+    protected abstract void DoEmitCode(CompilerTarget target, string trueLabel, string falseLabel);
 
     /// <summary>
     ///     Emit the jump code for an if-like condition (jump if true). Recognizes and takes advantage of lazy logical expressions.
@@ -94,16 +90,23 @@ public abstract class AstLazyLogical : AstExpr,
     /// <param name = "target">The compiler target to emit code to.</param>
     /// <param name = "cond">The condition of the jump.</param>
     /// <param name = "targetLabel">The target of the conditional jump.</param>
-    public static void EmitJumpIfCondition(
-        CompilerTarget target, AstExpr cond, string targetLabel)
+    public static void EmitJumpIfCondition(CompilerTarget target, AstExpr cond, string targetLabel)
     {
         if (cond == null)
-            throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
+            throw new ArgumentNullException(
+                nameof(cond),
+                Resources.AstLazyLogical__Condition_must_not_be_null
+            );
         if (target == null)
-            throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
+            throw new ArgumentNullException(
+                nameof(target),
+                Resources.AstNode_Compiler_target_must_not_be_null
+            );
         if (string.IsNullOrEmpty(targetLabel))
             throw new ArgumentException(
-                Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
+                Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty,
+                nameof(targetLabel)
+            );
         if (cond is AstLazyLogical logical)
         {
             var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
@@ -121,7 +124,8 @@ public abstract class AstLazyLogical : AstExpr,
         CompilerTarget target,
         AstExpr cond,
         string targetLabel,
-        bool isPositive)
+        bool isPositive
+    )
     {
         if (isPositive)
             EmitJumpIfCondition(target, cond, targetLabel);
@@ -134,18 +138,29 @@ public abstract class AstLazyLogical : AstExpr,
         AstExpr cond,
         string targetLabel,
         string alternativeLabel,
-        bool isPositive)
+        bool isPositive
+    )
     {
         if (cond == null)
-            throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
+            throw new ArgumentNullException(
+                nameof(cond),
+                Resources.AstLazyLogical__Condition_must_not_be_null
+            );
         if (target == null)
-            throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
+            throw new ArgumentNullException(
+                nameof(target),
+                Resources.AstNode_Compiler_target_must_not_be_null
+            );
         if (string.IsNullOrEmpty(targetLabel))
             throw new ArgumentException(
-                Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
+                Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty,
+                nameof(targetLabel)
+            );
         if (string.IsNullOrEmpty(alternativeLabel))
             throw new ArgumentException(
-                Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty, nameof(alternativeLabel));
+                Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty,
+                nameof(alternativeLabel)
+            );
         var logical = cond as AstLazyLogical;
         if (!isPositive)
         {
@@ -170,21 +185,33 @@ public abstract class AstLazyLogical : AstExpr,
         CompilerTarget target,
         AstExpr cond,
         string targetLabel,
-        string alternativeLabel)
+        string alternativeLabel
+    )
     {
         EmitJumpCondition(target, cond, targetLabel, alternativeLabel, true);
     }
 
     public static void EmitJumpUnlessCondition(
-        CompilerTarget target, AstExpr cond, string targetLabel)
+        CompilerTarget target,
+        AstExpr cond,
+        string targetLabel
+    )
     {
         if (cond == null)
-            throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
+            throw new ArgumentNullException(
+                nameof(cond),
+                Resources.AstLazyLogical__Condition_must_not_be_null
+            );
         if (target == null)
-            throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
+            throw new ArgumentNullException(
+                nameof(target),
+                Resources.AstNode_Compiler_target_must_not_be_null
+            );
         if (string.IsNullOrEmpty(targetLabel))
             throw new ArgumentException(
-                Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
+                Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty,
+                nameof(targetLabel)
+            );
         if (cond is AstLazyLogical logical)
         {
             var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
@@ -203,14 +230,15 @@ public abstract class AstLazyLogical : AstExpr,
     public NodeApplicationState CheckNodeApplicationState()
     {
         return new(
-            Conditions.Any(x => x.IsPlaceholder()), Conditions.Any(x => x.IsArgumentSplice()));
+            Conditions.Any(x => x.IsPlaceholder()),
+            Conditions.Any(x => x.IsArgumentSplice())
+        );
     }
 
     #endregion
 
     [PublicAPI]
-    public static AstExpr CreateConjunction(ISourcePosition position,
-        IEnumerable<AstExpr> clauses)
+    public static AstExpr CreateConjunction(ISourcePosition position, IEnumerable<AstExpr> clauses)
     {
         var cs = clauses.ToList();
 
@@ -224,8 +252,13 @@ public abstract class AstLazyLogical : AstExpr,
         }
         else
         {
-            var conj = new AstLogicalAnd(position.File, position.Line, position.Column, cs[0],
-                cs[1]);
+            var conj = new AstLogicalAnd(
+                position.File,
+                position.Line,
+                position.Column,
+                cs[0],
+                cs[1]
+            );
             foreach (var clause in cs.Skip(2))
                 conj.AddExpression(clause);
             return conj;
@@ -233,8 +266,7 @@ public abstract class AstLazyLogical : AstExpr,
     }
 
     [PublicAPI]
-    public static AstExpr CreateDisjunction(ISourcePosition position,
-        IEnumerable<AstExpr> clauses)
+    public static AstExpr CreateDisjunction(ISourcePosition position, IEnumerable<AstExpr> clauses)
     {
         var cs = clauses.ToList();
 
@@ -248,8 +280,13 @@ public abstract class AstLazyLogical : AstExpr,
         }
         else
         {
-            var disj = new AstLogicalOr(position.File, position.Line, position.Column, cs[0],
-                cs[1]);
+            var disj = new AstLogicalOr(
+                position.File,
+                position.Line,
+                position.Column,
+                cs[0],
+                cs[1]
+            );
             foreach (var clause in cs.Skip(2))
                 disj.AddExpression(clause);
             return disj;
@@ -272,7 +309,7 @@ public abstract class AstLazyLogical : AstExpr,
                 AstArgumentSplice.ReportNotSupported(node.Value, target, StackSemantics.Value);
                 return;
             }
-                
+
             var isPlaceholder = node.Value.IsPlaceholder();
             if (node.Next == null)
             {
@@ -280,7 +317,7 @@ public abstract class AstLazyLogical : AstExpr,
                 {
                     //there is no placeholder at all, wrap expression in const
                     Debug.Assert(Conditions.All(e => !e.IsPlaceholder()));
-                    DoEmitCode(target,StackSemantics.Value);
+                    DoEmitCode(target, StackSemantics.Value);
                     target.EmitCommandCall(Position, 1, Const.Alias);
                     return;
                 }
@@ -296,18 +333,25 @@ public abstract class AstLazyLogical : AstExpr,
         }
 
         //We have expression of the form `e1 and e2 and e3 and ... and ?i`
-        var placeholder = (AstPlaceholder) Conditions.Last!.Value;
+        var placeholder = (AstPlaceholder)Conditions.Last!.Value;
         AstPlaceholder.DeterminePlaceholderIndices(placeholder.Singleton());
-
 
         // compile the following code: `if(e1 and e2 and e3) id(?) else const(false)`
         var constExpr = CreatePrefix(Position, Conditions.Take(Conditions.Count - 1));
         //var identityFunc = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Id.Alias, SymbolInterpretations.Command);
         //identityFunc.Arguments.Add(new AstPlaceholder(File, Line, Column, placeholder.Index));
-        var identityFunc = new AstTypecast(Position, placeholder.GetCopy(),
-            new AstConstantTypeExpression(File, Line, Column, PType.Bool.ToString()));
-        var conditional = new AstConditionalExpression(File, Line, Column, constExpr,
-            ShortcircuitValue)
+        var identityFunc = new AstTypecast(
+            Position,
+            placeholder.GetCopy(),
+            new AstConstantTypeExpression(File, Line, Column, PType.Bool.ToString())
+        );
+        var conditional = new AstConditionalExpression(
+            File,
+            Line,
+            Column,
+            constExpr,
+            ShortcircuitValue
+        )
         {
             IfExpression = identityFunc,
             ElseExpression = this.ConstFunc(ShortcircuitValue),
@@ -320,7 +364,10 @@ public abstract class AstLazyLogical : AstExpr,
         target.Loader.ReportMessage(
             Message.Error(
                 Resources.AstLazyLogical_placeholderOnlyAtTheEnd,
-                Position, MessageClasses.OnlyLastOperandPartialInLazy));
+                Position,
+                MessageClasses.OnlyLastOperandPartialInLazy
+            )
+        );
     }
 
     /// <summary>
@@ -328,10 +375,14 @@ public abstract class AstLazyLogical : AstExpr,
     /// </summary>
     protected abstract bool ShortcircuitValue { get; }
 
-    protected virtual AstExpr CreatePrefix(ISourcePosition position,
-        IEnumerable<AstExpr> clauses)
+    protected virtual AstExpr CreatePrefix(ISourcePosition position, IEnumerable<AstExpr> clauses)
     {
-        throw new NotSupportedException(string.Format(Resources.AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication, GetType().Name));
+        throw new NotSupportedException(
+            string.Format(
+                Resources.AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication,
+                GetType().Name
+            )
+        );
     }
 
     public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
@@ -344,16 +395,23 @@ public abstract class AstLazyLogical : AstExpr,
             _OptimizeNode(target, ref condition);
             node.Value = condition; //Update list of conditions with optimized condition
 
-            if (condition is AstConstant &&
-                ((AstConstant) condition).ToPValue(target).TryConvertTo(target.Loader,
-                    PType.Bool, false, out var resultP))
+            if (
+                condition is AstConstant
+                && ((AstConstant)condition)
+                    .ToPValue(target)
+                    .TryConvertTo(target.Loader, PType.Bool, false, out var resultP)
+            )
             {
-                if ((bool) resultP.Value! == ShortcircuitValue)
+                if ((bool)resultP.Value! == ShortcircuitValue)
                 {
                     // Expr1 OP short circuit OP Expr2 = shortCircuit
                     // Expr1 OP short circuit OP Expr2 OP ? = const(shortCircuit)
-                    var shortCircuitConst = new AstConstant(condition.File, condition.Line,
-                        condition.Column, ShortcircuitValue);
+                    var shortCircuitConst = new AstConstant(
+                        condition.File,
+                        condition.Line,
+                        condition.Column,
+                        ShortcircuitValue
+                    );
                     if (placeholders > 0)
                     {
                         if (!Conditions.Last!.Value.IsPlaceholder() || placeholders > 1)
@@ -386,12 +444,19 @@ public abstract class AstLazyLogical : AstExpr,
         else if (Conditions.Count == 1)
         {
             var primaryExpr = Conditions.First!.Value;
-            expr = _GetOptimizedNode(target,
-                new AstTypecast(primaryExpr.Position, primaryExpr,
-                    new AstConstantTypeExpression(primaryExpr.File,
+            expr = _GetOptimizedNode(
+                target,
+                new AstTypecast(
+                    primaryExpr.Position,
+                    primaryExpr,
+                    new AstConstantTypeExpression(
+                        primaryExpr.File,
                         primaryExpr.Line,
                         primaryExpr.Column,
-                        PType.Bool.ToString())));
+                        PType.Bool.ToString()
+                    )
+                )
+            );
         }
 
         return expr != null;

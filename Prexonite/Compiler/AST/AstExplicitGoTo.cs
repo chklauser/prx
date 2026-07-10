@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Compiler.Ast;
 
 public sealed class AstExplicitGoTo : AstNode
@@ -11,9 +9,7 @@ public sealed class AstExplicitGoTo : AstNode
     }
 
     internal AstExplicitGoTo(Parser p, string destination)
-        : this(p.scanner.File, p.t.line, p.t.col, destination)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, destination) { }
 
     public string Destination { get; }
 

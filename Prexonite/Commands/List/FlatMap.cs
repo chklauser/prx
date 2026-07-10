@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -9,9 +9,7 @@ public class FlatMap : CoroutineCommand, ICilCompilerAware
 
     public static FlatMap Instance { get; } = new();
 
-    FlatMap()
-    {
-    }
+    FlatMap() { }
 
     public const string Alias = "flat_map";
 
@@ -22,7 +20,10 @@ public class FlatMap : CoroutineCommand, ICilCompilerAware
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -30,7 +31,7 @@ public class FlatMap : CoroutineCommand, ICilCompilerAware
             throw new ArgumentNullException(nameof(args));
 
         var sctx = sctxCarrier.StackContext;
-            
+
         //Get f
         IIndirectCall? f = args.Length < 1 ? null : args[0];
 

@@ -1,19 +1,15 @@
-
-
 using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstKeyValuePair : AstExpr,
-    IAstHasExpressions, IAstPartiallyApplicable
+public class AstKeyValuePair : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
 {
     AstExpr _key;
     AstExpr _value;
 
     [PublicAPI]
-    public AstKeyValuePair(
-        string file, int line, int column, AstExpr key, AstExpr value)
+    public AstKeyValuePair(string file, int line, int column, AstExpr key, AstExpr value)
         : base(file, line, column)
     {
         _key = key;
@@ -77,12 +73,13 @@ public class AstKeyValuePair : AstExpr,
     public NodeApplicationState CheckNodeApplicationState()
     {
         return new(
-            Key.IsPlaceholder() || Value.IsPlaceholder(), 
-            Key.IsArgumentSplice() || Value.IsArgumentSplice());
+            Key.IsPlaceholder() || Value.IsPlaceholder(),
+            Key.IsArgumentSplice() || Value.IsArgumentSplice()
+        );
     }
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
-    {            
+    {
         if (Key.IsArgumentSplice())
         {
             AstArgumentSplice.ReportNotSupported(Key, target, StackSemantics.Value);
@@ -92,7 +89,7 @@ public class AstKeyValuePair : AstExpr,
         {
             AstArgumentSplice.ReportNotSupported(Value, target, StackSemantics.Value);
         }
-        DoEmitCode(target,StackSemantics.Value);
+        DoEmitCode(target, StackSemantics.Value);
         //Partial application is handled by AstGetSetSymbol. Code is the same
     }
 

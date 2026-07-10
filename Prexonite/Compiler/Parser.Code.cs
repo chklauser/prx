@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -34,9 +32,9 @@ partial class Parser
     public Loader Loader { get; } = null!; // initialized in the only publicly available constructor
 
     /// <summary>
-    /// Preflight mode causes the parser to abort at the 
-    /// first non-meta construct, giving the user the opportunity 
-    /// to inspect a file's "header" without fully compiling 
+    /// Preflight mode causes the parser to abort at the
+    /// first non-meta construct, giving the user the opportunity
+    /// to inspect a file's "header" without fully compiling
     /// that file.
     /// </summary>
     public bool PreflightModeEnabled => Loader.Options.PreflightModeEnabled;
@@ -73,8 +71,11 @@ partial class Parser
 
     DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
     {
-        if(relativeNsId.Count < 1)
-            throw new ArgumentOutOfRangeException(nameof(relativeNsId),Resources.Parser_relativeNsId_empty);
+        if (relativeNsId.Count < 1)
+            throw new ArgumentOutOfRangeException(
+                nameof(relativeNsId),
+                Resources.Parser_relativeNsId_empty
+            );
         var outerScope = Loader.CurrentScope;
         QualifiedId prefix;
         SymbolStore declScopeStore;
@@ -92,7 +93,7 @@ partial class Parser
             surroundingNamespace = outerScope._LocalNamespace;
         }
 
-        var currentLookupScope = (ISymbolView<Symbol>) declScopeStore;
+        var currentLookupScope = (ISymbolView<Symbol>)declScopeStore;
         var isOutermostNs = true;
         foreach (var nsId in relativeNsId)
         {
@@ -101,11 +102,20 @@ partial class Parser
             prefix += new QualifiedId(nsId);
 
             // Create namespace if necessary
-            localNs ??= ((ModuleLevelView) Loader.TopLevelSymbols).CreateLocalNamespace(
-                new EmptySymbolView<Symbol>());
+            localNs ??= ((ModuleLevelView)Loader.TopLevelSymbols).CreateLocalNamespace(
+                new EmptySymbolView<Symbol>()
+            );
 
             // Make sure the namespace is exported from the current module and not just accessible via external declarations
-            _declareNamespaceAsExported(surroundingNamespace, declScopeStore, nsId, isOutermostNs, idPosition, localNs, prefix);
+            _declareNamespaceAsExported(
+                surroundingNamespace,
+                declScopeStore,
+                nsId,
+                isOutermostNs,
+                idPosition,
+                localNs,
+                prefix
+            );
 
             surroundingNamespace = localNs;
             currentLookupScope = localNs;
@@ -114,8 +124,10 @@ partial class Parser
         }
 
         // This should never happen, check is here to convey this fact to null-analysis
-        if(surroundingNamespace == null)
-            throw new PrexoniteException("Failed to create the innermost namespace of " + relativeNsId + ".");
+        if (surroundingNamespace == null)
+            throw new PrexoniteException(
+                "Failed to create the innermost namespace of " + relativeNsId + "."
+            );
 
         // Create the local scope of this namespace *declaration* (the scope inside the braces)
         // Not that this is almost completely independent of the namespace itself
@@ -126,9 +138,14 @@ partial class Parser
 
     class DeclarationScopeBuilder
     {
-        public DeclarationScopeBuilder(SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, LocalNamespace ns)
+        public DeclarationScopeBuilder(
+            SymbolStoreBuilder localScopeBuilder,
+            QualifiedId prefix,
+            LocalNamespace ns
+        )
         {
-            LocalScopeBuilder = localScopeBuilder ?? throw new ArgumentNullException(nameof(localScopeBuilder));
+            LocalScopeBuilder =
+                localScopeBuilder ?? throw new ArgumentNullException(nameof(localScopeBuilder));
             Prefix = prefix;
             Namespace = ns ?? throw new ArgumentNullException(nameof(ns));
         }
@@ -145,25 +162,37 @@ partial class Parser
         }
     }
 
-    LocalNamespace? _tryGetLocalNamespace(ISymbolView<Symbol> currentSurrounding, string superNsId, ISourcePosition idPosition)
+    LocalNamespace? _tryGetLocalNamespace(
+        ISymbolView<Symbol> currentSurrounding,
+        string superNsId,
+        ISourcePosition idPosition
+    )
     {
         LocalNamespace? localNs = null;
         if (currentSurrounding.TryGet(superNsId, out var sym))
         {
             var fakeExpr = Create.ExprFor(idPosition, sym);
             if (fakeExpr is not AstNamespaceUsage nsUsage)
-                Loader.ReportMessage(Message.Error(
-                    string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
-                    idPosition, MessageClasses.NamespaceExcepted));
+                Loader.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
+                        idPosition,
+                        MessageClasses.NamespaceExcepted
+                    )
+                );
             else
             {
                 // namespace already exists
                 localNs = nsUsage.Namespace as LocalNamespace;
                 if (localNs == null)
                 {
-                    Loader.ReportMessage(Message.Error(
-                        string.Format(Resources.Parser_CannotExtendMergedNamespace, superNsId),
-                        idPosition, MessageClasses.CannotExtendMergedNamespace));
+                    Loader.ReportMessage(
+                        Message.Error(
+                            string.Format(Resources.Parser_CannotExtendMergedNamespace, superNsId),
+                            idPosition,
+                            MessageClasses.CannotExtendMergedNamespace
+                        )
+                    );
                 }
             }
         }
@@ -181,42 +210,54 @@ partial class Parser
     /// <param name="localNs">The namespace to declare</param>
     /// <param name="nextPrefix">Namespaces prefix to use for physical names in declared namespace. Or null if the namespace already has a prefix assigned.</param>
     static void _declareNamespaceAsExported(
-        LocalNamespace? surroundingNamespace, 
-        SymbolStore outer, 
-        string superNsId, 
-        bool isOutermostNs, 
-        ISourcePosition idPosition, 
-        LocalNamespace localNs, 
-        QualifiedId nextPrefix)
+        LocalNamespace? surroundingNamespace,
+        SymbolStore outer,
+        string superNsId,
+        bool isOutermostNs,
+        ISourcePosition idPosition,
+        LocalNamespace localNs,
+        QualifiedId nextPrefix
+    )
     {
         var nsSym = Symbol.CreateNamespace(localNs, idPosition);
         Symbol? existingSym;
         if (isOutermostNs)
         {
             // The outermost namespace (x in x.y.z) is declared as an ordinary symbol in the current scope
-            if (!outer.IsDeclaredLocally(superNsId) ||
-                !(outer.TryGet(superNsId, out existingSym) && existingSym.Equals(nsSym)))
+            if (
+                !outer.IsDeclaredLocally(superNsId)
+                || !(outer.TryGet(superNsId, out existingSym) && existingSym.Equals(nsSym))
+            )
             {
                 outer.Declare(superNsId, nsSym);
             }
         }
         else if (surroundingNamespace == null)
             throw new PrexoniteException(
-                "Failed to create surrounding namespace (syntactic sugar for nested namespace)");
+                "Failed to create surrounding namespace (syntactic sugar for nested namespace)"
+            );
         else
         {
             // Inner namespaces (z and y in x.y.z) are exported from their respective super-namespaces
-            if (!surroundingNamespace.TryGetExported(superNsId, out existingSym) || !existingSym.Equals(nsSym))
+            if (
+                !surroundingNamespace.TryGetExported(superNsId, out existingSym)
+                || !existingSym.Equals(nsSym)
+            )
             {
                 surroundingNamespace.DeclareExports(
-                    new KeyValuePair<string, Symbol>(superNsId, nsSym).Singleton());
+                    new KeyValuePair<string, Symbol>(superNsId, nsSym).Singleton()
+                );
             }
         }
 
         localNs.Prefix ??= nextPrefix.ToString().Replace('.', '\\');
     }
 
-    ISymbolView<Symbol>? _resolveNamespace(ISymbolView<Symbol> scope, ISourcePosition qualifiedIdPosition, QualifiedId qualifiedId)
+    ISymbolView<Symbol>? _resolveNamespace(
+        ISymbolView<Symbol> scope,
+        ISourcePosition qualifiedIdPosition,
+        QualifiedId qualifiedId
+    )
     {
         while (qualifiedId.Count > 0)
         {
@@ -225,8 +266,16 @@ partial class Parser
             if (expr is not AstNamespaceUsage nsUsage)
             {
                 Create.ReportMessage(
-                    Message.Error(string.Format(Resources.Parser_NamespaceExpected, qualifiedId[0], sym == null ? "not defined" : sym.ToString()),
-                        qualifiedIdPosition, MessageClasses.NamespaceExcepted));
+                    Message.Error(
+                        string.Format(
+                            Resources.Parser_NamespaceExpected,
+                            qualifiedId[0],
+                            sym == null ? "not defined" : sym.ToString()
+                        ),
+                        qualifiedIdPosition,
+                        MessageClasses.NamespaceExcepted
+                    )
+                );
                 return null;
             }
             else
@@ -255,7 +304,7 @@ partial class Parser
     }
 
     /// <summary>
-    /// When forwarding exported symbols from the declaration scope, 
+    /// When forwarding exported symbols from the declaration scope,
     /// we need to assemble a temporary symbol view that only contains
     /// the symbols declared locally.
     /// </summary>
@@ -311,8 +360,9 @@ partial class Parser
                 if (target == null)
                 {
                     throw new PrexoniteException(
-                        "Internal error: tried to access AST of function that is not part of this compilation unit: " +
-                        func);
+                        "Internal error: tried to access AST of function that is not part of this compilation unit: "
+                            + func
+                    );
                 }
                 return target.Ast;
             }
@@ -326,7 +376,10 @@ partial class Parser
         get
         {
             bool flagLiteralsEnabled;
-            if (target != null && target.Meta.TryGetValue(Shell.FlagLiteralsKey, out var flagSwitch))
+            if (
+                target != null
+                && target.Meta.TryGetValue(Shell.FlagLiteralsKey, out var flagSwitch)
+            )
             {
                 flagLiteralsEnabled = flagSwitch.Switch;
             }
@@ -346,7 +399,6 @@ partial class Parser
     public AstBlock? CurrentBlock => target?.CurrentBlock;
 
     protected IAstFactory Create { get; } = null!; // initialized in the only publicly available constructor
-
     #endregion
 
     #region String cache
@@ -362,7 +414,14 @@ partial class Parser
     public void ViolentlyAbortParse()
     {
         scanner.Abort();
-        la = new() {kind = _EOF, pos = la.pos, line = la.pos, col = la.col, val = ""};
+        la = new()
+        {
+            kind = _EOF,
+            pos = la.pos,
+            line = la.pos,
+            col = la.col,
+            val = "",
+        };
     }
 
     #region Helper
@@ -376,14 +435,22 @@ partial class Parser
 
     public static bool TryParseInteger(string s, out int i)
     {
-        return int.TryParse(_removeSingleQuotes(s), IntegerStyle, CultureInfo.InvariantCulture,
-            out i);
+        return int.TryParse(
+            _removeSingleQuotes(s),
+            IntegerStyle,
+            CultureInfo.InvariantCulture,
+            out i
+        );
     }
 
     public static bool TryParseReal(string s, out double d)
     {
-        return double.TryParse(_removeSingleQuotes(s), RealStyle, CultureInfo.InvariantCulture,
-            out d);
+        return double.TryParse(
+            _removeSingleQuotes(s),
+            RealStyle,
+            CultureInfo.InvariantCulture,
+            out d
+        );
     }
 
     public static bool TryParseVersion(string? s, [NotNullWhen(true)] out Version? version)
@@ -391,7 +458,8 @@ partial class Parser
         return System.Version.TryParse(s, out version);
     }
 
-    public static NumberStyles RealStyle => NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent;
+    public static NumberStyles RealStyle =>
+        NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent;
 
     public static NumberStyles IntegerStyle => NumberStyles.None;
 
@@ -439,11 +507,7 @@ partial class Parser
     {
         if (val == null)
             throw new ArgumentNullException(nameof(val));
-        var c = new Token
-        {
-            kind = kind,
-            val = val,
-        };
+        var c = new Token { kind = kind, val = val };
         _inject(c);
     }
 
@@ -462,8 +526,10 @@ partial class Parser
         if (TargetModule.Variables.TryGetVariable(id, out var x))
         {
             vari = x;
-            return TargetApplication.Variables[vari.Id] 
-                ?? throw new PrexoniteException("Internal error: declared variable is not reflected in application.");
+            return TargetApplication.Variables[vari.Id]
+                ?? throw new PrexoniteException(
+                    "Internal error: declared variable is not reflected in application."
+                );
         }
         else
         {
@@ -477,7 +543,13 @@ partial class Parser
     {
         if (errors.count > 0)
         {
-            Loader.ReportMessage(Message.Error(Resources.Parser_ErrorsInBuildBlock,GetPosition(),MessageClasses.ErrorsInBuildBlock));
+            Loader.ReportMessage(
+                Message.Error(
+                    Resources.Parser_ErrorsInBuildBlock,
+                    GetPosition(),
+                    MessageClasses.ErrorsInBuildBlock
+                )
+            );
             return;
         }
 
@@ -488,10 +560,8 @@ partial class Parser
 
             buildBlockTarget.Function.Meta[nameof(File)] = scanner.File;
             buildBlockTarget.FinishTarget();
-            //Run the build block 
-            var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
-                [],
-                [], true);
+            //Run the build block
+            var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine, [], [], true);
             object? token = null;
             try
             {
@@ -508,7 +578,13 @@ partial class Parser
         }
         catch (Exception e)
         {
-            Loader.ReportMessage(Message.Error(string.Format(Resources.Parser_exception_in_build_block, e),GetPosition(),MessageClasses.ExceptionDuringCompilation));
+            Loader.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.Parser_exception_in_build_block, e),
+                    GetPosition(),
+                    MessageClasses.ExceptionDuringCompilation
+                )
+            );
         }
     }
 
@@ -536,10 +612,12 @@ partial class Parser
     {
         if (target == null || CurrentBlock == null)
         {
-            throw new PrexoniteException($"Internal error: {caller} does not have access to a compiler target.");
+            throw new PrexoniteException(
+                $"Internal error: {caller} does not have access to a compiler target."
+            );
         }
     }
-    
+
     [MemberNotNull(nameof(target), nameof(CurrentBlock))]
     internal void _PushScope(AstScopedBlock block)
     {
@@ -557,7 +635,7 @@ partial class Parser
         if (!ReferenceEquals(ct.ParentTarget, target))
             throw new PrexoniteException("Cannot push scope of unrelated compiler target.");
 
-        // SPECIAL CASE: Initialization code gets a separate environment every time 
+        // SPECIAL CASE: Initialization code gets a separate environment every time
         // a block of code is added to it.
         if (ct.Function.Id == Application.InitializationId)
         {
@@ -574,7 +652,8 @@ partial class Parser
     {
         if (!ReferenceEquals(_scopeStack.Peek(), block))
             throw new PrexoniteException(
-                $"Tried to pop scope of block {block} but {_scopeStack.Peek()} was on top.");
+                $"Tried to pop scope of block {block} but {_scopeStack.Peek()} was on top."
+            );
         ensureHasTarget();
         _scopeStack.Pop();
         target.EndBlock();
@@ -584,7 +663,8 @@ partial class Parser
     {
         if (!ReferenceEquals(_scopeStack.Peek(), ct))
             throw new PrexoniteException(
-                $"Tried to pop scope of compiler target {ct} but {_scopeStack.Peek()} was on top.");
+                $"Tried to pop scope of compiler target {ct} but {_scopeStack.Peek()} was on top."
+            );
         target = ct.ParentTarget;
         _scopeStack.Pop();
     }
@@ -602,7 +682,7 @@ partial class Parser
     }
 
     /// <summary>
-    /// Ensures the next two tokens represent <c>namespace import</c>. 
+    /// Ensures the next two tokens represent <c>namespace import</c>.
     /// </summary>
     /// <para>While <c>namespace</c> is a reserved keyword, <c>import</c> is only a contextual keyword.</para>
     /// <returns><c>true</c> if the next two tokens match; <c>false</c> otherwise</returns>
@@ -612,8 +692,9 @@ partial class Parser
         var c = la;
         var cla = scanner.Peek();
 
-        return c.kind == _namespace && 
-            cla.kind == _id && cla.val.Equals("import", StringComparison.InvariantCultureIgnoreCase);
+        return c.kind == _namespace
+            && cla.kind == _id
+            && cla.val.Equals("import", StringComparison.InvariantCultureIgnoreCase);
     }
 
     public bool isAssignmentOperator() //LL2
@@ -667,7 +748,6 @@ partial class Parser
         return la.kind == _id
             && scanner.Peek().kind == _lpar
             && la.val.ToUpperInvariant() == pattern;
-
     }
 
     bool isFollowedByStatementBlock()
@@ -701,8 +781,12 @@ partial class Parser
         {
             //break if lookahead is not valid to save tokens
             if (
-                !(next.kind == _comma || next.kind == _implementation ||
-                    next.kind == _rpar && requirePar))
+                !(
+                    next.kind == _comma
+                    || next.kind == _implementation
+                    || next.kind == _rpar && requirePar
+                )
+            )
                 return false;
             //Consume 1
             current = next;
@@ -714,8 +798,12 @@ partial class Parser
             current = scanner.Peek();
             //break if lookahead is not valid to save tokens
             if (
-                !(current.kind == _comma || current.kind == _implementation ||
-                    current.kind == _rpar && requirePar))
+                !(
+                    current.kind == _comma
+                    || current.kind == _implementation
+                    || current.kind == _rpar && requirePar
+                )
+            )
                 return false;
             next = scanner.Peek();
         }
@@ -774,7 +862,7 @@ partial class Parser
         return c.kind == _dot && cla.kind == _lpar;
     }
 
-    // used to distinguish asm{...} and asm(...) 
+    // used to distinguish asm{...} and asm(...)
     bool isAsmBlock() //LL(2)
     {
         var asm = la;
@@ -782,11 +870,11 @@ partial class Parser
         {
             return false;
         }
-            
+
         scanner.ResetPeek();
         return scanner.Peek().kind == _lbrace;
     }
-        
+
     [DebuggerStepThrough]
     [MemberNotNull(nameof(target))]
     bool isOuterVariable(string id) //context
@@ -801,23 +889,31 @@ partial class Parser
         return target.GenerateLocalId(prefix);
     }
 
-    Symbol _ensureDefinedLocal(string localAlias, string physicalId, bool isAutodereferenced, ISourcePosition declPos, bool isOverrideDecl)
+    Symbol _ensureDefinedLocal(
+        string localAlias,
+        string physicalId,
+        bool isAutodereferenced,
+        ISourcePosition declPos,
+        bool isOverrideDecl
+    )
     {
-        var refSym =
-            Symbol.CreateDereference(Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), declPos),
-                declPos);
-        var sym = isAutodereferenced
-            ? Symbol.CreateDereference(refSym, declPos)
-            : refSym;
+        var refSym = Symbol.CreateDereference(
+            Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), declPos),
+            declPos
+        );
+        var sym = isAutodereferenced ? Symbol.CreateDereference(refSym, declPos) : refSym;
 
         ensureHasTarget();
         target.Symbols.Declare(localAlias, sym);
-        if (!isOverrideDecl && !target.Function.Variables.Contains(physicalId) &&
-            isOuterVariable(physicalId))
+        if (
+            !isOverrideDecl
+            && !target.Function.Variables.Contains(physicalId)
+            && isOuterVariable(physicalId)
+        )
         {
             target.RequireOuterVariable(physicalId);
         }
-        else if(!target.Function.Variables.Contains(physicalId))
+        else if (!target.Function.Variables.Contains(physicalId))
         {
             target.Function.Variables.Add(physicalId);
         }
@@ -843,17 +939,23 @@ partial class Parser
             // (namespaces are otherwise anonymous, they have no physical name)
             // Note: similar code is located in the GetSetExtension parser production
             // for sub namespaces
-            if (complex is AstNamespaceUsage {ReferencePath: null} nsu)
+            if (complex is AstNamespaceUsage { ReferencePath: null } nsu)
             {
                 nsu.ReferencePath = new QualifiedId(id);
             }
             return complex;
         }
-        Loader.ReportMessage(Message.Error(Resources.Parser_SymbolicUsageAsLValue, position, MessageClasses.ParserInternal));
+        Loader.ReportMessage(
+            Message.Error(
+                Resources.Parser_SymbolicUsageAsLValue,
+                position,
+                MessageClasses.ParserInternal
+            )
+        );
         complex = _NullNode(position);
         return complex;
     }
-        
+
     /// <summary>
     /// Resolve a symbol into an expression. Will emit error messages as a side-effect.
     /// Use with qualified references. For unqualified references, use <see cref="_useSymbol"/> instead.
@@ -866,7 +968,7 @@ partial class Parser
     {
         var expr = _useSymbol(ns.Namespace, id, position);
         // write down qualified path
-        if(expr is AstNamespaceUsage {ReferencePath: null} subNs)
+        if (expr is AstNamespaceUsage { ReferencePath: null } subNs)
         {
             subNs.ReferencePath = ns.ReferencePath + new QualifiedId(id);
         }
@@ -878,7 +980,7 @@ partial class Parser
     {
         try
         {
-            var parser = new SymbolMExprParser(Symbols,Loader,Loader.TopLevelSymbols);
+            var parser = new SymbolMExprParser(Symbols, Loader, Loader.TopLevelSymbols);
             return parser.Parse(expr);
         }
         catch (ErrorMessageException e)
@@ -933,14 +1035,12 @@ partial class Parser
     static void mark_as_let(PFunction f, string local)
     {
         f.Meta[PFunction.LetKey] = (MetaEntry)
-            f.Meta[PFunction.LetKey].List
-                .Union([(MetaEntry)local])
-                .ToArray();
+            f.Meta[PFunction.LetKey].List.Union([(MetaEntry)local]).ToArray();
     }
 
     #region Assemble Invocation of Symbol
 
-    class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
+    class ReferenceTransformer : SymbolHandler<int, Tuple<Symbol, bool>>
     {
         readonly Parser _parser;
 
@@ -949,14 +1049,17 @@ partial class Parser
             _parser = parser;
         }
 
-        protected override Tuple<Symbol, bool> HandleWrappingSymbol(WrappingSymbol self, int argument)
+        protected override Tuple<Symbol, bool> HandleWrappingSymbol(
+            WrappingSymbol self,
+            int argument
+        )
         {
             if (argument == 0)
-                return Tuple.Create<Symbol,bool>(self,false);
+                return Tuple.Create<Symbol, bool>(self, false);
             else
             {
                 var innerResult = self.InnerSymbol.HandleWith(this, argument);
-                return Tuple.Create<Symbol,bool>(self.With(innerResult.Item1),innerResult.Item2);
+                return Tuple.Create<Symbol, bool>(self.With(innerResult.Item1), innerResult.Item2);
             }
         }
 
@@ -965,12 +1068,16 @@ partial class Parser
             if (argument > 0)
             {
                 throw new ErrorMessageException(
-                    Message.Error(Resources.ReferenceTransformer_CannotCreateReferenceToValue,
-                        _parser.GetPosition(), MessageClasses.CannotCreateReference));
+                    Message.Error(
+                        Resources.ReferenceTransformer_CannotCreateReferenceToValue,
+                        _parser.GetPosition(),
+                        MessageClasses.CannotCreateReference
+                    )
+                );
             }
             else
             {
-                return Tuple.Create(self,false);
+                return Tuple.Create(self, false);
             }
         }
 
@@ -991,15 +1098,19 @@ partial class Parser
             if (argument > 1)
             {
                 throw new ErrorMessageException(
-                    Message.Error(Resources.ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrPartialApplication,
-                        _parser.GetPosition(), MessageClasses.CannotCreateReference));
+                    Message.Error(
+                        Resources.ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrPartialApplication,
+                        _parser.GetPosition(),
+                        MessageClasses.CannotCreateReference
+                    )
+                );
             }
-            else if(argument == 1)
+            else if (argument == 1)
             {
-                // Here, we don't actually remove the expansion, but rather switch the 
-                //  flag to true to indicate that the calling procedure should 
+                // Here, we don't actually remove the expansion, but rather switch the
+                //  flag to true to indicate that the calling procedure should
                 //  convert the resulting expansion node into a partial application.
-                return new(base.HandleExpand(self,argument-1).Item1,true);
+                return new(base.HandleExpand(self, argument - 1).Item1, true);
             }
             else
             {
@@ -1018,7 +1129,13 @@ partial class Parser
         var position = GetPosition();
         if (!Symbols.TryGet(id, out var symbol))
         {
-            Loader.ReportMessage(Message.Error(string.Format(Resources.Parser__assembleReference_SymbolNotDefined, id),position,MessageClasses.SymbolNotResolved));
+            Loader.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.Parser__assembleReference_SymbolNotDefined, id),
+                    position,
+                    MessageClasses.SymbolNotResolved
+                )
+            );
             return Create.Null(position);
         }
         else
@@ -1034,8 +1151,12 @@ partial class Parser
                     if (invocation is not AstGetSet invocationCall)
                     {
                         Loader.ReportMessage(
-                            Message.Error(Resources.Parser__assembleReference_MacroDefinitionNotLValue, position,
-                                MessageClasses.ParserInternal));
+                            Message.Error(
+                                Resources.Parser__assembleReference_MacroDefinitionNotLValue,
+                                position,
+                                MessageClasses.ParserInternal
+                            )
+                        );
                         invocation = Create.Null(position);
                     }
                     else
@@ -1053,10 +1174,11 @@ partial class Parser
         }
     }
 
-    static readonly SymbolShift _objectCreationShift = static id => Loader.ObjectCreationPrefix + id;
-    static readonly SymbolShift _conversionShift =  static id => Loader.ConversionPrefix + id;
-    static readonly SymbolShift _typeCheckShift =  static id => Loader.TypeCheckPrefix + id;
-    static readonly SymbolShift _staticCallShift =  static id => Loader.StaticCallPrefix + id;
+    static readonly SymbolShift _objectCreationShift = static id =>
+        Loader.ObjectCreationPrefix + id;
+    static readonly SymbolShift _conversionShift = static id => Loader.ConversionPrefix + id;
+    static readonly SymbolShift _typeCheckShift = static id => Loader.TypeCheckPrefix + id;
+    static readonly SymbolShift _staticCallShift = static id => Loader.StaticCallPrefix + id;
 
     /// <summary>
     /// Given the partial application of a type check <c>(? is T)</c>, this method will construct the
@@ -1083,11 +1205,14 @@ partial class Parser
             Loader.ReportMessage(
                 Message.Error(
                     Resources.AstFactoryBase_UnaryOperation_NotOperatorForTypecheckRequiresLValue,
-                    position, MessageClasses.LValueExpected));
+                    position,
+                    MessageClasses.LValueExpected
+                )
+            );
             notCall = _NullNode(position);
         }
 
-        notCall.Arguments.Add(Create.Placeholder(position,0));
+        notCall.Arguments.Add(Create.Placeholder(position, 0));
 
         // Assemble "(? is T) then (not ?)"
         var thenCmd = Create.Call(position, EntityRef.Command.Create(Engine.ThenAlias));
@@ -1119,9 +1244,11 @@ partial class Parser
         rhs.Arguments.ReleaseRightAppend();
         AstIndirectCall? indirectCallNode;
         AstReference? refNode;
-        if ((indirectCallNode = rhs as AstIndirectCall) != null 
-            && (refNode = indirectCallNode.Subject as AstReference) != null 
-            && refNode.Entity.TryGetVariable(out _))
+        if (
+            (indirectCallNode = rhs as AstIndirectCall) != null
+            && (refNode = indirectCallNode.Subject as AstReference) != null
+            && refNode.Entity.TryGetVariable(out _)
+        )
             rhs.Call = PCall.Set;
     }
 
@@ -1146,7 +1273,10 @@ partial class Parser
             Loader.ReportMessage(
                 Message.Error(
                     string.Format(Resources.Parser_addOpAlias_Unknown, insBase, detail),
-                    GetPosition(), MessageClasses.UnknownAssemblyOperator));
+                    GetPosition(),
+                    MessageClasses.UnknownAssemblyOperator
+                )
+            );
             block.Add(new AstAsmInstruction(this, new(OpCode.nop)));
             return;
         }
@@ -1170,15 +1300,16 @@ partial class Parser
         return checkAsmInstruction(la1, la2, la3, insBase, detail);
     }
 
-    static bool checkAsmInstruction(
-        Token la1, Token la2, Token la3, string insBase, string? detail)
+    static bool checkAsmInstruction(Token la1, Token la2, Token la3, string insBase, string? detail)
     {
-        return
-            la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
-            (detail == null
-                ? la2.kind != _dot || la3.kind == _integer
-                : la2.kind == _dot && la3.kind != _string &&
-                Engine.StringsAreEqual(la3.val, detail)
+        return la1.kind != _string
+            && Engine.StringsAreEqual(la1.val, insBase)
+            && (
+                detail == null
+                    ? la2.kind != _dot || la3.kind == _integer
+                    : la2.kind == _dot
+                        && la3.kind != _string
+                        && Engine.StringsAreEqual(la3.val, detail)
             );
     }
 
@@ -1244,8 +1375,7 @@ partial class Parser
 
     readonly SymbolTable<OpCode> _instructionNameTable = new(60);
 
-    readonly SymbolTable<Tuple<string, int>> _opAliasTable =
-        new(32);
+    readonly SymbolTable<Tuple<string, int>> _opAliasTable = new(32);
 
     [DebuggerStepThrough]
     void _createTableOfInstructions()
@@ -1324,125 +1454,125 @@ partial class Parser
 
     readonly string?[,] asmIntegerGroup =
     {
-        {"ldc", "int"},
-        {"pop", null},
-        {"dup", null},
-        {"ldloci", null},
-        {"stloci", null},
-        {"incloci", null},
-        {"inci", null},
-        {"deci", null},
-        {"ldr", "loci"},
+        { "ldc", "int" },
+        { "pop", null },
+        { "dup", null },
+        { "ldloci", null },
+        { "stloci", null },
+        { "incloci", null },
+        { "inci", null },
+        { "deci", null },
+        { "ldr", "loci" },
     };
 
     readonly string?[,] asmJumpGroup =
     {
-        {"jump", null},
-        {"jump", nameof(t)},
-        {"jump", "f"},
-        {"jump", "true"},
-        {"jump", "false"},
-        {"leave", null},
+        { "jump", null },
+        { "jump", nameof(t) },
+        { "jump", "f" },
+        { "jump", "true" },
+        { "jump", "false" },
+        { "leave", null },
     };
 
     readonly string?[,] asmNullGroup =
     {
-        {"ldc", "null"},
-        {"ldnull", null},
-        {"check", "arg"},
-        {"check", "null"},
-        {"cast", "arg"},
-        {"ldr", "eng"},
-        {"ldr", "app"},
-        {"ret", null},
-        {"ret", nameof(set)},
-        {"ret", "value"},
-        {"ret", "val"},
-        {"ret", "break"},
-        {"ret", "continue"},
-        {"ret", "exit"},
-        {"break", null},
-        {"continue", null},
-        {"yield", null},
-        {"exit", null},
-        {"try", null},
-        {"throw", null},
-        {"exc", null},
-        {"exception", null},
+        { "ldc", "null" },
+        { "ldnull", null },
+        { "check", "arg" },
+        { "check", "null" },
+        { "cast", "arg" },
+        { "ldr", "eng" },
+        { "ldr", "app" },
+        { "ret", null },
+        { "ret", nameof(set) },
+        { "ret", "value" },
+        { "ret", "val" },
+        { "ret", "break" },
+        { "ret", "continue" },
+        { "ret", "exit" },
+        { "break", null },
+        { "continue", null },
+        { "yield", null },
+        { "exit", null },
+        { "try", null },
+        { "throw", null },
+        { "exc", null },
+        { "exception", null },
     };
 
     readonly string?[,] asmOpAliasGroup =
     {
-        {"neg", null},
-        {"not", null},
-        {"add", null},
-        {"sub", null},
-        {"mul", null},
-        {"div", null},
-        {"mod", null},
-        {"pow", null},
-        {"ceq", null},
-        {"cne", null},
-        {"clt", null},
-        {"cle", null},
-        {"cgt", null},
-        {"cge", null},
-        {"or", null},
-        {"and", null},
-        {"xor", null},
+        { "neg", null },
+        { "not", null },
+        { "add", null },
+        { "sub", null },
+        { "mul", null },
+        { "div", null },
+        { "mod", null },
+        { "pow", null },
+        { "ceq", null },
+        { "cne", null },
+        { "clt", null },
+        { "cle", null },
+        { "cgt", null },
+        { "cge", null },
+        { "or", null },
+        { "and", null },
+        { "xor", null },
     };
 
     readonly string?[,] asmIdGroup =
     {
-        {"inc", null},
-        {"incloc", null},
-        {"incglob", null},
-        {"dec", null},
-        {"decloc", null},
-        {"decglob", null},
-        {"ldc", "string"},
-        {"ldr", "func"},
-        {"ldr", "cmd"},
-        {"ldr", "glob"},
-        {"ldr", "loc"},
-        {"ldr", "type"},
-        {"ldloc", null},
-        {"stloc", null},
-        {"ldglob", null},
-        {"stglob", null},
-        {"check", "const"},
-        {"check", null},
-        {"cast", "const"},
-        {"cast", null},
-        {"newclo", null},
+        { "inc", null },
+        { "incloc", null },
+        { "incglob", null },
+        { "dec", null },
+        { "decloc", null },
+        { "decglob", null },
+        { "ldc", "string" },
+        { "ldr", "func" },
+        { "ldr", "cmd" },
+        { "ldr", "glob" },
+        { "ldr", "loc" },
+        { "ldr", "type" },
+        { "ldloc", null },
+        { "stloc", null },
+        { "ldglob", null },
+        { "stglob", null },
+        { "check", "const" },
+        { "check", null },
+        { "cast", "const" },
+        { "cast", null },
+        { "newclo", null },
     };
 
     readonly string?[,] asmIdArgGroup =
     {
-        {"newtype", null},
-        {"get", null},
-        {"set", null},
-        {"func", null},
-        {"cmd", null},
-        {"indloc", null},
-        {"indglob", null},
+        { "newtype", null },
+        { "get", null },
+        { "set", null },
+        { "func", null },
+        { "cmd", null },
+        { "indloc", null },
+        { "indglob", null },
     };
 
     readonly string?[,] asmArgGroup =
     {
-        {"indarg", null},
-        {"inda", null},
-        {"newcor", null},
-        {"cor", null},
-        {"tail", null},
+        { "indarg", null },
+        { "inda", null },
+        { "newcor", null },
+        { "cor", null },
+        { "tail", null },
     };
 
     readonly string?[,] asmQualidArgGroup =
     {
-        {"sget", null},
-        {"sset", null},
-        {"newobj", null},
-        {"new", null},
+        { "sget", null },
+        { "sset", null },
+        { "newobj", null },
+        { "new", null },
     };
 
     #endregion
@@ -1450,7 +1580,6 @@ partial class Parser
     #endregion
 
     #endregion
-
 }
 
 // ReSharper restore InconsistentNaming

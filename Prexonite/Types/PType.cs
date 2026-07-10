@@ -1,4 +1,3 @@
-
 #region
 
 using System.Diagnostics;
@@ -94,25 +93,25 @@ public abstract class PType : IObject
     public BuiltIn ToBuiltIn()
     {
         var thisType = GetType();
-        if (thisType == typeof (RealPType))
+        if (thisType == typeof(RealPType))
             return BuiltIn.Real;
-        if (thisType == typeof (IntPType))
+        if (thisType == typeof(IntPType))
             return BuiltIn.Int;
-        if (thisType == typeof (StringPType))
+        if (thisType == typeof(StringPType))
             return BuiltIn.String;
-        if (thisType == typeof (NullPType))
+        if (thisType == typeof(NullPType))
             return BuiltIn.Null;
-        if (thisType == typeof (BoolPType))
+        if (thisType == typeof(BoolPType))
             return BuiltIn.Bool;
-        if (thisType == typeof (ObjectPType))
+        if (thisType == typeof(ObjectPType))
             return BuiltIn.Object;
-        if (thisType == typeof (ListPType))
+        if (thisType == typeof(ListPType))
             return BuiltIn.List;
-        if (thisType == typeof (HashPType))
+        if (thisType == typeof(HashPType))
             return BuiltIn.Hash;
-        if (thisType == typeof (CharPType))
+        if (thisType == typeof(CharPType))
             return BuiltIn.Char;
-        if (thisType == typeof (StructurePType))
+        if (thisType == typeof(StructurePType))
             return BuiltIn.Structure;
 
         return BuiltIn.Null;
@@ -205,27 +204,25 @@ public abstract class PType : IObject
     /// </summary>
     public class PrexoniteObjectTypeProxy
     {
-        readonly ObjectPType charObj = new(typeof (char));
-        readonly ObjectPType byteObj = new(typeof (byte));
-        readonly ObjectPType sByteObj = new(typeof (sbyte));
-        readonly ObjectPType int16Obj = new(typeof (short));
-        readonly ObjectPType uInt16Obj = new(typeof (ushort));
-        readonly ObjectPType int32Obj = new(typeof (int));
-        readonly ObjectPType uInt32Obj = new(typeof (uint));
-        readonly ObjectPType int64Obj = new(typeof (long));
-        readonly ObjectPType uInt64Obj = new(typeof (ulong));
-        readonly ObjectPType booleanObj = new(typeof (bool));
-        readonly ObjectPType singleObj = new(typeof (float));
-        readonly ObjectPType doubleObj = new(typeof (double));
-        readonly ObjectPType stringObj = new(typeof (string));
-        readonly ObjectPType decimalObj = new(typeof (decimal));
-        readonly ObjectPType dateTimeObj = new(typeof (DateTime));
-        readonly ObjectPType timeSpanObj = new(typeof (TimeSpan));
-        readonly ObjectPType listOfPTypeObj = new(typeof (List<PValue>));
+        readonly ObjectPType charObj = new(typeof(char));
+        readonly ObjectPType byteObj = new(typeof(byte));
+        readonly ObjectPType sByteObj = new(typeof(sbyte));
+        readonly ObjectPType int16Obj = new(typeof(short));
+        readonly ObjectPType uInt16Obj = new(typeof(ushort));
+        readonly ObjectPType int32Obj = new(typeof(int));
+        readonly ObjectPType uInt32Obj = new(typeof(uint));
+        readonly ObjectPType int64Obj = new(typeof(long));
+        readonly ObjectPType uInt64Obj = new(typeof(ulong));
+        readonly ObjectPType booleanObj = new(typeof(bool));
+        readonly ObjectPType singleObj = new(typeof(float));
+        readonly ObjectPType doubleObj = new(typeof(double));
+        readonly ObjectPType stringObj = new(typeof(string));
+        readonly ObjectPType decimalObj = new(typeof(decimal));
+        readonly ObjectPType dateTimeObj = new(typeof(DateTime));
+        readonly ObjectPType timeSpanObj = new(typeof(TimeSpan));
+        readonly ObjectPType listOfPTypeObj = new(typeof(List<PValue>));
 
-        internal PrexoniteObjectTypeProxy()
-        {
-        }
+        internal PrexoniteObjectTypeProxy() { }
 
         public PValue CreatePValue(object? value)
         {
@@ -236,11 +233,11 @@ public abstract class PType : IObject
 
         internal static void _ImplementInCil(CompilerState state, Type clrType)
         {
-            if (clrType == typeof (PValueHashtable))
+            if (clrType == typeof(PValueHashtable))
             {
                 state.EmitCall(_getPValueHashTableObjectType);
             }
-            else if (clrType == typeof (PValueKeyValuePair))
+            else if (clrType == typeof(PValueKeyValuePair))
             {
                 state.EmitCall(_getPValueKeyValuePairObjectType);
             }
@@ -252,69 +249,62 @@ public abstract class PType : IObject
             }
         }
 
-        static readonly MethodInfo _getPValueHashTableObjectType =
-            typeof (PValueHashtable).GetProperty(nameof(PValueHashtable.ObjectType))!.GetGetMethod()!;
+        static readonly MethodInfo _getPValueHashTableObjectType = typeof(PValueHashtable)
+            .GetProperty(nameof(PValueHashtable.ObjectType))!
+            .GetGetMethod()!;
 
-        static readonly MethodInfo _getPValueKeyValuePairObjectType =
-            typeof (PValueKeyValuePair).GetProperty(nameof(PValueHashtable.ObjectType))!.GetGetMethod()!;
+        static readonly MethodInfo _getPValueKeyValuePairObjectType = typeof(PValueKeyValuePair)
+            .GetProperty(nameof(PValueHashtable.ObjectType))!
+            .GetGetMethod()!;
 
-        static readonly MethodInfo _getAnyObjectType =
-            typeof (PrexoniteObjectTypeProxy).GetProperty("Item", [typeof (Type)])!.
-                GetGetMethod()!;
+        static readonly MethodInfo _getAnyObjectType = typeof(PrexoniteObjectTypeProxy)
+            .GetProperty("Item", [typeof(Type)])!
+            .GetGetMethod()!;
 
         public ObjectPType this[Type clrType]
         {
             get
             {
-                if (clrType == typeof (char))
+                if (clrType == typeof(char))
                     return charObj;
-                if (clrType == typeof (byte))
+                if (clrType == typeof(byte))
                     return byteObj;
-                if (clrType == typeof (sbyte))
+                if (clrType == typeof(sbyte))
                     return sByteObj;
-                if (clrType == typeof (short))
+                if (clrType == typeof(short))
                     return int16Obj;
-                if (clrType == typeof (ushort))
+                if (clrType == typeof(ushort))
                     return uInt16Obj;
-                if (clrType == typeof (int))
+                if (clrType == typeof(int))
                     return int32Obj;
-                if (clrType == typeof (uint))
+                if (clrType == typeof(uint))
                     return uInt32Obj;
-                if (clrType == typeof (long))
+                if (clrType == typeof(long))
                     return int64Obj;
-                if (clrType == typeof (ulong))
+                if (clrType == typeof(ulong))
                     return uInt64Obj;
-                if (clrType == typeof (float))
+                if (clrType == typeof(float))
                     return singleObj;
-                else if (clrType == typeof (double))
+                else if (clrType == typeof(double))
                     return doubleObj;
-                else if (clrType == typeof (bool))
+                else if (clrType == typeof(bool))
                     return booleanObj;
-                else if (clrType == typeof (string))
+                else if (clrType == typeof(string))
                     return stringObj;
-                else if (clrType == typeof (decimal))
+                else if (clrType == typeof(decimal))
                     return decimalObj;
-                else if (clrType == typeof (DateTime))
+                else if (clrType == typeof(DateTime))
                     return dateTimeObj;
-                else if (clrType == typeof (TimeSpan))
+                else if (clrType == typeof(TimeSpan))
                     return timeSpanObj;
-                else if (clrType == typeof (List<PValue>))
+                else if (clrType == typeof(List<PValue>))
                     return listOfPTypeObj;
-                else if (clrType ==
-                         typeof (PValueHashtable))
-                    return
-                        PValueHashtable.
-                            ObjectType;
-                else if (clrType ==
-                         typeof (
-                             PValueKeyValuePair))
-                    return
-                        PValueKeyValuePair.
-                            ObjectType;
+                else if (clrType == typeof(PValueHashtable))
+                    return PValueHashtable.ObjectType;
+                else if (clrType == typeof(PValueKeyValuePair))
+                    return PValueKeyValuePair.ObjectType;
                 else
-                    return
-                        new(
-                            clrType);
+                    return new(clrType);
             }
         }
 
@@ -343,15 +333,25 @@ public abstract class PType : IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     );
 
     public abstract bool TryStaticCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result);
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    );
+
     // TODO overload with PValue[] args
 
-    public abstract bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result);
+    public abstract bool TryConstruct(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    );
+
     // TODO overload with PValue[] args
 
     [DebuggerStepThrough]
@@ -380,14 +380,22 @@ public abstract class PType : IObject
     #region Indirect Call
 
     public virtual bool IndirectCall(
-        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public bool IndirectCall(
-        StackContext sctx, PValue subject, PValue[] args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        PValue[] args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return IndirectCall(sctx, subject, new ReadOnlySpan<PValue>(args), out result);
     }
@@ -398,8 +406,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " (" + ToString() +
-                ") does not support indirect calls.");
+                "PType " + GetType().Name + " (" + ToString() + ") does not support indirect calls."
+            );
     }
 
     #endregion
@@ -414,8 +422,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name +
-                " does not support the UnaryNegation operator.");
+                "PType " + GetType().Name + " does not support the UnaryNegation operator."
+            );
     }
 
     public PValue LogicalNot(StackContext sctx, PValue operand)
@@ -424,7 +432,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the LogicalNot operator.");
+                "PType " + GetType().Name + " does not support the LogicalNot operator."
+            );
     }
 
     public PValue OnesComplement(StackContext sctx, PValue operand)
@@ -433,8 +442,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name +
-                " does not support the OnesComplement operator.");
+                "PType " + GetType().Name + " does not support the OnesComplement operator."
+            );
     }
 
     public PValue Increment(StackContext sctx, PValue operand)
@@ -443,7 +452,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Increment operator.");
+                "PType " + GetType().Name + " does not support the Increment operator."
+            );
     }
 
     public PValue Decrement(StackContext sctx, PValue operand)
@@ -452,7 +462,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Decrement operator.");
+                "PType " + GetType().Name + " does not support the Decrement operator."
+            );
     }
 
     //Binary
@@ -462,7 +473,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Addition operator.");
+                "PType " + GetType().Name + " does not support the Addition operator."
+            );
     }
 
     public PValue Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -471,7 +483,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Subtraction operator.");
+                "PType " + GetType().Name + " does not support the Subtraction operator."
+            );
     }
 
     public PValue Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -480,7 +493,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Multiply operator.");
+                "PType " + GetType().Name + " does not support the Multiply operator."
+            );
     }
 
     public PValue Division(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -489,7 +503,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Division operator.");
+                "PType " + GetType().Name + " does not support the Division operator."
+            );
     }
 
     public PValue Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -498,7 +513,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Modulus operator.");
+                "PType " + GetType().Name + " does not support the Modulus operator."
+            );
     }
 
     public PValue BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -507,7 +523,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the BitwiseAnd operator.");
+                "PType " + GetType().Name + " does not support the BitwiseAnd operator."
+            );
     }
 
     public PValue BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -516,7 +533,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the BitwiseOr operator.");
+                "PType " + GetType().Name + " does not support the BitwiseOr operator."
+            );
     }
 
     public PValue ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -525,7 +543,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the ExclusiveOr operator.");
+                "PType " + GetType().Name + " does not support the ExclusiveOr operator."
+            );
     }
 
     public PValue Equality(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -534,7 +553,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Equality operator.");
+                "PType " + GetType().Name + " does not support the Equality operator."
+            );
     }
 
     public PValue Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -543,7 +563,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the Inequality operator.");
+                "PType " + GetType().Name + " does not support the Inequality operator."
+            );
     }
 
     public PValue GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -552,7 +573,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the GreaterThan operator.");
+                "PType " + GetType().Name + " does not support the GreaterThan operator."
+            );
     }
 
     public PValue GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -561,8 +583,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name +
-                " does not support the GreaterThanOrEqual operator.");
+                "PType " + GetType().Name + " does not support the GreaterThanOrEqual operator."
+            );
     }
 
     public PValue LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -571,7 +593,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name + " does not support the LessThan operator.");
+                "PType " + GetType().Name + " does not support the LessThan operator."
+            );
     }
 
     public PValue LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -580,8 +603,8 @@ public abstract class PType : IObject
             return ret;
         else
             throw new InvalidCallException(
-                "PType " + GetType().Name +
-                " does not support the LessThanOrEqual operator.");
+                "PType " + GetType().Name + " does not support the LessThanOrEqual operator."
+            );
     }
 
     #endregion //Failing-Variantions
@@ -592,32 +615,52 @@ public abstract class PType : IObject
     //
     //Unary
     //
-    public virtual bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public virtual bool UnaryNegation(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
-    public virtual bool LogicalNot(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public virtual bool LogicalNot(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
-    public virtual bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public virtual bool OnesComplement(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     //Inc/Decrement
-    public virtual bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public virtual bool Increment(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
-    public virtual bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public virtual bool Decrement(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -628,35 +671,55 @@ public abstract class PType : IObject
     //
     //Arithmetic
     public virtual bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool Subtraction(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool Division(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool Modulus(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -664,21 +727,33 @@ public abstract class PType : IObject
 
     //Bitwise
     public virtual bool BitwiseAnd(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool BitwiseOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool ExclusiveOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -686,10 +761,16 @@ public abstract class PType : IObject
 
     //Comparision
     public virtual bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        if (ReferenceEquals(leftOperand.Value, rightOperand.Value) &&
-            leftOperand.Type == rightOperand.Type)
+        if (
+            ReferenceEquals(leftOperand.Value, rightOperand.Value)
+            && leftOperand.Type == rightOperand.Type
+        )
         {
             result = true;
             return true;
@@ -702,11 +783,17 @@ public abstract class PType : IObject
     }
 
     public virtual bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         //Types must be the same for this shortcut to be valid.
-        if (ReferenceEquals(leftOperand.Value, rightOperand.Value) &&
-            leftOperand.Type == rightOperand.Type)
+        if (
+            ReferenceEquals(leftOperand.Value, rightOperand.Value)
+            && leftOperand.Type == rightOperand.Type
+        )
         {
             result = false;
             return true;
@@ -720,7 +807,11 @@ public abstract class PType : IObject
     }
 
     public virtual bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -730,14 +821,19 @@ public abstract class PType : IObject
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public virtual bool LessThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -747,7 +843,8 @@ public abstract class PType : IObject
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -769,7 +866,8 @@ public abstract class PType : IObject
             return result;
         else
             throw new InvalidCallException(
-                "Cannot call '" + id + "' on object of PType " + ToString() + ".");
+                "Cannot call '" + id + "' on object of PType " + ToString() + "."
+            );
     }
 
     [DebuggerStepThrough]
@@ -778,8 +876,7 @@ public abstract class PType : IObject
         if (TryStaticCall(sctx, args, call, id, out var result))
             return result;
         else
-            throw new InvalidCallException(
-                "Cannot call '" + id + "' on PType " + ToString() + ".");
+            throw new InvalidCallException("Cannot call '" + id + "' on PType " + ToString() + ".");
     }
 
     #endregion //Type Interface
@@ -796,7 +893,7 @@ public abstract class PType : IObject
     /// <returns>The converted value.</returns>
     /// <exception cref = "PrexoniteException">Conversion failed.</exception>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
@@ -806,9 +903,14 @@ public abstract class PType : IObject
             return result;
         else
             throw new InvalidConversionException(
-                "Cannot " + (useExplicit ? "explicitly" : "implicitly") +
-                " convert " + subject.Type + " to " + target +
-                ".");
+                "Cannot "
+                    + (useExplicit ? "explicitly" : "implicitly")
+                    + " convert "
+                    + subject.Type
+                    + " to "
+                    + target
+                    + "."
+            );
     }
 
     /// <summary>
@@ -820,7 +922,7 @@ public abstract class PType : IObject
     /// <returns>The converted value.</returns>
     /// <exception cref = "PrexoniteException">Conversion failed.</exception>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
@@ -838,7 +940,7 @@ public abstract class PType : IObject
     /// <returns>The converted value.</returns>
     /// <exception cref = "PrexoniteException">Conversion failed.</exception>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
@@ -857,7 +959,7 @@ public abstract class PType : IObject
     /// <returns>The converted value.</returns>
     /// <exception cref = "PrexoniteException">Conversion failed.</exception>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
@@ -877,7 +979,7 @@ public abstract class PType : IObject
     /// <returns>The converted value.</returns>
     /// <exception cref = "PrexoniteException">Conversion failed.</exception>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
@@ -895,7 +997,7 @@ public abstract class PType : IObject
     /// <returns>The converted value.</returns>
     /// <exception cref = "PrexoniteException">Conversion failed.</exception>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
@@ -914,12 +1016,17 @@ public abstract class PType : IObject
     /// <param name = "result">The converted value if the conversion was successful, null otherwise.</param>
     /// <returns>True if the conversion succeeded, false otherwise.</returns>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryConvertTo(
-        StackContext sctx, PValue subject, PType target, bool useExplicit, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        PType target,
+        bool useExplicit,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         //Check if a conversion is needed
         if (subject.Type.IsEqual(target))
@@ -928,9 +1035,8 @@ public abstract class PType : IObject
             return true;
         }
         else
-            return
-                InternalConvertTo(sctx, subject, target, useExplicit, out result) ||
-                target.InternalConvertFrom(sctx, subject, useExplicit, out result);
+            return InternalConvertTo(sctx, subject, target, useExplicit, out result)
+                || target.InternalConvertFrom(sctx, subject, useExplicit, out result);
     }
 
     /// <summary>
@@ -942,11 +1048,16 @@ public abstract class PType : IObject
     /// <param name = "result">The converted value if the conversion was successful, null otherwise.</param>
     /// <returns>True if the conversion succeeded, false otherwise.</returns>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
-    public bool TryConvertTo(StackContext sctx, PValue subject, PType target, [NotNullWhen(true)] out PValue? result)
+    public bool TryConvertTo(
+        StackContext sctx,
+        PValue subject,
+        PType target,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return TryConvertTo(sctx, subject, target, false, out result);
     }
@@ -961,12 +1072,17 @@ public abstract class PType : IObject
     /// <param name = "result">The converted value if the conversion was successful, null otherwise.</param>
     /// <returns>True if the conversion succeeded, false otherwise.</returns>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryConvertTo(
-        StackContext sctx, PValue subject, Type clrTarget, bool useExplicit, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        Type clrTarget,
+        bool useExplicit,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (clrTarget == null)
             throw new ArgumentNullException(nameof(clrTarget));
@@ -982,12 +1098,16 @@ public abstract class PType : IObject
     /// <param name = "result">The converted value if the conversion was successful, null otherwise.</param>
     /// <returns>True if the conversion succeeded, false otherwise.</returns>
     /// <remarks>
-    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise 
+    ///     For implementors: Use the <see cref = "InternalConvertTo" /> and <see cref = "InternalConvertFrom" /> methods to customise
     ///     the conversion behaviour of your types.
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryConvertTo(
-        StackContext sctx, PValue subject, Type clrTarget, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        Type clrTarget,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return TryConvertTo(sctx, subject, clrTarget, false, out result);
     }
@@ -1002,7 +1122,7 @@ public abstract class PType : IObject
     /// <param name = "result">The converted value if the conversion was successful, null otherwise.</param>
     /// <returns>True if the conversion succeeded, false otherwise.</returns>
     /// <remarks>
-    ///     For implementors: <paramref name = "result" /> MUST be null if the conversion fails and MUST NOT be 
+    ///     For implementors: <paramref name = "result" /> MUST be null if the conversion fails and MUST NOT be
     ///     null (but possibly an instance of <see cref = "Null" />) if the conversion succeeds.
     /// </remarks>
     protected abstract bool InternalConvertTo(
@@ -1010,7 +1130,8 @@ public abstract class PType : IObject
         PValue subject,
         PType target,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result);
+        [NotNullWhen(true)] out PValue? result
+    );
 
     /// <summary>
     ///     Tries to convert a value of the supplied type to a value of the current other type.
@@ -1021,14 +1142,15 @@ public abstract class PType : IObject
     /// <param name = "result">The converted value if the conversion was successful, null otherwise.</param>
     /// <returns>True if the conversion succeeded, false otherwise.</returns>
     /// <remarks>
-    ///     For implementors: <paramref name = "result" /> MUST be null if the conversion fails and MUST NOT be 
+    ///     For implementors: <paramref name = "result" /> MUST be null if the conversion fails and MUST NOT be
     ///     null (but possibly an instance of <see cref = "Null" />) if the conversion succeeds.
     /// </remarks>
     protected abstract bool InternalConvertFrom(
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result);
+        [NotNullWhen(true)] out PValue? result
+    );
 
     #endregion
 
@@ -1045,7 +1167,7 @@ public abstract class PType : IObject
     [DebuggerStepThrough]
     public bool IsEqual(PType otherType)
     {
-        if ((object) otherType == null)
+        if ((object)otherType == null)
             throw new ArgumentNullException(nameof(otherType));
         if (ReferenceEquals(this, otherType))
             return true;
@@ -1073,9 +1195,9 @@ public abstract class PType : IObject
     [DebuggerStepThrough]
     public static bool operator ==(PType? left, PType? right)
     {
-        if ((object?) left == null && (object?) right == null)
+        if ((object?)left == null && (object?)right == null)
             return true;
-        else if ((object?) left == null || (object?) right == null)
+        else if ((object?)left == null || (object?)right == null)
             return false;
         return left.IsEqual(right);
     }
@@ -1101,11 +1223,11 @@ public abstract class PType : IObject
     public static bool operator ==(Type? left, PType? right)
     {
         ObjectPType? objT;
-        if ((object?) right == null && left == null)
+        if ((object?)right == null && left == null)
             return true;
-        else if ((object?) right == null || left == null)
+        else if ((object?)right == null || left == null)
             return false;
-        else if ((object?) (objT = right as ObjectPType) == null)
+        else if ((object?)(objT = right as ObjectPType) == null)
             return false;
         else
             return objT.ClrType == left;
@@ -1120,11 +1242,11 @@ public abstract class PType : IObject
     public static bool operator !=(Type? left, PType? right)
     {
         ObjectPType? objT;
-        if ((object?) right == null && left == null)
+        if ((object?)right == null && left == null)
             return false;
-        else if ((object?) right == null || left == null)
+        else if ((object?)right == null || left == null)
             return true;
-        else if ((object?) (objT = right as ObjectPType) == null)
+        else if ((object?)(objT = right as ObjectPType) == null)
             return false;
         else
             return objT.ClrType != left;
@@ -1139,11 +1261,11 @@ public abstract class PType : IObject
     public static bool operator ==(PType? left, Type? right)
     {
         ObjectPType? objT;
-        if ((object?) left == null && right == null)
+        if ((object?)left == null && right == null)
             return true;
-        else if ((object?) left == null || right == null)
+        else if ((object?)left == null || right == null)
             return false;
-        else if ((object?) (objT = left as ObjectPType) == null)
+        else if ((object?)(objT = left as ObjectPType) == null)
             return false;
         else
             return objT.ClrType == right;
@@ -1158,11 +1280,11 @@ public abstract class PType : IObject
     public static bool operator !=(PType? left, Type? right)
     {
         ObjectPType? objT;
-        if ((object?) left == null && right == null)
+        if ((object?)left == null && right == null)
             return false;
-        else if ((object?) left == null || right == null)
+        else if ((object?)left == null || right == null)
             return true;
-        else if ((object?) (objT = left as ObjectPType) == null)
+        else if ((object?)(objT = left as ObjectPType) == null)
             return false;
         else
             return objT.ClrType != right;
@@ -1179,9 +1301,9 @@ public abstract class PType : IObject
         if (obj == null)
             return false;
         else if (obj is PType)
-            return this == (PType) obj;
+            return this == (PType)obj;
         else if (obj is Type)
-            return this == (Type) obj;
+            return this == (Type)obj;
         else
             return ReferenceEquals(this, obj);
     }
@@ -1222,7 +1344,7 @@ public abstract class PType : IObject
     /// <returns>True if the value is a runtime type reference. False otherwise.</returns>
     public static bool IsPType(ObjectPType clrType)
     {
-        if ((object) clrType == null)
+        if ((object)clrType == null)
             throw new ArgumentNullException(nameof(clrType));
         return IsPType(clrType.ClrType);
     }
@@ -1234,7 +1356,7 @@ public abstract class PType : IObject
     /// <returns>True if the value is a runtime type reference. False otherwise.</returns>
     public static bool IsPType(Type? clrType)
     {
-        return clrType != null && typeof (PType).IsAssignableFrom(clrType);
+        return clrType != null && typeof(PType).IsAssignableFrom(clrType);
     }
 
     /// <summary>
@@ -1243,19 +1365,18 @@ public abstract class PType : IObject
     /// <typeparam name = "T">The clrType of the object to create</typeparam>
     /// <param name = "value">The value to create an object PValue for.</param>
     /// <returns>The newly created ClrObject[T]</returns>
-    protected static PValue CreateObject<T>(T value) where T : notnull
+    protected static PValue CreateObject<T>(T value)
+        where T : notnull
     {
-        return Object[typeof (T)].CreatePValue(value);
+        return Object[typeof(T)].CreatePValue(value);
     }
-
 
     bool IObject.TryDynamicCall(
         StackContext sctx,
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;

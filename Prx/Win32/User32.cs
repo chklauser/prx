@@ -1,9 +1,8 @@
-﻿
 #line 28
 
 #region Shared Source License
 
-// The above license text has been added by an automated tool. 
+// The above license text has been added by an automated tool.
 //  However, for this particular file a different license is in effect:
 
 /* **********************************************************************************
@@ -37,8 +36,7 @@ namespace Prx.Win32;
 
 public static class User32
 {
-    const uint
-        VK_SHIFT = 0x10,
+    const uint VK_SHIFT = 0x10,
         VK_CONTROL = 0x11,
         VK_ALT = 0x12,
         //a.k.a. "VK_MENU"
@@ -46,7 +44,7 @@ public static class User32
 
     public static string ToUnicode(ConsoleKeyInfo key, bool relaxed)
     {
-        // Intercept Packet keystrokes (unicode characters sent to the console by other applications) (-P) 
+        // Intercept Packet keystrokes (unicode characters sent to the console by other applications) (-P)
         if (key.Key == ConsoleKey.Packet)
         {
             return key.KeyChar.ToString();
@@ -56,14 +54,13 @@ public static class User32
             const int bufferLength = 16;
             var outputBuilder = new StringBuilder(bufferLength);
             var modifiers = GetKeyState(key.Modifiers);
-            var result = ToUnicode((uint) key.Key, 0, modifiers, outputBuilder, bufferLength, 0);
+            var result = ToUnicode((uint)key.Key, 0, modifiers, outputBuilder, bufferLength, 0);
             if (result > 0 && result <= outputBuilder.Length)
                 return outputBuilder.ToString(0, result);
             else if (relaxed)
                 return string.Empty;
             else //Fail early (-P)
-                throw new("Invalid key (" + key.KeyChar + "/" + result + "/" +
-                    outputBuilder + ")");
+                throw new("Invalid key (" + key.KeyChar + "/" + result + "/" + outputBuilder + ")");
         }
     }
 
@@ -71,8 +68,7 @@ public static class User32
     {
         var outputBuilder = new StringBuilder(2);
         var modifiers = GetKeyState(key.Modifiers);
-        var result = ToAscii((uint) key.Key, 0, modifiers,
-            outputBuilder, 0);
+        var result = ToAscii((uint)key.Key, 0, modifiers, outputBuilder, 0);
         if (result > 0)
             return outputBuilder.ToString(0, result);
         else
@@ -92,7 +88,7 @@ public static class User32
         if ((modifiers & ConsoleModifiers.Alt) == ConsoleModifiers.Alt)
             keyState[VK_ALT] = HighBit;
 
-        keyState[VK_CAPITAL] = (byte) (_queryKeyState(VK_CAPITAL) & 0xFF);
+        keyState[VK_CAPITAL] = (byte)(_queryKeyState(VK_CAPITAL) & 0xFF);
 
         return keyState;
     }
@@ -101,14 +97,21 @@ public static class User32
     static extern short _queryKeyState(uint nVirtKey);
 
     [DllImport("user32.dll")]
-    static extern int ToAscii(uint uVirtKey, uint uScanCode,
+    static extern int ToAscii(
+        uint uVirtKey,
+        uint uScanCode,
         byte[] lpKeyState,
         [Out] StringBuilder lpChar,
-        uint uFlags);
+        uint uFlags
+    );
 
     [DllImport("user32.dll")]
-    static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpKeyState,
+    static extern int ToUnicode(
+        uint wVirtKey,
+        uint wScanCode,
+        byte[] lpKeyState,
         [Out, MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)] StringBuilder pwszBuff,
         int cchBuff,
-        uint wFlags);
+        uint wFlags
+    );
 }

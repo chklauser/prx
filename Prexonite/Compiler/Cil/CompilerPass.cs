@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 using System.Diagnostics;
@@ -32,8 +31,9 @@ public class CompilerPass
         get
         {
             if (!MakeAvailableForLinking)
-                throw new NotSupportedException
-                    ("The compiler pass is not configured to make implementations available for static linking.");
+                throw new NotSupportedException(
+                    "The compiler pass is not configured to make implementations available for static linking."
+                );
             return _assemblyBuilder;
         }
     }
@@ -46,8 +46,9 @@ public class CompilerPass
         get
         {
             if (!MakeAvailableForLinking)
-                throw new NotSupportedException
-                    ("The compiler pass is not configured to make implementations available for static linking.");
+                throw new NotSupportedException(
+                    "The compiler pass is not configured to make implementations available for static linking."
+                );
             return _moduleBuilder;
         }
     }
@@ -60,8 +61,9 @@ public class CompilerPass
         get
         {
             if (!MakeAvailableForLinking)
-                throw new NotSupportedException
-                    ("The compiler pass is not configured to make implementations available for static linking.");
+                throw new NotSupportedException(
+                    "The compiler pass is not configured to make implementations available for static linking."
+                );
             return _typeBuilder;
         }
     }
@@ -73,10 +75,8 @@ public class CompilerPass
         {
             var sequenceName = _createNextTypeName(app?.Id);
             var asmName = new AssemblyName(sequenceName);
-            _assemblyBuilder = new PersistedAssemblyBuilder(asmName, typeof(object).Assembly) {
-                
-            };
-            
+            _assemblyBuilder = new PersistedAssemblyBuilder(asmName, typeof(object).Assembly) { };
+
             _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name!);
             _typeBuilder = _moduleBuilder.DefineType(sequenceName);
         }
@@ -89,12 +89,12 @@ public class CompilerPass
 
         var parameterTypes = new[]
         {
-            typeof (PFunction),
-            typeof (StackContext),
-            typeof (PValue[]),
-            typeof (PVariable[]),
-            typeof (PValue).MakeByRefType(),
-            typeof (ReturnMode).MakeByRefType(),
+            typeof(PFunction),
+            typeof(StackContext),
+            typeof(PValue[]),
+            typeof(PVariable[]),
+            typeof(PValue).MakeByRefType(),
+            typeof(ReturnMode).MakeByRefType(),
         };
 
         var makeAvailableForLinking = MakeAvailableForLinking;
@@ -102,12 +102,12 @@ public class CompilerPass
         {
             //Create method stub
 
-            var dm = TargetType.DefineMethod
-            (
+            var dm = TargetType.DefineMethod(
                 id,
                 MethodAttributes.Static | MethodAttributes.Public,
-                typeof (void),
-                parameterTypes);
+                typeof(void),
+                parameterTypes
+            );
             dm.DefineParameter(1, ParameterAttributes.In, "source");
             dm.DefineParameter(2, ParameterAttributes.In, "sctx");
             dm.DefineParameter(3, ParameterAttributes.In, "args");
@@ -118,22 +118,17 @@ public class CompilerPass
             Implementations.Add(moduleName, id, dm);
 
             //Create function field
-            var fb =
-                TargetType.DefineField
-                (_mkFieldName(moduleName, id), typeof (PFunction),
-                    FieldAttributes.Public | FieldAttributes.Static);
+            var fb = TargetType.DefineField(
+                _mkFieldName(moduleName, id),
+                typeof(PFunction),
+                FieldAttributes.Public | FieldAttributes.Static
+            );
             FunctionFields.Add(moduleName, id, fb);
 
             return dm;
         }
 
-        var cilm =
-            new DynamicMethod
-            (
-                id,
-                typeof (void),
-                parameterTypes,
-                typeof (Runtime));
+        var cilm = new DynamicMethod(id, typeof(void), parameterTypes, typeof(Runtime));
 
         cilm.DefineParameter(1, ParameterAttributes.In, "source");
         cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
@@ -158,8 +153,9 @@ public class CompilerPass
         get
         {
             if (!MakeAvailableForLinking)
-                throw new NotSupportedException
-                    ("The compiler pass is not configured to make implementations available for static linking.");
+                throw new NotSupportedException(
+                    "The compiler pass is not configured to make implementations available for static linking."
+                );
             return _functionFieldTable;
         }
     }
@@ -171,8 +167,9 @@ public class CompilerPass
         if (id == null)
             throw new ArgumentNullException(nameof(id));
         if (!Implementations.TryGetValue(moduleName, id, out var m))
-            throw new PrexoniteException("No implementation stub for a function named " + id +
-                " exists.");
+            throw new PrexoniteException(
+                "No implementation stub for a function named " + id + " exists."
+            );
 
         return GetIlGenerator(m);
     }
@@ -185,33 +182,33 @@ public class CompilerPass
             return dm.GetILGenerator();
         if ((mb = m as MethodBuilder) != null)
             return mb.GetILGenerator();
-        throw new PrexoniteException
-        (
-            "CIL Implementation " + m.Name +
-            " is neither a dynamic method nor a method builder but a " +
-            m.GetType());
+        throw new PrexoniteException(
+            "CIL Implementation "
+                + m.Name
+                + " is neither a dynamic method nor a method builder but a "
+                + m.GetType()
+        );
     }
 
-    [MemberNotNullWhen(true, nameof(_assemblyBuilder), nameof(_moduleBuilder), nameof(_typeBuilder))]
+    [MemberNotNullWhen(
+        true,
+        nameof(_assemblyBuilder),
+        nameof(_moduleBuilder),
+        nameof(_typeBuilder)
+    )]
     public bool MakeAvailableForLinking { get; }
 
     public CompilerPass(FunctionLinking linking)
-        : this(null, linking)
-    {
-    }
+        : this(null, linking) { }
 
     public CompilerPass(bool makeAvailableForLinking)
-        : this(null, makeAvailableForLinking)
-    {
-    }
+        : this(null, makeAvailableForLinking) { }
 
     public CompilerPass(Application? app, FunctionLinking linking)
         : this(
             app,
-            (linking & FunctionLinking.AvailableForLinking) ==
-            FunctionLinking.AvailableForLinking)
-    {
-    }
+            (linking & FunctionLinking.AvailableForLinking) == FunctionLinking.AvailableForLinking
+        ) { }
 
     readonly Dictionary<MethodInfo, ICilImplementation> _delegateCache = new();
 
@@ -223,12 +220,14 @@ public class CompilerPass
             throw new ArgumentNullException(nameof(id));
         if (!Implementations.TryGetValue(moduleName, id, out var m))
             throw new PrexoniteException(
-                $"No implementation for a function named {id} in module {moduleName} exists.");
+                $"No implementation for a function named {id} in module {moduleName} exists."
+            );
 
         return getDelegate(m);
     }
 
-    record CilImplementation(MethodInfo Declaration, CilFunction Implementation) : ICilImplementation;
+    record CilImplementation(MethodInfo Declaration, CilFunction Implementation)
+        : ICilImplementation;
 
     ICilImplementation getDelegate(MethodInfo m)
     {
@@ -237,15 +236,19 @@ public class CompilerPass
 
         DynamicMethod? dm;
         if ((dm = m as DynamicMethod) != null)
-            return _delegateCache[m] = new CilImplementation(m, (CilFunction)dm.CreateDelegate(typeof(CilFunction)));
-        return
-            _delegateCache[m] = new CilImplementation(m, 
-                (CilFunction)
-                Delegate.CreateDelegate
-                (
-                    typeof (CilFunction),
+            return _delegateCache[m] = new CilImplementation(
+                m,
+                (CilFunction)dm.CreateDelegate(typeof(CilFunction))
+            );
+        return _delegateCache[m] = new CilImplementation(
+            m,
+            (CilFunction)
+                Delegate.CreateDelegate(
+                    typeof(CilFunction),
                     _getRuntimeType().GetMethod(m.Name)!,
-                    true)!); // !-safety: throwOnBindFailure = true
+                    true
+                )!
+        ); // !-safety: throwOnBindFailure = true
     }
 
     Type _getRuntimeType()
@@ -254,7 +257,9 @@ public class CompilerPass
         {
             if (!MakeAvailableForLinking)
             {
-                throw new PrexoniteException("Cannot get CIL implementation type when static linking is not enabled.");
+                throw new PrexoniteException(
+                    "Cannot get CIL implementation type when static linking is not enabled."
+                );
             }
 
             // Emit type IL
@@ -269,12 +274,16 @@ public class CompilerPass
             using var mem = new MemoryStream();
             _assemblyBuilder.Save(mem);
             mem.Seek(0, SeekOrigin.Begin);
-            var ldCtx = AssemblyLoadContext.GetLoadContext(typeof(CompilerPass).Assembly) 
+            var ldCtx =
+                AssemblyLoadContext.GetLoadContext(typeof(CompilerPass).Assembly)
                 ?? throw new PrexoniteException("Failed to construct assembly load context.");
             var loaded = ldCtx.LoadFromStream(mem);
 
-            _cachedTypeReference = loaded.GetType(TargetType.FullName!, throwOnError: true)
-                ?? throw new PrexoniteException("Generated assembly did not contain the type that holds CIL implementations.");
+            _cachedTypeReference =
+                loaded.GetType(TargetType.FullName!, throwOnError: true)
+                ?? throw new PrexoniteException(
+                    "Generated assembly did not contain the type that holds CIL implementations."
+                );
         }
 
         return _cachedTypeReference;
@@ -290,7 +299,9 @@ public class CompilerPass
         var functionField = T.GetField(_mkFieldName(func.ParentApplication.Module.Name, func.Id));
         if (functionField == null)
         {
-            throw new PrexoniteException("Internal error. Expected a generated field for function {func}.");
+            throw new PrexoniteException(
+                "Internal error. Expected a generated field for function {func}."
+            );
         }
 
         functionField.SetValue(null, func);

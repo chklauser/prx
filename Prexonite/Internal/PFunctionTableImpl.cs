@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Internal;
 
 /// <summary>
@@ -45,12 +43,13 @@ public class PFunctionTableImpl : PFunctionTable
         }
         if (!_table.TryAdd(item.Id, item))
             throw new ArgumentException(
-                "The function table already contains a function named " + item.Id);
+                "The function table already contains a function named " + item.Id
+            );
     }
 
     public override void AddOverride(PFunction item)
     {
-        if (_table.TryGetValue(item.Id,out var oldFunc))
+        if (_table.TryGetValue(item.Id, out var oldFunc))
         {
             _table.Remove(oldFunc.Id);
         }
@@ -69,7 +68,7 @@ public class PFunctionTableImpl : PFunctionTable
         {
             return false;
         }
-        
+
         return _table.ContainsKey(item.Id);
     }
 
@@ -97,7 +96,7 @@ public class PFunctionTableImpl : PFunctionTable
         {
             return false;
         }
-        else if(_table.TryGetValue(item.Id,out var f) && ReferenceEquals(f,item))
+        else if (_table.TryGetValue(item.Id, out var f) && ReferenceEquals(f, item))
         {
             _table.Remove(item.Id);
             return true;
@@ -108,7 +107,7 @@ public class PFunctionTableImpl : PFunctionTable
 
     public override bool Remove(string id)
     {
-        if (_table.TryGetValue(id,out var oldFunc))
+        if (_table.TryGetValue(id, out var oldFunc))
         {
             return _table.Remove(id);
         }

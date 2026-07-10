@@ -1,12 +1,8 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstObjectCreation : AstExpr,
-    IAstHasExpressions,
-    IAstPartiallyApplicable
+public class AstObjectCreation : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
 {
     public ArgumentsProxy Arguments { get; }
 
@@ -26,19 +22,15 @@ public class AstObjectCreation : AstExpr,
         TypeExpr = type ?? throw new ArgumentNullException(nameof(type));
         Arguments = new(_arguments);
     }
-        
+
     [Obsolete]
     [DebuggerStepThrough]
     public AstObjectCreation(string file, int line, int col, AstTypeExpr type)
-        : this(new SourcePosition(file, line, col), type)
-    {
-    }
+        : this(new SourcePosition(file, line, col), type) { }
 
     [DebuggerStepThrough]
     internal AstObjectCreation(Parser p, AstTypeExpr type)
-        : this(p.GetPosition(), type)
-    {
-    }
+        : this(p.GetPosition(), type) { }
 
     #region AstExpr Members
 
@@ -46,7 +38,7 @@ public class AstObjectCreation : AstExpr,
     {
         expr = null;
 
-        TypeExpr = (AstTypeExpr) _GetOptimizedNode(target, TypeExpr);
+        TypeExpr = (AstTypeExpr)_GetOptimizedNode(target, TypeExpr);
 
         //Optimize arguments
         for (var i = 0; i < _arguments.Count; i++)
@@ -67,9 +59,9 @@ public class AstObjectCreation : AstExpr,
         {
             foreach (var arg in _arguments)
                 arg.EmitValueCode(target);
-            target.Emit(Position,OpCode.newobj, _arguments.Count, constType.TypeExpression);
-            if(stackSemantics == StackSemantics.Effect)
-                target.Emit(Position,Instruction.CreatePop());
+            target.Emit(Position, OpCode.newobj, _arguments.Count, constType.TypeExpression);
+            if (stackSemantics == StackSemantics.Effect)
+                target.Emit(Position, Instruction.CreatePop());
         }
         else
         {
@@ -88,14 +80,15 @@ public class AstObjectCreation : AstExpr,
 
     public NodeApplicationState CheckNodeApplicationState()
     {
-        return new(TypeExpr.IsPlaceholder() || Arguments.Any(x => x.IsPlaceholder()),
-            TypeExpr.IsArgumentSplice() || Arguments.Any(x => x.IsArgumentSplice()));
+        return new(
+            TypeExpr.IsPlaceholder() || Arguments.Any(x => x.IsPlaceholder()),
+            TypeExpr.IsArgumentSplice() || Arguments.Any(x => x.IsArgumentSplice())
+        );
     }
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
     {
-        var argv =
-            AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments.ToList());
+        var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments.ToList());
         var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
         if (TypeExpr is AstConstantTypeExpression constType)
             target.EmitConstant(Position, constType.TypeExpression);

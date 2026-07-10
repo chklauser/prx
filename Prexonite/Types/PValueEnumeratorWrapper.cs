@@ -1,4 +1,3 @@
-
 #region
 
 using System.Collections;
@@ -19,9 +18,7 @@ public sealed class PValueEnumeratorWrapper(IEnumerator<PValue> baseEnumerator) 
     /// </summary>
     /// <param name = "enumerable">An IEnumerable.</param>
     public PValueEnumeratorWrapper(IEnumerable<PValue> enumerable)
-        : this(enumerable.GetEnumerator())
-    {
-    }
+        : this(enumerable.GetEnumerator()) { }
 
     #endregion
 
@@ -43,7 +40,7 @@ public sealed class PValueEnumeratorWrapper(IEnumerator<PValue> baseEnumerator) 
     {
         if (!disposing)
             return;
-        // free managed resources 
+        // free managed resources
         baseEnumerator.Dispose();
     }
 

@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -8,9 +6,7 @@ public class HeadTail : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    HeadTail()
-    {
-    }
+    HeadTail() { }
 
     public static HeadTail Instance { get; } = new();
 
@@ -29,7 +25,7 @@ public class HeadTail : PCommand, ICilCompilerAware
             throw new ArgumentNullException(nameof(args));
 
         PValue? head;
-        var nextArg = ((IEnumerable<PValue>) args).GetEnumerator();
+        var nextArg = ((IEnumerable<PValue>)args).GetEnumerator();
         IEnumerator<PValue> nextX;
         try
         {
@@ -56,18 +52,21 @@ public class HeadTail : PCommand, ICilCompilerAware
             throw;
         }
 
-        return
-            (PValue)
+        return (PValue)
             new List<PValue>
             {
                 head,
                 sctx.CreateNativePValue(
-                    new Coroutine(new CoroutineContext(sctx, _tail(sctx, nextX, nextArg)))),
+                    new Coroutine(new CoroutineContext(sctx, _tail(sctx, nextX, nextArg)))
+                ),
             };
     }
 
-    static IEnumerable<PValue> _tail(StackContext sctx, IEnumerator<PValue> current,
-        IEnumerator<PValue> remaining)
+    static IEnumerable<PValue> _tail(
+        StackContext sctx,
+        IEnumerator<PValue> current,
+        IEnumerator<PValue> remaining
+    )
     {
         using (current)
             while (current.MoveNext())

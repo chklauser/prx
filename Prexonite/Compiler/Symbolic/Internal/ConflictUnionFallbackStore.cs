@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Properties;
 
@@ -12,14 +10,21 @@ sealed class ConflictUnionFallbackStore : SymbolStore
     SymbolTable<Symbol>? _local;
     readonly ReaderWriterLockSlim _lock = new();
 
-    internal ConflictUnionFallbackStore(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
+    internal ConflictUnionFallbackStore(
+        ISymbolView<Symbol>? parent = null,
+        IEnumerable<SymbolInfo>? conflictUnionSource = null
+    )
     {
         _parent = parent;
 
         if (conflictUnionSource != null)
         {
             var u = new SymbolTable<Symbol>();
-            u.AddRange(conflictUnionSource.GroupBy(i => i.Name, Engine.DefaultStringComparer).Select(_unifySymbols));
+            u.AddRange(
+                conflictUnionSource
+                    .GroupBy(i => i.Name, Engine.DefaultStringComparer)
+                    .Select(_unifySymbols)
+            );
             if (u.Count > 0)
                 _union = u;
         }
@@ -30,7 +35,11 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         using var e = source.GetEnumerator();
         // ReSharper disable NotResolvedInText
         if (!e.MoveNext())
-            throw new ArgumentOutOfRangeException("conflictUnionSource", source.Key, Resources.ConflictUnionFallbackStore__unifySymbols_Invalid_key_in_source_for_symbol_store_);
+            throw new ArgumentOutOfRangeException(
+                "conflictUnionSource",
+                source.Key,
+                Resources.ConflictUnionFallbackStore__unifySymbols_Invalid_key_in_source_for_symbol_store_
+            );
         // ReSharper restore NotResolvedInText
 
         var unionInfo = e.Current;
@@ -48,14 +57,18 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             }
             else
             {
-                x = new(merged,SymbolOrigin.MergedScope.CreateMerged(x.Origin, y.Origin),x.Name);
+                x = new(merged, SymbolOrigin.MergedScope.CreateMerged(x.Origin, y.Origin), x.Name);
             }
         }
 
         return new(unionInfo.Name, x.Symbol);
     }
 
-    static KeyValuePair<string, Symbol> _unifySymbolsDualMode(SymbolInfo first, SymbolInfo second, IEnumerator<SymbolInfo> e)
+    static KeyValuePair<string, Symbol> _unifySymbolsDualMode(
+        SymbolInfo first,
+        SymbolInfo second,
+        IEnumerator<SymbolInfo> e
+    )
     {
         var x1 = first;
         var x2 = second;
@@ -68,14 +81,22 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             var merged = _merge(x1, y);
             if (merged != null)
             {
-                x1 = new(merged,SymbolOrigin.MergedScope.CreateMerged(x1.Origin,y.Origin),x1.Name);
+                x1 = new(
+                    merged,
+                    SymbolOrigin.MergedScope.CreateMerged(x1.Origin, y.Origin),
+                    x1.Name
+                );
             }
             else
             {
-                merged = _merge(x2,y);
+                merged = _merge(x2, y);
                 if (merged != null)
                 {
-                    x2 = new(merged,SymbolOrigin.MergedScope.CreateMerged(x2.Origin,y.Origin),x2.Name);
+                    x2 = new(
+                        merged,
+                        SymbolOrigin.MergedScope.CreateMerged(x2.Origin, y.Origin),
+                        x2.Name
+                    );
                 }
                 else
                 {
@@ -84,17 +105,30 @@ sealed class ConflictUnionFallbackStore : SymbolStore
             }
         }
 
-        var msg = $"There are two incompatible declarations of the symbol {first.Name} in this scope. " +
-            $"One comes from {first.Origin}, the other one from {second.Origin}.";
+        var msg =
+            $"There are two incompatible declarations of the symbol {first.Name} in this scope. "
+            + $"One comes from {first.Origin}, the other one from {second.Origin}.";
 
-        return new(first.Name,
-            Symbol.CreateMessage(Message.Create(MessageSeverity.Error,
-                msg,
-                first.Origin.Position,
-                MessageClasses.SymbolConflict), x1.Symbol));
+        return new(
+            first.Name,
+            Symbol.CreateMessage(
+                Message.Create(
+                    MessageSeverity.Error,
+                    msg,
+                    first.Origin.Position,
+                    MessageClasses.SymbolConflict
+                ),
+                x1.Symbol
+            )
+        );
     }
 
-    static KeyValuePair<string, Symbol> _unifySymbolsMultiMode(SymbolInfo first, SymbolInfo second, SymbolInfo third, IEnumerator<SymbolInfo> e)
+    static KeyValuePair<string, Symbol> _unifySymbolsMultiMode(
+        SymbolInfo first,
+        SymbolInfo second,
+        SymbolInfo third,
+        IEnumerator<SymbolInfo> e
+    )
     {
         var symbols = new List<SymbolInfo> { first, second, third };
         var xs = new List<SymbolInfo> { first, second, third };
@@ -110,7 +144,11 @@ sealed class ConflictUnionFallbackStore : SymbolStore
                 var merged = _merge(thisSymbol, y);
                 if (merged != null)
                 {
-                    xs[i] = new(merged,SymbolOrigin.MergedScope.CreateMerged(thisSymbol.Origin, y.Origin),thisSymbol.Name);
+                    xs[i] = new(
+                        merged,
+                        SymbolOrigin.MergedScope.CreateMerged(thisSymbol.Origin, y.Origin),
+                        thisSymbol.Name
+                    );
                     break;
                 }
             }
@@ -123,11 +161,20 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         }
 
         var msg =
-            $"There are {xs.Count} incompatible declarations of the symbol {first.Name}. " +
-            $"They originate from {symbols.Select(s => s.Origin).ToEnumerationString()}.";
-        return new(first.Name,
-            Symbol.CreateMessage(Message.Create(MessageSeverity.Error, msg, first.Origin.Position,
-                MessageClasses.SymbolConflict), xs[0].Symbol));
+            $"There are {xs.Count} incompatible declarations of the symbol {first.Name}. "
+            + $"They originate from {symbols.Select(s => s.Origin).ToEnumerationString()}.";
+        return new(
+            first.Name,
+            Symbol.CreateMessage(
+                Message.Create(
+                    MessageSeverity.Error,
+                    msg,
+                    first.Origin.Position,
+                    MessageClasses.SymbolConflict
+                ),
+                xs[0].Symbol
+            )
+        );
     }
 
     static readonly ISymbolHandler<Message, bool> _containsMessage = new ContainsMessageHandler();
@@ -237,10 +284,15 @@ sealed class ConflictUnionFallbackStore : SymbolStore
                 return thisSymbol;
 
             // merge recursively
-            var innerInfo = new SymbolInfo(thisSymbol.InnerSymbol, mergeContext.ThisInfo.Origin,
-                mergeContext.ThisInfo.Name);
-            var innerUnionSymbol = thisSymbol.InnerSymbol.HandleWith(this,
-                new(innerInfo, mergeContext.OtherInfo));
+            var innerInfo = new SymbolInfo(
+                thisSymbol.InnerSymbol,
+                mergeContext.ThisInfo.Origin,
+                mergeContext.ThisInfo.Name
+            );
+            var innerUnionSymbol = thisSymbol.InnerSymbol.HandleWith(
+                this,
+                new(innerInfo, mergeContext.OtherInfo)
+            );
             if (innerUnionSymbol == null) // the underlying self is not the same
                 return null;
 
@@ -265,10 +317,10 @@ sealed class ConflictUnionFallbackStore : SymbolStore
                 // Create a merged view of the namespace
                 var exportedFromThis = _exportedFrom(self, mergeContext.ThisInfo);
                 var exportedFromOther = _exportedFrom(otherNamespaceSymbol, mergeContext.OtherInfo);
-                var merged = new MergedNamespace(Create(conflictUnionSource:
-                    exportedFromThis.Append(exportedFromOther)));
-                return Symbol.CreateNamespace(merged,
-                    mergeContext.ThisInfo.Origin.Position);
+                var merged = new MergedNamespace(
+                    Create(conflictUnionSource: exportedFromThis.Append(exportedFromOther))
+                );
+                return Symbol.CreateNamespace(merged, mergeContext.ThisInfo.Origin.Position);
             }
             else
                 return null;
@@ -276,7 +328,11 @@ sealed class ConflictUnionFallbackStore : SymbolStore
 
         static IEnumerable<SymbolInfo> _exportedFrom(NamespaceSymbol nsSymbol, SymbolInfo nsInfo)
         {
-            return nsSymbol.Namespace.Select(entry => new SymbolInfo(entry.Value,nsInfo.Origin,entry.Key));
+            return nsSymbol.Namespace.Select(entry => new SymbolInfo(
+                entry.Value,
+                nsInfo.Origin,
+                entry.Key
+            ));
         }
     }
 
@@ -314,14 +370,18 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         return (localOpt, _union, parentOpt) switch
         {
             (null, null, null) => Enumerable.Empty<KeyValuePair<string, Symbol>>().GetEnumerator(),
-            (null, null, {} parent) => parent.GetEnumerator(),
-            (null, {} union, null) => union.GetEnumerator(),
-            (null, {} union, {} parent) => union.Append(parent.Where(_notInUnion)).GetEnumerator(),
-            ({} local, _ , _) => _readLockEnumerable(_assembleEnumerator(local, parentOpt)),
+            (null, null, { } parent) => parent.GetEnumerator(),
+            (null, { } union, null) => union.GetEnumerator(),
+            (null, { } union, { } parent) => union
+                .Append(parent.Where(_notInUnion))
+                .GetEnumerator(),
+            ({ } local, _, _) => _readLockEnumerable(_assembleEnumerator(local, parentOpt)),
         };
     }
 
-    IEnumerator<KeyValuePair<string, Symbol>> _readLockEnumerable(IEnumerable<KeyValuePair<string, Symbol>> sequence)
+    IEnumerator<KeyValuePair<string, Symbol>> _readLockEnumerable(
+        IEnumerable<KeyValuePair<string, Symbol>> sequence
+    )
     {
         _lock.EnterReadLock();
         try
@@ -335,14 +395,19 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         }
     }
 
-    IEnumerable<KeyValuePair<string, Symbol>> _assembleEnumerator(IEnumerable<KeyValuePair<string, Symbol>> local, IEnumerable<KeyValuePair<string, Symbol>>? parentOpt)
+    IEnumerable<KeyValuePair<string, Symbol>> _assembleEnumerator(
+        IEnumerable<KeyValuePair<string, Symbol>> local,
+        IEnumerable<KeyValuePair<string, Symbol>>? parentOpt
+    )
     {
         return (_union, parentOpt) switch
         {
             (null, null) => local,
-            (null, {} parent) => local.Append(parent.Where(_notInLocal)),
-            ({} union, null) => local.Append(union.Where(_notInLocal)),
-            ({} union, {} parent) => local.Append(union.Where(_notInLocal)).Append(parent.Where(_notInLocalAndUnion)),
+            (null, { } parent) => local.Append(parent.Where(_notInLocal)),
+            ({ } union, null) => local.Append(union.Where(_notInLocal)),
+            ({ } union, { } parent) => local
+                .Append(union.Where(_notInLocal))
+                .Append(parent.Where(_notInLocalAndUnion)),
         };
     }
 
@@ -351,14 +416,14 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         _lock.EnterReadLock();
         try
         {
-            if (_local is {} local && local.TryGetValue(id, out value))
+            if (_local is { } local && local.TryGetValue(id, out value))
                 return true;
-                
+
             if (_union != null && _union.TryGetValue(id, out value))
             {
                 return true;
             }
-                
+
             if (_parent != null && _parent.TryGet(id, out value))
             {
                 return true;
@@ -368,7 +433,7 @@ sealed class ConflictUnionFallbackStore : SymbolStore
         {
             _lock.ExitReadLock();
         }
-            
+
         value = null;
         return false;
     }

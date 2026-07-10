@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -10,9 +8,7 @@ public class Max : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Max()
-    {
-    }
+    Max() { }
 
     public static Max Instance { get; } = new();
 
@@ -47,15 +43,15 @@ public class Max : PCommand, ICilCompilerAware
     {
         if (arg0.Type == PType.Int && arg1.Type == PType.Int)
         {
-            var a = (int) arg0.Value!;
-            var b = (int) arg1.Value!;
+            var a = (int)arg0.Value!;
+            var b = (int)arg1.Value!;
 
             return System.Math.Max(a, b);
         }
         else
         {
-            var a = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
-            var b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value!;
+            var a = (double)arg0.ConvertTo(sctx, PType.Real, true).Value!;
+            var b = (double)arg1.ConvertTo(sctx, PType.Real, true).Value!;
 
             return System.Math.Max(a, b);
         }
@@ -92,9 +88,10 @@ public class Max : PCommand, ICilCompilerAware
         }
     }
 
-    static readonly MethodInfo RunStaticallyMethod =
-        typeof (Max).GetMethod(nameof(RunStatically),
-            [typeof (PValue), typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyMethod = typeof(Max).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(PValue), typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

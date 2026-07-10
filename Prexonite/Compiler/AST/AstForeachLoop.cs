@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Globalization;
 using Prexonite.Compiler.Cil;
@@ -11,9 +9,7 @@ namespace Prexonite.Compiler.Ast;
 public class AstForeachLoop : AstLoop
 {
     public AstForeachLoop(ISourcePosition position, AstBlock parentBlock)
-        : base(position, parentBlock)
-    {
-    }
+        : base(position, parentBlock) { }
 
     public AstExpr? List;
     public AstGetSet? Element;
@@ -36,8 +32,10 @@ public class AstForeachLoop : AstLoop
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Value)
-            throw new NotSupportedException("Foreach loops don't produce values and can thus not be emitted with value semantics.");
+        if (stackSemantics == StackSemantics.Value)
+            throw new NotSupportedException(
+                "Foreach loops don't produce values and can thus not be emitted with value semantics."
+            );
 
         if (!IsInitialized)
             throw new PrexoniteException("AstForeachLoop requires List and Element to be set.");
@@ -56,13 +54,18 @@ public class AstForeachLoop : AstLoop
             element = optElem as AstGetSet;
             if (element == null)
             {
-                target.Loader.ReportMessage(Message.Error(Resources.AstForeachLoop_DoEmitCode_ElementTooComplicated,Position,MessageClasses.ForeachElementTooComplicated));
+                target.Loader.ReportMessage(
+                    Message.Error(
+                        Resources.AstForeachLoop_DoEmitCode_ElementTooComplicated,
+                        Position,
+                        MessageClasses.ForeachElementTooComplicated
+                    )
+                );
                 return;
             }
         }
         var ldEnumVar = target.Factory.Call(Position, EntityRef.Variable.Local.Create(enumVar));
-        var getCurrent =
-            new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
+        var getCurrent = new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
         element.Arguments.Add(getCurrent);
         element.Call = PCall.Set;
 
@@ -85,9 +88,9 @@ public class AstForeachLoop : AstLoop
 
         var @try = new AstTryCatchFinally(Position, Block);
 
-        @try.TryBlock = new AstActionBlock
-        (
-            Position, @try,
+        @try.TryBlock = new AstActionBlock(
+            Position,
+            @try,
             delegate
             {
                 target.EmitJump(Position, Block.ContinueLabel);
@@ -109,17 +112,18 @@ public class AstForeachLoop : AstLoop
 
                 //Break
                 target.EmitLabel(Position, Block.BreakLabel);
-            });
-        @try.FinallyBlock = new AstActionBlock
-        (
-            Position, @try,
+            }
+        );
+        @try.FinallyBlock = new AstActionBlock(
+            Position,
+            @try,
             delegate
             {
                 disposeAddr = target.Code.Count;
                 target.EmitLoadLocal(List.Position, enumVar);
                 target.EmitCommandCall(List.Position, 1, Engine.DisposeAlias, true);
-            });
-                
+            }
+        );
 
         @try.EmitEffectCode(target);
 
@@ -127,41 +131,49 @@ public class AstForeachLoop : AstLoop
 
         if (getCurrentAddr < 0 || moveNextAddr < 0 || disposeAddr < 0)
             throw new PrexoniteException(
-                "Could not capture addresses within foreach construct for CIL compiler hint.");
+                "Could not capture addresses within foreach construct for CIL compiler hint."
+            );
         else if (emitHint)
         {
-            var hint = new ForeachHint(enumVar, castAddr, getCurrentAddr, moveNextAddr,
-                disposeAddr);
+            var hint = new ForeachHint(
+                enumVar,
+                castAddr,
+                getCurrentAddr,
+                moveNextAddr,
+                disposeAddr
+            );
             Cil.Compiler.AddCilHint(target, hint);
 
-            Action<int, int> mkHook =
-                (index, original) =>
-                {
-                    AddressChangeHook? hook = null;
-                    hook = new(
-                        original,
-                        newAddr =>
+            Action<int, int> mkHook = (index, original) =>
+            {
+                AddressChangeHook? hook = null;
+                hook = new(
+                    original,
+                    newAddr =>
+                    {
+                        foreach (var hintEntry in target.Meta[Loader.CilHintsKey].List)
                         {
-                            foreach (
-                                var hintEntry in target.Meta[Loader.CilHintsKey].List)
+                            var entry = hintEntry.List;
+                            if (
+                                entry[0] == ForeachHint.Key
+                                && entry[index].Text
+                                    == original.ToString(CultureInfo.InvariantCulture)
+                            )
                             {
-                                var entry = hintEntry.List;
-                                if (entry[0] == ForeachHint.Key &&
-                                    entry[index].Text == original.ToString(CultureInfo.InvariantCulture))
-                                {
-                                    entry[index] = newAddr.ToString(CultureInfo.InvariantCulture);
-                                    // AddressChangeHook.ctor can be trusted not to call the closure.
-                                    // ReSharper disable PossibleNullReferenceException
-                                    // ReSharper disable AccessToModifiedClosure
-                                    hook!.InstructionIndex = newAddr;
-                                    // ReSharper restore AccessToModifiedClosure
-                                    // ReSharper restore PossibleNullReferenceException
-                                    original = newAddr;
-                                }
+                                entry[index] = newAddr.ToString(CultureInfo.InvariantCulture);
+                                // AddressChangeHook.ctor can be trusted not to call the closure.
+                                // ReSharper disable PossibleNullReferenceException
+                                // ReSharper disable AccessToModifiedClosure
+                                hook!.InstructionIndex = newAddr;
+                                // ReSharper restore AccessToModifiedClosure
+                                // ReSharper restore PossibleNullReferenceException
+                                original = newAddr;
                             }
-                        });
-                    target.AddressChangeHooks.Add(hook);
-                };
+                        }
+                    }
+                );
+                target.AddressChangeHooks.Add(hook);
+            };
 
             mkHook(ForeachHint.CastAddressIndex + 1, castAddr);
             mkHook(ForeachHint.GetCurrentAddressIndex + 1, getCurrentAddr);

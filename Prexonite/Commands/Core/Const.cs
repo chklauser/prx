@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection;
 using Prexonite.Compiler.Cil;
 
@@ -11,9 +9,7 @@ public class Const : PCommand, ICilCompilerAware
 
     public static Const Instance { get; } = new();
 
-    Const()
-    {
-    }
+    Const() { }
 
     #endregion
 
@@ -51,8 +47,10 @@ public class Const : PCommand, ICilCompilerAware
     {
         get
         {
-            return _createConstFunctionInfoCache ??= typeof (Const).GetMethod(nameof(CreateConstFunction),
-                [typeof (PValue), typeof (StackContext)])!;
+            return _createConstFunctionInfoCache ??= typeof(Const).GetMethod(
+                nameof(CreateConstFunction),
+                [typeof(PValue), typeof(StackContext)]
+            )!;
         }
     }
 

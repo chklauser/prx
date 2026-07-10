@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using JetBrains.Annotations;
@@ -12,31 +10,35 @@ namespace Prexonite.Internal;
 /// <typeparam name="TKey">The key that decides whether two tasks compute "the same thing" (e.g. path of file to process)</typeparam>
 /// <typeparam name="TResult">The type of results that tasks in this cache compute.</typeparam>
 /// <remarks>
-/// <para>Every work request (submitted via <see cref="GetOrAdd"/>) can come with its own <see cref="CancellationToken"/>. 
-/// You can request that the task managed by the cache be cancelled via this token. 
+/// <para>Every work request (submitted via <see cref="GetOrAdd"/>) can come with its own <see cref="CancellationToken"/>.
+/// You can request that the task managed by the cache be cancelled via this token.
 /// However, if there were other requests for the same work item (served via the cache), cancellation will not
 /// propagate to the cached task unless <em>all</em> tokens registered for that task are cancelled.</para>
 /// </remarks>
-public class AdHocTaskCache<TKey,TResult>
+public class AdHocTaskCache<TKey, TResult>
     where TKey : notnull
 {
     class TaskInfo
     {
         const int Cancelled = -7171;
 
-
         public readonly Task<TResult> Task;
 
         readonly CancellationTokenSource _cancelSource = new();
 
-        [System.Diagnostics.CodeAnalysis.NotNull] [DisallowNull]
+        [System.Diagnostics.CodeAnalysis.NotNull]
+        [DisallowNull]
         readonly TKey _key;
 
         readonly ConcurrentDictionary<TKey, TaskInfo> _cache;
 
         volatile int _liveTokens;
 
-        public TaskInfo(ConcurrentDictionary<TKey, TaskInfo> cache, TKey key, Func<CancellationToken, Task<TResult>> taskImplementation)
+        public TaskInfo(
+            ConcurrentDictionary<TKey, TaskInfo> cache,
+            TKey key,
+            Func<CancellationToken, Task<TResult>> taskImplementation
+        )
         {
             _cache = cache;
             _key = key;
@@ -58,14 +60,18 @@ public class AdHocTaskCache<TKey,TResult>
                 if (oldLiveCount == Cancelled)
                     // The task has been cancelled or is in the process of being cancelled
                     return false;
-                else if(oldLiveCount < 0)
+                else if (oldLiveCount < 0)
                     // Observed integer overflow, this is illegal as we can no longer guarantee that tasks
                     // stay alive for long enough.
-                    throw new OverflowException("Number of tasks cancellation constraints exceeded Int32.MaxValue.");
+                    throw new OverflowException(
+                        "Number of tasks cancellation constraints exceeded Int32.MaxValue."
+                    );
+            } while (
+                Interlocked.CompareExchange(ref _liveTokens, oldLiveCount + 1, oldLiveCount)
+                != oldLiveCount
+            );
 
-            } while (Interlocked.CompareExchange(ref _liveTokens, oldLiveCount + 1, oldLiveCount) != oldLiveCount);
-
-            // By incrementing the live token counter, we have already ensured that 
+            // By incrementing the live token counter, we have already ensured that
             // the task won't be cancelled prematurely. There is no hurry to add
             // the cancellation handler (it will be called synchronously if we missed the cancellation)
             constraint.Register(_onCancel);
@@ -83,19 +89,23 @@ public class AdHocTaskCache<TKey,TResult>
             {
                 Interlocked.MemoryBarrier();
                 oldLiveCount = _liveTokens;
-                Debug.Assert(oldLiveCount != Cancelled,
-                    "Cancellation handler invoked after task had already been cancelled.");
+                Debug.Assert(
+                    oldLiveCount != Cancelled,
+                    "Cancellation handler invoked after task had already been cancelled."
+                );
                 newLiveCount = oldLiveCount - 1;
                 if (newLiveCount == 0)
                 {
                     // To distinguish a cancelled task from an uninitialized task, we
                     //  set the live count to the sentinel value "Cancelled".
-                    // The method TryAddCancellationConstraint checks for this value 
+                    // The method TryAddCancellationConstraint checks for this value
                     //  before incrementing the live token count.
                     newLiveCount = Cancelled;
                 }
-
-            } while (Interlocked.CompareExchange(ref _liveTokens, newLiveCount, oldLiveCount) != oldLiveCount);
+            } while (
+                Interlocked.CompareExchange(ref _liveTokens, newLiveCount, oldLiveCount)
+                != oldLiveCount
+            );
 
             // Only one thread will ever reach this state, as only the last thread to cancel
             //  will arrive at live token count 0. See assertion in loop above.
@@ -103,9 +113,12 @@ public class AdHocTaskCache<TKey,TResult>
             {
                 // ReSharper disable RedundantAssignment
                 var removed = _cache.TryRemove(_key, out var info);
-// ReSharper restore RedundantAssignment
+                // ReSharper restore RedundantAssignment
                 Debug.Assert(removed, "Removal from task cache by cancellation handler failed.");
-                Debug.Assert(ReferenceEquals(info,this),"Elements in task cache should never be replaced without cancellation.");
+                Debug.Assert(
+                    ReferenceEquals(info, this),
+                    "Elements in task cache should never be replaced without cancellation."
+                );
 
                 // This, and only this thread will reach the cancel call. May throw aggregate exceptions.
                 _cancelSource.Cancel();
@@ -117,7 +130,7 @@ public class AdHocTaskCache<TKey,TResult>
     readonly ConcurrentDictionary<TKey, TaskInfo> _cache = new();
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="key"></param>
     /// <param name="resultTask"></param>
@@ -147,28 +160,33 @@ public class AdHocTaskCache<TKey,TResult>
     /// <remarks>
     /// <para> If a new task is created as a result of this call, then this task is guaranteed to be
     /// in the cache and be returned by the method call.</para>
-    /// <para><see cref="GetOrAdd"/> should only be called from a single location in your code 
-    /// (per instance of the cache). In particular, you should avoid having multiple possible 
-    /// implementations for any single key. You might not be able to control, which <see cref="GetOrAdd"/> 
-    /// call arrives first and thus which implementation will end up in the cache. For the 
-    /// same reason, instances of <see cref="AdHocTaskCache{TKey,TResult}"/> should not be 
-    /// accessible to clients of your code. 
+    /// <para><see cref="GetOrAdd"/> should only be called from a single location in your code
+    /// (per instance of the cache). In particular, you should avoid having multiple possible
+    /// implementations for any single key. You might not be able to control, which <see cref="GetOrAdd"/>
+    /// call arrives first and thus which implementation will end up in the cache. For the
+    /// same reason, instances of <see cref="AdHocTaskCache{TKey,TResult}"/> should not be
+    /// accessible to clients of your code.
     /// </para>
     /// <para>
-    /// If your implementation supports cancellation, <em>it must use the cancellation token 
+    /// If your implementation supports cancellation, <em>it must use the cancellation token
     /// (<see cref="CancellationToken"/>) provided to it via the second parameter of the
-    /// <paramref name="taskImplementation"/> delegate</em>. 
-    /// This token will only be triggered if all parties that have an interest in this task have 
-    /// requested its  cancellation. If you use your own cancellation token and your token gets cancelled, 
+    /// <paramref name="taskImplementation"/> delegate</em>.
+    /// This token will only be triggered if all parties that have an interest in this task have
+    /// requested its  cancellation. If you use your own cancellation token and your token gets cancelled,
     /// you might inadvertently cancel work that someone else still depends on.
     /// </para>
     /// </remarks>
     /// <returns></returns>
-    public Task<TResult> GetOrAdd([DisallowNull] TKey key, Func<TKey, CancellationToken,Task<TResult>> taskImplementation, CancellationToken cancellationToken)
+    public Task<TResult> GetOrAdd(
+        [DisallowNull] TKey key,
+        Func<TKey, CancellationToken, Task<TResult>> taskImplementation,
+        CancellationToken cancellationToken
+    )
     {
         // This only starts a new task if the cache doesn't already contain a running version of the task
         TaskInfo info;
-        TaskInfo taskFactory(TKey actualKey) => new(_cache, actualKey, ct => taskImplementation(actualKey, ct));
+        TaskInfo taskFactory(TKey actualKey) =>
+            new(_cache, actualKey, ct => taskImplementation(actualKey, ct));
 
         do
         {

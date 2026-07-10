@@ -1,4 +1,3 @@
-
 namespace Prx.Tests;
 
 public class TestObject

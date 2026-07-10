@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Build;
 
 public class BuildException : PrexoniteException
@@ -16,12 +14,14 @@ public class BuildException : PrexoniteException
         RelatedTarget = relatedTarget;
     }
 
-    public BuildException(string message, ITargetDescription? relatedTarget) : base(message)
+    public BuildException(string message, ITargetDescription? relatedTarget)
+        : base(message)
     {
         RelatedTarget = relatedTarget;
     }
 
-    public BuildException(string message, ITargetDescription? relatedTarget, Exception inner) : base(message, inner)
+    public BuildException(string message, ITargetDescription? relatedTarget, Exception inner)
+        : base(message, inner)
     {
         RelatedTarget = relatedTarget;
     }

@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite;
@@ -8,8 +6,7 @@ namespace Prexonite;
 ///     Represents a closure, a nested function bound to a set of shared variables.
 /// </summary>
 [DebuggerStepThrough]
-public class Closure : IIndirectCall,
-    IStackAware
+public class Closure : IIndirectCall, IStackAware
 {
     #region Properties
 
@@ -36,7 +33,8 @@ public class Closure : IIndirectCall,
     public Closure(PFunction func, PVariable[] sharedVariables)
     {
         Function = func ?? throw new ArgumentNullException(nameof(func));
-        SharedVariables = sharedVariables ?? throw new ArgumentNullException(nameof(sharedVariables));
+        SharedVariables =
+            sharedVariables ?? throw new ArgumentNullException(nameof(sharedVariables));
     }
 
     #endregion
@@ -93,9 +91,9 @@ public class Closure : IIndirectCall,
     /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
     public static bool operator ==(Closure? a, Closure? b)
     {
-        if ((object?) a == null && (object?) b == null)
+        if ((object?)a == null && (object?)b == null)
             return true;
-        else if ((object?) a == null || (object?) b == null)
+        else if ((object?)a == null || (object?)b == null)
             return false;
         else if (ReferenceEquals(a, b))
             return true;
@@ -132,7 +130,7 @@ public class Closure : IIndirectCall,
     public override bool Equals(object? obj)
     {
         var clo = obj as Closure;
-        if ((object?) clo == null)
+        if ((object?)clo == null)
             return false;
         return this == clo;
     }

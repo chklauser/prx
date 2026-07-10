@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -14,7 +14,7 @@ class DefaultBuildEnvironment : IBuildEnvironment
 
     public bool TryGetModule(ModuleName moduleName, [NotNullWhen(true)] out Module? module)
     {
-        if(_taskMap.TryGetValue(moduleName, out var target))
+        if (_taskMap.TryGetValue(moduleName, out var target))
         {
             module = target.Result.Module;
             return true;
@@ -26,7 +26,12 @@ class DefaultBuildEnvironment : IBuildEnvironment
         }
     }
 
-    public DefaultBuildEnvironment(ManualPlan plan, ITargetDescription description, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token)
+    public DefaultBuildEnvironment(
+        ManualPlan plan,
+        ITargetDescription description,
+        TaskMap<ModuleName, ITarget> taskMap,
+        CancellationToken token
+    )
     {
         _token = token;
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
@@ -36,10 +41,13 @@ class DefaultBuildEnvironment : IBuildEnvironment
         foreach (var name in description.Dependencies)
         {
             var d = taskMap[name].Value.Result;
-            if (d.Symbols == null) continue;
+            if (d.Symbols == null)
+                continue;
             var origin = new SymbolOrigin.ModuleTopLevel(name, NoSourcePosition.Instance);
-            externals.AddRange(from decl in d.Symbols
-                select new SymbolInfo(decl.Value, origin, decl.Key));
+            externals.AddRange(
+                from decl in d.Symbols
+                select new SymbolInfo(decl.Value, origin, decl.Key)
+            );
         }
         ExternalSymbols = SymbolStore.Create(conflictUnionSource: externals);
         _compilationEngine = plan.LeaseBuildEngine();
@@ -53,21 +61,24 @@ class DefaultBuildEnvironment : IBuildEnvironment
     public Application InstantiateForBuild()
     {
         var instance = new Application(Module);
-        ManualPlan._LinkDependenciesImpl(_plan,_taskMap, instance,_description, _token);
+        ManualPlan._LinkDependenciesImpl(_plan, _taskMap, instance, _description, _token);
         return instance;
     }
 
-    public Loader CreateLoader(LoaderOptions? defaults = null, Application? compilationTarget = null)
+    public Loader CreateLoader(
+        LoaderOptions? defaults = null,
+        Application? compilationTarget = null
+    )
     {
         defaults ??= new(null, null);
         var planOptions = _plan.Options;
-        if(planOptions != null)
+        if (planOptions != null)
             defaults.InheritFrom(planOptions);
         compilationTarget ??= InstantiateForBuild();
         Debug.Assert(compilationTarget.Module.Name == Module.Name);
         var lowPrioritySymbols = defaults.ExternalSymbols;
         SymbolStore predef;
-        if(lowPrioritySymbols.IsEmpty)
+        if (lowPrioritySymbols.IsEmpty)
         {
             predef = SymbolStore.Create(ExternalSymbols);
         }
@@ -80,10 +91,13 @@ class DefaultBuildEnvironment : IBuildEnvironment
                 predef.Declare(externalSymbol.Key, externalSymbol.Value);
             // Then create the final SymbolStore inheriting from the intermediate one.
             //  that way we can later extract the declarations made by this module.
-            predef = SymbolStore.Create(predef); 
+            predef = SymbolStore.Create(predef);
         }
         var finalOptions = new LoaderOptions(_compilationEngine, compilationTarget, predef)
-            {ReconstructSymbols = false, RegisterCommands = false};
+        {
+            ReconstructSymbols = false,
+            RegisterCommands = false,
+        };
         finalOptions.InheritFrom(defaults);
         return new(finalOptions);
     }

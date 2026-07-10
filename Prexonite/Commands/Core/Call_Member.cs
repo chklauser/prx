@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Commands.List;
 using Prexonite.Compiler;
@@ -17,9 +15,7 @@ public sealed class Call_Member : PCommand
 {
     #region Singleton
 
-    Call_Member()
-    {
-    }
+    Call_Member() { }
 
     public static Call_Member Instance { get; } = new();
 
@@ -32,14 +28,14 @@ public sealed class Call_Member : PCommand
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         Wrap Lists in other lists, if you want to pass them without being unfolded: 
+    ///         Wrap Lists in other lists, if you want to pass them without being unfolded:
     ///         <code>
     ///             function main()
     ///             {   var myList = [1, 2];
     ///             var obj = "{1}hell{0}";
     ///             print( call\member(obj, "format",  [ myList ]) );
     ///             }
-    /// 
+    ///
     ///             //Prints "2hell1"
     ///         </code>
     ///     </para>
@@ -54,7 +50,8 @@ public sealed class Call_Member : PCommand
             throw new ArgumentNullException(nameof(sctx));
         if (args.Length < 2 || args[0] == null)
             throw new ArgumentException(
-                "The command callmember has the signature(obj, [isSet,] id [, arg1, arg2,...,argn]).");
+                "The command callmember has the signature(obj, [isSet,] id [, arg1, arg2,...,argn])."
+            );
 
         var isSet = false;
         string id;
@@ -62,7 +59,7 @@ public sealed class Call_Member : PCommand
 
         if (args[1].Type == PType.Bool && args.Length > 2)
         {
-            isSet = (bool) args[1].Value!;
+            isSet = (bool)args[1].Value!;
             id = args[i++].CallToString(sctx);
         }
         else
@@ -99,7 +96,13 @@ public sealed class Call_Member : PCommand
     ///     Lists and coroutines are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
-    public PValue Run(StackContext sctx, PValue? obj, bool isSet, string id, params ReadOnlySpan<PValue> args)
+    public PValue Run(
+        StackContext sctx,
+        PValue? obj,
+        bool isSet,
+        string id,
+        params ReadOnlySpan<PValue> args
+    )
     {
         if (obj == null)
             return PType.Null.CreatePValue();
@@ -125,22 +128,20 @@ public sealed class Call_Member : PCommand
 
     public class PartialMemberCall : PartialCallWrapper
     {
-        protected PartialMemberCall(string alias, string callImplementationId,
-            SymbolInterpretations callImplementetaionInterpretation)
-            : base(alias, EntityRef.Command.Create(Alias))
-        {
-        }
+        protected PartialMemberCall(
+            string alias,
+            string callImplementationId,
+            SymbolInterpretations callImplementetaionInterpretation
+        )
+            : base(alias, EntityRef.Command.Create(Alias)) { }
 
         public PartialMemberCall()
-            : this(Engine.Call_MemberAlias, Alias, SymbolInterpretations.Command)
-        {
-        }
+            : this(Engine.Call_MemberAlias, Alias, SymbolInterpretations.Command) { }
 
         protected override IEnumerable<AstExpr> GetCallArguments(MacroContext context)
         {
             var argv = context.Invocation.Arguments;
-            return
-                Extensions.Append(argv.Take(1), _getIsSetExpr(context)).Append(argv.Skip(1));
+            return Extensions.Append(argv.Take(1), _getIsSetExpr(context)).Append(argv.Skip(1));
         }
 
         static AstExpr _getIsSetExpr(MacroContext context)

@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Properties;
 
@@ -23,15 +21,16 @@ public class AstPlaceholder : AstGetSetImplBase
         set
         {
             if (value < 0)
-                throw new ArgumentOutOfRangeException(nameof(value),
-                    Resources.AstPlaceholder_PlaceholdeIndexNegative);
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    Resources.AstPlaceholder_PlaceholdeIndexNegative
+                );
             _index = value;
         }
     }
 
-    public AstPlaceholder(string file, int line, int column) : this(file, line, column, null)
-    {
-    }
+    public AstPlaceholder(string file, int line, int column)
+        : this(file, line, column, null) { }
 
     public AstPlaceholder(string file, int line, int column, int? index)
         : base(file, line, column, PCall.Get)
@@ -39,7 +38,8 @@ public class AstPlaceholder : AstGetSetImplBase
         Index = index;
     }
 
-    internal AstPlaceholder(Parser p, int? index = null) : base(p, PCall.Get)
+    internal AstPlaceholder(Parser p, int? index = null)
+        : base(p, PCall.Get)
     {
         Index = index;
     }
@@ -54,7 +54,8 @@ public class AstPlaceholder : AstGetSetImplBase
     void _throwSyntaxNotSupported()
     {
         throw new PartialApplicationSyntaxNotSupportedException(
-            $"This syntax does not support placeholders. (Position {File}:{Line} col {Column})");
+            $"This syntax does not support placeholders. (Position {File}:{Line} col {Column})"
+        );
     }
 
     protected override void EmitSetCode(CompilerTarget target)
@@ -85,7 +86,8 @@ public class AstPlaceholder : AstGetSetImplBase
                 if (placeholder.Index.Value > 127)
                 {
                     throw new PrexoniteException(
-                        $"The placeholder (at {placeholder.Position.GetSourcePositionString()}) has a custom index value that exceeds the maximum mappable index.");
+                        $"The placeholder (at {placeholder.Position.GetSourcePositionString()}) has a custom index value that exceeds the maximum mappable index."
+                    );
                 }
 
                 if (assigned.Count <= placeholder.Index)
@@ -98,8 +100,10 @@ public class AstPlaceholder : AstGetSetImplBase
                 {
                     assigned[placeholder.Index.Value] = placeholder;
                 }
-                Debug.Assert(ReferenceEquals(assigned[placeholder.Index.Value], placeholder),
-                    "placeholder was not inserted at the right spot.");
+                Debug.Assert(
+                    ReferenceEquals(assigned[placeholder.Index.Value], placeholder),
+                    "placeholder was not inserted at the right spot."
+                );
             }
             else
             {
@@ -121,7 +125,8 @@ public class AstPlaceholder : AstGetSetImplBase
 
             if (index > MaxPlaceholderIndex)
                 throw new PrexoniteException(
-                    $"The placeholder (at {placeholder.Position.GetSourcePositionString()}) would be assigned an index that exceeds the maximum mappable index.");
+                    $"The placeholder (at {placeholder.Position.GetSourcePositionString()}) would be assigned an index that exceeds the maximum mappable index."
+                );
         }
     }
 
@@ -136,16 +141,11 @@ public class AstPlaceholder : AstGetSetImplBase
 
 public class PartialApplicationSyntaxNotSupportedException : PrexoniteException
 {
-    public PartialApplicationSyntaxNotSupportedException()
-    {
-    }
+    public PartialApplicationSyntaxNotSupportedException() { }
 
-    public PartialApplicationSyntaxNotSupportedException(string message) : base(message)
-    {
-    }
+    public PartialApplicationSyntaxNotSupportedException(string message)
+        : base(message) { }
 
     public PartialApplicationSyntaxNotSupportedException(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+        : base(message, inner) { }
 }

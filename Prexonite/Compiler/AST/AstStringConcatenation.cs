@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Text;
 
@@ -13,8 +11,7 @@ namespace Prexonite.Compiler.Ast;
 ///         This node get's created as a replacement for nodes created by <see cref = "IAstFactory.BinaryOperation" /> with string operands.
 ///     </para>
 /// </remarks>
-public class AstStringConcatenation : AstExpr,
-    IAstHasExpressions
+public class AstStringConcatenation : AstExpr, IAstHasExpressions
 {
     readonly AstGetSet _simpleConcatPrototype;
     readonly AstGetSet _multiConcatPrototype;
@@ -32,14 +29,19 @@ public class AstStringConcatenation : AstExpr,
     /// <param name="multiConcatPrototype">A prototype of the call that implements the multi-string concatenation (more than two operands).</param>
     /// <param name = "arguments">A list of expressions to be added to the <see cref = "_arguments" /> list.</param>
     [DebuggerNonUserCode]
-    public AstStringConcatenation(ISourcePosition position, AstGetSet simpleConcatPrototype, AstGetSet multiConcatPrototype, params AstExpr[] arguments)
+    public AstStringConcatenation(
+        ISourcePosition position,
+        AstGetSet simpleConcatPrototype,
+        AstGetSet multiConcatPrototype,
+        params AstExpr[] arguments
+    )
         : base(position)
     {
         if (simpleConcatPrototype == null)
             throw new ArgumentNullException(nameof(simpleConcatPrototype));
         if (multiConcatPrototype == null)
             throw new ArgumentNullException(nameof(multiConcatPrototype));
-            
+
         arguments ??= [];
 
         _arguments.AddRange(arguments);
@@ -113,8 +115,10 @@ public class AstStringConcatenation : AstExpr,
                 _arguments[0].EmitValueCode(target);
 
                 AstConstant? constant;
-                if ((constant = _arguments[0] as AstConstant) != null &&
-                    constant.Constant is not string)
+                if (
+                    (constant = _arguments[0] as AstConstant) != null
+                    && constant.Constant is not string
+                )
                     target.EmitGetCall(Position, 1, nameof(ToString));
             }
             else
@@ -124,7 +128,7 @@ public class AstStringConcatenation : AstExpr,
         }
         else if (_arguments.Count == 0)
         {
-            if(stackSemantics == StackSemantics.Value)
+            if (stackSemantics == StackSemantics.Value)
                 target.EmitConstant(Position, "");
         }
     }
@@ -136,11 +140,11 @@ public class AstStringConcatenation : AstExpr,
     /// </summary>
     /// <param name = "target">The context in which to perform the optimization.</param>
     /// <param name = "expr">A possible replacement for the called node.</param>
-    /// <returns>True, if <paramref name = "expr" /> contains a replacement for the called node. 
+    /// <returns>True, if <paramref name = "expr" /> contains a replacement for the called node.
     ///     False otherwise.</returns>
     /// <remarks>
     ///     <para>
-    ///         Note that <c>false</c> as the return value doesn't mean that the node cannot be 
+    ///         Note that <c>false</c> as the return value doesn't mean that the node cannot be
     ///         optimized. It just cannot be replaced by <paramref name = "expr" />.
     ///     </para>
     ///     <para>
@@ -154,9 +158,10 @@ public class AstStringConcatenation : AstExpr,
         AstConstant? collapsed;
         if (Arguments.Count == 1 && (collapsed = Arguments[0] as AstConstant) != null)
         {
-            expr = collapsed.Constant is string
-                ? collapsed
-                : new AstGetSetMemberAccess(File, Line, Column, collapsed, nameof(ToString));
+            expr =
+                collapsed.Constant is string
+                    ? collapsed
+                    : new AstGetSetMemberAccess(File, Line, Column, collapsed, nameof(ToString));
         }
         else
         {
@@ -168,15 +173,18 @@ public class AstStringConcatenation : AstExpr,
 
     internal void _OptimizeInternal(CompilerTarget target)
     {
-//Optimize arguments
+        //Optimize arguments
         foreach (var arg in _arguments.ToArray())
         {
             if (arg == null)
                 throw new PrexoniteException(
-                    "Invalid (null) argument in StringConcat node (" + ToString() +
-// ReSharper disable ConditionIsAlwaysTrueOrFalse
-                    ") detected.");
-// ReSharper restore ConditionIsAlwaysTrueOrFalse
+                    "Invalid (null) argument in StringConcat node ("
+                        + ToString()
+                        +
+                        // ReSharper disable ConditionIsAlwaysTrueOrFalse
+                        ") detected."
+                );
+            // ReSharper restore ConditionIsAlwaysTrueOrFalse
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
             {

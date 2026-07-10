@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections;
 
 namespace Prexonite.Types;
@@ -42,8 +40,9 @@ public abstract class PValueEnumerator : IEnumerator<PValue>, IObject
     /// <exception cref = "NotSupportedException">The base enumerator does not support resetting.</exception>
     public virtual void Reset()
     {
-        throw new NotSupportedException(GetType().Name +
-            " does not support System.Collections.IEnumerator.Reset()");
+        throw new NotSupportedException(
+            GetType().Name + " does not support System.Collections.IEnumerator.Reset()"
+        );
     }
 
     /// <summary>
@@ -63,8 +62,7 @@ public abstract class PValueEnumerator : IEnumerator<PValue>, IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;

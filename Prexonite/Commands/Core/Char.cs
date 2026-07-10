@@ -1,14 +1,10 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core;
 
 public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
 {
-    Char()
-    {
-    }
+    Char() { }
 
     public static Char Instance { get; } = new();
 
@@ -31,7 +27,7 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
         var arg = args[0];
         if (arg.Type == PType.String)
         {
-            var s = (string) arg.Value!;
+            var s = (string)arg.Value!;
             if (s.Length == 0)
                 throw new PrexoniteException("Cannot create char from empty string.");
             else
@@ -43,7 +39,7 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
         }
         else if (arg.TryConvertTo(sctx, PType.Int, true, out v))
         {
-            return (char) (int) v.Value!;
+            return (char)(int)v.Value!;
         }
         else
         {
@@ -70,8 +66,11 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
 
     public void ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion
@@ -80,13 +79,20 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
 
     bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
     {
-        return dynamicArgc == 0 && staticArgv.Length == 1 &&
-            (staticArgv[0].TryGetString(out var literal) && literal.Length > 0 ||
-                staticArgv[0].TryGetInt(out var code) && code >= 0);
+        return dynamicArgc == 0
+            && staticArgv.Length == 1
+            && (
+                staticArgv[0].TryGetString(out var literal) && literal.Length > 0
+                || staticArgv[0].TryGetInt(out var code) && code >= 0
+            );
     }
 
-    void ICilExtension.Implement(CompilerState state, Instruction ins,
-        CompileTimeValue[] staticArgv, int dynamicArgc)
+    void ICilExtension.Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         if (ins.JustEffect)
             return; // Usually for commands without side-effects you have to at least
@@ -97,7 +103,8 @@ public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
             code = literal[0];
         else if (!staticArgv[0].TryGetInt(out code))
             throw new ArgumentException(
-                "char command requires one argument that is either a string or a 32-bit integer with the most significant bit cleared.");
+                "char command requires one argument that is either a string or a 32-bit integer with the most significant bit cleared."
+            );
 
         state.EmitLdcI4(code);
         state.EmitWrapChar();

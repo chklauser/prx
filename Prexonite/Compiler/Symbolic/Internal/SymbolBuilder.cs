@@ -1,5 +1,3 @@
-﻿
-
 using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -60,16 +58,19 @@ sealed class SymbolBuilder : ICloneable
             _dereferenceCount--;
         }
 
-        if(_dereferenceCount < 0)
+        if (_dereferenceCount < 0)
         {
-            _prefix =
-                Symbol.CreateMessage(
-                    Message.Error(
-                        Resources.SymbolBuilder_TooManyArrows, _prefix.Position,
-                        MessageClasses.CannotCreateReference), _prefix);
+            _prefix = Symbol.CreateMessage(
+                Message.Error(
+                    Resources.SymbolBuilder_TooManyArrows,
+                    _prefix.Position,
+                    MessageClasses.CannotCreateReference
+                ),
+                _prefix
+            );
         }
 
-        while(_messages.Count > 0)
+        while (_messages.Count > 0)
             _prefix = Symbol.CreateMessage(_messages.Dequeue(), _prefix);
     }
 
@@ -80,11 +81,11 @@ sealed class SymbolBuilder : ICloneable
             symbol = null;
         else
         {
-            var entityRefSym = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
-            if(AutoDereferenceEnabled)
+            var entityRefSym = Symbol.CreateReference(Entity, NoSourcePosition.Instance);
+            if (AutoDereferenceEnabled)
             {
-                symbol = Entity.TryGetMacroCommand(out _) 
-                    ? Symbol.CreateExpand(entityRefSym) 
+                symbol = Entity.TryGetMacroCommand(out _)
+                    ? Symbol.CreateExpand(entityRefSym)
                     : Symbol.CreateDereference(entityRefSym);
             }
             else
@@ -105,7 +106,7 @@ sealed class SymbolBuilder : ICloneable
         else
         {
             return _prefix.HandleWith(ReplaceCoreNilHandler.Instance, symbol);
-        }  
+        }
     }
 
     #region Implementation of ICloneable
@@ -118,7 +119,12 @@ sealed class SymbolBuilder : ICloneable
     [PublicAPI]
     public SymbolBuilder Clone()
     {
-        var c = new SymbolBuilder {_dereferenceCount = _dereferenceCount, Entity = Entity, _prefix = _prefix};
+        var c = new SymbolBuilder
+        {
+            _dereferenceCount = _dereferenceCount,
+            Entity = Entity,
+            _prefix = _prefix,
+        };
         foreach (var message in _messages)
             c._messages.Enqueue(message);
         return c;

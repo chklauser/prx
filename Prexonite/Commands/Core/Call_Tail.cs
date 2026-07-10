@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Macro;
@@ -12,16 +10,13 @@ public sealed class Call_Tail : StackAwareCommand
 {
     #region Singleton
 
-    Call_Tail()
-    {
-    }
+    Call_Tail() { }
 
     public static Call_Tail Instance { get; } = new();
 
     #endregion
 
     public const string Alias = @"call\tail\perform";
-
 
     /// <summary>
     ///     Executes the command.
@@ -39,7 +34,7 @@ public sealed class Call_Tail : StackAwareCommand
 
         var iargs = make_tailcall(sctx, args);
 
-        return args[0].IndirectCall(sctx, [..iargs.AsReadOnly()]);
+        return args[0].IndirectCall(sctx, [.. iargs.AsReadOnly()]);
     }
 
     public override StackContext CreateStackContext(StackContext sctx, PValue[]? args)
@@ -65,7 +60,8 @@ public sealed class Call_Tail : StackAwareCommand
         if (node == null)
         {
             throw new PrexoniteException(
-                $"{Engine.Call_TailAlias} only works on the interpreted stack.");
+                $"{Engine.Call_TailAlias} only works on the interpreted stack."
+            );
         }
         stack.Remove(node);
         return iargs;
@@ -77,16 +73,15 @@ public sealed class Call_Tail : StackAwareCommand
 
     public class PartialTailCall : PartialCallWrapper
     {
-        protected PartialTailCall(string alias, string callImplementationId,
-            SymbolInterpretations callImplementetaionInterpretation)
-            : base(alias, EntityRef.Command.Create(Alias))
-        {
-        }
+        protected PartialTailCall(
+            string alias,
+            string callImplementationId,
+            SymbolInterpretations callImplementetaionInterpretation
+        )
+            : base(alias, EntityRef.Command.Create(Alias)) { }
 
         public PartialTailCall()
-            : this(Engine.Call_TailAlias, Alias, SymbolInterpretations.Command)
-        {
-        }
+            : this(Engine.Call_TailAlias, Alias, SymbolInterpretations.Command) { }
 
         protected override void DoExpand(MacroContext context)
         {
@@ -98,8 +93,10 @@ public sealed class Call_Tail : StackAwareCommand
         static void _specifyDeficiency(MacroContext context)
         {
             context.Function.Meta[PFunction.VolatileKey] = true;
-            if (!context.Function.Meta.TryGetValue(PFunction.DeficiencyKey, out var deficiency) ||
-                deficiency.Text == "")
+            if (
+                !context.Function.Meta.TryGetValue(PFunction.DeficiencyKey, out var deficiency)
+                || deficiency.Text == ""
+            )
                 context.Function.Meta[PFunction.DeficiencyKey] = $"Uses {Engine.Call_TailAlias}.";
         }
     }

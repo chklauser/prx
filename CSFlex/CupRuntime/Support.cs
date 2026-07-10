@@ -10,10 +10,10 @@ namespace java_cup;
 
 public class Support
 {
-	private static DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+    private static DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
-	public static long currentTimeMillis()
-	{
-		return (long)(DateTime.Now - epoch).TotalMilliseconds;
-	}
+    public static long currentTimeMillis()
+    {
+        return (long)(DateTime.Now - epoch).TotalMilliseconds;
+    }
 }

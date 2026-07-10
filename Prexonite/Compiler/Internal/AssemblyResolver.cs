@@ -9,8 +9,11 @@ sealed class AssemblyResolver : ICloneable
     readonly ConcurrentDictionary<AssemblyName, Assembly> _assemblies = new();
     readonly ConcurrentDictionary<string, Assembly> _cache = new();
 
-    public Assembly Resolve(string name) => TryResolve(name) ??
-        throw new PrexoniteException($"Could not resolve assembly by name '{name}'. Is it loaded?");
+    public Assembly Resolve(string name) =>
+        TryResolve(name)
+        ?? throw new PrexoniteException(
+            $"Could not resolve assembly by name '{name}'. Is it loaded?"
+        );
 
     public Assembly? TryResolve(string name)
     {
@@ -24,17 +27,26 @@ sealed class AssemblyResolver : ICloneable
         Assembly? resolvedAssembly = null;
         foreach (var assembly in _assemblies.Values)
         {
-            if (Engine.DefaultStringComparer.Equals(assembly.FullName, name)
-                || assembly.GetName() is var otherName &&
-                (Engine.DefaultStringComparer.Equals(otherName.Name, name)
-                    || Engine.DefaultStringComparer.Equals($"{otherName.Name},{otherName.Version}", name)))
+            if (
+                Engine.DefaultStringComparer.Equals(assembly.FullName, name)
+                || assembly.GetName() is var otherName
+                    && (
+                        Engine.DefaultStringComparer.Equals(otherName.Name, name)
+                        || Engine.DefaultStringComparer.Equals(
+                            $"{otherName.Name},{otherName.Version}",
+                            name
+                        )
+                    )
+            )
             {
                 resolvedAssembly = assembly;
                 break;
             }
         }
 
-        return resolvedAssembly == null ? resolvedAssembly : _cache.GetOrAdd(name, resolvedAssembly);
+        return resolvedAssembly == null
+            ? resolvedAssembly
+            : _cache.GetOrAdd(name, resolvedAssembly);
     }
 
     /// <summary>
@@ -94,6 +106,6 @@ sealed class AssemblyResolver : ICloneable
         // clone).
         return copy;
     }
-    
+
     object ICloneable.Clone() => Clone();
 }

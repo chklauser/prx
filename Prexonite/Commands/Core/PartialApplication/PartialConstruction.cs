@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 /// <summary>
@@ -23,8 +21,7 @@ public class PartialConstruction : PartialApplicationBase
 
     #region Overrides of PartialApplicationBase
 
-    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-        PValue[] arguments)
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments, PValue[] arguments)
     {
         return _type.Construct(sctx, arguments);
     }

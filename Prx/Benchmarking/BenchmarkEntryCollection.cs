@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections.ObjectModel;
 
@@ -8,9 +6,7 @@ namespace Prx.Benchmarking;
 public sealed class BenchmarkEntryCollection : KeyedCollection<string, BenchmarkEntry>
 {
     public BenchmarkEntryCollection()
-        : base(StringComparer.OrdinalIgnoreCase)
-    {
-    }
+        : base(StringComparer.OrdinalIgnoreCase) { }
 
     ///<summary>
     ///    When implemented in a derived class, extracts the key from the specified element.

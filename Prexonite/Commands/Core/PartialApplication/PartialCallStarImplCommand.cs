@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
@@ -8,9 +6,7 @@ public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
 
     public static PartialCallStarImplCommand Instance { get; } = new();
 
-    PartialCallStarImplCommand()
-    {
-    }
+    PartialCallStarImplCommand() { }
 
     #endregion
 
@@ -18,15 +14,19 @@ public class PartialCallStarImplCommand : PartialApplicationCommandBase<object>
 
     #region Overrides of PartialApplicationCommandBase<object>
 
-    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, object parameter)
+    protected override IIndirectCall CreatePartialApplication(
+        StackContext sctx,
+        int[] mappings,
+        PValue[] closedArguments,
+        object parameter
+    )
     {
         return new PartialCallStar(mappings, closedArguments);
     }
 
     protected override Type GetPartialCallRepresentationType(object parameter)
     {
-        return typeof (PartialCallStar);
+        return typeof(PartialCallStar);
     }
 
     #endregion

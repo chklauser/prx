@@ -1,24 +1,16 @@
-
-
 using Prexonite.Commands.Core;
 using Prexonite.Properties;
 using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstCoalescence : AstExpr,
-    IAstHasExpressions,
-    IAstPartiallyApplicable
+public class AstCoalescence : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
 {
     public AstCoalescence(string file, int line, int column)
-        : base(file, line, column)
-    {
-    }
+        : base(file, line, column) { }
 
     internal AstCoalescence(Parser p)
-        : base(p)
-    {
-    }
+        : base(p) { }
 
     #region IAstHasExpressions Members
 
@@ -40,8 +32,12 @@ public class AstCoalescence : AstExpr,
             var arg = Expressions[i];
             if (arg == null)
                 throw new PrexoniteException(
-                    "Invalid (null) argument in GetSet node (" + ToString() +
-                    ") detected at position " + Expressions.IndexOf(null!) + ".");
+                    "Invalid (null) argument in GetSet node ("
+                        + ToString()
+                        + ") detected at position "
+                        + Expressions.IndexOf(null!)
+                        + "."
+                );
             var oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
                 Expressions[i] = oArg;
@@ -70,8 +66,7 @@ public class AstCoalescence : AstExpr,
 
     static bool _exprIsNotNull(AstExpr iexpr)
     {
-        return !(iexpr is AstNull ||
-            iexpr is AstConstant && ((AstConstant) iexpr).Constant == null);
+        return !(iexpr is AstNull || iexpr is AstConstant && ((AstConstant)iexpr).Constant == null);
     }
 
     #endregion
@@ -108,19 +103,19 @@ public class AstCoalescence : AstExpr,
             StackSemantics needValue;
             if (stackSemantics == StackSemantics.Value || i < Expressions.Count - 1)
                 needValue = StackSemantics.Value;
-            else 
+            else
                 needValue = StackSemantics.Effect;
 
             expr.EmitCode(target, needValue);
 
-            //The last element doesn't need special handling, control just 
+            //The last element doesn't need special handling, control just
             //  falls into the surrounding code with the correct value on top of the stack
             if (i + 1 >= Expressions.Count)
                 continue;
 
-            if(stackSemantics == StackSemantics.Value)
+            if (stackSemantics == StackSemantics.Value)
                 target.EmitDuplicate(Position);
-            target.Emit(Position,OpCode.check_null);
+            target.Emit(Position, OpCode.check_null);
             target.EmitJumpIfFalse(Position, endLabel);
         }
     }
@@ -163,7 +158,7 @@ public class AstCoalescence : AstExpr,
                 {
                     //there is no placeholder at all, wrap expression in const
                     Debug.Assert(Expressions.All(e => !e.IsPlaceholder()));
-                    DoEmitCode(target,StackSemantics.Value);
+                    DoEmitCode(target, StackSemantics.Value);
                     target.EmitCommandCall(Position, 1, Const.Alias);
                     return;
                 }
@@ -177,23 +172,28 @@ public class AstCoalescence : AstExpr,
                 }
             }
 
-            if (!value.IsArgumentSplice()) continue;
+            if (!value.IsArgumentSplice())
+                continue;
             AstArgumentSplice.ReportNotSupported(value, target, StackSemantics.Value);
             return;
         }
 
         if (count == 1)
         {
-            Debug.Assert(Expressions[0].IsPlaceholder(),
-                "Singleton ??-chain expected to consist of placeholder.");
-            var placeholder = (AstPlaceholder) Expressions[0];
+            Debug.Assert(
+                Expressions[0].IsPlaceholder(),
+                "Singleton ??-chain expected to consist of placeholder."
+            );
+            var placeholder = (AstPlaceholder)Expressions[0];
             placeholder.IdFunc().EmitValueCode(target);
         }
         else
         {
-            Debug.Assert(Expressions[count - 1].IsPlaceholder(),
-                "Last expression in ??-chain expected to be placeholder.");
-            var placeholder = (AstPlaceholder) Expressions[count - 1];
+            Debug.Assert(
+                Expressions[count - 1].IsPlaceholder(),
+                "Last expression in ??-chain expected to be placeholder."
+            );
+            var placeholder = (AstPlaceholder)Expressions[count - 1];
             var prefix = new AstCoalescence(File, Line, Column);
             prefix.Expressions.AddRange(Expressions.Take(count - 1));
 
@@ -202,7 +202,7 @@ public class AstCoalescence : AstExpr,
             var endLabel = _generateEndLabel();
             prefix._emitCode(target, constLabel, StackSemantics.Value);
             target.EmitDuplicate(Position);
-            target.Emit(Position,OpCode.check_null);
+            target.Emit(Position, OpCode.check_null);
             target.EmitJumpIfFalse(Position, constLabel);
             //prefix is null, identity function
             target.EmitPop(Position);
@@ -220,6 +220,9 @@ public class AstCoalescence : AstExpr,
         target.Loader.ReportMessage(
             Message.Error(
                 Resources.AstCoalescence__reportInvalidPlaceholders,
-                Position, MessageClasses.OnlyLastOperandPartialInLazy));
+                Position,
+                MessageClasses.OnlyLastOperandPartialInLazy
+            )
+        );
     }
 }
