@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <DefineConstants>UseIndex</DefineConstants>
@@ -13,17 +13,8 @@
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
   </PropertyGroup>
 
-  <!-- CUSTOM TASKS -->
-  <PropertyGroup>
-    <!--<UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable> -->
-    <BuildDependsOn>
-      PrexoniteScanner;
-      $(BuildDependsOn);
-    </BuildDependsOn>
-    <ToolsDirectory>$(ProjectDir)../Tools</ToolsDirectory>
-    <PrexoniteScannerDefinition>Prexonite.lex</PrexoniteScannerDefinition>
-  </PropertyGroup>
   <ItemGroup>
+    <AdditionalFiles Include="Compiler\Prexonite.lex" CSFlexOutput="Prexonite.Compiler.Lexer.g.cs" />
     <AdditionalFiles Include="Compiler\Grammar\Header.atg" PxCocoGrammar="Prexonite" PxCocoOrder="10" />
     <AdditionalFiles Include="Compiler\Grammar\Scanner.atg" PxCocoGrammar="Prexonite" PxCocoOrder="20" />
     <AdditionalFiles Include="Compiler\Grammar\Parser*.atg" PxCocoGrammar="Prexonite" PxCocoOrder="30" />
@@ -31,6 +22,7 @@
     <AdditionalFiles Include="PTypeExpression.atg" PxCocoGrammar="PTypeExpression" PxCocoOrder="10" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="PxCocoGrammar" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="PxCocoOrder" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="CSFlexOutput" />
     <None Remove="prxlib\legacy_symbols.pxs" />
     <None Remove="prxlib\prx.core.pxs" />
     <None Remove="prxlib\prx.prim.pxs" />
@@ -41,11 +33,7 @@
     <EmbeddedResource Include="prxlib\prx.v1.prelude.pxs" />
     <EmbeddedResource Include="prxlib\prx.v2.prelude.pxs" />
     <EmbeddedResource Include="prxlib\sys.pxs" />
-    <None Remove="Compiler\Lexer.cs~" />
   </ItemGroup>
-  <Target Name="PrexoniteScanner" Outputs="$(ProjectDir)/Compiler/Lexer.cs" Inputs="$(ProjectDir)/Compiler/$(PrexoniteScannerDefinition)">
-    <Exec Command="&quot;../$(ToolsDirectory)/csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)/Compiler" />
-  </Target>
   
   <ItemGroup>
     <!-- Generate the Properties/Resources.Designer.cs file from the default translations in Resources.resx -->
@@ -62,6 +50,9 @@
 
   <!-- NUGET References -->
   <ItemGroup>
+    <ProjectReference Include="..\CSFlex\CSFlex.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\PxCoco\PxCoco.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

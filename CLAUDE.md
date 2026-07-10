@@ -30,7 +30,7 @@ dotnet test --filter "FullyQualifiedName~TestName"
 
 ## Compilation Pipeline
 
-1. **Lexical Analysis** (`Compiler/Lexer.cs`) - Generated from `Prexonite.lex` via CSFlex
+1. **Lexical Analysis** - Generated in memory from `Prexonite.lex` by the CSFlex source generator
 2. **Parsing** - Generated from `.atg` `AdditionalFiles` by the PxCoco source generator
 3. **AST Construction** (`Compiler/AST/`) - 50+ node types representing language constructs
 4. **Macro Expansion** (`Compiler/Macro/`) - Compile-time AST transformation (macros run during compilation)
@@ -119,7 +119,7 @@ Embedded scripts in `prxlib/`:
 
 - **Grammar Assembly**: `.atg` fragments are ordered and merged in memory by the PxCoco source generator
 - **Parser Generation**: PxCoco emits parser/scanner sources directly into the Roslyn compilation
-- **Lexer Generation**: CSFlex generates `Lexer.cs` from `Prexonite.lex`
+- **Lexer Generation**: the CSFlex source generator emits the lexer directly into the Roslyn compilation from `Prexonite.lex`
 - **Test fixture generation**: `PrexoniteTests.Generators` generates NUnit fixtures from the JSON test configurations
 
 # Meta-Programming Features
