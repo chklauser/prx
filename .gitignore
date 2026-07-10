@@ -87,7 +87,6 @@ Desktop.ini
 *.orig
 
 # Ignore generated files
-# TODO: implement cross-platform CSFlex (Prexonite\Compiler\Lexer.cs)
 PrexoniteTests/OldPrexoniteTests.csproj.xml
 Prexonite/Properties/Resources.Designer.cs
 

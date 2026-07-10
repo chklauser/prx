@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="CSFlex/CSFlex.csproj" />
   <Project Path="Prexonite/Prexonite.csproj" />
   <Project Path="PrexoniteTests/PrexoniteTests.csproj" />
   <Project Path="PrexoniteTests.Generators/PrexoniteTests.Generators.csproj" />
