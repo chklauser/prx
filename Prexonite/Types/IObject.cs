@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Types;
 
 public interface IObject
@@ -9,9 +7,8 @@ public interface IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     );
-    
+
     // TODO add backwards compat overload
 }

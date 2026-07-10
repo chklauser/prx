@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class Log : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Log()
-    {
-    }
+    Log() { }
 
     public static Log Instance { get; } = new();
 
@@ -50,14 +46,14 @@ public class Log : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(PValue arg0, PValue arg1, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
-        var b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value!;
+        var x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value!;
+        var b = (double)arg1.ConvertTo(sctx, PType.Real, true).Value!;
         return System.Math.Log(x, b);
     }
 
     public static PValue RunStatically(PValue arg0, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
+        var x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value!;
         return System.Math.Log(x);
     }
 
@@ -78,12 +74,15 @@ public class Log : PCommand, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    static readonly MethodInfo RunStaticallyNaturalMethod =
-        typeof (Log).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyNaturalMethod = typeof(Log).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(StackContext)]
+    )!;
 
-    static readonly MethodInfo RunStaticallyAnyMethod =
-        typeof (Log).GetMethod(nameof(RunStatically),
-            [typeof (PValue), typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyAnyMethod = typeof(Log).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(PValue), typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

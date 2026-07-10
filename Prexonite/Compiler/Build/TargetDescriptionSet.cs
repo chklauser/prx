@@ -1,19 +1,14 @@
-﻿
-
 using System.Collections;
 using System.Collections.Concurrent;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build;
 
-public sealed class TargetDescriptionSet 
-    : ICollection<ITargetDescription>
+public sealed class TargetDescriptionSet : ICollection<ITargetDescription>
 {
     readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new();
 
-    TargetDescriptionSet()
-    {
-    }
+    TargetDescriptionSet() { }
 
     public static TargetDescriptionSet Create()
     {
@@ -22,7 +17,7 @@ public sealed class TargetDescriptionSet
 
     public bool TryGetValue(ModuleName name, out ITargetDescription? description)
     {
-        if ((object) name == null)
+        if ((object)name == null)
             throw new ArgumentNullException(nameof(name));
         return _table.TryGetValue(name, out description);
     }
@@ -33,18 +28,22 @@ public sealed class TargetDescriptionSet
             throw new ArgumentNullException(nameof(oldDescription));
         if (newDescription == null)
             throw new ArgumentNullException(nameof(newDescription));
-        if(oldDescription.Name != newDescription.Name)
+        if (oldDescription.Name != newDescription.Name)
             throw new ArgumentException(
-                $"Cannot replace description for {oldDescription.Name} with a description for a different module ({newDescription.Name}).");
+                $"Cannot replace description for {oldDescription.Name} with a description for a different module ({newDescription.Name})."
+            );
         if (!_table.TryUpdate(oldDescription.Name, newDescription, oldDescription))
         {
             throw new PrexoniteException(
-                "Failed to update target description set. Probably due to concurrent modification.");
+                "Failed to update target description set. Probably due to concurrent modification."
+            );
         }
     }
 
-    public ITargetDescription GetOrAdd(ModuleName name,
-        Func<ModuleName, ITargetDescription> factory)
+    public ITargetDescription GetOrAdd(
+        ModuleName name,
+        Func<ModuleName, ITargetDescription> factory
+    )
     {
         return _table.GetOrAdd(name, factory);
     }
@@ -81,10 +80,12 @@ public sealed class TargetDescriptionSet
 
     public void Add(ITargetDescription? item)
     {
-        if(item == null)
+        if (item == null)
             throw new ArgumentNullException(nameof(item));
-        if(!_table.TryAdd(item.Name,item))
-            throw new ArgumentException($"A target description for this module name already exists: {item.Name}");
+        if (!_table.TryAdd(item.Name, item))
+            throw new ArgumentException(
+                $"A target description for this module name already exists: {item.Name}"
+            );
     }
 
     public void Clear()

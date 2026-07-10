@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using JetBrains.Annotations;
@@ -45,12 +43,16 @@ public abstract class Module : IHasMetaTable, IMetaFilter
     }
 
     [DebuggerStepThrough]
-    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(
+        KeyValuePair<string?, MetaEntry> item
+    )
     {
         return SetTransform(item);
     }
 
-    protected virtual KeyValuePair<string?, MetaEntry>? SetTransform(KeyValuePair<string?, MetaEntry> item)
+    protected virtual KeyValuePair<string?, MetaEntry>? SetTransform(
+        KeyValuePair<string?, MetaEntry> item
+    )
     {
         if (Engine.StringsAreEqual(item.Key, Application.NameKey))
             item = new(Application.IdKey, item.Value);
@@ -58,7 +60,7 @@ public abstract class Module : IHasMetaTable, IMetaFilter
             item = new(Application.ImportKey, item.Value);
         return item;
     }
-        
+
     #endregion
 
     public static Module Create(ModuleName moduleName)
@@ -72,8 +74,9 @@ public abstract class Module : IHasMetaTable, IMetaFilter
     {
         if (Functions.Contains(id))
             throw new PrexoniteException(
-                $"Cannot declare function with physical ID '{id}'. A function with that ID already exists in {Name}.");
-        var decl = FunctionDeclaration._Create(id,this);
+                $"Cannot declare function with physical ID '{id}'. A function with that ID already exists in {Name}."
+            );
+        var decl = FunctionDeclaration._Create(id, this);
         Functions.Add(decl);
         return decl;
     }
@@ -81,9 +84,8 @@ public abstract class Module : IHasMetaTable, IMetaFilter
 
 public class FunctionTable : KeyedCollection<string, FunctionDeclaration>
 {
-    public FunctionTable() : base(StringComparer.InvariantCultureIgnoreCase)
-    {
-    }
+    public FunctionTable()
+        : base(StringComparer.InvariantCultureIgnoreCase) { }
 
     protected override string GetKeyForItem(FunctionDeclaration item)
     {
@@ -99,7 +101,7 @@ public class FunctionTable : KeyedCollection<string, FunctionDeclaration>
     [PublicAPI]
     public bool TryGetFunction(string id, [NotNullWhen(true)] out FunctionDeclaration? declaration)
     {
-        if(Contains(id))
+        if (Contains(id))
         {
             declaration = this[id];
             return true;
@@ -126,7 +128,7 @@ class ModuleImpl : Module
     {
         if (name == null)
             throw new ArgumentNullException(nameof(name));
-            
+
         Name = name;
         var m = MetaTable.Create(this);
         m[Application.IdKey] = name.ToMetaEntry();
@@ -134,7 +136,7 @@ class ModuleImpl : Module
         _meta[Application.EntryKey] = Application.DefaultEntryFunction;
         _meta[Application.ImportKey] = Application.DefaultImport;
 
-        _functions.Add(FunctionDeclaration._Create(Application.InitializationId,this));
+        _functions.Add(FunctionDeclaration._Create(Application.InitializationId, this));
     }
 
     public override CentralCache Cache

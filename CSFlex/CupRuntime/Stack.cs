@@ -10,52 +10,52 @@ namespace java_cup;
 
 public class Stack
 {
-	private ArrayList back = new ArrayList();
+    private ArrayList back = new ArrayList();
 
-	public void push(object item)
-	{
-		back.Add(item);
-	}
+    public void push(object item)
+    {
+        back.Add(item);
+    }
 
-	public object pop()
-	{
-		try
-		{
-			return peek();
-		}
-		finally
-		{
-			back.RemoveAt(back.Count - 1);
-		}
-	}
+    public object pop()
+    {
+        try
+        {
+            return peek();
+        }
+        finally
+        {
+            back.RemoveAt(back.Count - 1);
+        }
+    }
 
-	public object peek()
-	{
-		return back[back.Count - 1];
-	}
+    public object peek()
+    {
+        return back[back.Count - 1];
+    }
 
-	public bool empty()
-	{
-		return back.Count == 0;
-	}
+    public bool empty()
+    {
+        return back.Count == 0;
+    }
 
-	public void clear()
-	{
-		back.Clear();
-	}
+    public void clear()
+    {
+        back.Clear();
+    }
 
-	public int size()
-	{
-		return back.Count;
-	}
+    public int size()
+    {
+        return back.Count;
+    }
 
-	public object elementAt(int idx)
-	{
-		return back[idx];
-	}
+    public object elementAt(int idx)
+    {
+        return back[idx];
+    }
 
-	public void setElementAt(object new_item, int idx)
-	{
-		back[idx] = new_item;
-	}
+    public void setElementAt(object new_item, int idx)
+    {
+        back[idx] = new_item;
+    }
 }

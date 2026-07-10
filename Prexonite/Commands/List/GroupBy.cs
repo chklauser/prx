@@ -1,11 +1,8 @@
-
-
 namespace Prexonite.Commands.List;
 
 public class GroupBy : CoroutineCommand
 {
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         if (args == null)
             throw new ArgumentNullException(nameof(args));
@@ -19,8 +16,7 @@ public class GroupBy : CoroutineCommand
 
         var sctx = sctxCarrier.StackContext;
 
-        var groups =
-            new Dictionary<PValue, List<PValue>>();
+        var groups = new Dictionary<PValue, List<PValue>>();
 
         for (var i = 1; i < args.Length; i++)
         {
@@ -44,10 +40,10 @@ public class GroupBy : CoroutineCommand
             }
         }
         // DO NO CONVERT TO LINQ, dereferencing of sctx MUST be delayed!
-        // ReSharper disable LoopCanBeConvertedToQuery 
+        // ReSharper disable LoopCanBeConvertedToQuery
         foreach (var pair in groups)
         {
-            yield return new PValueKeyValuePair(pair.Key, (PValue) pair.Value);
+            yield return new PValueKeyValuePair(pair.Key, (PValue)pair.Value);
         }
         // ReSharper restore LoopCanBeConvertedToQuery
     }

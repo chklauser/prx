@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\Prexonite\Prexonite.csproj" />
   </ItemGroup>
@@ -19,8 +18,10 @@
       <PropertyGroup>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
-        <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Linux'))">linux-x64</RuntimeIdentifier>
+        <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))"
+          >win-x64</RuntimeIdentifier>
+        <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Linux'))"
+          >linux-x64</RuntimeIdentifier>
         <!-- Ready to run makes a HUGE difference in terms of startup time. 
              Reduces startup time from ~820ms down to ~210ms.  -->
         <PublishReadyToRun>true</PublishReadyToRun>
@@ -50,7 +51,7 @@
     <Compile Remove="Properties/Resources.Designer.cs" />
     <Compile Include="Properties/Resources.Designer.cs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <None Remove="src\prx_interactive.pxs" />
     <None Remove="src\prx_lib.pxs" />
@@ -59,11 +60,9 @@
     <EmbeddedResource Include="src\prx_lib.pxs" LogicalName="prx_lib.pxs" />
     <EmbeddedResource Include="src\prx_main.pxs" LogicalName="prx_main.pxs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <None Include="psr\**\*.pxs" CopyToOutputDirectory="Always" />
     <None Include="samples\**\*.pxs" CopyToPublishDirectory="Always" />
   </ItemGroup>
-  
-
 </Project>

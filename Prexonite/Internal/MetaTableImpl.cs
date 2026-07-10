@@ -1,9 +1,7 @@
-
-
 namespace Prexonite.Internal;
 
 ///<summary>
-///    The Prexonite meta table is used to store information about <see cref = "Application" />s, 
+///    The Prexonite meta table is used to store information about <see cref = "Application" />s,
 ///    Functions (<see cref = "PFunction" />) and global variables (<see cref = "PVariable" />).
 ///</summary>
 ///[DebuggerStepThrough]
@@ -15,9 +13,8 @@ class MetaTableImpl : MetaTable
     ///     Creates a new meta table.
     /// </summary>
     /// <param name = "filter">An object that filters requests to the meta table.</param>
-    internal MetaTableImpl(IMetaFilter? filter) : this(filter, 7)
-    {
-    }
+    internal MetaTableImpl(IMetaFilter? filter)
+        : this(filter, 7) { }
 
     /// <summary>
     ///     Creates a new meta table.
@@ -62,7 +59,7 @@ class MetaTableImpl : MetaTable
 
     protected override void AddTransformed(string key, MetaEntry item)
     {
-        _table.Add(key,item);
+        _table.Add(key, item);
     }
 
     protected override bool ContainsTransformedKey(string key)
@@ -79,7 +76,10 @@ class MetaTableImpl : MetaTable
         _table[key] = entry;
     }
 
-    protected override bool TryGetValueTransformed(string key, [NotNullWhen(true)] out MetaEntry? entry)
+    protected override bool TryGetValueTransformed(
+        string key,
+        [NotNullWhen(true)] out MetaEntry? entry
+    )
     {
         return _table.TryGetValue(key, out entry);
     }

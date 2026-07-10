@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler;
 
 namespace Prexonite.Internal;

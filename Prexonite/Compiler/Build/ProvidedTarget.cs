@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Prexonite.Compiler.Build.Internal;
@@ -22,13 +20,15 @@ public class ProvidedTarget : ITargetDescription, ITarget
     string debuggerDisplay =>
         $"ProvidedTarget({Name}) {(IsSuccessful ? "successful" : "errors detected")}";
 
-    public ProvidedTarget(Module module,
+    public ProvidedTarget(
+        Module module,
         IEnumerable<ModuleName>? dependencies = null,
         IEnumerable<KeyValuePair<string, Symbol>>? symbols = null,
         IEnumerable<IResourceDescriptor>? resources = null,
         IEnumerable<Message>? messages = null,
         IEnumerable<Message>? buildMessages = null,
-        Exception? exception = null)
+        Exception? exception = null
+    )
     {
         Module = module;
         this.dependencies = new(module.Name);
@@ -45,26 +45,35 @@ public class ProvidedTarget : ITargetDescription, ITarget
         Exception = exception;
 
         if (messages != null)
-            this.messages = [..messages];
+            this.messages = [.. messages];
 
         if (buildMessages != null)
         {
             this.buildMessages = new List<Message>(buildMessages);
 
             if (this.messages == null)
-                this.messages = [..this.buildMessages];
+                this.messages = [.. this.buildMessages];
             else
                 this.messages.AddRange(this.buildMessages);
         }
 
-        IsSuccessful = exception == null &&
-            (this.messages == null || this.messages.All(m => m.Severity != MessageSeverity.Error));
+        IsSuccessful =
+            exception == null
+            && (
+                this.messages == null || this.messages.All(m => m.Severity != MessageSeverity.Error)
+            );
     }
 
     public ProvidedTarget(ITargetDescription description, ITarget result)
-        : this(result.Module, description.Dependencies, result.Symbols, result.Resources, result.Messages, description.BuildMessages, result.Exception)
-    {
-    }
+        : this(
+            result.Module,
+            description.Dependencies,
+            result.Symbols,
+            result.Resources,
+            result.Messages,
+            description.BuildMessages,
+            result.Exception
+        ) { }
 
     #region Implementation of ITargetDescription
 
@@ -72,8 +81,9 @@ public class ProvidedTarget : ITargetDescription, ITarget
 
     public Module Module { get; }
 
-    public IReadOnlyCollection<IResourceDescriptor> Resources => resources ??
-        (IReadOnlyCollection<IResourceDescriptor>)ImmutableArray<IResourceDescriptor>.Empty;
+    public IReadOnlyCollection<IResourceDescriptor> Resources =>
+        resources
+        ?? (IReadOnlyCollection<IResourceDescriptor>)ImmutableArray<IResourceDescriptor>.Empty;
 
     public SymbolStore Symbols { get; }
 
@@ -81,7 +91,11 @@ public class ProvidedTarget : ITargetDescription, ITarget
 
     public IReadOnlyList<Message> BuildMessages => buildMessages ?? DefaultModuleTarget.NoMessages;
 
-    public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
+    public Task<ITarget> BuildAsync(
+        IBuildEnvironment build,
+        IDictionary<ModuleName, Task<ITarget>> dependencies,
+        CancellationToken token
+    )
     {
         var tcs = new TaskCompletionSource<ITarget>();
         tcs.SetResult(this);
@@ -91,7 +105,8 @@ public class ProvidedTarget : ITargetDescription, ITarget
 
     #region Implementation of ITarget
 
-    public IReadOnlyCollection<Message> Messages => (IReadOnlyCollection<Message>?)messages ?? DefaultModuleTarget.NoMessages;
+    public IReadOnlyCollection<Message> Messages =>
+        (IReadOnlyCollection<Message>?)messages ?? DefaultModuleTarget.NoMessages;
 
     public Exception? Exception { get; }
 

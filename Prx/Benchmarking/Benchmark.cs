@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,32 +15,28 @@ public sealed class Benchmark : IObject
 
     public Engine Machine { get; set; }
 
-
     public int Iterations { get; }
 
     public Benchmark(StackContext sctx, int iterations)
-        : this(sctx.ParentEngine, iterations)
-    {
-    }
+        : this(sctx.ParentEngine, iterations) { }
 
     public Benchmark(Engine eng, int iterations)
     {
         if (iterations < 0)
             throw new ArgumentOutOfRangeException(
-                nameof(iterations), iterations, "iterations must be a positive integer.");
+                nameof(iterations),
+                iterations,
+                "iterations must be a positive integer."
+            );
         Iterations = iterations;
         Machine = eng ?? throw new ArgumentNullException(nameof(eng));
     }
 
     public Benchmark(Engine eng)
-        : this(eng, DefaultIterations)
-    {
-    }
+        : this(eng, DefaultIterations) { }
 
     public Benchmark(StackContext sctx)
-        : this(sctx.ParentEngine)
-    {
-    }
+        : this(sctx.ParentEngine) { }
 
     #endregion
 
@@ -108,8 +102,7 @@ public sealed class Benchmark : IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         if (sctx == null)
@@ -129,7 +122,7 @@ public sealed class Benchmark : IObject
                 {
                     if (arg.Type.ToBuiltIn() != PType.BuiltIn.List)
                         continue;
-                    foreach (var func in (List<PValue>) arg.Value!)
+                    foreach (var func in (List<PValue>)arg.Value!)
                         Include(func.ConvertTo<PFunction>(sctx));
                 }
                 result = PType.Null.CreatePValue();
@@ -144,7 +137,7 @@ public sealed class Benchmark : IObject
                 if (!(args.Length > 0 && args[0].TryConvertTo(sctx, out bool verbose)))
                     verbose = true;
                 var plst = MeasureAll(verbose).Select(sctx.CreateNativePValue).ToList();
-                result = (PValue) plst;
+                result = (PValue)plst;
                 break;
             case "warmup":
                 WarmUp();

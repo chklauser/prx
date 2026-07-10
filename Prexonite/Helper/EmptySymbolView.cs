@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 
 namespace Prexonite;
 
@@ -6,7 +6,8 @@ namespace Prexonite;
 /// An empty scope. Will never return elements.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class EmptySymbolView<T> : ISymbolView<T> where T: class
+public class EmptySymbolView<T> : ISymbolView<T>
+    where T : class
 {
     public IEnumerator<KeyValuePair<string, T>> GetEnumerator()
     {

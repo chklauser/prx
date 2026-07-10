@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Cil;
@@ -13,9 +11,7 @@ public class CallAsync : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    CallAsync()
-    {
-    }
+    CallAsync() { }
 
     public static CallAsync Instance { get; } = new();
 
@@ -45,7 +41,7 @@ public class CallAsync : PCommand, ICilCompilerAware
             PValue result;
             try
             {
-                result = args[0].IndirectCall(sctx, [..iargs]);
+                result = args[0].IndirectCall(sctx, [.. iargs]);
             }
             catch (Exception ex)
             {
@@ -63,10 +59,7 @@ public class CallAsync : PCommand, ICilCompilerAware
     public static Channel RunAsync(StackContext sctx, Func<PValue> comp)
     {
         var retChan = new Channel();
-        var T = new Thread(() => retChan.Send(comp()))
-        {
-            IsBackground = true,
-        };
+        var T = new Thread(() => retChan.Send(comp())) { IsBackground = true };
         T.Start();
         return retChan;
     }
@@ -82,16 +75,19 @@ public class CallAsync : PCommand, ICilCompilerAware
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion
 
     #region Partial application via call\star
 
-    public PartialCallWrapper Partial { [DebuggerStepThrough] get; } = new(
-        Engine.Call_AsyncAlias, EntityRef.Command.Create(Alias));
+    public PartialCallWrapper Partial { [DebuggerStepThrough] get; } =
+        new(Engine.Call_AsyncAlias, EntityRef.Command.Create(Alias));
 
     #endregion
 }

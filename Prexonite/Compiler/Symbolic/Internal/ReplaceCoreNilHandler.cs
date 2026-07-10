@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Symbolic.Internal;
 
 public class ReplaceCoreNilHandler : TransformHandler<Symbol>
@@ -8,9 +6,7 @@ public class ReplaceCoreNilHandler : TransformHandler<Symbol>
 
     public static ReplaceCoreNilHandler Instance { get; } = new();
 
-    ReplaceCoreNilHandler()
-    {
-    }
+    ReplaceCoreNilHandler() { }
 
     #endregion
 

@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class ForceCommand : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    ForceCommand()
-    {
-    }
+    ForceCommand() { }
 
     public static ForceCommand Instance { get; } = new();
 
@@ -60,8 +56,11 @@ public class ForceCommand : PCommand, ICilCompilerAware
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion

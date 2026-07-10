@@ -1,12 +1,13 @@
-
-
 namespace Prexonite;
 
 /// <summary>
 ///     Integrates suspendable .NET managed code into the Prexonite stack via the IEnumerator interface.
 /// </summary>
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Coroutine))]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = nameof(Coroutine)
+)]
 public sealed class CoroutineContext : StackContext, IDisposable
 {
     public override string ToString()
@@ -27,9 +28,7 @@ public sealed class CoroutineContext : StackContext, IDisposable
     }
 
     public CoroutineContext(StackContext sctx, IEnumerable<PValue> coroutine)
-        : this(sctx, coroutine.GetEnumerator())
-    {
-    }
+        : this(sctx, coroutine.GetEnumerator()) { }
 
     readonly IEnumerator<PValue> _coroutine;
 

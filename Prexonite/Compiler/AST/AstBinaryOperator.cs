@@ -1,4 +1,3 @@
-
 namespace Prexonite.Compiler.Ast;
 
 /// <summary>
@@ -14,6 +13,7 @@ public enum BinaryOperator
     ///     No operator, invalid in most contexts.
     /// </summary>
     None,
+
     //Binary operators with a direct equivalent in assembler code
 
     /// <summary>

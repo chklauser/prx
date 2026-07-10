@@ -1,5 +1,3 @@
-
-
 using System.Text;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class SetRightCommand : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    SetRightCommand()
-    {
-    }
+    SetRightCommand() { }
 
     public static SetRightCommand Instance { get; } = new();
 
@@ -36,7 +32,7 @@ public class SetRightCommand : PCommand, ICilCompilerAware
         }
         s = args[1].CallToString(sctx);
         parseW:
-        var w = (int) args[0].ConvertTo(sctx, PType.Int).Value!;
+        var w = (int)args[0].ConvertTo(sctx, PType.Int).Value!;
         if (args.Length > 2)
             f = args[2].CallToString(sctx);
         else

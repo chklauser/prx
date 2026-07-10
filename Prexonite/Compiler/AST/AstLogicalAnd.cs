@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast;
@@ -11,16 +9,12 @@ public class AstLogicalAnd : AstLazyLogical, IAstPartiallyApplicable
         int line,
         int col,
         AstExpr leftCondition,
-        AstExpr rightCondition)
-        : base(file, line, col, leftCondition, rightCondition)
-    {
-    }
+        AstExpr rightCondition
+    )
+        : base(file, line, col, leftCondition, rightCondition) { }
 
-    internal AstLogicalAnd(
-        Parser p, AstExpr leftCondition, AstExpr rightCondition)
-        : base(p, leftCondition, rightCondition)
-    {
-    }
+    internal AstLogicalAnd(Parser p, AstExpr leftCondition, AstExpr rightCondition)
+        : base(p, leftCondition, rightCondition) { }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
@@ -51,8 +45,7 @@ public class AstLogicalAnd : AstLazyLogical, IAstPartiallyApplicable
     }
 
     //Called by either AstLogicalAnd or AstLogicalOr
-    protected override void DoEmitCode(CompilerTarget target, string trueLabel,
-        string falseLabel)
+    protected override void DoEmitCode(CompilerTarget target, string trueLabel, string falseLabel)
     {
         var labelNs = @"And\" + Guid.NewGuid().ToString("N");
         var nextLabel = @"Next\" + labelNs;
@@ -77,8 +70,7 @@ public class AstLogicalAnd : AstLazyLogical, IAstPartiallyApplicable
 
     #region Partial application
 
-    protected override AstExpr CreatePrefix(ISourcePosition position,
-        IEnumerable<AstExpr> clauses)
+    protected override AstExpr CreatePrefix(ISourcePosition position, IEnumerable<AstExpr> clauses)
     {
         return CreateConjunction(position, clauses);
     }

@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 using System.Diagnostics;
@@ -17,23 +16,21 @@ public class FunctionContext : StackContext
 {
     #region Creation
 
-    public FunctionContext
-    (
+    public FunctionContext(
         Engine parentEngine,
         PFunction implementation,
         PValue[]? args,
-        PVariable[]? sharedVariables)
-        : this(parentEngine, implementation, args, sharedVariables, false)
-    {
-    }
+        PVariable[]? sharedVariables
+    )
+        : this(parentEngine, implementation, args, sharedVariables, false) { }
 
-    internal FunctionContext
-    (
+    internal FunctionContext(
         Engine parentEngine,
         PFunction implementation,
         PValue[]? args,
         PVariable[]? sharedVariables,
-        bool suppressInitialization)
+        bool suppressInitialization
+    )
     {
         if (parentEngine == null)
             throw new ArgumentNullException(nameof(parentEngine));
@@ -42,8 +39,7 @@ public class FunctionContext : StackContext
         sharedVariables ??= [];
         args ??= [];
 
-        if (
-            !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
+        if (!(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
             implementation.ParentApplication.EnsureInitialization(parentEngine);
 
         _parentEngine = parentEngine;
@@ -56,22 +52,24 @@ public class FunctionContext : StackContext
             var sharedNames = value.List;
             //Ensure enough shared variables have been passed
             if (sharedNames.Length > sharedVariables.Length)
-                throw new ArgumentException
-                (
-                    "The function " + Implementation.Id + " requires " +
-                    sharedNames.Length + " variables to be shared.");
-
+                throw new ArgumentException(
+                    "The function "
+                        + Implementation.Id
+                        + " requires "
+                        + sharedNames.Length
+                        + " variables to be shared."
+                );
 
             for (var i = 0; i < sharedNames.Length; i++)
             {
                 if (sharedVariables[i] == null)
-                    throw new ArgumentNullException
-                    (
+                    throw new ArgumentNullException(
                         nameof(sharedVariables),
-                        $"The element at index {i} passed in sharedVariables is null for function {implementation}.");
+                        $"The element at index {i} passed in sharedVariables is null for function {implementation}."
+                    );
 
                 if (LocalVariables.ContainsKey(sharedNames[i]))
-                    continue; //Arguments are redeclarations, that is not shared 
+                    continue; //Arguments are redeclarations, that is not shared
                 LocalVariables.Add(sharedNames[i], sharedVariables[i]);
             }
         }
@@ -79,25 +77,23 @@ public class FunctionContext : StackContext
         //Populate fast variable access array (call by index)
         _localVariableArray = new PVariable[LocalVariables.Count];
         foreach (var mapping in Implementation.LocalVariableMapping)
-            _localVariableArray[mapping.Value] = LocalVariables[mapping.Key] ??
-                throw new PrexoniteException("Local variable mapping references non-existent local variable '" +
-                    mapping.Key + "'.");
+            _localVariableArray[mapping.Value] =
+                LocalVariables[mapping.Key]
+                ?? throw new PrexoniteException(
+                    "Local variable mapping references non-existent local variable '"
+                        + mapping.Key
+                        + "'."
+                );
     }
 
     public FunctionContext(StackContext sctx, PFunction implementation, PValue[] args)
-        : this(sctx.ParentEngine, implementation, args)
-    {
-    }
+        : this(sctx.ParentEngine, implementation, args) { }
 
     public FunctionContext(Engine parentEngine, PFunction implementation, PValue[]? args)
-        : this(parentEngine, implementation, args, null)
-    {
-    }
+        : this(parentEngine, implementation, args, null) { }
 
     public FunctionContext(Engine parentEngine, PFunction implementation)
-        : this(parentEngine, implementation, null)
-    {
-    }
+        : this(parentEngine, implementation, null) { }
 
     void _bindArguments(PValue[] args)
     {
@@ -106,10 +102,7 @@ public class FunctionContext : StackContext
 
         if (Implementation.Variables.Contains(argVId))
         {
-            var argsV = new PVariable
-            {
-                Value = _parentEngine.CreateNativePValue(args),
-            };
+            var argsV = new PVariable { Value = _parentEngine.CreateNativePValue(args) };
             LocalVariables.Add(argVId, argsV);
         }
 
@@ -195,8 +188,10 @@ public class FunctionContext : StackContext
     [DebuggerStepThrough]
     public void Push(PValue? val)
     {
-        if(_stack.Count > 2000)
-            throw new PrexoniteInvalidStackException(message: $"Stack-overflow in Prexonite code: {this}");
+        if (_stack.Count > 2000)
+            throw new PrexoniteInvalidStackException(
+                message: $"Stack-overflow in Prexonite code: {this}"
+            );
 
         if (_useVirtualStackInstead)
             _useVirtualStackInstead = false;
@@ -224,10 +219,9 @@ public class FunctionContext : StackContext
 
     void _throwInvalidStackException(int argc)
     {
-        throw new PrexoniteInvalidStackException
-        (
-            "Code expects " + argc +
-            " values on the stack but finds " + _stack.Count);
+        throw new PrexoniteInvalidStackException(
+            "Code expects " + argc + " values on the stack but finds " + _stack.Count
+        );
     }
 
     [DebuggerNonUserCode]
@@ -264,7 +258,7 @@ public class FunctionContext : StackContext
     bool _useVirtualStackInstead;
 
     /// <summary>
-    ///     When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this 
+    ///     When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this
     ///     method to instruct the calling function context to use the result of the virtual machine stack successor instead. (The return value of the managed code is discarded)
     /// </summary>
     internal void _UseVirtualMachineStackInstead()
@@ -282,8 +276,8 @@ public class FunctionContext : StackContext
     bool _performNextCycle(StackContext? lastContext, bool needToReturn)
     {
         //Indicates whether or not control needs to be returned to the VM.
-        //  as long as no operation is performed on the stack, 
-        //  
+        //  as long as no operation is performed on the stack,
+        //
         var codeBase = Implementation.Code;
         var codeLength = codeBase.Count;
         do
@@ -306,7 +300,12 @@ public class FunctionContext : StackContext
             var ins = codeBase[Pointer++];
 
 #if Verbose
-            Console.Write("/* " + (_pointer-1).ToString(CultureInfo.InvariantCulture).PadLeft(4, '0') + " */ " + ins);
+            Console.Write(
+                "/* "
+                    + (_pointer - 1).ToString(CultureInfo.InvariantCulture).PadLeft(4, '0')
+                    + " */ "
+                    + ins
+            );
             PValue val;
 #endif
 
@@ -349,7 +348,7 @@ public class FunctionContext : StackContext
                     Push(argc);
                     break;
                 case OpCode.ldc_real:
-                    Push((double) ins.GenericArgument!);
+                    Push((double)ins.GenericArgument!);
                     break;
                 case OpCode.ldc_bool:
                     Push(argc != 0);
@@ -370,9 +369,9 @@ public class FunctionContext : StackContext
                     if (LocalVariables.TryGetValue(id!, out var variable))
                         Push(CreateNativePValue(variable));
                     else
-                        throw new PrexoniteException
-                        (
-                            $"Cannot load reference to local variable {id} in function {Implementation.Id}.");
+                        throw new PrexoniteException(
+                            $"Cannot load reference to local variable {id} in function {Implementation.Id}."
+                        );
                     break;
                 case OpCode.ldr_loci:
                     Push(CreateNativePValue(_localVariableArray[argc]));
@@ -382,26 +381,24 @@ public class FunctionContext : StackContext
                     if (targetApplication.Variables.TryGetValue(id!, out pvar))
                         Push(CreateNativePValue(pvar));
                     else
-                        throw new PrexoniteException
-                        (
-                            $"Cannot load reference to global variable {id} in application {targetApplication.Module.Name}.");
+                        throw new PrexoniteException(
+                            $"Cannot load reference to global variable {id} in application {targetApplication.Module.Name}."
+                        );
                     break;
                 case OpCode.ldr_func:
                     targetApplication = _getTargetApplication(moduleName);
                     if (targetApplication.Functions.TryGetValue(id!, out func))
                         Push(CreateNativePValue(func));
                     else
-                        throw new PrexoniteException
-                        (
-                            $"Cannot load reference to function {id} in application {targetApplication.Module.Name}.");
+                        throw new PrexoniteException(
+                            $"Cannot load reference to function {id} in application {targetApplication.Module.Name}."
+                        );
                     break;
                 case OpCode.ldr_cmd:
                     if (ParentEngine.Commands.Contains(id!))
                         Push(CreateNativePValue(ParentEngine.Commands[id!]));
                     else
-                        throw new PrexoniteException
-                        (
-                            $"Cannot load reference to command {id}.");
+                        throw new PrexoniteException($"Cannot load reference to command {id}.");
                     break;
                 case OpCode.ldr_app:
                     Push(CreateNativePValue(ParentApplication));
@@ -410,7 +407,7 @@ public class FunctionContext : StackContext
                     Push(CreateNativePValue(ParentEngine));
                     break;
                 case OpCode.ldr_type:
-                    if ((object?) t == null)
+                    if ((object?)t == null)
                     {
                         t = ConstructPType(id!);
                         ins.GenericArgument = t;
@@ -435,10 +432,13 @@ public class FunctionContext : StackContext
                 case OpCode.ldloc:
                     pvar = LocalVariables[id!];
                     if (pvar == null)
-                        throw new PrexoniteException
-                        (
-                            "The local variable " + id + " in function " + Implementation.Id +
-                            " does not exist.");
+                        throw new PrexoniteException(
+                            "The local variable "
+                                + id
+                                + " in function "
+                                + Implementation.Id
+                                + " does not exist."
+                        );
 #if Verbose
                     val = pvar.Value;
                     Console.Write("=" + _toDebug(val));
@@ -450,10 +450,13 @@ public class FunctionContext : StackContext
                 case OpCode.stloc:
                     pvar = LocalVariables[id!];
                     if (pvar == null)
-                        throw new PrexoniteException
-                        (
-                            "The local variable " + id + " in function " + Implementation.Id +
-                            " does not exist.");
+                        throw new PrexoniteException(
+                            "The local variable "
+                                + id
+                                + " in function "
+                                + Implementation.Id
+                                + " does not exist."
+                        );
 
                     pvar.Value = Pop();
                     break;
@@ -501,7 +504,7 @@ public class FunctionContext : StackContext
 
                 //CONSTRUCTION
                 case OpCode.newobj:
-                    if ((object?) t == null)
+                    if ((object?)t == null)
                     {
                         t = ConstructPType(id!);
                         ins.GenericArgument = t;
@@ -524,8 +527,11 @@ public class FunctionContext : StackContext
                     }
                     if (vars == null)
                     {
-                        var entries = func.Meta.TryGetValue(PFunction.SharedNamesKey, out var sharedNamesEntry) 
-                            ? sharedNamesEntry.List 
+                        var entries = func.Meta.TryGetValue(
+                            PFunction.SharedNamesKey,
+                            out var sharedNamesEntry
+                        )
+                            ? sharedNamesEntry.List
                             : [];
                         vars = new string[entries.Length];
                         for (var i = 0; i < entries.Length; i++)
@@ -534,9 +540,15 @@ public class FunctionContext : StackContext
                     }
                     var pvars = new PVariable[vars.Length];
                     for (var i = 0; i < pvars.Length; i++)
-                        pvars[i] = LocalVariables[vars[i]] ?? throw new PrexoniteException(
-                            "Closure references non-existing shared variable " + vars[i] + " in function " +
-                            Implementation.Id + ".");
+                        pvars[i] =
+                            LocalVariables[vars[i]]
+                            ?? throw new PrexoniteException(
+                                "Closure references non-existing shared variable "
+                                    + vars[i]
+                                    + " in function "
+                                    + Implementation.Id
+                                    + "."
+                            );
                     if (func.HasCilImplementation)
                     {
                         Push(CreateNativePValue(new CilClosure(func, pvars)));
@@ -562,22 +574,25 @@ public class FunctionContext : StackContext
                         if (routineobj is IStackAware routinesa)
                             corctx = routinesa.CreateStackContext(this, argv);
                         else
-                            corctx = (StackContext)
-                                (routine.DynamicCall
-                                (
-                                    this,
-                                    new[]
-                                    {
-                                        PType.Object.CreatePValue(ParentEngine),
-                                        PType.Object.CreatePValue(argv),
-                                    },
-                                    PCall.Get,
-                                    "CreateStackContext").Value ?? throw new PrexoniteException("Expected a StackContext from calling CreateStackContext"));
+                            corctx = (StackContext)(
+                                routine
+                                    .DynamicCall(
+                                        this,
+                                        new[]
+                                        {
+                                            PType.Object.CreatePValue(ParentEngine),
+                                            PType.Object.CreatePValue(argv),
+                                        },
+                                        PCall.Get,
+                                        "CreateStackContext"
+                                    )
+                                    .Value
+                                ?? throw new PrexoniteException(
+                                    "Expected a StackContext from calling CreateStackContext"
+                                )
+                            );
 
-                        Push
-                        (
-                            PType.Object[typeof (Coroutine)].CreatePValue(
-                                new Coroutine(corctx)));
+                        Push(PType.Object[typeof(Coroutine)].CreatePValue(new Coroutine(corctx)));
                     }
                     break;
 
@@ -592,8 +607,13 @@ public class FunctionContext : StackContext
                     pvar = LocalVariables[id!];
                     if (pvar == null)
                     {
-                        throw new PrexoniteException("incloc instructions references non-existent local variable " +
-                            id + " in function " + Implementation.Id + ".");
+                        throw new PrexoniteException(
+                            "incloc instructions references non-existent local variable "
+                                + id
+                                + " in function "
+                                + Implementation.Id
+                                + "."
+                        );
                     }
                     doIncrement:
                     pvar.Value = pvar.Value.Increment(this);
@@ -618,8 +638,13 @@ public class FunctionContext : StackContext
                     pvar = LocalVariables[id!];
                     if (pvar == null)
                     {
-                        throw new PrexoniteException("decloc instructions references non-existent local variable " +
-                            id + " in function " + Implementation.Id + ".");
+                        throw new PrexoniteException(
+                            "decloc instructions references non-existent local variable "
+                                + id
+                                + " in function "
+                                + Implementation.Id
+                                + "."
+                        );
                     }
                     doDecrement:
                     pvar.Value = pvar.Value.Decrement(this);
@@ -657,14 +682,14 @@ public class FunctionContext : StackContext
 
                 //TYPE CHECK
                 case OpCode.check_const:
-                    if ((object?) t == null)
+                    if ((object?)t == null)
                     {
                         t = ConstructPType(id!);
                         ins.GenericArgument = t;
                     }
                     goto check_type; //common code
                 case OpCode.check_arg:
-                    t = (PType) (Pop().Value ?? PType.Null);
+                    t = (PType)(Pop().Value ?? PType.Null);
                     check_type:
                     Push(Pop().Type.Equals(t));
                     break;
@@ -677,14 +702,14 @@ public class FunctionContext : StackContext
                 #region TYPE CAST
 
                 case OpCode.cast_const:
-                    if ((object?) t == null)
+                    if ((object?)t == null)
                     {
                         t = ConstructPType(id!);
                         ins.GenericArgument = t;
                     }
                     goto cast_type; //common code
                 case OpCode.cast_arg:
-                    t = (PType) (Pop().Value ?? PType.Null);
+                    t = (PType)(Pop().Value ?? PType.Null);
                     cast_type:
                     Push(Pop().ConvertTo(this, t, true));
                     break;
@@ -720,9 +745,9 @@ public class FunctionContext : StackContext
                     _fillArgs(argc, out argv);
                     idx = id!.LastIndexOf("::", StringComparison.InvariantCulture);
                     if (idx < 0)
-                        throw new PrexoniteException
-                        (
-                            "Invalid sget instruction. Does not specify a method.");
+                        throw new PrexoniteException(
+                            "Invalid sget instruction. Does not specify a method."
+                        );
                     needToReturn = true;
                     methodId = id[(idx + 2)..];
                     member = ins.GenericArgument as MemberInfo;
@@ -764,9 +789,9 @@ public class FunctionContext : StackContext
                     _fillArgs(argc, out argv);
                     idx = id!.LastIndexOf("::", StringComparison.InvariantCulture);
                     if (idx < 0)
-                        throw new PrexoniteException
-                        (
-                            "Invalid sget instruction. Does not specify a method.");
+                        throw new PrexoniteException(
+                            "Invalid sget instruction. Does not specify a method."
+                        );
                     needToReturn = true;
                     methodId = id[(idx + 2)..];
                     member = ins.GenericArgument as MemberInfo;
@@ -785,7 +810,7 @@ public class FunctionContext : StackContext
                         if (t is ObjectPType)
                         {
                             //Try to get a member info
-                            var objT = (ObjectPType) t;
+                            var objT = (ObjectPType)t;
                             objT.StaticCall(this, argv, PCall.Set, methodId, out member);
                             if (member != null)
                                 ins.GenericArgument = member;
@@ -809,8 +834,12 @@ public class FunctionContext : StackContext
                     _fillArgs(argc, out argv);
                     pvar = LocalVariables[id!];
                     if (pvar == null)
-                        throw new PrexoniteException("The local variable " + id +
-                            " resolved to null in function " + Implementation.Id);
+                        throw new PrexoniteException(
+                            "The local variable "
+                                + id
+                                + " resolved to null in function "
+                                + Implementation.Id
+                        );
                     left = pvar.Value;
 
 #if Verbose
@@ -822,20 +851,20 @@ public class FunctionContext : StackContext
 
                     //Perform indirect call
                     doIndloc:
-                {
-                    if (left.Value is IStackAware stackAware && left.Type is ObjectPType)
                     {
-                        _fetchReturnValue = !justEffect;
-                        ParentEngine.Stack.AddLast(stackAware.CreateStackContext(this, argv));
-                    }
-                    else
-                    {
-                        if (justEffect)
-                            left.IndirectCall(this, argv);
+                        if (left.Value is IStackAware stackAware && left.Type is ObjectPType)
+                        {
+                            _fetchReturnValue = !justEffect;
+                            ParentEngine.Stack.AddLast(stackAware.CreateStackContext(this, argv));
+                        }
                         else
-                            Push(left.IndirectCall(this, argv));
+                        {
+                            if (justEffect)
+                                left.IndirectCall(this, argv);
+                            else
+                                Push(left.IndirectCall(this, argv));
+                        }
                     }
-                }
 
                     needToReturn = true;
                     break;
@@ -873,7 +902,10 @@ public class FunctionContext : StackContext
                     left = Pop();
 
                     var stack = _parentEngine.Stack;
-                    stack.Remove(stack.FindLast(this) ?? throw new PrexoniteException("tail call executed off stack"));
+                    stack.Remove(
+                        stack.FindLast(this)
+                            ?? throw new PrexoniteException("tail call executed off stack")
+                    );
 
                     stack.AddLast(Call.CreateStackContext(this, left, argv));
                     return false;
@@ -886,8 +918,9 @@ public class FunctionContext : StackContext
                     _fillArgs(argc, out argv);
                     if (ParentEngine.CacheFunctions)
                     {
-                        func = ins.GenericArgument as PFunction ??
-                            _getTargetApplication(moduleName).Functions[id!];
+                        func =
+                            ins.GenericArgument as PFunction
+                            ?? _getTargetApplication(moduleName).Functions[id!];
                         ins.GenericArgument = func;
                     }
                     else
@@ -897,18 +930,17 @@ public class FunctionContext : StackContext
                     if (func == null)
                         throw physicalFunctionNotFoundException(id!, moduleName);
 #if NoCil
-                        FunctionContext fctx =
-                            new FunctionContext(
-                                ParentEngine, func, argv);
+                    FunctionContext fctx = new FunctionContext(ParentEngine, func, argv);
 
-                        _fetchReturnValue = !justEffect;
-                        ParentEngine.Stack.AddLast(fctx);
+                    _fetchReturnValue = !justEffect;
+                    ParentEngine.Stack.AddLast(fctx);
 #else
-                    if (func.CilImplementation is {} cilImplementation)
+                    if (func.CilImplementation is { } cilImplementation)
                     {
-                        var callCtx = ParentApplication == func.ParentApplication 
-                            ? this 
-                            : (StackContext) CilFunctionContext.New(this, func);
+                        var callCtx =
+                            ParentApplication == func.ParentApplication
+                                ? this
+                                : (StackContext)CilFunctionContext.New(this, func);
                         cilImplementation(func, callCtx, argv, null, out left, out var returnMode);
                         ReturnMode = returnMode;
                         if (!justEffect)
@@ -916,10 +948,7 @@ public class FunctionContext : StackContext
                     }
                     else
                     {
-                        var fctx =
-                            new FunctionContext
-                            (
-                                ParentEngine, func, argv);
+                        var fctx = new FunctionContext(ParentEngine, func, argv);
 
                         _fetchReturnValue = !justEffect;
                         ParentEngine.Stack.AddLast(fctx);
@@ -927,7 +956,12 @@ public class FunctionContext : StackContext
 #endif
 
 #if Verbose
-                    Console.Write("\n#PSH: {0}/{1},{2}(", id, ParentApplication.Module.Name.Id, ParentApplication.Module.Name.Version);
+                    Console.Write(
+                        "\n#PSH: {0}/{1},{2}(",
+                        id,
+                        ParentApplication.Module.Name.Id,
+                        ParentApplication.Module.Name.Version
+                    );
                     foreach (PValue arg in argv)
                         Console.Write(_toDebug(arg) + ", ");
                     Console.WriteLine(")");
@@ -987,7 +1021,7 @@ public class FunctionContext : StackContext
                     left = Pop();
                     if (left.Value is not bool)
                         left = left.ConvertTo(this, PType.Bool);
-                    if ((bool) left.Value!)
+                    if ((bool)left.Value!)
                     {
                         Pointer = argc;
 #if Verbose
@@ -999,7 +1033,7 @@ public class FunctionContext : StackContext
                     left = Pop();
                     if (left.Value is not bool)
                         left = left.ConvertTo(this, PType.Bool);
-                    if (!(bool) left.Value!)
+                    if (!(bool)left.Value!)
                     {
 #if Verbose
                         Console.Write(" -> jump");
@@ -1053,22 +1087,21 @@ public class FunctionContext : StackContext
                     t = left.Type;
                     PrexoniteRuntimeException prexc;
                     if (t is StringPType)
-                        prexc =
-                            PrexoniteRuntimeException.CreateRuntimeException
-                            (
-                                this, (string) left.Value!);
+                        prexc = PrexoniteRuntimeException.CreateRuntimeException(
+                            this,
+                            (string)left.Value!
+                        );
                     else if (t is ObjectPType && left.Value is Exception)
-                        prexc =
-                            PrexoniteRuntimeException.CreateRuntimeException
-                            (
-                                this,
-                                ((Exception) left.Value).Message,
-                                (Exception) left.Value);
+                        prexc = PrexoniteRuntimeException.CreateRuntimeException(
+                            this,
+                            ((Exception)left.Value).Message,
+                            (Exception)left.Value
+                        );
                     else
-                        prexc =
-                            PrexoniteRuntimeException.CreateRuntimeException
-                            (
-                                this, left.CallToString(this));
+                        prexc = PrexoniteRuntimeException.CreateRuntimeException(
+                            this,
+                            left.CallToString(this)
+                        );
 #if Verbose
                     Console.WriteLine();
 #endif
@@ -1086,7 +1119,8 @@ public class FunctionContext : StackContext
                     if (_isHandlingException.Count == 0)
                     {
                         throw new PrexoniteException(
-                            "Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
+                            "Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside."
+                        );
                     }
                     else if (!_isHandlingException.Pop())
                     {
@@ -1098,19 +1132,32 @@ public class FunctionContext : StackContext
                     }
                     else
                     {
-                        if (_currentTry?.HasCatch ?? throw PrexoniteRuntimeException.CreateRuntimeException(this, "leave instruction outside of try block"))
+                        if (
+                            _currentTry?.HasCatch
+                            ?? throw PrexoniteRuntimeException.CreateRuntimeException(
+                                this,
+                                "leave instruction outside of try block"
+                            )
+                        )
                         {
                             //Exception handled by user code
 #if Verbose
 
-                                Console.Write(" => execute catch({0}:{1})", 
-                                    _currentException.GetType().Name, _currentException.Message);
+                            Console.Write(
+                                " => execute catch({0}:{1})",
+                                _currentException.GetType().Name,
+                                _currentException.Message
+                            );
 #endif
                         }
                         else
                         {
                             //Rethrow exception
-                            throw _currentException ?? throw PrexoniteRuntimeException.CreateRuntimeException(this, "leave instruction outside of try block");
+                            throw _currentException
+                                ?? throw PrexoniteRuntimeException.CreateRuntimeException(
+                                    this,
+                                    "leave instruction outside of try block"
+                                );
                         }
                     }
 
@@ -1143,11 +1190,11 @@ public class FunctionContext : StackContext
                         Push(left);
                     break;
                 case OpCode.rot:
-                    var values = (int) ins.GenericArgument!;
+                    var values = (int)ins.GenericArgument!;
                     var rotations = argc;
                     var target = new PValue[values];
                     for (var i = 0; i < values; i++)
-                        target[(i + rotations)%values] = Pop();
+                        target[(i + rotations) % values] = Pop();
                     for (var i = values - 1; i >= 0; i--)
                         Push(target[i]);
                     break;
@@ -1170,7 +1217,12 @@ public class FunctionContext : StackContext
 
     PrexoniteRuntimeException physicalFunctionNotFoundException(string id, ModuleName? moduleName)
     {
-        return PrexoniteRuntimeException.CreateRuntimeException(this, "No function with the physical name " + id + (moduleName == null ? " exists." : $" exists in module {moduleName}."));
+        return PrexoniteRuntimeException.CreateRuntimeException(
+            this,
+            "No function with the physical name "
+                + id
+                + (moduleName == null ? " exists." : $" exists in module {moduleName}.")
+        );
     }
 
     Application _getTargetApplication(ModuleName? moduleName)
@@ -1189,15 +1241,14 @@ public class FunctionContext : StackContext
 
     Exception _moduleNotFoundException(ModuleName moduleName)
     {
-        return
-            new PrexoniteException(
-                $"Cannot find an instance of the module {moduleName} in compound with module {ParentApplication.Module.Name}.");
+        return new PrexoniteException(
+            $"Cannot find an instance of the module {moduleName} in compound with module {ParentApplication.Module.Name}."
+        );
     }
 
     PrexoniteException _globalVariableDoesNotExistException(string id)
     {
-        return new(
-            "The global variable " + id + " does not exist.");
+        return new("The global variable " + id + " does not exist.");
     }
 
     #region Exception Handling
@@ -1220,8 +1271,7 @@ public class FunctionContext : StackContext
         //Pointer has already been incremented.
         var address = Pointer - 1;
 
-        var block =
-            TryCatchFinallyBlock.Closest(address, Implementation.TryCatchFinallyBlocks);
+        var block = TryCatchFinallyBlock.Closest(address, Implementation.TryCatchFinallyBlocks);
 
         if (block == null) //No try-catch-finally block handles exceptions at the given address.
             return false;
@@ -1231,7 +1281,7 @@ public class FunctionContext : StackContext
         if (block.HasFinally)
         {
 #if Verbose
-                Console.WriteLine("Exception handled by finally-catch. " + block);
+            Console.WriteLine("Exception handled by finally-catch. " + block);
 #endif
             _isHandlingException.Pop();
             _isHandlingException.Push(true);
@@ -1241,7 +1291,7 @@ public class FunctionContext : StackContext
         else if (block.HasCatch)
         {
 #if Verbose
-                Console.WriteLine("Exception handled by catch." + block);
+            Console.WriteLine("Exception handled by catch." + block);
 #endif
             Pointer = block.BeginCatch;
         }
@@ -1263,17 +1313,11 @@ public class FunctionContext : StackContext
 [DebuggerNonUserCode]
 public class PrexoniteInvalidStackException : PrexoniteException
 {
-    public PrexoniteInvalidStackException()
-    {
-    }
+    public PrexoniteInvalidStackException() { }
 
     public PrexoniteInvalidStackException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     public PrexoniteInvalidStackException(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+        : base(message, inner) { }
 }

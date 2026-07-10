@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -12,9 +10,7 @@ public class Contains : PCommand, ICilCompilerAware
 
     public static Contains Instance { get; } = new();
 
-    Contains()
-    {
-    }
+    Contains() { }
 
     #endregion
 
@@ -42,8 +38,11 @@ public class Contains : PCommand, ICilCompilerAware
             if (set != null)
                 foreach (var value in set)
                 {
-                    if (value.Equality(sctx, needle, out var result) &&
-                        result.TryConvertTo(sctx, true, out bool boolResult) && boolResult)
+                    if (
+                        value.Equality(sctx, needle, out var result)
+                        && result.TryConvertTo(sctx, true, out bool boolResult)
+                        && boolResult
+                    )
                         return result;
                 }
         }
@@ -58,7 +57,10 @@ public class Contains : PCommand, ICilCompilerAware
 
     public void ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 }

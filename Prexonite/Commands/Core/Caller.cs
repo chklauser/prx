@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -11,9 +9,7 @@ namespace Prexonite.Commands.Core;
 /// </summary>
 public sealed class Caller : PCommand, ICilCompilerAware
 {
-    Caller()
-    {
-    }
+    Caller() { }
 
     public static Caller Instance { get; } = new();
 
@@ -50,8 +46,11 @@ public sealed class Caller : PCommand, ICilCompilerAware
         }
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil"
+    )]
     public static PValue GetCallerFromCilFunction(StackContext sctx)
     {
         var stack = sctx.ParentEngine.Stack;
@@ -61,8 +60,10 @@ public sealed class Caller : PCommand, ICilCompilerAware
             return sctx.CreateNativePValue(stack.Last!.Value);
     }
 
-    static readonly MethodInfo GetCallerFromCilFunctionMethod =
-        typeof (Caller).GetMethod(nameof(GetCallerFromCilFunction), [typeof (StackContext)])!;
+    static readonly MethodInfo GetCallerFromCilFunctionMethod = typeof(Caller).GetMethod(
+        nameof(GetCallerFromCilFunction),
+        [typeof(StackContext)]
+    )!;
 
     #region ICilCompilerAware Members
 

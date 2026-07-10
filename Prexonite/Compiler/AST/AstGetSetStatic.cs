@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast;
@@ -10,7 +8,11 @@ public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
 
     [DebuggerStepThrough]
     public AstGetSetStatic(
-        ISourcePosition position, PCall call, AstTypeExpr typeExpr, string memberId)
+        ISourcePosition position,
+        PCall call,
+        AstTypeExpr typeExpr,
+        string memberId
+    )
         : base(position, call)
     {
         TypeExpr = typeExpr ?? throw new ArgumentNullException(nameof(typeExpr));
@@ -19,15 +21,13 @@ public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
 
     [DebuggerStepThrough]
     internal AstGetSetStatic(Parser p, PCall call, AstTypeExpr typeExpr, string memberId)
-        : this(p.GetPosition(), call, typeExpr, memberId)
-    {
-    }
+        : this(p.GetPosition(), call, typeExpr, memberId) { }
 
     public string MemberId { get; }
 
     public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
-        TypeExpr = (AstTypeExpr) _GetOptimizedNode(target, TypeExpr);
+        TypeExpr = (AstTypeExpr)_GetOptimizedNode(target, TypeExpr);
         return base.TryOptimize(target, out expr);
     }
 
@@ -39,17 +39,27 @@ public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
         if (constType != null)
         {
             EmitArguments(target);
-            target.EmitStaticGetCall(Position, Arguments.Count, constType.TypeExpression, MemberId, justEffect);
+            target.EmitStaticGetCall(
+                Position,
+                Arguments.Count,
+                constType.TypeExpression,
+                MemberId,
+                justEffect
+            );
         }
         else
         {
             TypeExpr.EmitValueCode(target);
             target.EmitConstant(Position, MemberId);
             EmitArguments(target);
-            target.EmitGetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
+            target.EmitGetCall(
+                Position,
+                Arguments.Count + 1,
+                PType.StaticCallFromStackId,
+                justEffect
+            );
         }
     }
-
 
     /// <summary>
     /// Warning: cannot handle set-expressions, use <see cref="EmitSetCode(Prexonite.Compiler.CompilerTarget,Prexonite.Compiler.Ast.StackSemantics)"/> instead.
@@ -67,7 +77,11 @@ public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
         if (constType != null)
         {
             EmitArguments(target, !justEffect, 0);
-            target.EmitStaticSetCall(Position, Arguments.Count, constType.TypeExpression + "::" + MemberId);
+            target.EmitStaticSetCall(
+                Position,
+                Arguments.Count,
+                constType.TypeExpression + "::" + MemberId
+            );
         }
         else
         {
@@ -103,14 +117,14 @@ public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
             target.EmitConstant(constTypeExpr.Position, constTypeExpr.TypeExpression);
         else
             TypeExpr.EmitValueCode(target);
-        target.EmitConstant(Position, (int) Call);
+        target.EmitConstant(Position, (int)Call);
         target.EmitConstant(Position, MemberId);
         target.EmitCommandCall(Position, ctorArgc + 3, Engine.PartialStaticCallAlias);
     }
 
     public override string ToString()
     {
-        var name = Enum.GetName(typeof (PCall), Call);
+        var name = Enum.GetName(typeof(PCall), Call);
         return $"{name?.ToLowerInvariant() ?? "-"} {TypeExpr}::{MemberId}({Arguments})";
     }
 }

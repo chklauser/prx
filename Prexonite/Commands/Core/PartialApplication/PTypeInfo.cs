@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 /// <summary>
@@ -22,6 +20,7 @@ public abstract record RuntimePTypeInfo<TSelf> : IRuntimePTypeInfo<TSelf>
     where TSelf : IRuntimePTypeInfo<TSelf>, new()
 {
     public PType Type { get; init; } = null!;
+
     public static TSelf Create(PType type) => new() { Type = type };
 }
 
@@ -31,6 +30,7 @@ public abstract record CompileTimePTypeInfo<TSelf> : ICompileTimePType<TSelf>
     where TSelf : ICompileTimePType<TSelf>, new()
 {
     public string Expr { get; init; } = null!;
+
     public static TSelf Create(string expr) => new() { Expr = expr };
 }
 
@@ -45,8 +45,8 @@ public interface IRuntimePTypeInfo<TSelf>
 }
 
 [SuppressMessage("ReSharper", "TypeParameterCanBeVariant", Justification = "Self")]
-public interface ICompileTimePType<TSelf> 
-where TSelf : ICompileTimePType<TSelf>
+public interface ICompileTimePType<TSelf>
+    where TSelf : ICompileTimePType<TSelf>
 {
     string Expr { get; init; }
     static abstract TSelf Create(string expr);

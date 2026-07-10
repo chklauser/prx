@@ -1,5 +1,3 @@
-
-
 using System.ComponentModel;
 using System.Diagnostics;
 using JetBrains.Annotations;
@@ -11,13 +9,11 @@ using Prexonite.Properties;
 namespace Prexonite;
 
 /// <summary>
-///     An application can be compared to an assembly in the .NET framework. 
-///     It holds functions and variables together, provides a <see cref = "MetaTable" /> and 
+///     An application can be compared to an assembly in the .NET framework.
+///     It holds functions and variables together, provides a <see cref = "MetaTable" /> and
 ///     manages the initialization of global variables.
 /// </summary>
-public class Application : IMetaFilter,
-    IHasMetaTable,
-    IIndirectCall
+public class Application : IMetaFilter, IHasMetaTable, IIndirectCall
 {
     #region Meta Keys
 
@@ -54,7 +50,7 @@ public class Application : IMetaFilter,
     /// <summary>
     ///     Meta table key used for storing initialization generation.
     /// </summary>
-    [Obsolete("Prexonite always completes partial initialization. This key has no effect.")] 
+    [Obsolete("Prexonite always completes partial initialization. This key has no effect.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public const string InitializationGeneration = InitializationId;
 
@@ -64,9 +60,10 @@ public class Application : IMetaFilter,
     /// </summary>
     [Obsolete("Prexonite no longer stores the initialization offset in a meta table.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-// ReSharper disable UnusedMember.Global
+    // ReSharper disable UnusedMember.Global
     public const string InitializationOffset = InitializationId;
-// ReSharper restore UnusedMember.Global
+
+    // ReSharper restore UnusedMember.Global
 
     /// <summary>
     ///     Meta table key used as an alias for <see cref = "Application.IdKey" />
@@ -86,17 +83,14 @@ public class Application : IMetaFilter,
     /// </summary>
     [DebuggerStepThrough]
     public Application()
-        : this("A\\" + Guid.NewGuid().ToString("N"))
-    {
-    }
+        : this("A\\" + Guid.NewGuid().ToString("N")) { }
 
     /// <summary>
     ///     Creates a new application with a given Id.
     /// </summary>
     /// <param name = "id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
-    public Application(string id) : this(Module.Create(new(id,new())))
-    {
-    }
+    public Application(string id)
+        : this(Module.Create(new(id, new()))) { }
 
     public Application(Module module)
     {
@@ -110,9 +104,11 @@ public class Application : IMetaFilter,
         foreach (var funDecl in Module.Functions)
             Functions.Add(new(this, funDecl));
 
-        _InitializationFunction = Functions[InitializationId] ??
-            throw new PrexoniteException(
-                $"Instantiating module {Module.Name} did not result in an instantiated initialization function.");
+        _InitializationFunction =
+            Functions[InitializationId]
+            ?? throw new PrexoniteException(
+                $"Instantiating module {Module.Name} did not result in an instantiated initialization function."
+            );
     }
 
     #endregion
@@ -128,7 +124,11 @@ public class Application : IMetaFilter,
 
     #region Functions
 
-    public bool TryGetFunction(string id, ModuleName? moduleName, [NotNullWhen(true)] out PFunction? func)
+    public bool TryGetFunction(
+        string id,
+        ModuleName? moduleName,
+        [NotNullWhen(true)] out PFunction? func
+    )
     {
         var app = this;
         if (moduleName != null && moduleName != Module.Name)
@@ -197,7 +197,8 @@ public class Application : IMetaFilter,
     ///      cref = "EnsureInitialization(Prexonite.Engine)" />.
     /// </summary>
     /// <value>A <see cref = "ApplicationInitializationState" /> that indicates the initialization state the application is currently in.</value>
-    public ApplicationInitializationState InitializationState { get; internal set; } = ApplicationInitializationState.None;
+    public ApplicationInitializationState InitializationState { get; internal set; } =
+        ApplicationInitializationState.None;
 
     /// <summary>
     ///     Provides access to the initialization function.
@@ -236,7 +237,7 @@ public class Application : IMetaFilter,
     ///                 </item>
     ///                 <item>
     ///                     <term><see cref = "ApplicationInitializationState.Partial" /></term>
-    ///                     <description>The method checks if the initialization code for <paramref name = "context" /> has already run. 
+    ///                     <description>The method checks if the initialization code for <paramref name = "context" /> has already run.
     ///                         <br />Initialization is only required if that is not the case.</description>
     ///                 </item>
     ///                 <item>
@@ -290,19 +291,17 @@ public class Application : IMetaFilter,
                 try
                 {
                     _SuppressInitialization = true;
-                    var fctx =
-                        _InitializationFunction.CreateFunctionContext
-                        (
-                            targetEngine,
-                            [], // \init has no arguments
-                            [], // \init is not a closure
-                            true // don't initialize. That's what WE are trying to do here.
-                        );
+                    var fctx = _InitializationFunction.CreateFunctionContext(
+                        targetEngine,
+                        [], // \init has no arguments
+                        [], // \init is not a closure
+                        true // don't initialize. That's what WE are trying to do here.
+                    );
 
-                    //Find offset at which to continue initialization. 
+                    //Find offset at which to continue initialization.
                     fctx.Pointer = _initializationOffset;
 #if Verbose
-                        Console.WriteLine("#Initialization (offset = {0}).", _initializationOffset);
+                    Console.WriteLine("#Initialization (offset = {0}).", _initializationOffset);
 #endif
 
                     //Execute the part of the initialize function that is missing
@@ -326,8 +325,7 @@ public class Application : IMetaFilter,
             case ApplicationInitializationState.Complete:
                 break;
             default:
-                throw new PrexoniteException(
-                    "Invalid InitializationState " + InitializationState);
+                throw new PrexoniteException("Invalid InitializationState " + InitializationState);
         }
     }
 
@@ -347,7 +345,8 @@ public class Application : IMetaFilter,
         string entryName = Meta[EntryKey];
         if (!Functions.TryGetValue(entryName, out var func))
             throw new PrexoniteException(
-                "Cannot find an entry function named \"" + entryName + "\"");
+                "Cannot find an entry function named \"" + entryName + "\""
+            );
 
         //Make sure the functions environment is initialized.
         EnsureInitialization(parentEngine);
@@ -394,7 +393,7 @@ public class Application : IMetaFilter,
     public void StoreInFile(string path)
     {
         //Create a crippled engine for this process
-        var eng = new Engine {ExecutionProhibited = true};
+        var eng = new Engine { ExecutionProhibited = true };
         var ldr = new Loader(eng, this);
         ldr.StoreInFile(path);
     }
@@ -450,7 +449,7 @@ public class Application : IMetaFilter,
     public void Store(TextWriter writer)
     {
         //Create a crippled engine for this process
-        var eng = new Engine {ExecutionProhibited = true};
+        var eng = new Engine { ExecutionProhibited = true };
         var ldr = new Loader(eng, this);
         ldr.Store(writer);
     }
@@ -516,7 +515,9 @@ public class Application : IMetaFilter,
     }
 
     [DebuggerStepThrough]
-    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(
+        KeyValuePair<string?, MetaEntry> item
+    )
     {
         //Unlike the function, the application allows name changes
         if (Engine.StringsAreEqual(item.Key, NameKey))
@@ -534,7 +535,7 @@ public class Application : IMetaFilter,
 
     public ApplicationCompound Compound => _compound ??= new SingletonCompound(this);
 
-    public bool IsLinked => _compound is {Count: > 1};
+    public bool IsLinked => _compound is { Count: > 1 };
 
     public static void Link(Application application1, Application application2)
     {
@@ -542,28 +543,31 @@ public class Application : IMetaFilter,
             throw new ArgumentNullException(nameof(application1));
         if (application2 == null)
             throw new ArgumentNullException(nameof(application2));
-            
+
         if (application1.IsLinkedTo(application2))
             return; //nothing to do.
-            
-        if(application1.IsLinked && application2.IsLinked)
+
+        if (application1.IsLinked && application2.IsLinked)
         {
             if (application1.Compound.Count > application2.Compound.Count)
                 application2._linkInto(application1.Compound);
             else
                 application1._linkInto(application2.Compound);
         }
-        else if(application1.IsLinked || application1._compound is { } and not SingletonCompound)
+        else if (application1.IsLinked || application1._compound is { } and not SingletonCompound)
         {
             application2._linkInto(application1.Compound);
         }
-        else if(application2.IsLinked || application2._compound is { } and not SingletonCompound)
+        else if (application2.IsLinked || application2._compound is { } and not SingletonCompound)
         {
             application1._linkInto(application2.Compound);
         }
         else
         {
-            Debug.Assert(application1.Compound is SingletonCompound, "Link(a,_): `a` is assumed to be part of a singleton compound.");
+            Debug.Assert(
+                application1.Compound is SingletonCompound,
+                "Link(a,_): `a` is assumed to be part of a singleton compound."
+            );
             application1._compound?._Clear();
             application1._compound = ApplicationCompound.Create();
             application1._compound._Link(application1);
@@ -587,12 +591,14 @@ public class Application : IMetaFilter,
     [PublicAPI]
     public bool IsLinkedTo(Module? module)
     {
-        if(module == null)
+        if (module == null)
             return false;
         else
         {
-            return IsLinked && _compound != null && _compound.TryGetApplication(module.Name, out var moduleInstance) &&
-                moduleInstance.Module == module;
+            return IsLinked
+                && _compound != null
+                && _compound.TryGetApplication(module.Name, out var moduleInstance)
+                && moduleInstance.Module == module;
         }
     }
 
@@ -604,11 +610,10 @@ public class Application : IMetaFilter,
             return IsLinked && _compound != null && _compound.Contains(name);
     }
 
-
     void _linkInto(ApplicationCompound targetCompound)
     {
         var oldCompound = _compound;
-        if(IsLinked)
+        if (IsLinked)
         {
             Debug.Assert(oldCompound != null);
             var newCache = oldCompound.Cache.LinkInto(targetCompound.Cache);
@@ -620,7 +625,7 @@ public class Application : IMetaFilter,
                 linkedApp._compound = targetCompound;
                 targetCompound._Link(linkedApp);
             }
-                
+
             oldCompound._Clear();
         }
         else
@@ -633,12 +638,15 @@ public class Application : IMetaFilter,
             _compound = targetCompound;
             targetCompound._Link(this);
         }
-        Debug.Assert(ReferenceEquals(_compound, targetCompound), "_linkInto didn't catch the receiving Application.");
+        Debug.Assert(
+            ReferenceEquals(_compound, targetCompound),
+            "_linkInto didn't catch the receiving Application."
+        );
     }
 
     public void Unlink()
     {
-        if(!IsLinked)
+        if (!IsLinked)
             return;
 
         _compound?._Unlink(this);
@@ -665,7 +673,8 @@ public class Application : IMetaFilter,
 
         public override IEnumerator<Application> GetEnumerator()
         {
-            return _application?.Singleton().GetEnumerator() ?? Enumerable.Empty<Application>().GetEnumerator();
+            return _application?.Singleton().GetEnumerator()
+                ?? Enumerable.Empty<Application>().GetEnumerator();
         }
 
         internal override void _Unlink(Application application)
@@ -678,7 +687,8 @@ public class Application : IMetaFilter,
         {
             if (!Equals(_application, application))
                 throw new NotSupportedException(
-                    "Cannot link other applications into a singleton compound");
+                    "Cannot link other applications into a singleton compound"
+                );
         }
 
         internal override void _Clear()
@@ -691,8 +701,10 @@ public class Application : IMetaFilter,
             return _application != null && _application.Module.Name.Equals(item);
         }
 
-        public override bool TryGetApplication(ModuleName moduleName,
-            [NotNullWhen(true)] out Application? application)
+        public override bool TryGetApplication(
+            ModuleName moduleName,
+            [NotNullWhen(true)] out Application? application
+        )
         {
             if (_application == null || !_application.Module.Name.Equals(moduleName))
             {
@@ -714,8 +726,11 @@ public class Application : IMetaFilter,
             if (array == null)
                 throw new ArgumentNullException(nameof(array));
             if (arrayIndex < 0 || array.Length <= arrayIndex)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex,
-                    Resources.SingletonCompound_CopyTo_IndexOutOfArrayBounds);
+                throw new ArgumentOutOfRangeException(
+                    nameof(arrayIndex),
+                    arrayIndex,
+                    Resources.SingletonCompound_CopyTo_IndexOutOfArrayBounds
+                );
 
             array[arrayIndex] = _application;
         }
@@ -743,7 +758,8 @@ public enum ApplicationInitializationState
     /// </summary>
     [Obsolete(
         "Prexonite no longer distinguishes between partial and no initialization. Use None instead. The behaviour is the same."
-    )] Partial = 1,
+    )]
+    Partial = 1,
 
     /// <summary>
     ///     The application is completely initialized.

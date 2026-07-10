@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,9 +28,9 @@ abstract class ScriptedUnitTestContainer : IDisposable
     public const string DumpRequestFlag = "request_dump";
 
     protected abstract UnitTestConfiguration Runner { get; }
-        
+
     // NOTE: the RunUnitTest method relies on the fact that StringWriter.ToString() prints the contents.
-    // If you change the TextWriter implementation, you need to account for that. 
+    // If you change the TextWriter implementation, you need to account for that.
     public TextWriter OneTimeSetupLog { get; } = new StringWriter();
     bool _oneTimeSetupPrinted;
 
@@ -45,15 +43,19 @@ abstract class ScriptedUnitTestContainer : IDisposable
         Root = new NullContext(Engine, Application, []);
 
         var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        while (slnPath != null && Directory.Exists(slnPath) &&
-               !File.Exists(Path.Combine(slnPath, "prx.sln")) &&
-               !File.Exists(Path.Combine(slnPath, "prx.slnx")))
+        while (
+            slnPath != null
+            && Directory.Exists(slnPath)
+            && !File.Exists(Path.Combine(slnPath, "prx.sln"))
+            && !File.Exists(Path.Combine(slnPath, "prx.slnx"))
+        )
             slnPath = Path.Combine(slnPath, @".." + Path.DirectorySeparatorChar);
 
         if (slnPath != null && Directory.Exists(slnPath))
         {
-            var psrTestsPath =
-                Path.GetFullPath(Path.Combine(slnPath, nameof(PrexoniteTests), "psr-tests"));
+            var psrTestsPath = Path.GetFullPath(
+                Path.Combine(slnPath, nameof(PrexoniteTests), "psr-tests")
+            );
             OneTimeSetupLog.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
             Engine.Paths.Add(psrTestsPath);
 
@@ -79,28 +81,41 @@ abstract class ScriptedUnitTestContainer : IDisposable
 
         var tc = Application.Functions[testCaseId];
         Assert.That(tc, Is.Not.Null, "Test case " + testCaseId + " not found.");
-        if (tc == null) throw new InvalidOperationException("tc is null");
+        if (tc == null)
+            throw new InvalidOperationException("tc is null");
         if (Runner.CompileToCil)
         {
-            Assert.That(tc.CilImplementation, Is.Not.Null, "Test case " + testCaseId + " should have a CIL implementation.");
+            Assert.That(
+                tc.CilImplementation,
+                Is.Not.Null,
+                "Test case " + testCaseId + " should have a CIL implementation."
+            );
         }
         else
         {
-            Assert.That(tc.CilImplementation, Is.Null, "Test case " + testCaseId + " should not have a CIL implementation.");
+            Assert.That(
+                tc.CilImplementation,
+                Is.Null,
+                "Test case " + testCaseId + " should not have a CIL implementation."
+            );
         }
 
         var rt = _findRunFunction();
-        Assert.That(rt, Is.Not.Null,
-            "Test case run function (part of testing framework) not found. Was looking for {0}.", RunTestId);
-        if (rt == null) throw new InvalidOperationException("rt is null");
+        Assert.That(
+            rt,
+            Is.Not.Null,
+            "Test case run function (part of testing framework) not found. Was looking for {0}.",
+            RunTestId
+        );
+        if (rt == null)
+            throw new InvalidOperationException("rt is null");
 
         var resP = rt.Run(Engine, [PType.Null, Root.CreateNativePValue(tc)]);
-        var success = (bool) resP.DynamicCall(Root, [], PCall.Get, "Key").Value!;
+        var success = (bool)resP.DynamicCall(Root, [], PCall.Get, "Key").Value!;
         if (success)
             return;
 
-        var eObj = resP
-            .DynamicCall(Root, [], PCall.Get, "Value")
+        var eObj = resP.DynamicCall(Root, [], PCall.Get, "Value")
             .DynamicCall(Root, [], PCall.Get, "e")
             .Value;
         if (eObj is Exception e)
@@ -120,11 +135,13 @@ abstract class ScriptedUnitTestContainer : IDisposable
     /// </summary>
     public void PrintCompound()
     {
-        var tasks =
-            Application.Compound.Where(app => app.Meta[DumpRequestFlag].Switch).Select(
-                    app =>
-                        new KeyValuePair<ModuleName, Task<ITarget>>(app.Module.Name, Runner.Cache.BuildAsync(app.Module.Name)))
-                .ToDictionary(k => k.Key, k => k.Value);
+        var tasks = Application
+            .Compound.Where(app => app.Meta[DumpRequestFlag].Switch)
+            .Select(app => new KeyValuePair<ModuleName, Task<ITarget>>(
+                app.Module.Name,
+                Runner.Cache.BuildAsync(app.Module.Name)
+            ))
+            .ToDictionary(k => k.Key, k => k.Value);
         var printedRepresentation = false;
         foreach (var (name, targetTask) in tasks)
         {
@@ -132,14 +149,24 @@ abstract class ScriptedUnitTestContainer : IDisposable
             var target = targetTask.Result;
 
             OneTimeSetupLog.WriteLine();
-            OneTimeSetupLog.WriteLine("##################################  begin of stored representation for {0} ",name);
+            OneTimeSetupLog.WriteLine(
+                "##################################  begin of stored representation for {0} ",
+                name
+            );
 
             var opt = new LoaderOptions(Engine, new(target.Module), target.Symbols)
-                {ReconstructSymbols = false, RegisterCommands = false, StoreSymbols = true};
+            {
+                ReconstructSymbols = false,
+                RegisterCommands = false,
+                StoreSymbols = true,
+            };
             var ldr = new Loader(opt);
             ldr.Store(OneTimeSetupLog);
 
-            OneTimeSetupLog.WriteLine("##################################    end of stored representation for {0} ----------", name);
+            OneTimeSetupLog.WriteLine(
+                "##################################    end of stored representation for {0} ----------",
+                name
+            );
         }
 
         if (printedRepresentation)
@@ -150,10 +177,12 @@ abstract class ScriptedUnitTestContainer : IDisposable
 
     PFunction? _findRunFunction()
     {
-        return Application.Compound.Select(app =>
-        {
-            return app.Functions.TryGetValue(RunTestId, out var func) ? func : null;
-        }).SingleOrDefault(f => f != null);
+        return Application
+            .Compound.Select(app =>
+            {
+                return app.Functions.TryGetValue(RunTestId, out var func) ? func : null;
+            })
+            .SingleOrDefault(f => f != null);
     }
 
     public void Dispose()

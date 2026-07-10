@@ -1,9 +1,10 @@
-
-
 namespace Prexonite.Commands;
 
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Coroutine))]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = nameof(Coroutine)
+)]
 public abstract class CoroutineCommand : PCommand
 {
     /// <summary>
@@ -23,16 +24,16 @@ public abstract class CoroutineCommand : PCommand
         return sctx.CreateNativePValue(new Coroutine(corctx));
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected abstract IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args);
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected abstract IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args);
 
     public sealed class ContextCarrier
     {
-        public ContextCarrier()
-        {
-        }
+        public ContextCarrier() { }
 
         public ContextCarrier(StackContext sctx)
         {
@@ -46,8 +47,7 @@ public abstract class CoroutineCommand : PCommand
             get
             {
                 if (stackContext == null)
-                    throw new InvalidOperationException(
-                        "StackContext has not been assigned yet.");
+                    throw new InvalidOperationException("StackContext has not been assigned yet.");
                 return stackContext;
             }
             set

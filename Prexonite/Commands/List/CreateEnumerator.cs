@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 
@@ -11,9 +9,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
 
     public static CreateEnumerator Instance { get; } = new();
 
-    CreateEnumerator()
-    {
-    }
+    CreateEnumerator() { }
 
     #endregion
 
@@ -34,21 +30,17 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
 
     // ReSharper disable MemberCanBePrivate.Global
     public static PValue RunStatically(StackContext sctx, PValue[] args)
-        // ReSharper restore MemberCanBePrivate.Global
+    // ReSharper restore MemberCanBePrivate.Global
     {
         if (args.Length < 3)
-            throw new PrexoniteException(Alias + " requires three arguments: " + Alias +
-                "(fMoveNext, fCurrent, fDispose);");
+            throw new PrexoniteException(
+                Alias + " requires three arguments: " + Alias + "(fMoveNext, fCurrent, fDispose);"
+            );
 
         return sctx.CreateNativePValue(new EnumeratorProxy(sctx, args[0], args[1], args[2]));
     }
 
-    sealed class EnumeratorProxy(
-            StackContext sctx,
-            PValue moveNext,
-            PValue current,
-            PValue dispose
-        )
+    sealed class EnumeratorProxy(StackContext sctx, PValue moveNext, PValue current, PValue dispose)
         : PValueEnumerator
     {
         bool _disposed;
@@ -83,8 +75,7 @@ public class CreateEnumerator : PCommand, ICilCompilerAware
         /// <filterpriority>2</filterpriority>
         public override bool MoveNext()
         {
-            return Runtime.ExtractBool(moveNext.IndirectCall(sctx),
-                sctx);
+            return Runtime.ExtractBool(moveNext.IndirectCall(sctx), sctx);
         }
 
         #endregion

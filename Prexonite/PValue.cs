@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
@@ -27,7 +25,7 @@ namespace Prexonite;
 ///        PFunction root = new PFunction(app);
 ///        FunctionContext fctx = root.CreateFunctionContext(engine);
 ///        //In your application, you will always have some FunctionContext or StackContext references running around...
-///         
+///
 ///        //Create an integer PValue
 ///        PValue pv0 = PType.Int.CreatePValue(55);
 ///        //Add this integer to a newly created floating point PValue
@@ -43,7 +41,7 @@ namespace Prexonite;
 ///    </code>
 ///</example>
 ///<remarks>
-///    <para> 
+///    <para>
 ///        The <see cref = "Value" /> property only returns null if the <see cref = "Type" /> of a PValue is <see
 ///     cref = "PType.Null" />.
 ///    </para>
@@ -54,9 +52,7 @@ namespace Prexonite;
 ///</remarks>
 ///<seealso cref = "PType" />
 ///<seealso cref = "PVariable" />
-public sealed class PValue : DynamicObject,
-    IIndirectCall,
-    IObject
+public sealed class PValue : DynamicObject, IIndirectCall, IObject
 {
     #region Internals
 
@@ -71,7 +67,7 @@ public sealed class PValue : DynamicObject,
     {
         if (value == null)
             type = NullPType.Instance;
-        else if ((object) type == null)
+        else if ((object)type == null)
             throw new ArgumentNullException(nameof(type));
 
         Value = value;
@@ -115,12 +111,8 @@ public sealed class PValue : DynamicObject,
     }
 
     [Obsolete("Use the overload with ReadOnlySpan<PValue> instead.")]
-    public PValue DynamicCall(
-        StackContext sctx,
-        PValue[] args,
-        PCall call,
-        string id
-    ) => DynamicCall(sctx, args.AsSpan(), call, id);
+    public PValue DynamicCall(StackContext sctx, PValue[] args, PCall call, string id) =>
+        DynamicCall(sctx, args.AsSpan(), call, id);
 
     /// <summary>
     ///     Tries to perform a dynamic (instance) call on the value and stores the result in the out parameter <paramref
@@ -139,7 +131,12 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryDynamicCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return Type.TryDynamicCall(sctx, this, args, call, id, out result);
     }
@@ -162,8 +159,12 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     [Obsolete("Use the overload with ReadOnlySpan<PValue> instead.")]
     public bool TryDynamicCall(
-        StackContext sctx, PValue[] args, PCall call, string id, [NotNullWhen(true)] out PValue? result) =>
-        TryDynamicCall(sctx, args.AsSpan(), call, id, out result);
+        StackContext sctx,
+        PValue[] args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    ) => TryDynamicCall(sctx, args.AsSpan(), call, id, out result);
 
     /// <summary>
     ///     Performs a conversion on the value and returns the resulting PValue. You should use <see
@@ -241,7 +242,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     public T ConvertTo<T>(StackContext sctx, bool useExplicit)
     {
-        return (T) Type.ConvertTo(sctx, this, typeof (T), useExplicit).Value!;
+        return (T)Type.ConvertTo(sctx, this, typeof(T), useExplicit).Value!;
     }
 
     /// <summary>
@@ -269,15 +270,25 @@ public sealed class PValue : DynamicObject,
     ///     Note that the value of <paramref name = "result" /> is undefined (and therefor not to be used) if the method call returned false.
     /// </remarks>
     [DebuggerStepThrough]
-    public bool TryConvertTo<T>(StackContext sctx, bool useExplicit, [NotNullWhen(true)] out T? result)
+    public bool TryConvertTo<T>(
+        StackContext sctx,
+        bool useExplicit,
+        [NotNullWhen(true)] out T? result
+    )
     {
         result = default;
         if (
-            !Type.TryConvertTo(sctx, this, sctx.ParentEngine.PTypeMap[typeof (T)], useExplicit,
-                out var r) || r.Value is not T)
+            !Type.TryConvertTo(
+                sctx,
+                this,
+                sctx.ParentEngine.PTypeMap[typeof(T)],
+                useExplicit,
+                out var r
+            ) || r.Value is not T
+        )
             return false;
 
-        result = (T) r.Value;
+        result = (T)r.Value;
         return true;
     }
 
@@ -311,7 +322,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryConvertTo(
-        StackContext sctx, PType target, bool useExplicit, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PType target,
+        bool useExplicit,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return Type.TryConvertTo(sctx, this, target, useExplicit, out result);
     }
@@ -329,7 +344,11 @@ public sealed class PValue : DynamicObject,
     ///     Note that the value of <paramref name = "result" /> is undefined (and therefor not to be used) if the method call returned false.
     /// </remarks>
     [DebuggerStepThrough]
-    public bool TryConvertTo(StackContext sctx, PType target, [NotNullWhen(true)] out PValue? result)
+    public bool TryConvertTo(
+        StackContext sctx,
+        PType target,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return TryConvertTo(sctx, target, false, out result);
     }
@@ -349,7 +368,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     [DebuggerStepThrough]
     public bool TryConvertTo(
-        StackContext sctx, Type clrTarget, bool useExplicit, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        Type clrTarget,
+        bool useExplicit,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return Type.TryConvertTo(sctx, this, clrTarget, useExplicit, out result);
     }
@@ -368,7 +391,11 @@ public sealed class PValue : DynamicObject,
     ///     Note that the value of <paramref name = "result" /> is undefined (and therefor not to be used) if the method call returned false.
     /// </remarks>
     [DebuggerStepThrough]
-    public bool TryConvertTo(StackContext sctx, Type clrTarget, [NotNullWhen(true)] out PValue? result)
+    public bool TryConvertTo(
+        StackContext sctx,
+        Type clrTarget,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return TryConvertTo(sctx, clrTarget, false, out result);
     }
@@ -384,7 +411,11 @@ public sealed class PValue : DynamicObject,
     ///     Note that the value of <paramref name = "result" /> is undefined (and therefor not to be used) if the method call returned false.
     /// </remarks>
     [DebuggerStepThrough]
-    public bool TryIndirectCall(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+    public bool TryIndirectCall(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return Type.IndirectCall(sctx, this, args, out result);
     }
@@ -403,7 +434,7 @@ public sealed class PValue : DynamicObject,
     {
         return Type.IndirectCall(sctx, this, args);
     }
-    
+
     [Obsolete("Use the overload with ReadOnlySpan<PValue> instead.")]
     public PValue IndirectCall(StackContext sctx, PValue[] args)
     {
@@ -511,7 +542,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the addition operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the addition. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -525,7 +556,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Addition(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Addition(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -537,7 +572,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the subtraction operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the subtraction. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -551,7 +586,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Subtraction(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Subtraction(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -563,7 +602,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the multiplication operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the multiplication. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -577,7 +616,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Multiply(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Multiply(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -589,7 +632,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the division operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the division. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -603,7 +646,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Division(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Division(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -615,7 +662,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the modulus operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the modulus division. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -629,7 +676,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Modulus(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Modulus(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -641,7 +692,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the bitwise AND operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the bitwise AND operation. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -655,7 +706,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool BitwiseAnd(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool BitwiseAnd(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -667,7 +722,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the bitwise OR operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the bitwise OR operation. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -681,7 +736,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool BitwiseOr(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool BitwiseOr(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -693,7 +752,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to apply the bitwise XOR operator to the instance as the left operand and the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the bitwise XOR operation. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -707,7 +766,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool ExclusiveOr(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool ExclusiveOr(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -718,7 +781,7 @@ public sealed class PValue : DynamicObject,
     }
 
     /// <summary>
-    ///     Tries to test the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand for equality. 
+    ///     Tries to test the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand for equality.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the equality test. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -732,7 +795,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Equality(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Equality(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -743,7 +810,7 @@ public sealed class PValue : DynamicObject,
     }
 
     /// <summary>
-    ///     Tries to test the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand for inequality. 
+    ///     Tries to test the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand for inequality.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the inequality test. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -757,7 +824,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool Inequality(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool Inequality(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -768,7 +839,7 @@ public sealed class PValue : DynamicObject,
     }
 
     /// <summary>
-    ///     Tries to test if the instance as the left operand is greater than the supplied <paramref name = "rightOperand" /> as the right operand. 
+    ///     Tries to test if the instance as the left operand is greater than the supplied <paramref name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the greater than-test. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -782,7 +853,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool GreaterThan(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool GreaterThan(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -794,7 +869,7 @@ public sealed class PValue : DynamicObject,
 
     /// <summary>
     ///     Tries to test if the instance as the left operand is greater than or equal to the supplied <paramref
-    ///      name = "rightOperand" /> as the right operand. 
+    ///      name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the greater than or equal-test. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -808,7 +883,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool GreaterThanOrEqual(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool GreaterThanOrEqual(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -819,7 +898,7 @@ public sealed class PValue : DynamicObject,
     }
 
     /// <summary>
-    ///     Tries to test if the instance as the left operand is less than the supplied <paramref name = "rightOperand" /> as the right operand. 
+    ///     Tries to test if the instance as the left operand is less than the supplied <paramref name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the less than-test. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -833,7 +912,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool LessThan(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool LessThan(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -844,7 +927,7 @@ public sealed class PValue : DynamicObject,
     }
 
     /// <summary>
-    ///     Tries to test if the instance as the left operand is less than or equal to the supplied <paramref name = "rightOperand" /> as the right operand. 
+    ///     Tries to test if the instance as the left operand is less than or equal to the supplied <paramref name = "rightOperand" /> as the right operand.
     ///     The method first gives the left operand's <see cref = "Type" /> the chance to handle the less than or equal-test. Should that fail, the right operand's <see
     ///      cref = "PType" /> is used.
     ///     The result is stored in the out parameter <paramref name = "result" />.
@@ -858,7 +941,11 @@ public sealed class PValue : DynamicObject,
     /// </remarks>
     /// <exception cref = "ArgumentNullException">If either <paramref name = "sctx" /> or <paramref name = "rightOperand" /> are null.</exception>
     [DebuggerStepThrough]
-    public bool LessThanOrEqual(StackContext sctx, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public bool LessThanOrEqual(
+        StackContext sctx,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -969,8 +1056,8 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Addition operator.");
+                "Neither " + Type + " nor " + rightOperand.Type + " supports the Addition operator."
+            );
     }
 
     /// <summary>
@@ -997,8 +1084,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Subtraction operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the Subtraction operator."
+            );
     }
 
     /// <summary>
@@ -1025,8 +1116,8 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Multiply operator.");
+                "Neither " + Type + " nor " + rightOperand.Type + " supports the Multiply operator."
+            );
     }
 
     /// <summary>
@@ -1053,8 +1144,8 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Division operator.");
+                "Neither " + Type + " nor " + rightOperand.Type + " supports the Division operator."
+            );
     }
 
     /// <summary>
@@ -1081,8 +1172,8 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Modulus operator.");
+                "Neither " + Type + " nor " + rightOperand.Type + " supports the Modulus operator."
+            );
     }
 
     /// <summary>
@@ -1109,8 +1200,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the BitwiseAnd operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the BitwiseAnd operator."
+            );
     }
 
     /// <summary>
@@ -1137,8 +1232,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the BitwiseOr operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the BitwiseOr operator."
+            );
     }
 
     /// <summary>
@@ -1165,8 +1264,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the ExclusiveOr operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the ExclusiveOr operator."
+            );
     }
 
     /// <summary>
@@ -1193,8 +1296,8 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Equality operator.");
+                "Neither " + Type + " nor " + rightOperand.Type + " supports the Equality operator."
+            );
     }
 
     /// <summary>
@@ -1221,8 +1324,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the Inequality operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the Inequality operator."
+            );
     }
 
     /// <summary>
@@ -1249,8 +1356,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the GreaterThan operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the GreaterThan operator."
+            );
     }
 
     /// <summary>
@@ -1277,8 +1388,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the GreaterThanOrEqual operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " supports the GreaterThanOrEqual operator."
+            );
     }
 
     /// <summary>
@@ -1305,8 +1420,8 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " supports the LessThan operator.");
+                "Neither " + Type + " nor " + rightOperand.Type + " supports the LessThan operator."
+            );
     }
 
     /// <summary>
@@ -1333,8 +1448,12 @@ public sealed class PValue : DynamicObject,
             return result;
         else
             throw new InvalidCallException(
-                "Neither " + Type + " nor " + rightOperand.Type +
-                " LessThanOrEqual the Addition operator.");
+                "Neither "
+                    + Type
+                    + " nor "
+                    + rightOperand.Type
+                    + " LessThanOrEqual the Addition operator."
+            );
     }
 
     #endregion //Failing-Variants
@@ -1390,9 +1509,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     public override string ToString()
     {
-        return
-            string.Concat(
-                "{", Value == null ? "-NULL-" : string.Concat(Value, "~", Type), "}");
+        return string.Concat("{", Value == null ? "-NULL-" : string.Concat(Value, "~", Type), "}");
     }
 
     /// <summary>
@@ -1408,7 +1525,7 @@ public sealed class PValue : DynamicObject,
     public string CallToString(StackContext sctx)
     {
         if (Type == PType.String)
-            return (string) Value!;
+            return (string)Value!;
         else if (TryDynamicCall(sctx, [], PCall.Get, nameof(ToString), out var text))
             return text.Value!.ToString()!;
         else
@@ -1467,7 +1584,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerNonUserCode]
     public static explicit operator PValue(uint number)
     {
-        return PType.Int.CreatePValue((int) number);
+        return PType.Int.CreatePValue((int)number);
     }
 
     /// <summary>
@@ -1481,7 +1598,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerNonUserCode]
     public static explicit operator PValue(byte number)
     {
-        return PType.Int.CreatePValue((int) number);
+        return PType.Int.CreatePValue((int)number);
     }
 
     /// <summary>
@@ -1495,7 +1612,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerNonUserCode]
     public static explicit operator PValue(sbyte number)
     {
-        return PType.Int.CreatePValue((int) number);
+        return PType.Int.CreatePValue((int)number);
     }
 
     /// <summary>
@@ -1510,7 +1627,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     public static explicit operator PValue(long number)
     {
-        return PType.Int.CreatePValue((int) number);
+        return PType.Int.CreatePValue((int)number);
     }
 
     /// <summary>
@@ -1524,7 +1641,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     public static explicit operator PValue(short number)
     {
-        return PType.Int.CreatePValue((int) number);
+        return PType.Int.CreatePValue((int)number);
     }
 
     //PReal
@@ -1553,7 +1670,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     public static explicit operator PValue(float number)
     {
-        return PType.Real.CreatePValue((double) number);
+        return PType.Real.CreatePValue((double)number);
     }
 
     /// <summary>
@@ -1568,7 +1685,7 @@ public sealed class PValue : DynamicObject,
     [DebuggerStepThrough]
     public static explicit operator PValue(decimal number)
     {
-        return PType.Object.CreatePValue((double) number);
+        return PType.Object.CreatePValue((double)number);
     }
 
     //PChar
@@ -1652,8 +1769,7 @@ public sealed class PValue : DynamicObject,
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         if (Engine.StringsAreEqual(id, "self"))
@@ -1713,9 +1829,9 @@ public sealed class PValue : DynamicObject,
         if (args.Length > 0 && (sctx = args[0] as StackContext) != null)
         {
             var localStcx = sctx;
-            icargs =
-                args.Skip(1).Select(o => o as PValue ?? localStcx.CreateNativePValue(o)).ToArray
-                    ();
+            icargs = args.Skip(1)
+                .Select(o => o as PValue ?? localStcx.CreateNativePValue(o))
+                .ToArray();
             return true;
         }
         else
@@ -1736,13 +1852,18 @@ public sealed class PValue : DynamicObject,
         return result != null || base.TryInvoke(binder, args, out result);
     }
 
-    public override bool TryInvokeMember(InvokeMemberBinder binder, object?[]? args,
-        out object? result)
+    public override bool TryInvokeMember(
+        InvokeMemberBinder binder,
+        object?[]? args,
+        out object? result
+    )
     {
         result = null;
 
-        if (_tryParseCall(args ?? [], out var sctx, out var icargs) &&
-            TryDynamicCall(sctx, icargs.AsSpan(), PCall.Get, binder.Name, out var pvresult))
+        if (
+            _tryParseCall(args ?? [], out var sctx, out var icargs)
+            && TryDynamicCall(sctx, icargs.AsSpan(), PCall.Get, binder.Name, out var pvresult)
+        )
             result = pvresult;
 
         return result != null || base.TryInvokeMember(binder, args, out result);
@@ -1752,8 +1873,10 @@ public sealed class PValue : DynamicObject,
     {
         result = null;
 
-        if (_tryParseCall(indexes, out var sctx, out var icargs) &&
-            TryDynamicCall(sctx, icargs.AsSpan(), PCall.Get, string.Empty, out var pvresult))
+        if (
+            _tryParseCall(indexes, out var sctx, out var icargs)
+            && TryDynamicCall(sctx, icargs.AsSpan(), PCall.Get, string.Empty, out var pvresult)
+        )
         {
             result = pvresult;
         }
@@ -1767,8 +1890,8 @@ public sealed class PValue : DynamicObject,
         Array.Copy(indexes, args, indexes.Length);
         args[^1] = value;
 
-        return _tryParseCall(args, out var sctx, out var icargs) &&
-            TryDynamicCall(sctx, icargs.AsSpan(), PCall.Set, string.Empty, out _)
+        return _tryParseCall(args, out var sctx, out var icargs)
+                && TryDynamicCall(sctx, icargs.AsSpan(), PCall.Set, string.Empty, out _)
             || base.TrySetIndex(binder, indexes, value);
     }
 

@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Build.Internal;
@@ -45,13 +43,15 @@ public static class Source
 
     public static ISource FromEmbeddedPrexoniteResource(string name)
     {
-        if (name == null) throw new ArgumentNullException(nameof(name));
+        if (name == null)
+            throw new ArgumentNullException(nameof(name));
         return new EmbeddedResourceSource(Assembly.GetExecutingAssembly(), "Prexonite." + name);
     }
-    
+
     public static ISource FromEmbeddedResource(Assembly assembly, string name)
     {
-        if (name == null) throw new ArgumentNullException(nameof(name));
+        if (name == null)
+            throw new ArgumentNullException(nameof(name));
         return new EmbeddedResourceSource(assembly, name);
     }
 
@@ -59,8 +59,10 @@ public static class Source
     {
         public async Task<ISource> CacheInMemoryAsync()
         {
-            if(!source.TryOpen(out var reader))
-                throw new InvalidOperationException("Unable to open source " + source + " for reading.");
+            if (!source.TryOpen(out var reader))
+                throw new InvalidOperationException(
+                    "Unable to open source " + source + " for reading."
+                );
             var contents = await reader.ReadToEndAsync();
             return FromString(contents);
         }

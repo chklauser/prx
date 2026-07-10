@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,17 +14,19 @@ public class CilCompilerTests : VMTestsBase
     [Test]
     public void SetCilHintTest()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main() {
-                    foreach(var x in var args)
-                        println(x);
-                }
-                """);
+            function main() {
+                foreach(var x in var args)
+                    println(x);
+            }
+            """
+        );
 
         var main = target.Functions["main"] ?? throw new InvalidOperationException("main missing");
 
-        var cilExt1 = new CilExtensionHint(new List<int> {1, 5, 9});
+        var cilExt1 = new CilExtensionHint(new List<int> { 1, 5, 9 });
         var existingHints = _getCilHints(main, true);
         Assert.AreEqual(1, existingHints.Length);
 
@@ -39,12 +39,15 @@ public class CilCompilerTests : VMTestsBase
         var cilExt1P = CilExtensionHint.FromMetaEntry(hints1[1].List);
         Assert.IsTrue(
             cilExt1P.Offsets.All(offset => cilExt1.Offsets.Contains(offset)),
-            "deserialized contains elements not in original");
-        Assert.IsTrue(cilExt1.Offsets.All(offset => cilExt1P.Offsets.Contains(offset)),
-            "original contains elements not in deserialized");
+            "deserialized contains elements not in original"
+        );
+        Assert.IsTrue(
+            cilExt1.Offsets.All(offset => cilExt1P.Offsets.Contains(offset)),
+            "original contains elements not in deserialized"
+        );
 
         //Add, one existing
-        var cilExt2 = new CilExtensionHint(new List<int> {2, 4, 8, 16});
+        var cilExt2 = new CilExtensionHint(new List<int> { 2, 4, 8, 16 });
         Compiler.SetCilHint(main, cilExt2);
         var hints2 = _getCilHints(main, true);
         Assert.AreSame(hints1, hints2);
@@ -53,23 +56,26 @@ public class CilCompilerTests : VMTestsBase
         var cilExt2P = CilExtensionHint.FromMetaEntry(hints2[1].List);
         Assert.IsTrue(
             cilExt2P.Offsets.All(offset => cilExt2.Offsets.Contains(offset)),
-            "deserialized contains elements not in original");
-        Assert.IsTrue(cilExt2.Offsets.All(offset => cilExt2P.Offsets.Contains(offset)),
-            "original contains elements not in deserialized");
+            "deserialized contains elements not in original"
+        );
+        Assert.IsTrue(
+            cilExt2.Offsets.All(offset => cilExt2P.Offsets.Contains(offset)),
+            "original contains elements not in deserialized"
+        );
 
         //Add, many existing
         var cilExts = new List<CilExtensionHint>
         {
-            new(new List<int> {1, 6, 16, 66}),
-            new(new List<int> {7, 77, 777}),
-            new(new List<int> {9, 88, 777, 6666}),
+            new(new List<int> { 1, 6, 16, 66 }),
+            new(new List<int> { 7, 77, 777 }),
+            new(new List<int> { 9, 88, 777, 6666 }),
         };
         foreach (var cilExt in cilExts)
             Compiler.AddCilHint(main, cilExt);
         var hints3 = _getCilHints(main, true);
         Assert.AreNotSame(hints2, hints3);
         Assert.AreEqual(5, hints3.Length);
-        var cilExt3 = new CilExtensionHint(new List<int> {44, 55, 66, 77, 88});
+        var cilExt3 = new CilExtensionHint(new List<int> { 44, 55, 66, 77, 88 });
         Compiler.SetCilHint(main, cilExt3);
         var hints4 = _getCilHints(main, true);
         Assert.AreNotSame(hints3, hints4);
@@ -78,10 +84,12 @@ public class CilCompilerTests : VMTestsBase
         var cilExt3P = CilExtensionHint.FromMetaEntry(hints4[1].List);
         Assert.IsTrue(
             cilExt3P.Offsets.All(offset => cilExt3.Offsets.Contains(offset)),
-            "deserialized contains elements not in original");
-        Assert.IsTrue(cilExt3.Offsets.All(offset => cilExt3P.Offsets.Contains(offset)),
-            "original contains elements not in deserialized");
-
+            "deserialized contains elements not in original"
+        );
+        Assert.IsTrue(
+            cilExt3.Offsets.All(offset => cilExt3P.Offsets.Contains(offset)),
+            "original contains elements not in deserialized"
+        );
 
         //Add, no cil hints key yet
         var emptyFunc = target.CreateFunction();
@@ -93,9 +101,12 @@ public class CilCompilerTests : VMTestsBase
         var cilExt4P = CilExtensionHint.FromMetaEntry(hints5[1].List);
         Assert.IsTrue(
             cilExt4P.Offsets.All(offset => cilExt3.Offsets.Contains(offset)),
-            "deserialized contains elements not in original");
-        Assert.IsTrue(cilExt3.Offsets.All(offset => cilExt4P.Offsets.Contains(offset)),
-            "original contains elements not in deserialized");
+            "deserialized contains elements not in original"
+        );
+        Assert.IsTrue(
+            cilExt3.Offsets.All(offset => cilExt4P.Offsets.Contains(offset)),
+            "original contains elements not in deserialized"
+        );
     }
 
     static MetaEntry[] _getCilHints(IHasMetaTable table, bool keyMustExist)
@@ -146,9 +157,10 @@ public class CilCompilerTests : VMTestsBase
                 return result;
             }
 
-            """);
+            """
+        );
         _expectCil();
-        Expect(Enumerable.Range(1, 10).Select(_ => (PValue) true).ToList());
+        Expect(Enumerable.Range(1, 10).Select(_ => (PValue)true).ToList());
     }
 
     [Test]
@@ -164,11 +176,11 @@ public class CilCompilerTests : VMTestsBase
                 return results;
             }
 
-            """);
+            """
+        );
         _expectCil();
-        Expect((List<PValue>)[(PValue) true]);
+        Expect((List<PValue>)[(PValue)true]);
     }
-
 
     [Test]
     public void JumpBreaksCilExtensions()
@@ -190,7 +202,8 @@ public class CilCompilerTests : VMTestsBase
                             ret
             }}
 
-            """);
+            """
+        );
         Assert.AreEqual(1, _getCilHints(target.Functions["main"]!, true).Length);
         _expectCil();
         Expect("IF-branch", 4);
@@ -222,7 +235,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("tfce");
     }
@@ -231,8 +245,10 @@ public class CilCompilerTests : VMTestsBase
     {
         var func = target.Functions[functionId];
         Assert.IsNotNull(func, "Function " + functionId + " must exist");
-        Assert.IsFalse(func!.Meta[PFunction.VolatileKey].Switch,
-            functionId + " must not be volatile.");
+        Assert.IsFalse(
+            func!.Meta[PFunction.VolatileKey].Switch,
+            functionId + " must not be volatile."
+        );
     }
 
     [Test]
@@ -259,7 +275,8 @@ public class CilCompilerTests : VMTestsBase
                     return t;
                 }
 
-                """);
+                """
+            );
             _expectCil();
             Expect("tf", true);
         });
@@ -288,7 +305,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("tce", true);
     }
@@ -320,7 +338,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("tcef", true);
     }
@@ -351,7 +370,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
 
         _expectCil();
         Expect("txf", true);
@@ -385,7 +405,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("txf", true);
     }
@@ -425,7 +446,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("fefefefefe", true);
     }
@@ -460,7 +482,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("f", true, true);
     }
@@ -490,7 +513,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("tfce", true);
     }
@@ -498,42 +522,46 @@ public class CilCompilerTests : VMTestsBase
     [Test]
     public void LabelOnFirstNeLabelOnTry()
     {
-        Assert.Throws<PrexoniteRuntimeException>(() =>
-        {
-            Compile(
-                """
+        Assert.Throws<PrexoniteRuntimeException>(
+            () =>
+            {
+                Compile(
+                    """
 
-                var t = "";
-                function trace(x) = t+=x;
+                    var t = "";
+                    function trace(x) = t+=x;
 
-                function main(x) //[store_debug_implementation enabled;]
-                {
-                    try {
-                        trace("t");
-                        goto L1;
-                        trace("z");
-                    } finally {
-                        trace("f");
-                    }
-
-                    try {
-                        trace("g");
+                    function main(x) //[store_debug_implementation enabled;]
+                    {
                         try {
-                L1:         trace("b");
+                            trace("t");
+                            goto L1;
+                            trace("z");
                         } finally {
-                            trace("r");
+                            trace("f");
                         }
-                    } finally {
-                        trace("v");
+
+                        try {
+                            trace("g");
+                            try {
+                    L1:         trace("b");
+                            } finally {
+                                trace("r");
+                            }
+                        } finally {
+                            trace("v");
+                        }
+
+                        return t;
                     }
 
-                    return t;
-                }
-
-                """);
-            _expectSehDeficiency();
-            Expect("undefined", true);
-        }, @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
+                    """
+                );
+                _expectSehDeficiency();
+                Expect("undefined", true);
+            },
+            @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside."
+        );
     }
 
     [Test]
@@ -570,7 +598,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectSehDeficiency();
         Expect("tbrv", true);
     }
@@ -609,7 +638,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectCil();
         Expect("ktfbrv", true);
     }
@@ -636,7 +666,8 @@ public class CilCompilerTests : VMTestsBase
                 return t;
             }
 
-            """);
+            """
+        );
         _expectSehDeficiency();
         Expect("kf", true);
     }
@@ -649,10 +680,14 @@ public class CilCompilerTests : VMTestsBase
     static void _expectSehDeficiency(PFunction function)
     {
         Assert.IsNotNull(function, "function not found");
-        Assert.IsTrue(function.Meta[PFunction.VolatileKey].Switch,
-            "Function is expected to be volatile.");
-        Assert.IsTrue(function.Meta[PFunction.DeficiencyKey].Text.Contains("SEH"),
-            "CIL deficiency is expected to be related to SEH.");
+        Assert.IsTrue(
+            function.Meta[PFunction.VolatileKey].Switch,
+            "Function is expected to be volatile."
+        );
+        Assert.IsTrue(
+            function.Meta[PFunction.DeficiencyKey].Text.Contains("SEH"),
+            "CIL deficiency is expected to be related to SEH."
+        );
     }
 
     [Test]
@@ -669,7 +704,8 @@ public class CilCompilerTests : VMTestsBase
                 finally{trace(2);}
                 return t;
             }
-            """);
+            """
+        );
 
         Expect("12", true);
     }
@@ -684,8 +720,9 @@ public class CilCompilerTests : VMTestsBase
                 //return a + "." + b + "." + c + "." + d + "." + f;
                 return "a.b.c.d.f";
             }
-            """);
-        
+            """
+        );
+
         Expect("a.b.c.d.f");
     }
 }

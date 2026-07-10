@@ -1,5 +1,3 @@
-
-
 using System.ComponentModel;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -14,9 +12,7 @@ namespace Prexonite.Commands.Core;
 /// </remarks>
 public sealed class Dispose : PCommand, ICilCompilerAware
 {
-    Dispose()
-    {
-    }
+    Dispose() { }
 
     public static Dispose Instance { get; } = new();
 
@@ -72,8 +68,7 @@ public sealed class Dispose : PCommand, ICilCompilerAware
             {
                 if (arg.Value is IObject isObj)
                 {
-                    isObj.TryDynamicCall(
-                        sctx, [], PCall.Get, DisposeMemberId, out _);
+                    isObj.TryDynamicCall(sctx, [], PCall.Get, DisposeMemberId, out _);
                 }
             }
         }
@@ -101,16 +96,17 @@ public sealed class Dispose : PCommand, ICilCompilerAware
             case 1:
                 //Emit call to RunStatically(PValue, StackContext)
                 state.EmitLoadLocal(state.SctxLocal);
-                var run =
-                    typeof (Dispose).GetMethod(nameof(RunStatically),
-                        [typeof (PValue), typeof (StackContext)])!;
+                var run = typeof(Dispose).GetMethod(
+                    nameof(RunStatically),
+                    [typeof(PValue), typeof(StackContext)]
+                )!;
                 state.Il.EmitCall(OpCodes.Call, run, null);
                 if (!ins.JustEffect)
                     state.EmitLoadNullAsPValue();
                 break;
             default:
                 //Emit call to RunStatically(StackContext, PValue[])
-                state.EmitEarlyBoundCommandCall(typeof (Dispose), ins);
+                state.EmitEarlyBoundCommandCall(typeof(Dispose), ins);
                 break;
         }
     }

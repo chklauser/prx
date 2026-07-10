@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core;
@@ -42,7 +40,7 @@ namespace Prexonite
         /// </summary>
         /// <remarks>
         ///     <para>
-        ///         This function executes the context on top of the stack until that context gets popped, 
+        ///         This function executes the context on top of the stack until that context gets popped,
         ///         regardless of any other contexts that have been pushed by the code.
         ///     </para>
         ///     <para>
@@ -61,7 +59,8 @@ namespace Prexonite
             var level = localStack.Count;
             if (level < 1)
                 throw new PrexoniteException(
-                    "The VM stack is empty. Return value cannot be computed.");
+                    "The VM stack is empty. Return value cannot be computed."
+                );
 
             PrexoniteRuntimeException? currentException = null;
             StackContext? lastContext = null;
@@ -87,7 +86,8 @@ namespace Prexonite
                     catch (Exception exc)
                     {
                         currentException = PrexoniteRuntimeException.UnpackException(
-                            PrexoniteRuntimeException.CreateRuntimeException(sctx, exc));
+                            PrexoniteRuntimeException.CreateRuntimeException(sctx, exc)
+                        );
                         continue;
                     }
                 }
@@ -106,9 +106,9 @@ namespace Prexonite
                     catch (Exception exc)
                     {
                         //Original exception can no longer be handled
-                        currentException =
-                            PrexoniteRuntimeException.UnpackException(
-                                PrexoniteRuntimeException.CreateRuntimeException(sctx, exc));
+                        currentException = PrexoniteRuntimeException.UnpackException(
+                            PrexoniteRuntimeException.CreateRuntimeException(sctx, exc)
+                        );
                         continue;
                     }
                 }
@@ -116,7 +116,12 @@ namespace Prexonite
                 if (!keepOnStack)
                 {
 #if Verbose
-                    Console.WriteLine("#POP: " + Stack.Last.Value + "=" + PValue.ToDebugString(Stack.Last.Value.ReturnValue));
+                    Console.WriteLine(
+                        "#POP: "
+                            + Stack.Last.Value
+                            + "="
+                            + PValue.ToDebugString(Stack.Last.Value.ReturnValue)
+                    );
 #endif
                     if (ReferenceEquals(localStack.Last.Value, sctx))
                         localStack.RemoveLast();
@@ -144,7 +149,7 @@ namespace Prexonite
                 throw new ArgumentNullException(nameof(sctx));
             Stack.AddLast(sctx);
 #if Verbose
-                    Console.WriteLine("\n#PSH: " + sctx + "(?)");
+            Console.WriteLine("\n#PSH: " + sctx + "(?)");
 #endif
             sctx.ReturnMode = ReturnMode.Exit;
             return Process();
@@ -158,7 +163,7 @@ namespace Prexonite
         ///     Controls whether function references are cached to skip the string comparison based lookup.
         /// </summary>
         /// <remarks>
-        ///     If you enabled caching and replace a function at runtime, instructions that 
+        ///     If you enabled caching and replace a function at runtime, instructions that
         ///     maintain a cached reference will still call the original function.
         /// </remarks>
         [PublicAPI]
@@ -168,7 +173,7 @@ namespace Prexonite
         ///     Controls whether command references are cached to skip the string comparison based lookup.
         /// </summary>
         /// <remarks>
-        ///     If you enabled caching and replace a commanc at runtime, instructions that 
+        ///     If you enabled caching and replace a commanc at runtime, instructions that
         ///     maintain a cached reference will still call the original command.
         /// </remarks>
         [PublicAPI]
@@ -179,7 +184,7 @@ namespace Prexonite
         /// </summary>
         /// <remarks>
         ///     <para>
-        ///         Only calls to <see cref = "Process()" /> are blocked. 
+        ///         Only calls to <see cref = "Process()" /> are blocked.
         ///         More specifically they will result in a <see cref = "ExecutionProhibitedException" /> if called.
         ///     </para>
         ///     <para>
@@ -192,7 +197,7 @@ namespace Prexonite
         public bool ExecutionProhibited { get; set; }
 
         /// <summary>
-        ///     Indicates whether the <see cref = "CompileToCil" /> command is allowed to link statically. 
+        ///     Indicates whether the <see cref = "CompileToCil" /> command is allowed to link statically.
         ///     This setting overrides any arguments passed to CompileToCil.
         /// </summary>
         [PublicAPI]

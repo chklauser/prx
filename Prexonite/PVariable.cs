@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -10,7 +8,7 @@ namespace Prexonite;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         PVariables are used for both local and global variables with the difference that 
+///         PVariables are used for both local and global variables with the difference that
 ///         local variables don't usually have a <see cref = "Meta">MetaTable</see>.
 ///     </para>
 ///     <para>
@@ -18,10 +16,10 @@ namespace Prexonite;
 ///     </para>
 /// </remarks>
 [DebuggerStepThrough]
-public sealed class PVariable : IHasMetaTable,
-    IIndirectCall
+public sealed class PVariable : IHasMetaTable, IIndirectCall
 {
     PValue _value = PType.Null;
+
     //Variable metatables are only created when requested.
     VariableDeclaration? _declaration;
 
@@ -70,9 +68,7 @@ public sealed class PVariable : IHasMetaTable,
     /// <remarks>
     ///     This constructor does not create a <see cref = "MetaTable" />.
     /// </remarks>
-    public PVariable()
-    {
-    }
+    public PVariable() { }
 
     /// <summary>
     ///     Creates a new (global) variable.
@@ -98,7 +94,8 @@ public sealed class PVariable : IHasMetaTable,
     /// <param name="variableDeclaration">The variable declaration this variable is based on.</param>
     public PVariable(VariableDeclaration variableDeclaration)
     {
-        _declaration = variableDeclaration ?? throw new ArgumentNullException(nameof(variableDeclaration));
+        _declaration =
+            variableDeclaration ?? throw new ArgumentNullException(nameof(variableDeclaration));
     }
 
     #endregion

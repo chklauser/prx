@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -11,7 +9,7 @@ public class SymbolEntry : IEquatable<SymbolEntry>
 
     /// <summary>
     ///     Optional integer parameter for this symbol.
-    /// 
+    ///
     ///     Label - Address of jump target (if known)
     /// </summary>
     readonly int? argument;
@@ -21,14 +19,10 @@ public class SymbolEntry : IEquatable<SymbolEntry>
     #region Constructor
 
     public SymbolEntry(SymbolInterpretations interpretation, ModuleName? module)
-        : this(interpretation,null,module)
-    {
-    }
+        : this(interpretation, null, module) { }
 
     public SymbolEntry(SymbolInterpretations interpretation, string? id, ModuleName? module)
-        : this(interpretation,id, null,module)
-    {
-    }
+        : this(interpretation, id, null, module) { }
 
     SymbolEntry(SymbolInterpretations interpretation, string? id, int? argument, ModuleName? module)
     {
@@ -39,8 +33,10 @@ public class SymbolEntry : IEquatable<SymbolEntry>
         InternalId = id;
         this.argument = argument;
 
-        Debug.Assert(!Interpretation.AssociatedWithModule() || Module != null,
-            $"Attempted to create a {Enum.GetName(typeof(SymbolInterpretations), interpretation)} symbol pointing to {id} without supplying a module name.");
+        Debug.Assert(
+            !Interpretation.AssociatedWithModule() || Module != null,
+            $"Attempted to create a {Enum.GetName(typeof(SymbolInterpretations), interpretation)} symbol pointing to {id} without supplying a module name."
+        );
     }
 
     #endregion
@@ -73,11 +69,10 @@ public class SymbolEntry : IEquatable<SymbolEntry>
 
     public override string ToString()
     {
-        return Enum.GetName(
-                typeof (SymbolInterpretations), Interpretation) +
-            (InternalId == null ? "" : ":" + InternalId) + 
-            (argument.HasValue ? "#" + argument.Value : "") +
-            (Module != null ? "/" + Module : "");
+        return Enum.GetName(typeof(SymbolInterpretations), Interpretation)
+            + (InternalId == null ? "" : ":" + InternalId)
+            + (argument.HasValue ? "#" + argument.Value : "")
+            + (Module != null ? "/" + Module : "");
     }
 
     #region Equality
@@ -91,9 +86,14 @@ public class SymbolEntry : IEquatable<SymbolEntry>
     /// <param name="other">An object to compare with this object.</param>
     public bool Equals(SymbolEntry? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return Equals(other.Interpretation, Interpretation) && Equals(other.InternalId, InternalId) && Equals(other.Module, Module) && other.argument.Equals(argument);
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
+        return Equals(other.Interpretation, Interpretation)
+            && Equals(other.InternalId, InternalId)
+            && Equals(other.Module, Module)
+            && other.argument.Equals(argument);
     }
 
     /// <summary>
@@ -105,14 +105,17 @@ public class SymbolEntry : IEquatable<SymbolEntry>
     /// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>. </param><filterpriority>2</filterpriority>
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != typeof (SymbolEntry)) return false;
-        return Equals((SymbolEntry) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != typeof(SymbolEntry))
+            return false;
+        return Equals((SymbolEntry)obj);
     }
 
     /// <summary>
-    /// Serves as a hash function for a particular type. 
+    /// Serves as a hash function for a particular type.
     /// </summary>
     /// <returns>
     /// A hash code for the current <see cref="T:System.Object"/>.
@@ -123,8 +126,8 @@ public class SymbolEntry : IEquatable<SymbolEntry>
         unchecked
         {
             var result = Interpretation.GetHashCode();
-            result = (result*397) ^ (InternalId != null ? InternalId.GetHashCode() : 0);
-            result = (result*397) ^ (Module != null ? Module.GetHashCode() : 0);
+            result = (result * 397) ^ (InternalId != null ? InternalId.GetHashCode() : 0);
+            result = (result * 397) ^ (Module != null ? Module.GetHashCode() : 0);
             return result;
         }
     }
@@ -145,7 +148,7 @@ public class SymbolEntry : IEquatable<SymbolEntry>
 
     public static SymbolEntry LocalObjectVariable(string id)
     {
-        return new(SymbolInterpretations.LocalObjectVariable, id,null);
+        return new(SymbolInterpretations.LocalObjectVariable, id, null);
     }
 
     public static SymbolEntry LocalReferenceVariable(string id)
@@ -155,7 +158,7 @@ public class SymbolEntry : IEquatable<SymbolEntry>
 
     public static SymbolEntry Command(string id)
     {
-        return new(SymbolInterpretations.Command,id,null);
+        return new(SymbolInterpretations.Command, id, null);
     }
 
     public static SymbolEntry MacroCommand(string id)
@@ -169,7 +172,6 @@ public class SymbolEntry : IEquatable<SymbolEntry>
     }
 
     #endregion
-
 }
 
 /// <summary>
@@ -223,13 +225,13 @@ public enum SymbolInterpretations
     GlobalObjectVariable,
 
     /// <summary>
-    ///     Symbol is a global variable, to be looked up in <see cref = "Application.Variables" />, 
+    ///     Symbol is a global variable, to be looked up in <see cref = "Application.Variables" />,
     ///     will be dereferenced when mentioned. See <see cref = "IIndirectCall" />.
     /// </summary>
     GlobalReferenceVariable,
 
     /// <summary>
-    ///     Symbol is a macro command, to be looked up in <see cref = "Loader.MacroCommands" />. 
+    ///     Symbol is a macro command, to be looked up in <see cref = "Loader.MacroCommands" />.
     ///     Macro commands need to be applied at compile-time.
     /// </summary>
     MacroCommand,

@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
@@ -14,9 +12,7 @@ public class CallStar : PartialMacroCommand
     public static CallStar Instance { get; } = new();
 
     CallStar()
-        : base(@"call\star")
-    {
-    }
+        : base(@"call\star") { }
 
     #endregion
 
@@ -26,8 +22,13 @@ public class CallStar : PartialMacroCommand
     {
         if (context.Invocation.Arguments.Count < 1)
         {
-            context.ReportMessage(Message.Error(
-                string.Format(Resources.CallStar_usage, Id), context.Invocation.Position, MessageClasses.CallStarUsage));
+            context.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.CallStar_usage, Id),
+                    context.Invocation.Position,
+                    MessageClasses.CallStarUsage
+                )
+            );
             return true;
         }
 
@@ -38,8 +39,7 @@ public class CallStar : PartialMacroCommand
         return true;
     }
 
-    void _expandPartialApplication(MacroContext context, int passThrough,
-        List<AstExpr> arguments)
+    void _expandPartialApplication(MacroContext context, int passThrough, List<AstExpr> arguments)
     {
         var flatArgs = new List<AstExpr>(arguments.Count);
         var directives = new List<int>(arguments.Count);
@@ -79,8 +79,11 @@ public class CallStar : PartialMacroCommand
         _mergeDirectivesIntoMappings(directives, mappings8, argc);
         var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
-        var implCall = context.Factory.Call(context.Invocation.Position,
-            EntityRef.Command.Create(PartialCallStarImplCommand.Alias), context.Call);
+        var implCall = context.Factory.Call(
+            context.Invocation.Position,
+            EntityRef.Command.Create(PartialCallStarImplCommand.Alias),
+            context.Call
+        );
         implCall.Arguments.AddRange(closedArguments);
 
         implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));
@@ -88,8 +91,7 @@ public class CallStar : PartialMacroCommand
         context.Block.Expression = implCall;
     }
 
-    static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8,
-        int argc)
+    static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8, int argc)
     {
         var mi = argc;
         foreach (var directive in directives)
@@ -121,8 +123,11 @@ public class CallStar : PartialMacroCommand
         {
             context.ReportMessage(
                 Message.Error(
-                    string.Format(Resources.CallStar_usage, Id), context.Invocation.Position,
-                    MessageClasses.CallStarUsage));
+                    string.Format(Resources.CallStar_usage, Id),
+                    context.Invocation.Position,
+                    MessageClasses.CallStarUsage
+                )
+            );
             return;
         }
 
@@ -135,14 +140,22 @@ public class CallStar : PartialMacroCommand
         }
 
         // "Fallback" direct invocation
-        var ic = new AstIndirectCall(context.Invocation.File, context.Invocation.Line,
-            context.Invocation.Column, context.Invocation.Call, arguments[0]);
+        var ic = new AstIndirectCall(
+            context.Invocation.File,
+            context.Invocation.Line,
+            context.Invocation.Column,
+            context.Invocation.Call,
+            arguments[0]
+        );
         ic.Arguments.AddRange(arguments.Skip(1));
         context.Block.Expression = ic;
     }
 
-    static void _determinePassThrough(MacroContext context, out int passThrough,
-        out List<AstExpr> arguments)
+    static void _determinePassThrough(
+        MacroContext context,
+        out int passThrough,
+        out List<AstExpr> arguments
+    )
     {
         var arg0 = context.Invocation.Arguments[0];
         var passThroughNode = arg0 as AstConstant;
@@ -162,7 +175,9 @@ public class CallStar : PartialMacroCommand
                 Message.Error(
                     string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
                     passThroughNode?.Position ?? context.Invocation.Position,
-                    MessageClasses.CallStarPassThrough));
+                    MessageClasses.CallStarPassThrough
+                )
+            );
     }
 
     #endregion

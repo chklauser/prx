@@ -1,9 +1,8 @@
-
 #line 15
 
 #region Shared Source License
 
-// The above license text has been added by an automated tool. 
+// The above license text has been added by an automated tool.
 //  However, for this particular file a different license is in effect:
 
 /* **********************************************************************************
@@ -119,7 +118,8 @@ public abstract class SuperConsole
 
         public int Count => list.Count;
 
-        string? Current => current >= 0 && current < list.Count ? (string?) list[current] : string.Empty;
+        string? Current =>
+            current >= 0 && current < list.Count ? (string?)list[current] : string.Empty;
 
         public void Clear()
         {
@@ -139,7 +139,7 @@ public abstract class SuperConsole
         {
             if (list.Count > 0)
             {
-                current = (current - 1 + list.Count)%list.Count;
+                current = (current - 1 + list.Count) % list.Count;
             }
             return Current;
         }
@@ -148,7 +148,7 @@ public abstract class SuperConsole
         {
             if (list.Count > 0)
             {
-                current = (current + 1)%list.Count;
+                current = (current + 1) % list.Count;
             }
             return Current;
         }
@@ -185,8 +185,8 @@ public abstract class SuperConsole
 
         public void Place(int index)
         {
-            Console.CursorLeft = (Left + index)%Console.BufferWidth;
-            var cursorTop = Top + (Left + index)/Console.BufferWidth;
+            Console.CursorLeft = (Left + index) % Console.BufferWidth;
+            var cursorTop = Top + (Left + index) / Console.BufferWidth;
             if (cursorTop >= Console.BufferHeight)
             {
                 Top -= cursorTop - Console.BufferHeight + 1;
@@ -197,10 +197,10 @@ public abstract class SuperConsole
 
         public void Move(int delta)
         {
-            var position = Console.CursorTop*Console.BufferWidth + Console.CursorLeft + delta;
+            var position = Console.CursorTop * Console.BufferWidth + Console.CursorLeft + delta;
 
-            Console.CursorLeft = position%Console.BufferWidth;
-            Console.CursorTop = position/Console.BufferWidth;
+            Console.CursorLeft = position % Console.BufferWidth;
+            Console.CursorTop = position / Console.BufferWidth;
         }
     }
 
@@ -272,9 +272,7 @@ public abstract class SuperConsole
         for (len = input.Length; len > 0; len--)
         {
             var c = input[len - 1];
-            if (IsPartOfIdentifier(c))
-            {
-            }
+            if (IsPartOfIdentifier(c)) { }
             else
             {
                 break;
@@ -333,8 +331,7 @@ public abstract class SuperConsole
         }
     }
 
-    public abstract IEnumerable<string> OnTab(
-        string attr, string pref, string root);
+    public abstract IEnumerable<string> OnTab(string attr, string pref, string root);
 
     void SetInput(string line)
     {
@@ -428,7 +425,7 @@ public abstract class SuperConsole
         if (c == 13)
             return "\r\n";
         if (c <= 26)
-            return "^" + (char) (c + 'A' - 1);
+            return "^" + (char)(c + 'A' - 1);
 
         return "^?";
         //return c.ToString();
@@ -576,7 +573,7 @@ public abstract class SuperConsole
 
     void InsertTab()
     {
-        for (var i = TabSize - current%TabSize; i > 0; i--)
+        for (var i = TabSize - current % TabSize; i > 0; i--)
         {
             Insert(' ');
         }
@@ -605,7 +602,7 @@ public abstract class SuperConsole
         var inputChanged = false;
         var optionsObsolete = false;
 
-        for (;;)
+        for (; ; )
         {
             var key = Console.ReadKey(true);
 
@@ -640,9 +637,10 @@ public abstract class SuperConsole
 
                     if (options.Count > 0)
                     {
-                        var part = (key.Modifiers & ConsoleModifiers.Shift) != 0
-                            ? options.Previous()
-                            : options.Next();
+                        var part =
+                            (key.Modifiers & ConsoleModifiers.Shift) != 0
+                                ? options.Previous()
+                                : options.Next();
                         SetInput(options.Root + part);
                     }
                     else
@@ -708,7 +706,7 @@ public abstract class SuperConsole
         var inputChanged = false;
         var optionsObsolete = false;
 
-        for (;;)
+        for (; ; )
         {
             var key = Console.ReadKey(true);
 
@@ -745,9 +743,10 @@ public abstract class SuperConsole
 
                     if (options.Count > 0)
                     {
-                        var part = (key.Modifiers & ConsoleModifiers.Shift) != 0
-                            ? options.Previous()
-                            : options.Next();
+                        var part =
+                            (key.Modifiers & ConsoleModifiers.Shift) != 0
+                                ? options.Previous()
+                                : options.Next();
                         SetInput(options.Root + part);
                     }
                     else
@@ -756,9 +755,7 @@ public abstract class SuperConsole
                         {
                             InsertTab();
                         }
-                        else
-                        {
-                        }
+                        else { }
                     }
                     inputChanged = true;
                     break;
@@ -812,7 +809,8 @@ public abstract class SuperConsole
 
     //Made FinalLineText static  (-P)
 
-    static string FinalLineText => Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
+    static string FinalLineText =>
+        Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
 
     public void Write(string text, Style style)
     {

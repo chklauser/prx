@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
@@ -10,11 +8,12 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 {
     public static readonly TraceSource Trace = new("Prexonite.Compiler.Symbolic");
 
-    internal Symbol()
-    {
-    }
+    internal Symbol() { }
 
-    public abstract TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument);
+    public abstract TResult HandleWith<TArg, TResult>(
+        ISymbolHandler<TArg, TResult> handler,
+        TArg argument
+    );
 
     public abstract ISourcePosition Position { get; }
 
@@ -36,7 +35,9 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,dereferenceSymbol: notnull;=>false,dereferenceSymbol:canbenull")]
-    public virtual bool TryGetDereferenceSymbol([NotNullWhen(true)] out DereferenceSymbol? dereferenceSymbol)
+    public virtual bool TryGetDereferenceSymbol(
+        [NotNullWhen(true)] out DereferenceSymbol? dereferenceSymbol
+    )
     {
         dereferenceSymbol = null;
         return false;
@@ -44,7 +45,9 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,referenceSymbol: notnull;=>false,referenceSymbol:canbenull")]
-    public virtual bool TryGetReferenceSymbol([NotNullWhen(true)] out ReferenceSymbol? referenceSymbol)
+    public virtual bool TryGetReferenceSymbol(
+        [NotNullWhen(true)] out ReferenceSymbol? referenceSymbol
+    )
     {
         referenceSymbol = null;
         return false;
@@ -60,7 +63,9 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
 
     [PublicAPI]
     [ContractAnnotation("=>true,namespaceSymbol: notnull;=>false,namespaceSymbol:canbenull")]
-    public virtual bool TryGetNamespaceSymbol([NotNullWhen(true)] out NamespaceSymbol? namespaceSymbol)
+    public virtual bool TryGetNamespaceSymbol(
+        [NotNullWhen(true)] out NamespaceSymbol? namespaceSymbol
+    )
     {
         namespaceSymbol = null;
         return false;
@@ -71,12 +76,11 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     [PublicAPI]
     public static Symbol CreateReference(EntityRef entityRef, ISourcePosition position)
     {
-        return ReferenceSymbol._Create(entityRef,position);
+        return ReferenceSymbol._Create(entityRef, position);
     }
 
     [PublicAPI]
-    public static Symbol CreateNamespace(Namespace @namespace,
-        ISourcePosition position)
+    public static Symbol CreateNamespace(Namespace @namespace, ISourcePosition position)
     {
         return NamespaceSymbol._Create(@namespace, position);
     }
@@ -96,7 +100,11 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     }
 
     [PublicAPI]
-    public static Symbol CreateMessage(Message message, Symbol inner, ISourcePosition? position = null)
+    public static Symbol CreateMessage(
+        Message message,
+        Symbol inner,
+        ISourcePosition? position = null
+    )
     {
         if (message == null)
             throw new ArgumentNullException(nameof(message));
@@ -116,17 +124,23 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
     [PublicAPI]
     public static Symbol CreateCall(EntityRef entity, ISourcePosition position)
     {
-        return CreateDereference(CreateReference(entity,position),position);
+        return CreateDereference(CreateReference(entity, position), position);
     }
 
     public abstract bool Equals(Symbol? other);
+
     public sealed override bool Equals(object? obj)
     {
-        if (ReferenceEquals(this, obj)) return true;
-        if (ReferenceEquals(obj, null)) return false;
-        if (obj.GetType() != GetType()) return false;
-        else return Equals((Symbol) obj);
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (ReferenceEquals(obj, null))
+            return false;
+        if (obj.GetType() != GetType())
+            return false;
+        else
+            return Equals((Symbol)obj);
     }
+
     public abstract override int GetHashCode();
 
     public bool TryDynamicCall(
@@ -137,11 +151,16 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
         out PValue result
     )
     {
-        static PValue assignOutParameter(StackContext stackContext, ReadOnlySpan<PValue> innerArgs, object? value, bool found)
+        static PValue assignOutParameter(
+            StackContext stackContext,
+            ReadOnlySpan<PValue> innerArgs,
+            object? value,
+            bool found
+        )
         {
             if (innerArgs.Length > 0)
             {
-                var wrappedValue = found ? stackContext.CreateNativePValue(value) : PType.Null;   
+                var wrappedValue = found ? stackContext.CreateNativePValue(value) : PType.Null;
                 innerArgs[0].IndirectCall(stackContext, wrappedValue);
             }
             return stackContext.CreateNativePValue(found);
@@ -154,22 +173,22 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
                 found = TryGetNamespaceSymbol(out var namespaceSymbol);
                 result = assignOutParameter(sctx, args, namespaceSymbol, found);
                 return true;
-                
+
             case "TRYGETNILSYMBOL":
                 found = TryGetNilSymbol(out var nilSymbol);
                 result = assignOutParameter(sctx, args, nilSymbol, found);
                 return true;
-                
+
             case "TRYGETREFERENCESYMBOL":
                 found = TryGetReferenceSymbol(out var referenceSymbol);
                 result = assignOutParameter(sctx, args, referenceSymbol, found);
                 return true;
-                
+
             case "TRYGETDEREFERENCESYMBOL":
                 found = TryGetDereferenceSymbol(out var dereferenceSymbol);
                 result = assignOutParameter(sctx, args, dereferenceSymbol, found);
                 return true;
-                
+
             case "TRYGETMESSAGESYMBOL":
                 found = TryGetMessageSymbol(out var messageSymbol);
                 result = assignOutParameter(sctx, args, messageSymbol, found);
@@ -178,7 +197,6 @@ public abstract class Symbol : IEquatable<Symbol>, IObject
                 found = TryGetExpandSymbol(out var expandSymbol);
                 result = assignOutParameter(sctx, args, expandSymbol, found);
                 return true;
-
         }
 
         result = PType.Null;
@@ -203,14 +221,14 @@ public abstract class WrappingSymbol : Symbol
 
     protected bool Equals(WrappingSymbol? other)
     {
-        return other != null 
-            && other.GetType() == GetType() 
+        return other != null
+            && other.GetType() == GetType()
             && InnerSymbol.Equals(other.InnerSymbol);
     }
 
     public override int GetHashCode()
     {
-        return HashCodeXorFactor ^InnerSymbol.GetHashCode();
+        return HashCodeXorFactor ^ InnerSymbol.GetHashCode();
     }
 
     protected abstract int HashCodeXorFactor { get; }

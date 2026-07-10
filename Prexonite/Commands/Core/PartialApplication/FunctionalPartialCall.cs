@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 public class FunctionalPartialCall(PValue subject, PValue[] arguments) : IMaybeStackAware
@@ -9,9 +7,12 @@ public class FunctionalPartialCall(PValue subject, PValue[] arguments) : IMaybeS
         return subject.IndirectCall(sctx, _getEffectiveArgs(args));
     }
 
-    public bool TryDefer(StackContext sctx, PValue[] args,
+    public bool TryDefer(
+        StackContext sctx,
+        PValue[] args,
         [NotNullWhen(true)] out StackContext? partialApplicationContext,
-        [NotNullWhen(false)] out PValue? result)
+        [NotNullWhen(false)] out PValue? result
+    )
     {
         var effectiveArgs = _getEffectiveArgs(args);
 
@@ -29,9 +30,12 @@ public class FunctionalPartialCall(PValue subject, PValue[] arguments) : IMaybeS
             }
 
             if (raw is IMaybeStackAware partialApplication)
-                return partialApplication.TryDefer(sctx, effectiveArgs,
+                return partialApplication.TryDefer(
+                    sctx,
+                    effectiveArgs,
                     out partialApplicationContext,
-                    out result);
+                    out result
+                );
         }
 
         result = subject.IndirectCall(sctx, effectiveArgs);

@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -10,9 +8,7 @@ public class Except : PCommand, ICilCompilerAware
 
     public static Except Instance { get; } = new();
 
-    Except()
-    {
-    }
+    Except() { }
 
     #endregion
 

@@ -1,4 +1,3 @@
-
 #region
 
 using System.Reflection;
@@ -63,9 +62,7 @@ public class StructurePType : PType, ICilCompilerAware
         }
 
         public Member()
-            : this(false)
-        {
-        }
+            : this(false) { }
 
         public PValue Invoke(StackContext sctx, ReadOnlySpan<PValue> args, PCall call)
         {
@@ -90,9 +87,7 @@ public class StructurePType : PType, ICilCompilerAware
         #endregion
     }
 
-    StructurePType()
-    {
-    }
+    StructurePType() { }
 
     public static StructurePType Instance { get; } = new();
 
@@ -123,8 +118,7 @@ public class StructurePType : PType, ICilCompilerAware
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;
@@ -149,10 +143,10 @@ public class StructurePType : PType, ICilCompilerAware
                     if (args.Length < 2)
                         goto default;
 
-                    var mid = (string) args[0].ConvertTo(sctx, String).Value!;
+                    var mid = (string)args[0].ConvertTo(sctx, String).Value!;
 
                     if (isReference || args.Length > 2)
-                        isReference = (bool) args[1].ConvertTo(sctx, Bool).Value!;
+                        isReference = (bool)args[1].ConvertTo(sctx, Bool).Value!;
 
                     if (obj.TryGetValue(mid, out var memberValue))
                         m = memberValue;
@@ -181,7 +175,12 @@ public class StructurePType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -189,144 +188,306 @@ public class StructurePType : PType, ICilCompilerAware
 
     #region Operators
 
-    public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Addition(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.Addition, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Addition,
+            out result
+        );
     }
 
-    public override bool Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Subtraction(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.Subtraction, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Subtraction,
+            out result
+        );
     }
 
-    public override bool Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Multiply(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.Multiplication, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Multiplication,
+            out result
+        );
     }
 
-    public override bool Division(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Division(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.Division, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Division,
+            out result
+        );
     }
 
-    public override bool Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Modulus(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get, OperatorNames.Prexonite.Modulus,
-            out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Modulus,
+            out result
+        );
     }
 
-    public override bool BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool BitwiseAnd(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.BitwiseAnd, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.BitwiseAnd,
+            out result
+        );
     }
 
-    public override bool BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool BitwiseOr(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.BitwiseOr, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.BitwiseOr,
+            out result
+        );
     }
 
-    public override bool ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool ExclusiveOr(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.ExclusiveOr, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.ExclusiveOr,
+            out result
+        );
     }
 
-    public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Equality(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.Equality, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Equality,
+            out result
+        );
     }
 
-    public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Inequality(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.Inequality, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.Inequality,
+            out result
+        );
     }
 
-    public override bool GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool GreaterThan(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.GreaterThan, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.GreaterThan,
+            out result
+        );
     }
 
-    public override bool GreaterThanOrEqual(StackContext sctx, PValue leftOperand,
-        PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public override bool GreaterThanOrEqual(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.GreaterThanOrEqual, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.GreaterThanOrEqual,
+            out result
+        );
     }
 
-    public override bool LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool LessThan(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.LessThan, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.LessThan,
+            out result
+        );
     }
 
-    public override bool LessThanOrEqual(StackContext sctx, PValue leftOperand,
-        PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+    public override bool LessThanOrEqual(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, leftOperand, new[] {rightOperand}, PCall.Get,
-            OperatorNames.Prexonite.LessThanOrEqual, out result);
+        return TryDynamicCall(
+            sctx,
+            leftOperand,
+            new[] { rightOperand },
+            PCall.Get,
+            OperatorNames.Prexonite.LessThanOrEqual,
+            out result
+        );
     }
 
-    public override bool UnaryNegation(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool UnaryNegation(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.UnaryNegation,
-            out result);
+        return TryDynamicCall(
+            sctx,
+            operand,
+            [],
+            PCall.Get,
+            OperatorNames.Prexonite.UnaryNegation,
+            out result
+        );
     }
 
-    public override bool OnesComplement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool OnesComplement(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.OnesComplement,
-            out result);
+        return TryDynamicCall(
+            sctx,
+            operand,
+            [],
+            PCall.Get,
+            OperatorNames.Prexonite.OnesComplement,
+            out result
+        );
     }
 
-    public override bool Increment(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool Increment(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.Increment,
-            out result);
+        return TryDynamicCall(
+            sctx,
+            operand,
+            [],
+            PCall.Get,
+            OperatorNames.Prexonite.Increment,
+            out result
+        );
     }
 
-    public override bool Decrement(StackContext sctx, PValue operand, [NotNullWhen(true)] out PValue? result)
+    public override bool Decrement(
+        StackContext sctx,
+        PValue operand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
-        return TryDynamicCall
-        (sctx, operand, [], PCall.Get, OperatorNames.Prexonite.Decrement,
-            out result);
+        return TryDynamicCall(
+            sctx,
+            operand,
+            [],
+            PCall.Get,
+            OperatorNames.Prexonite.Decrement,
+            out result
+        );
     }
 
     #endregion
@@ -338,7 +499,11 @@ public class StructurePType : PType, ICilCompilerAware
     /// <param name = "args">An array of arguments. Ignored in the current implementation.</param>
     /// <param name = "result">The out parameter that holds the resulting PValue.</param>
     /// <returns>True if the construction was successful; false otherwise.</returns>
-    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = new(new SymbolTable<Member>(), this);
         return true;
@@ -349,7 +514,8 @@ public class StructurePType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         if (subject.Value is not SymbolTable<Member>)
@@ -359,13 +525,11 @@ public class StructurePType : PType, ICilCompilerAware
         {
             case BuiltIn.String:
                 normalString:
-                if (
-                    !TryDynamicCall(sctx, subject, [], PCall.Get, nameof(ToString),
-                        out result))
+                if (!TryDynamicCall(sctx, subject, [], PCall.Get, nameof(ToString), out result))
                     result = null;
                 break;
             case BuiltIn.Object:
-                var clrType = ((ObjectPType) target).ClrType;
+                var clrType = ((ObjectPType)target).ClrType;
                 var tc = Type.GetTypeCode(clrType);
                 switch (tc)
                 {
@@ -382,14 +546,19 @@ public class StructurePType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         if (subject.Value is not SymbolTable<Member> obj)
@@ -438,8 +607,9 @@ public class StructurePType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    static readonly MethodInfo _getStructurePType =
-        typeof (PType).GetProperty(nameof(Structure))!.GetGetMethod()!;
+    static readonly MethodInfo _getStructurePType = typeof(PType)
+        .GetProperty(nameof(Structure))!
+        .GetGetMethod()!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

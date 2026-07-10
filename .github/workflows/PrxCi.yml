@@ -37,6 +37,10 @@ jobs:
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
         env:
           NUGET_AUTH_TOKEN: '${{secrets.GITHUB_TOKEN}}'
+      - name: Restore local tools
+        run: dotnet tool restore
+      - name: Check formatting
+        run: dotnet csharpier check .
       - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages

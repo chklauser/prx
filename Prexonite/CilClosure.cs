@@ -1,12 +1,13 @@
-
-
 namespace Prexonite;
 
 /// <summary>
 ///     Represents a closure, a nested function bound to a set of shared variables.
 /// </summary>
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Cil")]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = "Cil"
+)]
 public sealed class CilClosure : IIndirectCall, IStackAware
 {
     #region Properties
@@ -40,7 +41,8 @@ public sealed class CilClosure : IIndirectCall, IStackAware
             throw new ArgumentException(func + " does not have a cil implemenetation");
 
         Function = func;
-        SharedVariables = sharedVariables ?? throw new ArgumentNullException(nameof(sharedVariables));
+        SharedVariables =
+            sharedVariables ?? throw new ArgumentNullException(nameof(sharedVariables));
     }
 
     #endregion
@@ -55,14 +57,23 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// <returns>The value returned by the function.</returns>
     public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
     {
-        if (Function.CilImplementation is not {} cilImplementation)
-            throw new PrexoniteException("CilClosure cannot handle " + Function +
-                " because it has no cil implementation");
-        
-        var callCtx = sctx.ParentApplication == Function.ParentApplication 
-            ? sctx 
-            : CilFunctionContext.New(sctx, Function);
-        cilImplementation(Function, callCtx, args.ToArray(), SharedVariables, out var result, out _);
+        if (Function.CilImplementation is not { } cilImplementation)
+            throw new PrexoniteException(
+                "CilClosure cannot handle " + Function + " because it has no cil implementation"
+            );
+
+        var callCtx =
+            sctx.ParentApplication == Function.ParentApplication
+                ? sctx
+                : CilFunctionContext.New(sctx, Function);
+        cilImplementation(
+            Function,
+            callCtx,
+            args.ToArray(),
+            SharedVariables,
+            out var result,
+            out _
+        );
         return result;
     }
 
@@ -78,9 +89,9 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
     public static bool operator ==(CilClosure? a, CilClosure? b)
     {
-        if ((object?) a == null && (object?) b == null)
+        if ((object?)a == null && (object?)b == null)
             return true;
-        else if ((object?) a == null || (object?) b == null)
+        else if ((object?)a == null || (object?)b == null)
             return false;
         else if (ReferenceEquals(a, b))
             return true;
@@ -117,7 +128,7 @@ public sealed class CilClosure : IIndirectCall, IStackAware
     public override bool Equals(object? obj)
     {
         var clo = obj as CilClosure;
-        if ((object?) clo == null)
+        if ((object?)clo == null)
             return false;
         return this == clo;
     }

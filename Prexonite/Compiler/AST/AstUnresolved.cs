@@ -1,5 +1,3 @@
-
-
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast;
@@ -12,12 +10,14 @@ public class AstUnresolved : AstGetSetImplBase
         Id = id;
     }
 
-    internal AstUnresolved(Parser p, string id) : base(p, PCall.Get)
+    internal AstUnresolved(Parser p, string id)
+        : base(p, PCall.Get)
     {
         Id = id;
     }
 
-    public AstUnresolved(ISourcePosition position, string id) : base(position,PCall.Get)
+    public AstUnresolved(ISourcePosition position, string id)
+        : base(position, PCall.Get)
     {
         Id = id ?? throw new ArgumentNullException(nameof(id));
     }
@@ -34,8 +34,11 @@ public class AstUnresolved : AstGetSetImplBase
     {
         target.Loader.ReportMessage(
             Message.Error(
-                string.Format(Resources.AstUnresolved_The_symbol__0__has_not_been_resolved_, Id), Position,
-                MessageClasses.SymbolNotResolved));
+                string.Format(Resources.AstUnresolved_The_symbol__0__has_not_been_resolved_, Id),
+                Position,
+                MessageClasses.SymbolNotResolved
+            )
+        );
     }
 
     public string Id { get; }

@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -14,15 +12,18 @@ public class FunctionIdChangingEventArgs : EventArgs
 {
     public FunctionIdChangingEventArgs(string newId)
     {
-        if(string.IsNullOrEmpty(newId))
-            throw new ArgumentException("new id cannot be null or empty.",nameof(newId));
+        if (string.IsNullOrEmpty(newId))
+            throw new ArgumentException("new id cannot be null or empty.", nameof(newId));
         NewId = newId;
     }
 
     public string NewId { get; }
 }
 
-public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDependent<EntityRef.Function>
+public abstract class FunctionDeclaration
+    : IHasMetaTable,
+        IMetaFilter,
+        IDependent<EntityRef.Function>
 {
     /// <summary>
     /// The id of the global variable. Not null and not empty.
@@ -52,7 +53,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// <summary>
     /// The function's byte code, must always return the same reference.
     /// </summary>
-    public abstract List<Instruction> Code { get; } 
+    public abstract List<Instruction> Code { get; }
 
     /// <summary>
     /// A table that maps from local variables to the indices of the variable slots used by the VM.
@@ -126,12 +127,18 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// <summary>
     /// An implementation of this function in CIL, if it is available; null otherwise.
     /// </summary>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil"
+    )]
     public abstract ICilImplementation? CilImplementation { get; protected internal set; }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil"
+    )]
     public bool HasCilImplementation
     {
         [DebuggerStepThrough]
@@ -145,7 +152,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     }
 
     /// <summary>
-    /// The name this function was originally declared under. 
+    /// The name this function was originally declared under.
     /// Primarily a debugging help, has no meaning in the Prexonite VM.
     /// </summary>
     [PublicAPI]
@@ -181,16 +188,24 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// <param name = "item">The item to update/store.</param>
     /// <returns>The transformed item or null if nothing is to be stored.</returns>
     [DebuggerNonUserCode]
-    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(
+        KeyValuePair<string?, MetaEntry> item
+    )
     {
         //Prevent changing the name of the function;
-        if ((Engine.StringsAreEqual(item.Key, PFunction.IdKey) ||
-                Engine.StringsAreEqual(item.Key, Application.NameKey))
-            && (MetaTable?)Meta != null) //this clauses causes the filter to skip this check 
+        if (
+            (
+                Engine.StringsAreEqual(item.Key, PFunction.IdKey)
+                || Engine.StringsAreEqual(item.Key, Application.NameKey)
+            )
+            && (MetaTable?)Meta != null
+        ) //this clauses causes the filter to skip this check
             // while the Function is still being constructed
             return null;
-        else if (Engine.StringsAreEqual(item.Key, Application.ImportKey) ||
-                 Engine.StringsAreEqual(item.Key, "imports"))
+        else if (
+            Engine.StringsAreEqual(item.Key, Application.ImportKey)
+            || Engine.StringsAreEqual(item.Key, "imports")
+        )
         {
             //
             ImportedClrNamespaces.Clear();
@@ -230,7 +245,9 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     protected abstract ModuleName ContainingModule { get; }
     protected abstract CentralCache Cache { get; }
 
-    EntityRef.Function INamed<EntityRef.Function>.Name => (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(Id, ContainingModule));
+    EntityRef.Function INamed<EntityRef.Function>.Name =>
+        (EntityRef.Function)
+            Cache.EntityRefs.GetCached(EntityRef.Function.Create(Id, ContainingModule));
 
     public IEnumerable<EntityRef.Function> GetDependencies()
     {
@@ -245,8 +262,8 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                 case OpCode.newclo:
                 case OpCode.func:
                     var moduleName = ins.ModuleName ?? ContainingModule;
-                    yield return
-                        (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(id!, moduleName));
+                    yield return (EntityRef.Function)
+                        Cache.EntityRefs.GetCached(EntityRef.Function.Create(id!, moduleName));
                     break;
             }
         }
@@ -264,15 +281,18 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
     /// <returns>A new function declaration.</returns>
     internal static FunctionDeclaration _Create(string id, Module module)
     {
-        return new Impl(id,module);
+        return new Impl(id, module);
     }
 
     sealed class Impl : FunctionDeclaration
     {
         public Impl(string id, Module module)
         {
-            if(string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("Function id cannot be null, empty or just whitespace.",nameof(id));
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentException(
+                    "Function id cannot be null, empty or just whitespace.",
+                    nameof(id)
+                );
             var meta = MetaTable.Create(this);
             meta[PFunction.IdKey] = id;
             meta[Application.ImportKey] = module.Meta[Application.ImportKey];
@@ -418,7 +438,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                 foreach (var rawIns in Code)
                 {
 #if DEBUG || Verbose
-                        int idxBeginning = buffer.Length;
+                    int idxBeginning = buffer.Length;
 #endif
 
                     //Rewrite index-based op-codes back
@@ -427,25 +447,25 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                     switch (rawIns.OpCode)
                     {
                         case OpCode.ldloci:
-                            ins = new(OpCode.ldloc,
-                                reverseLocalMapping[rawIns.Arguments]);
+                            ins = new(OpCode.ldloc, reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.stloci:
-                            ins = new(OpCode.stloc,
-                                reverseLocalMapping[rawIns.Arguments]);
+                            ins = new(OpCode.stloc, reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.incloci:
-                            ins = new(OpCode.incloc,
-                                reverseLocalMapping[rawIns.Arguments]);
+                            ins = new(OpCode.incloc, reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.decloci:
-                            ins = new(OpCode.decloc,
-                                reverseLocalMapping[rawIns.Arguments]);
+                            ins = new(OpCode.decloc, reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.indloci:
                             rawIns.DecodeIndLocIndex(out var index, out var argc);
-                            ins = new(OpCode.indloc, argc, reverseLocalMapping[index],
-                                rawIns.JustEffect);
+                            ins = new(
+                                OpCode.indloc,
+                                argc,
+                                reverseLocalMapping[index],
+                                rawIns.JustEffect
+                            );
                             break;
                         default:
                             ins = rawIns;
@@ -454,10 +474,10 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
 
                     ins.ToString(buffer);
 #if DEBUG || Verbose
-                        if (buffer[idxBeginning] != '@')
-                            buffer.Insert(idxBeginning, ' ');
-                        buffer.AppendLine();
-                        _appendAddress(buffer, ++idx, digits);
+                    if (buffer[idxBeginning] != '@')
+                        buffer.Insert(idxBeginning, ' ');
+                    buffer.AppendLine();
+                    _appendAddress(buffer, ++idx, digits);
 #else
                     buffer.AppendLine();
                     _appendAddress(buffer, ++idx, digits);
@@ -523,7 +543,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             writer.Write(Loader.SuppressPrimarySymbol);
             writer.Write(";");
 #if DEBUG || Verbose
-                writer.WriteLine();
+            writer.WriteLine();
 #endif
             var meta = Meta.Clone();
             meta.Remove(Application.ImportKey); //to be added separately
@@ -549,7 +569,7 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
                 writer.Write(buffer.ToString());
                 writer.Write(";");
 #if DEBUG || Verbose
-                    writer.WriteLine();
+                writer.WriteLine();
 #endif
             }
             //write symbol mapping information
@@ -566,11 +586,11 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             }
             writer.Write("};");
 #if DEBUG || Verbose
-                writer.WriteLine();
+            writer.WriteLine();
 #endif
             writer.Write("]");
 #if DEBUG || Verbose
-                writer.WriteLine();
+            writer.WriteLine();
 #endif
             //End of Metadata
 
@@ -595,8 +615,6 @@ public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDepende
             #endregion
         }
     }
-
-        
 
     #endregion
 }

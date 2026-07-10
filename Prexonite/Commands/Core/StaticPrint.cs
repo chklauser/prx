@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -10,9 +8,7 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
 {
     #region Singleton
 
-    StaticPrint()
-    {
-    }
+    StaticPrint() { }
 
     public static StaticPrint Instance { get; } = new();
 
@@ -79,8 +75,8 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
     #region Implementation of ICilExtension
 
     /// <summary>
-    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
-    /// 
+    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension.
+    ///
     ///     <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see
     ///       cref = "ICilCompilerAware" /> and finally the built-in mechanisms.</para>
     ///     <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see
@@ -103,8 +99,12 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
     /// <param name = "ins">The instruction that "calls" the CIL extension. Usually a command call.</param>
     /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
     /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
-    public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-        int dynamicArgc)
+    public void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         var text = string.Concat(staticArgv.Select(_ToString));
         if (text.Length == 0)
@@ -132,12 +132,14 @@ public class StaticPrint : PCommand, ICilCompilerAware, ICilExtension
         }
     }
 
-    internal static readonly MethodInfo _StaticPrintTextWriterGetMethod =
-        typeof (StaticPrint).GetProperty(nameof(Writer))!.GetGetMethod()!;
+    internal static readonly MethodInfo _StaticPrintTextWriterGetMethod = typeof(StaticPrint)
+        .GetProperty(nameof(Writer))!
+        .GetGetMethod()!;
 
-    static readonly MethodInfo _textWriterWriteMethod = typeof (TextWriter).GetMethod(
+    static readonly MethodInfo _textWriterWriteMethod = typeof(TextWriter).GetMethod(
         "Write",
-        [typeof (string)])!;
+        [typeof(string)]
+    )!;
 
     internal static string _ToString(CompileTimeValue value)
     {

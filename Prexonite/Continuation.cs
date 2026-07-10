@@ -1,5 +1,3 @@
-
-
 namespace Prexonite;
 
 public class Continuation : Closure
@@ -44,7 +42,11 @@ public class Continuation : Closure
         for (var i = 0; i < sharedNames.Length; i++)
         {
             var name = sharedNames[i].Text;
-            sharedVariables[i] = fctx.LocalVariables[name] ?? throw new PrexoniteException("Continuation references non-existent shared variable '" + name + "'.");
+            sharedVariables[i] =
+                fctx.LocalVariables[name]
+                ?? throw new PrexoniteException(
+                    "Continuation references non-existent shared variable '" + name + "'."
+                );
         }
         return sharedVariables;
     }
@@ -80,7 +82,9 @@ public class Continuation : Closure
             var v = fctx.LocalVariables[variable.Key];
             if (v == null)
             {
-                throw new PrexoniteException("Continuation references non-existent local variable '" + variable.Key + "'.");
+                throw new PrexoniteException(
+                    "Continuation references non-existent local variable '" + variable.Key + "'."
+                );
             }
             v.Value = variable.Value;
         }

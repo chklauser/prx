@@ -1,14 +1,16 @@
-
-
 using Prexonite.Commands.Core.Operators;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstConditionalExpression : AstExpr,
-    IAstHasExpressions
+public class AstConditionalExpression : AstExpr, IAstHasExpressions
 {
     public AstConditionalExpression(
-        string file, int line, int column, AstExpr condition, bool isNegative)
+        string file,
+        int line,
+        int column,
+        AstExpr condition,
+        bool isNegative
+    )
         : base(file, line, column)
     {
         Condition = condition ?? throw new ArgumentNullException(nameof(condition));
@@ -16,19 +18,13 @@ public class AstConditionalExpression : AstExpr,
     }
 
     public AstConditionalExpression(string file, int line, int column, AstExpr condition)
-        : this(file, line, column, condition, false)
-    {
-    }
+        : this(file, line, column, condition, false) { }
 
     internal AstConditionalExpression(Parser p, AstExpr condition, bool isNegative)
-        : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative) { }
 
     internal AstConditionalExpression(Parser p, AstExpr condition)
-        : this(p, condition, false)
-    {
-    }
+        : this(p, condition, false) { }
 
     public required AstExpr IfExpression;
     public required AstExpr ElseExpression;
@@ -40,7 +36,7 @@ public class AstConditionalExpression : AstExpr,
 
     public AstExpr[] Expressions
     {
-        get { return new[] {Condition, IfExpression, ElseExpression}.ToArray(); }
+        get { return new[] { Condition, IfExpression, ElseExpression }.ToArray(); }
     }
 
     #endregion
@@ -61,9 +57,13 @@ public class AstConditionalExpression : AstExpr,
         //Constant conditions
         if (Condition is AstConstant constCond)
         {
-            if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
+            if (
+                !constCond
+                    .ToPValue(target)
+                    .TryConvertTo(target.Loader, PType.Bool, out var condValue)
+            )
                 expr = null;
-            else if ((bool) condValue.Value! ^ IsNegative)
+            else if ((bool)condValue.Value! ^ IsNegative)
                 expr = IfExpression;
             else
                 expr = ElseExpression;

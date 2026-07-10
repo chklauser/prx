@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Properties;
 
@@ -8,9 +6,7 @@ namespace Prexonite.Compiler.Ast;
 public abstract class AstNode : IObject
 {
     protected AstNode(string file, int line, int column)
-        : this(new SourcePosition(file, line, column))
-    {
-    }
+        : this(new SourcePosition(file, line, column)) { }
 
     protected AstNode(ISourcePosition position)
     {
@@ -18,9 +14,7 @@ public abstract class AstNode : IObject
     }
 
     internal AstNode(Parser p)
-        : this(p.scanner.File, p.t.line, p.t.col)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col) { }
 
     public ISourcePosition Position { get; }
 
@@ -45,7 +39,8 @@ public abstract class AstNode : IObject
     public void EmitCode(CompilerTarget target, StackSemantics justEffectCode)
     {
         var partiallyApplicabale = this as IAstPartiallyApplicable;
-        var applicationState = partiallyApplicabale?.CheckNodeApplicationState() ?? default(NodeApplicationState);
+        var applicationState =
+            partiallyApplicabale?.CheckNodeApplicationState() ?? default(NodeApplicationState);
 
         if (justEffectCode == StackSemantics.Effect)
         {
@@ -77,18 +72,21 @@ public abstract class AstNode : IObject
     ///      cref = "IAstPartiallyApplicable.CheckForPlaceholders" />, if implemented in derived types.
     /// </summary>
     /// <returns>True if this node has placeholders; false otherwise</returns>
-    public bool CheckForPlaceholders() => 
+    public bool CheckForPlaceholders() =>
         this is IAstPartiallyApplicable pa && pa.CheckNodeApplicationState().HasPlaceholders;
 
-    internal static AstExpr _GetOptimizedNode(
-        CompilerTarget target, AstExpr expr)
+    internal static AstExpr _GetOptimizedNode(CompilerTarget target, AstExpr expr)
     {
         if (target == null)
             throw new ArgumentNullException(
-                nameof(target), Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
+                nameof(target),
+                Resources.AstNode__GetOptimizedNode_CompilerTarget_null
+            );
         if (expr == null)
             throw new ArgumentNullException(
-                nameof(expr), Resources.AstNode__GetOptimizedNode_Expression_null);
+                nameof(expr),
+                Resources.AstNode__GetOptimizedNode_Expression_null
+            );
         return expr.TryOptimize(target, out var opt) ? opt : expr;
     }
 
@@ -96,10 +94,14 @@ public abstract class AstNode : IObject
     {
         if (target == null)
             throw new ArgumentNullException(
-                nameof(target), Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
+                nameof(target),
+                Resources.AstNode__GetOptimizedNode_CompilerTarget_null
+            );
         if (expr == null)
             throw new ArgumentNullException(
-                nameof(expr), Resources.AstNode__GetOptimizedNode_Expression_null);
+                nameof(expr),
+                Resources.AstNode__GetOptimizedNode_Expression_null
+            );
         expr = _GetOptimizedNode(target, expr);
     }
 
@@ -110,8 +112,7 @@ public abstract class AstNode : IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;
@@ -122,7 +123,8 @@ public abstract class AstNode : IObject
                 CompilerTarget? target;
                 if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                     throw new PrexoniteException(
-                        "_GetOptimizedNode(CompilerTarget target) requires target.");
+                        "_GetOptimizedNode(CompilerTarget target) requires target."
+                    );
                 if (this is not AstExpr expr)
                     throw new PrexoniteException("The node is not an AstExpr.");
 
@@ -131,7 +133,8 @@ public abstract class AstNode : IObject
             case "EMITEFFECTCODE":
                 if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                     throw new PrexoniteException(
-                        "EmitEffectCode(CompilerTarget target) requires target.");
+                        "EmitEffectCode(CompilerTarget target) requires target."
+                    );
                 EmitEffectCode(target);
                 result = PType.Null;
                 break;

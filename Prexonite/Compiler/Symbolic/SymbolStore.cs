@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic.Internal;
@@ -49,9 +47,12 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     /// <param name="conflictUnionSource">A sequence of symbols, possibly from multiple stores, that the newly created store should provide a unified view of.</param>
     /// <returns>A new symbol store.</returns>
     [PublicAPI]
-    public static SymbolStore Create(ISymbolView<Symbol>? parent = null, IEnumerable<SymbolInfo>? conflictUnionSource = null)
+    public static SymbolStore Create(
+        ISymbolView<Symbol>? parent = null,
+        IEnumerable<SymbolInfo>? conflictUnionSource = null
+    )
     {
-        return new ConflictUnionFallbackStore(parent,conflictUnionSource);
+        return new ConflictUnionFallbackStore(parent, conflictUnionSource);
     }
 
     /// <summary>
@@ -73,12 +74,12 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     /// <summary>
     /// Removes all local declarations from this symbol store.
     /// </summary>
-    [PublicAPI] //This operations is required to clear the symbol table of the 
+    [PublicAPI] //This operations is required to clear the symbol table of the
     // the initialization function target.
     public abstract void ClearLocalDeclarations();
 
     /// <summary>
-    /// Gets or sets the surrounding scope for this symbol store. 
+    /// Gets or sets the surrounding scope for this symbol store.
     /// </summary>
     /// <exception cref="System.NotSupportedException">If this kind of symbol store does not support surrounding scopes.</exception>
     [PublicAPI]
@@ -98,8 +99,11 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     /// <returns>An error symbol with a message indicating that the supplied id could not be resolved.</returns>
     internal static Symbol _CreateSymbolNotFoundError(string id, ISourcePosition position)
     {
-        var msg = Message.Error($"Cannot resolve symbol {id}.", position,
-            MessageClasses.SymbolNotResolved);
+        var msg = Message.Error(
+            $"Cannot resolve symbol {id}.",
+            position,
+            MessageClasses.SymbolNotResolved
+        );
         return Symbol.CreateMessage(msg, Symbol.CreateNil(position));
     }
 
@@ -117,13 +121,16 @@ public abstract class SymbolStore : ISymbolView<Symbol>, IObject
         {
             case "":
                 throw new PrexoniteException(
-                    "Symbol stores do not have an index property. Use symbolStore.TryGet(symbolicId, ref symbol) instead.");
+                    "Symbol stores do not have an index property. Use symbolStore.TryGet(symbolicId, ref symbol) instead."
+                );
             case "TRYGET":
                 if (args.Length < 2)
                     throw new PrexoniteException(
-                        "Not enough arguments for SymbolStore.TryGet(symbolicId, resultVar).");
-                var symbolic = (string)args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value!;
-                if(TryGet(symbolic,out var symbol))
+                        "Not enough arguments for SymbolStore.TryGet(symbolicId, resultVar)."
+                    );
+                var symbolic = (string)
+                    args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value!;
+                if (TryGet(symbolic, out var symbol))
                 {
                     args[1].IndirectCall(sctx, sctx.CreateNativePValue(symbol));
                     result = true;

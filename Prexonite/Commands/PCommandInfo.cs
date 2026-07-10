@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands;
 
 /// <summary>
@@ -7,7 +5,7 @@ namespace Prexonite.Commands;
 /// </summary>
 /// <remarks>
 ///     This type enables the CIL compiler to reason about commands that are not currently installed
-///     in the engine. Build commands and commands that are only available during macro expansions are 
+///     in the engine. Build commands and commands that are only available during macro expansions are
 ///     applications of this feature.
 /// </remarks>
 public interface ICommandInfo
@@ -88,7 +86,9 @@ public static class CommandInfo
         /// </summary>
         /// <param name = "cilCompilerAware">On success, holds a reference to the object describing the CIL compiler awareness of the command. Undefined on failure.</param>
         /// <returns>True, on success; false on failure</returns>
-        public bool TryGetCilCompilerAware([NotNullWhen(true)] out ICilCompilerAware? cilCompilerAware)
+        public bool TryGetCilCompilerAware(
+            [NotNullWhen(true)] out ICilCompilerAware? cilCompilerAware
+        )
         {
             cilCompilerAware = compilerAware;
             return cilCompilerAware != null;

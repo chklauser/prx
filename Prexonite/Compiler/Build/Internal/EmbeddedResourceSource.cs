@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 
 namespace Prexonite.Compiler.Build.Internal;
@@ -18,10 +18,11 @@ public class EmbeddedResourceSource : ISource
 
     public bool CanOpen => true;
     public bool IsSingleUse => false;
+
     public bool TryOpen([NotNullWhen(true)] out TextReader? reader)
     {
         var stream = _assembly.GetManifestResourceStream(_name);
-        if(stream == null)
+        if (stream == null)
         {
             reader = null;
             return false;

@@ -1,4 +1,3 @@
-﻿
 namespace Prexonite.Compiler;
 
 public interface ILoopBlock

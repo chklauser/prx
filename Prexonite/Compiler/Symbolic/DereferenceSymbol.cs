@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Symbolic;
@@ -27,9 +25,7 @@ public sealed class DereferenceSymbol : WrappingSymbol
     }
 
     DereferenceSymbol(ISourcePosition position, Symbol inner)
-        : base(position, inner)
-    {
-    }
+        : base(position, inner) { }
 
     #region Equality members
 
@@ -48,12 +44,17 @@ public sealed class DereferenceSymbol : WrappingSymbol
 
     #region Overrides of Symbol
 
-    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    public override TResult HandleWith<TArg, TResult>(
+        ISymbolHandler<TArg, TResult> handler,
+        TArg argument
+    )
     {
         return handler.HandleDereference(this, argument);
     }
 
-    public override bool TryGetDereferenceSymbol([NotNullWhen(true)] out DereferenceSymbol? dereferenceSymbol)
+    public override bool TryGetDereferenceSymbol(
+        [NotNullWhen(true)] out DereferenceSymbol? dereferenceSymbol
+    )
     {
         dereferenceSymbol = this;
         return true;
@@ -61,8 +62,10 @@ public sealed class DereferenceSymbol : WrappingSymbol
 
     public override bool Equals(Symbol? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return other is DereferenceSymbol otherDeref && Equals(otherDeref);
     }
 

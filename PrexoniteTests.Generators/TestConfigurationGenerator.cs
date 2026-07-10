@@ -17,7 +17,8 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         "{0}",
         "PrexoniteTests",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true
+    );
 
     static readonly DiagnosticDescriptor MissingConfiguration = new(
         "PRXTEST002",
@@ -25,7 +26,8 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         "Expected one version {0} test configuration named testconfig.json",
         "PrexoniteTests",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true
+    );
 
     static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -36,11 +38,14 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var configurations = context.AdditionalTextsProvider
-            .Where(static file => string.Equals(
-                Path.GetFileName(file.Path),
-                ConfigurationFileName,
-                StringComparison.OrdinalIgnoreCase))
+        var configurations = context
+            .AdditionalTextsProvider.Where(static file =>
+                string.Equals(
+                    Path.GetFileName(file.Path),
+                    ConfigurationFileName,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
             .Select(static (file, cancellationToken) => Parse(file, cancellationToken))
             .Collect();
 
@@ -71,7 +76,9 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
                     dependency.File = NormalizePath(dependency.File ?? "");
                     dependency.Dependencies ??= [];
                     for (var i = 0; i < dependency.Dependencies.Count; i++)
-                        dependency.Dependencies[i] = NormalizePath(dependency.Dependencies[i] ?? "");
+                        dependency.Dependencies[i] = NormalizePath(
+                            dependency.Dependencies[i] ?? ""
+                        );
                 }
             }
 
@@ -81,7 +88,8 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         {
             return ParseResult.Failure(
                 file.Path,
-                $"Invalid JSON at line {exception.LineNumber}, byte {exception.BytePositionInLine}: {exception.Message}");
+                $"Invalid JSON at line {exception.LineNumber}, byte {exception.BytePositionInLine}: {exception.Message}"
+            );
         }
     }
 
@@ -92,40 +100,52 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         {
             if (result.Error is { } error)
             {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    InvalidConfiguration,
-                    Location.None,
-                    $"{result.Path}: {error}"));
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        InvalidConfiguration,
+                        Location.None,
+                        $"{result.Path}: {error}"
+                    )
+                );
                 continue;
             }
 
             var configuration = result.Configuration!;
             if (configuration.Version is not (1 or 2))
             {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    InvalidConfiguration,
-                    Location.None,
-                    $"{result.Path}: unsupported configuration version {configuration.Version}."));
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        InvalidConfiguration,
+                        Location.None,
+                        $"{result.Path}: unsupported configuration version {configuration.Version}."
+                    )
+                );
                 continue;
             }
 
             if (!configurations.TryAdd(configuration.Version, configuration))
             {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    InvalidConfiguration,
-                    Location.None,
-                    $"More than one version {configuration.Version} test configuration was supplied."));
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        InvalidConfiguration,
+                        Location.None,
+                        $"More than one version {configuration.Version} test configuration was supplied."
+                    )
+                );
             }
         }
 
         foreach (var version in new[] { 1, 2 })
         {
             if (!configurations.ContainsKey(version))
-                context.ReportDiagnostic(Diagnostic.Create(MissingConfiguration, Location.None, version));
+                context.ReportDiagnostic(
+                    Diagnostic.Create(MissingConfiguration, Location.None, version)
+                );
         }
 
-        if (!configurations.TryGetValue(1, out var v1) ||
-            !configurations.TryGetValue(2, out var v2))
+        if (
+            !configurations.TryGetValue(1, out var v1) || !configurations.TryGetValue(2, out var v2)
+        )
             return;
 
         var v1IsValid = Validate(context, v1, 1);
@@ -133,11 +153,21 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         if (!v1IsValid || !v2IsValid)
             return;
 
-        context.AddSource("PsrUnitTests.g.cs", SourceText.From(GenerateScriptTests(v1, v2), Encoding.UTF8));
-        context.AddSource("VMTestConfigurations.g.cs", SourceText.From(GenerateVmFixtures(v1, v2), Encoding.UTF8));
+        context.AddSource(
+            "PsrUnitTests.g.cs",
+            SourceText.From(GenerateScriptTests(v1, v2), Encoding.UTF8)
+        );
+        context.AddSource(
+            "VMTestConfigurations.g.cs",
+            SourceText.From(GenerateVmFixtures(v1, v2), Encoding.UTF8)
+        );
     }
 
-    static bool Validate(SourceProductionContext context, TestConfiguration configuration, int expectedVersion)
+    static bool Validate(
+        SourceProductionContext context,
+        TestConfiguration configuration,
+        int expectedVersion
+    )
     {
         var valid = true;
         if (configuration.Suites.Count == 0)
@@ -179,7 +209,9 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
                 }
                 else if (!methodNames.Add(ValidTestName(test)))
                 {
-                    Report($"Suite '{suite.File}' contains test names that map to the same C# identifier '{ValidTestName(test)}'.");
+                    Report(
+                        $"Suite '{suite.File}' contains test names that map to the same C# identifier '{ValidTestName(test)}'."
+                    );
                     valid = false;
                 }
             }
@@ -196,8 +228,10 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
 
         return valid;
 
-        void Report(string message) => context.ReportDiagnostic(
-            Diagnostic.Create(InvalidConfiguration, Location.None, message));
+        void Report(string message) =>
+            context.ReportDiagnostic(
+                Diagnostic.Create(InvalidConfiguration, Location.None, message)
+            );
     }
 
     static string GenerateScriptTests(TestConfiguration v1, TestConfiguration v2)
@@ -210,16 +244,32 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         {
             var className = ToPsrClassName(suite.File);
             source.AppendLine("[GeneratedCode(\"TestConfigurationGenerator\", \"1.0\")]");
-            source.Append("internal abstract class ").Append(className).AppendLine(" : ScriptedUnitTestContainer");
+            source
+                .Append("internal abstract class ")
+                .Append(className)
+                .AppendLine(" : ScriptedUnitTestContainer");
             source.AppendLine("{");
             source.AppendLine("    [OneTimeSetUp]");
             source.AppendLine("    public void SetupTestFile()");
             source.AppendLine("    {");
             source.AppendLine("        var model = new TestModel");
             source.AppendLine("        {");
-            source.Append("            TestSuiteScript = ").Append(Literal(suite.File)).AppendLine(",");
-            AppendDependencies(source, "UnitsUnderTest", suite.UnitsUnderTest, includeTestFramework: false);
-            AppendDependencies(source, "TestDependencies", suite.TestDependencies, includeTestFramework: true);
+            source
+                .Append("            TestSuiteScript = ")
+                .Append(Literal(suite.File))
+                .AppendLine(",");
+            AppendDependencies(
+                source,
+                "UnitsUnderTest",
+                suite.UnitsUnderTest,
+                includeTestFramework: false
+            );
+            AppendDependencies(
+                source,
+                "TestDependencies",
+                suite.TestDependencies,
+                includeTestFramework: true
+            );
             source.AppendLine("        };");
             source.AppendLine("        Initialize();");
             source.AppendLine("        Runner.Configure(model, this);");
@@ -234,10 +284,17 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         {
             var className = ToPsrClassName(suite.File) + "V2";
             source.AppendLine("[GeneratedCode(\"TestConfigurationGenerator\", \"1.0\")]");
-            source.Append("internal abstract class ").Append(className).AppendLine(" : V2UnitTestContainer");
+            source
+                .Append("internal abstract class ")
+                .Append(className)
+                .AppendLine(" : V2UnitTestContainer");
             source.AppendLine("{");
-            source.Append("    protected ").Append(className).Append("(bool compileToCil) : base(")
-                .Append(Literal(suite.File)).AppendLine(", compileToCil)");
+            source
+                .Append("    protected ")
+                .Append(className)
+                .Append("(bool compileToCil) : base(")
+                .Append(Literal(suite.File))
+                .AppendLine(", compileToCil)");
             source.AppendLine("    {");
             source.AppendLine("    }");
             source.AppendLine();
@@ -259,12 +316,24 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         {
             var className = ToPsrClassName(suite.File);
             var baseName = ToIdentifier(suite.File);
-            AppendV1Fixture(source, baseName + "_Interpreted", className,
-                "new UnitTestConfiguration.InMemory()");
-            AppendV1Fixture(source, baseName + "_CilStatic", className,
-                "new UnitTestConfiguration.InMemory { CompileToCil = true }");
-            AppendV1Fixture(source, baseName + "_CilIsolated", className,
-                "new UnitTestConfiguration.InMemory { CompileToCil = true, Linking = FunctionLinking.FullyIsolated }");
+            AppendV1Fixture(
+                source,
+                baseName + "_Interpreted",
+                className,
+                "new UnitTestConfiguration.InMemory()"
+            );
+            AppendV1Fixture(
+                source,
+                baseName + "_CilStatic",
+                className,
+                "new UnitTestConfiguration.InMemory { CompileToCil = true }"
+            );
+            AppendV1Fixture(
+                source,
+                baseName + "_CilIsolated",
+                className,
+                "new UnitTestConfiguration.InMemory { CompileToCil = true, Linking = FunctionLinking.FullyIsolated }"
+            );
         }
 
         foreach (var suite in v2.Suites)
@@ -275,39 +344,56 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
             AppendV2Fixture(source, baseName + "_CilIsolatedV2", className, compileToCil: true);
         }
 
-        foreach (var vmClass in new[]
-        {
-            "PrexoniteTests.Tests.VMTests",
-            "PrexoniteTests.Tests.PartialApplication",
-            "PrexoniteTests.Tests.Lazy",
-            "PrexoniteTests.Tests.Translation",
-            "PrexoniteTests.Tests.BuiltInTypeTests",
-            "PrexoniteTests.Tests.ShellExtensions",
-        })
+        foreach (
+            var vmClass in new[]
+            {
+                "PrexoniteTests.Tests.VMTests",
+                "PrexoniteTests.Tests.PartialApplication",
+                "PrexoniteTests.Tests.Lazy",
+                "PrexoniteTests.Tests.Translation",
+                "PrexoniteTests.Tests.BuiltInTypeTests",
+                "PrexoniteTests.Tests.ShellExtensions",
+            }
+        )
         {
             var baseName = vmClass[(vmClass.LastIndexOf('.') + 1)..];
             AppendVmFixture(source, baseName + "_Interpreted", vmClass, false, null);
-            AppendVmFixture(source, baseName + "_CilStatic", vmClass, true, "FunctionLinking.FullyStatic");
-            AppendVmFixture(source, baseName + "_CilIsolated", vmClass, true, "FunctionLinking.FullyIsolated");
+            AppendVmFixture(
+                source,
+                baseName + "_CilStatic",
+                vmClass,
+                true,
+                "FunctionLinking.FullyStatic"
+            );
+            AppendVmFixture(
+                source,
+                baseName + "_CilIsolated",
+                vmClass,
+                true,
+                "FunctionLinking.FullyIsolated"
+            );
         }
 
         return source.ToString();
     }
 
-    static StringBuilder Header() => new(
-        """
-        // <auto-generated />
-        using System.CodeDom.Compiler;
-        using NUnit.Framework;
-        using Prexonite.Compiler.Cil;
+    static StringBuilder Header() =>
+        new(
+            """
+            // <auto-generated />
+            using System.CodeDom.Compiler;
+            using NUnit.Framework;
+            using Prexonite.Compiler.Cil;
 
-        """);
+            """
+        );
 
     static void AppendDependencies(
         StringBuilder source,
         string property,
         List<TestDependency> dependencies,
-        bool includeTestFramework)
+        bool includeTestFramework
+    )
     {
         source.Append("            ").Append(property).AppendLine(" =");
         source.AppendLine("            [");
@@ -315,7 +401,10 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         {
             source.AppendLine("                new TestDependency");
             source.AppendLine("                {");
-            source.Append("                    ScriptName = ").Append(Literal(dependency.File)).AppendLine(",");
+            source
+                .Append("                    ScriptName = ")
+                .Append(Literal(dependency.File))
+                .AppendLine(",");
             source.Append("                    Dependencies = [");
             var entries = dependency.Dependencies.Select(Literal).ToList();
             if (includeTestFramework)
@@ -333,7 +422,12 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
             source.AppendLine("    [Test]");
             source.Append("    public void ").Append(ValidTestName(test)).AppendLine("()");
             source.AppendLine("    {");
-            source.Append("        ").Append(runner).Append('(').Append(Literal(test)).AppendLine(");");
+            source
+                .Append("        ")
+                .Append(runner)
+                .Append('(')
+                .Append(Literal(test))
+                .AppendLine(");");
             source.AppendLine("    }");
             source.AppendLine();
         }
@@ -345,20 +439,32 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         source.AppendLine("[GeneratedCode(\"TestConfigurationGenerator\", \"1.0\")]");
         source.Append("internal sealed class ").Append(name).Append(" : ").AppendLine(baseClass);
         source.AppendLine("{");
-        source.Append("    private readonly UnitTestConfiguration _runner = ").Append(runner).AppendLine(";");
+        source
+            .Append("    private readonly UnitTestConfiguration _runner = ")
+            .Append(runner)
+            .AppendLine(";");
         source.AppendLine("    protected override UnitTestConfiguration Runner => _runner;");
         source.AppendLine("}");
         source.AppendLine();
     }
 
-    static void AppendV2Fixture(StringBuilder source, string name, string baseClass, bool compileToCil)
+    static void AppendV2Fixture(
+        StringBuilder source,
+        string name,
+        string baseClass,
+        bool compileToCil
+    )
     {
         source.AppendLine("[TestFixture]");
         source.AppendLine("[GeneratedCode(\"TestConfigurationGenerator\", \"1.0\")]");
         source.Append("internal sealed class ").Append(name).Append(" : ").AppendLine(baseClass);
         source.AppendLine("{");
-        source.Append("    public ").Append(name).Append("() : base(")
-            .Append(compileToCil ? "true" : "false").AppendLine(")");
+        source
+            .Append("    public ")
+            .Append(name)
+            .Append("() : base(")
+            .Append(compileToCil ? "true" : "false")
+            .AppendLine(")");
         source.AppendLine("    {");
         source.AppendLine("    }");
         source.AppendLine("}");
@@ -370,7 +476,8 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         string name,
         string baseClass,
         bool compileToCil,
-        string? linking)
+        string? linking
+    )
     {
         source.AppendLine("[TestFixture]");
         source.AppendLine("[GeneratedCode(\"TestConfigurationGenerator\", \"1.0\")]");
@@ -378,7 +485,10 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         source.AppendLine("{");
         source.Append("    public ").Append(name).AppendLine("()");
         source.AppendLine("    {");
-        source.Append("        CompileToCil = ").Append(compileToCil ? "true" : "false").AppendLine(";");
+        source
+            .Append("        CompileToCil = ")
+            .Append(compileToCil ? "true" : "false")
+            .AppendLine(";");
         if (linking is not null)
             source.Append("        StaticLinking = ").Append(linking).AppendLine(";");
         source.AppendLine("    }");
@@ -405,10 +515,12 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
         for (var i = 0; i < characters.Length; i++)
         {
             var character = characters[i];
-            if (!(character is >= 'a' and <= 'z') &&
-                !(character is >= 'A' and <= 'Z') &&
-                !(character is >= '0' and <= '9') &&
-                character != '_')
+            if (
+                !(character is >= 'a' and <= 'z')
+                && !(character is >= 'A' and <= 'Z')
+                && !(character is >= '0' and <= '9')
+                && character != '_'
+            )
                 characters[i] = '_';
         }
         return new string(characters);

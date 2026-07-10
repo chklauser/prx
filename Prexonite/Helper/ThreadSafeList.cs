@@ -8,19 +8,23 @@ public sealed class ThreadSafeList<T> : IList<T>
 {
     readonly IList<T> _inner = new List<T>();
     readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
-        
+
     public IEnumerator<T> GetEnumerator()
     {
         return asWeaklyConsistentEnumerable().GetEnumerator();
     }
 
-    [SuppressMessage("ReSharper", "NotDisposedResourceIsReturned", Justification = "Enumerator disposed of in caller.")]
+    [SuppressMessage(
+        "ReSharper",
+        "NotDisposedResourceIsReturned",
+        Justification = "Enumerator disposed of in caller."
+    )]
     IEnumerable<T> asWeaklyConsistentEnumerable()
     {
         using var enumerator = WithReadLock(inner => inner.GetEnumerator());
         while (true)
         {
-            var (hasValue, value) = WithReadLock(_ => 
+            var (hasValue, value) = WithReadLock(_ =>
                 enumerator.MoveNext() ? (true, enumerator.Current) : (false, default(T)!)
             );
             if (!hasValue)
@@ -92,7 +96,7 @@ public sealed class ThreadSafeList<T> : IList<T>
             _lock.ExitReadLock();
         }
     }
-        
+
     public void Add(T item)
     {
         WithWriteLock(inner => inner.Add(item));

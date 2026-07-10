@@ -1,4 +1,3 @@
-﻿
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
@@ -46,7 +45,9 @@ public abstract partial class VMTests
             }
 
             """,
-            CallSub.Alias, "expression");
+            CallSub.Alias,
+            "expression"
+        );
 
         //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         //Expect("[ 4, 10, 16 ]", (PValue)xs);
@@ -77,7 +78,8 @@ public abstract partial class VMTests
                 return zs.ToString();
             }
 
-            """);
+            """
+        );
         Func<List<PValue>> getZs = () =>
         {
             var pv = target.Variables["zs"]!.Value.Value as List<PValue>;
@@ -123,7 +125,8 @@ public abstract partial class VMTests
                 return 2; 
             }
 
-            """);
+            """
+        );
 
         Expect(2);
     }
@@ -148,7 +151,8 @@ public abstract partial class VMTests
                 return zs[0];
             }
 
-            """);
+            """
+        );
 
         Expect(1);
     }
@@ -179,7 +183,9 @@ public abstract partial class VMTests
             }
 
             """,
-            CallSub.Alias, "expression");
+            CallSub.Alias,
+            "expression"
+        );
 
         //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         //Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
@@ -211,13 +217,13 @@ public abstract partial class VMTests
                     return x;
                 }
 
-            """);
+            """
+        );
         var clo = target.Functions["echo\\0"];
         Assert.IsNotNull(clo, "Closure must exist.");
         Assert.IsTrue(clo!.Meta.ContainsKey(PFunction.SharedNamesKey));
         Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
-        Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
-            MacroAliases.ContextAlias);
+        Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text, MacroAliases.ContextAlias);
 
         Expect(15);
     }
@@ -254,7 +260,8 @@ public abstract partial class VMTests
                 return gen(5);
             }
 
-            """);
+            """
+        );
 
         Expect(1 + 2 + 3 + 4 + 4);
         ExpectNamed("main2", 1 + 2 + 3 + 4 + 5 + 5);
@@ -309,33 +316,39 @@ public abstract partial class VMTests
                         , x + __surround("xXx", 8) + y];
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue>
-        {
-            "a__xXx__b",
-            "a__xXx__b",
-            "a__xXx__=b",
-            "a__xXx__jeb",
-            "a__xXx__b",
-            "a__xXx__jeb",
-            "a__xXx__b",
-            "a__xXx__je=b",
-            "a__xXx__=b",
-        }, "a", "b");
+        Expect(
+            new List<PValue>
+            {
+                "a__xXx__b",
+                "a__xXx__b",
+                "a__xXx__=b",
+                "a__xXx__jeb",
+                "a__xXx__b",
+                "a__xXx__jeb",
+                "a__xXx__b",
+                "a__xXx__je=b",
+                "a__xXx__=b",
+            },
+            "a",
+            "b"
+        );
 
         if (CompileToCil)
         {
             var surround = target.Functions["__surround"];
             Assert.That(surround, Is.Not.Null, "Function __surround does not exist.");
-            Assert.That(surround!.Meta[PFunction.VolatileKey].Switch,
+            Assert.That(
+                surround!.Meta[PFunction.VolatileKey].Switch,
                 Is.False,
-                $"Function {surround.Id} is volatile. Reason: {surround.Meta[PFunction.DeficiencyKey].Text}");
+                $"Function {surround.Id} is volatile. Reason: {surround.Meta[PFunction.DeficiencyKey].Text}"
+            );
         }
     }
 
-
-    [Test,Ignore("TODO: figure out why this is ignored")]
+    [Test, Ignore("TODO: figure out why this is ignored")]
     public void PartialCallMacroOnFunction()
     {
         Compile(
@@ -415,68 +428,81 @@ public abstract partial class VMTests
                         , x + __surround("xXx", 8) + y]; // 72
             }
 
-            """);
+            """
+        );
 
-        Expect(new List<PValue>
-        {
-            "a__xXx__b",
-            "a__xXx__b",
-            "a__xXx__=b",
-            "a__xXx__jeb",
-            "a__xXx__b",
-            "a__xXx__jeb",
-            "a__xXx__b",
-            "a__xXx__je=b",
-            "a__xXx__=b",
-        }, "a", "b");
+        Expect(
+            new List<PValue>
+            {
+                "a__xXx__b",
+                "a__xXx__b",
+                "a__xXx__=b",
+                "a__xXx__jeb",
+                "a__xXx__b",
+                "a__xXx__jeb",
+                "a__xXx__b",
+                "a__xXx__je=b",
+                "a__xXx__=b",
+            },
+            "a",
+            "b"
+        );
     }
 
     [Test]
     public void AstIsExpand()
     {
-        Compile("""
+        Compile(
+            """
 
-                var uniq\\node_t6;
+            var uniq\\node_t6;
 
-                function ast_is_Expand(node_arg)
-                {asm{
-                var tmpp0
-                /* 00 */ ldloc node_arg
-                /* 01 */ cmd.1 boxed
-                /* 02 */ get.0 Type
-                /* 03 */ dup 1
-                /* 04 */ stloc tmpp0
-                /* 05 */ check.const "Object(\"Prexonite.Types.ObjectPType\")"
-                /* 06 */ jump.t 9
-                /* 07 */ ldc.bool false
-                /* 08 */ ret.value
-                /* 09 */ ldglob uniq\\node_t6
-                /* 10 */ check.null
-                /* 11 */ jump.f 15
-                /* 12 */ ldc.string "Prexonite.Compiler.Ast.AstExpand"
-                /* 13 */ sget.1 "Object(\"System.Type\")::GetType"
-                /* 14 */ stglob uniq\\node_t6
-                /* 15 */ ldglob uniq\\node_t6
-                /* 16 */ ldloc tmpp0
-                /* 17 */ get.0 ClrType
-                /* 18 */ get.1 IsAssignableFrom
-                /* 19 */ jump.f 26
-                /* 20 */ ldloc node_arg
-                /* 21 */ get.0 CheckForPlaceholders
-                /* 22 */ cmd.1 $not
-                /* 23 */ jump.f 26
-                /* 24 */ ldc.bool true
-                /* 25 */ jump 27
-                /* 26 */ ldc.bool false
-                /* 27 */ ret.value
-                /* 28 */ }}
+            function ast_is_Expand(node_arg)
+            {asm{
+            var tmpp0
+            /* 00 */ ldloc node_arg
+            /* 01 */ cmd.1 boxed
+            /* 02 */ get.0 Type
+            /* 03 */ dup 1
+            /* 04 */ stloc tmpp0
+            /* 05 */ check.const "Object(\"Prexonite.Types.ObjectPType\")"
+            /* 06 */ jump.t 9
+            /* 07 */ ldc.bool false
+            /* 08 */ ret.value
+            /* 09 */ ldglob uniq\\node_t6
+            /* 10 */ check.null
+            /* 11 */ jump.f 15
+            /* 12 */ ldc.string "Prexonite.Compiler.Ast.AstExpand"
+            /* 13 */ sget.1 "Object(\"System.Type\")::GetType"
+            /* 14 */ stglob uniq\\node_t6
+            /* 15 */ ldglob uniq\\node_t6
+            /* 16 */ ldloc tmpp0
+            /* 17 */ get.0 ClrType
+            /* 18 */ get.1 IsAssignableFrom
+            /* 19 */ jump.f 26
+            /* 20 */ ldloc node_arg
+            /* 21 */ get.0 CheckForPlaceholders
+            /* 22 */ cmd.1 $not
+            /* 23 */ jump.f 26
+            /* 24 */ ldc.bool true
+            /* 25 */ jump 27
+            /* 26 */ ldc.bool false
+            /* 27 */ ret.value
+            /* 28 */ }}
 
-                function main(n) = ast_is_Expand(n);
-                """);
+            function main(n) = ast_is_Expand(n);
+            """
+        );
 
-        Expect(true,
-            sctx.CreateNativePValue(new AstExpand(NoSourcePosition.Instance,
-                EntityRef.MacroCommand.Create("call\\macro"), PCall.Get)));
-
+        Expect(
+            true,
+            sctx.CreateNativePValue(
+                new AstExpand(
+                    NoSourcePosition.Instance,
+                    EntityRef.MacroCommand.Create("call\\macro"),
+                    PCall.Get
+                )
+            )
+        );
     }
 }

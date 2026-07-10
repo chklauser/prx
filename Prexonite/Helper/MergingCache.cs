@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Modular;
 
@@ -17,14 +15,13 @@ public abstract class CentralCache
     /// Links two central caches together.
     /// </summary>
     /// <param name="cache">The cache to link together with this cache.</param>
-// ReSharper disable InconsistentNaming
+    // ReSharper disable InconsistentNaming
     protected internal abstract CentralCache LinkInto(CentralCache cache);
-// ReSharper restore InconsistentNaming
+
+    // ReSharper restore InconsistentNaming
     protected abstract int EstimateSize();
 
-    CentralCache()
-    {
-    }
+    CentralCache() { }
 
     public static CentralCache Create()
     {
@@ -37,14 +34,16 @@ public abstract class CentralCache
 
         MergingCache<ModuleName>? _moduleNameCache;
 
-        public override IObjectCache<EntityRef> EntityRefs => _entityRefCache ??= _createEntityRefCache();
+        public override IObjectCache<EntityRef> EntityRefs =>
+            _entityRefCache ??= _createEntityRefCache();
 
         static MergingCache<EntityRef> _createEntityRefCache()
         {
             return MergingCache<EntityRef>.Create(1000);
         }
 
-        public override IObjectCache<ModuleName> ModuleNames => _moduleNameCache ??= _createModuleNameCache();
+        public override IObjectCache<ModuleName> ModuleNames =>
+            _moduleNameCache ??= _createModuleNameCache();
 
         static MergingCache<ModuleName> _createModuleNameCache()
         {
@@ -56,7 +55,8 @@ public abstract class CentralCache
             return (_entityRefCache?.EstimateSize() ?? 0) + (_moduleNameCache?.EstimateSize() ?? 0);
         }
 
-        public override ModuleName this[string internalId, Version version] => ModuleNames.GetCached(new(internalId, version));
+        public override ModuleName this[string internalId, Version version] =>
+            ModuleNames.GetCached(new(internalId, version));
 
         public override ModuleName this[ModuleName moduleName] => ModuleNames.GetCached(moduleName);
 
@@ -64,14 +64,16 @@ public abstract class CentralCache
 
         protected internal override CentralCache LinkInto(CentralCache cache)
         {
-            if(cache is not Impl c)
+            if (cache is not Impl c)
             {
                 throw new ArgumentException(
-                    "Can only link with proper implementations of CentralCache.", nameof(cache));
+                    "Can only link with proper implementations of CentralCache.",
+                    nameof(cache)
+                );
             }
             var thisSize = EstimateSize();
             var otherSize = cache.EstimateSize();
-            if(thisSize <= otherSize)
+            if (thisSize <= otherSize)
             {
                 return _linkInto(c);
             }
@@ -86,8 +88,11 @@ public abstract class CentralCache
             if (ReferenceEquals(targetCache, this))
                 return this;
 
-            Debug.Assert(targetCache != null, "targetCache cannot be null.",
-                "CentralCache MergingCache._linkInto(targetCache): targetCache cannot be null.");
+            Debug.Assert(
+                targetCache != null,
+                "targetCache cannot be null.",
+                "CentralCache MergingCache._linkInto(targetCache): targetCache cannot be null."
+            );
 
             //Make sure entity ref caches are the same
             if (_entityRefCache == null)
@@ -95,8 +100,7 @@ public abstract class CentralCache
                     _entityRefCache = targetCache._entityRefCache = _createEntityRefCache();
                 else
                     _entityRefCache = targetCache._entityRefCache;
-            else
-            if (targetCache._entityRefCache == null)
+            else if (targetCache._entityRefCache == null)
                 targetCache._entityRefCache = _entityRefCache;
             else
                 targetCache._entityRefCache.LinkWith(_entityRefCache);
@@ -107,8 +111,7 @@ public abstract class CentralCache
                     _moduleNameCache = targetCache._moduleNameCache = _createModuleNameCache();
                 else
                     _moduleNameCache = targetCache._moduleNameCache;
-            else
-            if (targetCache._moduleNameCache == null)
+            else if (targetCache._moduleNameCache == null)
                 targetCache._moduleNameCache = _moduleNameCache;
             else
                 targetCache._moduleNameCache.LinkWith(_moduleNameCache);
@@ -121,9 +124,7 @@ public abstract class CentralCache
 public abstract class MergingCache<T> : IObjectCache<T>
     where T : notnull
 {
-    MergingCache()
-    {
-    }
+    MergingCache() { }
 
     public static MergingCache<T> Create(int capacity = 100)
     {
@@ -157,8 +158,8 @@ public abstract class MergingCache<T> : IObjectCache<T>
         {
             if (cache == null)
                 throw new ArgumentNullException(nameof(cache));
-                
-            Merge(this, (Impl) cache);
+
+            Merge(this, (Impl)cache);
         }
 
         public override int EstimateSize()
@@ -168,7 +169,7 @@ public abstract class MergingCache<T> : IObjectCache<T>
 
         public static void Merge(Impl left, Impl right)
         {
-            if(ReferenceEquals(left,right))
+            if (ReferenceEquals(left, right))
                 return;
 
             while (true)
@@ -176,18 +177,18 @@ public abstract class MergingCache<T> : IObjectCache<T>
                 var leftCache = left._cache;
                 var rightCache = right._cache;
                 const int moveThreshold = 15;
-                if (leftCache.Count <= moveThreshold*rightCache.Capacity/100)
+                if (leftCache.Count <= moveThreshold * rightCache.Capacity / 100)
                 {
                     foreach (var moduleName in leftCache.Contents())
                         rightCache.GetCached(moduleName);
-                    if(_trySwap(left, leftCache, rightCache))
+                    if (_trySwap(left, leftCache, rightCache))
                         break;
                 }
-                else if (rightCache.Count <= moveThreshold*leftCache.Capacity/100)
+                else if (rightCache.Count <= moveThreshold * leftCache.Capacity / 100)
                 {
                     foreach (var moduleName in rightCache.Contents())
                         leftCache.GetCached(moduleName);
-                    if(_trySwap(right,rightCache,leftCache))
+                    if (_trySwap(right, rightCache, leftCache))
                         break;
                 }
                 else
@@ -200,17 +201,18 @@ public abstract class MergingCache<T> : IObjectCache<T>
 
         static bool _trySwap(Impl victim, Cache victimCache, Cache targetCache)
         {
-            return ReferenceEquals(Interlocked.CompareExchange(
-                ref victim._cache, targetCache, victimCache),victimCache);
+            return ReferenceEquals(
+                Interlocked.CompareExchange(ref victim._cache, targetCache, victimCache),
+                victimCache
+            );
         }
 
         public static void FullMerge(Impl left, Impl right)
         {
-                
             var target = left; // a truly random selection
             var victim = right;
-                
-            while(true)
+
+            while (true)
             {
                 var targetCache = target._cache;
                 var victimCache = victim._cache;
@@ -220,7 +222,8 @@ public abstract class MergingCache<T> : IObjectCache<T>
                 using (var li = ls.GetEnumerator())
                 using (var ri = rs.GetEnumerator())
                 {
-                    bool hasLeft, hasRight;
+                    bool hasLeft,
+                        hasRight;
                     //iterate in-step
                     while (true)
                     {
@@ -248,7 +251,7 @@ public abstract class MergingCache<T> : IObjectCache<T>
                         targetCache.GetCached(ri.Current);
                 }
 
-                if(_trySwap(victim,victimCache,targetCache))
+                if (_trySwap(victim, victimCache, targetCache))
                     break;
             }
         }

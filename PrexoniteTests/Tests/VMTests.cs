@@ -1,4 +1,3 @@
-
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
@@ -21,7 +20,7 @@ namespace PrexoniteTests.Tests
 {
     // ReSharper disable InconsistentNaming
     public abstract partial class VMTests
-        // ReSharper restore InconsistentNaming
+    // ReSharper restore InconsistentNaming
     {
         [Test]
         public virtual void CilVersusInterpreted()
@@ -36,10 +35,10 @@ namespace PrexoniteTests.Tests
                     return interpreter_stack == 0;
                 }
 
-                """);
+                """
+            );
             Expect(CompileToCil);
         }
-
 
         [Test]
         public void DataStructure()
@@ -89,13 +88,14 @@ namespace PrexoniteTests.Tests
                     return ch(seed);
                 }
 
-                """);
+                """
+            );
             var seed = new Random().Next(400, 500);
             var expected = seed;
             expected = expected + 2;
-            expected = expected*2;
-            expected = expected%3;
-            expected = (int) (Math.Sqrt(expected)*10);
+            expected = expected * 2;
+            expected = expected % 3;
+            expected = (int)(Math.Sqrt(expected) * 10);
 
             Expect("The answer is: " + expected, seed);
         }
@@ -145,21 +145,20 @@ namespace PrexoniteTests.Tests
                     return toString( select(0) + select(1) );
                 }
 
-                """);
+                """
+            );
             var lst = new List<PValue>();
             var sbo = new StringBuilder();
             var sbe = new StringBuilder();
             for (var i = 0; i < 10; i++)
             {
                 lst.Add(i);
-                if (i%2 == 0)
+                if (i % 2 == 0)
                     sbe.Append(i);
                 else
                     sbo.Append(i);
             }
-            Expect(
-                string.Concat(sbe.ToString(), sbo.ToString()),
-                PType.List.CreatePValue(lst));
+            Expect(string.Concat(sbe.ToString(), sbo.ToString()), PType.List.CreatePValue(lst));
         }
 
         [Test]
@@ -180,7 +179,8 @@ namespace PrexoniteTests.Tests
                     return f + f + f;
                 }
 
-                """);
+                """
+            );
             Expect("abc", "a", "b", "c");
         }
 
@@ -203,7 +203,8 @@ namespace PrexoniteTests.Tests
                     return buffer.ToString;
                 }
 
-                """);
+                """
+            );
 
             Expect("cde", "a", "b", "c", "d", "e", "f", "g");
         }
@@ -271,7 +272,8 @@ namespace PrexoniteTests.Tests
                     return toString(filterChain(var args));
                 }
 
-                """);
+                """
+            );
             var lst = new List<PValue>();
             var buffer = new StringBuilder();
             var nums = 0;
@@ -280,16 +282,15 @@ namespace PrexoniteTests.Tests
                 lst.Add(i);
                 if (i < 2)
                     continue;
-                if (i*3%2 != 0)
+                if (i * 3 % 2 != 0)
                     continue;
                 if (nums > 2)
                     continue;
-                buffer.Append(i*3);
+                buffer.Append(i * 3);
                 nums++;
             }
             Expect(buffer.ToString(), lst.ToArray());
         }
-
 
         /// <summary>
         ///     Makes sure that coroutines do not return an unnecessary null at the end.
@@ -321,7 +322,8 @@ namespace PrexoniteTests.Tests
                     return buffer.ToString;
                 }
 
-                """);
+                """
+            );
             Expect("=>0\n=>1\n=>2\n=>3\n");
         }
 
@@ -355,7 +357,8 @@ namespace PrexoniteTests.Tests
                     return buffer.ToString;
                 }
 
-                """);
+                """
+            );
 
             var args = new List<PValue>();
             var sub1 = new List<PValue>();
@@ -409,7 +412,8 @@ namespace PrexoniteTests.Tests
                     return numbers[n-1];
                 }
 
-                """);
+                """
+            );
 
             ExpectNamed("fib", _fibonacci(6), 6);
         }
@@ -444,14 +448,14 @@ namespace PrexoniteTests.Tests
                     return diff;
                 }
 
-                """);
-            var xs =
-                new PValue[]
-                    {
-                        2, //4
-                        3, //5
-                        8, //10
-                    };
+                """
+            );
+            var xs = new PValue[]
+            {
+                2, //4
+                3, //5
+                8, //10
+            };
             Expect(4 + 5 + 10, xs);
         }
 
@@ -476,7 +480,8 @@ namespace PrexoniteTests.Tests
                     return B(var args[0]);
                 }
 
-                """);
+                """
+            );
 
             //#if UseCil
             //            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
@@ -485,7 +490,6 @@ namespace PrexoniteTests.Tests
             //#endif
             Expect("bs.function main\\A0(xa)b", "s");
         }
-
 
         [Test]
         public void StructureToString()
@@ -501,21 +505,23 @@ namespace PrexoniteTests.Tests
                     return s~String;
                 }
 
-                """);
+                """
+            );
             Expect("xzzxy", "xzzxy");
         }
 
         [Test]
         public void GlobalVarInitSimple()
         {
-            Compile("""
+            Compile(
+                """
 
-                    var x = 5;
-                    function main = x;
+                var x = 5;
+                function main = x;
 
-                    """);
+                """
+            );
             Expect(5);
-
         }
 
         [Test]
@@ -545,16 +551,17 @@ namespace PrexoniteTests.Tests
                     return sum;
                 }
 
-                """);
+                """
+            );
             var lst = new List<PValue>(4)
-                {
-                    new PValueKeyValuePair("apple", 1),
-                    new PValueKeyValuePair("pencil", 5),
-                    new PValueKeyValuePair("juice", 2),
-                    new PValueKeyValuePair("apple", 2),
-                };
+            {
+                new PValueKeyValuePair("apple", 1),
+                new PValueKeyValuePair("pencil", 5),
+                new PValueKeyValuePair("juice", 2),
+                new PValueKeyValuePair("apple", 2),
+            };
 
-            Expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
+            Expect(3 * 3 * 2 + 5 * 1 + 2 * 4, PType.List.CreatePValue(lst));
         }
 
         [Test]
@@ -580,7 +587,8 @@ namespace PrexoniteTests.Tests
                     return foldl((l,r) => l + "." + r, "", blit(xs,ys));
                 }        
 
-                """);
+                """
+            );
 
             Expect(".6.2.4.4.?.1");
         }
@@ -616,7 +624,8 @@ namespace PrexoniteTests.Tests
                 function main(sep) = foldl( (l,r) => $l + " " + $r, "BEGIN")
                     << limit(3) << map( x => x.Length + sep + x ) << where( x => x.Length >= 3 ) << skip(1) << var args;
 
-                """);
+                """
+            );
 
             Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
@@ -657,7 +666,8 @@ namespace PrexoniteTests.Tests
                     limit(3) >>
                     foldl( (l,r) => $l + " " + $r, "BEGIN");
 
-                """);
+                """
+            );
 
             Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
@@ -677,7 +687,8 @@ namespace PrexoniteTests.Tests
                     return ((a+10)/5) + (if(b) c*a else c);
                 }
 
-                """);
+                """
+            );
 
             const double a = 2.9;
             const int b = 27;
@@ -704,7 +715,8 @@ namespace PrexoniteTests.Tests
                     return "$(x)$(y)$(z)";
                 }
 
-                """);
+                """
+            );
 
             Expect("cd50x", "abcd", 10, true);
         }
@@ -745,7 +757,8 @@ function main(a,b)
                     return s.\("text") = a;
                 }
 
-                """);
+                """
+            );
             Expect("ham", "ham");
         }
 
@@ -769,7 +782,8 @@ function main(a,b)
                     else
                         fac(n-1, n*r);
 
-                """);
+                """
+            );
 
             ExpectNamed("fac", _fac(6), 6, 1);
         }
@@ -788,23 +802,25 @@ function main(a,b)
                         return b;
                 }
 
-                """);
+                """
+            );
 
             Expect(125, 125, "s-b-s");
             Expect(125.0, 125.0, "s-b-s");
             Expect(true, true, "s-b-s");
         }
 
-
         [Test]
         public void SuperFastPrintLn()
         {
             //Covers #10
-            Compile("""
+            Compile(
+                """
 
-                    function main = println;
+                function main = println;
 
-                    """);
+                """
+            );
 
             Expect("");
         }
@@ -812,13 +828,15 @@ function main(a,b)
         [Test]
         public void UseFunctionMacro()
         {
-            Compile("""
+            Compile(
+                """
 
-                    macro nothing = null;
+                macro nothing = null;
 
-                    function main does return nothing;
+                function main does return nothing;
 
-                    """);
+                """
+            );
 
             ExpectNull();
         }
@@ -839,9 +857,11 @@ function main(a,b)
 
                 function main = acquire_free;
 
-                """);
+                """
+            );
 
-            var mainFunc = target.Functions["main"] ?? throw new InvalidOperationException("main not found.");
+            var mainFunc =
+                target.Functions["main"] ?? throw new InvalidOperationException("main not found.");
 
             Assert.AreEqual(1, mainFunc.Variables.Count);
             var v = mainFunc.Variables.First();
@@ -857,7 +877,8 @@ function main(a,b)
                 function interpreted [is volatile;] = System::Object.ReferenceEquals("ab", "a" + "b");
                 function compiled [is volatile;] = System::Object.ReferenceEquals("ab", "a" + "b");
 
-                """);
+                """
+            );
 
             ExpectNamed("interpreted", true);
             ExpectNamed("compiled", true);
@@ -866,14 +887,16 @@ function main(a,b)
         [Test]
         public void UnlessConditionalExpression()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function main()
-                    {
-                        return unless(true) 1 else 2;
-                    }
+                function main()
+                {
+                    return unless(true) 1 else 2;
+                }
 
-                    """);
+                """
+            );
 
             Expect(2);
         }
@@ -890,9 +913,14 @@ function main(a,b)
 
                 build does write("nothing");
 
-                """);
+                """
+            );
 
-            Assert.IsNull((target.Variables["flag"] ?? throw new InvalidOperationException("flag not found.")).Value.Value);
+            Assert.IsNull(
+                (target.Variables["flag"] ?? throw new InvalidOperationException("flag not found."))
+                    .Value
+                    .Value
+            );
         }
 
         [Test]
@@ -924,7 +952,8 @@ function main(a,b)
                     return "$t1,$k1; $t2,$k2; $t3";
                 }
 
-                """);
+                """
+            );
 
             Expect("x,y; x,y; y", "x", "y");
         }
@@ -953,7 +982,8 @@ function main(a,b)
                     return buffer.ToString;
                 }
 
-                """);
+                """
+            );
 
             const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
             Expect(expected);
@@ -977,7 +1007,8 @@ function main(a,b)
 
                 function make_foo(z) = "foo($z)";
 
-                """);
+                """
+            );
 
             Expect("foo(x)bar(y)", "x", "y");
         }
@@ -985,15 +1016,17 @@ function main(a,b)
         [Test] //#19
         public void ObjectIdentity()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function eq(x) = x == x;
-                    function neq(x) = x != x;
+                function eq(x) = x == x;
+                function neq(x) = x != x;
 
-                    """);
+                """
+            );
 
-            ExpectNamed("eq", true, new PValue(new(), PType.Object[typeof (object)]));
-            ExpectNamed("neq", false, new PValue(new(), PType.Object[typeof (object)]));
+            ExpectNamed("eq", true, new PValue(new(), PType.Object[typeof(object)]));
+            ExpectNamed("neq", false, new PValue(new(), PType.Object[typeof(object)]));
         }
 
         [Test] //#18
@@ -1004,9 +1037,10 @@ function main(a,b)
 
                 function main = "\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD".ToCharArray() >> map(x => x~Int) >> all;
 
-                """);
+                """
+            );
 
-            Expect(new List<PValue> {0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD});
+            Expect(new List<PValue> { 0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD });
         }
 
         [Test]
@@ -1027,7 +1061,8 @@ function main(a,b)
                     return inner(x) and lambda(x);
                 }
 
-                """);
+                """
+            );
 
             Expect(true, new PValueKeyValuePair(1, 2));
             Expect(false, 1);
@@ -1036,11 +1071,13 @@ function main(a,b)
         [Test]
         public void ConditionalExpressionVsKvpPriority()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function main(x,y,z) = if(x) x else y:z;
+                function main(x,y,z) = if(x) x else y:z;
 
-                    """);
+                """
+            );
 
             Expect(true, true, 1, 2);
         }
@@ -1048,11 +1085,13 @@ function main(a,b)
         [Test]
         public void KvpSelfPriority()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function main(x,y,z) = (x : y : z).Key;
+                function main(x,y,z) = (x : y : z).Key;
 
-                    """);
+                """
+            );
 
             Expect(1, 1, 2, 3);
         }
@@ -1102,7 +1141,8 @@ function main(a,b)
                     break;
                 }
 
-                """);
+                """
+            );
 
             _testReturnMode("ret_exit", ReturnMode.Exit, 5);
             _testReturnMode("ret_yield", ReturnMode.Continue, 6);
@@ -1112,13 +1152,19 @@ function main(a,b)
 
         void _testReturnMode(string id, ReturnMode mode, PValue retVal)
         {
-            var func = target.Functions[id] ?? throw new InvalidOperationException("func not found.");
+            var func =
+                target.Functions[id] ?? throw new InvalidOperationException("func not found.");
             var fctx = func.CreateFunctionContext(engine);
             engine.Process(fctx);
-            Assert.AreEqual(fctx.ReturnMode, mode,
-                "Return mode for function " + id + " does not match.");
-            Assert.IsTrue((bool) retVal.Equality(fctx, fctx.ReturnValue).Value!,
-                "Return value for function " + id + " does not match.");
+            Assert.AreEqual(
+                fctx.ReturnMode,
+                mode,
+                "Return mode for function " + id + " does not match."
+            );
+            Assert.IsTrue(
+                (bool)retVal.Equality(fctx, fctx.ReturnValue).Value!,
+                "Return value for function " + id + " does not match."
+            );
         }
 
         [Test]
@@ -1160,20 +1206,18 @@ function main(a,b)
                     return f.(null);
                 }
 
-                """);
+                """
+            );
 
-            var x =
-                sctx.CreateNativePValue(
-                    new Callable(
-                        (stackContext, args) => "x" + args[0].CallToString(stackContext) + "x"));
-            var y =
-                sctx.CreateNativePValue(
-                    new Callable(
-                        (stackContext, args) => "y" + args[0].CallToString(stackContext) + "y"));
-            var z =
-                sctx.CreateNativePValue(
-                    new Callable(
-                        (stackContext, args) => "z" + args[0].CallToString(stackContext) + "z"));
+            var x = sctx.CreateNativePValue(
+                new Callable((stackContext, args) => "x" + args[0].CallToString(stackContext) + "x")
+            );
+            var y = sctx.CreateNativePValue(
+                new Callable((stackContext, args) => "y" + args[0].CallToString(stackContext) + "y")
+            );
+            var z = sctx.CreateNativePValue(
+                new Callable((stackContext, args) => "z" + args[0].CallToString(stackContext) + "z")
+            );
 
             ExpectNamed("closed", "yxxy", x, y);
             ExpectNamed("partialLeft", "yxxy", x, y);
@@ -1185,20 +1229,23 @@ function main(a,b)
         [Test]
         public void PartialInitialization2()
         {
-            var ldr = Compile("""
+            var ldr = Compile(
+                """
 
-                              var x = 5;
+                var x = 5;
 
-                              function main(y)
-                              {
-                                  return y + x;
-                              }
+                function main(y)
+                {
+                    return y + x;
+                }
 
-                              """);
+                """
+            );
 
             Expect(11, 6);
 
-            Compile(ldr,
+            Compile(
+                ldr,
                 """
 
                 var x = 17;
@@ -1209,16 +1256,20 @@ function main(a,b)
                     return z + main(x);
                 }
 
-                """);
+                """
+            );
 
             ExpectNamed("main2", 20 + 9, 3);
 
-            Compile(ldr, """
+            Compile(
+                ldr,
+                """
 
-                         var x = 22;
-                         var z = 20;
+                var x = 22;
+                var z = 20;
 
-                         """);
+                """
+            );
 
             ExpectNamed("main2", 20 + 22 + 4, 4);
         }
@@ -1238,20 +1289,26 @@ function main(a,b)
                 }
 
                 """,
-                "main", PFunction.ArgumentListId, "0", "local");
+                "main",
+                PFunction.ArgumentListId,
+                "0",
+                "local"
+            );
         }
 
         [Test]
         public void ParamDefaultNull()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function main(x,y)
-                    {
-                        return y;
-                    }
+                function main(x,y)
+                {
+                    return y;
+                }
 
-                    """);
+                """
+            );
 
             ExpectNull("main", "z");
         }
@@ -1259,14 +1316,16 @@ function main(a,b)
         [Test]
         public void VariableDefaultNull()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function main(x)
-                    {
-                        var y;
-                        return y;
-                    }
-                    """);
+                function main(x)
+                {
+                    var y;
+                    return y;
+                }
+                """
+            );
 
             ExpectNull("main", "z");
         }
@@ -1292,13 +1351,14 @@ function main(a,b)
                     return y;
                 }
 
-                """);
+                """
+            );
 
             var x = 22.5;
-            var y = x*1.5;
+            var y = x * 1.5;
             var t = 0.75;
 
-            Expect(x + (y - x)*t, x, t);
+            Expect(x + (y - x) * t, x, t);
         }
 
         [Test]
@@ -1327,13 +1387,14 @@ function main(a,b)
                     return result;
                 }
 
-                """);
+                """
+            );
 
             var x = 22.5;
-            var y = x*1.5;
+            var y = x * 1.5;
             var t = 0.75;
 
-            Expect(x + (y - x)*t, x, t);
+            Expect(x + (y - x) * t, x, t);
         }
 
         [Test]
@@ -1348,11 +1409,12 @@ function main(a,b)
                     var a = z^y;
                     return a;
                 }
-                """);
+                """
+            );
 
             var x = Math.PI;
-            var y = x*2.5;
-            var z = y/1.4;
+            var y = x * 2.5;
+            var z = y / 1.4;
             var a = Math.Pow(z, y);
             Expect(a, x);
         }
@@ -1368,23 +1430,26 @@ function main(a,b)
                 {
                     return asm(ldr.app).Functions["foo"].(x);
                 }
-                """);
+                """
+            );
             Expect(4, 2);
         }
 
         [Test]
         public void DynamicTypeIsArray()
         {
-            Compile("""
+            Compile(
+                """
 
-                    function main(x,type)
-                    {
-                        return x is Object<(type + "[]")>;
-                    }
+                function main(x,type)
+                {
+                    return x is Object<(type + "[]")>;
+                }
 
-                    """);
+                """
+            );
             Expect(false, 4, "System.String");
-            Expect(true, sctx.CreateNativePValue(new[] {1, 2, 3}), "System.Int32");
+            Expect(true, sctx.CreateNativePValue(new[] { 1, 2, 3 }), "System.Int32");
         }
 
         [Test]
@@ -1403,7 +1468,8 @@ function main(a,b)
                         return i--;
                 }
 
-                """);
+                """
+            );
             var i = 0;
             Expect(i++, 2);
             Expect(i++, 4);
@@ -1426,7 +1492,8 @@ function main(a,b)
                         return --i;
                 }
 
-                """);
+                """
+            );
             var i = 0;
             Expect(++i, 2);
             Expect(++i, 4);
@@ -1437,7 +1504,7 @@ function main(a,b)
         [Test]
         public void StaticSet()
         {
-            engine.RegisterAssembly(typeof (StaticClassMock).Assembly);
+            engine.RegisterAssembly(typeof(StaticClassMock).Assembly);
 
             Compile(
                 """
@@ -1455,7 +1522,8 @@ function main(a,b)
                         return 5;
                 }
 
-                """);
+                """
+            );
             var x = "500";
             Expect(x, 10, x);
         }
@@ -1478,7 +1546,8 @@ function main(a,b)
                     return [a,b,c,d,e,f,g];
                 }
 
-                """);
+                """
+            );
 
             var x = 27;
             var y = 0x113;
@@ -1492,9 +1561,8 @@ function main(a,b)
             var f = x & y | z;
             var g = x | y & z;
 
-            Expect(new List<PValue> {a, b, c, d, e, f, g}, x, y, z);
+            Expect(new List<PValue> { a, b, c, d, e, f, g }, x, y, z);
         }
-
 
         [Test]
         public void LazyAndOptimization()
@@ -1531,7 +1599,8 @@ function main(a,b)
 
                     return s;
                 }
-                """);
+                """
+            );
 
             const string prefix = "TrueFalseTrueFalseFalseFalseFalseFalse";
             const string valueEqTrue = "TrueFalseTrueFalse";
@@ -1545,7 +1614,7 @@ function main(a,b)
         }
 
         /// <summary>
-        ///     This test checks whether optimizations of lazy logical expression 
+        ///     This test checks whether optimizations of lazy logical expression
         ///     can alter semantics (e.g., conversion to bool still necessary)
         /// </summary>
         [Test]
@@ -1583,7 +1652,8 @@ function main(a,b)
 
                     return s;
                 }
-                """);
+                """
+            );
 
             const string prefix = "TrueTrueTrueTrueTrueFalseTrueFalse";
             const string valueEqTrue = "TrueTrueTrueTrue";
@@ -1609,7 +1679,8 @@ function main(a,b)
                     return "$s:$ues:$es";
                 }
 
-                """);
+                """
+            );
 
             //ä = U+00E4
 
@@ -1655,7 +1726,8 @@ function main(a,b)
                     return z\&&true;
                 }
 
-                """);
+                """
+            );
 
             const string expected = "A_B;A&:0";
             const string x = "A";
@@ -1680,7 +1752,8 @@ function main(a,b)
                     return "$x $al'gebra $x':" + 54'08.9;
                 }
 
-                """);
+                """
+            );
 
             Expect("A 7000 1000:5408.9", "A", 1000);
         }
@@ -1688,7 +1761,7 @@ function main(a,b)
         [Test]
         public void ObjectCreationOptimizeReorder()
         {
-            engine.RegisterAssembly(typeof (StaticClassMock).Assembly);
+            engine.RegisterAssembly(typeof(StaticClassMock).Assembly);
             Compile(
                 """
 
@@ -1700,7 +1773,8 @@ function main(a,b)
                     return obj.ToString;
                 }
 
-                """);
+                """
+            );
 
             Expect("-1-xXx");
         }
@@ -1708,36 +1782,51 @@ function main(a,b)
         [Test]
         public void DuplicatingJustEffectBlockExpression()
         {
-            var ldr =
-                Compile("""
+            var ldr = Compile(
+                """
 
-                        var s;
-                        function main()[is volatile;]
-                        {
-                            s = "BEGIN--";
-                        }
+                var s;
+                function main()[is volatile;]
+                {
+                    s = "BEGIN--";
+                }
 
-                        """);
+                """
+            );
             var pos = new SourcePosition("file", -1, -2);
             var mn = ldr.ParentApplication.Module.Name;
             var ct = ldr.FunctionTargets["main"];
             ct!.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
-            var block = new AstScopedBlock(new SourcePosition("file", -1, -2),ct.Ast);
+            var block = new AstScopedBlock(new SourcePosition("file", -1, -2), ct.Ast);
 
-            var assignStmt = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s",mn),PCall.Set);
+            var assignStmt = ct.Factory.Call(
+                pos,
+                EntityRef.Variable.Global.Create("s", mn),
+                PCall.Set
+            );
             assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
-            var incStmt = ct.Factory.ModifyingAssignment(NoSourcePosition.Instance,
-                                                         assignStmt,
-                                                         BinaryOperator.Addition);
+            var incStmt = ct.Factory.ModifyingAssignment(
+                NoSourcePosition.Instance,
+                assignStmt,
+                BinaryOperator.Addition
+            );
 
-            var assignExpr = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s", mn), PCall.Set);
+            var assignExpr = ct.Factory.Call(
+                pos,
+                EntityRef.Variable.Global.Create("s", mn),
+                PCall.Set
+            );
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
             var incExpr = ct.Factory.ModifyingAssignment(pos, assignExpr, BinaryOperator.Addition);
 
             block.Statements.Add(incStmt);
             block.Expression = incExpr;
 
-            Assert.That(block,Is.InstanceOf<AstExpr>(), $"{block} is expected to handle emission of effect code.");
+            Assert.That(
+                block,
+                Is.InstanceOf<AstExpr>(),
+                $"{block} is expected to handle emission of effect code."
+            );
             block.EmitEffectCode(ct);
 
             var sourcePosition = new SourcePosition("file", -1, -2);

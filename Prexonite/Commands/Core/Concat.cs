@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core;
@@ -11,9 +9,7 @@ public sealed class Concat : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    Concat()
-    {
-    }
+    Concat() { }
 
     public static Concat Instance { get; } = new();
 
@@ -34,7 +30,7 @@ public sealed class Concat : PCommand, ICilCompilerAware
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
-            var element = arg.Type is StringPType ? (string) arg.Value! : arg.CallToString(sctx);
+            var element = arg.Type is StringPType ? (string)arg.Value! : arg.CallToString(sctx);
             elements[i] = element;
         }
 

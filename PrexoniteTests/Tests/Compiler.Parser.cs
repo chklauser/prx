@@ -1,5 +1,3 @@
-
-
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
@@ -15,8 +13,7 @@ public class CompilerTestBaseParser : CompilerTestBase
     [Test]
     public void VariableDeclarations()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function func0
             {
@@ -36,7 +33,7 @@ public class CompilerTestBaseParser : CompilerTestBase
             }
 
             """;
-        var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+        var opt = new LoaderOptions(engine, target) { UseIndicesLocally = false };
         var ldr = new Loader(opt);
         ldr.LoadFromString(input1);
         foreach (var message in ldr.Errors)
@@ -53,66 +50,93 @@ public class CompilerTestBaseParser : CompilerTestBase
 
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0", null),
-            LookupSymbolEntry(tar!.Symbols, "obj0"));
+            LookupSymbolEntry(tar!.Symbols, "obj0")
+        );
         Assert.IsTrue(tar.Function.Variables.Contains("obj0"));
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1", null),
-            LookupSymbolEntry(tar.Symbols, "obj1"));
+            LookupSymbolEntry(tar.Symbols, "obj1")
+        );
         Assert.IsTrue(tar.Function.Variables.Contains("obj1"));
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2", null),
-            LookupSymbolEntry(tar.Symbols, "obj2"));
+            LookupSymbolEntry(tar.Symbols, "obj2")
+        );
         Assert.IsTrue(tar.Function.Variables.Contains("obj2"));
 
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1", null),
-            LookupSymbolEntry(tar.Symbols, "func1"));
+            LookupSymbolEntry(tar.Symbols, "func1")
+        );
         Assert.IsTrue(tar.Function.Variables.Contains("func1"));
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0", null),
-            LookupSymbolEntry(tar.Symbols, "ifunc0"));
+            LookupSymbolEntry(tar.Symbols, "ifunc0")
+        );
         Assert.IsTrue(tar.Function.Variables.Contains("ifunc0"));
         Assert.AreEqual(
             new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0", null),
-            LookupSymbolEntry(tar.Symbols, "cor0"));
+            LookupSymbolEntry(tar.Symbols, "cor0")
+        );
         Assert.IsTrue(tar.Function.Variables.Contains("cor0"));
 
         Assert.AreEqual(
-            new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0", target.Module.Name),
-            LookupSymbolEntry(tar.Symbols, "gobj0"));
+            new SymbolEntry(
+                SymbolInterpretations.GlobalObjectVariable,
+                "gobj0",
+                target.Module.Name
+            ),
+            LookupSymbolEntry(tar.Symbols, "gobj0")
+        );
         Assert.IsFalse(
             tar.Function.Variables.Contains("gobj0"),
-            "\"declare var <id>;\" only declares a global variable.");
+            "\"declare var <id>;\" only declares a global variable."
+        );
         Assert.IsFalse(
             ldr.Options.TargetApplication!.Variables.ContainsKey("gobj0"),
-            "\"global <id>;\" only declares a global variable.");
+            "\"global <id>;\" only declares a global variable."
+        );
         Assert.AreEqual(
-            new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1", target.Module.Name),
-            LookupSymbolEntry(tar.Symbols, "gobj1"));
+            new SymbolEntry(
+                SymbolInterpretations.GlobalObjectVariable,
+                "gobj1",
+                target.Module.Name
+            ),
+            LookupSymbolEntry(tar.Symbols, "gobj1")
+        );
         Assert.IsFalse(
             tar.Function.Variables.Contains("gobj1"),
-            "\"declare var <id>;\" only declares a global variable.");
+            "\"declare var <id>;\" only declares a global variable."
+        );
         Assert.IsFalse(
             ldr.Options.TargetApplication.Variables.ContainsKey("gobj1"),
-            "\"declare var <id>;\" only declares a global variable.");
+            "\"declare var <id>;\" only declares a global variable."
+        );
 
         Assert.AreEqual(
-            new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0", target.Module.Name),
-            LookupSymbolEntry(tar.Symbols, "sobj0"));
-        Assert.IsTrue(
-            ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
+            new SymbolEntry(
+                SymbolInterpretations.GlobalObjectVariable,
+                "func0\\static\\sobj0",
+                target.Module.Name
+            ),
+            LookupSymbolEntry(tar.Symbols, "sobj0")
+        );
+        Assert.IsTrue(ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
         Assert.AreEqual(
-            new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1", target.Module.Name),
-            LookupSymbolEntry(tar.Symbols, "sobj1"));
-        Assert.IsTrue(
-            ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
+            new SymbolEntry(
+                SymbolInterpretations.GlobalObjectVariable,
+                "func0\\static\\sobj1",
+                target.Module.Name
+            ),
+            LookupSymbolEntry(tar.Symbols, "sobj1")
+        );
+        Assert.IsTrue(ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
     }
 
     [Test]
     public void ExplicitGotos()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             declare function instruction;
 
@@ -141,23 +165,23 @@ public class CompilerTestBaseParser : CompilerTestBase
         //label begin
         var i = 0;
         Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
-        Assert.AreEqual("begin", ((AstExplicitLabel) block[i]).Label);
+        Assert.AreEqual("begin", ((AstExplicitLabel)block[i]).Label);
 
         //instruction
         i++;
         Assert.IsInstanceOf(typeof(AstIndirectCall), block[i]);
-        Assert.AreEqual(PCall.Get, ((AstGetSet) block[i]).Call);
-        Assert.AreEqual(0, ((AstGetSet) block[i]).Arguments.Count);
+        Assert.AreEqual(PCall.Get, ((AstGetSet)block[i]).Call);
+        Assert.AreEqual(0, ((AstGetSet)block[i]).Arguments.Count);
 
         //goto fith
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
-        Assert.AreEqual("fifth", ((AstExplicitGoTo) block[i]).Destination);
+        Assert.AreEqual("fifth", ((AstExplicitGoTo)block[i]).Destination);
 
         //label third
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
-        Assert.AreEqual("third", ((AstExplicitLabel) block[i]).Label);
+        Assert.AreEqual("third", ((AstExplicitLabel)block[i]).Label);
 
         //instruction
         i++;
@@ -168,32 +192,32 @@ public class CompilerTestBaseParser : CompilerTestBase
         //label fourth
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
-        Assert.AreEqual("fourth", ((AstExplicitLabel) block[i]).Label);
+        Assert.AreEqual("fourth", ((AstExplicitLabel)block[i]).Label);
 
         //goto sixth
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
-        Assert.AreEqual("sixth", ((AstExplicitGoTo) block[i]).Destination);
+        Assert.AreEqual("sixth", ((AstExplicitGoTo)block[i]).Destination);
 
         //label fifth
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
-        Assert.AreEqual("fifth", ((AstExplicitLabel) block[i]).Label);
+        Assert.AreEqual("fifth", ((AstExplicitLabel)block[i]).Label);
 
         //goto fourth
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
-        Assert.AreEqual("fourth", ((AstExplicitGoTo) block[i]).Destination);
+        Assert.AreEqual("fourth", ((AstExplicitGoTo)block[i]).Destination);
 
         //label sixth
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
-        Assert.AreEqual("sixth", ((AstExplicitLabel) block[i]).Label);
+        Assert.AreEqual("sixth", ((AstExplicitLabel)block[i]).Label);
 
         //goto begin
         i++;
         Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
-        Assert.AreEqual("begin", ((AstExplicitGoTo) block[i]).Destination);
+        Assert.AreEqual("begin", ((AstExplicitGoTo)block[i]).Destination);
 
         TestContext.WriteLine(target.StoreInString());
     }
@@ -201,8 +225,7 @@ public class CompilerTestBaseParser : CompilerTestBase
     [Test]
     public void Arguments()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function main
             {
@@ -215,31 +238,32 @@ public class CompilerTestBaseParser : CompilerTestBase
 
             """;
         _compile(input1);
-        Expect("""
+        Expect(
+            """
 
-               @func.0 func1
+            @func.0 func1
 
-               ldc.int 1
-               @func.1 func1
-               ldc.string "2"
-               ldc.bool true
-               ldc.real 3.41
-               @func.3 func1
+            ldc.int 1
+            @func.1 func1
+            ldc.string "2"
+            ldc.bool true
+            ldc.real 3.41
+            @func.3 func1
 
-               ldc.int 55
-                func.1 func1
-                func.1 func1
-                func.1 func1
-                ret.val
+            ldc.int 55
+             func.1 func1
+             func.1 func1
+             func.1 func1
+             ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void Expressions()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function main
             {
@@ -271,7 +295,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             stloc    x
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -291,9 +316,11 @@ public class CompilerTestBaseParser : CompilerTestBase
                 x = 1+(++y)+1;
                 return null;
             }
-            """);
-   
-        Expect("func0",
+            """
+        );
+
+        Expect(
+            "func0",
             """
 
             //x = 1
@@ -343,54 +370,63 @@ public class CompilerTestBaseParser : CompilerTestBase
                 break;
                 continue;
             }
-            """);
-
+            """
+        );
 
         var actual = target.Functions["func0"]!.Code;
-        var expected =
-            GetInstructions(
-                """
+        var expected = GetInstructions(
+            """
 
-                ret.exit
-                ldloc   x
-                ret.value
-                ret.break
-                ret.continue
+            ret.exit
+            ldloc   x
+            ret.value
+            ret.break
+            ret.continue
 
-                """);
+            """
+        );
         TestContext.Write(target.StoreInString());
 
         Assert.AreEqual(
-            expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
+            expected.Count,
+            actual.Count,
+            "Expected and actual instruction count missmatch."
+        );
 
         for (var i = 0; i < actual.Count; i++)
             Assert.AreEqual(
                 expected[i],
                 actual[i],
-                $"Instructions at address {i} do not match ({expected[i]} != {actual[i]})");
+                $"Instructions at address {i} do not match ({expected[i]} != {actual[i]})"
+            );
     }
 
     [Test]
     public void StaticCallAssign()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function test\static_assign
-                 {
-                     ::System::Console.WriteLine = "Hi";
-                 }
+            function test\static_assign
+            {
+                ::System::Console.WriteLine = "Hi";
+            }
 
-                 """);
-        Expect(@"test\static_assign", """
+            """
+        );
+        Expect(
+            @"test\static_assign",
+            """
 
-                                       ldc.string "Hi"
-                                       dup 1
-                                       sset.1 "Object(\"System.Console\")::WriteLine"
-                                       ret.value
+             ldc.string "Hi"
+             dup 1
+             sset.1 "Object(\"System.Console\")::WriteLine"
+             ret.value
 
-                                      """);
-    } 
-        
+            """
+        );
+    }
+
     [Test]
     public void StaticCalls()
     {
@@ -424,7 +460,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """");
+            """"
+        );
 
         Expect(
             @"test\static",
@@ -456,7 +493,8 @@ public class CompilerTestBaseParser : CompilerTestBase
              ldnull
              ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -506,7 +544,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 if(not x){}else;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -557,7 +596,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             @func.0  action2
             label   endif5  
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -582,7 +622,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 asm { nop+end };
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -618,7 +659,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             label endif1
                             nop+end
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -644,7 +686,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 do action1; while ( ( u And v ) Or x);
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -695,7 +738,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             label   next\logical2   ldloc   x
                                     jump.t  begin\while0
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -744,7 +788,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 asm { nop+END };
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -801,7 +846,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                             
                             nop+END
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -849,7 +895,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 fifthLevel:;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -874,29 +921,34 @@ public class CompilerTestBaseParser : CompilerTestBase
             @func.0  ________________
              label   fifthLevel
 
-            """);
+            """
+        );
     }
 
     [Test]
     public void StringConcat()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main(id)
-                 {
-                     return "Hello " + id;
-                 }
+            function main(id)
+            {
+                return "Hello " + id;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               ldc.string  "Hello "
-               ldloc       id
-               add
-               ret.value
+            ldc.string  "Hello "
+            ldloc       id
+            add
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
@@ -913,17 +965,20 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-                ldloc   str
-                ldloc   idx
-                get.1   ""
-               @func.1  println
-                ldc.null
-                ret.val
+             ldloc   str
+             ldloc   idx
+             get.1   ""
+            @func.1  println
+             ldc.null
+             ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
@@ -953,7 +1008,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 if(3 == x) asm { inc x }
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -980,7 +1036,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             inc     x
             label   endif2
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1029,7 +1086,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 }
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -1103,7 +1161,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                                     jump    while5\continue
             label   while5\break   
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1122,9 +1181,9 @@ public class CompilerTestBaseParser : CompilerTestBase
                 for(var i = 0; while i < 5; i++)
                     action;
 
-            """);
-        var asmInput =
             """
+        );
+        var asmInput = """
 
                             var i
                             ldc.int 0
@@ -1169,7 +1228,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                      }
                 }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -1219,7 +1279,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                                 jump.f  begin
             label   break
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1240,7 +1301,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -1253,7 +1315,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1275,7 +1338,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 foreach(buffer.Append in lst.ToArray);
             }
 
-            """);
+            """
+        );
         var code = target.Functions["main"]!.Code;
         Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
         var enum1 = code[3].Id ?? "No_ID_at_3";
@@ -1337,7 +1401,9 @@ public class CompilerTestBaseParser : CompilerTestBase
 
                 """,
                 enum1,
-                enum2));
+                enum2
+            )
+        );
     }
 
     [Test]
@@ -1364,15 +1430,18 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldglob  ekoe
-               @cmd.1   print
-               ldc.null
-               ret.val
+            ldglob  ekoe
+            @cmd.1   print
+            ldc.null
+            ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
@@ -1401,7 +1470,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -1432,7 +1502,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1448,7 +1519,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -1468,7 +1540,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1494,13 +1567,12 @@ public class CompilerTestBaseParser : CompilerTestBase
                 var w = x => { var d = x+2; return d * 4; };
             }
 
-            """);
+            """
+        );
         Expect(@"main\0", @"ldc.int 5861 ret.value");
         Expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
         Expect(@"main\2", @"ldloc x ldloc y add indloc.1 z ret.val");
-        Expect(
-            @"main\3",
-            @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.val");
+        Expect(@"main\3", @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.val");
     }
 
     [Test]
@@ -1518,27 +1590,34 @@ public class CompilerTestBaseParser : CompilerTestBase
                 var u = () => { ref a; a; return null; };
             }
 
-            """);
+            """
+        );
 
-        Expect(@"main\0", """
+        Expect(
+            @"main\0",
+            """
 
-                          ldloc   x
-                          ldloc   a
-                          add
-                          ret.value
+            ldloc   x
+            ldloc   a
+            add
+            ret.value
 
-                          """);
+            """
+        );
         var func = target.Functions[@"main\0"]!;
         Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
         Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
 
-        Expect(@"main\1", """
+        Expect(
+            @"main\1",
+            """
 
-                          @indloc.0  a
-                          ldnull
-                          ret.val
+            @indloc.0  a
+            ldnull
+            ret.val
 
-                          """);
+            """
+        );
         func = target.Functions[@"main\1"];
         Assert.AreEqual(1, func!.Meta[PFunction.SharedNamesKey].List.Length);
         Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
@@ -1567,7 +1646,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         _expectSharedVariables(@"main\N10", "a");
         _expectSharedVariables(@"main\N21");
@@ -1595,7 +1675,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1620,7 +1701,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -1646,7 +1728,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1667,7 +1750,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -1693,7 +1777,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1716,7 +1801,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -1759,7 +1845,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1776,7 +1863,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -1793,7 +1881,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1810,7 +1899,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -1834,22 +1924,25 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
     public void StringInterpolationExpressionSimple()
     {
-        _compile("""
+        _compile(
+            """
 
-                 declare command a;
-                 function main()
-                 {
-                     print = "AB$(a)CD";
-                     return null;
-                 }
+            declare command a;
+            function main()
+            {
+                print = "AB$(a)CD";
+                return null;
+            }
 
-                 """);
+            """
+        );
         Expect(
             """
 
@@ -1861,7 +1954,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -1902,9 +1996,9 @@ public class CompilerTestBaseParser : CompilerTestBase
                         x.Length;
             }
 
-            """);
-        const string emax =
             """
+        );
+        const string emax = """
 
                             ldloc   a
                             ldloc   b
@@ -1919,8 +2013,7 @@ public class CompilerTestBaseParser : CompilerTestBase
         Expect("max", emax);
         Expect("maxv", emax);
 
-        const string emain =
-            """
+        const string emain = """
 
                             ldloc   x
                             ldc.int 2
@@ -1998,7 +2091,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2041,7 +2135,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldc.null
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2056,7 +2151,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return "There is $(transform("no")) spoon";
             }   
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2067,7 +2163,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             cmd.3       string_concat
             ret.value
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2082,7 +2179,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2091,25 +2189,30 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
     public void OneDividedByX()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main(x) = 1 / x;
+            function main(x) = 1 / x;
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldc.int 1
-               ldloc   x
-               div
-               ret.value
+            ldc.int 1
+            ldloc   x
+            div
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
@@ -2125,7 +2228,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2146,7 +2250,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2173,7 +2278,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2190,7 +2296,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val 
 
-            """);
+            """
+        );
 
         Expect(
             @"subrange",
@@ -2216,7 +2323,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             clt
             jump.t  begin
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2240,15 +2348,18 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldglob  A
-               @cmd.1  println
-               ldnull
-               ret.val
+            ldglob  A
+            @cmd.1  println
+            ldnull
+            ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
@@ -2274,7 +2385,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return where(skip([1,2,3],1),x=>x mod 2==0);
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2292,23 +2404,29 @@ public class CompilerTestBaseParser : CompilerTestBase
             func.2  where
             ret.val
 
-            """);
+            """
+        );
 
-        Expect("where", """
-
-                        newclo  where\0
-                        newcor.0
-                        ret.value
-
-                        """);
         Expect(
-            @"main\skip0", """
+            "where",
+            """
 
-                           newclo  main\skip0\0
-                           newcor.0
-                           ret.value
+            newclo  where\0
+            newcor.0
+            ret.value
 
-                           """);
+            """
+        );
+        Expect(
+            @"main\skip0",
+            """
+
+            newclo  main\skip0\0
+            newcor.0
+            ret.value
+
+            """
+        );
     }
 
     [Test]
@@ -2342,7 +2460,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 }
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2366,7 +2485,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                                @func.1  log
             label endTry        nop
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2407,7 +2527,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 }
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2439,7 +2560,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                                @func.1  log
             label endTry        nop
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2469,7 +2591,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 }
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2488,7 +2611,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                                 leave   endTry
             label endTry        nop
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2505,7 +2629,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2522,7 +2647,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.value
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2543,33 +2669,38 @@ public class CompilerTestBaseParser : CompilerTestBase
                     write(h,15);
             }
 
-            """);
+            """
+        );
 
         var code = target.Functions["main"]!.Code;
         Assert.IsTrue(code.Count > 6, "Resulting must be longer than 6 instructions");
         var using1 = code[6].Id ?? "No_ID_at_6";
 
-        Expect(string.Format(
-            """
+        Expect(
+            string.Format(
+                """
 
-            var h,{0}
-            label beginTry  try
-                            ldr.loc h
-                            func.0  createHandle
-                            dup 1
-                            rot.2,3
-                           @func.2  handle
-                            stloc   {0}
-                            ldloc   h
-                            ldc.int 15
-                           @func.2  write
-            label beginFinally
-                            ldloc   {0}
-                           @cmd.1   dispose
-                            leave   endTry
-            label endTry    nop
+                var h,{0}
+                label beginTry  try
+                                ldr.loc h
+                                func.0  createHandle
+                                dup 1
+                                rot.2,3
+                               @func.2  handle
+                                stloc   {0}
+                                ldloc   h
+                                ldc.int 15
+                               @func.2  write
+                label beginFinally
+                                ldloc   {0}
+                               @cmd.1   dispose
+                                leave   endTry
+                label endTry    nop
 
-            """,using1));
+                """,
+                using1
+            )
+        );
     }
 
     [Test]
@@ -2589,7 +2720,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2622,7 +2754,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2659,7 +2792,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2722,7 +2856,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.value
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2743,7 +2878,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
         Expect(
             """
 
@@ -2768,69 +2904,75 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
     public void ReferenceDeclarationLiteral()
     {
         // Note: the behaviour of the expression (ref h) has been changed.
-        //  It is no longer equivalent to ->h but instead always means the same as var h 
+        //  It is no longer equivalent to ->h but instead always means the same as var h
         //  (without changing re-declaring h, of course)
         //  By extension (ref ref h) == (ref h)
-        _compile("""
+        _compile(
+            """
 
-                 function main
-                 {
-                     print(ref h);
-                     print(ref ref g);
-                     ref ref ref var k = ref h;
-                     print(k);
-                     return var o;
-                 }
+            function main
+            {
+                print(ref h);
+                print(ref ref g);
+                ref ref ref var k = ref h;
+                print(k);
+                return var o;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var h
-               ldloc h
-               @cmd.1  print
+            var h
+            ldloc h
+            @cmd.1  print
 
-               ldloc g
-               @cmd.1 print
+            ldloc g
+            @cmd.1 print
 
-               ldloc h
-               stloc k
+            ldloc h
+            stloc k
 
-               indloc k
-               indarg.0 
-               indarg.0
-               @cmd.1 print
+            indloc k
+            indarg.0 
+            indarg.0
+            @cmd.1 print
 
-               ldloc o
-               ret.val
+            ldloc o
+            ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void GlobalCode()
     {
-        _compile("""
+        _compile(
+            """
 
-                 var g;
+            var g;
 
-                 { g = 4; }
+            { g = 4; }
 
-                 function main does
-                 {
-                     println = g;
-                     return null;
-                 }
+            function main does
+            {
+                println = g;
+                return null;
+            }
 
-                 """);
-
+            """
+        );
     }
 
     [Test]
@@ -2847,7 +2989,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 println(g); and
                 return null;
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2868,7 +3011,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                         ldnull
                         ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2885,7 +3029,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2904,7 +3049,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2923,7 +3069,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -2968,7 +3115,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                             ldnull
                             ret.val                
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -2991,7 +3139,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -3014,7 +3163,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -3031,7 +3181,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -3049,7 +3200,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -3068,7 +3220,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }   
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -3089,7 +3242,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -3106,7 +3260,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                 return null;
             }
 
-            """);
+            """
+        );
 
         Expect(
             """
@@ -3129,7 +3284,8 @@ public class CompilerTestBaseParser : CompilerTestBase
             ldnull
             ret.val
 
-            """);
+            """
+        );
     }
 
     [Test]
@@ -3142,7 +3298,8 @@ public class CompilerTestBaseParser : CompilerTestBase
                println(app.Compound >> trace(f) >> all);
                app.Compound         >> trace(f)        >> all >> println;
             }
-            """);
+            """
+        );
 
         Expect(
             """
@@ -3162,10 +3319,10 @@ public class CompilerTestBaseParser : CompilerTestBase
              cmd.1 println
              ret.val
 
-            """);
+            """
+        );
     }
 
-       
     /* not supported at the moment
     [Test]
     public void AppendLeftDirect()
@@ -3199,454 +3356,503 @@ indloc.1 a
     {
         //Since operators can now be overloaded, this optimization does no longer apply
         //This test ensures that the optimization does NOT take place
-        _compile("""
+        _compile(
+            """
 
-                 function main()
-                 {
-                     var x;
-                     return x^2;
-                 }
+            function main()
+            {
+                var x;
+                return x^2;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var x
-               ldloc   x
-               ldc.int 2   //what you would expect
-               pow
-               ret
+            var x
+            ldloc   x
+            ldc.int 2   //what you would expect
+            pow
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void SingleModifyingAssign()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main()
-                 {
-                     var a;
-                     a += 3;
-                 }
+            function main()
+            {
+                var a;
+                a += 3;
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldloc a
-               ldc.int 3
-               add
-               dup 1
-               stloc a
-               ret.val
+            ldloc a
+            ldc.int 3
+            add
+            dup 1
+            stloc a
+            ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CastAssign()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main()
-                 {
-                     var a;
-                     var x = a;
-                     var y = a;
-                     var z = a;
+            function main()
+            {
+                var a;
+                var x = a;
+                var y = a;
+                var z = a;
 
-                     x~=String; //no whitespace
-                     y ~= Int; //normal whitespace
-                     z ~ = Real; // ~ and = are two distinct operators. There is no '~=' operator  
+                x~=String; //no whitespace
+                y ~= Int; //normal whitespace
+                z ~ = Real; // ~ and = are two distinct operators. There is no '~=' operator  
 
-                     return x+y+z;
-                 }
+                return x+y+z;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var a,x,y,z
+            var a,x,y,z
 
-               ldloc   a
-               stloc   x
-               ldloc   a
-               stloc   y
-               ldloc   a
-               stloc   z
+            ldloc   a
+            stloc   x
+            ldloc   a
+            stloc   y
+            ldloc   a
+            stloc   z
 
-               ldloc   x
-               cast.const  String
-               stloc   x
+            ldloc   x
+            cast.const  String
+            stloc   x
 
-               ldloc   y
-               cast.const  Int
-               stloc   y
+            ldloc   y
+            cast.const  Int
+            stloc   y
 
-               ldloc   z
-               cast.const  Real
-               stloc   z
+            ldloc   z
+            cast.const  Real
+            stloc   z
 
-               ldloc   x
-               ldloc   y
-               add
-               ldloc   z
-               add
-               ret
+            ldloc   x
+            ldloc   y
+            add
+            ldloc   z
+            add
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CastAssignSingle()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main(a, b)
-                 {
-                     var x = b;
-                     x ~ = Object<"System.Version">;
-                     return x;
-                 }
+            function main(a, b)
+            {
+                var x = b;
+                x ~ = Object<"System.Version">;
+                return x;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var a,b,x
+            var a,b,x
 
-               ldloc b
-               stloc x
+            ldloc b
+            stloc x
 
-               ldloc x
-               cast.const "Object(\"System.Version\")"
-               stloc x
+            ldloc x
+            cast.const "Object(\"System.Version\")"
+            stloc x
 
-               ldloc x
-               ret
+            ldloc x
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void SimpleAssignExpr()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main()
-                 {
-                     var a;
-                     var b;
-                     var c = b = a;
-                     var d = a + 5*(b = c);
-                     var s;
-                     var e = s.M = d;
-                     var f = System::Console.WriteLine = 5;
-                     var g = f.(8) = a;
-                     
-                     return null;
-                 }
+            function main()
+            {
+                var a;
+                var b;
+                var c = b = a;
+                var d = a + 5*(b = c);
+                var s;
+                var e = s.M = d;
+                var f = System::Console.WriteLine = 5;
+                var g = f.(8) = a;
+                
+                return null;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var a,b,c,d,e,f,g,s
+            var a,b,c,d,e,f,g,s
 
-               ldloc   a
-               dup     1
-               stloc   b
-               stloc   c
+            ldloc   a
+            dup     1
+            stloc   b
+            stloc   c
 
-               ldloc   a
-               ldc.int 5
-               ldloc   c
-               dup     1
-               stloc   b
-               mul
-               add
-               stloc   d
+            ldloc   a
+            ldc.int 5
+            ldloc   c
+            dup     1
+            stloc   b
+            mul
+            add
+            stloc   d
 
-               ldloc   s
-               ldloc   d
-               dup     1
-               rot.2,3
-               set.1   M
-               stloc   e
+            ldloc   s
+            ldloc   d
+            dup     1
+            rot.2,3
+            set.1   M
+            stloc   e
 
-               ldc.int 5
-               dup     1
-               sset.1  "Object(\"System.Console\")::WriteLine"
-               stloc   f
+            ldc.int 5
+            dup     1
+            sset.1  "Object(\"System.Console\")::WriteLine"
+            stloc   f
 
-               ldc.int 8
-               ldloc   a
-               dup     1
-               rot.2,3
-               @indloc.2 f
-               stloc   g
+            ldc.int 8
+            ldloc   a
+            dup     1
+            rot.2,3
+            @indloc.2 f
+            stloc   g
 
-               ldnull
-               ret.val
+            ldnull
+            ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void ComplexAssignExpr()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main()
-                 {
-                     var a;
-                     var b = a *= 5;
-                     var c ~= String;
-                     var d = b ??= a;
+            function main()
+            {
+                var a;
+                var b = a *= 5;
+                var c ~= String;
+                var d = b ??= a;
 
-                     return null;
-                 }
+                return null;
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               var a,b,c,d
+            var a,b,c,d
 
-                           ldloc   a
-                           ldc.int 5
-                           mul
-                           dup     1
-                           stloc   a
-                           stloc   b
+                        ldloc   a
+                        ldc.int 5
+                        mul
+                        dup     1
+                        stloc   a
+                        stloc   b
 
-                           ldloc   c
-                           cast.const  "String"
-                           stloc   c
+                        ldloc   c
+                        cast.const  "String"
+                        stloc   c
 
-                           ldloc   b
-                           check.null
-                           jump.f  el
-                           ldloc   a
-                           dup     1
-                           stloc   b
-                           jump    end
-               label   el  ldloc   b
-               label end   stloc   d
-                   
-                           ldnull
-                           ret.val
+                        ldloc   b
+                        check.null
+                        jump.f  el
+                        ldloc   a
+                        dup     1
+                        stloc   b
+                        jump    end
+            label   el  ldloc   b
+            label end   stloc   d
+                
+                        ldnull
+                        ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void DirectTailRecursion()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function fac n r =
-                     if(n == 1)
-                         r
-                     else
-                         fac(n-1, n*r);
+            function fac n r =
+                if(n == 1)
+                    r
+                else
+                    fac(n-1, n*r);
 
-                 """);
+            """
+        );
 
-        Expect("fac", """
+        Expect(
+            "fac",
+            """
 
-                      ldloc   n
-                      ldc.int 1
-                      ceq
-                      jump.f  else
-                      ldloc   r
-                      ret.value
+            ldloc   n
+            ldc.int 1
+            ceq
+            jump.f  else
+            ldloc   r
+            ret.value
 
-                      label else
+            label else
 
-                      ldloc   n
-                      ldc.int 1
-                      sub
+            ldloc   n
+            ldc.int 1
+            sub
 
-                      ldloc   n
-                      ldloc   r
-                      mul
+            ldloc   n
+            ldloc   r
+            mul
 
-                      stloc   r
-                      stloc   n
+            stloc   r
+            stloc   n
 
-                      jump    0
+            jump    0
 
-                      """);
+            """
+        );
     }
 
     [Test]
     public void ComplexModifyAssign()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main()
-                 {
-                     var a;
-                     var b;
-                     a.Member -= b;
-                     return null;
-                 }
+            function main()
+            {
+                var a;
+                var b;
+                a.Member -= b;
+                return null;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var a,b
-               ldloc   a
-               ldloc   a
-               get.0   Member
-               ldloc   b
-               sub
-               //dup 1
-               set.1   Member
-               //rot.2,3
-               ldc.null
-               ret.value
+            var a,b
+            ldloc   a
+            ldloc   a
+            get.0   Member
+            ldloc   b
+            sub
+            //dup 1
+            set.1   Member
+            //rot.2,3
+            ldc.null
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void AppendRightStatement()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main(lst)
-                 {
-                     lst >>
-                         where(x => x > 5) >>
-                         foldl((a,b) => a + b, 1);
-                     return null;
-                 }
+            function main(lst)
+            {
+                lst >>
+                    where(x => x > 5) >>
+                    foldl((a,b) => a + b, 1);
+                return null;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var lst
+            var lst
 
-               ldr.func main\1
-               ldc.int 1
-               ldr.func main\0
-               ldloc   lst
-               cmd.2   where
-               @cmd.3   foldl
+            ldr.func main\1
+            ldc.int 1
+            ldr.func main\0
+            ldloc   lst
+            cmd.2   where
+            @cmd.3   foldl
 
-               ldnull
-               ret.val
+            ldnull
+            ret.val
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void ReturnUnlessOptimization()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main(x)
-                 {
-                     return unless(x) 1 else 0;
-                 }
-                 """);
+            function main(x)
+            {
+                return unless(x) 1 else 0;
+            }
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               ldloc x
-               jump.t elseBranch
-               ldc.int 1
-               ret
-               label elseBranch
-               ldc.int 0
-               ret
+            ldloc x
+            jump.t elseBranch
+            ldc.int 1
+            ret
+            label elseBranch
+            ldc.int 0
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void PostIncrementFunctionEmulation()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function propLike = 0;
+            function propLike = 0;
 
-                 function main()
-                 {
-                     return "work" * propLike++;
-                 }
+            function main()
+            {
+                return "work" * propLike++;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               ldc.string work
-               func.0 propLike
-               func.0 propLike
-               ldc.int 1
-               add
-               @func.1 propLike
-               mul
-               ret.value
+            ldc.string work
+            func.0 propLike
+            func.0 propLike
+            ldc.int 1
+            add
+            @func.1 propLike
+            mul
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void NullcheckInConditionalExpression()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main(x)
-                 {
-                     var n = if(x is null) 1 else 0;
-                     var i = if(x is not null) 1 else 0;
-                     asm{nop}
-                     return if(x is not null) 1 else 0;
-                 }
+            function main(x)
+            {
+                var n = if(x is null) 1 else 0;
+                var i = if(x is not null) 1 else 0;
+                asm{nop}
+                return if(x is not null) 1 else 0;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               var n,i
+            var n,i
 
-               ldloc x
-               check.null
-               jump.f isNotNull
-               ldc.int 1
-               jump endn
-               label isNotNull
-               ldc.int 0
-               label endn
-               stloc n
+            ldloc x
+            check.null
+            jump.f isNotNull
+            ldc.int 1
+            jump endn
+            label isNotNull
+            ldc.int 0
+            label endn
+            stloc n
 
-               ldloc x
-               check.null
-               jump.t isNull
-               ldc.int 1
-               jump endi
-               label isNull
-               ldc.int 0
-               label endi
-               stloc i
+            ldloc x
+            check.null
+            jump.t isNull
+            ldc.int 1
+            jump endi
+            label isNull
+            ldc.int 0
+            label endi
+            stloc i
 
-               nop
+            nop
 
-               ldloc x
-               check.null
-               jump.t isNull2
-               ldc.int 1
-               ret
-               label isNull2
-               ldc.int 0
-               ret
+            ldloc x
+            check.null
+            jump.t isNull2
+            ldc.int 1
+            ret
+            label isNull2
+            ldc.int 0
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
@@ -3663,162 +3869,187 @@ indloc.1 a
                 t.() = t.().M;
             }
 
-            """);
+            """
+        );
 
-        Expect(string.Format("""
+        Expect(
+            string.Format(
+                """
 
-                             var args,arg,t,{0}
-                                                     ldloc   args
-                                                     get.0   GetEnumerator
-                                                     cast.const "Object(\"System.Collections.IEnumerator\")"
-                                                     stloc   {0}
-                                                     try
-                                                     jump    continueForeach
-                             label   beginForeach    ldloc   {0}
-                                                     get.0   Current
-                                                     stloc   arg
-                                                     ldloc   arg
-                                                     func.1  f
-                                                     stloc   t
-                                                     indloc.0    t
-                                                     get.0   M
-                                                     @indloc.1    t
-                             label continueForeach   ldloc   {0}
-                                                     get.0   MoveNext
-                                                     jump.t  beginForeach
-                                                     ldloc   {0}
-                                                     @cmd.1  dispose
-                                                     leave   end
-                             label   end             nop //this nop ensures compatibility with CIL
+                var args,arg,t,{0}
+                                        ldloc   args
+                                        get.0   GetEnumerator
+                                        cast.const "Object(\"System.Collections.IEnumerator\")"
+                                        stloc   {0}
+                                        try
+                                        jump    continueForeach
+                label   beginForeach    ldloc   {0}
+                                        get.0   Current
+                                        stloc   arg
+                                        ldloc   arg
+                                        func.1  f
+                                        stloc   t
+                                        indloc.0    t
+                                        get.0   M
+                                        @indloc.1    t
+                label continueForeach   ldloc   {0}
+                                        get.0   MoveNext
+                                        jump.t  beginForeach
+                                        ldloc   {0}
+                                        @cmd.1  dispose
+                                        leave   end
+                label   end             nop //this nop ensures compatibility with CIL
 
-                             """, target.Functions["main"]!.Code[3].Id));
+                """,
+                target.Functions["main"]!.Code[3].Id
+            )
+        );
     }
 
     [Test]
     public void ValidFunctionScope()
     {
         _compile(@"function main=()=>{};function f2(){}");
-        Assert.That(target.Functions.Contains("f2"),Is.True,"Expected that function f2 exists.");
+        Assert.That(target.Functions.Contains("f2"), Is.True, "Expected that function f2 exists.");
     }
 
     [Test]
     public void Bug26CommentsAtEnd()
     {
         //cannot reproduce as unit test so far
-        _compile("""
+        _compile(
+            """
 
-                 //PXS_
+            //PXS_
 
-                 function get_routine(name) = asm(ldr.app).Functions[name] ?? () => {};
+            function get_routine(name) = asm(ldr.app).Functions[name] ?? () => {};
 
-                 function as setup does get_routine("setup").();
-                 function as teardown does get_routine("teardown").();
+            function as setup does get_routine("setup").();
+            function as teardown does get_routine("teardown").();
 
-                 var TEST_KEY = "test";
+            var TEST_KEY = "test";
 
-                 function run\test(test)
-                 {
-                 	var result = null;
-                 	try {
-                 		setup();		
-                 		test.();
-                 		teardown();
-                 	} 
-                 	catch(var e)
-                 	{
-                 		result = e;
-                 	}
-                 	
-                 	return result;
-                 }
+            function run\test(test)
+            {
+            	var result = null;
+            	try {
+            		setup();		
+            		test.();
+            		teardown();
+            	} 
+            	catch(var e)
+            	{
+            		result = e;
+            	}
+            	
+            	return result;
+            }
 
-                 function main as run_all()
-                 {
-                 	if(var args.count == 0)
-                 		args = asm(ldr.app).Functions;
-                 	
-                 	var tests =
-                 		args 
-                 		>> map(t => if(t is String) asm(ldr.app).Functions[t] else t)
-                 		>> where(t => t is not null and t.Meta[TEST_KEY].Switch)
-                 		>> all;
-                 	
-                 	var n = tests.Count;
-                 	println("Running $(tests.Count) tests.");
-                 	var i = 1;
-                 	var failed = [];
-                 	foreach(var test in tests)
-                 	{
-                 		println("Running test $i/$n: ",$test.Id);
-                 		var exc = run\test(test);
-                 		if(exc is not null)
-                 		{
-                 			failed[] = test;
-                 			println("\tFAILED");
-                 			println(exc);
-                 		}
-                 		else 
-                 		{
-                 			println("\tSUCCESS");
-                 		}
-                 		
-                 		println();
-                 		i++;
-                 	}
-                 }
+            function main as run_all()
+            {
+            	if(var args.count == 0)
+            		args = asm(ldr.app).Functions;
+            	
+            	var tests =
+            		args 
+            		>> map(t => if(t is String) asm(ldr.app).Functions[t] else t)
+            		>> where(t => t is not null and t.Meta[TEST_KEY].Switch)
+            		>> all;
+            	
+            	var n = tests.Count;
+            	println("Running $(tests.Count) tests.");
+            	var i = 1;
+            	var failed = [];
+            	foreach(var test in tests)
+            	{
+            		println("Running test $i/$n: ",$test.Id);
+            		var exc = run\test(test);
+            		if(exc is not null)
+            		{
+            			failed[] = test;
+            			println("\tFAILED");
+            			println(exc);
+            		}
+            		else 
+            		{
+            			println("\tSUCCESS");
+            		}
+            		
+            		println();
+            		i++;
+            	}
+            }
 
-                 { 
-                 	CompileToCil;
-                 	if(->run\test.Meta["volatile"].Switch)
-                 		throw "run\\test was not compiled to CIL. This is necessary in order to ensure testing integrity.";
-                 }
+            { 
+            	CompileToCil;
+            	if(->run\test.Meta["volatile"].Switch)
+            		throw "run\\test was not compiled to CIL. This is necessary in order to ensure testing integrity.";
+            }
 
-                 //
+            //
 
-                 /* */
+            /* */
 
-                 """);
+            """
+        );
     }
 
     [Test]
     public void GlobalShadowId()
     {
-        var ldr = _compile("""
+        var ldr = _compile(
+            """
 
-                           function f as alias1, alias2(){}
+            function f as alias1, alias2(){}
 
-                           function as alias3, alias4{}
+            function as alias3, alias4{}
 
-                           """);
-        Assert.IsTrue(target.Functions.Contains("f"),"Function f not defined");
+            """
+        );
+        Assert.IsTrue(target.Functions.Contains("f"), "Function f not defined");
         var entryF = LookupSymbolEntry(ldr.Symbols, "F");
-        Assert.IsNotNull(entryF,"No symbol table entry for `f` exists");
-        Assert.IsTrue(entryF.Interpretation == SymbolInterpretations.Function,"Symbol f is not declared as a function");
+        Assert.IsNotNull(entryF, "No symbol table entry for `f` exists");
+        Assert.IsTrue(
+            entryF.Interpretation == SymbolInterpretations.Function,
+            "Symbol f is not declared as a function"
+        );
         Assert.IsTrue(target.Functions.Contains(entryF.InternalId!));
 
         var alias1 = LookupSymbolEntry(ldr.Symbols, "alias1");
         Assert.IsNotNull(alias1, "No symbol table entry for `alias1` exists");
-        Assert.IsTrue(alias1.Interpretation == SymbolInterpretations.Function, "Symbol alias1 is not declared as a function");
+        Assert.IsTrue(
+            alias1.Interpretation == SymbolInterpretations.Function,
+            "Symbol alias1 is not declared as a function"
+        );
         Assert.IsTrue(target.Functions.Contains(alias1.InternalId!));
         Assert.AreSame(target.Functions[entryF.InternalId!], target.Functions[alias1.InternalId!]);
         Assert.IsFalse(target.Functions.Contains(nameof(alias1)));
 
         var alias2 = LookupSymbolEntry(ldr.Symbols, "alias2");
         Assert.IsNotNull(alias2, "No symbol table entry for `alias2` exists");
-        Assert.IsTrue(alias2.Interpretation == SymbolInterpretations.Function, "Symbol alias2 is not declared as a function");
+        Assert.IsTrue(
+            alias2.Interpretation == SymbolInterpretations.Function,
+            "Symbol alias2 is not declared as a function"
+        );
         Assert.IsTrue(target.Functions.Contains(alias2.InternalId!));
         Assert.AreSame(target.Functions[entryF.InternalId!], target.Functions[alias2.InternalId!]);
         Assert.IsFalse(target.Functions.Contains(nameof(alias2)));
 
         var alias3 = LookupSymbolEntry(ldr.Symbols, "alias3");
         Assert.IsNotNull(alias3, "No symbol table entry for `alias3` exists");
-        Assert.IsTrue(alias3.Interpretation == SymbolInterpretations.Function, "Symbol alias3 is not declared as a function");
+        Assert.IsTrue(
+            alias3.Interpretation == SymbolInterpretations.Function,
+            "Symbol alias3 is not declared as a function"
+        );
         Assert.IsTrue(target.Functions.Contains(alias3.InternalId!));
         Assert.IsFalse(target.Functions.Contains(nameof(alias3)));
 
         var alias4 = LookupSymbolEntry(ldr.Symbols, "alias4");
         Assert.IsNotNull(alias4, "No symbol table entry for `alias4` exists");
-        Assert.IsTrue(alias4.Interpretation == SymbolInterpretations.Function, "Symbol alias4 is not declared as a function");
+        Assert.IsTrue(
+            alias4.Interpretation == SymbolInterpretations.Function,
+            "Symbol alias4 is not declared as a function"
+        );
         Assert.IsTrue(target.Functions.Contains(alias4.InternalId!));
         Assert.IsFalse(target.Functions.Contains(nameof(alias4)));
 
@@ -3828,15 +4059,17 @@ indloc.1 a
     [Test]
     public void LocalShadowId()
     {
-        var ldr = _compile("""
+        var ldr = _compile(
+            """
 
-                           function main()
-                           {
-                               function f as alias1, alias2(){}
-                               function as alias3, alias4(){}
-                           }
+            function main()
+            {
+                function f as alias1, alias2(){}
+                function as alias3, alias4(){}
+            }
 
-                           """);
+            """
+        );
         var maint = ldr.FunctionTargets["main"];
         var main = target.Functions["main"];
 
@@ -3878,392 +4111,451 @@ indloc.1 a
     [Test]
     public void PrxShowPrompt()
     {
-        _compile("""
+        _compile(
+            """
 
-                 declare function runInDifferentColor, readline;
+            declare function runInDifferentColor, readline;
 
-                 function showPrompt(q) does
-                 {
-                 	declare var prompt\color as color;
-                 	var originalColor;
-                     if(q == null)
-                         q = "PRX> ";
-                     runInDifferentColor( () => print(q), 
-                         if(color != null) color else ::Console.ForegroundColor);
-                 	return readline;
-                 }
+            function showPrompt(q) does
+            {
+            	declare var prompt\color as color;
+            	var originalColor;
+                if(q == null)
+                    q = "PRX> ";
+                runInDifferentColor( () => print(q), 
+                    if(color != null) color else ::Console.ForegroundColor);
+            	return readline;
+            }
 
-                 """);
-
+            """
+        );
     }
 
     [Test]
     public void NestedDerivedCapture()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function parent
-                 {
-                     var x;
-                     coroutine nested = x;
-                     lazy nested = x;
-                 }
+            function parent
+            {
+                var x;
+                coroutine nested = x;
+                lazy nested = x;
+            }
 
-                 """);
+            """
+        );
     }
 
     [Test]
     public void GetCopyOfAstUnknown()
     {
         var unr = new AstUnresolved("file", 1, 2, "the_id");
-        unr.Arguments.Add(new AstNull("file2",2,3));
-        unr.Arguments.RightAppend(new AstNull("file3",3,4));
+        unr.Arguments.Add(new AstNull("file2", 2, 3));
+        unr.Arguments.RightAppend(new AstNull("file3", 3, 4));
         unr.Arguments.ReleaseRightAppend();
         unr.Call = PCall.Set;
 
         var copy = unr.GetCopy();
         Assert.AreEqual(2, unr.Arguments.Count);
         Assert.IsInstanceOf(typeof(AstNull), copy.Arguments[0]);
-        Assert.AreEqual("file3",copy.Arguments[1].File);
-        Assert.AreEqual(PCall.Set,unr.Call);
-        Assert.AreNotSame(unr,copy);
+        Assert.AreEqual("file3", copy.Arguments[1].File);
+        Assert.AreEqual(PCall.Set, unr.Call);
+        Assert.AreNotSame(unr, copy);
     }
 
     [Test]
     public void ArgumentListDuplicate()
     {
-        //If the argument list of a AstGetSet complex contains successive references to the same node, it will 
+        //If the argument list of a AstGetSet complex contains successive references to the same node, it will
         //  emit a duplicate instructions.
         //This shouldn't happen during ordinary operation, as the nodes may be equal, but not identical
-        _compile("""
+        _compile(
+            """
 
-                 declare command side_effect, target;
-                 function main does
-                     target(side_effect, side_effect);
+            declare command side_effect, target;
+            function main does
+                target(side_effect, side_effect);
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               cmd.0 side_effect
-               cmd.0 side_effect
-               cmd.2 target
-               ret
+            cmd.0 side_effect
+            cmd.0 side_effect
+            cmd.2 target
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void NoClosureForSimpleLambda()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function main = x => x.(16)+5; //more complicated than id or something partially applicable
+            function main = x => x.(16)+5; //more complicated than id or something partially applicable
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               ldr.func    main\0
-               ret
+            ldr.func    main\0
+            ret
 
-               """);
+            """
+        );
     }
-
 
     [Test]
     public void ObjectCreationFallback()
     {
-        _compile("""
+        _compile(
+            """
 
-                 declare function make_foo as create_foo;
+            declare function make_foo as create_foo;
 
-                 function main(x,y)
-                 {
-                     return new foo(x,y);
-                 }
+            function main(x,y)
+            {
+                return new foo(x,y);
+            }
 
-                 function make_foo(){}
+            function make_foo(){}
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldloc x
-               ldloc y
-               func.2 make_foo
-               ret
+            ldloc x
+            ldloc y
+            func.2 make_foo
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void ObjectCreationFallbackWithTypeArgs()
     {
-        _compile("""
+        _compile(
+            """
 
-                 declare function make_foo as create_foo;
-                 function make_foo()[pxs\supportsTypeArguments]{}
-                 function main(x,y)
-                 {
-                     return new foo<1,"a">(x,y);
-                 }
+            declare function make_foo as create_foo;
+            function make_foo()[pxs\supportsTypeArguments]{}
+            function main(x,y)
+            {
+                return new foo<1,"a">(x,y);
+            }
 
 
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldc.int 2
-               ldc.int 1
-               ldc.string "a"
-               ldloc x
-               ldloc y
-               func.5 make_foo
-               ret
+            ldc.int 2
+            ldc.int 1
+            ldc.string "a"
+            ldloc x
+            ldloc y
+            func.5 make_foo
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CustomTypeConversion()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function convert_to_foo as to_foo(){};
-                 function main(x) {
-                     return x~foo;
-                 }
+            function convert_to_foo as to_foo(){};
+            function main(x) {
+                return x~foo;
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldloc x
-               func.1 convert_to_foo
-               ret.value
+            ldloc x
+            func.1 convert_to_foo
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CustomTypeConversionWithTypeArgs()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function convert_to_foo as to_foo()[pxs\supportsTypeArguments]{};
-                 function main(x) {
-                     return x~foo<1, "a">;
-                 }
+            function convert_to_foo as to_foo()[pxs\supportsTypeArguments]{};
+            function main(x) {
+                return x~foo<1, "a">;
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldc.int 2
-               ldc.int 1
-               ldc.string "a"
-               ldloc x
-               func.4 convert_to_foo
-               ret.value
+            ldc.int 2
+            ldc.int 1
+            ldc.string "a"
+            ldloc x
+            func.4 convert_to_foo
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CustomTypeCheck()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function check_foo as is_foo(){}
-                 function main(x) {
-                     println(x is not foo);
-                     return x is foo;
-                 }
+            function check_foo as is_foo(){}
+            function main(x) {
+                println(x is not foo);
+                return x is foo;
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldloc x
-               func.1 check_foo
-               not
-               @cmd.1 println
-               ldloc x
-               func.1 check_foo
-               ret.value
+            ldloc x
+            func.1 check_foo
+            not
+            @cmd.1 println
+            ldloc x
+            func.1 check_foo
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CustomTypeCheckWithTypeArgs()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function check_foo as is_foo()[pxs\supportsTypeArguments]{}
-                 function main(x) {
-                     println(x is not foo<3, "a">);
-                     return x is foo<1, "b">;
-                 }
+            function check_foo as is_foo()[pxs\supportsTypeArguments]{}
+            function main(x) {
+                println(x is not foo<3, "a">);
+                return x is foo<1, "b">;
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-               ldc.int 2
-               ldc.int 3
-               ldc.string "a"
-               ldloc x
-               func.4 check_foo
-               not
-               @cmd.1 println
-               ldc.int 2
-               ldc.int 1
-               ldc.string "b"
-               ldloc x
-               func.4 check_foo
-               ret.value
+            ldc.int 2
+            ldc.int 3
+            ldc.string "a"
+            ldloc x
+            func.4 check_foo
+            not
+            @cmd.1 println
+            ldc.int 2
+            ldc.int 1
+            ldc.string "b"
+            ldloc x
+            func.4 check_foo
+            ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CustomTypeStaticCall()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function static_foo as static_call_foo(){}
-                 function main(x,y) {
-                     ~foo.the_property = x;
-                     return ~foo.the_method(x,y);
-                 }
+            function static_foo as static_call_foo(){}
+            function main(x,y) {
+                ~foo.the_property = x;
+                return ~foo.the_method(x,y);
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-                ldc.string "the_property"
-                ldloc x
-               @func.2 static_foo
-                
-                ldc.string "the_method"
-                ldloc x
-                ldloc y
-                func.3 static_foo
-                ret.value
+             ldc.string "the_property"
+             ldloc x
+            @func.2 static_foo
+             
+             ldc.string "the_method"
+             ldloc x
+             ldloc y
+             func.3 static_foo
+             ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void CustomTypeStaticCallWithTypeArgs()
     {
-        _compile("""
+        _compile(
+            """
 
-                 function static_foo as static_call_foo()[pxs\supportsTypeArguments]{}
-                 function main(x,y) {
-                     ~foo<1, "a">.the_property = x;
-                     return ~foo<3, "b">.the_method(x,y);
-                 }
+            function static_foo as static_call_foo()[pxs\supportsTypeArguments]{}
+            function main(x,y) {
+                ~foo<1, "a">.the_property = x;
+                return ~foo<3, "b">.the_method(x,y);
+            }
 
-                 """);
-        Expect("""
+            """
+        );
+        Expect(
+            """
 
-                ldc.int 2
-                ldc.int 1
-                ldc.string a
-                ldc.string "the_property"
-                ldloc x
-               @func.5 static_foo
-                
-                ldc.int 2
-                ldc.int 3
-                ldc.string b
-                ldc.string "the_method"
-                ldloc x
-                ldloc y
-                func.6 static_foo
-                ret.value
+             ldc.int 2
+             ldc.int 1
+             ldc.string a
+             ldc.string "the_property"
+             ldloc x
+            @func.5 static_foo
+             
+             ldc.int 2
+             ldc.int 3
+             ldc.string b
+             ldc.string "the_method"
+             ldloc x
+             ldloc y
+             func.6 static_foo
+             ret.value
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void LocalAliasDeclaration()
     {
-        _compile("""
+        _compile(
+            """
 
-                 var g;
-                 function main()
-                 {
-                     declare g as f;
-                     declare( h = sym "g" );
-                     return f + h;
-                 }
+            var g;
+            function main()
+            {
+                declare g as f;
+                declare( h = sym "g" );
+                return f + h;
+            }
 
-                 """);
+            """
+        );
 
-        Expect("""
+        Expect(
+            """
 
-               ldglob g
-               ldglob g
-               add
-               ret
+            ldglob g
+            ldglob g
+            add
+            ret
 
-               """);
+            """
+        );
     }
 
     [Test]
     public void ErrorSymbolOnlyGeneratesOneMessage()
     {
-        var loader = CompileWithErrors("""
+        var loader = CompileWithErrors(
+            """
 
-                                       declare(
-                                           invalid = error(pos("some-file",1,2),"T.example","Zhee-Error-Message",null)
-                                       );
+            declare(
+                invalid = error(pos("some-file",1,2),"T.example","Zhee-Error-Message",null)
+            );
 
-                                       function main = invalid;
+            function main = invalid;
 
-                                       """);
+            """
+        );
 
-        Assert.That(loader.ErrorCount,Is.EqualTo(1));
+        Assert.That(loader.ErrorCount, Is.EqualTo(1));
         var message = loader.Errors[0];
-        Assert.That(message.MessageClass,Is.EqualTo("T.example"));
-        Assert.That(message.Text,Is.EqualTo("Zhee-Error-Message"));
+        Assert.That(message.MessageClass, Is.EqualTo("T.example"));
+        Assert.That(message.Text, Is.EqualTo("Zhee-Error-Message"));
     }
 
     [Test]
     public void OneIsTrue()
     {
-        var ldr = _justCompile("""
+        var ldr = _justCompile(
+            """
 
-                               function main = 1 is true;
+            function main = 1 is true;
 
-                               """);
+            """
+        );
         Assert.That(ldr.Errors, Is.Not.Empty);
-        Assert.That(ldr.Errors.Select(m => m.MessageClass), Contains.Item(MessageClasses.TypeExpressionExpected));
+        Assert.That(
+            ldr.Errors.Select(m => m.MessageClass),
+            Contains.Item(MessageClasses.TypeExpressionExpected)
+        );
     }
 
     [Test]
     public void SkeletonNamespaceRequiresSemicolon()
     {
-        var ldr = _justCompile("""
+        var ldr = _justCompile(
+            """
 
-                               namespace target
+            namespace target
 
-                               function main() = "f";
+            function main() = "f";
 
-                               """);
-        
+            """
+        );
+
         Assert.That(ldr.Errors, Is.Not.Empty);
-        Assert.That(ldr.Errors.Select(m => m.MessageClass), Contains.Item(MessageClasses.SkeletonNamespaceRequiresSemicolon));
+        Assert.That(
+            ldr.Errors.Select(m => m.MessageClass),
+            Contains.Item(MessageClasses.SkeletonNamespaceRequiresSemicolon)
+        );
     }
 
     [Test]
     public void SkeletonNamespaceTolerated()
     {
-        _compile("""
+        _compile(
+            """
 
-                 namespace target;
+            namespace target;
 
-                 function main() = "f";
+            function main() = "f";
 
-                 """);
+            """
+        );
     }
-
 }

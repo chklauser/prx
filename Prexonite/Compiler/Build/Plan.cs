@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Compiler.Build.Internal;
 
@@ -10,7 +8,8 @@ public static class Plan
     public static readonly TraceSource Trace = new("Prexonite.Compiler.Build");
 
     /// <summary>List of modules included in the Prexonite assembly. Does not include 'sys' itself.</summary>
-    static readonly ISource[] _stdLibModules = [
+    static readonly ISource[] _stdLibModules =
+    [
         Source.FromEmbeddedPrexoniteResource("prxlib.prx.prim.pxs"),
         Source.FromEmbeddedPrexoniteResource("prxlib.prx.core.pxs"),
         Source.FromEmbeddedPrexoniteResource("prxlib.sys.pxs"),
@@ -30,11 +29,17 @@ public static class Plan
         return CreateSelfAssembling(StandardLibraryPreference.Default);
     }
 
-    public static async Task<ISelfAssemblingPlan> CreateSelfAssemblingAsync(StandardLibraryPreference stdPreference,
-        CancellationToken token)
+    public static async Task<ISelfAssemblingPlan> CreateSelfAssemblingAsync(
+        StandardLibraryPreference stdPreference,
+        CancellationToken token
+    )
     {
         var plan = new SelfAssemblingPlan();
-        if (stdPreference is StandardLibraryPreference.Default or StandardLibraryPreference.NoPrelude)
+        if (
+            stdPreference
+            is StandardLibraryPreference.Default
+                or StandardLibraryPreference.NoPrelude
+        )
         {
             // Provide modules that the standard library may be composed of. No dependency checking.
             await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));

@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using System.Diagnostics;
 using System.Text;
@@ -28,7 +26,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         _rightAppends.Add(item);
     }
 
@@ -36,7 +34,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         _rightAppends.AddRange(item);
     }
 
@@ -69,7 +67,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         return _arguments.IndexOf(item);
     }
 
@@ -85,7 +83,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         _arguments.Insert(index, item);
     }
 
@@ -117,8 +115,12 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
         get
         {
             var value = _arguments[index];
-            Debug.Assert(value != null, "Arguments of Ast nodes cannot be null",
-                "Found null entry at index {0}", index);
+            Debug.Assert(
+                value != null,
+                "Arguments of Ast nodes cannot be null",
+                "Found null entry at index {0}",
+                index
+            );
             return value;
         }
         set => _arguments[index] = value ?? throw new ArgumentNullException(nameof(value));
@@ -137,7 +139,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         _arguments.Add(item);
     }
 
@@ -149,7 +151,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (items == null)
             throw new ArgumentNullException(nameof(items));
-            
+
         _arguments.AddRange(items);
     }
 
@@ -173,7 +175,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         return _arguments.Contains(item);
     }
 
@@ -206,7 +208,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-            
+
         return _arguments.Remove(item);
     }
 
@@ -224,7 +226,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
     ///<returns>
     ///    true if the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only; otherwise, false.
     ///</returns>
-    public bool IsReadOnly => ((ICollection<AstExpr>) _arguments).IsReadOnly;
+    public bool IsReadOnly => ((ICollection<AstExpr>)_arguments).IsReadOnly;
 
     #endregion
 
@@ -283,8 +285,7 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         switch (id.ToUpperInvariant())
@@ -302,7 +303,9 @@ public class ArgumentsProxy : IList<AstExpr>, IObject
                     }
                     else if ((xs = arg0.Value as IEnumerable<PValue>) != null)
                     {
-                        AddRange(xs.Select(x => (AstExpr)x.ConvertTo(sctx, typeof(AstExpr), true).Value!));
+                        AddRange(
+                            xs.Select(x => (AstExpr)x.ConvertTo(sctx, typeof(AstExpr), true).Value!)
+                        );
                         result = PType.Null;
                         return true;
                     }

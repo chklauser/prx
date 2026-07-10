@@ -1,4 +1,3 @@
-
 #region
 
 using System.Diagnostics;
@@ -47,14 +46,12 @@ public class PValueHashtable : Dictionary<PValue, PValue>
     /// <summary>
     ///     Provides access to the object type of this class.
     /// </summary>
-    public static ObjectPType ObjectType { get; } = new(typeof (PValueHashtable));
+    public static ObjectPType ObjectType { get; } = new(typeof(PValueHashtable));
 
     /// <summary>
     ///     Creates a new instance of PValueHashTable.
     /// </summary>
-    public PValueHashtable()
-    {
-    }
+    public PValueHashtable() { }
 
     /// <summary>
     ///     Creates a new instance of PValueHashTable.
@@ -63,9 +60,7 @@ public class PValueHashtable : Dictionary<PValue, PValue>
     ///     This overload initializes the backing store with a certain capacity.
     /// </remarks>
     public PValueHashtable(int capacity)
-        : base(capacity)
-    {
-    }
+        : base(capacity) { }
 
     /// <summary>
     ///     Creates a new instance of PValueHashTable.
@@ -74,9 +69,7 @@ public class PValueHashtable : Dictionary<PValue, PValue>
     ///     This overload initialized the table with the supplied dictionary.
     /// </remarks>
     public PValueHashtable(IDictionary<PValue, PValue> dictionary)
-        : base(dictionary)
-    {
-    }
+        : base(dictionary) { }
 
     /// <summary>
     ///     Checks whether an object is equal to the current PValueHashtable
@@ -94,14 +87,13 @@ public class PValueHashtable : Dictionary<PValue, PValue>
     {
         var hash = 1;
         foreach (var pair in this)
-            hash =
-                hash ^ pair.Key.GetHashCode() ^ pair.Value.GetHashCode();
+            hash = hash ^ pair.Key.GetHashCode() ^ pair.Value.GetHashCode();
 
         return hash;
     }
 
     /// <summary>
-    ///     Similar to <see cref = "Dictionary{TKey,TValue}.GetEnumerator" /> but 
+    ///     Similar to <see cref = "Dictionary{TKey,TValue}.GetEnumerator" /> but
     ///     returns <see cref = "PValueKeyValuePair" /> instances.
     /// </summary>
     /// <returns>An IEnumerator that returns <see cref = "PValueKeyValuePair" /> instances.</returns>

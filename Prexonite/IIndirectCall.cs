@@ -19,7 +19,7 @@ public interface IIndirectCall
     /// <param name = "args">The array of arguments passed to the call.</param>
     /// <remarks>
     ///     <para>
-    ///         Neither <paramref name = "sctx" /> nor <paramref name = "args" /> should be null. 
+    ///         Neither <paramref name = "sctx" /> nor <paramref name = "args" /> should be null.
     ///         Implementations should raise an <see cref = "ArgumentNullException" /> when confronted with null as the StackContext.<br />
     ///         A null reference as the argument array should be silently converted to an empty array.
     ///     </para>

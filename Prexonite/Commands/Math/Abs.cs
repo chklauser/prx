@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -10,9 +8,7 @@ public sealed class Abs : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Abs()
-    {
-    }
+    Abs() { }
 
     public static Abs Instance { get; } = new();
 
@@ -58,13 +54,13 @@ public sealed class Abs : PCommand, ICilCompilerAware
 
         if (arg.Type == PType.Int)
         {
-            var x = (int) arg.Value!;
+            var x = (int)arg.Value!;
 
             return System.Math.Abs(x);
         }
         else
         {
-            var x = (double) arg.ConvertTo(sctx, PType.Real, true).Value!;
+            var x = (double)arg.ConvertTo(sctx, PType.Real, true).Value!;
 
             return System.Math.Abs(x);
         }
@@ -91,8 +87,10 @@ public sealed class Abs : PCommand, ICilCompilerAware
         }
     }
 
-    static readonly MethodInfo RunStaticallyMethod =
-        typeof (Abs).GetMethod(nameof(RunStatically), [typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyMethod = typeof(Abs).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -104,7 +102,11 @@ public sealed class Abs : PCommand, ICilCompilerAware
         _CallStaticFunc1(state, ins, RunStaticallyMethod);
     }
 
-    internal static void _CallStaticFunc1(CompilerState state, Instruction ins, MethodInfo runStaticallyMethod)
+    internal static void _CallStaticFunc1(
+        CompilerState state,
+        Instruction ins,
+        MethodInfo runStaticallyMethod
+    )
     {
         if (ins == null)
             throw new ArgumentNullException(nameof(ins));

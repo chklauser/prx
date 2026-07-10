@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core;
@@ -10,9 +8,7 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
 
     public static CallSubPerform Instance { get; } = new();
 
-    CallSubPerform()
-    {
-    }
+    CallSubPerform() { }
 
     #endregion
 
@@ -33,7 +29,8 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
     {
         if (args.Length < 1)
             throw new PrexoniteException(
-                "call\\sub\\perform needs at least one argument, the function to call.");
+                "call\\sub\\perform needs at least one argument, the function to call."
+            );
         var fpv = args[0];
 
         var iargs = Call.FlattenArguments(sctx, args, 1).ToArray();
@@ -46,8 +43,12 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
         return RunStatically(sctx, fpv, iargs, false);
     }
 
-    public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs,
-        bool useIndirectCallAsFallback)
+    public static PValue RunStatically(
+        StackContext sctx,
+        PValue fpv,
+        PValue[] iargs,
+        bool useIndirectCallAsFallback
+    )
     {
         CilClosure? cilClosure;
         PFunction? func = null;
@@ -62,11 +63,16 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
             sharedVars = cilClosure.SharedVariables;
         }
 
-        if ((func ?? fpv.Value as PFunction) is { CilImplementation: { } cilImpl} pFunc)
+        if ((func ?? fpv.Value as PFunction) is { CilImplementation: { } cilImpl } pFunc)
         {
             cilImpl.Invoke(
-                pFunc, CilFunctionContext.New(sctx, pFunc), iargs, sharedVars ?? [],
-                out result, out returnMode);
+                pFunc,
+                CilFunctionContext.New(sctx, pFunc),
+                iargs,
+                sharedVars ?? [],
+                out result,
+                out returnMode
+            );
         }
         else if (fpv.Value is IStackAware f)
         {
@@ -92,20 +98,23 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
             {
                 throw new PrexoniteException(
                     string.Format(
-                        "Invocation of {0} did not produce a valid return mode. " +
-                        "Only Prexonite functions have a return mode.",
-                        fpv.CallToString(sctx)));
+                        "Invocation of {0} did not produce a valid return mode. "
+                            + "Only Prexonite functions have a return mode.",
+                        fpv.CallToString(sctx)
+                    )
+                );
             }
         }
         else if (useIndirectCallAsFallback)
         {
-            result = fpv.IndirectCall(sctx, [..iargs.AsReadOnly()]);
+            result = fpv.IndirectCall(sctx, [.. iargs.AsReadOnly()]);
             returnMode = ReturnMode.Exit;
         }
         else
         {
             throw new PrexoniteException(
-                "call\\sub\\perform requires its argument to be stack aware.");
+                "call\\sub\\perform requires its argument to be stack aware."
+            );
         }
 
         return new PValueKeyValuePair(sctx.CreateNativePValue(returnMode), result);
@@ -127,8 +136,11 @@ public sealed class CallSubPerform : PCommand, ICilCompilerAware
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion

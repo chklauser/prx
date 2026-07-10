@@ -1,30 +1,23 @@
-
-
 using System.Text;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstDynamicTypeExpression : AstTypeExpr,
-    IAstHasExpressions
+public class AstDynamicTypeExpression : AstTypeExpr, IAstHasExpressions
 {
     public List<AstExpr> Arguments { get; } = new();
     public string TypeId { get; }
 
     public AstDynamicTypeExpression(string file, int line, int column, string typeId)
-        : this(new SourcePosition(file, line, column), typeId)
-    {
-    }
+        : this(new SourcePosition(file, line, column), typeId) { }
 
     public AstDynamicTypeExpression(ISourcePosition position, string typeId)
-        :base(position)
+        : base(position)
     {
         TypeId = typeId ?? throw new ArgumentNullException(nameof(typeId));
     }
 
     internal AstDynamicTypeExpression(Parser p, string typeId)
-        : this(p.GetPosition(), typeId)
-    {
-    }
+        : this(p.GetPosition(), typeId) { }
 
     #region IAstHasExpressions Members
 
@@ -66,8 +59,8 @@ public class AstDynamicTypeExpression : AstTypeExpr,
                 {
                     buffer.Append('"');
                     buffer.Append(
-                        StringPType.Escape(
-                            constValue.ToPValue(target).CallToString(target.Loader)));
+                        StringPType.Escape(constValue.ToPValue(target).CallToString(target.Loader))
+                    );
                     buffer.Append('"');
                 }
                 else if (constType != null)
@@ -92,10 +85,10 @@ public class AstDynamicTypeExpression : AstTypeExpr,
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
         foreach (var expr in Arguments)
-            expr.EmitCode(target,stackSemantics);
+            expr.EmitCode(target, stackSemantics);
 
-        if(stackSemantics == StackSemantics.Value)
-            target.Emit(Position,OpCode.newtype, Arguments.Count, TypeId);
+        if (stackSemantics == StackSemantics.Value)
+            target.Emit(Position, OpCode.newtype, Arguments.Count, TypeId);
     }
 
     #endregion

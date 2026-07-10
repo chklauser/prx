@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using Prexonite.Internal;
 
@@ -65,7 +63,8 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
     {
         if (GetTransform(item.Key) is { } key)
         {
-            return TryGetValueTransformed(key, out var currentEntry) && Equals(currentEntry, item.Value);
+            return TryGetValueTransformed(key, out var currentEntry)
+                && Equals(currentEntry, item.Value);
         }
         else
         {
@@ -77,8 +76,11 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
 
     public virtual bool Remove(KeyValuePair<string, MetaEntry> item)
     {
-        if (GetTransform(item.Key) is { } key && TryGetValueTransformed(key, out var currentEntry) &&
-            Equals(currentEntry, item.Value))
+        if (
+            GetTransform(item.Key) is { } key
+            && TryGetValueTransformed(key, out var currentEntry)
+            && Equals(currentEntry, item.Value)
+        )
         {
             Remove(key);
             return true;
@@ -118,7 +120,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
     /// <param name = "key">The key of the list to which to add the entry.</param>
     /// <param name = "entry">The entry to add to the list.</param>
     /// <remarks>
-    ///     <para>If the entry doesn't already exist, it is created as 
+    ///     <para>If the entry doesn't already exist, it is created as
     ///         a list with the supplied entry as its only element, </para>
     ///     <para>The entry is converted to a list if necessary.</para>
     /// </remarks>
@@ -127,11 +129,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
         if (ContainsKey(key))
             this[key] = this[key].AddToList(entry);
         else
-            Add(
-                key, (MetaEntry) new[]
-                {
-                    entry,
-                });
+            Add(key, (MetaEntry)new[] { entry });
     }
 
     /// <summary>
@@ -141,7 +139,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
     /// <returns>True if the the meta table contains an entry for the given key. False otherwise.</returns>
     public bool ContainsKey(string key)
     {
-        return GetTransform(key) is {} actualKey && ContainsTransformedKey(actualKey);
+        return GetTransform(key) is { } actualKey && ContainsTransformedKey(actualKey);
     }
 
     protected abstract bool ContainsTransformedKey(string key);
@@ -152,7 +150,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
     /// <param name = "key">The key of an entry in the table.</param>
     /// <returns>The entry stored under the supplied key or a default element if no entry is found.</returns>
     /// <remarks>
-    ///     <para>Using this property it is impossible to tell whether a default entry has 
+    ///     <para>Using this property it is impossible to tell whether a default entry has
     ///         explicitly been added to the meta table.</para>
     ///     <para>Use the <see cref = "SymbolTable{TValue}.TryGetValue" /> method for this purpose.</para>
     /// </remarks>
@@ -205,18 +203,21 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
     /// <param name = "value">Variable to store the meta entry in.</param>
     /// <returns>True if the entry can be found in the table. False otherwise.</returns>
     /// <remarks>
-    ///     <paramref name = "value" /> contains the default element if the table does 
+    ///     <paramref name = "value" /> contains the default element if the table does
     ///     not contain an entry for <paramref name = "key" />.
     /// </remarks>
     public bool TryGetValue(string key, [NotNullWhen(true)] out MetaEntry? value)
     {
-        if (GetTransform(key) is {} actualKey && TryGetValueTransformed(actualKey, out value))
+        if (GetTransform(key) is { } actualKey && TryGetValueTransformed(actualKey, out value))
             return true;
         value = default;
         return false;
     }
 
-    protected abstract bool TryGetValueTransformed(string key, [NotNullWhen(true)] out MetaEntry? entry);
+    protected abstract bool TryGetValueTransformed(
+        string key,
+        [NotNullWhen(true)] out MetaEntry? entry
+    );
 
     /// <summary>
     ///     Writes a machine- and human-readable representation to the supplied <see cref = "TextWriter" />.
@@ -234,8 +235,11 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
             {
                 if (kvp.Key.EndsWith("ation"))
                 {
-                    writer.Write("{0} {1};", StringPType.ToIdLiteral(kvp.Key),
-                        entry.Switch ? "enabled" : "disabled");
+                    writer.Write(
+                        "{0} {1};",
+                        StringPType.ToIdLiteral(kvp.Key),
+                        entry.Switch ? "enabled" : "disabled"
+                    );
                 }
                 else
                 {
@@ -252,7 +256,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
                 writer.Write("{0} {1};", StringPType.ToIdLiteral(kvp.Key), entry);
             }
 #if DEBUG || Verbose
-                writer.WriteLine();
+            writer.WriteLine();
 #endif
         }
     }
@@ -273,7 +277,9 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
     /// </summary>
     /// <param name = "item">The new entry to transform.</param>
     /// <returns>A transformed entry or null if the filter completely blocks the entry.</returns>
-    public virtual KeyValuePair<string?, MetaEntry>? SetTransform(KeyValuePair<string?, MetaEntry> item)
+    public virtual KeyValuePair<string?, MetaEntry>? SetTransform(
+        KeyValuePair<string?, MetaEntry> item
+    )
     {
         return Filter == null ? item : Filter.SetTransform(item);
     }
@@ -332,7 +338,7 @@ public abstract class MetaTable : ISymbolTable<MetaEntry>, IMetaFilter, ICloneab
 
     public MetaEntry GetDefault(string key, MetaEntry defaultValue)
     {
-        if (GetTransform(key) is {} actualKey && TryGetValueTransformed(actualKey, out var entry))
+        if (GetTransform(key) is { } actualKey && TryGetValueTransformed(actualKey, out var entry))
             return entry;
         else
             return defaultValue;

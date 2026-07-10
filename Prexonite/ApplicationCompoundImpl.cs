@@ -1,5 +1,3 @@
-
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Prexonite.Modular;
@@ -29,8 +27,10 @@ class ApplicationCompoundImpl : ApplicationCompound
     {
         // ReSharper disable RedundantAssignment
         var r = _table.Remove(application);
-        Debug.Assert(r,
-            "Tried to _Unlink an application that wasn't part of the compound. Probable cause of bugs");
+        Debug.Assert(
+            r,
+            "Tried to _Unlink an application that wasn't part of the compound. Probable cause of bugs"
+        );
         // ReSharper restore RedundantAssignment
     }
 
@@ -47,7 +47,8 @@ class ApplicationCompoundImpl : ApplicationCompound
                 throw new ModuleConflictException(
                     "Attempted to link two instantiations of the same module (or modules wth the same name/version).",
                     application.Module,
-                    current.Module);
+                    current.Module
+                );
             }
         }
         application.Module.Cache = application.Module.Cache.LinkInto(Cache);
@@ -64,7 +65,10 @@ class ApplicationCompoundImpl : ApplicationCompound
         return _table.Contains(item);
     }
 
-    public override bool TryGetApplication(ModuleName moduleName, [NotNullWhen(true)] out Application? application)
+    public override bool TryGetApplication(
+        ModuleName moduleName,
+        [NotNullWhen(true)] out Application? application
+    )
     {
         if (_table.Contains(moduleName))
         {

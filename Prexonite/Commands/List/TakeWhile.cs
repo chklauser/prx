@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -11,24 +9,26 @@ public class TakeWhile : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    TakeWhile()
-    {
-    }
+    TakeWhile() { }
 
     public static TakeWhile Instance { get; } = new();
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -47,10 +47,7 @@ public class TakeWhile : CoroutineCommand, ICilCompilerAware
             var arg = args[k];
             var set = Map._ToEnumerable(sctx, arg);
             foreach (var value in set)
-                if (
-                    (bool)
-                    f.IndirectCall(sctx, value, i++).ConvertTo(sctx, PType.Bool,
-                        true).Value!)
+                if ((bool)f.IndirectCall(sctx, value, i++).ConvertTo(sctx, PType.Bool, true).Value!)
                     yield return value;
         }
     }

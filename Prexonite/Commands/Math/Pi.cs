@@ -1,5 +1,3 @@
-
-
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class Pi : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Pi()
-    {
-    }
+    Pi() { }
 
     public static Pi Instance { get; } = new();
 

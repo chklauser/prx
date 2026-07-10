@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.Concurrent;
 using JetBrains.Annotations;
 using Prexonite.Compiler;
@@ -16,9 +14,12 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
     {
         public UnscopedFactory(ModuleName compartment)
         {
-            CurrentBlock =
-                AstBlock.CreateRootBlock(NoSourcePosition.Instance, SymbolStore.Create(), compartment.ToString(),
-                    Guid.NewGuid().ToString("N"));
+            CurrentBlock = AstBlock.CreateRootBlock(
+                NoSourcePosition.Instance,
+                SymbolStore.Create(),
+                compartment.ToString(),
+                Guid.NewGuid().ToString("N")
+            );
         }
 
         protected override AstBlock CurrentBlock { get; }
@@ -33,9 +34,7 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
             return false;
         }
 
-        protected override void RequireOuterVariable(string id)
-        {
-        }
+        protected override void RequireOuterVariable(string id) { }
 
         public override void ReportMessage(Message message)
         {
@@ -44,16 +43,17 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
             throw new ErrorMessageException(message);
         }
 
-        protected override CompilerTarget CompileTimeExecutionContext => throw new InvalidOperationException("Unscoped AST factory does not have access to a compiler instance.");
+        protected override CompilerTarget CompileTimeExecutionContext =>
+            throw new InvalidOperationException(
+                "Unscoped AST factory does not have access to a compiler instance."
+            );
     }
 
     #region Singleton
 
     public static GetUnscopedAstFactory Instance { get; } = new();
 
-    GetUnscopedAstFactory()
-    {
-    }
+    GetUnscopedAstFactory() { }
 
     public const string Alias = "get_unscoped_ast_factory";
 
@@ -64,14 +64,14 @@ public class GetUnscopedAstFactory : PCommand, ICilCompilerAware
         return RunStatically(sctx, args.ToArray());
     }
 
-    static readonly ConcurrentDictionary<ModuleName,UnscopedFactory> _unscopedFactories = new();
+    static readonly ConcurrentDictionary<ModuleName, UnscopedFactory> _unscopedFactories = new();
 
     [PublicAPI]
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        return
-            sctx.CreateNativePValue(_unscopedFactories.GetOrAdd(sctx.ParentApplication.Module.Name,
-                n => new(n)));
+        return sctx.CreateNativePValue(
+            _unscopedFactories.GetOrAdd(sctx.ParentApplication.Module.Name, n => new(n))
+        );
     }
 
     public CompilationFlags CheckQualification(Instruction ins)

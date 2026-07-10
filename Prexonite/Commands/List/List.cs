@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -9,9 +7,7 @@ public class List : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    List()
-    {
-    }
+    List() { }
 
     public static List Instance { get; } = new();
 
@@ -32,7 +28,7 @@ public class List : PCommand, ICilCompilerAware
 
         var lst = new List<PValue>(args.Length);
         lst.AddRange(args);
-        return (PValue) lst;
+        return (PValue)lst;
     }
 
     /// <summary>

@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -18,8 +16,12 @@ public abstract class UnaryOperatorBase : PCommand, ICilExtension
     /// </summary>
     protected abstract MethodInfo OperationMethod { get; }
 
-    public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-        int dynamicArgc)
+    public void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         if (dynamicArgc >= 1)
         {

@@ -1,4 +1,3 @@
-
 #region
 
 #endregion
@@ -14,7 +13,7 @@ public class PValueKeyValuePair : IObject
     /// <summary>
     ///     A static reference to the object type of this class.
     /// </summary>
-    public static ObjectPType ObjectType { get; } = new(typeof (PValueKeyValuePair));
+    public static ObjectPType ObjectType { get; } = new(typeof(PValueKeyValuePair));
 
     /// <summary>
     ///     Provides access to the value stored as the "Key".
@@ -42,9 +41,7 @@ public class PValueKeyValuePair : IObject
     /// </summary>
     /// <param name = "pair">The key-value pair.</param>
     public PValueKeyValuePair(KeyValuePair<PValue, PValue> pair)
-        : this(pair.Key, pair.Value)
-    {
-    }
+        : this(pair.Key, pair.Value) { }
 
     #region IObject Members
 
@@ -66,8 +63,7 @@ public class PValueKeyValuePair : IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         if (sctx == null)
@@ -86,7 +82,7 @@ public class PValueKeyValuePair : IObject
                 {
                     if (args[0].TryConvertTo(sctx, PType.Int, out arg0))
                     {
-                        var i = (int) arg0.Value!;
+                        var i = (int)arg0.Value!;
                         if (i == 0)
                             result = Key;
                         else
@@ -105,7 +101,7 @@ public class PValueKeyValuePair : IObject
                 {
                     if (args[0].TryConvertTo(sctx, ObjectType, out arg0))
                     {
-                        var pair = (PValueKeyValuePair) arg0.Value!;
+                        var pair = (PValueKeyValuePair)arg0.Value!;
                         result = Key.Equals(pair.Key) && Value.Equals(pair.Value);
                     }
                 }
@@ -135,13 +131,13 @@ public class PValueKeyValuePair : IObject
 
         if (obj is PValueKeyValuePair)
         {
-            var pvkvp = (PValueKeyValuePair) obj;
+            var pvkvp = (PValueKeyValuePair)obj;
             okey = pvkvp.Key;
             ovalue = pvkvp.Value;
         }
         else if (obj is KeyValuePair<PValue, PValue>)
         {
-            var kvp = (KeyValuePair<PValue, PValue>) obj;
+            var kvp = (KeyValuePair<PValue, PValue>)obj;
             okey = kvp.Key;
             ovalue = kvp.Value;
         }

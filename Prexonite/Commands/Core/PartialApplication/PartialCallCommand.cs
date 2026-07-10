@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 /// <summary>
@@ -9,15 +7,19 @@ public class PartialCallCommand : PartialApplicationCommandBase<object>
 {
     #region Overrides of PartialApplicationCommandBase<object>
 
-    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, object parameter)
+    protected override IIndirectCall CreatePartialApplication(
+        StackContext sctx,
+        int[] mappings,
+        PValue[] closedArguments,
+        object parameter
+    )
     {
         return new PartialCall(mappings, closedArguments);
     }
 
     protected override Type GetPartialCallRepresentationType(object parameter)
     {
-        return typeof (PartialCall);
+        return typeof(PartialCall);
     }
 
     #endregion

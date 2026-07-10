@@ -20,7 +20,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         "{0}",
         "PxCoco",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true
+    );
 
     static readonly DiagnosticDescriptor InvalidGrammar = new(
         "PRXCOCO002",
@@ -28,7 +29,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         "{0}",
         "PxCoco",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true
+    );
 
     static readonly DiagnosticDescriptor GenerationFailure = new(
         "PRXCOCO003",
@@ -36,13 +38,17 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         "{0}",
         "PxCoco",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true
+    );
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var files = context.AdditionalTextsProvider
-            .Combine(context.AnalyzerConfigOptionsProvider)
-            .Select(static (pair, cancellationToken) => ReadFile(pair.Left, pair.Right, cancellationToken))
+        var files = context
+            .AdditionalTextsProvider.Combine(context.AnalyzerConfigOptionsProvider)
+            .Select(
+                static (pair, cancellationToken) =>
+                    ReadFile(pair.Left, pair.Right, cancellationToken)
+            )
             .Where(static file => file is not null)
             .Collect();
 
@@ -52,15 +58,26 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
     static GrammarFile ReadFile(
         AdditionalText file,
         AnalyzerConfigOptionsProvider optionsProvider,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var options = optionsProvider.GetOptions(file);
-        if (!options.TryGetValue(GrammarMetadata, out var grammar) || string.IsNullOrWhiteSpace(grammar))
+        if (
+            !options.TryGetValue(GrammarMetadata, out var grammar)
+            || string.IsNullOrWhiteSpace(grammar)
+        )
             return null;
 
         var order = 0;
-        if (options.TryGetValue(OrderMetadata, out var orderText) &&
-            !int.TryParse(orderText, NumberStyles.Integer, CultureInfo.InvariantCulture, out order))
+        if (
+            options.TryGetValue(OrderMetadata, out var orderText)
+            && !int.TryParse(
+                orderText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out order
+            )
+        )
             order = int.MinValue;
 
         var text = file.GetText(cancellationToken);
@@ -76,7 +93,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
             targetNamespace: "Prexonite.Compiler",
             generateScanner: false,
             parserHintName: "Prexonite.Compiler.Parser.g.cs",
-            scannerHintName: null);
+            scannerHintName: null
+        );
 
         GenerateGrammar(
             context,
@@ -85,7 +103,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
             targetNamespace: "Prexonite.Internal",
             generateScanner: true,
             parserHintName: "Prexonite.Internal.Parser.g.cs",
-            scannerHintName: "Prexonite.Internal.Scanner.g.cs");
+            scannerHintName: "Prexonite.Internal.Scanner.g.cs"
+        );
     }
 
     static void GenerateGrammar(
@@ -95,7 +114,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         string targetNamespace,
         bool generateScanner,
         string parserHintName,
-        string scannerHintName)
+        string scannerHintName
+    )
     {
         var files = allFiles
             .Where(file => string.Equals(file.Grammar, grammarName, StringComparison.Ordinal))
@@ -105,19 +125,25 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
 
         if (files.Length == 0)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                InvalidInput,
-                Location.None,
-                $"No AdditionalFiles were supplied for the '{grammarName}' grammar."));
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    InvalidInput,
+                    Location.None,
+                    $"No AdditionalFiles were supplied for the '{grammarName}' grammar."
+                )
+            );
             return;
         }
 
         if (files.Any(file => file.Order == int.MinValue))
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                InvalidInput,
-                Location.None,
-                $"Grammar '{grammarName}' has a file with a non-integer PxCocoOrder."));
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    InvalidInput,
+                    Location.None,
+                    $"Grammar '{grammarName}' has a file with a non-integer PxCocoOrder."
+                )
+            );
             return;
         }
 
@@ -125,18 +151,21 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         {
             var errors = new List<string>();
             var grammar = files.Length == 1 ? files[0].Text.ToString() : Merge(files);
-            var result = at.jku.ssw.Coco.Coco.Generate(new at.jku.ssw.Coco.GeneratorOptions(
-                writeMessage: static _ => { },
-                writeError: errors.Add)
-            {
-                Grammar = grammar,
-                SourceName = files.Length == 1 ? files[0].Path : grammarName + ".atg",
-                ParserFrame = ReadResource("PxCoco.Parser.frame"),
-                ParserFrameName = "../../Tools/Parser.frame",
-                ScannerFrame = ReadResource("PxCoco.Scanner.frame"),
-                Namespace = targetNamespace,
-                GenerateScanner = generateScanner
-            });
+            var result = at.jku.ssw.Coco.Coco.Generate(
+                new at.jku.ssw.Coco.GeneratorOptions(
+                    writeMessage: static _ => { },
+                    writeError: errors.Add
+                )
+                {
+                    Grammar = grammar,
+                    SourceName = files.Length == 1 ? files[0].Path : grammarName + ".atg",
+                    ParserFrame = ReadResource("PxCoco.Parser.frame"),
+                    ParserFrameName = "../../Tools/Parser.frame",
+                    ScannerFrame = ReadResource("PxCoco.Scanner.frame"),
+                    Namespace = targetNamespace,
+                    GenerateScanner = generateScanner,
+                }
+            );
 
             foreach (var error in errors)
                 ReportGrammarError(context, files, error);
@@ -146,15 +175,19 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
 
             context.AddSource(
                 parserHintName,
-                SourceText.From("#nullable enable\n" + result.Parser, Encoding.UTF8));
+                SourceText.From("#nullable enable\n" + result.Parser, Encoding.UTF8)
+            );
             if (generateScanner)
             {
                 if (result.Scanner is null)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        GenerationFailure,
-                        Location.None,
-                        $"Grammar '{grammarName}' did not produce a scanner."));
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            GenerationFailure,
+                            Location.None,
+                            $"Grammar '{grammarName}' did not produce a scanner."
+                        )
+                    );
                     return;
                 }
 
@@ -163,10 +196,13 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         }
         catch (Exception exception)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                GenerationFailure,
-                Location.None,
-                $"Grammar '{grammarName}': {exception.Message}"));
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    GenerationFailure,
+                    Location.None,
+                    $"Grammar '{grammarName}': {exception.Message}"
+                )
+            );
         }
     }
 
@@ -186,16 +222,22 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
 
     static string ReadResource(string name)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name)
+        using var stream =
+            Assembly.GetExecutingAssembly().GetManifestResourceStream(name)
             ?? throw new InvalidOperationException($"Embedded resource '{name}' is missing.");
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(
+            stream,
+            Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true
+        );
         return reader.ReadToEnd();
     }
 
     static void ReportGrammarError(
         SourceProductionContext context,
         IReadOnlyCollection<GrammarFile> files,
-        string error)
+        string error
+    )
     {
         if (!TryParseError(error, out var path, out var line, out var column, out var message))
         {
@@ -213,7 +255,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         out string path,
         out int line,
         out int column,
-        out string message)
+        out string message
+    )
     {
         path = "";
         line = 0;
@@ -228,8 +271,20 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         if (comma < 2 || closing < comma || separator < closing)
             return false;
 
-        if (!int.TryParse(error.AsSpan(1, comma - 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out line) ||
-            !int.TryParse(error.AsSpan(comma + 1, closing - comma - 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out column))
+        if (
+            !int.TryParse(
+                error.AsSpan(1, comma - 1),
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out line
+            )
+            || !int.TryParse(
+                error.AsSpan(comma + 1, closing - comma - 1),
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out column
+            )
+        )
             return false;
 
         path = error.Substring(closing + 1, separator - closing - 1);
@@ -241,7 +296,11 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
     {
         try
         {
-            return string.Equals(Path.GetFullPath(left), Path.GetFullPath(right), StringComparison.OrdinalIgnoreCase);
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase
+            );
         }
         catch (Exception)
         {
@@ -259,7 +318,8 @@ public sealed class PxCocoGenerator : IIncrementalGenerator
         return Location.Create(
             file.Path,
             new TextSpan(position, 0),
-            new LinePositionSpan(point, point));
+            new LinePositionSpan(point, point)
+        );
     }
 
     sealed record GrammarFile(string Path, string Grammar, int Order, SourceText Text);

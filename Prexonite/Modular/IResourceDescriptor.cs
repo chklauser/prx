@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Modular;
 
 public interface IResourceDescriptor

@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite;
@@ -7,8 +5,11 @@ namespace Prexonite;
 /// <summary>
 ///     Provides a way to communicate incompatibilities and custom implementations to the CIL compiler.
 /// </summary>
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Cil")]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = "Cil"
+)]
 public interface ICilCompilerAware
 {
     /// <summary>
@@ -23,7 +24,10 @@ public interface ICilCompilerAware
     /// </summary>
     /// <param name = "state">The compiler state.</param>
     /// <param name = "ins">The instruction to compile.</param>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = "Cil")]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = "Cil"
+    )]
     void ImplementInCil(CompilerState state, Instruction ins);
 }

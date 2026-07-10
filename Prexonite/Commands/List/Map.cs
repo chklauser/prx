@@ -1,12 +1,10 @@
-
-
 using System.Collections;
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
 
 /// <summary>
-///     Implementation of the map function. Applies a supplied function (#1) to every 
+///     Implementation of the map function. Applies a supplied function (#1) to every
 ///     value in the supplied list (#2) and returns a list with the result values.
 /// </summary>
 /// <remarks>
@@ -22,9 +20,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Map()
-    {
-    }
+    Map() { }
 
     public static Map Instance { get; } = new();
 
@@ -41,13 +37,13 @@ public class Map : CoroutineCommand, ICilCompilerAware
         switch (psource.Type.ToBuiltIn())
         {
             case PType.BuiltIn.List:
-                return (IEnumerable<PValue>) psource.Value!;
+                return (IEnumerable<PValue>)psource.Value!;
             case PType.BuiltIn.Object:
-                var clrType = ((ObjectPType) psource.Type).ClrType;
-                if (typeof (IEnumerable<PValue>).IsAssignableFrom(clrType))
+                var clrType = ((ObjectPType)psource.Type).ClrType;
+                if (typeof(IEnumerable<PValue>).IsAssignableFrom(clrType))
                     goto case PType.BuiltIn.List;
-                else if (typeof (IEnumerable).IsAssignableFrom(clrType))
-                    return _wrapNonGenericIEnumerable(sctx, (IEnumerable) psource.Value!);
+                else if (typeof(IEnumerable).IsAssignableFrom(clrType))
+                    return _wrapNonGenericIEnumerable(sctx, (IEnumerable)psource.Value!);
 
                 break;
         }
@@ -62,10 +58,10 @@ public class Map : CoroutineCommand, ICilCompilerAware
 
     static IEnumerable<PValue> _wrapDynamicIEnumerable(StackContext sctx, PValue psource)
     {
-        var pvEnumerator =
-            psource.DynamicCall(sctx, [], PCall.Get, "GetEnumerator").
-                ConvertTo(sctx, typeof (IEnumerator));
-        var enumerator = (IEnumerator) pvEnumerator.Value!;
+        var pvEnumerator = psource
+            .DynamicCall(sctx, [], PCall.Get, "GetEnumerator")
+            .ConvertTo(sctx, typeof(IEnumerator));
+        var enumerator = (IEnumerator)pvEnumerator.Value!;
         try
         {
             PValueEnumerator? pvEnum;
@@ -87,10 +83,16 @@ public class Map : CoroutineCommand, ICilCompilerAware
         }
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        IIndirectCall? f, IEnumerable<PValue> source)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRun(
+        ContextCarrier sctxCarrier,
+        IIndirectCall? f,
+        IEnumerable<PValue> source
+    )
     {
         var sctx = sctxCarrier.StackContext;
 
@@ -104,10 +106,15 @@ public class Map : CoroutineCommand, ICilCompilerAware
     /// <param name = "sctxCarrier">The stack context in which to call the supplied function.</param>
     /// <param name = "args">The list of arguments to be passed to the command.</param>
     /// <returns>A coroutine that maps the.</returns>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -148,8 +155,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         }
     }
 
-    static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx,
-        IEnumerable nonGeneric)
+    static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx, IEnumerable nonGeneric)
     {
         foreach (var obj in nonGeneric)
             yield return sctx.CreateNativePValue(obj);
@@ -187,8 +193,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }

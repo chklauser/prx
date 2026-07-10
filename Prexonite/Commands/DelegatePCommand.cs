@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands;
 
 /// <summary>
@@ -40,9 +38,7 @@ public sealed class DelegatePCommand : PCommand
     /// <param name = "action">An implementation of the <see cref = "PCommand.Run" /> method.</param>
     /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
     public DelegatePCommand(PCommandAction action)
-        : this(action, false)
-    {
-    }
+        : this(action, false) { }
 
     /// <summary>
     ///     Creates a new <see cref = "DelegatePCommand" />.

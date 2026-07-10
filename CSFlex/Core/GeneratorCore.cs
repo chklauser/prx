@@ -12,7 +12,8 @@ namespace CSFlex;
 
 internal sealed record GenerationResult(
     string Source,
-    ImmutableArray<GenerationDiagnostic> Diagnostics);
+    ImmutableArray<GenerationDiagnostic> Diagnostics
+);
 
 internal static class GeneratorCore
 {
@@ -45,17 +46,18 @@ internal static class GeneratorCore
                 dfa.minimize();
 
                 var output = new StringBuilder();
-                using (var writer = new StringWriter(
-                           output,
-                           System.Globalization.CultureInfo.InvariantCulture))
+                using (
+                    var writer = new StringWriter(
+                        output,
+                        System.Globalization.CultureInfo.InvariantCulture
+                    )
+                )
                 {
                     var emitter = new Emitter(inputFile, parser, dfa, writer);
                     emitter.emit();
                 }
 
-                return new GenerationResult(
-                    output.ToString(),
-                    Out.Diagnostics.ToImmutableArray());
+                return new GenerationResult(output.ToString(), Out.Diagnostics.ToImmutableArray());
             }
             catch (ScannerException exception)
             {
@@ -65,9 +67,7 @@ internal static class GeneratorCore
             {
                 Out.error(exception.Message);
             }
-            catch (GeneratorException)
-            {
-            }
+            catch (GeneratorException) { }
             catch (Exception exception)
             {
                 Out.error(exception.Message);

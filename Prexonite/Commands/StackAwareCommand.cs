@@ -1,4 +1,3 @@
-
 namespace Prexonite.Commands;
 
 public abstract class StackAwareCommand : PCommand, IStackAware

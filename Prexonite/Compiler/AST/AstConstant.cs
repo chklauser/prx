@@ -1,5 +1,3 @@
-
-
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast;
@@ -9,9 +7,7 @@ public class AstConstant : AstExpr
     public readonly object? Constant;
 
     internal AstConstant(Parser p, object? constant)
-        : this(p.scanner.File, p.t.line, p.t.col, constant)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, constant) { }
 
     public AstConstant(string file, int line, int column, object? constant)
         : base(file, line, column)
@@ -23,12 +19,16 @@ public class AstConstant : AstExpr
         CompilerTarget target,
         ISourcePosition position,
         PValue value,
-        [NotNullWhen(true)] out AstExpr? expr)
+        [NotNullWhen(true)] out AstExpr? expr
+    )
     {
         expr = null;
         if (value.Type is ObjectPType)
             target.Loader.ParentEngine.CreateNativePValue(value.Value);
-        if (value.Type is IntPType or RealPType or BoolPType or StringPType or NullPType || _isModuleName(value))
+        if (
+            value.Type is IntPType or RealPType or BoolPType or StringPType or NullPType
+            || _isModuleName(value)
+        )
             expr = new AstConstant(position.File, position.Line, position.Column, value.Value);
         else //Cannot represent value in a constant instruction
             return false;
@@ -38,7 +38,8 @@ public class AstConstant : AstExpr
     static bool _isModuleName(PValue value)
     {
         ObjectPType? objectType;
-        return (object?)(objectType = value.Type as ObjectPType) != null && typeof(ModuleName).IsAssignableFrom(objectType.ClrType);
+        return (object?)(objectType = value.Type as ObjectPType) != null
+            && typeof(ModuleName).IsAssignableFrom(objectType.ClrType);
     }
 
     public PValue ToPValue(CompilerTarget target)
@@ -48,7 +49,7 @@ public class AstConstant : AstExpr
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Effect)
+        if (stackSemantics == StackSemantics.Effect)
             return;
 
         if (Constant == null)
@@ -57,21 +58,21 @@ public class AstConstant : AstExpr
             switch (Type.GetTypeCode(Constant.GetType()))
             {
                 case TypeCode.Boolean:
-                    target.EmitConstant(Position, (bool) Constant);
+                    target.EmitConstant(Position, (bool)Constant);
                     break;
                 case TypeCode.Int16:
                 case TypeCode.Byte:
                 case TypeCode.Int32:
                 case TypeCode.UInt16:
                 case TypeCode.UInt32:
-                    target.EmitConstant(Position, (int) Constant);
+                    target.EmitConstant(Position, (int)Constant);
                     break;
                 case TypeCode.Single:
                 case TypeCode.Double:
-                    target.EmitConstant(Position, (double) Constant);
+                    target.EmitConstant(Position, (double)Constant);
                     break;
                 case TypeCode.String:
-                    target.EmitConstant(Position, (string) Constant);
+                    target.EmitConstant(Position, (string)Constant);
                     break;
                 default:
                     if (Constant is ModuleName moduleName)
@@ -81,8 +82,10 @@ public class AstConstant : AstExpr
                     else
                     {
                         throw new PrexoniteException(
-                            "Prexonite does not support constants of type " +
-                            Constant.GetType().Name + ".");
+                            "Prexonite does not support constants of type "
+                                + Constant.GetType().Name
+                                + "."
+                        );
                     }
                     break;
             }
@@ -106,6 +109,7 @@ public class AstConstant : AstExpr
                 return string.Concat("\"", StringPType.Escape(str), "\"");
             else
                 return Constant.ToString();
-        else return "-null-";
+        else
+            return "-null-";
     }
 }

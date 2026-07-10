@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,10 +20,11 @@ public sealed class BenchmarkEntry
 
     public long GetAverageRawMilliseconds()
     {
-        var sum = Measurements.Aggregate<Measurement, ulong>(0,
-            (current, m) => current + (ulong) m.RawMilliseconds);
-        return
-            (long) Math.Round(sum/(double) Measurements.Count, MidpointRounding.AwayFromZero);
+        var sum = Measurements.Aggregate<Measurement, ulong>(
+            0,
+            (current, m) => current + (ulong)m.RawMilliseconds
+        );
+        return (long)Math.Round(sum / (double)Measurements.Count, MidpointRounding.AwayFromZero);
     }
 
     internal BenchmarkEntry(Benchmark parent, PFunction function)
@@ -68,9 +67,9 @@ public sealed class BenchmarkEntry
 
     public static bool operator ==(BenchmarkEntry? be1, BenchmarkEntry? be2)
     {
-        if ((object?) be1 == null && (object?) be2 == null)
+        if ((object?)be1 == null && (object?)be2 == null)
             return true;
-        else if ((object?) be1 == null || (object?) be2 == null)
+        else if ((object?)be1 == null || (object?)be2 == null)
             return false;
         else
             return be1.Equals(be2);
@@ -78,9 +77,9 @@ public sealed class BenchmarkEntry
 
     public static bool operator !=(BenchmarkEntry? be1, BenchmarkEntry? be2)
     {
-        if ((object?) be1 == null && (object?) be2 == null)
+        if ((object?)be1 == null && (object?)be2 == null)
             return false;
-        else if ((object?) be1 == null || (object?) be2 == null)
+        else if ((object?)be1 == null || (object?)be2 == null)
             return true;
         else
             return !be1.Equals(be2);
@@ -97,7 +96,10 @@ public sealed class BenchmarkEntry
         if (verbose)
         {
             Console.WriteLine(
-                "--------------------------------------\n{0}\n {1}", Title, Description);
+                "--------------------------------------\n{0}\n {1}",
+                Title,
+                Description
+            );
             if (UsesIteration)
                 Console.WriteLine("\tIterations:\t{0}", iterations);
         }
@@ -117,20 +119,21 @@ public sealed class BenchmarkEntry
         if (verbose)
         {
             Console.WriteLine(
-                "\tmeasured:\t{0} ms\n" +
-                "\t\t\t{1:0.00} s\n" +
-                "\tpass:\t\t{2:0.00} ms\n" +
-                "\t\t\t{3:0.00} micros",
+                "\tmeasured:\t{0} ms\n"
+                    + "\t\t\t{1:0.00} s\n"
+                    + "\tpass:\t\t{2:0.00} ms\n"
+                    + "\t\t\t{3:0.00} micros",
                 m.RawMilliseconds,
                 m.RawSeconds,
                 m.PassMilliseconds,
-                m.PassMicroseconds);
+                m.PassMicroseconds
+            );
             if (overhead > 0)
                 Console.WriteLine(
-                    "\tcleared:\t{0:0.00} ms\n" +
-                    "\t\t\t{1:0.00} micros",
+                    "\tcleared:\t{0:0.00} ms\n" + "\t\t\t{1:0.00} micros",
                     m.ClearedPassMilliseconds,
-                    m.ClearedPassMicroseconds);
+                    m.ClearedPassMicroseconds
+                );
         }
 
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
@@ -142,10 +145,10 @@ public sealed class BenchmarkEntry
 
     public void WarmUp()
     {
-        var fctx =
-            Function.CreateFunctionContext(
-                Parent.Machine,
-                [Benchmark.DefaultWarmUpIterations]);
+        var fctx = Function.CreateFunctionContext(
+            Parent.Machine,
+            [Benchmark.DefaultWarmUpIterations]
+        );
         Parent.Machine.Process(fctx);
     }
 }

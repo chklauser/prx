@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Compiler;
 
 class MessageEventArgs : EventArgs

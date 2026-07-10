@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -11,9 +9,7 @@ public sealed class All : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    All()
-    {
-    }
+    All() { }
 
     public static All Instance { get; } = new();
 
@@ -41,7 +37,7 @@ public sealed class All : PCommand, ICilCompilerAware
                 lst.AddRange(set);
         }
 
-        return (PValue) lst;
+        return (PValue)lst;
     }
 
     public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)

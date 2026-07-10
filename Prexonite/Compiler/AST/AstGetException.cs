@@ -1,25 +1,19 @@
-
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstGetException : AstExpr
 {
     internal AstGetException(Parser p)
-        : base(p)
-    {
-    }
+        : base(p) { }
 
     public AstGetException(string file, int line, int column)
-        : base(file, line, column)
-    {
-    }
+        : base(file, line, column) { }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Effect)
+        if (stackSemantics == StackSemantics.Effect)
             return;
 
-        target.Emit(Position,OpCode.exc);
+        target.Emit(Position, OpCode.exc);
     }
 
     #region AstExpr Members

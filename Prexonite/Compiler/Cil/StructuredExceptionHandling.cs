@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil.Seh;
@@ -8,7 +6,8 @@ namespace Prexonite.Compiler.Cil;
 
 public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHandling
 {
-    internal StructuredExceptionHandlingCompiler(CompilerState state) : base(state.Source)
+    internal StructuredExceptionHandlingCompiler(CompilerState state)
+        : base(state.Source)
     {
         State = state;
     }
@@ -29,7 +28,8 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
     {
         if (State == null)
             throw new InvalidOperationException(
-                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+                "Cannot emit code on a SEH instance that is not tied to a compiler state."
+            );
         int targetAddr;
         var returning = false;
         switch (ins.OpCode)
@@ -49,7 +49,9 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
                 break;
             default:
                 throw new ArgumentException(
-                    "The supplied instruction does not involve branching.", nameof(ins));
+                    "The supplied instruction does not involve branching.",
+                    nameof(ins)
+                );
         }
 
         var handling = AssessJump(sourceAddr, targetAddr);
@@ -67,14 +69,19 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
                 _emitEndFinally(ins);
                 break;
             case BranchHandling.LeaveSkipTry:
-                _emitLeave(sourceAddr,
-                    _loci[sourceAddr].InnermostRegion?.Block.EndTry ?? throw new PrexoniteException(
-                        $"Internal error branch mode for jump instruction {sourceAddr}: {ins} implies a surrounding region that was not found."),
-                    ins);
+                _emitLeave(
+                    sourceAddr,
+                    _loci[sourceAddr].InnermostRegion?.Block.EndTry
+                        ?? throw new PrexoniteException(
+                            $"Internal error branch mode for jump instruction {sourceAddr}: {ins} implies a surrounding region that was not found."
+                        ),
+                    ins
+                );
                 break;
             case BranchHandling.Invalid:
                 throw new PrexoniteException(
-                    "Attempted to compile function with invalid SEH construct");
+                    "Attempted to compile function with invalid SEH construct"
+                );
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -85,7 +92,8 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
         if (State == null)
         {
             throw new InvalidOperationException(
-                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+                "Cannot emit code on a SEH instance that is not tied to a compiler state."
+            );
         }
 
         Action endfinally = () => State.Il.Emit(OpCodes.Endfinally);
@@ -111,9 +119,10 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
         if (State == null)
         {
             throw new InvalidOperationException(
-                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+                "Cannot emit code on a SEH instance that is not tied to a compiler state."
+            );
         }
-        
+
         Action leave = () => State.Il.Emit(OpCodes.Leave, State.InstructionLabels[targetAddr]);
         switch (ins.OpCode)
         {
@@ -148,9 +157,10 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
         if (State == null)
         {
             throw new InvalidOperationException(
-                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+                "Cannot emit code on a SEH instance that is not tied to a compiler state."
+            );
         }
-        
+
         switch (ins.OpCode)
         {
             case OpCode.jump:
@@ -187,7 +197,8 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
         if (State == null)
         {
             throw new InvalidOperationException(
-                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+                "Cannot emit code on a SEH instance that is not tied to a compiler state."
+            );
         }
         Debug.Assert(0 <= sourceAddress && sourceAddress <= State.StackSize.Length);
         State.EmitIgnoreArguments(State.StackSize[sourceAddress]);
@@ -217,7 +228,8 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
         if (State == null)
         {
             throw new InvalidOperationException(
-                "Cannot emit code on a SEH instance that is not tied to a compiler state.");
+                "Cannot emit code on a SEH instance that is not tied to a compiler state."
+            );
         }
         State.EmitLoadLocal(State.SctxLocal);
         State.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
@@ -231,16 +243,16 @@ public sealed class StructuredExceptionHandlingCompiler : StructuredExceptionHan
 public class StructuredExceptionHandling
 {
     internal readonly InstructionInfo[] _loci;
-    
+
     internal StructuredExceptionHandling(PFunction source)
     {
         _loci = new InstructionInfo[source.Code.Count + 1];
         //include virtual instruction at the end of the function.
 
-        var regions =
-            source.TryCatchFinallyBlocks
-                .Select(CompiledTryCatchFinallyBlock.Create)
-                .SelectMany(Region.FromBlock).ToList();
+        var regions = source
+            .TryCatchFinallyBlocks.Select(CompiledTryCatchFinallyBlock.Create)
+            .SelectMany(Region.FromBlock)
+            .ToList();
         for (var instructionOffset = 0; instructionOffset < _loci.Length; instructionOffset++)
         {
             var address = instructionOffset; //make sure that we don't access a modified closure
@@ -259,15 +271,16 @@ public class StructuredExceptionHandling
     /// <returns>The handling required to implement this jump.</returns>
     public BranchHandling AssessJump(int sourceAddr, int targetAddr)
     {
-        var decisions = 
-            _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
+        var decisions = _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
             .Select(st => _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr));
 
         return decisions.Aggregate(_integrateBranchHandling);
     }
 
-    static IEnumerable<(Region?, Region?)> _involvedRegions(List<Region> source,
-        List<Region> target)
+    static IEnumerable<(Region?, Region?)> _involvedRegions(
+        List<Region> source,
+        List<Region> target
+    )
     {
         //Find common ancestor
         var areParallel = false; //have regions of same try-catch-finally construct
@@ -330,13 +343,16 @@ public class StructuredExceptionHandling
             return h2;
         else if (h1 == BranchHandling.EndFinally || h2 == BranchHandling.EndFinally)
             return BranchHandling.Invalid; //end finally is only compatible with itself
-        else if (h1 == BranchHandling.Leave && h2 == BranchHandling.LeaveSkipTry ||
-            h2 == BranchHandling.Leave && h1 == BranchHandling.LeaveSkipTry)
+        else if (
+            h1 == BranchHandling.Leave && h2 == BranchHandling.LeaveSkipTry
+            || h2 == BranchHandling.Leave && h1 == BranchHandling.LeaveSkipTry
+        )
             return BranchHandling.LeaveSkipTry;
         else
         {
             throw new PrexoniteException(
-                $"Invalid decision by SEH checking algorithm: {Enum.GetName(typeof(BranchHandling), h1)} and {Enum.GetName(typeof(BranchHandling), h1)}.");
+                $"Invalid decision by SEH checking algorithm: {Enum.GetName(typeof(BranchHandling), h1)} and {Enum.GetName(typeof(BranchHandling), h1)}."
+            );
         }
     }
 
@@ -364,22 +380,27 @@ public class StructuredExceptionHandling
                 //Jump into try block only legal if target is first instruction of said try block
                 //Or else target must be in a surrounding try block
                 return BranchHandling.Leave;
-            case ({ Kind: RegionKind.Try }, { Kind: RegionKind.Finally }) when targetAddr == targetRegion.Begin:
+            case ({ Kind: RegionKind.Try }, { Kind: RegionKind.Finally })
+                when targetAddr == targetRegion.Begin:
                 return BranchHandling.LeaveSkipTry;
             case ({ Kind: RegionKind.Catch }, null):
                 return BranchHandling.Leave;
             case ({ Kind: RegionKind.Catch }, { Kind: RegionKind.Try })
                 when targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion):
                 return BranchHandling.Leave;
-            case ({ Kind: RegionKind.Catch }, { Kind: RegionKind.Finally }) when targetAddr == targetRegion.Begin:
+            case ({ Kind: RegionKind.Catch }, { Kind: RegionKind.Finally })
+                when targetAddr == targetRegion.Begin:
                 return BranchHandling.LeaveSkipTry;
-            case ({ Kind: RegionKind.Finally }, _) when targetRegion == null || !targetRegion.IsIn(sourceRegion):
-                //Prexonite byte code ends a finally block sometimes by jumping to the 
+            case ({ Kind: RegionKind.Finally }, _)
+                when targetRegion == null || !targetRegion.IsIn(sourceRegion):
+                //Prexonite byte code ends a finally block sometimes by jumping to the
                 //  instruction right after the whole try-catch-finally. In CIL this
                 //  has to be implemented by the endfinally opcode.
-                return targetAddr == sourceRegion.Block.EndTry ? BranchHandling.EndFinally : BranchHandling.Invalid;
-            case ({ Kind: RegionKind.Finally }, { Kind: RegionKind.Try }) when targetAddr == targetRegion.Begin ||
-                sourceRegion.IsIn(targetRegion):
+                return targetAddr == sourceRegion.Block.EndTry
+                    ? BranchHandling.EndFinally
+                    : BranchHandling.Invalid;
+            case ({ Kind: RegionKind.Finally }, { Kind: RegionKind.Try })
+                when targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion):
                 return BranchHandling.Leave;
             case (_, _):
                 return BranchHandling.Invalid;
@@ -399,7 +420,8 @@ public class StructuredExceptionHandling
     }
 
     [DebuggerDisplay(
-        "{address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnermostRegion}]")]
+        "{address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnermostRegion}]"
+    )]
     internal sealed class InstructionInfo(StructuredExceptionHandling seh, int address)
     {
         readonly int address = address;
@@ -422,8 +444,10 @@ public class StructuredExceptionHandling
             [DebuggerStepThrough]
             get
             {
-                if (seh is StructuredExceptionHandlingCompiler { State.Source.Code: var source } &&
-                    address < source.Count)
+                if (
+                    seh is StructuredExceptionHandlingCompiler { State.Source.Code: var source }
+                    && address < source.Count
+                )
                 {
                     return source[address];
                 }

@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections;
 using System.Diagnostics;
 
@@ -56,7 +54,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
     /// <param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
     void ICollection<KeyValuePair<int, ISourcePosition?>>.Add(
-        KeyValuePair<int, ISourcePosition?> item)
+        KeyValuePair<int, ISourcePosition?> item
+    )
     {
         Add(item.Key, item.Value);
     }
@@ -79,7 +78,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
     /// </returns>
     /// <param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
     bool ICollection<KeyValuePair<int, ISourcePosition?>>.Contains(
-        KeyValuePair<int, ISourcePosition?> item)
+        KeyValuePair<int, ISourcePosition?> item
+    )
     {
         return TryGetValue(item.Key, out var pos) && pos.SourcePositionEquals(item.Value);
     }
@@ -88,19 +88,19 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
     ///     Copies the elements of the <see cref = "T:System.Collections.Generic.ICollection`1" /> to an <see
     ///      cref = "T:System.Array" />, starting at a particular <see cref = "T:System.Array" /> index.
     /// </summary>
-    /// <param name = "array">The one-dimensional <see cref = "T:System.Array" /> that is the destination 
-    ///     of the elements copied from <see cref = "T:System.Collections.Generic.ICollection`1" />. 
+    /// <param name = "array">The one-dimensional <see cref = "T:System.Array" /> that is the destination
+    ///     of the elements copied from <see cref = "T:System.Collections.Generic.ICollection`1" />.
     ///     The <see cref = "T:System.Array" /> must have zero-based indexing.</param>
     /// <param name = "arrayIndex">
     ///     The zero-based index in <paramref name = "array" /> at which copying begins.
     /// </param>
     /// <exception cref = "T:System.ArgumentNullException"><paramref name = "array" /> is null.
     /// </exception>
-    /// <exception cref = "T:System.ArgumentOutOfRangeException"><paramref name = "arrayIndex" /> 
+    /// <exception cref = "T:System.ArgumentOutOfRangeException"><paramref name = "arrayIndex" />
     ///     is less than 0.</exception>
-    /// <exception cref = "T:System.ArgumentException"><paramref name = "array" /> 
-    ///     is multidimensional.-or-The number of elements in the source 
-    ///     <see cref = "T:System.Collections.Generic.ICollection`1" /> is greater than the available space 
+    /// <exception cref = "T:System.ArgumentException"><paramref name = "array" />
+    ///     is multidimensional.-or-The number of elements in the source
+    ///     <see cref = "T:System.Collections.Generic.ICollection`1" /> is greater than the available space
     ///     from <paramref name = "arrayIndex" /> to the end of the destination <paramref name = "array" />.
     ///     -or-Type cannot be cast automatically to the type of the destination <paramref name = "array" />.
     /// </exception>
@@ -120,7 +120,8 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
     /// <param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
     /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
     bool ICollection<KeyValuePair<int, ISourcePosition?>>.Remove(
-        KeyValuePair<int, ISourcePosition?> item)
+        KeyValuePair<int, ISourcePosition?> item
+    )
     {
         if (TryGetValue(item.Key, out var pos) && pos.SourcePositionEquals(item.Value))
         {
@@ -162,8 +163,7 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
     /// <exception cref = "T:System.ArgumentNullException"><paramref name = "instructionOffset" /> is null.</exception>
     public bool ContainsKey(int instructionOffset)
     {
-        return instructionOffset < positionTable.Count &&
-            positionTable[instructionOffset] != null;
+        return instructionOffset < positionTable.Count && positionTable[instructionOffset] != null;
     }
 
     /// <summary>
@@ -188,8 +188,10 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
         }
         else
         {
-            positionTable.Capacity = Math.Max(2,
-                Math.Max(instructionOffset + 1, positionTable.Capacity*2));
+            positionTable.Capacity = Math.Max(
+                2,
+                Math.Max(instructionOffset + 1, positionTable.Capacity * 2)
+            );
             for (var i = positionTable.Count; i < positionTable.Capacity; i++)
                 positionTable.Add(null);
             Debug.Assert(instructionOffset < positionTable.Count);
@@ -242,10 +244,11 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
 
         if (instructionOffset < positionTable.Count)
         {
-            count = Math.Min(instructionOffset + count, positionTable.Count) -
-                instructionOffset;
-            Debug.Assert(instructionOffset + count <= positionTable.Count,
-                "Removal range not clamped to backing storage index range.");
+            count = Math.Min(instructionOffset + count, positionTable.Count) - instructionOffset;
+            Debug.Assert(
+                instructionOffset + count <= positionTable.Count,
+                "Removal range not clamped to backing storage index range."
+            );
             positionTable.RemoveRange(instructionOffset, count);
         }
     }
@@ -294,8 +297,9 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
                 return pos;
             else
                 throw new KeyNotFoundException(
-                    "The source mapping does not contain an entry for instruction " +
-                    instructionOffset);
+                    "The source mapping does not contain an entry for instruction "
+                        + instructionOffset
+                );
         }
         set
         {
@@ -316,9 +320,10 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
     {
         get
         {
-            return
-                Enumerable.Range(0, positionTable.Count).Where(i => positionTable[i] != null).
-                    ToList();
+            return Enumerable
+                .Range(0, positionTable.Count)
+                .Where(i => positionTable[i] != null)
+                .ToList();
         }
     }
 
@@ -372,8 +377,10 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
             var thisFile = entry.Length >= 4 ? entry[3].Text : file;
 
             //Convert text to values
-            if (instructionOffsetRaw == null ||
-                !int.TryParse(instructionOffsetRaw, out var instructionOffset))
+            if (
+                instructionOffsetRaw == null
+                || !int.TryParse(instructionOffsetRaw, out var instructionOffset)
+            )
                 continue;
 
             if (lineRaw == null || !int.TryParse(lineRaw, out var line))
@@ -449,10 +456,10 @@ public class SourceMapping : IDictionary<int, ISourcePosition?>
             if (!pos.File.Equals(mostCommonFile, StringComparison.Ordinal))
                 entry.Add(pos.File);
 
-            rootEntry.AddLast((MetaEntry) entry.ToArray());
+            rootEntry.AddLast((MetaEntry)entry.ToArray());
         }
 
-        table[SourceMappingKey] = (MetaEntry) rootEntry.ToArray();
+        table[SourceMappingKey] = (MetaEntry)rootEntry.ToArray();
     }
 
     #endregion

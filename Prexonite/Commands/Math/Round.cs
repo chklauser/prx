@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -10,9 +8,7 @@ public class Round : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Round()
-    {
-    }
+    Round() { }
 
     public static Round Instance { get; } = new();
 
@@ -42,12 +38,12 @@ public class Round : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(PValue arg0, PValue? arg1, StackContext sctx)
     {
-        var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value!;
+        var x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value!;
 
         int d;
 
         if (arg1 != null && arg1.TryConvertTo(sctx, PType.Int, true, out var pd))
-            d = System.Math.Abs((int) pd.Value!);
+            d = System.Math.Abs((int)pd.Value!);
         else
             d = 0;
 
@@ -85,9 +81,10 @@ public class Round : PCommand, ICilCompilerAware
         }
     }
 
-    static readonly MethodInfo RunStaticallyMethod =
-        typeof (Round).GetMethod(nameof(RunStatically),
-            [typeof (PValue), typeof (PValue), typeof (StackContext)])!;
+    static readonly MethodInfo RunStaticallyMethod = typeof(Round).GetMethod(
+        nameof(RunStatically),
+        [typeof(PValue), typeof(PValue), typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

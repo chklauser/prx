@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
@@ -11,9 +9,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    AsyncSeq()
-    {
-    }
+    AsyncSeq() { }
 
     public static AsyncSeq Instance { get; } = new();
 
@@ -21,16 +17,20 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
     #region Overrides of CoroutineCommand
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -39,7 +39,8 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
         if (args.Length < 1)
             throw new PrexoniteException(
-                "async_seq requires one parameter: The sequence to be computed.");
+                "async_seq requires one parameter: The sequence to be computed."
+            );
 
         return new ChannelEnumerable(sctxCarrier, args[0]);
     }
@@ -49,7 +50,6 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     {
         readonly ContextCarrier _sctxCarrier;
         readonly PValue _arg;
-
 
         public ChannelEnumerable(ContextCarrier sctxCarrier, PValue arg)
         {
@@ -69,76 +69,77 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
 
             #region Producer
 
-            Func<PValue> producer =
-                () =>
+            Func<PValue> producer = () =>
+            {
+                using var e = Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator();
+                var doCont = true;
+                var doDisp = false;
+
+                cont:
+                if (e.MoveNext())
                 {
-                    using var e =
-                        Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator
-                            ();
-                    var doCont = true;
-                    var doDisp = false;
+                    peek.Send(true);
+                    data.Send(e.Current);
+                }
+                else
+                {
+                    peek.Send(false);
+                    //doCont = false;
+                    goto shutDown;
+                }
 
-                    cont:
-                    if (e.MoveNext())
-                    {
-                        peek.Send(true);
-                        data.Send(e.Current);
-                    }
-                    else
-                    {
-                        peek.Send(false);
-                        //doCont = false;
-                        goto shutDown;
-                    }
-
-                    wait:
-                    Select.RunStatically(
-                        _sctxCarrier.StackContext,
-                        [
-                            new KeyValuePair<Channel?, PValue>
-                            (
-                                rset, pfunc(
-                                    (_, _) =>
+                wait:
+                Select.RunStatically(
+                    _sctxCarrier.StackContext,
+                    [
+                        new KeyValuePair<Channel?, PValue>(
+                            rset,
+                            pfunc(
+                                (_, _) =>
+                                {
+                                    doCont = true;
+                                    try
                                     {
-                                        doCont = true;
-                                        try
-                                        {
-                                            e.Reset();
-                                        }
-                                        catch (Exception exc)
-                                        {
-                                            rset.Send(
-                                                PType.Object.CreatePValue(exc));
-                                        }
-                                        rset.Send(PType.Null);
-                                        return PType.Null;
-                                    })),
-                            new KeyValuePair<Channel?, PValue>
-                            (
-                                disp, pfunc(
-                                    (_, _) =>
+                                        e.Reset();
+                                    }
+                                    catch (Exception exc)
                                     {
-                                        doCont = false;
-                                        doDisp = true;
-                                        return PType.Null;
-                                    })),
-                            new KeyValuePair<Channel?, PValue>
-                                (null, PType.Null),
-                        ], false);
+                                        rset.Send(PType.Object.CreatePValue(exc));
+                                    }
+                                    rset.Send(PType.Null);
+                                    return PType.Null;
+                                }
+                            )
+                        ),
+                        new KeyValuePair<Channel?, PValue>(
+                            disp,
+                            pfunc(
+                                (_, _) =>
+                                {
+                                    doCont = false;
+                                    doDisp = true;
+                                    return PType.Null;
+                                }
+                            )
+                        ),
+                        new KeyValuePair<Channel?, PValue>(null, PType.Null),
+                    ],
+                    false
+                );
 
-                    //We loop until the dispose command is explicitly given. 
-                    //  -> This way, a reset command can be issued after
-                    //  the complete enumeration has been computed
-                    //  without the enumerator being disposed of prematurely
-                    if (doCont)
-                        goto cont;
-                    else if (! doDisp)
-                        goto wait;
+                //We loop until the dispose command is explicitly given.
+                //  -> This way, a reset command can be issued after
+                //  the complete enumeration has been computed
+                //  without the enumerator being disposed of prematurely
+                if (doCont)
+                    goto cont;
+                else if (!doDisp)
+                    goto wait;
 
-                    //Ignored (part of CallAsync interface)
-                    shutDown:
-                    return PType.Null;
-                };
+                //Ignored (part of CallAsync interface)
+                shutDown:
+                return PType.Null;
+            };
 
             #endregion
 
@@ -157,12 +158,14 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     //  to our producer
     class ChannelEnumerator : IEnumerator<PValue>
     {
-        public ChannelEnumerator(Channel peek,
+        public ChannelEnumerator(
+            Channel peek,
             Channel data,
             Channel rset,
             Channel disp,
             Func<PValue> produce,
-            ContextCarrier sctxCarrier)
+            ContextCarrier sctxCarrier
+        )
         {
             _peek = peek;
             _sctxCarrier = sctxCarrier;
@@ -204,7 +207,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
                 Current = PType.Null;
             }
 
-            if ((bool) _peek.Receive().Value!)
+            if ((bool)_peek.Receive().Value!)
             {
                 Current = _data.Receive();
                 return true;
@@ -244,7 +247,8 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     {
         #region Implementation of IIndirectCall
 
-        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args) => f(sctx, args);
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args) =>
+            f(sctx, args);
 
         #endregion
 
@@ -254,7 +258,7 @@ public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     static PValue pfunc(PFuncImpl f) => new PFunc(f);
 
     delegate PValue PFuncImpl(StackContext sctx, ReadOnlySpan<PValue> args);
-    
+
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
         var carrier = new ContextCarrier();

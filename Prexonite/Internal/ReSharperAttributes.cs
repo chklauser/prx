@@ -1,12 +1,7 @@
-﻿
-
-
-
 // ReSharper disable CheckNamespace
 namespace JetBrains.Annotations;
-    // ReSharper restore CheckNamespace
 
-
+// ReSharper restore CheckNamespace
 
 /// <summary>
 /// Indicates that marked element should be localized or not.
@@ -19,9 +14,7 @@ public sealed class LocalizationRequiredAttribute : Attribute
     /// <see cref="Required"/> set to <see langword="true"/>.
     /// </summary>
     public LocalizationRequiredAttribute()
-        : this(true)
-    {
-    }
+        : this(true) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LocalizationRequiredAttribute"/> class.
@@ -62,7 +55,7 @@ public sealed class LocalizationRequiredAttribute : Attribute
 }
 
 /// <summary>
-/// Indicates that marked method builds string by format pattern and (optional) arguments. 
+/// Indicates that marked method builds string by format pattern and (optional) arguments.
 /// Parameter, which contains format string, should be given in constructor.
 /// The format string should be in <see cref="string.Format(IFormatProvider,string,object[])"/> -like form
 /// </summary>
@@ -88,13 +81,25 @@ public sealed class StringFormatMethodAttribute : Attribute
 /// <summary>
 /// Indicates that the value of marked element could be <c>null</c> sometimes, so the check for <c>null</c> is necessary before its usage
 /// </summary>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Delegate | AttributeTargets.Field)]
+[AttributeUsage(
+    AttributeTargets.Method
+        | AttributeTargets.Parameter
+        | AttributeTargets.Property
+        | AttributeTargets.Delegate
+        | AttributeTargets.Field
+)]
 public sealed class CanBeNullAttribute : Attribute;
 
 /// <summary>
 /// Indicates that the value of marked element could never be <c>null</c>
 /// </summary>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Delegate | AttributeTargets.Field)]
+[AttributeUsage(
+    AttributeTargets.Method
+        | AttributeTargets.Parameter
+        | AttributeTargets.Property
+        | AttributeTargets.Delegate
+        | AttributeTargets.Field
+)]
 public sealed class NotNullAttribute : Attribute;
 
 /// <summary>
@@ -127,9 +132,7 @@ public sealed class NotNullAttribute : Attribute;
 public sealed class ContractAnnotationAttribute : Attribute
 {
     public ContractAnnotationAttribute(string fdt)
-        : this(fdt, false)
-    {
-    }
+        : this(fdt, false) { }
 
     public ContractAnnotationAttribute(string fdt, bool forceFullStates)
     {
@@ -137,12 +140,11 @@ public sealed class ContractAnnotationAttribute : Attribute
         ForceFullStates = forceFullStates;
     }
 
-// ReSharper disable InconsistentNaming
-    public string FDT { [UsedImplicitly]
-        get; private set; }
-// ReSharper restore InconsistentNaming
-    public bool ForceFullStates { [UsedImplicitly]
-        get; private set; }
+    // ReSharper disable InconsistentNaming
+    public string FDT { [UsedImplicitly] get; private set; }
+
+    // ReSharper restore InconsistentNaming
+    public bool ForceFullStates { [UsedImplicitly] get; private set; }
 }
 
 /// <summary>
@@ -157,7 +159,10 @@ public sealed class UsedImplicitlyAttribute : Attribute
         : this(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.Default) { }
 
     [UsedImplicitly]
-    public UsedImplicitlyAttribute(ImplicitUseKindFlags useKindFlags, ImplicitUseTargetFlags targetFlags)
+    public UsedImplicitlyAttribute(
+        ImplicitUseKindFlags useKindFlags,
+        ImplicitUseTargetFlags targetFlags
+    )
     {
         UseKindFlags = useKindFlags;
         TargetFlags = targetFlags;
@@ -192,7 +197,10 @@ public sealed class MeansImplicitUseAttribute : Attribute
         : this(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.Default) { }
 
     [UsedImplicitly]
-    public MeansImplicitUseAttribute(ImplicitUseKindFlags useKindFlags, ImplicitUseTargetFlags targetFlags)
+    public MeansImplicitUseAttribute(
+        ImplicitUseKindFlags useKindFlags,
+        ImplicitUseTargetFlags targetFlags
+    )
     {
         UseKindFlags = useKindFlags;
         TargetFlags = targetFlags;
@@ -200,9 +208,7 @@ public sealed class MeansImplicitUseAttribute : Attribute
 
     [UsedImplicitly]
     public MeansImplicitUseAttribute(ImplicitUseKindFlags useKindFlags)
-        : this(useKindFlags, ImplicitUseTargetFlags.Default)
-    {
-    }
+        : this(useKindFlags, ImplicitUseTargetFlags.Default) { }
 
     [UsedImplicitly]
     public MeansImplicitUseAttribute(ImplicitUseTargetFlags targetFlags)
@@ -274,7 +280,7 @@ public enum ImplicitUseTargetFlags
 public sealed class PublicAPIAttribute : Attribute;
 
 /// <summary>
-/// Tells code analysis engine if the parameter is completely handled when the invoked method is on stack. 
+/// Tells code analysis engine if the parameter is completely handled when the invoked method is on stack.
 /// If the parameter is delegate, indicates that delegate is executed while the method is executed.
 /// If the parameter is enumerable, indicates that it is enumerated while the method is executed.
 /// </summary>

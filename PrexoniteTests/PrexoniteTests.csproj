@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsTestProject>true</IsTestProject>
@@ -8,9 +7,11 @@
   <ItemGroup>
     <PackageReference Include="System.Text.RegularExpressions" />
     <ProjectReference Include="..\Prexonite\Prexonite.csproj" />
-    <ProjectReference Include="..\PrexoniteTests.Generators\PrexoniteTests.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference
+      Include="..\PrexoniteTests.Generators\PrexoniteTests.Generators.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
     <PackageReference Include="NUnit" />
@@ -21,9 +22,8 @@
     <AdditionalFiles Include="psr-tests\testconfig.json" />
     <AdditionalFiles Include="psr-tests\_2\testconfig.json" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Folder Include="psr-tests\_2" />
   </ItemGroup>
-  
 </Project>

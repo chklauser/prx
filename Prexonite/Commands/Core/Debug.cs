@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler;
 
 namespace Prexonite.Commands.Core;
@@ -20,9 +18,7 @@ public class Debug : PCommand
         if (debugging)
             foreach (var arg in args)
             {
-                println.Run(
-                    sctx,
-                    string.Concat("DEBUG ??? = ", arg.CallToString(sctx)));
+                println.Run(sctx, string.Concat("DEBUG ??? = ", arg.CallToString(sctx)));
             }
         return debugging;
     }

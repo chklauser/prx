@@ -1,5 +1,3 @@
-
-
 namespace Prexonite;
 
 public class IndirectCallContext : StackContext
@@ -8,34 +6,40 @@ public class IndirectCallContext : StackContext
 
     public IndirectCallContext(StackContext parent, IIndirectCall callable, PValue[] args)
         : this(
-            parent, parent.ParentEngine, parent.ParentApplication, parent.ImportedNamespaces,
-            callable, args)
-    {
-    }
+            parent,
+            parent.ParentEngine,
+            parent.ParentApplication,
+            parent.ImportedNamespaces,
+            callable,
+            args
+        ) { }
 
-    public IndirectCallContext(Engine parentEngine,
-        Application parentApplication,
-        IEnumerable<string> importedNamespaces,
-        IIndirectCall callable,
-        PValue[] args)
-        : this(null, parentEngine, parentApplication, importedNamespaces, callable, args)
-    {
-    }
-
-    public IndirectCallContext(StackContext? originalSctx,
+    public IndirectCallContext(
         Engine parentEngine,
         Application parentApplication,
         IEnumerable<string> importedNamespaces,
         IIndirectCall callable,
-        PValue[] args)
+        PValue[] args
+    )
+        : this(null, parentEngine, parentApplication, importedNamespaces, callable, args) { }
+
+    public IndirectCallContext(
+        StackContext? originalSctx,
+        Engine parentEngine,
+        Application parentApplication,
+        IEnumerable<string> importedNamespaces,
+        IIndirectCall callable,
+        PValue[] args
+    )
     {
         if (importedNamespaces == null)
             throw new ArgumentNullException(nameof(importedNamespaces));
 
         ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-        ParentApplication = parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
-        ImportedNamespaces = importedNamespaces as SymbolCollection ??
-            new SymbolCollection(importedNamespaces);
+        ParentApplication =
+            parentApplication ?? throw new ArgumentNullException(nameof(parentApplication));
+        ImportedNamespaces =
+            importedNamespaces as SymbolCollection ?? new SymbolCollection(importedNamespaces);
         Callable = callable ?? throw new ArgumentNullException(nameof(callable));
         Arguments = args ?? throw new ArgumentNullException(nameof(args));
         _originalStackContext = originalSctx;

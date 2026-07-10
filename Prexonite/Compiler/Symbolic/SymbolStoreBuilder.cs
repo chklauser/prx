@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.ObjectModel;
 using JetBrains.Annotations;
 
@@ -7,19 +5,23 @@ namespace Prexonite.Compiler.Symbolic;
 
 public abstract class SymbolStoreBuilder
 {
-    public abstract void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source, IEnumerable<SymbolTransferDirective> directives);
+    public abstract void Forward(
+        SymbolOrigin sourceDescription,
+        ISymbolView<Symbol> source,
+        IEnumerable<SymbolTransferDirective> directives
+    );
     public abstract SymbolStore ToSymbolStore();
 
     public static SymbolStoreBuilder Create(ISymbolView<Symbol>? existingNamespace)
     {
-        return new Impl{ ExistingNamespace = existingNamespace };
+        return new Impl { ExistingNamespace = existingNamespace };
     }
 
     public static SymbolStoreBuilder Create()
     {
         return new Impl();
     }
-        
+
     public abstract ISymbolView<Symbol>? ExistingNamespace { get; set; }
 
     #region Internal data structures
@@ -37,8 +39,7 @@ public abstract class SymbolStoreBuilder
         }
     }
 
-    sealed class ImportStatementSet :
-        KeyedCollection<SymbolOrigin, ImportStatement>
+    sealed class ImportStatementSet : KeyedCollection<SymbolOrigin, ImportStatement>
     {
         protected override SymbolOrigin GetKeyForItem(ImportStatement item)
         {
@@ -71,8 +72,11 @@ public abstract class SymbolStoreBuilder
 
         readonly ImportStatementSet _statements = new();
 
-        public override void Forward(SymbolOrigin sourceDescription, ISymbolView<Symbol> source,
-            IEnumerable<SymbolTransferDirective> directives)
+        public override void Forward(
+            SymbolOrigin sourceDescription,
+            ISymbolView<Symbol> source,
+            IEnumerable<SymbolTransferDirective> directives
+        )
         {
             if (!_statements.TryGet(sourceDescription, out var statement))
                 _statements.Add(statement = new(source, sourceDescription));
@@ -92,13 +96,16 @@ public abstract class SymbolStoreBuilder
             var drops = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var renames = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-            // Convert directives into a pair of indexes (drops and renames) 
+            // Convert directives into a pair of indexes (drops and renames)
             // for efficient application
             foreach (var directive in import)
             {
                 // ReSharper disable RedundantArgumentName
                 directive.Match(
-                    onWildcard: () => { isWildcard = true; },
+                    onWildcard: () =>
+                    {
+                        isWildcard = true;
+                    },
                     onRename: r =>
                     {
                         if (!renames.TryGetValue(r.OriginalName, out var destinations))
@@ -116,27 +123,37 @@ public abstract class SymbolStoreBuilder
                 : _applyDirectivesSelective(import, import.Source);
         }
 
-        IEnumerable<SymbolInfo> _applyDirectivesSelective(ImportStatement import,
-            ISymbolView<Symbol> symbolSource)
+        IEnumerable<SymbolInfo> _applyDirectivesSelective(
+            ImportStatement import,
+            ISymbolView<Symbol> symbolSource
+        )
         {
-            return import.SelectMaybe(SymbolTransferDirective.Matching<SymbolInfo?>(() => null, rename =>
-                {
-                    var originalName = rename.OriginalName;
-                    if (!symbolSource.TryGet(originalName, out var symbol))
+            return import.SelectMaybe(
+                SymbolTransferDirective.Matching<SymbolInfo?>(
+                    () => null,
+                    rename =>
                     {
-                        symbol = _createSymbolNotFoundSymbol(import, originalName);
-                    }
+                        var originalName = rename.OriginalName;
+                        if (!symbolSource.TryGet(originalName, out var symbol))
+                        {
+                            symbol = _createSymbolNotFoundSymbol(import, originalName);
+                        }
 
-                    return _createSymbolInfo(import, rename.NewName, symbol);
-                    // ReSharper disable ImplicitlyCapturedClosure
-                }, _ => null
-            ));
+                        return _createSymbolInfo(import, rename.NewName, symbol);
+                        // ReSharper disable ImplicitlyCapturedClosure
+                    },
+                    _ => null
+                )
+            );
             // ReSharper restore ImplicitlyCapturedClosure
         }
 
-        static IEnumerable<SymbolInfo> _applyDirectivesWildcard(ImportStatement import,
+        static IEnumerable<SymbolInfo> _applyDirectivesWildcard(
+            ImportStatement import,
             IEnumerable<KeyValuePair<string, Symbol>> symbolSource,
-            HashSet<string> drops, Dictionary<string, List<string>> renames)
+            HashSet<string> drops,
+            Dictionary<string, List<string>> renames
+        )
         {
             var mentioned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return symbolSource
@@ -158,13 +175,23 @@ public abstract class SymbolStoreBuilder
                 .Append(_missingErrorSymbols(import, renames, mentioned));
         }
 
-        static IEnumerable<SymbolInfo> _missingErrorSymbols(ImportStatement import,
-            Dictionary<string, List<string>> renames, HashSet<string> mentioned)
+        static IEnumerable<SymbolInfo> _missingErrorSymbols(
+            ImportStatement import,
+            Dictionary<string, List<string>> renames,
+            HashSet<string> mentioned
+        )
         {
             return renames
                 .Where(kvp => !mentioned.Contains(kvp.Key))
-                .SelectMany(kvp => kvp.Value
-                    .Select(dest => _createSymbolInfo(import, dest, _createSymbolNotFoundSymbol(import, kvp.Key))));
+                .SelectMany(kvp =>
+                    kvp.Value.Select(dest =>
+                        _createSymbolInfo(
+                            import,
+                            dest,
+                            _createSymbolNotFoundSymbol(import, kvp.Key)
+                        )
+                    )
+                );
         }
 
         static Symbol _createSymbolNotFoundSymbol(ImportStatement import, string n)
@@ -181,8 +208,11 @@ public abstract class SymbolStoreBuilder
 
         static bool _matchingName(string name, SymbolTransferDirective directive)
         {
-            return directive.Match(() => false, r => Engine.StringsAreEqual(name, r.OriginalName),
-                d => Engine.StringsAreEqual(name, d.Name));
+            return directive.Match(
+                () => false,
+                r => Engine.StringsAreEqual(name, r.OriginalName),
+                d => Engine.StringsAreEqual(name, d.Name)
+            );
         }
 
         static SymbolInfo _createSymbolInfo(ImportStatement import, string name, Symbol symbol)
@@ -192,5 +222,4 @@ public abstract class SymbolStoreBuilder
     }
 
     #endregion
-
 }

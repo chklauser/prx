@@ -1,5 +1,3 @@
-
-
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 
@@ -14,9 +12,7 @@ namespace Prexonite.Commands.Core;
 /// </remarks>
 public sealed class Pair : PCommand, ICilCompilerAware
 {
-    Pair()
-    {
-    }
+    Pair() { }
 
     public static Pair Instance { get; } = new();
 
@@ -38,7 +34,8 @@ public sealed class Pair : PCommand, ICilCompilerAware
                 new PValueKeyValuePair(
                     args[0] ?? PType.Null.CreatePValue(),
                     args[1] ?? PType.Null.CreatePValue()
-                ));
+                )
+            );
     }
 
     #region ICilCompilerAware Members

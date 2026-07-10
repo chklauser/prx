@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
@@ -11,9 +9,7 @@ namespace Prexonite.Commands.Core;
 /// </summary>
 public sealed class LoadAssembly : PCommand, ICilCompilerAware
 {
-    LoadAssembly()
-    {
-    }
+    LoadAssembly() { }
 
     public static LoadAssembly Instance { get; } = new();
 
@@ -45,8 +41,7 @@ public sealed class LoadAssembly : PCommand, ICilCompilerAware
             var ldr = sctx as Loader ?? new Loader(ldrOptions);
             var asmFile = ldr.ApplyLoadPaths(path);
             if (asmFile == null)
-                throw new FileNotFoundException("Prexonite can't load assembly located in " +
-                    path);
+                throw new FileNotFoundException("Prexonite can't load assembly located in " + path);
 
             Assembly assembly;
             if (asmFile is FileSpec { FullName: var asmFilePath })

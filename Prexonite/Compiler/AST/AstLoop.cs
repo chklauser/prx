@@ -1,14 +1,11 @@
-
 namespace Prexonite.Compiler.Ast;
 
-public abstract class AstLoop : AstNode,
-    IAstHasBlocks
-
+public abstract class AstLoop : AstNode, IAstHasBlocks
 {
     internal AstLoop(ISourcePosition p, AstBlock parentBlock)
         : base(p)
     {
-        Block = new(p, parentBlock, prefix:"body");
+        Block = new(p, parentBlock, prefix: "body");
     }
 
     #region IAstHasBlocks Members

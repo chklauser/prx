@@ -1,11 +1,8 @@
-
-
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstReturn : AstNode,
-    IAstHasExpressions
+public class AstReturn : AstNode, IAstHasExpressions
 {
     public ReturnVariant ReturnVariant;
     public AstExpr? Expression;
@@ -17,9 +14,7 @@ public class AstReturn : AstNode,
     }
 
     internal AstReturn(Parser p, ReturnVariant returnVariant)
-        : this(p.scanner.File, p.t.line, p.t.col, returnVariant)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, returnVariant) { }
 
     #region IAstHasExpressions Members
 
@@ -29,8 +24,10 @@ public class AstReturn : AstNode,
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Value)
-            throw new NotSupportedException("Return nodes cannot be used with value stack semantics. (They don't produce any values)");
+        if (stackSemantics == StackSemantics.Value)
+            throw new NotSupportedException(
+                "Return nodes cannot be used with value stack semantics. (They don't produce any values)"
+            );
 
         var warned = false;
         if (target.Function.Meta[Coroutine.IsCoroutineKey].Switch)
@@ -48,25 +45,25 @@ public class AstReturn : AstNode,
         switch (ReturnVariant)
         {
             case ReturnVariant.Exit:
-                target.Emit(Position,OpCode.ret_exit);
+                target.Emit(Position, OpCode.ret_exit);
                 break;
             case ReturnVariant.Set:
                 if (Expression == null)
                     throw new PrexoniteException("Return assignment requires an expression.");
                 Expression.EmitValueCode(target);
-                target.Emit(Position,OpCode.ret_set);
+                target.Emit(Position, OpCode.ret_set);
                 break;
             case ReturnVariant.Continue:
                 if (Expression != null)
                 {
                     Expression.EmitValueCode(target);
-                    target.Emit(Position,OpCode.ret_set);
+                    target.Emit(Position, OpCode.ret_set);
                     _warnInCoroutines(target, ref warned);
                 }
-                target.Emit(Position,OpCode.ret_continue);
+                target.Emit(Position, OpCode.ret_continue);
                 break;
             case ReturnVariant.Break:
-                target.Emit(Position,OpCode.ret_break);
+                target.Emit(Position, OpCode.ret_break);
                 break;
         }
     }
@@ -75,19 +72,27 @@ public class AstReturn : AstNode,
     {
         if (!warned && _isInProtectedBlock(target))
         {
-            target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
-                Resources.AstReturn_Warn_YieldInProtectedBlock,
-                Position, MessageClasses.YieldFromProtectedBlock));
+            target.Loader.ReportMessage(
+                Message.Create(
+                    MessageSeverity.Warning,
+                    Resources.AstReturn_Warn_YieldInProtectedBlock,
+                    Position,
+                    MessageClasses.YieldFromProtectedBlock
+                )
+            );
             warned = true;
         }
     }
 
     static bool _isInProtectedBlock(CompilerTarget target)
     {
-        return
-            target.ScopeBlocks.OfType<AstScopedBlock>().Any(
-                sb => sb.LexicalScope is AstForeachLoop ||
-                    sb.LexicalScope is AstTryCatchFinally || sb.LexicalScope is AstUsing);
+        return target
+            .ScopeBlocks.OfType<AstScopedBlock>()
+            .Any(sb =>
+                sb.LexicalScope is AstForeachLoop
+                || sb.LexicalScope is AstTryCatchFinally
+                || sb.LexicalScope is AstUsing
+            );
     }
 
     void _emitTailCallExit(CompilerTarget target)
@@ -95,8 +100,10 @@ public class AstReturn : AstNode,
         if (_optimizeConditionalReturnExpression(target))
             return;
 
-        if (Expression is AstIndirectCall indirectCall
-            && _isStacklessRecursionPossible(target, indirectCall))
+        if (
+            Expression is AstIndirectCall indirectCall
+            && _isStacklessRecursionPossible(target, indirectCall)
+        )
         {
             // specialized approach
             // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
@@ -137,8 +144,7 @@ public class AstReturn : AstNode,
         target.Emit(Position, OpCode.ret_value);
     }
 
-    static bool _isStacklessRecursionPossible(CompilerTarget target,
-        AstIndirectCall symbol)
+    static bool _isStacklessRecursionPossible(CompilerTarget target, AstIndirectCall symbol)
     {
         if (symbol.Subject is not AstReference refNode)
             return false;
@@ -166,7 +172,12 @@ public class AstReturn : AstNode,
         //              expr1
         //          else
         //              expr2
-        var retif = new AstCondition(Position, target.CurrentBlock, cond.Condition, cond.IsNegative);
+        var retif = new AstCondition(
+            Position,
+            target.CurrentBlock,
+            cond.Condition,
+            cond.IsNegative
+        );
 
         var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
         {

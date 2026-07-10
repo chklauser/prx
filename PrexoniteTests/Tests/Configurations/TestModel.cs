@@ -1,5 +1,3 @@
-﻿
-
 namespace PrexoniteTests.Tests.Configurations;
 
 record TestModel

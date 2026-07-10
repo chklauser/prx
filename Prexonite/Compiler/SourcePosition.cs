@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Compiler;
 
 public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
@@ -52,10 +50,13 @@ public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
     /// <filterpriority>2</filterpriority>
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != typeof (SourcePosition)) return false;
-        return Equals((SourcePosition) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != typeof(SourcePosition))
+            return false;
+        return Equals((SourcePosition)obj);
     }
 
     /// <summary>
@@ -72,8 +73,6 @@ public class SourcePosition : ISourcePosition, IEquatable<SourcePosition>
 
     public override string ToString()
     {
-        return File != null
-            ? $"{File} {Line}.{Column}"
-            : $"{Line}.{Column}";
+        return File != null ? $"{File} {Line}.{Column}" : $"{Line}.{Column}";
     }
 }

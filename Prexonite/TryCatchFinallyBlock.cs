@@ -1,4 +1,3 @@
-
 #region Namespace Imports
 
 #endregion
@@ -15,13 +14,11 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     ///     Creates a new try-catch-finally block.
     /// </summary>
     /// <remarks>
-    ///     As there is no initialization with this overload, the resulting 
+    ///     As there is no initialization with this overload, the resulting
     ///     instance will be invalid (<see cref = "IsValid" />) until you set <see cref = "BeginTry" /> and
     ///     <see cref = "EndTry" /> to appropriate values.
     /// </remarks>
-    public TryCatchFinallyBlock()
-    {
-    }
+    public TryCatchFinallyBlock() { }
 
     /// <summary>
     ///     Creates a new try-catch-finally block.
@@ -47,14 +44,17 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         get => _beginTry;
         set
         {
-            if ((_endTry > 0 ? value >= _endTry : false) ||
-                (HasFinally ? value >= _beginFinally : false) ||
-                (HasCatch ? value >= _beginCatch : false))
-                throw new ArgumentOutOfRangeException
-                (
+            if (
+                (_endTry > 0 ? value >= _endTry : false)
+                || (HasFinally ? value >= _beginFinally : false)
+                || (HasCatch ? value >= _beginCatch : false)
+            )
+                throw new ArgumentOutOfRangeException(
                     nameof(value),
-                    "BeginTry(" + value +
-                    ") has to be less than BeginFinally,BeginCatch and EndTry.");
+                    "BeginTry("
+                        + value
+                        + ") has to be less than BeginFinally,BeginCatch and EndTry."
+                );
             _beginTry = value;
         }
     }
@@ -72,15 +72,20 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         get => _beginFinally;
         set
         {
-            if (value > 0 &&
-                ((_beginTry > 0 ? value <= _beginTry : false) ||
-                    (_endTry > 0 ? value >= _endTry : false) ||
-                    (HasCatch ? value >= _beginCatch : false)))
-                throw new ArgumentOutOfRangeException
-                (
+            if (
+                value > 0
+                && (
+                    (_beginTry > 0 ? value <= _beginTry : false)
+                    || (_endTry > 0 ? value >= _endTry : false)
+                    || (HasCatch ? value >= _beginCatch : false)
+                )
+            )
+                throw new ArgumentOutOfRangeException(
                     nameof(value),
-                    "BeginFinally(" + value +
-                    ") has to be within the whole try-catch-finally structure but before a catch-clause.");
+                    "BeginFinally("
+                        + value
+                        + ") has to be within the whole try-catch-finally structure but before a catch-clause."
+                );
             _beginFinally = value;
         }
     }
@@ -98,15 +103,20 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         get => _beginCatch;
         set
         {
-            if (value > 0 &&
-                ((_beginTry > 0 ? value <= _beginTry : false) ||
-                    (_endTry > 0 ? value >= _endTry : false) ||
-                    (HasFinally ? value <= _beginFinally : false)))
-                throw new ArgumentOutOfRangeException
-                (
+            if (
+                value > 0
+                && (
+                    (_beginTry > 0 ? value <= _beginTry : false)
+                    || (_endTry > 0 ? value >= _endTry : false)
+                    || (HasFinally ? value <= _beginFinally : false)
+                )
+            )
+                throw new ArgumentOutOfRangeException(
                     nameof(value),
-                    "BeginCatch(" + value +
-                    ") has to be within whole try-catch-finally structure but after a finally-clause.");
+                    "BeginCatch("
+                        + value
+                        + ") has to be within whole try-catch-finally structure but after a finally-clause."
+                );
             _beginCatch = value;
         }
     }
@@ -124,14 +134,17 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         get => _endTry;
         set
         {
-            if ((_beginTry > 0 ? value <= _beginTry : false) ||
-                (HasCatch ? value <= _beginCatch : false) ||
-                (HasFinally ? value <= _beginFinally : false))
-                throw new ArgumentOutOfRangeException
-                (
+            if (
+                (_beginTry > 0 ? value <= _beginTry : false)
+                || (HasCatch ? value <= _beginCatch : false)
+                || (HasFinally ? value <= _beginFinally : false)
+            )
+                throw new ArgumentOutOfRangeException(
                     nameof(value),
-                    "EndTry(" + value +
-                    ") has to be greater than BeginTry, BeginFinally and BeginCatch.");
+                    "EndTry("
+                        + value
+                        + ") has to be greater than BeginTry, BeginFinally and BeginCatch."
+                );
             _endTry = value;
         }
     }
@@ -171,9 +184,13 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
             if (!IsValid)
                 return -1;
             else
-                return
-                    (HasFinally ? _beginFinally : HasCatch ? _beginCatch : _endTry) - _beginTry -
-                    1;
+                return (
+                        HasFinally ? _beginFinally
+                        : HasCatch ? _beginCatch
+                        : _endTry
+                    )
+                    - _beginTry
+                    - 1;
         }
     }
 
@@ -184,9 +201,13 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <returns>True if the block handles exceptions at the supplied address, false otherwise.</returns>
     public bool Handles(int address)
     {
-        return
-            address >= _beginTry &&
-            address < (HasFinally ? _beginFinally : HasCatch ? _beginCatch : _endTry);
+        return address >= _beginTry
+            && address
+                < (
+                    HasFinally ? _beginFinally
+                    : HasCatch ? _beginCatch
+                    : _endTry
+                );
     }
 
     /// <summary>
@@ -196,9 +217,7 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <returns>True if the address falls into the "guarded block" (CIL), false otherwise.</returns>
     public bool Spans(int address)
     {
-        return
-            address >= _beginTry &&
-            address < _endTry;
+        return address >= _beginTry && address < _endTry;
     }
 
     /// <summary>
@@ -222,9 +241,10 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <param name = "address">The address where the excpetion has been caught.</param>
     /// <param name = "blocks">An collection of try-catch-finally candidates.</param>
     /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-    public static TryCatchFinallyBlock? Closest
-    (
-        int address, IEnumerable<TryCatchFinallyBlock> blocks)
+    public static TryCatchFinallyBlock? Closest(
+        int address,
+        IEnumerable<TryCatchFinallyBlock> blocks
+    )
     {
         if (blocks == null)
             throw new ArgumentNullException(nameof(blocks));
@@ -233,9 +253,10 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
 
         return blocks
             .Where(block => block.Handles(address))
-            .Aggregate<TryCatchFinallyBlock, TryCatchFinallyBlock?>(null,
-                (current, block) =>
-                    Closer(address, current, block));
+            .Aggregate<TryCatchFinallyBlock, TryCatchFinallyBlock?>(
+                null,
+                (current, block) => Closer(address, current, block)
+            );
     }
 
     /// <summary>
@@ -245,11 +266,9 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <param name = "address">The address where the exception has been caught.</param>
     /// <param name = "blocks">An array of try-catch-finally candidates.</param>
     /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-    public static TryCatchFinallyBlock? Closest
-    (
-        int address, params TryCatchFinallyBlock[] blocks)
+    public static TryCatchFinallyBlock? Closest(int address, params TryCatchFinallyBlock[] blocks)
     {
-        return Closest(address, (ICollection<TryCatchFinallyBlock>) blocks);
+        return Closest(address, (ICollection<TryCatchFinallyBlock>)blocks);
     }
 
     /// <summary>
@@ -260,9 +279,11 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <param name = "b">A try-catch-finally block that handles the address.</param>
     /// <returns>The try-catch-finally block that is closer to the address.
     ///     If neither <paramref name = "a" /> nor <paramref name = "b" /> handle the supplied address, null is returned.</returns>
-    public static TryCatchFinallyBlock? Closer
-    (
-        int address, TryCatchFinallyBlock? a, TryCatchFinallyBlock? b)
+    public static TryCatchFinallyBlock? Closer(
+        int address,
+        TryCatchFinallyBlock? a,
+        TryCatchFinallyBlock? b
+    )
     {
         if (address < 0)
             throw new ArgumentOutOfRangeException(nameof(address), "address must be positive.");
@@ -307,25 +328,29 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     /// <returns>A human-readable representation of the try-catch-finally construct.</returns>
     public override string ToString()
     {
-        return
-            "try{" + _beginTry + (!(HasFinally || HasCatch) ? ", " + (_beginTry + Range) : "") +
-            "}" +
-            (HasFinally
-                ? "finally{" + _beginFinally + (!HasCatch ? ", " + _endTry : "") + "}"
-                : "") +
-            (HasCatch ? "catch{" + _beginCatch + ", " + _endTry + "}" : "");
+        return "try{"
+            + _beginTry
+            + (!(HasFinally || HasCatch) ? ", " + (_beginTry + Range) : "")
+            + "}"
+            + (
+                HasFinally
+                    ? "finally{" + _beginFinally + (!HasCatch ? ", " + _endTry : "") + "}"
+                    : ""
+            )
+            + (HasCatch ? "catch{" + _beginCatch + ", " + _endTry + "}" : "");
     }
 
     public MetaEntry ToMetaEntry()
     {
-        return (MetaEntry) new MetaEntry[]
-        {
-            BeginTry.ToString(),
-            BeginFinally.ToString(),
-            BeginCatch.ToString(),
-            EndTry.ToString(),
-            UsesException,
-        };
+        return (MetaEntry)
+            new MetaEntry[]
+            {
+                BeginTry.ToString(),
+                BeginFinally.ToString(),
+                BeginCatch.ToString(),
+                EndTry.ToString(),
+                UsesException,
+            };
     }
 
     public static implicit operator MetaEntry(TryCatchFinallyBlock? block)
@@ -340,10 +365,13 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != typeof (TryCatchFinallyBlock)) return false;
-        return Equals((TryCatchFinallyBlock) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != typeof(TryCatchFinallyBlock))
+            return false;
+        return Equals((TryCatchFinallyBlock)obj);
     }
 
     public override int GetHashCode()
@@ -351,28 +379,32 @@ public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
         unchecked
         {
             var result = _beginTry;
-            result = (result*397) ^ _beginFinally;
-            result = (result*397) ^ _beginCatch;
-            result = (result*397) ^ _endTry;
-            result = (result*397) ^ UsesException.GetHashCode();
+            result = (result * 397) ^ _beginFinally;
+            result = (result * 397) ^ _beginCatch;
+            result = (result * 397) ^ _endTry;
+            result = (result * 397) ^ UsesException.GetHashCode();
             return result;
         }
     }
 
     public bool Equals(TryCatchFinallyBlock? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return other._beginTry == _beginTry && other._beginFinally == _beginFinally &&
-            other._beginCatch == _beginCatch && other._endTry == _endTry &&
-            other.UsesException.Equals(UsesException);
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
+        return other._beginTry == _beginTry
+            && other._beginFinally == _beginFinally
+            && other._beginCatch == _beginCatch
+            && other._endTry == _endTry
+            && other.UsesException.Equals(UsesException);
     }
 
     public static bool operator ==(TryCatchFinallyBlock? a, TryCatchFinallyBlock? b)
     {
-        if ((object?) a == null && (object?) b == null)
+        if ((object?)a == null && (object?)b == null)
             return true;
-        else if ((object?) a == null || (object?) b == null)
+        else if ((object?)a == null || (object?)b == null)
             return false;
         else
             return a.Equals(b);

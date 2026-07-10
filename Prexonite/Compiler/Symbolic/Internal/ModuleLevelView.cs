@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Symbolic.Internal;
@@ -14,11 +14,14 @@ class ModuleLevelView : SymbolStore
     /// Maps namespaces to already constructed proxies.
     /// </summary>
     /// <remarks>
-    /// This dictionary is shared between all child-<see cref="ModuleLevelView"/>s. 
+    /// This dictionary is shared between all child-<see cref="ModuleLevelView"/>s.
     /// </remarks>
     readonly ConcurrentDictionary<Namespace, LocalNamespaceImpl> _localProxies;
 
-    ModuleLevelView(SymbolStore backingStore, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+    ModuleLevelView(
+        SymbolStore backingStore,
+        ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies
+    )
     {
         BackingStore = backingStore ?? throw new ArgumentNullException(nameof(backingStore));
         _localProxies = localProxies ?? throw new ArgumentNullException(nameof(localProxies));
@@ -53,7 +56,10 @@ class ModuleLevelView : SymbolStore
         /// </remarks>
         string? _prefix;
 
-        internal LocalNamespaceImpl(ISymbolView<Symbol> externalScope, ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+        internal LocalNamespaceImpl(
+            ISymbolView<Symbol> externalScope,
+            ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies
+        )
         {
             _exportScope = Create(externalScope);
             _localView = new(_exportScope, localProxies);
@@ -68,9 +74,10 @@ class ModuleLevelView : SymbolStore
                     throw new ArgumentNullException(nameof(value));
 
                 if (_prefix != null)
-                    throw new InvalidOperationException( 
-                        "The prefix for this namespace is already assigned. " 
-                        + $"(Existing prefix: '{_prefix}', new prefix: '{value}')");
+                    throw new InvalidOperationException(
+                        "The prefix for this namespace is already assigned. "
+                            + $"(Existing prefix: '{_prefix}', new prefix: '{value}')"
+                    );
 
                 _prefix = value;
             }
@@ -95,18 +102,18 @@ class ModuleLevelView : SymbolStore
         {
             if (exportScope == null)
                 throw new ArgumentNullException(nameof(exportScope));
-                
+
             foreach (var newExport in exportScope)
                 _exportScope.Declare(newExport.Key, newExport.Value);
         }
 
-        public override IEnumerable<KeyValuePair<string, Symbol>> Exports => _exportScope.LocalDeclarations;
+        public override IEnumerable<KeyValuePair<string, Symbol>> Exports =>
+            _exportScope.LocalDeclarations;
 
         public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
         {
             return _localView.GetEnumerator();
         }
-
 
         public override bool TryGet(string id, [NotNullWhen(true)] out Symbol? value)
         {
@@ -122,7 +129,7 @@ class ModuleLevelView : SymbolStore
         {
             var ns = nsSymbol.Namespace;
             // Check if we already have a wrap.
-            // This happens when an alias to a wrapped namespace is declared 
+            // This happens when an alias to a wrapped namespace is declared
             // but hasn't been accessed from this namespace until now
             if (ns is LocalNamespaceImpl localNamespace)
             {
@@ -135,14 +142,21 @@ class ModuleLevelView : SymbolStore
                 else
                 {
                     // this namespace comes from a different scope, we need to wrap it
-                    Symbol.Trace.TraceEvent(TraceEventType.Warning, 0,
+                    Symbol.Trace.TraceEvent(
+                        TraceEventType.Warning,
+                        0,
                         "Found LocalNamespace coming from external scope of {0}. Prefix of that local namespace {1}.",
-                        GetType().Name, localNamespace.Prefix);
+                        GetType().Name,
+                        localNamespace.Prefix
+                    );
                 }
             }
-                
-            localNamespace = _localProxies.GetOrAdd(ns, (externalNs, proxies) => 
-                new(externalNs, proxies), _localProxies);
+
+            localNamespace = _localProxies.GetOrAdd(
+                ns,
+                (externalNs, proxies) => new(externalNs, proxies),
+                _localProxies
+            );
 
             return Symbol.CreateNamespace(localNamespace, nsSymbol.Position);
         }
@@ -180,7 +194,8 @@ class ModuleLevelView : SymbolStore
         set => BackingStore.ExternalScope = value;
     }
 
-    public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations => BackingStore.LocalDeclarations;
+    public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations =>
+        BackingStore.LocalDeclarations;
 
     public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
     {

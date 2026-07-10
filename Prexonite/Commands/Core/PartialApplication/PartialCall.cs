@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Commands.Core.PartialApplication;
 
 /// <summary>
@@ -8,24 +6,22 @@ namespace Prexonite.Commands.Core.PartialApplication;
 public class PartialCall : PartialApplicationBase
 {
     public PartialCall(int[] mappings, PValue[] closedArguments)
-        : base(mappings, closedArguments, 1)
-    {
-    }
+        : base(mappings, closedArguments, 1) { }
 
     #region Overrides of PartialApplicationBase
 
-    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments,
-        PValue[] arguments)
+    protected override PValue Invoke(StackContext sctx, PValue[] nonArguments, PValue[] arguments)
     {
         return nonArguments[0].IndirectCall(sctx, arguments);
     }
 
-    protected override bool DoTryDefer(StackContext sctx, PValue[] nonArguments,
+    protected override bool DoTryDefer(
+        StackContext sctx,
+        PValue[] nonArguments,
         PValue[] arguments,
-        [NotNullWhen(true)]
-        out StackContext? partialApplicationContext,
-        [NotNullWhen(false)]
-        out PValue? result)
+        [NotNullWhen(true)] out StackContext? partialApplicationContext,
+        [NotNullWhen(false)] out PValue? result
+    )
     {
         partialApplicationContext = null;
         result = null;
@@ -41,9 +37,12 @@ public class PartialCall : PartialApplicationBase
             }
 
             if (raw is IMaybeStackAware partialApplication)
-                return partialApplication.TryDefer(sctx, arguments,
+                return partialApplication.TryDefer(
+                    sctx,
+                    arguments,
                     out partialApplicationContext,
-                    out result);
+                    out result
+                );
         }
 
         result = Invoke(sctx, nonArguments, arguments);

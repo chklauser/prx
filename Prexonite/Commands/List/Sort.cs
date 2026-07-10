@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands.List;
 
 /// <summary>
@@ -14,9 +12,7 @@ public class Sort : PCommand
     /// </summary>
     public static Sort Instance { get; } = new();
 
-    Sort()
-    {
-    }
+    Sort() { }
 
     #endregion
 
@@ -39,7 +35,7 @@ public class Sort : PCommand
         {
             var set = Map._ToEnumerable(sctx, args[0]);
             lst.AddRange(set);
-            return (PValue) lst;
+            return (PValue)lst;
         }
         else
         {
@@ -55,13 +51,14 @@ public class Sort : PCommand
                         var pdec = f.IndirectCall(sctx, a, b);
                         if (pdec.Type is not IntPType)
                             pdec = pdec.ConvertTo(sctx, PType.Int);
-                        var dec = (int) pdec.Value!;
+                        var dec = (int)pdec.Value!;
                         if (dec != 0)
                             return dec;
                     }
                     return 0;
-                });
-            return (PValue) lst;
+                }
+            );
+            return (PValue)lst;
         }
     }
 

@@ -157,8 +157,10 @@ public sealed class MetaEntry
     public static implicit operator string(MetaEntry item)
     {
         if (item == null)
-            throw new ArgumentNullException(nameof(item),
-                "A null reference cannot be implicitly converted to a meta entry.");
+            throw new ArgumentNullException(
+                nameof(item),
+                "A null reference cannot be implicitly converted to a meta entry."
+            );
         return item.Text;
     }
 
@@ -166,8 +168,10 @@ public sealed class MetaEntry
     public static implicit operator bool(MetaEntry item)
     {
         if (item == null)
-            throw new ArgumentNullException(nameof(item),
-                "A null reference cannot be implicitly converted to a meta entry.");
+            throw new ArgumentNullException(
+                nameof(item),
+                "A null reference cannot be implicitly converted to a meta entry."
+            );
         return item.Switch;
     }
 
@@ -175,8 +179,10 @@ public sealed class MetaEntry
     public static explicit operator MetaEntry[](MetaEntry item)
     {
         if (item == null)
-            throw new ArgumentNullException(nameof(item),
-                "A null reference cannot be explicitly converted to a meta entry.");
+            throw new ArgumentNullException(
+                nameof(item),
+                "A null reference cannot be explicitly converted to a meta entry."
+            );
         return item.List;
     }
 
@@ -190,8 +196,10 @@ public sealed class MetaEntry
     public static implicit operator MetaEntry(string item)
     {
         if (item == null)
-            throw new ArgumentNullException(nameof(item),
-                "A null reference cannot be implicitly converted to a meta entry.");
+            throw new ArgumentNullException(
+                nameof(item),
+                "A null reference cannot be implicitly converted to a meta entry."
+            );
         return new(item);
     }
 
@@ -199,16 +207,20 @@ public sealed class MetaEntry
     public static explicit operator MetaEntry(MetaEntry[] item)
     {
         if (item == null)
-            throw new ArgumentNullException(nameof(item),
-                "A null reference cannot be explicitly converted to a meta entry.");
+            throw new ArgumentNullException(
+                nameof(item),
+                "A null reference cannot be explicitly converted to a meta entry."
+            );
         return new(item);
     }
 
     public static implicit operator PValue(MetaEntry item)
     {
         if (item == null)
-            throw new ArgumentNullException(nameof(item),
-                "A null reference cannot be implicitly converted to a meta entry.");
+            throw new ArgumentNullException(
+                nameof(item),
+                "A null reference cannot be implicitly converted to a meta entry."
+            );
         switch (item.EntryType)
         {
             case Type.Text:
@@ -230,15 +242,16 @@ public sealed class MetaEntry
                 return PType.List.CreatePValue(lst);
             default:
                 throw new PrexoniteException(
-                    "Meta entry type " + item.EntryType + " is not supported.");
+                    "Meta entry type " + item.EntryType + " is not supported."
+                );
         }
     }
 
     public static bool operator ==(MetaEntry? a, MetaEntry? b)
     {
-        if (ReferenceEquals(a,null) && ReferenceEquals(b,null))
+        if (ReferenceEquals(a, null) && ReferenceEquals(b, null))
             return true;
-        else if (ReferenceEquals(a,null) || ReferenceEquals(b,null))
+        else if (ReferenceEquals(a, null) || ReferenceEquals(b, null))
             return false;
         else
         {
@@ -291,12 +304,12 @@ public sealed class MetaEntry
     public override int GetHashCode()
     {
         return EntryType switch
-        {
-            Type.List => _list?.GetHashCode() ?? 0,
-            Type.Switch => _switch.GetHashCode(),
-            Type.Text => _text?.GetHashCode() ?? 0,
-            _ => -1,
-        } ^ (EntryType.GetHashCode() + 23);
+            {
+                Type.List => _list?.GetHashCode() ?? 0,
+                Type.Switch => _switch.GetHashCode(),
+                Type.Text => _text?.GetHashCode() ?? 0,
+                _ => -1,
+            } ^ (EntryType.GetHashCode() + 23);
     }
 
     #endregion
@@ -310,7 +323,7 @@ public sealed class MetaEntry
         var newList = new MetaEntry[list.Length + newEntries.Length];
         Array.Copy(list, newList, list.Length);
         Array.Copy(newEntries, 0, newList, list.Length, newEntries.Length);
-        return (MetaEntry) newList;
+        return (MetaEntry)newList;
     }
 
     MetaEntry[] _asList()
@@ -338,7 +351,8 @@ public sealed class MetaEntry
         if (index + length > list.Length - 1 || index < 0 || length < 0)
             throw new ArgumentOutOfRangeException(
                 nameof(index),
-                $"The supplied index and length {index} are out of the range of 0..{list.Length - 1}.");
+                $"The supplied index and length {index} are out of the range of 0..{list.Length - 1}."
+            );
         var newList = new MetaEntry[list.Length - 1];
         //Copy the elements before the ones to remove
         if (index > 0)
@@ -346,7 +360,7 @@ public sealed class MetaEntry
         //Copy the elements after the ones to remove
         if (index + length < list.Length - 1)
             Array.Copy(list, index + length, newList, index, list.Length - (index + length));
-        return (MetaEntry) newList;
+        return (MetaEntry)newList;
     }
 
     #endregion
@@ -357,20 +371,21 @@ public sealed class MetaEntry
         var proto = new List<MetaEntry>(elements.Count);
         foreach (var pv in elements)
         {
-            if (pv.TryConvertTo(sctx, typeof (MetaEntry), out var pvEntry))
-                proto.Add((MetaEntry) pvEntry.Value!);
-            else switch (pv.Type)
-            {
-                case ListPType _:
-                    proto.Add((MetaEntry) CreateArray(sctx, (List<PValue>) pv.Value!));
-                    break;
-                case BoolPType _:
-                    proto.Add((bool) pv.Value!);
-                    break;
-                default:
-                    proto.Add(pv.CallToString(sctx));
-                    break;
-            }
+            if (pv.TryConvertTo(sctx, typeof(MetaEntry), out var pvEntry))
+                proto.Add((MetaEntry)pvEntry.Value!);
+            else
+                switch (pv.Type)
+                {
+                    case ListPType _:
+                        proto.Add((MetaEntry)CreateArray(sctx, (List<PValue>)pv.Value!));
+                        break;
+                    case BoolPType _:
+                        proto.Add((bool)pv.Value!);
+                        break;
+                    default:
+                        proto.Add(pv.CallToString(sctx));
+                        break;
+                }
         }
         return proto.ToArray();
     }
@@ -454,7 +469,8 @@ public sealed class MetaEntry
                 break;
             default:
                 throw new ArgumentOutOfRangeException(
-                    string.Format(Resources.MetaEntry_EntryTypeUnknownToString, EntryType));
+                    string.Format(Resources.MetaEntry_EntryTypeUnknownToString, EntryType)
+                );
         }
     }
 

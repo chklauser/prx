@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Cil;
@@ -7,8 +5,11 @@ namespace Prexonite.Compiler.Cil;
 /// <summary>
 ///     Wraps a cil extension hint. Should replace existing hints of the same kind.
 /// </summary>
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Cil))]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = nameof(Cil)
+)]
 public class CilExtensionHint : ICilHint
 {
     /// <summary>
@@ -43,8 +44,7 @@ public class CilExtensionHint : ICilHint
     /// <returns>The list of fields to be serialized.</returns>
     public MetaEntry[] GetFields()
     {
-        return (from address in Offsets
-            select (MetaEntry) address.ToString()).ToArray();
+        return (from address in Offsets select (MetaEntry)address.ToString()).ToArray();
     }
 
     #endregion

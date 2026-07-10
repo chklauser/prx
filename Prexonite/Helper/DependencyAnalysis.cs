@@ -1,4 +1,3 @@
-
 #undef DEBUG
 
 using System.Collections;
@@ -11,7 +10,7 @@ namespace Prexonite;
 /// </summary>
 /// <typeparam name = "TKey">Identifier for nodes.</typeparam>
 /// <typeparam name = "TValue">Nodes of the dependency graph.</typeparam>
-public class DependencyAnalysis<TKey, TValue> 
+public class DependencyAnalysis<TKey, TValue>
     where TKey : notnull
     where TValue : class, IDependent<TKey>
 {
@@ -22,9 +21,8 @@ public class DependencyAnalysis<TKey, TValue>
     /// </summary>
     /// <param name = "query">The set of (possibly) interdependent items.</param>
     /// <exception cref = "ArgumentNullException">query is null</exception>
-    public DependencyAnalysis(IEnumerable<TValue> query) : this(query, true)
-    {
-    }
+    public DependencyAnalysis(IEnumerable<TValue> query)
+        : this(query, true) { }
 
     /// <summary>
     ///     Creates a new dependency analysis object from the supplied set of items.
@@ -36,7 +34,8 @@ public class DependencyAnalysis<TKey, TValue>
     ///      name = "ignoreUnknownDependencies" /> is false.</exception>
     public DependencyAnalysis(IEnumerable<TValue> query, bool ignoreUnknownDependencies)
     {
-        if (query == null) throw new ArgumentNullException(nameof(query));
+        if (query == null)
+            throw new ArgumentNullException(nameof(query));
 
         //Add all items
         foreach (var item in query)
@@ -45,8 +44,7 @@ public class DependencyAnalysis<TKey, TValue>
         //Find dependencies
         foreach (var node in _nodes.Values)
         {
-            var dependencies =
-                _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
+            var dependencies = _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
             foreach (var dependencyName in dependencies)
             {
                 if (_nodes.TryGetValue(dependencyName, out var dependency))
@@ -55,17 +53,16 @@ public class DependencyAnalysis<TKey, TValue>
                     dependency.Clients.Add(node);
                 }
                 else if (!ignoreUnknownDependencies)
-                    throw new ArgumentException("Cannot resolve dependency " + dependencyName +
-                        " of " + node.Subject + ".");
+                    throw new ArgumentException(
+                        "Cannot resolve dependency " + dependencyName + " of " + node.Subject + "."
+                    );
                 //else ignore
             }
         }
     }
 
     public DependencyAnalysis(IEnumerable<PValue> query)
-        : this(_acceptPValueSequence(query))
-    {
-    }
+        : this(_acceptPValueSequence(query)) { }
 
     static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
     {
@@ -73,9 +70,7 @@ public class DependencyAnalysis<TKey, TValue>
     }
 
     public DependencyAnalysis(IEnumerable<PValue> query, bool ignoreUnknownDependencies)
-        : this(_acceptPValueSequence(query), ignoreUnknownDependencies)
-    {
-    }
+        : this(_acceptPValueSequence(query), ignoreUnknownDependencies) { }
 
     [DebuggerStepThrough]
     internal class SearchEnv
@@ -114,9 +109,8 @@ public class DependencyAnalysis<TKey, TValue>
             _list = list ?? throw new ArgumentNullException(nameof(list));
         }
 
-        public Group(IEnumerable<Node> nodes) : this(nodes.ToLinkedList())
-        {
-        }
+        public Group(IEnumerable<Node> nodes)
+            : this(nodes.ToLinkedList()) { }
 
         public void CopyTo(Node[] array, int arrayIndex)
         {
@@ -130,7 +124,7 @@ public class DependencyAnalysis<TKey, TValue>
 
         public int Count => _list.Count;
 
-        public bool IsReadOnly => ((ICollection<Node>) _list).IsReadOnly;
+        public bool IsReadOnly => ((ICollection<Node>)_list).IsReadOnly;
 
         public IEnumerator<Node> GetEnumerator()
         {
@@ -139,14 +133,12 @@ public class DependencyAnalysis<TKey, TValue>
 
         public IEnumerable<TValue> GetValues()
         {
-            return from node in _list
-                select node.Subject;
+            return from node in _list select node.Subject;
         }
 
         public IEnumerable<TKey> GetNames()
         {
-            return from node in _list
-                select node.Name;
+            return from node in _list select node.Name;
         }
 
         public TValue[] ToArray()
@@ -201,7 +193,8 @@ public class DependencyAnalysis<TKey, TValue>
     public class Node : ExtendableObject, IEquatable<Node>, INamed<TKey>
     {
         bool _assignmentPending;
-        int _dfbi, _q;
+        int _dfbi,
+            _q;
 
         public bool HasBeenVisited { [DebuggerStepThrough] get; private set; }
 
@@ -219,7 +212,6 @@ public class DependencyAnalysis<TKey, TValue>
         [PublicAPI]
         public HashSet<Node> Clients { [DebuggerStepThrough] get; } = new();
 
-
         [PublicAPI]
         public TValue Subject { [DebuggerStepThrough] get; }
 
@@ -234,8 +226,10 @@ public class DependencyAnalysis<TKey, TValue>
         /// <param name = "other">An object to compare with this object.</param>
         public bool Equals(Node? other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
             return Equals(Name, other.Name) && Equals(other.Subject, Subject);
         }
 
@@ -250,10 +244,13 @@ public class DependencyAnalysis<TKey, TValue>
         /// <filterpriority>2</filterpriority>
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != typeof (Node)) return false;
-            return Equals((Node) obj);
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            if (obj.GetType() != typeof(Node))
+                return false;
+            return Equals((Node)obj);
         }
 
         /// <summary>

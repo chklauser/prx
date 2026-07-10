@@ -1,4 +1,3 @@
-﻿
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
@@ -25,12 +24,12 @@ public abstract partial class VMTests
     {
         const string input1 = """
 
-                              function test1
-                              {
-                                  var x = 5 + 5;
-                              }
+            function test1
+            {
+                var x = 5 + 5;
+            }
 
-                              """;
+            """;
         var ldr = new Loader(engine, target);
         ldr.LoadFromString(input1);
         Assert.AreEqual(0, ldr.ErrorCount);
@@ -40,23 +39,24 @@ public abstract partial class VMTests
         var fctx = new FunctionContext(engine, test1!);
         var x = fctx.LocalVariables["x"];
         Assert.NotNull(x);
-        Assert.IsTrue(
-            x!.Value.Value == null, "variable x must be null in some way.");
+        Assert.IsTrue(x!.Value.Value == null, "variable x must be null in some way.");
         engine.Stack.AddLast(fctx);
         engine.Process();
         Assert.AreEqual(
-            0, engine.Stack.Count, "Machine stack is expected to be empty after execution.");
+            0,
+            engine.Stack.Count,
+            "Machine stack is expected to be empty after execution."
+        );
         Assert.IsNotNull(x.Value, "Value of PVariable is null (violates invariant).");
         Assert.AreEqual(PType.BuiltIn.Int, x.Value.Type.ToBuiltIn());
         Assert.IsNotNull(x.Value.Value, "Result is null (while PType is Int)");
-        Assert.AreEqual(10, (int) x.Value.Value!);
+        Assert.AreEqual(10, (int)x.Value.Value!);
     }
 
     [Test]
     public void IncDecrement()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function test1(x)
             {
@@ -77,31 +77,31 @@ public abstract partial class VMTests
         var x0 = rnd.Next(1, 200);
         var x = x0;
         x++;
-        x = 2*x;
+        x = 2 * x;
         var expected = x--;
 
-        var fctx =
-            target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
+        var fctx = target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
 
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
         Assert.AreEqual(
             expected,
-            (int) rv.Value!,
-            "Return value is expected to be " + expected + ".");
+            (int)rv.Value!,
+            "Return value is expected to be " + expected + "."
+        );
 
         Assert.AreEqual(
             x,
-            (int) fctx.LocalVariables[nameof(x)]!.Value.Value!,
-            "Value of x is supposed to be " + x + ".");
+            (int)fctx.LocalVariables[nameof(x)]!.Value.Value!,
+            "Value of x is supposed to be " + x + "."
+        );
     }
 
     [Test]
     public void LateReturnIsIllegal()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function test1(x)
             {
@@ -118,14 +118,14 @@ public abstract partial class VMTests
         Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
         Assert.IsTrue(
             ldr.Errors[0].Text.Contains("Return value assignment is no longer supported."),
-            "The compiler did not reject a return value assignment.");
+            "The compiler did not reject a return value assignment."
+        );
     }
 
     [Test]
     public void Return()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function twice(v) = 2*v;
             function complicated(x,y) does
@@ -153,19 +153,20 @@ public abstract partial class VMTests
 
         //Test simple
         var v0 = rnd.Next(1, 100);
-        var expected = 2*v0;
+        var expected = 2 * v0;
 
         var result = target.Functions["twice"]!.Run(engine, [v0]);
         Assert.AreEqual(
             PType.BuiltIn.Int,
             result.Type.ToBuiltIn(),
-            "Result is expected to be an integer. (twice)");
-        Assert.AreEqual(expected, (int) result.Value!);
+            "Result is expected to be an integer. (twice)"
+        );
+        Assert.AreEqual(expected, (int)result.Value!);
 
-        //Test complicated            
+        //Test complicated
         var x0 = rnd.Next(1, 100);
         var y0 = rnd.Next(1, 100);
-        var z = x0*y0;
+        var z = x0 * y0;
         var x1 = z - x0;
         var y1 = x1 + z;
         expected = y1 + x1;
@@ -174,16 +175,16 @@ public abstract partial class VMTests
         Assert.AreEqual(
             PType.BuiltIn.Int,
             result.Type.ToBuiltIn(),
-            "Result is expected to be an integer. (complicated)");
-        Assert.AreEqual(expected, (int) result.Value!);
+            "Result is expected to be an integer. (complicated)"
+        );
+        Assert.AreEqual(expected, (int)result.Value!);
     }
 
     [Test]
     [SuppressMessage("ReSharper", "UselessBinaryOperation")]
     public void FunctionAndGlobals()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             var J; //= random();
             function h(x) = x+2+J;
@@ -209,22 +210,20 @@ public abstract partial class VMTests
         //Expectation
         var x0 = rnd.Next(1, 589);
         j = 0;
-        j = 7*x0 + 2 + j;
-        var expected = (x0 + 2 + j)/j;
+        j = 7 * x0 + 2 + j;
+        var expected = (x0 + 2 + j) / j;
 
-        var fctx =
-            target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
+        var fctx = target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
-        Assert.AreEqual(expected, (int) rv.Value!);
+        Assert.AreEqual(expected, (int)rv.Value!);
     }
 
     [Test]
     public void FunctionCallSimple()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             var J;
             function h(x) = 2+x+J;
@@ -247,25 +246,23 @@ public abstract partial class VMTests
         const int j0 = 0;
         var x0 = rnd.Next(1, 300);
         const int x1 = 2 + j0 + j0;
-        const int j1 = 2 + 7*x1 + j0;
-        const int expected = (2 + x1 + j1)/j1;
+        const int j1 = 2 + 7 * x1 + j0;
+        const int expected = (2 + x1 + j1) / j1;
 
-        var fctx =
-            target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
+        var fctx = target.Functions["test1"]!.CreateFunctionContext(engine, [x0]);
         engine.Stack.AddLast(fctx);
         var rv = engine.Process();
         Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
-        Assert.AreEqual(expected, (int) fctx.ReturnValue.Value!);
+        Assert.AreEqual(expected, (int)fctx.ReturnValue.Value!);
 
         Assert.AreEqual(PType.BuiltIn.Int, target.Variables["J"]!.Value.Type.ToBuiltIn());
-        Assert.AreEqual(j1, (int) target.Variables["J"]!.Value.Value!);
+        Assert.AreEqual(j1, (int)target.Variables["J"]!.Value.Value!);
     }
 
     [Test]
     public void FibRecursion()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function fib(n) does
             {
@@ -284,24 +281,22 @@ public abstract partial class VMTests
         {
             TestContext.WriteLine("\nFib(" + n + ") do ");
             var expected = _fibonacci(n);
-            var fctx =
-                target.Functions["fib"]!.CreateFunctionContext(engine, [n]);
+            var fctx = target.Functions["fib"]!.CreateFunctionContext(engine, [n]);
             engine.Stack.AddLast(fctx);
             var rv = engine.Process();
-            Assert.AreEqual(
-                PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
+            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
             Assert.AreEqual(
                 expected,
-                (int) rv.Value!,
-                "Fib(" + n + ") = " + expected + " and not " + (int) rv.Value);
+                (int)rv.Value!,
+                "Fib(" + n + ") = " + expected + " and not " + (int)rv.Value
+            );
         }
     }
 
     [Test]
     public void Recursion()
     {
-        const string input1 =
-            """
+        const string input1 = """
 
             function fib(n) does asm
             {
@@ -340,26 +335,22 @@ public abstract partial class VMTests
         {
             TestContext.WriteLine("\nFib(" + n + ") do ");
             var expected = _fibonacci(n);
-            var fctx =
-                target.Functions["fib"]!.CreateFunctionContext(engine, [n]);
+            var fctx = target.Functions["fib"]!.CreateFunctionContext(engine, [n]);
             engine.Stack.AddLast(fctx);
             var rv = engine.Process();
-            Assert.AreEqual(
-                PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
+            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
             Assert.AreEqual(
                 expected,
-                (int) rv.Value!,
-                "Fib(" + n + ") = " + expected + " and not " + (int) rv.Value);
+                (int)rv.Value!,
+                "Fib(" + n + ") = " + expected + " and not " + (int)rv.Value
+            );
         }
     }
 
     [DebuggerNonUserCode]
     static int _fibonacci(int n)
     {
-        return
-            n <= 2
-                ? 1
-                : _fibonacci(n - 1) + _fibonacci(n - 2);
+        return n <= 2 ? 1 : _fibonacci(n - 1) + _fibonacci(n - 2);
     }
 
     [Test]
@@ -381,14 +372,15 @@ public abstract partial class VMTests
                 return sum;
             }
 
-            """);
+            """
+        );
 
         var rnd = new Random();
         var m = rnd.Next(1, 13);
         var iterations = rnd.Next(3, 10);
         var sum = 0;
         for (var i = 0; i < iterations; i++)
-            sum += m*i + 12;
+            sum += m * i + 12;
         var expected = sum;
 
         ExpectNamed("main", expected, m, iterations);
@@ -432,16 +424,16 @@ public abstract partial class VMTests
                 return print\static\buffer.ToString;
             }
 
-            """);
+            """
+        );
         var buffer = new StringBuilder();
         const int max = 20;
-        var aList = new List<string>(
-        [
+        var aList = new List<string>([
             GenerateRandomString(5),
-                GenerateRandomString(10),
-                GenerateRandomString(15),
-                GenerateRandomString(3),
-                GenerateRandomString(5),
+            GenerateRandomString(10),
+            GenerateRandomString(15),
+            GenerateRandomString(3),
+            GenerateRandomString(5),
         ]);
 
         foreach (var elem in aList)
@@ -463,7 +455,8 @@ public abstract partial class VMTests
                 return System::Int32.Parse(rawInteger);
             }
 
-            """);
+            """
+        );
         var rnd = new Random();
         var expected = rnd.Next(1, 45);
         Expect(expected, expected.ToString());
@@ -518,7 +511,8 @@ public abstract partial class VMTests
                 return G;
             }
 
-            """);
+            """
+        );
         const string tt = "1212";
         const string tx = "11112";
         const string xT = "2112";
@@ -561,7 +555,8 @@ public abstract partial class VMTests
                 return buffer;
             }
 
-            """);
+            """
+        );
 
         var str = Guid.NewGuid().ToString("N")[..3];
         var rnd = new Random();
@@ -594,7 +589,8 @@ public abstract partial class VMTests
 
             function main(a,b,c) = work(a,b,c).ToString;
 
-            """);
+            """
+        );
         var a = Guid.NewGuid().ToString("N");
         var b = Guid.NewGuid().ToString("N");
         var c = Guid.NewGuid().ToString("N");
@@ -615,17 +611,19 @@ public abstract partial class VMTests
                     for (var i = args.Length - 1; i > -1; i--)
                         sb.Append(args[i].CallToString(localSctx));
                     return sb.ToString();
-                }));
+                }
+            )
+        );
 
-        var list =
-            new[] {"the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"};
+        var list = new[] { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
         engine.Commands.AddUserCommand(
             "theList",
-            new DelegatePCommand(
-                (localSctx, _) => localSctx.CreateNativePValue(list)));
+            new DelegatePCommand((localSctx, _) => localSctx.CreateNativePValue(list))
+        );
         Compile(
-            @"function main = conRev(theList[0], theList[1], theList[2], theList[3], theList[4], theList[5], theList[6], theList[7], theList[8]);");
+            @"function main = conRev(theList[0], theList[1], theList[2], theList[3], theList[4], theList[5], theList[6], theList[7], theList[8]);"
+        );
 
         var buffer = new StringBuilder();
         for (var i = list.Length - 1; i > -1; i--)
@@ -647,8 +645,7 @@ public abstract partial class VMTests
 
         public IEnumerator<string> GetEnumerator()
         {
-            var words = _input.Split(' ', '\t', '\n',
-                '\r');
+            var words = _input.Split(' ', '\t', '\n', '\r');
 
             foreach (var word in words)
                 if (word.Length > 0)
@@ -658,7 +655,7 @@ public abstract partial class VMTests
 
             foreach (var word in words)
                 if (word.Length > 0)
-                    if (word[0]%2 == 0)
+                    if (word[0] % 2 == 0)
                         yield return word.Insert(1, "\\").ToUpperInvariant();
                     else
                         yield return word.ToLowerInvariant();
@@ -720,8 +717,9 @@ public abstract partial class VMTests
                 return i;
             }
 
-            """);
-        Expect(5, PType.List.CreatePValue(new PValue[] {1, 2, 3, 4, 5}));
+            """
+        );
+        Expect(5, PType.List.CreatePValue(new PValue[] { 1, 2, 3, 4, 5 }));
     }
 
     [Test]
@@ -766,7 +764,8 @@ public abstract partial class VMTests
                 return cnt;
             }
 
-            """);
+            """
+        );
 
         ExpectNamed("printList", lst._PrintList(), sctx.CreateNativePValue(lst));
         ExpectNamed("countList", lst._CountList(), sctx.CreateNativePValue(lst));
@@ -796,7 +795,8 @@ public abstract partial class VMTests
                 return buffer.ToString;
             }
 
-            """);
+            """
+        );
         var buffer = new StringBuilder();
         var hw = new StringBuilder("Hello World");
         var rnd = new Random();
@@ -816,36 +816,36 @@ public abstract partial class VMTests
     [Test]
     public void PartialInitialization()
     {
-        var ldr =
-            Compile(
-                """
+        var ldr = Compile(
+            """
 
 
-                Add System::Text to Import;
+            Add System::Text to Import;
 
-                var buffer = new System::Text::StringBuilder;
-                function print does foreach( buffer.Append in var args);
+            var buffer = new System::Text::StringBuilder;
+            function print does foreach( buffer.Append in var args);
 
-                var L1 = "1o1";
-                var L2;
+            var L1 = "1o1";
+            var L2;
 
-                function main(level)
-                {
-                    unless( level < 1)
-                       print("#1=",L1,";");
-                    
-                    unless (level < 2)
-                       print("#2=",L2,";");
+            function main(level)
+            {
+                unless( level < 1)
+                   print("#1=",L1,";");
+                
+                unless (level < 2)
+                   print("#2=",L2,";");
 
-                    declare var L3;
+                declare var L3;
 
-                    unless (level < 3)
-                        print("#3=",L3,";");
+                unless (level < 3)
+                    print("#3=",L3,";");
 
-                    return buffer.ToString; 
-                }
+                return buffer.ToString; 
+            }
 
-                """);
+            """
+        );
 
         Expect("#1=1o1;", 1);
 
@@ -861,7 +861,8 @@ public abstract partial class VMTests
                 buffer = new System::Text::StringBuilder;
             }
 
-            """);
+            """
+        );
         Expect("#1=1o2;#2=2p2;", 2);
 
         //Continue compilation using a different loader
@@ -875,7 +876,8 @@ public abstract partial class VMTests
             declare var buffer;
             { buffer = new System::Text::StringBuilder; }
 
-            """);
+            """
+        );
 
         Expect("#1=1k3;#2=2m3;#3=3z3;", 3);
     }
@@ -883,11 +885,13 @@ public abstract partial class VMTests
     [Test]
     public void UselessBuildBlock()
     {
-        var ldr = Compile("""
+        var ldr = Compile(
+            """
 
-                              var myGlob; var initGlob;
+                var myGlob; var initGlob;
 
-                          """);
+            """
+        );
 
         Compile(
             ldr,
@@ -909,8 +913,9 @@ public abstract partial class VMTests
 
             function main = myGlob + initGlob;
 
-            """);
-        Expect("ELLO" + 55*77 + "init");
+            """
+        );
+        Expect("ELLO" + 55 * 77 + "init");
     }
 
     [Test]
@@ -1011,7 +1016,8 @@ public abstract partial class VMTests
                 return  (bin\quad\sum - tup\bin_twi\sub\sum)~Int; // 6248
             }
 
-            """);
+            """
+        );
         Expect(6248);
     }
 
@@ -1034,17 +1040,18 @@ public abstract partial class VMTests
                 return r;       
             }
 
-            """);
+            """
+        );
         var rs = GenerateRandomString(3);
         Expect(rs + rs, rs);
 
-        var lst = new List<PValue>(
-        [
-            GenerateRandomString(2), GenerateRandomString(3),
-                GenerateRandomString(4),
+        var lst = new List<PValue>([
+            GenerateRandomString(2),
+            GenerateRandomString(3),
+            GenerateRandomString(4),
         ]);
         var ls = lst.Aggregate("", (current, e) => current + (e.Value as string));
-        Expect(ls, (PValue) lst);
+        Expect(ls, (PValue)lst);
 
         var sb = new StringBuilder(GenerateRandomString(5));
         Expect(sb.ToString(), engine.CreateNativePValue(sb));
@@ -1063,27 +1070,28 @@ public abstract partial class VMTests
                 return x => a*x;
             }
 
-            """);
+            """
+        );
 
         var rnd = new Random();
 
 #if UseCil
         var pclo1 = GetReturnValueNamed("clo1");
-        Assert.AreEqual(PType.Object[typeof (PFunction)], pclo1.Type);
+        Assert.AreEqual(PType.Object[typeof(PFunction)], pclo1.Type);
         var clo1 = pclo1.Value as PFunction;
         Assert.IsNotNull(clo1);
 
         var pclo2 = GetReturnValueNamed("clo2", rnd.Next(1, 10));
         if (CompileToCil)
         {
-            Assert.AreEqual(PType.Object[typeof (CilClosure)], pclo2.Type);
+            Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo2.Type);
             var clo2 = pclo2.Value as CilClosure;
             Assert.IsNotNull(clo2);
             Assert.AreEqual(1, clo2!.SharedVariables.Length);
         }
         else
         {
-            Assert.AreEqual(PType.Object[typeof (Closure)], pclo2.Type);
+            Assert.AreEqual(PType.Object[typeof(Closure)], pclo2.Type);
             var clo2 = pclo2.Value as Closure;
             Assert.IsNotNull(clo2);
             Assert.AreEqual(1, clo2!.SharedVariables.Length);
@@ -1151,21 +1159,22 @@ public abstract partial class VMTests
                 return foldl( (l,r) => l + " " + r, "", tuples);
             }
 
-            """);
+            """
+        );
         var lst = new int[10];
         var rnd = new Random();
         var sb = new StringBuilder();
         for (var i = 0; i < 10; i++)
         {
             lst[i] = rnd.Next(4, 49);
-            var twi = 2*lst[i];
-            var factors = twi/10;
-            var rests = twi%10;
+            var twi = 2 * lst[i];
+            var factors = twi / 10;
+            var rests = twi % 10;
             sb.Append(" (" + factors + "," + rests + ")");
         }
         var expected = sb.ToString();
 
-        var plst = lst.Select(x => (PValue) x).ToList();
+        var plst = lst.Select(x => (PValue)x).ToList();
 
         Expect(expected, PType.List.CreatePValue(plst));
     }
@@ -1218,7 +1227,8 @@ public abstract partial class VMTests
                 return sb.ToString;
             }
 
-            """);
+            """
+        );
         var rnd = new Random();
         var s = rnd.Next(2, 9);
         var plst = new List<PValue>();
@@ -1279,19 +1289,28 @@ public abstract partial class VMTests
                 return apply( ->koo , goo( p ) );
             }
 
-            """);
+            """
+        );
         var rnd = new Random();
-        var ps =
-            new[]
-            {
-                1, 2, 10, 27, 26, 57, 60, 157, rnd.Next(1, 190), rnd.Next(1, 190),
-                rnd.Next(1, 190),
-            };
+        var ps = new[]
+        {
+            1,
+            2,
+            10,
+            27,
+            26,
+            57,
+            60,
+            157,
+            rnd.Next(1, 190),
+            rnd.Next(1, 190),
+            rnd.Next(1, 190),
+        };
         foreach (var p in ps)
         {
             int goo;
-            if (p%10 == 0)
-                goo = 2*p;
+            if (p % 10 == 0)
+                goo = 2 * p;
             else
                 goo = 2 + p;
 
@@ -1302,7 +1321,7 @@ public abstract partial class VMTests
             else
             {
                 q = q + q;
-                koo = q.Length%2 != 0 ? q + nameof(q) : q;
+                koo = q.Length % 2 != 0 ? q + nameof(q) : q;
             }
 
             Expect(koo, p);
@@ -1337,10 +1356,11 @@ public abstract partial class VMTests
                 return applyInChain(->flst, m);
             }
 
-            """);
+            """
+        );
         var rnd = new Random();
         var m = rnd.Next(3, 500);
-        var expected = 2 + 2*m;
+        var expected = 2 + 2 * m;
 
         Expect(expected, m);
     }
@@ -1348,14 +1368,16 @@ public abstract partial class VMTests
     [Test]
     public void PowerSqrt()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main(x,y)
-                {
-                    return ::Math.Sqrt(x^2 + y^2);
-                }
+            function main(x,y)
+            {
+                return ::Math.Sqrt(x^2 + y^2);
+            }
 
-                """);
+            """
+        );
         const double x = 113.0;
         const double y = 13.0;
         Expect(Math.Sqrt(Math.Pow(x, 2) + Math.Pow(y, 2)), x, y);
@@ -1395,7 +1417,8 @@ public abstract partial class VMTests
                 return sum;
             }
 
-            """);
+            """
+        );
         var rnd = new Random();
         var sum = 0.0;
         List<PValue> xlst = [],
@@ -1438,7 +1461,8 @@ public abstract partial class VMTests
                 return -sum(all(map(a => min(a, limit), lst)));
             }
 
-            """);
+            """
+        );
         var rnd = new Random();
         var lst = new List<PValue>();
         var sum = 0;
@@ -1481,13 +1505,13 @@ public abstract partial class VMTests
                 return s;
             }
 
-            """);
-        var xs = new List<PValue>(
-        [
+            """
+        );
+        var xs = new List<PValue>([
             12, //=> 12
-                4, //=> 8
-                5, //=> 3
-                13, //=> 15
+            4, //=> 8
+            5, //=> 3
+            13, //=> 15
         ]);
 
         Expect(12 + 8 + 3 + 15, PType.List.CreatePValue(xs));
@@ -1527,16 +1551,22 @@ public abstract partial class VMTests
                 return "f$first::$(average(lst))::s$second";
             }
 
-            """);
+            """
+        );
         var lst = new List<PValue>();
         var av = 0;
         for (var i = 0; i < 10; i++)
         {
             lst.Add(i);
-            var k = i != 0 ? i != 1 ? i : 7 : 4;
+            var k =
+                i != 0
+                    ? i != 1
+                        ? i
+                        : 7
+                    : 4;
             av += k;
         }
-        av = av/10;
+        av = av / 10;
         Expect("f4::" + av + "::s7", PType.List.CreatePValue(lst));
     }
 
@@ -1567,7 +1597,8 @@ public abstract partial class VMTests
                 return x;
             }
 
-            """);
+            """
+        );
 
         Expect(6);
     }
@@ -1594,7 +1625,8 @@ public abstract partial class VMTests
                     return inner() * 2;
                 }
 
-            """);
+            """
+        );
 
         Expect(12, 5);
         Expect(14, 6);
@@ -1602,20 +1634,25 @@ public abstract partial class VMTests
 
     public void ConvertListToEnumerableOfT()
     {
-        Compile("""
+        Compile(
+            """
 
-                function main()
-                {
-                    var xs = [1, "2", 3, 4.0];
-                    var ys = xs~Object<"System.Collections.Generic.IEnumerable`1[System.String0.3]">;
-                    return ys;
-                }
+            function main()
+            {
+                var xs = [1, "2", 3, 4.0];
+                var ys = xs~Object<"System.Collections.Generic.IEnumerable`1[System.String0.3]">;
+                return ys;
+            }
 
-                """);
+            """
+        );
         Expect(rs =>
         {
-            Assert.That(rs,Is.InstanceOf<IEnumerable<string>>());
-            Assert.That(((IEnumerable<string>)rs.Value!).ToList(),Is.EquivalentTo(new[]{"1","2","3","4.0"}));
+            Assert.That(rs, Is.InstanceOf<IEnumerable<string>>());
+            Assert.That(
+                ((IEnumerable<string>)rs.Value!).ToList(),
+                Is.EquivalentTo(new[] { "1", "2", "3", "4.0" })
+            );
         });
     }
 }

@@ -1,5 +1,3 @@
-
-
 namespace Prexonite.Commands.List;
 
 public class Exists : PCommand
@@ -24,8 +22,10 @@ public class Exists : PCommand
             {
                 eargs[0] = value;
                 var result = f.IndirectCall(sctx, eargs);
-                if (result.TryConvertTo(sctx, PType.Bool, true, out var existance) &&
-                    (bool) existance.Value!)
+                if (
+                    result.TryConvertTo(sctx, PType.Bool, true, out var existance)
+                    && (bool)existance.Value!
+                )
                     return true;
             }
         }

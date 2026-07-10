@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
@@ -7,9 +5,7 @@ using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstUnaryOperator : AstExpr,
-    IAstHasExpressions,
-    IAstPartiallyApplicable
+public class AstUnaryOperator : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
 {
     public AstUnaryOperator(ISourcePosition position, UnaryOperator op, AstExpr operand)
         : base(position)
@@ -35,7 +31,7 @@ public class AstUnaryOperator : AstExpr,
         expr = null;
         var operand = Operand;
         _OptimizeNode(target, ref operand);
-        if (operand is AstConstant constOperand) 
+        if (operand is AstConstant constOperand)
         {
             var valueOperand = constOperand.ToPValue(target);
             PValue? result;
@@ -71,7 +67,11 @@ public class AstUnaryOperator : AstExpr,
                     //No optimization allowed/needed here
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(Operator), Operator, "Unknown unary operator.");
+                    throw new ArgumentOutOfRangeException(
+                        nameof(Operator),
+                        Operator,
+                        "Unknown unary operator."
+                    );
             }
             goto emitFull;
 
@@ -87,7 +87,10 @@ public class AstUnaryOperator : AstExpr,
             case UnaryOperator.UnaryNegation:
             case UnaryOperator.LogicalNot:
             case UnaryOperator.OnesComplement:
-                if (operand is AstUnaryOperator doubleNegation && doubleNegation.Operator == Operator)
+                if (
+                    operand is AstUnaryOperator doubleNegation
+                    && doubleNegation.Operator == Operator
+                )
                 {
                     expr = doubleNegation.Operand;
                     return true;
@@ -105,7 +108,11 @@ public class AstUnaryOperator : AstExpr,
                 //No optimization
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(Operator), Operator, "Unknown unary operator.");
+                throw new ArgumentOutOfRangeException(
+                    nameof(Operator),
+                    Operator,
+                    "Unknown unary operator."
+                );
         }
         return false;
     }
@@ -119,21 +126,22 @@ public class AstUnaryOperator : AstExpr,
             AstArgumentSplice.ReportNotSupported(Operand, target, value);
             return;
         }
-            
+
         var symbolCall = Operand as AstIndirectCall;
         var symbol = symbolCall?.Subject as AstReference;
         EntityRef.Variable? variableRef = null;
         var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
-        var isPre = Operator == UnaryOperator.PreDecrement || Operator == UnaryOperator.PreIncrement;
+        var isPre =
+            Operator == UnaryOperator.PreDecrement || Operator == UnaryOperator.PreIncrement;
         switch (Operator)
         {
             case UnaryOperator.PreIncrement:
             case UnaryOperator.PostIncrement:
             case UnaryOperator.PreDecrement:
             case UnaryOperator.PostDecrement:
-                var isIncrement = 
-                    Operator == UnaryOperator.PostIncrement ||
-                    Operator == UnaryOperator.PreIncrement;
+                var isIncrement =
+                    Operator == UnaryOperator.PostIncrement
+                    || Operator == UnaryOperator.PreIncrement;
                 if (isVariable)
                 {
                     Debug.Assert(variableRef != null);
@@ -144,20 +152,31 @@ public class AstUnaryOperator : AstExpr,
                     if (variableRef.TryGetLocalVariable(out var localRef))
                     {
                         loadVar = () => target.EmitLoadLocal(Position, localRef.Id);
-                        perform = () => 
-                            target.Emit(Position, isIncrement ? OpCode.incloc : OpCode.decloc, localRef.Id);
+                        perform = () =>
+                            target.Emit(
+                                Position,
+                                isIncrement ? OpCode.incloc : OpCode.decloc,
+                                localRef.Id
+                            );
                     }
-                    else if(variableRef.TryGetGlobalVariable(out var globalRef))
+                    else if (variableRef.TryGetGlobalVariable(out var globalRef))
                     {
-                        loadVar = () => target.EmitLoadGlobal(Position, globalRef.Id, globalRef.ModuleName);
+                        loadVar = () =>
+                            target.EmitLoadGlobal(Position, globalRef.Id, globalRef.ModuleName);
 
                         perform = () =>
-                            target.Emit(Position, isIncrement ? OpCode.incglob : OpCode.decglob, globalRef.Id,
-                                globalRef.ModuleName);
+                            target.Emit(
+                                Position,
+                                isIncrement ? OpCode.incglob : OpCode.decglob,
+                                globalRef.Id,
+                                globalRef.ModuleName
+                            );
                     }
                     else
                     {
-                        throw new InvalidOperationException("Found variable entity that is neither a global nor a local variable.");
+                        throw new InvalidOperationException(
+                            "Found variable entity that is neither a global nor a local variable."
+                        );
                     }
 
                     // Then decide in what order to apply them.
@@ -175,8 +194,10 @@ public class AstUnaryOperator : AstExpr,
                 }
                 else
                     throw new PrexoniteException(
-                        "Node of type " + Operand.GetType() +
-                        " does not support increment/decrement operators.");
+                        "Node of type "
+                            + Operand.GetType()
+                            + " does not support increment/decrement operators."
+                    );
                 break;
             // ReSharper disable RedundantCaseLabel
             case UnaryOperator.UnaryNegation:
@@ -218,7 +239,10 @@ public class AstUnaryOperator : AstExpr,
                 target.Loader.ReportMessage(
                     Message.Error(
                         Resources.AstUnaryOperator__NonIncrementDecrement,
-                        Position, MessageClasses.ParserInternal));
+                        Position,
+                        MessageClasses.ParserInternal
+                    )
+                );
                 break;
             case UnaryOperator.PreDecrement:
             case UnaryOperator.PreIncrement:
@@ -235,17 +259,18 @@ public class AstUnaryOperator : AstExpr,
     {
         return new(
             Operand.IsPlaceholder()
-            || Operator == UnaryOperator.LogicalNot
-            && Operand is AstTypecheck typecheck
-            && typecheck.CheckForPlaceholders(),
-            Operand.IsArgumentSplice());
+                || Operator == UnaryOperator.LogicalNot
+                    && Operand is AstTypecheck typecheck
+                    && typecheck.CheckForPlaceholders(),
+            Operand.IsArgumentSplice()
+        );
     }
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
     {
         //Just emit the operator normally, the appropriate mechanism will kick in
         // further down the AST
-        DoEmitCode(target,StackSemantics.Value);
+        DoEmitCode(target, StackSemantics.Value);
     }
 }
 

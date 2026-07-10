@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class ThenCommand : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    ThenCommand()
-    {
-    }
+    ThenCommand() { }
 
     public static ThenCommand Instance { get; } = new();
 
@@ -57,8 +53,10 @@ public class CallComposition : IIndirectCall
 
     public CallComposition(PValue innerExpression, PValue outerExpression)
     {
-        InnerExpression = innerExpression ?? throw new ArgumentNullException(nameof(innerExpression));
-        OuterExpression = outerExpression ?? throw new ArgumentNullException(nameof(outerExpression));
+        InnerExpression =
+            innerExpression ?? throw new ArgumentNullException(nameof(innerExpression));
+        OuterExpression =
+            outerExpression ?? throw new ArgumentNullException(nameof(outerExpression));
     }
 
     #region Implementation of IIndirectCall

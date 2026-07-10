@@ -44,20 +44,41 @@ public class ManualPlan : IPlan
     /// <returns></returns>
     /// <exception cref="ArgumentException">Dependencies must not contain multiple versions of the same module.</exception>
     /// <remarks>You will have to make sure that this plan contains a target description for each dependency before this target description can be built.</remarks>
-    public ITargetDescription CreateDescription(ModuleName moduleName, ISource source, string? fileName, IEnumerable<ModuleName> dependencies, IEnumerable<Message>? buildMessages = null)
+    public ITargetDescription CreateDescription(
+        ModuleName moduleName,
+        ISource source,
+        string? fileName,
+        IEnumerable<ModuleName> dependencies,
+        IEnumerable<Message>? buildMessages = null
+    )
     {
-        return new ManualTargetDescription(moduleName, source, fileName, dependencies, buildMessages);
+        return new ManualTargetDescription(
+            moduleName,
+            source,
+            fileName,
+            dependencies,
+            buildMessages
+        );
     }
 
     protected void EnsureIsResolved(ITargetDescription description)
     {
         if (HasUnresolvedDependencies(description))
         {
-            var missing = description.Dependencies.Where(d => !TargetDescriptions.Contains(d)).ToEnumerationString();
-            Plan.Trace.TraceEvent(TraceEventType.Error, 0,
-                "Failed to resolve the following dependencies of target {0}: {1}", description, missing);
+            var missing = description
+                .Dependencies.Where(d => !TargetDescriptions.Contains(d))
+                .ToEnumerationString();
+            Plan.Trace.TraceEvent(
+                TraceEventType.Error,
+                0,
+                "Failed to resolve the following dependencies of target {0}: {1}",
+                description,
+                missing
+            );
             throw new BuildException(
-                $"Not all dependencies of target named {description.Name} have been resolved. The following modules are missing: {missing}", description);
+                $"Not all dependencies of target named {description.Name} have been resolved. The following modules are missing: {missing}",
+                description
+            );
         }
     }
 
@@ -73,14 +94,18 @@ public class ManualPlan : IPlan
         return BuildWithMapAsync(description, taskMap, token);
     }
 
-    public IDictionary<ModuleName, Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token)
+    public IDictionary<ModuleName, Task<ITarget>> BuildAsync(
+        IEnumerable<ModuleName> names,
+        CancellationToken token
+    )
     {
         if (names == null)
             throw new ArgumentNullException(nameof(names));
         var taskMap = CreateTaskMap();
-        return
-            names
-                .ToDictionary(name => name, name => BuildWithMapAsync(_prepareBuild(name), taskMap, token));
+        return names.ToDictionary(
+            name => name,
+            name => BuildWithMapAsync(_prepareBuild(name), taskMap, token)
+        );
     }
 
     ITargetDescription _prepareBuild(ModuleName name)
@@ -95,22 +120,32 @@ public class ManualPlan : IPlan
         return new(5, TargetDescriptions.Count);
     }
 
-    public IDictionary<ModuleName, Task<(Application Application, ITarget Target)>> LoadAsync(IEnumerable<ModuleName> names, CancellationToken token)
+    public IDictionary<ModuleName, Task<(Application Application, ITarget Target)>> LoadAsync(
+        IEnumerable<ModuleName> names,
+        CancellationToken token
+    )
     {
         if (names == null)
             throw new ArgumentNullException(nameof(names));
         var taskMap = CreateTaskMap();
-        return names.ToDictionary(name => name, name =>
-        {
-            var description = _prepareBuild(name);
-            return BuildWithMapAsync(description, taskMap, token).ContinueWith(buildTask =>
+        return names.ToDictionary(
+            name => name,
+            name =>
             {
-                var target = buildTask.Result;
-                var app = new Application(target.Module);
-                _linkDependencies(taskMap, app, description, token);
-                return (app, target);
-            }, token);
-        });
+                var description = _prepareBuild(name);
+                return BuildWithMapAsync(description, taskMap, token)
+                    .ContinueWith(
+                        buildTask =>
+                        {
+                            var target = buildTask.Result;
+                            var app = new Application(target.Module);
+                            _linkDependencies(taskMap, app, description, token);
+                            return (app, target);
+                        },
+                        token
+                    );
+            }
+        );
     }
 
     protected ManualPlan()
@@ -121,15 +156,26 @@ public class ManualPlan : IPlan
     public LoaderOptions? Options { get; set; }
 
     internal Engine LeaseBuildEngine() => _enginePool.Get();
+
     internal void ReturnBuildEngine(Engine buildEngine) => _enginePool.Return(buildEngine);
 
-    void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
+    void _linkDependencies(
+        TaskMap<ModuleName, ITarget> taskMap,
+        Application instance,
+        ITargetDescription instanceDescription,
+        CancellationToken token
+    )
     {
         _LinkDependenciesImpl(this, taskMap, instance, instanceDescription, token);
     }
 
-    internal static void _LinkDependenciesImpl(IPlan plan, TaskMap<ModuleName, ITarget> taskMap, Application instance,
-        ITargetDescription instanceDescription, CancellationToken token)
+    internal static void _LinkDependenciesImpl(
+        IPlan plan,
+        TaskMap<ModuleName, ITarget> taskMap,
+        Application instance,
+        ITargetDescription instanceDescription,
+        CancellationToken token
+    )
     {
         foreach (var dependency in instanceDescription.Dependencies)
         {
@@ -143,7 +189,11 @@ public class ManualPlan : IPlan
         }
     }
 
-    protected Task<IBuildEnvironment> GetBuildEnvironmentAsync(TaskMap<ModuleName, ITarget> taskMap, ITargetDescription description, CancellationToken token)
+    protected Task<IBuildEnvironment> GetBuildEnvironmentAsync(
+        TaskMap<ModuleName, ITarget> taskMap,
+        ITargetDescription description,
+        CancellationToken token
+    )
     {
         if (description.Dependencies.Count == 0)
         {
@@ -156,79 +206,127 @@ public class ManualPlan : IPlan
             // Note how the lambda expression doesn't actually depend on the result (directly)
             //  the continue all makes sure that we're not wasting a thread that blocks on Task.Result
             // GetBuildEnvironment can access the results via the taskMap.
-            Plan.Trace.TraceEvent(TraceEventType.Verbose, 0,"{0} is waiting for its dependencies to be built: {1}", 
-                description.Name, description.Dependencies.ToListString());
-            return Task.Factory.ContinueWhenAll(description.Dependencies.Select(d => taskMap[d].Value).ToArray(),
-                _ => GetBuildEnvironment(taskMap, description, token));
+            Plan.Trace.TraceEvent(
+                TraceEventType.Verbose,
+                0,
+                "{0} is waiting for its dependencies to be built: {1}",
+                description.Name,
+                description.Dependencies.ToListString()
+            );
+            return Task.Factory.ContinueWhenAll(
+                description.Dependencies.Select(d => taskMap[d].Value).ToArray(),
+                _ => GetBuildEnvironment(taskMap, description, token)
+            );
         }
     }
 
-    protected virtual IBuildEnvironment GetBuildEnvironment(TaskMap<ModuleName, ITarget> taskMap, ITargetDescription description, CancellationToken token)
+    protected virtual IBuildEnvironment GetBuildEnvironment(
+        TaskMap<ModuleName, ITarget> taskMap,
+        ITargetDescription description,
+        CancellationToken token
+    )
     {
-        Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Get build environment for {0}.", description);
+        Plan.Trace.TraceEvent(
+            TraceEventType.Verbose,
+            0,
+            "Get build environment for {0}.",
+            description
+        );
         var buildEnvironment = new DefaultBuildEnvironment(this, description, taskMap, token);
         return buildEnvironment;
     }
 
-    protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token)
+    protected Task<ITarget> BuildWithMapAsync(
+        ITargetDescription targetDescription,
+        TaskMap<ModuleName, ITarget> taskMap,
+        CancellationToken token
+    )
     {
-        return taskMap.GetOrAdd(targetDescription.Name,
+        return taskMap.GetOrAdd(
+            targetDescription.Name,
             name =>
             {
-                Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Request build of {0} and its dependencies.",
-                    targetDescription);
-                return
-                    Task.Factory.StartNew(() => _buildTaskImpl(targetDescription, taskMap, token, name), token)
-                        .Unwrap();
-            });
+                Plan.Trace.TraceEvent(
+                    TraceEventType.Verbose,
+                    0,
+                    "Request build of {0} and its dependencies.",
+                    targetDescription
+                );
+                return Task
+                    .Factory.StartNew(
+                        () => _buildTaskImpl(targetDescription, taskMap, token, name),
+                        token
+                    )
+                    .Unwrap();
+            }
+        );
     }
 
-    Task<ITarget> _buildTaskImpl(ITargetDescription targetDescription, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token,
-        ModuleName name)
+    Task<ITarget> _buildTaskImpl(
+        ITargetDescription targetDescription,
+        TaskMap<ModuleName, ITarget> taskMap,
+        CancellationToken token,
+        ModuleName name
+    )
     {
         var desc = TargetDescriptions[name];
-        var deps =
-            desc.Dependencies.Select(
-                depName =>
-                    new KeyValuePair<ModuleName, Task<ITarget>>(
-                        depName,
-                        BuildWithMapAsync(
-                            TargetDescriptions[depName],
-                            taskMap, token)));
+        var deps = desc.Dependencies.Select(depName => new KeyValuePair<ModuleName, Task<ITarget>>(
+            depName,
+            BuildWithMapAsync(TargetDescriptions[depName], taskMap, token)
+        ));
 
         var depMap = new Dictionary<ModuleName, Task<ITarget>>();
         depMap.AddRange(deps);
 
         token.ThrowIfCancellationRequested();
-            
-        var buildTask = GetBuildEnvironmentAsync(taskMap, desc,
-                token)
-            .ContinueWith(async bet =>
-            {
-                try
+
+        var buildTask = GetBuildEnvironmentAsync(taskMap, desc, token)
+            .ContinueWith(
+                async bet =>
                 {
-                    var instance = new Application(bet.Result.Module);
-                    Plan.Trace.TraceEvent(TraceEventType.Verbose, 0,
-                        "Linking compile-time dependencies for module {0}.", bet.Result.Module.Name);
-                    _linkDependencies(taskMap, instance, targetDescription, token);
-                    token.ThrowIfCancellationRequested();
-                    var target = await BuildTargetAsync(bet, desc, depMap, token);
-                    Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Finished BuildTargetAsync({0})", desc.Name);
-                    return target;
-                }
-                finally
-                {
-                    bet.Dispose();
-                }
-            }, token);
+                    try
+                    {
+                        var instance = new Application(bet.Result.Module);
+                        Plan.Trace.TraceEvent(
+                            TraceEventType.Verbose,
+                            0,
+                            "Linking compile-time dependencies for module {0}.",
+                            bet.Result.Module.Name
+                        );
+                        _linkDependencies(taskMap, instance, targetDescription, token);
+                        token.ThrowIfCancellationRequested();
+                        var target = await BuildTargetAsync(bet, desc, depMap, token);
+                        Plan.Trace.TraceEvent(
+                            TraceEventType.Verbose,
+                            0,
+                            "Finished BuildTargetAsync({0})",
+                            desc.Name
+                        );
+                        return target;
+                    }
+                    finally
+                    {
+                        bet.Dispose();
+                    }
+                },
+                token
+            );
         return buildTask.Unwrap();
     }
 
-    protected virtual Task<ITarget> BuildTargetAsync(Task<IBuildEnvironment> buildEnvironment, ITargetDescription description, Dictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
+    protected virtual Task<ITarget> BuildTargetAsync(
+        Task<IBuildEnvironment> buildEnvironment,
+        ITargetDescription description,
+        Dictionary<ModuleName, Task<ITarget>> dependencies,
+        CancellationToken token
+    )
     {
         var buildTask = description.BuildAsync(buildEnvironment.Result, dependencies, token);
-        Debug.Assert(buildTask != null, "Task for building target is null.",
-            $"{description.GetType().Name}.BuildAsync returned null instead of a Task.");
+        Debug.Assert(
+            buildTask != null,
+            "Task for building target is null.",
+            $"{description.GetType().Name}.BuildAsync returned null instead of a Task."
+        );
         return buildTask;
     }
 }

@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using Prexonite.Compiler.Build;
 
 namespace PrexoniteTests.Tests;
@@ -27,19 +27,19 @@ public class EmbeddedPrxLibTests
     {
         _checkEmbeddedResource("prxlib.prx.v2.prelude.pxs");
     }
-        
+
     [Test]
     public void PrxCore()
     {
         _checkEmbeddedResource("prxlib.prx.core.pxs");
     }
-        
+
     [Test]
     public void PrxPrim()
     {
         _checkEmbeddedResource("prxlib.prx.prim.pxs");
     }
-        
+
     [Test]
     public void Sys()
     {
@@ -48,7 +48,10 @@ public class EmbeddedPrxLibTests
 
     static void _checkEmbeddedResource(string name)
     {
-        Assert.True(Source.FromEmbeddedPrexoniteResource(name).TryOpen(out var reader), $"Cannot open {name}");
+        Assert.True(
+            Source.FromEmbeddedPrexoniteResource(name).TryOpen(out var reader),
+            $"Cannot open {name}"
+        );
         var contents = reader!.ReadToEnd();
         Assert.That(contents, Is.Not.Null);
         Assert.That(contents.Length, Is.GreaterThan(100));

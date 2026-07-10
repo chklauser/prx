@@ -1,5 +1,3 @@
-﻿
-
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 
@@ -11,7 +9,8 @@ namespace Prexonite.Commands.Core.PartialApplication;
 /// </summary>
 /// <typeparam name="TRuntimeParam"><see cref="RuntimePTypeInfo"/> can be used if no additional information is required.</typeparam>
 /// <typeparam name="TCompileTimeParam"><see cref="CompileTimePTypeInfo"/> can be used if no additional information is required.</typeparam>
-public abstract class PartialWithPTypeCommandBase<TRuntimeParam, TCompileTimeParam> : PartialApplicationCommandBase<TRuntimeParam, TCompileTimeParam>
+public abstract class PartialWithPTypeCommandBase<TRuntimeParam, TCompileTimeParam>
+    : PartialApplicationCommandBase<TRuntimeParam, TCompileTimeParam>
     where TRuntimeParam : IRuntimePTypeInfo<TRuntimeParam>
     where TCompileTimeParam : ICompileTimePType<TCompileTimeParam>
 {
@@ -28,13 +27,14 @@ public abstract class PartialWithPTypeCommandBase<TRuntimeParam, TCompileTimePar
         if (arguments.Length < 1)
         {
             throw new PrexoniteException(
-                $"{PartialApplicationKind} requires a PType argument (or a PType expression).");
+                $"{PartialApplicationKind} requires a PType argument (or a PType expression)."
+            );
         }
 
         var raw = arguments[^1];
         PType? ptype;
         //Allow the type to be specified as a type expression (instead of a type instance)
-        if (!(raw.Type is ObjectPType && (object?) (ptype = raw.Value as PType) != null))
+        if (!(raw.Type is ObjectPType && (object?)(ptype = raw.Value as PType) != null))
         {
             var ptypeExpr = raw.CallToString(sctx);
             ptype = sctx.ConstructPType(ptypeExpr);

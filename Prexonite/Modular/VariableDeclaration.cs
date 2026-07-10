@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Properties;
 
@@ -25,7 +23,9 @@ public abstract class VariableDeclaration : IHasMetaTable, IMetaFilter
             return key;
     }
 
-    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string?, MetaEntry> item)
+    KeyValuePair<string?, MetaEntry>? IMetaFilter.SetTransform(
+        KeyValuePair<string?, MetaEntry> item
+    )
     {
         if (Engine.StringsAreEqual(item.Key, Application.NameKey))
             return new KeyValuePair<string?, MetaEntry>(Application.IdKey, item.Value);
@@ -60,7 +60,10 @@ public abstract class VariableDeclaration : IHasMetaTable, IMetaFilter
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
             if (id.Length == 0)
-                throw new ArgumentException(Resources.VariableDeclaration_Variable_id_must_not_be_empty, nameof(id));
+                throw new ArgumentException(
+                    Resources.VariableDeclaration_Variable_id_must_not_be_empty,
+                    nameof(id)
+                );
 
             Meta[Application.IdKey] = id;
         }

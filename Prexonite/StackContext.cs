@@ -1,5 +1,3 @@
-
-
 namespace Prexonite;
 
 /// <summary>
@@ -113,8 +111,11 @@ public abstract class StackContext : IIndirectCall
     /// </summary>
     /// <param name = "obj">The object to be represented.</param>
     /// <returns>A PValue containing the supplied object with an appropriate type.</returns>
-    [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames",
-        MessageId = nameof(obj))]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1720:IdentifiersShouldNotContainTypeNames",
+        MessageId = nameof(obj)
+    )]
     public PValue CreateNativePValue(object? obj)
     {
         return ParentEngine.CreateNativePValue(obj);

@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -8,24 +6,26 @@ public class Skip : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Skip()
-    {
-    }
+    Skip() { }
 
     public static Skip Instance { get; } = new();
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -38,7 +38,7 @@ public class Skip : CoroutineCommand, ICilCompilerAware
         if (args.Length < 1)
             throw new PrexoniteException("Skip requires at least one argument.");
 
-        var index = (int) args[0].ConvertTo(sctx, PType.Int, true).Value!;
+        var index = (int)args[0].ConvertTo(sctx, PType.Int, true).Value!;
 
         for (var j = 1; j < args.Length; j++)
         {

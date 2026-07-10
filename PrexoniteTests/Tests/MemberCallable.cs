@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -30,19 +28,26 @@ public class MemberCallable : IObject
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
-        Assert.IsTrue(Expectations.TryGetValue(id, out var expectation),
-            $"A call to member {id} on object {Name} is not expected.");
+        Assert.IsTrue(
+            Expectations.TryGetValue(id, out var expectation),
+            $"A call to member {id} on object {Name} is not expected."
+        );
 
         Assert.AreEqual(expectation!.ExpectedCall, call, "Call type (get/set)");
-        Assert.AreEqual(expectation.ExpectedArguments.Length, args.Length,
-            "Number of arguments do not match. Called with " + args.ToEnumerationString());
+        Assert.AreEqual(
+            expectation.ExpectedArguments.Length,
+            args.Length,
+            "Number of arguments do not match. Called with " + args.ToEnumerationString()
+        );
         for (var i = 0; i < expectation.ExpectedArguments.Length; i++)
-            Assert.AreEqual(expectation.ExpectedArguments[i], args[i],
-                $"Arguments at position {i} don't match");
+            Assert.AreEqual(
+                expectation.ExpectedArguments[i],
+                args[i],
+                $"Arguments at position {i} don't match"
+            );
 
         result = expectation.ReturnValue ?? PType.Null;
         expectation.WasCalled = true;
@@ -51,16 +56,22 @@ public class MemberCallable : IObject
 
     #endregion
 
-    public void Expect(string memberId, PValue[] args, PCall call = PCall.Get,
-        PValue? returns = null)
+    public void Expect(
+        string memberId,
+        PValue[] args,
+        PCall call = PCall.Get,
+        PValue? returns = null
+    )
     {
         Expectations.Add(
             memberId,
-            new() {
+            new()
+            {
                 ExpectedArguments = args,
                 ExpectedCall = call,
                 ReturnValue = returns,
-            });
+            }
+        );
     }
 
     public void AssertCalledAll()
@@ -68,6 +79,7 @@ public class MemberCallable : IObject
         foreach (var expectation in Expectations)
             Assert.IsTrue(
                 expectation.Value.WasCalled,
-                $"The member {expectation.Key} was not called.");
+                $"The member {expectation.Key} was not called."
+            );
     }
 }

@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -10,20 +8,19 @@ public class Reverse : CoroutineCommand, ICilCompilerAware
 
     public static Reverse Instance { get; } = new();
 
-    Reverse()
-    {
-    }
+    Reverse() { }
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
-        IEnumerable<PValue> args)
+    static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        IEnumerable<PValue> args
+    )
     {
         if (args == null)
             throw new ArgumentNullException(nameof(args));
@@ -44,7 +41,7 @@ public class Reverse : CoroutineCommand, ICilCompilerAware
     // Bound statically by CIL compiler
     // ReSharper disable UnusedMember.Global
     public static PValue RunStatically(StackContext sctx, PValue[] args)
-        // ReSharper restore UnusedMember.Global
+    // ReSharper restore UnusedMember.Global
     {
         var carrier = new ContextCarrier();
         var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));

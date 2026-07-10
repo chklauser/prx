@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Macro;

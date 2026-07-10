@@ -1,16 +1,13 @@
-﻿
-
 using System.Reflection;
 
 namespace Prexonite.Commands.Core.PartialApplication;
 
-public class PartialConstructionCommand : PartialWithPTypeCommandBase<RuntimePTypeInfo,CompileTimePTypeInfo>
+public class PartialConstructionCommand
+    : PartialWithPTypeCommandBase<RuntimePTypeInfo, CompileTimePTypeInfo>
 {
     #region Singleton pattern
 
-    PartialConstructionCommand()
-    {
-    }
+    PartialConstructionCommand() { }
 
     ConstructorInfo? _ptypeConstructCtor;
 
@@ -20,8 +17,12 @@ public class PartialConstructionCommand : PartialWithPTypeCommandBase<RuntimePTy
 
     #region Overrides of PartialApplicationCommandBase<TypeInfo>
 
-    protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings,
-        PValue[] closedArguments, RuntimePTypeInfo parameter)
+    protected override IIndirectCall CreatePartialApplication(
+        StackContext sctx,
+        int[] mappings,
+        PValue[] closedArguments,
+        RuntimePTypeInfo parameter
+    )
     {
         return new PartialConstruction(mappings, closedArguments, parameter.Type);
     }
@@ -29,14 +30,16 @@ public class PartialConstructionCommand : PartialWithPTypeCommandBase<RuntimePTy
     protected override ConstructorInfo GetConstructorCtor(CompileTimePTypeInfo parameter)
     {
         var ty = GetPartialCallRepresentationType(parameter);
-        return _ptypeConstructCtor ??= ty.GetConstructor(
-                [typeof (int[]), typeof (PValue[]), typeof (PType)])
-            ?? throw new InvalidOperationException($"{ty} does not have an (int[], PValue[], PValue) constructor.");
+        return _ptypeConstructCtor ??=
+            ty.GetConstructor([typeof(int[]), typeof(PValue[]), typeof(PType)])
+            ?? throw new InvalidOperationException(
+                $"{ty} does not have an (int[], PValue[], PValue) constructor."
+            );
     }
 
     protected override Type GetPartialCallRepresentationType(CompileTimePTypeInfo parameter)
     {
-        return typeof (PartialConstruction);
+        return typeof(PartialConstruction);
     }
 
     protected override string PartialApplicationKind => "Partial Construction";

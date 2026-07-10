@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands;
@@ -10,13 +8,16 @@ namespace Prexonite.Commands;
 ///     <para>The implementation of this interface does not affect execution under the Prexonite VM.</para>
 ///     <para>Currently only commands are checked for CIL extensions.</para>
 /// </summary>
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Cil")]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = "Cil"
+)]
 public interface ICilExtension
 {
     /// <summary>
-    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
-    /// 
+    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension.
+    ///
     ///     <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see
     ///       cref = "ICilCompilerAware" /> and finally the built-in mechanisms.</para>
     ///     <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see
@@ -36,6 +37,10 @@ public interface ICilExtension
     /// <param name = "ins">The instruction that "calls" the CIL extension. Usually a command call.</param>
     /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
     /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
-    void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-        int dynamicArgc);
+    void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    );
 }

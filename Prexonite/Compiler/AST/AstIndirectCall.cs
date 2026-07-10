@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.PartialApplication;
@@ -25,15 +23,14 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
     }
 
     [PublicAPI]
-    public AstIndirectCall(
-        string file, int line, int column, PCall call, AstExpr subject)
+    public AstIndirectCall(string file, int line, int column, PCall call, AstExpr subject)
         : base(file, line, column, call)
     {
         Subject = subject ?? throw new ArgumentNullException(nameof(subject));
     }
 
     public AstIndirectCall(ISourcePosition position, PCall call, AstExpr subject)
-        : base(position,call)
+        : base(position, call)
     {
         Subject = subject;
     }
@@ -49,102 +46,142 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         }
     }
 
-    class EntityIndirectCallMatcher : EntityRefMatcher<object?,Action<CompilerTarget,AstIndirectCall,PCall,bool>?>
+    class EntityIndirectCallMatcher
+        : EntityRefMatcher<object?, Action<CompilerTarget, AstIndirectCall, PCall, bool>?>
     {
         public static readonly EntityIndirectCallMatcher Instance = new();
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool>? OnNotMatched(EntityRef entity, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool>? OnNotMatched(
+            EntityRef entity,
+            object? argument
+        )
         {
             return null;
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(
+            EntityRef.Variable.Local variable,
+            object? argument
+        )
         {
-            return
-                (target, node, _, justEffect) =>
-                    target.Emit(node.Position,Instruction.CreateLocalIndirectCall(node.Arguments.Count, variable.Id, justEffect));
+            return (target, node, _, justEffect) =>
+                target.Emit(
+                    node.Position,
+                    Instruction.CreateLocalIndirectCall(
+                        node.Arguments.Count,
+                        variable.Id,
+                        justEffect
+                    )
+                );
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(
+            EntityRef.Variable.Global variable,
+            object? argument
+        )
         {
-            return
-                (target, node, _, justEffect) =>
-                    target.Emit(node.Position, Instruction.CreateGlobalIndirectCall(node.Arguments.Count, variable.Id, variable.ModuleName, justEffect));
+            return (target, node, _, justEffect) =>
+                target.Emit(
+                    node.Position,
+                    Instruction.CreateGlobalIndirectCall(
+                        node.Arguments.Count,
+                        variable.Id,
+                        variable.ModuleName,
+                        justEffect
+                    )
+                );
         }
     }
 
-    class EntityCallMatcher : EntityRefMatcher<object?,Action<CompilerTarget,AstIndirectCall,PCall,bool>?>
+    class EntityCallMatcher
+        : EntityRefMatcher<object?, Action<CompilerTarget, AstIndirectCall, PCall, bool>?>
     {
         public static readonly EntityCallMatcher Instance = new();
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool>? OnNotMatched(EntityRef entity, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool>? OnNotMatched(
+            EntityRef entity,
+            object? argument
+        )
         {
             return null;
         }
 
-        public override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnFunction(EntityRef.Function function, object? argument)
+        public override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnFunction(
+            EntityRef.Function function,
+            object? argument
+        )
         {
-            return
-                (target, node, _, justEffect) =>
-                    target.EmitFunctionCall(node.Position, node.Arguments.Count, function.Id, function.ModuleName,
-                        justEffect);
+            return (target, node, _, justEffect) =>
+                target.EmitFunctionCall(
+                    node.Position,
+                    node.Arguments.Count,
+                    function.Id,
+                    function.ModuleName,
+                    justEffect
+                );
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnCommand(EntityRef.Command command, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnCommand(
+            EntityRef.Command command,
+            object? argument
+        )
         {
-            return
-                (target, node, _, justEffect) =>
-                    target.EmitCommandCall(node.Position, node.Arguments.Count, command.Id, justEffect);
+            return (target, node, _, justEffect) =>
+                target.EmitCommandCall(node.Position, node.Arguments.Count, command.Id, justEffect);
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(
+            EntityRef.Variable.Local variable,
+            object? argument
+        )
         {
-            return
-                (target, node, call, justEffect) =>
+            return (target, node, call, justEffect) =>
+            {
+                switch (call)
                 {
-                    switch (call)
-                    {
-                        case PCall.Get:
-                            if(node.Arguments.Count > 0)
-                                target.EmitPop(node.Position,node.Arguments.Count);
-                            if(!justEffect)
-                                target.EmitLoadLocal(node.Position,variable.Id);
-                            break;
-                        case PCall.Set:
-                            Debug.Assert(node.Arguments.Count > 0, "Store local missing RHS");
-                            target.EmitStoreLocal(node.Position,variable.Id);
-                            if(node.Arguments.Count > 1)
-                                target.EmitPop(node.Position,node.Arguments.Count - 1);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(call));
-                    }
-                };
+                    case PCall.Get:
+                        if (node.Arguments.Count > 0)
+                            target.EmitPop(node.Position, node.Arguments.Count);
+                        if (!justEffect)
+                            target.EmitLoadLocal(node.Position, variable.Id);
+                        break;
+                    case PCall.Set:
+                        Debug.Assert(node.Arguments.Count > 0, "Store local missing RHS");
+                        target.EmitStoreLocal(node.Position, variable.Id);
+                        if (node.Arguments.Count > 1)
+                            target.EmitPop(node.Position, node.Arguments.Count - 1);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(call));
+                }
+            };
         }
 
-        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object? argument)
+        protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(
+            EntityRef.Variable.Global variable,
+            object? argument
+        )
         {
-            return
-                (target, node, call, justEffect) =>
+            return (target, node, call, justEffect) =>
+            {
+                switch (call)
                 {
-                    switch (call)
-                    {
-                        case PCall.Get:
-                            if (node.Arguments.Count > 0)
-                                target.EmitPop(node.Position, node.Arguments.Count);
-                            if (!justEffect)
-                                target.EmitLoadGlobal(node.Position, variable.Id,variable.ModuleName);
-                            break;
-                        case PCall.Set:
-                            Debug.Assert(node.Arguments.Count > 0, "Store local missing RHS");
-                            target.EmitStoreGlobal(node.Position, variable.Id,variable.ModuleName);
-                            if (node.Arguments.Count > 1)
-                                target.EmitPop(node.Position, node.Arguments.Count - 1);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(call));
-                    }
-                };
+                    case PCall.Get:
+                        if (node.Arguments.Count > 0)
+                            target.EmitPop(node.Position, node.Arguments.Count);
+                        if (!justEffect)
+                            target.EmitLoadGlobal(node.Position, variable.Id, variable.ModuleName);
+                        break;
+                    case PCall.Set:
+                        Debug.Assert(node.Arguments.Count > 0, "Store local missing RHS");
+                        target.EmitStoreGlobal(node.Position, variable.Id, variable.ModuleName);
+                        if (node.Arguments.Count > 1)
+                            target.EmitPop(node.Position, node.Arguments.Count - 1);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(call));
+                }
+            };
         }
     }
 
@@ -156,11 +193,11 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
         {
             // Could be variable, function, command
             //  -> generates func, cmd, ldloc, stloc, ldglob, stglob
-            return refNode.Entity.Match(EntityCallMatcher.Instance,null);
+            return refNode.Entity.Match(EntityCallMatcher.Instance, null);
         }
-        else if (Subject is AstIndirectCall {Subject: AstReference indRefNode})
+        else if (Subject is AstIndirectCall { Subject: AstReference indRefNode })
         {
-            // Could be indirectly accessed local or global variable 
+            // Could be indirectly accessed local or global variable
             //  -> generates indloc, indglob
             return indRefNode.Entity.Match(EntityIndirectCallMatcher.Instance, null);
         }
@@ -188,14 +225,20 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
     {
         // Convert R.(A_1, A_2, *S_3, A_4, *S_5) into
         //   call(R, [A_1, A_2], S_3, [A_4], S_5)
-        var callNode = target.Factory.Expand(Position, EntityRef.MacroCommand.Create(Engine.CallAlias), Call);
+        var callNode = target.Factory.Expand(
+            Position,
+            EntityRef.MacroCommand.Create(Engine.CallAlias),
+            Call
+        );
         List<AstExpr>? currentBatch = null;
 
         void flushCurrentBatch()
         {
             if (currentBatch != null)
             {
-                callNode.Arguments.Add(target.Factory.ListLiteral(currentBatch[0].Position, currentBatch));
+                callNode.Arguments.Add(
+                    target.Factory.ListLiteral(currentBatch[0].Position, currentBatch)
+                );
             }
             currentBatch = null;
         }
@@ -265,13 +308,19 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
             {
                 partialSliceForm.DoEmitPartialApplicationCode(target);
             }
-            else if(sliceForm is AstExpand macroSliceForm)
+            else if (sliceForm is AstExpand macroSliceForm)
             {
                 macroSliceForm.EmitCode(target, StackSemantics.Value);
             }
             else
             {
-                target.Loader.ReportMessage(Message.Error(Resources.AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice, Position, MessageClasses.ArgumentSpliceNotSupported));
+                target.Loader.ReportMessage(
+                    Message.Error(
+                        Resources.AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice,
+                        Position,
+                        MessageClasses.ArgumentSpliceNotSupported
+                    )
+                );
             }
         }
         else
@@ -282,9 +331,9 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
 
     void _emitNonSplicedPartialApplication(CompilerTarget target)
     {
-        var argv =
-            AstPartiallyApplicable.PreprocessPartialApplicationArguments(
-                Subject.Singleton().Append(Arguments));
+        var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(
+            Subject.Singleton().Append(Arguments)
+        );
         var argc = argv.Count;
         AstPlaceholder? p;
         if (argc == 0)
@@ -299,17 +348,18 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
             Subject.EmitValueCode(target);
         }
         else if (
-                argc >= 2
-                && !argv[0].IsPlaceholder()
-                && argv.Skip(2).All(expr => !expr.IsPlaceholder())
-                && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0))
-            //Matches the patterns 
-            //  subj.(c_1, c_2,...,c_n, ?0,?1,?2,...,?m) 
-            //and 
-            //  subj.(?0, c_1,c_2,...,c_n, ?1,?2,?3,...,?m)
+            argc >= 2
+            && !argv[0].IsPlaceholder()
+            && argv.Skip(2).All(expr => !expr.IsPlaceholder())
+            && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0)
+        )
+        //Matches the patterns
+        //  subj.(c_1, c_2,...,c_n, ?0,?1,?2,...,?m)
+        //and
+        //  subj.(?0, c_1,c_2,...,c_n, ?1,?2,?3,...,?m)
         {
             //This partial application was reduced to just closed arguments in prefix position
-            //  with an optional open argument in front. No mapping is necessary in this case. 
+            //  with an optional open argument in front. No mapping is necessary in this case.
 
             //Check for optional open argument
             if (p != null)
@@ -318,7 +368,11 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
                 argv[0].EmitValueCode(target);
                 foreach (var arg in argv.Skip(2))
                     arg.EmitValueCode(target);
-                target.EmitCommandCall(Position, argc - 1, FlippedFunctionalPartialCallCommand.Alias);
+                target.EmitCommandCall(
+                    Position,
+                    argc - 1,
+                    FlippedFunctionalPartialCallCommand.Alias
+                );
             }
             else
             {
@@ -339,7 +393,8 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
     public override NodeApplicationState CheckNodeApplicationState()
     {
         var state = base.CheckNodeApplicationState();
-        return state.WithPlaceholders(state.HasPlaceholders || Subject.IsPlaceholder())
+        return state
+            .WithPlaceholders(state.HasPlaceholders || Subject.IsPlaceholder())
             .WithArgumentSpliced(state.HasArgumentSplices || Subject.IsArgumentSplice());
     }
 
@@ -350,8 +405,12 @@ public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
 
     #endregion
 
-    public static AstGetSet Create(ISourcePosition position, AstExpr astExpr, PCall call = PCall.Get)
+    public static AstGetSet Create(
+        ISourcePosition position,
+        AstExpr astExpr,
+        PCall call = PCall.Get
+    )
     {
-        return new AstIndirectCall(position,call,astExpr);
+        return new AstIndirectCall(position, call, astExpr);
     }
 }

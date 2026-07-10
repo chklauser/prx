@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -8,9 +6,7 @@ public class Count : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Count()
-    {
-    }
+    Count() { }
 
     public static Count Instance { get; } = new();
 

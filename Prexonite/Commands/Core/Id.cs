@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core;
@@ -10,9 +8,7 @@ public class Id : PCommand, ICilCompilerAware
 
     public static Id Instance { get; } = new();
 
-    Id()
-    {
-    }
+    Id() { }
 
     #endregion
 

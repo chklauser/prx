@@ -1,5 +1,3 @@
-﻿
-
 namespace Prexonite.Compiler.Build.Internal;
 
 class StringSource : ISource

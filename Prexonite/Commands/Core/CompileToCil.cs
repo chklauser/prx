@@ -1,18 +1,17 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core;
 
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = "Cil")]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = "Cil"
+)]
 public class CompileToCil : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    CompileToCil()
-    {
-    }
+    CompileToCil() { }
 
     public static CompileToCil Instance { get; } = new();
 
@@ -72,11 +71,11 @@ public class CompileToCil : PCommand, ICilCompilerAware
                     if (args.Length == 0)
                     {
                         if (AlreadyCompiledStatically)
-                            throw new PrexoniteException
-                            (
-                                $"You should only use static compilation once per process. Use {Engine.CompileToCilAlias}(true)" +
-                                " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " +
-                                $"use {Engine.CompileToCilAlias}(false) for disposable implementations.");
+                            throw new PrexoniteException(
+                                $"You should only use static compilation once per process. Use {Engine.CompileToCilAlias}(true)"
+                                    + " to force recompilation (warning: memory leak!). Should your program recompile dynamically, "
+                                    + $"use {Engine.CompileToCilAlias}(false) for disposable implementations."
+                            );
                         else
                             AlreadyCompiledStatically = true;
                     }
@@ -94,15 +93,15 @@ public class CompileToCil : PCommand, ICilCompilerAware
                     goto case 0;
                 if (arg0.Type == PType.Bool)
                 {
-                    if ((bool) arg0.Value!)
+                    if ((bool)arg0.Value!)
                         linking = FunctionLinking.FullyStatic;
                     else
                         linking = FunctionLinking.FullyIsolated;
                     goto case 0;
                 }
-                else if (arg0.Type == typeof (FunctionLinking))
+                else if (arg0.Type == typeof(FunctionLinking))
                 {
-                    linking = (FunctionLinking) arg0.Value!;
+                    linking = (FunctionLinking)arg0.Value!;
                     goto case 0;
                 }
                 else

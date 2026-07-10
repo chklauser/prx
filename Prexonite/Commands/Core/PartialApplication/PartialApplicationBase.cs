@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -32,7 +30,9 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         {
             return _mappings.Array == null
                 ? []
-                : Enumerable.Range(_mappings.Offset, _mappings.Count).Select(i => _mappings.Array[i]);
+                : Enumerable
+                    .Range(_mappings.Offset, _mappings.Count)
+                    .Select(i => _mappings.Array[i]);
         }
     }
 
@@ -44,11 +44,12 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     /// <param name = "closedArguments">Already provided (closed) arguments.</param>
     /// <param name = "nonArgumentPrefix">Indicates how many of the effective arguments should be isolated and not packed into the arguments array. See remarks on <see
     ///      cref = "NonArgumentPrefix" />.</param>
-    protected PartialApplicationBase(int[] mappings, PValue[] closedArguments,
-        int nonArgumentPrefix)
-        : this(new ArraySegment<int>(mappings), closedArguments, nonArgumentPrefix)
-    {
-    }
+    protected PartialApplicationBase(
+        int[] mappings,
+        PValue[] closedArguments,
+        int nonArgumentPrefix
+    )
+        : this(new ArraySegment<int>(mappings), closedArguments, nonArgumentPrefix) { }
 
     /// <summary>
     ///     Initializes the partial application.
@@ -58,12 +59,17 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     /// <param name = "closedArguments">Already provided (closed) arguments.</param>
     /// <param name = "nonArgumentPrefix">Indicates how many of the effective arguments should be isolated and not packed into the arguments array. See remarks on <see
     ///      cref = "NonArgumentPrefix" />.</param>
-    protected PartialApplicationBase(ArraySegment<int> mappings, PValue[] closedArguments,
-        int nonArgumentPrefix)
+    protected PartialApplicationBase(
+        ArraySegment<int> mappings,
+        PValue[] closedArguments,
+        int nonArgumentPrefix
+    )
     {
         if (nonArgumentPrefix < 0)
             throw new ArgumentOutOfRangeException(
-                nameof(nonArgumentPrefix), "non-argument prefix cannot be negative");
+                nameof(nonArgumentPrefix),
+                "non-argument prefix cannot be negative"
+            );
 
         _closedArguments = closedArguments;
 
@@ -117,25 +123,34 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         return Invoke(sctx, nonArguments, effectiveArguments);
     }
 
-    void _combineArguments(ReadOnlySpan<PValue> args, out PValue[] nonArguments,
-        out PValue[] effectiveArguments)
+    void _combineArguments(
+        ReadOnlySpan<PValue> args,
+        out PValue[] nonArguments,
+        out PValue[] effectiveArguments
+    )
     {
-        System.Diagnostics.Debug.Assert(args.ToImmutableArray().All(value => (PValue?)value != null),
-            "Actual (CLI) null references passed to " +
-            GetType().Name + ".IndirectCall");
+        System.Diagnostics.Debug.Assert(
+            args.ToImmutableArray().All(value => (PValue?)value != null),
+            "Actual (CLI) null references passed to " + GetType().Name + ".IndirectCall"
+        );
 
         var argc = args.Length;
         var countExcessArguments = System.Math.Max(
-            argc - _computeCountOpenArgumentsMapped(argc), 0);
+            argc - _computeCountOpenArgumentsMapped(argc),
+            0
+        );
         var nonArgumentPrefix = NonArgumentPrefix;
         var mappingLength = _mappings.Count;
-        var countEffectiveArguments =
-            System.Math.Max(mappingLength + countExcessArguments - nonArgumentPrefix, 0);
+        var countEffectiveArguments = System.Math.Max(
+            mappingLength + countExcessArguments - nonArgumentPrefix,
+            0
+        );
 
         nonArguments = new PValue[nonArgumentPrefix];
         effectiveArguments = new PValue[countEffectiveArguments];
-        System.Diagnostics.Debug.Assert(effectiveArguments.Length + nonArgumentPrefix >=
-            mappingLength);
+        System.Diagnostics.Debug.Assert(
+            effectiveArguments.Length + nonArgumentPrefix >= mappingLength
+        );
 
         //Apply mapping
         var openArgumentUsed = new bool[argc];
@@ -146,13 +161,17 @@ public abstract class PartialApplicationBase : IMaybeStackAware
             System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
 
             var argumentList = _determineArgumentList(
-                out var relativeIndex, nonArgumentPrefix, absoluteIndex, nonArguments,
-                effectiveArguments);
+                out var relativeIndex,
+                nonArgumentPrefix,
+                absoluteIndex,
+                nonArguments,
+                effectiveArguments
+            );
 
             if (0 <= mapping)
             {
                 var index = mapping - 1;
-                //maps closed arguments   
+                //maps closed arguments
                 argumentList[relativeIndex] = _closedArguments[index];
             }
             else
@@ -177,25 +196,42 @@ public abstract class PartialApplicationBase : IMaybeStackAware
             if (openArgumentUsed[i])
                 continue;
 
-            var argumentList = _determineArgumentList(out var relativeIndex, nonArgumentPrefix,
-                absoluteIndex++, nonArguments,
-                effectiveArguments);
+            var argumentList = _determineArgumentList(
+                out var relativeIndex,
+                nonArgumentPrefix,
+                absoluteIndex++,
+                nonArguments,
+                effectiveArguments
+            );
             argumentList[relativeIndex] = args[i];
         }
 
-        System.Diagnostics.Debug.Assert(nonArguments.All(x => !ReferenceEquals(x, null)),
-            "non-argument left unassigned");
-        System.Diagnostics.Debug.Assert(effectiveArguments.All(x => !ReferenceEquals(x, null)),
-            "effective argument left unassigned");
+        System.Diagnostics.Debug.Assert(
+            nonArguments.All(x => !ReferenceEquals(x, null)),
+            "non-argument left unassigned"
+        );
+        System.Diagnostics.Debug.Assert(
+            effectiveArguments.All(x => !ReferenceEquals(x, null)),
+            "effective argument left unassigned"
+        );
     }
 
-    public bool TryDefer(StackContext sctx, PValue[] args,
-        [NotNullWhen(true)] out StackContext? partialApplicationContext, [NotNullWhen(false)] out PValue? result)
+    public bool TryDefer(
+        StackContext sctx,
+        PValue[] args,
+        [NotNullWhen(true)] out StackContext? partialApplicationContext,
+        [NotNullWhen(false)] out PValue? result
+    )
     {
         _combineArguments(args, out var nonArguments, out var effectiveArguments);
 
-        return DoTryDefer(sctx, nonArguments, effectiveArguments, out partialApplicationContext,
-            out result);
+        return DoTryDefer(
+            sctx,
+            nonArguments,
+            effectiveArguments,
+            out partialApplicationContext,
+            out result
+        );
     }
 
     /// <summary>
@@ -209,20 +245,26 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     /// <param name = "partialApplicationContext">The stack context for this partial application</param>
     /// <param name = "result"></param>
     /// <returns>True if the <see cref = "StackContext" /> has been created; false otherwise.</returns>
-    protected virtual bool DoTryDefer(StackContext sctx, PValue[] nonArguments,
+    protected virtual bool DoTryDefer(
+        StackContext sctx,
+        PValue[] nonArguments,
         PValue[] arguments,
-        [NotNullWhen(true)]
-        out StackContext? partialApplicationContext,
-        [NotNullWhen(false)]
-        out PValue? result)
+        [NotNullWhen(true)] out StackContext? partialApplicationContext,
+        [NotNullWhen(false)] out PValue? result
+    )
     {
         partialApplicationContext = null;
         result = Invoke(sctx, nonArguments, arguments);
         return false;
     }
 
-    static PValue[] _determineArgumentList(out int relativeIndex, int nonArgumentPrefix,
-        int absoluteIndex, PValue[] nonArguments, PValue[] effectiveArguments)
+    static PValue[] _determineArgumentList(
+        out int relativeIndex,
+        int nonArgumentPrefix,
+        int absoluteIndex,
+        PValue[] nonArguments,
+        PValue[] effectiveArguments
+    )
     {
         PValue[] argumentList;
         if (absoluteIndex < nonArgumentPrefix)
@@ -239,7 +281,8 @@ public abstract class PartialApplicationBase : IMaybeStackAware
         System.Diagnostics.Debug.Assert(argumentList != null, "ArgumentList cannot be null");
         System.Diagnostics.Debug.Assert(
             0 <= relativeIndex && relativeIndex < argumentList.Length,
-            "Relative index is out of bounds");
+            "Relative index is out of bounds"
+        );
         return argumentList;
     }
 
@@ -251,8 +294,7 @@ public abstract class PartialApplicationBase : IMaybeStackAware
     ///      cref = "NonArgumentPrefix" />.</param>
     /// <param name = "arguments">The rest of the effective arguments, ready to be passed as arguments.</param>
     /// <returns>The value to be returned as the partial application's result</returns>
-    protected abstract PValue Invoke(StackContext sctx, PValue[] nonArguments,
-        PValue[] arguments);
+    protected abstract PValue Invoke(StackContext sctx, PValue[] nonArguments, PValue[] arguments);
 
     /// <summary>
     ///     Indicates how many of the effective arguments should be isolated and not packed into the arguments array.

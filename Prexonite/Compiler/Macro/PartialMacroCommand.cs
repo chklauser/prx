@@ -1,4 +1,3 @@
-﻿
 namespace Prexonite.Compiler.Macro;
 
 /// <summary>
@@ -10,9 +9,8 @@ public abstract class PartialMacroCommand : MacroCommand
     ///     Creates a new partially applicable macro.
     /// </summary>
     /// <param name = "id">The id of this macro</param>
-    protected PartialMacroCommand(string id) : base(id)
-    {
-    }
+    protected PartialMacroCommand(string id)
+        : base(id) { }
 
     /// <summary>
     ///     Implements the expansion of the partially applied macro. May refuse certain partial applications.

@@ -1,25 +1,19 @@
-
-
 namespace Prexonite.Compiler.Ast;
 
-public class AstTypecast : AstExpr,
-    IAstHasExpressions,
-    IAstPartiallyApplicable
+public class AstTypecast : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
 {
     public AstExpr Subject { get; private set; }
     public AstTypeExpr Type { get; private set; }
 
     public AstTypecast(ISourcePosition position, AstExpr subject, AstTypeExpr type)
-        :base(position)
+        : base(position)
     {
         Subject = subject ?? throw new ArgumentNullException(nameof(subject));
-        Type = type ?? throw new ArgumentNullException(nameof(type));   
+        Type = type ?? throw new ArgumentNullException(nameof(type));
     }
 
     internal AstTypecast(Parser p, AstExpr subject, AstTypeExpr type)
-        : this(p.GetPosition(), subject, type)
-    {
-    }
+        : this(p.GetPosition(), subject, type) { }
 
     #region IAstHasExpressions Members
 
@@ -32,10 +26,9 @@ public class AstTypecast : AstExpr,
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Effect)
+        if (stackSemantics == StackSemantics.Effect)
             return;
-            
-            
+
         if (Subject.IsArgumentSplice())
         {
             AstArgumentSplice.ReportNotSupported(Subject, target, stackSemantics);
@@ -49,18 +42,18 @@ public class AstTypecast : AstExpr,
 
         Subject.EmitValueCode(target);
         if (Type is AstConstantTypeExpression constType)
-            target.Emit(Position,OpCode.cast_const, constType.TypeExpression);
+            target.Emit(Position, OpCode.cast_const, constType.TypeExpression);
         else
         {
             Type.EmitValueCode(target);
-            target.Emit(Position,OpCode.cast_arg);
+            target.Emit(Position, OpCode.cast_arg);
         }
     }
 
     public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
     {
         Subject = _GetOptimizedNode(target, Subject);
-        Type = (AstTypeExpr) _GetOptimizedNode(target, Type);
+        Type = (AstTypeExpr)_GetOptimizedNode(target, Type);
 
         expr = null;
 
@@ -74,8 +67,10 @@ public class AstTypecast : AstExpr,
         //Redundant cast
         AstTypecast? castSubject;
         AstConstantTypeExpression? sndCastType;
-        if ((castSubject = Subject as AstTypecast) != null &&
-            (sndCastType = castSubject.Type as AstConstantTypeExpression) != null)
+        if (
+            (castSubject = Subject as AstTypecast) != null
+            && (sndCastType = castSubject.Type as AstConstantTypeExpression) != null
+        )
         {
             if (Engine.StringsAreEqual(sndCastType.TypeExpression, constType.TypeExpression))
             {
@@ -88,8 +83,12 @@ public class AstTypecast : AstExpr,
         return false;
     }
 
-    bool _tryOptimizeConstCast(CompilerTarget target, AstConstant constSubject,
-        AstConstantTypeExpression constType, [NotNullWhen(true)] out AstExpr? expr)
+    bool _tryOptimizeConstCast(
+        CompilerTarget target,
+        AstConstant constSubject,
+        AstConstantTypeExpression constType,
+        [NotNullWhen(true)] out AstExpr? expr
+    )
     {
         expr = null;
         PType type;
@@ -108,11 +107,13 @@ public class AstTypecast : AstExpr,
         else
             return false;
     }
-        
+
     public NodeApplicationState CheckNodeApplicationState()
     {
-        return new(Subject.IsPlaceholder() || Type.IsPlaceholder(), 
-            Subject.IsArgumentSplice() || Type.IsArgumentSplice());
+        return new(
+            Subject.IsPlaceholder() || Type.IsPlaceholder(),
+            Subject.IsArgumentSplice() || Type.IsArgumentSplice()
+        );
     }
 
     public void DoEmitPartialApplicationCode(CompilerTarget target)
@@ -127,9 +128,10 @@ public class AstTypecast : AstExpr,
             AstArgumentSplice.ReportNotSupported(Type, target, StackSemantics.Value);
             return;
         }
-            
-        var argv =
-            AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton());
+
+        var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(
+            Subject.Singleton()
+        );
         var ctorArgc = AstPartiallyApplicable.EmitConstructorArguments(this, target, argv);
         if (Type is AstConstantTypeExpression constType)
             target.EmitConstant(Position, constType.TypeExpression);

@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using System.Diagnostics;
 using System.Text;
@@ -10,9 +8,7 @@ public static class Extensions
 {
     extension<T>(T ignored)
     {
-        public void Ignore()
-        {
-        }
+        public void Ignore() { }
     }
 
     extension<TA, TB, TC>(Func<TA, TB, TC> func)
@@ -25,9 +21,7 @@ public static class Extensions
 
     extension<TSource>(IEnumerable<TSource> xs)
     {
-        public TAccum Foldr<TAccum>(
-            Func<TSource, TAccum, TAccum> func,
-            TAccum seed)
+        public TAccum Foldr<TAccum>(Func<TSource, TAccum, TAccum> func, TAccum seed)
         {
             if (func == null)
                 throw new ArgumentNullException(nameof(func));
@@ -45,7 +39,6 @@ public static class Extensions
                 xsr = xs.Reverse();
 
             foreach (var x in xsr)
-
             {
                 seed = func(x, seed);
             }
@@ -104,7 +97,7 @@ public static class Extensions
             var hasStarted = false;
             foreach (var x in xs)
             {
-                if(hasStarted)
+                if (hasStarted)
                 {
                     s.Append(", ");
                 }
@@ -157,14 +150,15 @@ public static class Extensions
         ///      cref = "MapMaybe{TSource,TResult}(System.Collections.Generic.IEnumerable{TSource},System.Func{TSource,TResult})" />.</param>
         /// <returns>The sequence of mapped elements that are not <code>null</code></returns>
         [DebuggerNonUserCode]
-        public IEnumerable<TResult> MapMaybe<TResult>(Func<TSource, TResult?> func) where TResult : class
+        public IEnumerable<TResult> MapMaybe<TResult>(Func<TSource, TResult?> func)
+            where TResult : class
         {
             if (func == null)
                 throw new ArgumentNullException(nameof(func));
 
             // ReSharper disable LoopCanBeConvertedToQuery
             foreach (var item in xs)
-                // ReSharper restore LoopCanBeConvertedToQuery
+            // ReSharper restore LoopCanBeConvertedToQuery
             {
                 var y = func(item);
                 if (y != null)
@@ -173,7 +167,8 @@ public static class Extensions
         }
 
         [DebuggerNonUserCode]
-        public IEnumerable<TResult> SelectMaybe<TResult>(Func<TSource, TResult?> func) where TResult : struct
+        public IEnumerable<TResult> SelectMaybe<TResult>(Func<TSource, TResult?> func)
+            where TResult : struct
         {
             if (func == null)
                 throw new ArgumentNullException(nameof(func));
@@ -189,7 +184,8 @@ public static class Extensions
         }
 
         [DebuggerNonUserCode]
-        public IEnumerable<TResult> SelectMaybe<TResult>(Func<TSource, TResult?> func) where TResult : class
+        public IEnumerable<TResult> SelectMaybe<TResult>(Func<TSource, TResult?> func)
+            where TResult : class
         {
             if (func == null)
                 throw new ArgumentNullException(nameof(func));
@@ -207,7 +203,8 @@ public static class Extensions
         [DebuggerNonUserCode]
         public IEnumerable<TResult> Zip<TRight, TResult>(
             IEnumerable<TRight> rightHandSide,
-            Func<TSource, TRight, TResult> func)
+            Func<TSource, TRight, TResult> func
+        )
         {
             if (rightHandSide == null)
                 throw new ArgumentNullException(nameof(rightHandSide));
@@ -221,8 +218,7 @@ public static class Extensions
         }
 
         [DebuggerNonUserCode]
-        public void DoZipped<TRight>(IEnumerable<TRight> rightHandSide,
-            Action<TSource, TRight> f)
+        public void DoZipped<TRight>(IEnumerable<TRight> rightHandSide, Action<TSource, TRight> f)
         {
             if (rightHandSide == null)
                 throw new ArgumentNullException(nameof(rightHandSide));
@@ -235,8 +231,7 @@ public static class Extensions
                 f(le.Current, re.Current);
         }
 
-        public IEnumerable<TSource> Append(
-            IEnumerable<TSource> right)
+        public IEnumerable<TSource> Append(IEnumerable<TSource> right)
         {
             return xs.Concat(right);
         }
@@ -345,20 +340,26 @@ public static class Extensions
 
         public IEnumerable<LinkedListNode<T>> ToNodeSequence()
         {
-            if(source.Count == 0)
+            if (source.Count == 0)
                 yield break;
 
             var node = source.First;
-            while(node != null)
+            while (node != null)
             {
 #if !DEBUG
                 yield return node;
 #else
-                    var prev = node.Previous;
-                    var next = node.Next;
-                    yield return node;
-                    Debug.Assert(ReferenceEquals(node.Next,next),"Linked list has changed while enumerating over elements. (next node)");
-                    Debug.Assert(ReferenceEquals(node.Previous, prev), "Linked list has changed while enumerating over elements. (prev node)");
+                var prev = node.Previous;
+                var next = node.Next;
+                yield return node;
+                Debug.Assert(
+                    ReferenceEquals(node.Next, next),
+                    "Linked list has changed while enumerating over elements. (next node)"
+                );
+                Debug.Assert(
+                    ReferenceEquals(node.Previous, prev),
+                    "Linked list has changed while enumerating over elements. (prev node)"
+                );
 #endif
                 node = node.Next;
             }
@@ -379,7 +380,7 @@ public static class Extensions
         public IEnumerable<T> Singleton()
         {
             return new SingletonEnum<T>(element);
-    }
+        }
     }
 
     extension<T>(ICollection<T> collection)
@@ -396,7 +397,7 @@ public static class Extensions
 
     #region Nested type: SingletonEnum
 
-        class SingletonEnum<T> : IEnumerable<T>
+    class SingletonEnum<T> : IEnumerable<T>
     {
         readonly T _element;
 

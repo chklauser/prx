@@ -1,5 +1,3 @@
-
-
 using System.Text;
 using Prexonite.Compiler.Cil;
 
@@ -9,9 +7,7 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
 {
     #region Singleton
 
-    SetCenterCommand()
-    {
-    }
+    SetCenterCommand() { }
 
     public static SetCenterCommand Instance { get; } = new();
 
@@ -38,7 +34,7 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
         }
         s = args[1].CallToString(sctx);
         parseW:
-        w = (int) args[0].ConvertTo(sctx, PType.Int).Value!;
+        w = (int)args[0].ConvertTo(sctx, PType.Int).Value!;
         if (args.Length > 2)
             f = args[2].CallToString(sctx);
         else
@@ -50,10 +46,10 @@ public class SetCenterCommand : PCommand, ICilCompilerAware
 
         var sb = new StringBuilder(w);
 
-        var lw = (int) System.Math.Round(w / 2.0, 0, MidpointRounding.AwayFromZero);
+        var lw = (int)System.Math.Round(w / 2.0, 0, MidpointRounding.AwayFromZero);
         var rw = w - lw;
 
-        var ll = (int) System.Math.Round(l / 2.0, 0, MidpointRounding.AwayFromZero);
+        var ll = (int)System.Math.Round(l / 2.0, 0, MidpointRounding.AwayFromZero);
 
         sb.Append(SetRightCommand.SetRight(lw, s[..ll], f));
         sb.Append(SetLeftCommand.SetLeft(rw, s[ll..], f));

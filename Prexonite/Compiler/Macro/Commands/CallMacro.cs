@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
@@ -17,17 +15,14 @@ public class CallMacro : PartialMacroCommand
 
     public static CallMacro Instance { get; } = new();
 
-    CallMacro() : base(Alias)
-    {
-    }
+    CallMacro()
+        : base(Alias) { }
 
     #endregion
 
     public static KeyValuePair<string, CallMacroPerform> GetHelperCommands(Loader ldr)
     {
-        return
-            new(CallMacroPerform.Alias,
-                new(ldr));
+        return new(CallMacroPerform.Alias, new(ldr));
     }
 
     #region Call\Macro\Perform
@@ -36,6 +31,7 @@ public class CallMacro : PartialMacroCommand
     {
         // ReSharper disable MemberHidesStaticFromOuterClass
         public const string Alias = @"call\macro\perform";
+
         // ReSharper restore MemberHidesStaticFromOuterClass
 
         #region Overrides of PCommand
@@ -46,7 +42,8 @@ public class CallMacro : PartialMacroCommand
         {
             if (args.Length < CallingConventionArgumentsCount)
                 throw new PrexoniteException(
-                    "Id of macro implementation, effect flag, call type and/or context missing.");
+                    "Id of macro implementation, effect flag, call type and/or context missing."
+                );
 
             var entityRef = _getMacroRef(sctx, args[0]);
 
@@ -69,8 +66,7 @@ public class CallMacro : PartialMacroCommand
             {
                 macroSession = target.AcquireMacroSession();
 
-                return sctx.CreateNativePValue(
-                    macroSession.ExpandMacro(inv, justEffect));
+                return sctx.CreateNativePValue(macroSession.ExpandMacro(inv, justEffect));
             }
             finally
             {
@@ -81,37 +77,37 @@ public class CallMacro : PartialMacroCommand
 
         static void _detectRuntimeValues(IEnumerable<PValue> argList)
         {
-            var offender =
-                argList.FirstOrDefault(
-                    p => p.Type is not ObjectPType || p.Value is not AstExpr);
+            var offender = argList.FirstOrDefault(p =>
+                p.Type is not ObjectPType || p.Value is not AstExpr
+            );
             if (offender != null)
                 throw new PrexoniteException(
                     string.Format(
                         "Macros cannot have runtime values as arguments in call to {1}. {0} is not an AST node.",
-                        offender, Alias));
+                        offender,
+                        Alias
+                    )
+                );
         }
 
         static bool _getEffectFlag(PValue rawEffectFlag)
         {
             if (rawEffectFlag.Type != PType.Bool)
-                throw new PrexoniteException(
-                    $"Effect flag is missing in call to {Alias}.");
-            return (bool) rawEffectFlag.Value!;
+                throw new PrexoniteException($"Effect flag is missing in call to {Alias}.");
+            return (bool)rawEffectFlag.Value!;
         }
 
         static PCall _getCallType(PValue rawCallType)
         {
             if (!(rawCallType.Type is ObjectPType && rawCallType.Value is PCall))
-                throw new PrexoniteException(
-                    $"Call type is missing in call to {Alias}.");
-            return (PCall) rawCallType.Value;
+                throw new PrexoniteException($"Call type is missing in call to {Alias}.");
+            return (PCall)rawCallType.Value;
         }
 
         static MacroContext _getContext(PValue rawContext)
         {
             if (rawContext.Type is not ObjectPType || rawContext.Value is not MacroContext context)
-                throw new PrexoniteException(
-                    $"Macro context is missing in call to {Alias}.");
+                throw new PrexoniteException($"Macro context is missing in call to {Alias}.");
             return context;
         }
 
@@ -133,12 +129,11 @@ public class CallMacro : PartialMacroCommand
         {
             // ReSharper disable MemberHidesStaticFromOuterClass
             public const string Alias = @"call\macro\impl";
+
             // ReSharper restore MemberHidesStaticFromOuterClass
 
             public PartialCallMacroPerform()
-                : base(Alias, EntityRef.Command.Create(CallMacroPerform.Alias))
-            {
-            }
+                : base(Alias, EntityRef.Command.Create(CallMacroPerform.Alias)) { }
 
             protected override int GetPassThroughArguments(MacroContext context)
             {
@@ -176,8 +171,11 @@ public class CallMacro : PartialMacroCommand
         {
             context.ReportMessage(
                 Message.Error(
-                    Resources.CallMacro_call_macro_must_be_supplied_a_macro_reference, context.Invocation.Position,
-                    MessageClasses.MacroReferenceForCallMacroMissing));
+                    Resources.CallMacro_call_macro_must_be_supplied_a_macro_reference,
+                    context.Invocation.Position,
+                    MessageClasses.MacroReferenceForCallMacroMissing
+                )
+            );
             return null;
         }
 
@@ -187,30 +185,50 @@ public class CallMacro : PartialMacroCommand
                 Message.Error(
                     string.Format(
                         Resources.CallMacro_CalledFromNonMacro,
-                        context.Function.LogicalId), context.Invocation.Position,
-                    MessageClasses.CallMacroCalledFromNonMacro));
+                        context.Function.LogicalId
+                    ),
+                    context.Invocation.Position,
+                    MessageClasses.CallMacroCalledFromNonMacro
+                )
+            );
             return null;
         }
 
         context.EstablishMacroContext();
 
-        if (!_parseArguments(context, out var call, out var justEffect, out var args, out var macroSpec))
+        if (
+            !_parseArguments(
+                context,
+                out var call,
+                out var justEffect,
+                out var args,
+                out var macroSpec
+            )
+        )
             return null;
 
         // [| call\macro\prepare_macro($macroEntityRef, context, $call, $justEffect, $args...) |]
         return _prepareMacro(context, macroSpec, call, justEffect, args);
     }
 
-    static AstGetSet _prepareMacro(MacroContext context,
-        AstExpr macroSpec, AstExpr call, AstExpr justEffect,
-        IEnumerable<AstExpr> args)
+    static AstGetSet _prepareMacro(
+        MacroContext context,
+        AstExpr macroSpec,
+        AstExpr call,
+        AstExpr justEffect,
+        IEnumerable<AstExpr> args
+    )
     {
-        var getContext = context.Factory.IndirectCall(context.Invocation.Position,
-            context.Factory.Call(context.Invocation.Position,
-                EntityRef.Variable.Local.Create(
-                    MacroAliases.ContextAlias)));
-        var prepareCall =
-            context.CreateExpand(EntityRef.MacroCommand.Create(CallMacroPerform.PartialCallMacroPerform.Alias));
+        var getContext = context.Factory.IndirectCall(
+            context.Invocation.Position,
+            context.Factory.Call(
+                context.Invocation.Position,
+                EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)
+            )
+        );
+        var prepareCall = context.CreateExpand(
+            EntityRef.MacroCommand.Create(CallMacroPerform.PartialCallMacroPerform.Alias)
+        );
         prepareCall.Arguments.Add(macroSpec);
         prepareCall.Arguments.Add(getContext);
         prepareCall.Arguments.Add(call);
@@ -219,19 +237,20 @@ public class CallMacro : PartialMacroCommand
         return prepareCall;
     }
 
-    static bool _parseArguments(MacroContext context, out AstExpr call,
+    static bool _parseArguments(
+        MacroContext context,
+        out AstExpr call,
         out AstExpr justEffect,
-        [NotNullWhen(true)]
-        out AstExpr[]? args,
-        [NotNullWhen(true)]
-        out AstExpr? macroSpec)
+        [NotNullWhen(true)] out AstExpr[]? args,
+        [NotNullWhen(true)] out AstExpr? macroSpec
+    )
     {
         /* call(macroRef,...) = call([],macroRef,[false],...);
          * call([],macroRef,[je],...) = call([],macroRef,[je,context.Call],...);
-         * call([],macroRef,[je,c],...) = { macroId := macroRef.Id; 
-         *                                  macroInterpretation := interpretation(macroRef); 
-         *                                  call := c; 
-         *                                  justEffect := je 
+         * call([],macroRef,[je,c],...) = { macroId := macroRef.Id;
+         *                                  macroInterpretation := interpretation(macroRef);
+         *                                  call := c;
+         *                                  justEffect := je
          *                                }
          * call([proto(...1)],...2) = call([],from_proto(proto),[false,PCall.Get],[...1],...2);
          * call([proto(...1) = x],...2) = call([],from_proto(proto),[false,PCall.Set],[...1],...2,[x]);
@@ -241,8 +260,7 @@ public class CallMacro : PartialMacroCommand
          */
 
         var inv = context.Invocation;
-        justEffect = new AstConstant(inv.File, inv.Line,
-            inv.Column, false);
+        justEffect = new AstConstant(inv.File, inv.Line, inv.Column, false);
         call = PCall.Get.ToExpr(context.Invocation.Position);
 
         var invokeSpec = inv.Arguments[0];
@@ -260,8 +278,10 @@ public class CallMacro : PartialMacroCommand
             // - followed by a list of options
 
             AstListLiteral? optionsRaw;
-            if (inv.Arguments.Count < 3 ||
-                (optionsRaw = inv.Arguments[2] as AstListLiteral) == null)
+            if (
+                inv.Arguments.Count < 3
+                || (optionsRaw = inv.Arguments[2] as AstListLiteral) == null
+            )
             {
                 _errorUsageFullRef(context);
                 args = null;
@@ -291,8 +311,14 @@ public class CallMacro : PartialMacroCommand
 
             var specProto = listSpec.Elements[0];
             if (
-                !_parsePrototype(context, specProto, out var protoCall,
-                    out var protoArguments, out macroSpec))
+                !_parsePrototype(
+                    context,
+                    specProto,
+                    out var protoCall,
+                    out var protoArguments,
+                    out macroSpec
+                )
+            )
             {
                 args = null;
                 return false;
@@ -303,23 +329,22 @@ public class CallMacro : PartialMacroCommand
                 justEffect = listSpec.Elements[1];
 
             //second option: call type
-            call = listSpec.Elements.Count >= 3
-                ? listSpec.Elements[2]
-                : protoCall.ToExpr(specProto.Position);
+            call =
+                listSpec.Elements.Count >= 3
+                    ? listSpec.Elements[2]
+                    : protoCall.ToExpr(specProto.Position);
 
             //args: lift and pass prototype arguments, special care for set
 
-            var setArgs = protoCall == PCall.Set
-                ? protoArguments.Last()
-                : null;
-            var getArgs = protoCall == PCall.Set
-                ? protoArguments.Take(protoArguments.Count - 1)
-                : protoArguments;
+            var setArgs = protoCall == PCall.Set ? protoArguments.Last() : null;
+            var getArgs =
+                protoCall == PCall.Set
+                    ? protoArguments.Take(protoArguments.Count - 1)
+                    : protoArguments;
 
-            // ReSharper disable PossibleMultipleEnumeration 
+            // ReSharper disable PossibleMultipleEnumeration
             // enumerating getArgs multiple times is safe and efficient
             if (getArgs.Any(a => !_ensureExplicitPlaceholder(context, a)))
-
             {
                 args = [];
                 return false;
@@ -328,8 +353,11 @@ public class CallMacro : PartialMacroCommand
             IEnumerable<AstExpr> getArgsLit;
             if (getArgs.Any())
             {
-                var getArgsLitNode = new AstListLiteral(specProto.File, specProto.Line,
-                    specProto.Column);
+                var getArgsLitNode = new AstListLiteral(
+                    specProto.File,
+                    specProto.Line,
+                    specProto.Column
+                );
                 getArgsLitNode.Elements.AddRange(getArgs);
                 getArgsLit = getArgsLitNode.Singleton();
             }
@@ -356,9 +384,7 @@ public class CallMacro : PartialMacroCommand
                 setArgsLit = [];
             }
 
-            args = getArgsLit
-                .Append(inv.Arguments.Skip(1))
-                .Append(setArgsLit).ToArray();
+            args = getArgsLit.Append(inv.Arguments.Skip(1)).Append(setArgsLit).ToArray();
 
             return true;
         }
@@ -366,23 +392,27 @@ public class CallMacro : PartialMacroCommand
 
     static bool _ensureExplicitPlaceholder(MacroContext context, AstExpr arg)
     {
-        if (arg is AstPlaceholder {Index: null} setPlaceholder)
+        if (arg is AstPlaceholder { Index: null } setPlaceholder)
         {
             context.ReportMessage(
                 Message.Error(
                     string.Format(Resources.CallMacro_SpecifyPlaceholderIndexExplicitly, Alias),
-                    setPlaceholder.Position, MessageClasses.SpecifyPlaceholderIndexExplicitly));
+                    setPlaceholder.Position,
+                    MessageClasses.SpecifyPlaceholderIndexExplicitly
+                )
+            );
             return false;
         }
         return true;
     }
 
-    static bool _parsePrototype(MacroContext context,
-        AstExpr specProto, out PCall protoCall,
-        [NotNullWhen(true)]
-        out IList<AstExpr>? protoArguments,
-        [NotNullWhen(true)]
-        out AstExpr? macroSpec)
+    static bool _parsePrototype(
+        MacroContext context,
+        AstExpr specProto,
+        out PCall protoCall,
+        [NotNullWhen(true)] out IList<AstExpr>? protoArguments,
+        [NotNullWhen(true)] out AstExpr? macroSpec
+    )
     {
         var proto2 = specProto as AstExpand;
         if (specProto.IsPlaceholder())
@@ -409,8 +439,7 @@ public class CallMacro : PartialMacroCommand
         return true;
     }
 
-    static AstExpr _getMacroSpecExpr(MacroContext context,
-        AstExpand proto)
+    static AstExpr _getMacroSpecExpr(MacroContext context, AstExpand proto)
     {
         return EntityRefTo.ToExpr(context.Factory, context.Invocation.Position, proto.Entity);
     }
@@ -419,8 +448,11 @@ public class CallMacro : PartialMacroCommand
     {
         context.ReportMessage(
             Message.Error(
-                string.Format(Resources.CallMacro_errorUsagePrototype, Alias), context.Invocation.Position,
-                MessageClasses.CallMacroUsage));
+                string.Format(Resources.CallMacro_errorUsagePrototype, Alias),
+                context.Invocation.Position,
+                MessageClasses.CallMacroUsage
+            )
+        );
     }
 
     static bool _parseReference(MacroContext context, AstExpr macroRef)
@@ -429,8 +461,11 @@ public class CallMacro : PartialMacroCommand
         {
             context.ReportMessage(
                 Message.Error(
-                    Resources.CallMacro_notOnPlaceholder, context.Invocation.Position,
-                    MessageClasses.CallMacroNotOnPlaceholder));
+                    Resources.CallMacro_notOnPlaceholder,
+                    context.Invocation.Position,
+                    MessageClasses.CallMacroNotOnPlaceholder
+                )
+            );
             return false;
         }
 
@@ -441,8 +476,11 @@ public class CallMacro : PartialMacroCommand
     {
         context.ReportMessage(
             Message.Error(
-                Resources.CallMacro_errorUsageFullRef, context.Invocation.Position,
-                MessageClasses.CallMacroUsage));
+                Resources.CallMacro_errorUsageFullRef,
+                context.Invocation.Position,
+                MessageClasses.CallMacroUsage
+            )
+        );
     }
 
     #endregion

@@ -1,4 +1,3 @@
-
 #define SINGLE_NULL
 
 #region
@@ -15,9 +14,7 @@ public class NullPType : PType, ICilCompilerAware
 {
     #region Singleton
 
-    NullPType()
-    {
-    }
+    NullPType() { }
 
     /// <summary>
     ///     The one and only instance of <see cref = "NullPType" />.
@@ -68,7 +65,11 @@ public class NullPType : PType, ICilCompilerAware
         return Null.CreatePValue();
     }
 
-    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, out PValue result)
+    public override bool TryConstruct(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        out PValue result
+    )
     {
         result = Null.CreatePValue();
         return true;
@@ -81,8 +82,7 @@ public class NullPType : PType, ICilCompilerAware
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         result = null;
@@ -96,7 +96,12 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         return false;
@@ -107,7 +112,8 @@ public class NullPType : PType, ICilCompilerAware
         PValue subject,
         PType target,
         bool useExplicit,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = target.ToBuiltIn() switch
         {
@@ -125,7 +131,8 @@ public class NullPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue subject,
         bool useExplicit,
-        out PValue result)
+        out PValue result
+    )
     {
         result = Null.CreatePValue();
         return true;
@@ -193,55 +200,91 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool Addition(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Subtraction(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Multiply(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Division(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Modulus(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool BitwiseAnd(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool BitwiseOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool ExclusiveOr(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         return _coalesce(leftOperand, rightOperand, out result);
     }
 
     public override bool Equality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         var leftIsNull = leftOperand.Value == null;
         var rightIsNull = rightOperand.Value == null;
@@ -257,7 +300,11 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool Inequality(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         var leftIsNull = leftOperand.Value == null;
         var rightIsNull = rightOperand.Value == null;
@@ -273,7 +320,11 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool GreaterThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -293,7 +344,8 @@ public class NullPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -310,7 +362,11 @@ public class NullPType : PType, ICilCompilerAware
     }
 
     public override bool LessThan(
-        StackContext sctx, PValue leftOperand, PValue rightOperand, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -330,7 +386,8 @@ public class NullPType : PType, ICilCompilerAware
         StackContext sctx,
         PValue leftOperand,
         PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
         var leftIsNull = leftOperand.Value == null;
@@ -360,7 +417,11 @@ public class NullPType : PType, ICilCompilerAware
     /// <returns>Always true (doing nothing can't possibly fail...)</returns>
     [DebuggerStepThrough]
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, out PValue result)
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        out PValue result
+    )
     {
         //Does nothing
         result = CreatePValue();

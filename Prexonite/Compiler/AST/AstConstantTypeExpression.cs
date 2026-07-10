@@ -13,9 +13,7 @@ public class AstConstantTypeExpression : AstTypeExpr
     }
 
     internal AstConstantTypeExpression(Parser p, string typeExpression)
-        : this(p.scanner.File, p.t.line, p.t.col, typeExpression)
-    {
-    }
+        : this(p.scanner.File, p.t.line, p.t.col, typeExpression) { }
 
     /// <inheritdoc />
     public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
@@ -26,10 +24,10 @@ public class AstConstantTypeExpression : AstTypeExpr
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Effect)
+        if (stackSemantics == StackSemantics.Effect)
             return;
 
-        target.Emit(Position,OpCode.ldr_type, TypeExpression);
+        target.Emit(Position, OpCode.ldr_type, TypeExpression);
     }
 
     #endregion

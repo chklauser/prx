@@ -31,82 +31,83 @@ using System.Linq;
 
 namespace CSFlex
 {
+    /**
+     * Simple symbol table, mapping lexical state names to integers.
+     *
+     * @author Gerwin Klein
+     * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:48 $
+     * @author Jonathan Gilbert
+     * @version CSFlex 1.4
+     */
+    public class LexicalStates
+    {
+        /** maps state name to state number */
+        Hashtable states;
 
-/**
- * Simple symbol table, mapping lexical state names to integers.
- *
- * @author Gerwin Klein
- * @version JFlex 1.4, $Revision: 2.1 $, $Date: 2004/04/12 10:07:48 $
- * @author Jonathan Gilbert
- * @version CSFlex 1.4
- */
-public class LexicalStates {
+        /** codes of inclusive states (subset of states) */
+        ArrayList inclusive;
 
-  /** maps state name to state number */
-  Hashtable states;
+        /** number of declared states */
+        int numStates;
 
-  /** codes of inclusive states (subset of states) */
-  ArrayList inclusive;
+        /**
+         * constructs a new lexical state symbol table
+         */
+        public LexicalStates()
+        {
+            states = new PrettyHashtable();
+            inclusive = new PrettyArrayList();
+        }
 
-  /** number of declared states */
-  int numStates;
+        /**
+         * insert a new state declaration
+         */
+        public void insert(String name, bool is_inclusive)
+        {
+            if (states.ContainsKey(name))
+                return;
 
+            Integer code = new Integer(numStates++);
+            states[name] = code;
 
-  /**
-   * constructs a new lexical state symbol table
-   */
-  public LexicalStates() {
-    states = new PrettyHashtable();
-    inclusive = new PrettyArrayList();
-  }
+            if (is_inclusive)
+                inclusive.Add(code.intValue());
+        }
 
+        /**
+         * returns the number (code) of a declared state,
+         * <code>null</code> if no such state has been declared.
+         */
+        public Integer getNumber(String name)
+        {
+            return (Integer)states[name];
+        }
 
-  /**
-   * insert a new state declaration
-   */
-  public void insert(String name, bool is_inclusive) {
-    if ( states.ContainsKey(name) ) return;
+        /**
+         * returns the number of declared states
+         */
+        public int number()
+        {
+            return numStates;
+        }
 
-    Integer code = new Integer(numStates++);
-    states[name] = code;
+        /**
+         * returns the names of all states
+         */
+        public IEnumerator names()
+        {
+            return states
+                .Keys.Cast<String>()
+                .OrderBy(name => ((Integer)states[name]).intValue())
+                .GetEnumerator();
+        }
 
-    if (is_inclusive)
-      inclusive.Add(code.intValue());
-  }
-
-
-  /**
-   * returns the number (code) of a declared state,
-   * <code>null</code> if no such state has been declared.
-   */
-  public Integer getNumber(String name) {
-    return (Integer)states[name];
-  }
-
-
-  /**
-   * returns the number of declared states
-   */
-  public int number() {
-    return numStates;
-  }
-
-
-  /**
-   * returns the names of all states
-   */
-  public IEnumerator names() {
-    return states.Keys
-      .Cast<String>()
-      .OrderBy(name => ((Integer)states[name]).intValue())
-      .GetEnumerator();
-  }
-
-  /**
-   * returns the code of all inclusive states
-   */
-  public IEnumerator getInclusiveStates() {
-    return inclusive.GetEnumerator();
-  }
-}
+        /**
+         * returns the code of all inclusive states
+         */
+        public IEnumerator getInclusiveStates()
+        {
+            return inclusive.GetEnumerator();
+        }
+    }
 }

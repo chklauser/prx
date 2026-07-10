@@ -1,19 +1,15 @@
 using System;
-using System.Reflection;
 using System.Collections.Generic;
-using Prexonite.Types;
+using System.Reflection;
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.Operators
 {
-
     public class Addition : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Addition()
-        {
-        }
+        private Addition() { }
 
         internal static Addition Instance { get; } = new Addition();
         #endregion
@@ -39,17 +35,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVAdditionMethod;
 
-
         #endregion
     }
 
     public class Subtraction : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Subtraction()
-        {
-        }
+        private Subtraction() { }
 
         internal static Subtraction Instance { get; } = new Subtraction();
         #endregion
@@ -75,17 +67,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVSubtractionMethod;
 
-
         #endregion
     }
 
     public class Multiplication : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Multiplication()
-        {
-        }
+        private Multiplication() { }
 
         internal static Multiplication Instance { get; } = new Multiplication();
         #endregion
@@ -111,17 +99,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVMultiplyMethod;
 
-
         #endregion
     }
 
     public class Division : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Division()
-        {
-        }
+        private Division() { }
 
         internal static Division Instance { get; } = new Division();
         #endregion
@@ -147,17 +131,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVDivisionMethod;
 
-
         #endregion
     }
 
     public class Modulus : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Modulus()
-        {
-        }
+        private Modulus() { }
 
         internal static Modulus Instance { get; } = new Modulus();
         #endregion
@@ -183,17 +163,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVModulusMethod;
 
-
         #endregion
     }
 
     public class Power : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Power()
-        {
-        }
+        private Power() { }
 
         internal static Power Instance { get; } = new Power();
         #endregion
@@ -213,9 +189,14 @@ namespace Prexonite.Commands.Core.Operators
             var left = args[0];
             var right = args[1];
             if (
-                !(left.TryConvertTo(sctx, PType.Real, out var rleft) &&
-                right.TryConvertTo(sctx, PType.Real, out var rright)))
-                throw new PrexoniteException("The arguments supplied to the power operator are invalid (cannot be converted to Real).");
+                !(
+                    left.TryConvertTo(sctx, PType.Real, out var rleft)
+                    && right.TryConvertTo(sctx, PType.Real, out var rright)
+                )
+            )
+                throw new PrexoniteException(
+                    "The arguments supplied to the power operator are invalid (cannot be converted to Real)."
+                );
             return System.Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value));
         }
 
@@ -225,8 +206,12 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Runtime.RaiseToPowerMethod;
 
-
-        public override void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        public override void Implement(
+            CompilerState state,
+            Instruction ins,
+            CompileTimeValue[] staticArgv,
+            int dynamicArgc
+        )
         {
             if (dynamicArgc >= 2)
             {
@@ -250,11 +235,8 @@ namespace Prexonite.Commands.Core.Operators
 
     public class BitwiseAnd : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private BitwiseAnd()
-        {
-        }
+        private BitwiseAnd() { }
 
         internal static BitwiseAnd Instance { get; } = new BitwiseAnd();
         #endregion
@@ -280,17 +262,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVBitwiseAndMethod;
 
-
         #endregion
     }
 
     public class BitwiseOr : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private BitwiseOr()
-        {
-        }
+        private BitwiseOr() { }
 
         internal static BitwiseOr Instance { get; } = new BitwiseOr();
         #endregion
@@ -316,17 +294,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVBitwiseOrMethod;
 
-
         #endregion
     }
 
     public class ExclusiveOr : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private ExclusiveOr()
-        {
-        }
+        private ExclusiveOr() { }
 
         internal static ExclusiveOr Instance { get; } = new ExclusiveOr();
         #endregion
@@ -352,17 +326,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVExclusiveOrMethod;
 
-
         #endregion
     }
 
     public class Equality : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Equality()
-        {
-        }
+        private Equality() { }
 
         internal static Equality Instance { get; } = new Equality();
         #endregion
@@ -388,17 +358,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVEqualityMethod;
 
-
         #endregion
     }
 
     public class Inequality : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private Inequality()
-        {
-        }
+        private Inequality() { }
 
         internal static Inequality Instance { get; } = new Inequality();
         #endregion
@@ -424,17 +390,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVInequalityMethod;
 
-
         #endregion
     }
 
     public class GreaterThan : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private GreaterThan()
-        {
-        }
+        private GreaterThan() { }
 
         internal static GreaterThan Instance { get; } = new GreaterThan();
         #endregion
@@ -460,17 +422,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVGreaterThanMethod;
 
-
         #endregion
     }
 
     public class GreaterThanOrEqual : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private GreaterThanOrEqual()
-        {
-        }
+        private GreaterThanOrEqual() { }
 
         internal static GreaterThanOrEqual Instance { get; } = new GreaterThanOrEqual();
         #endregion
@@ -485,7 +443,9 @@ namespace Prexonite.Commands.Core.Operators
         public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
         {
             if (args.Length < 2)
-                throw new PrexoniteException("The GreaterThanOrEqual operator requires two arguments.");
+                throw new PrexoniteException(
+                    "The GreaterThanOrEqual operator requires two arguments."
+                );
 
             return args[0].GreaterThanOrEqual(sctx, args[1]);
         }
@@ -494,19 +454,16 @@ namespace Prexonite.Commands.Core.Operators
 
         #region CIL extension
 
-        protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVGreaterThanOrEqualMethod;
-
+        protected override MethodInfo OperationMethod =>
+            Compiler.Cil.Compiler.PVGreaterThanOrEqualMethod;
 
         #endregion
     }
 
     public class LessThan : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private LessThan()
-        {
-        }
+        private LessThan() { }
 
         internal static LessThan Instance { get; } = new LessThan();
         #endregion
@@ -532,17 +489,13 @@ namespace Prexonite.Commands.Core.Operators
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVLessThanMethod;
 
-
         #endregion
     }
 
     public class LessThanOrEqual : BinaryOperatorBase
     {
-
         #region Singleton pattern
-        private LessThanOrEqual()
-        {
-        }
+        private LessThanOrEqual() { }
 
         internal static LessThanOrEqual Instance { get; } = new LessThanOrEqual();
         #endregion
@@ -557,7 +510,9 @@ namespace Prexonite.Commands.Core.Operators
         public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
         {
             if (args.Length < 2)
-                throw new PrexoniteException("The LessThanOrEqual operator requires two arguments.");
+                throw new PrexoniteException(
+                    "The LessThanOrEqual operator requires two arguments."
+                );
 
             return args[0].LessThanOrEqual(sctx, args[1]);
         }
@@ -566,19 +521,16 @@ namespace Prexonite.Commands.Core.Operators
 
         #region CIL extension
 
-        protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVLessThanOrEqualMethod;
-
+        protected override MethodInfo OperationMethod =>
+            Compiler.Cil.Compiler.PVLessThanOrEqualMethod;
 
         #endregion
     }
 
     public class UnaryNegation : UnaryOperatorBase
     {
-
         #region Singleton pattern
-        private UnaryNegation()
-        {
-        }
+        private UnaryNegation() { }
 
         internal static UnaryNegation Instance { get; } = new UnaryNegation();
         #endregion
@@ -595,7 +547,6 @@ namespace Prexonite.Commands.Core.Operators
             if (args.Length < 1)
                 throw new PrexoniteException("The UnaryNegation operator requires one argument.");
 
-
             return args[0].UnaryNegation(sctx);
         }
 
@@ -603,19 +554,16 @@ namespace Prexonite.Commands.Core.Operators
 
         #region CIL extension
 
-        protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVUnaryNegationMethod;
-
+        protected override MethodInfo OperationMethod =>
+            Compiler.Cil.Compiler.PVUnaryNegationMethod;
 
         #endregion
     }
 
     public class OnesComplement : UnaryOperatorBase
     {
-
         #region Singleton pattern
-        private OnesComplement()
-        {
-        }
+        private OnesComplement() { }
 
         internal static OnesComplement Instance { get; } = new OnesComplement();
         #endregion
@@ -632,7 +580,6 @@ namespace Prexonite.Commands.Core.Operators
             if (args.Length < 1)
                 throw new PrexoniteException("The OnesComplement operator requires one argument.");
 
-
             return args[0].OnesComplement(sctx);
         }
 
@@ -640,19 +587,16 @@ namespace Prexonite.Commands.Core.Operators
 
         #region CIL extension
 
-        protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVOnesComplementMethod;
-
+        protected override MethodInfo OperationMethod =>
+            Compiler.Cil.Compiler.PVOnesComplementMethod;
 
         #endregion
     }
 
     public class LogicalNot : UnaryOperatorBase
     {
-
         #region Singleton pattern
-        private LogicalNot()
-        {
-        }
+        private LogicalNot() { }
 
         internal static LogicalNot Instance { get; } = new LogicalNot();
         #endregion
@@ -669,7 +613,6 @@ namespace Prexonite.Commands.Core.Operators
             if (args.Length < 1)
                 throw new PrexoniteException("The LogicalNot operator requires one argument.");
 
-
             return args[0].LogicalNot(sctx);
         }
 
@@ -678,7 +621,6 @@ namespace Prexonite.Commands.Core.Operators
         #region CIL extension
 
         protected override MethodInfo OperationMethod => Compiler.Cil.Compiler.PVLogicalNotMethod;
-
 
         #endregion
     }
@@ -708,33 +650,46 @@ namespace Prexonite.Commands.Core.Operators
             cs.AddEngineCommand(LogicalNot.DefaultAlias, LogicalNot.Instance);
         }
 
-        private static readonly Lazy<Dictionary<string, string>> _reverseLiteralMap =
-            new Lazy<Dictionary<string, string>>(() =>
+        private static readonly Lazy<Dictionary<string, string>> _reverseLiteralMap = new Lazy<
+            Dictionary<string, string>
+        >(
+            () =>
                 new Dictionary<string, string>
                 {
-                    {OperatorNames.Prexonite.Addition, "(+)"},
-                    {OperatorNames.Prexonite.Subtraction, "(-)"},
-                    {OperatorNames.Prexonite.Multiplication, "(*)"},
-                    {OperatorNames.Prexonite.Division, "(/)"},
-                    {OperatorNames.Prexonite.Modulus, "$" + OperatorNames.Prexonite.Modulus},
-                    {OperatorNames.Prexonite.Power, "(^)"},
-                    {OperatorNames.Prexonite.BitwiseAnd, "(&)"},
-                    {OperatorNames.Prexonite.BitwiseOr, "(|)"},
-                    {OperatorNames.Prexonite.ExclusiveOr, "$" + OperatorNames.Prexonite.ExclusiveOr},
-                    {OperatorNames.Prexonite.Equality, "(==)"},
-                    {OperatorNames.Prexonite.Inequality, "(!=)"},
-                    {OperatorNames.Prexonite.GreaterThan, "(>)"},
-                    {OperatorNames.Prexonite.GreaterThanOrEqual, "(>=)"},
-                    {OperatorNames.Prexonite.LessThan, "(<)"},
-                    {OperatorNames.Prexonite.LessThanOrEqual, "(<=)"},
-                    {OperatorNames.Prexonite.UnaryNegation, "(-.)"},
-                    {OperatorNames.Prexonite.OnesComplement, "$" + OperatorNames.Prexonite.OnesComplement},
-                    {OperatorNames.Prexonite.LogicalNot, "$" + OperatorNames.Prexonite.LogicalNot},
-                }, System.Threading.LazyThreadSafetyMode.PublicationOnly);
+                    { OperatorNames.Prexonite.Addition, "(+)" },
+                    { OperatorNames.Prexonite.Subtraction, "(-)" },
+                    { OperatorNames.Prexonite.Multiplication, "(*)" },
+                    { OperatorNames.Prexonite.Division, "(/)" },
+                    { OperatorNames.Prexonite.Modulus, "$" + OperatorNames.Prexonite.Modulus },
+                    { OperatorNames.Prexonite.Power, "(^)" },
+                    { OperatorNames.Prexonite.BitwiseAnd, "(&)" },
+                    { OperatorNames.Prexonite.BitwiseOr, "(|)" },
+                    {
+                        OperatorNames.Prexonite.ExclusiveOr,
+                        "$" + OperatorNames.Prexonite.ExclusiveOr
+                    },
+                    { OperatorNames.Prexonite.Equality, "(==)" },
+                    { OperatorNames.Prexonite.Inequality, "(!=)" },
+                    { OperatorNames.Prexonite.GreaterThan, "(>)" },
+                    { OperatorNames.Prexonite.GreaterThanOrEqual, "(>=)" },
+                    { OperatorNames.Prexonite.LessThan, "(<)" },
+                    { OperatorNames.Prexonite.LessThanOrEqual, "(<=)" },
+                    { OperatorNames.Prexonite.UnaryNegation, "(-.)" },
+                    {
+                        OperatorNames.Prexonite.OnesComplement,
+                        "$" + OperatorNames.Prexonite.OnesComplement
+                    },
+                    {
+                        OperatorNames.Prexonite.LogicalNot,
+                        "$" + OperatorNames.Prexonite.LogicalNot
+                    },
+                },
+            System.Threading.LazyThreadSafetyMode.PublicationOnly
+        );
+
         public static bool TryGetLiteral(string id, [NotNullWhen(true)] out string? literal)
         {
             return _reverseLiteralMap.Value.TryGetValue(id, out literal);
         }
     }
 }
-

@@ -1,5 +1,3 @@
-﻿
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Cil.Seh;
@@ -37,8 +35,7 @@ static class RegionExtensions
 [DebuggerDisplay("{Kind}-block from {Begin} to {End}")]
 sealed class Region : IEquatable<Region>
 {
-    public const RegionKind AnyRegionKind =
-        RegionKind.Try | RegionKind.Catch | RegionKind.Finally;
+    public const RegionKind AnyRegionKind = RegionKind.Try | RegionKind.Catch | RegionKind.Finally;
 
     public readonly CompiledTryCatchFinallyBlock Block;
     public readonly RegionKind Kind;
@@ -121,8 +118,10 @@ sealed class Region : IEquatable<Region>
 
         //here, r1 and r2 must cover the same region
         //   this can only be the case for try-blocks
-        Debug.Assert(r1.Kind == RegionKind.Try && r2.Kind == RegionKind.Try,
-            "Exactly overlapping finally/catch regions are illegal.");
+        Debug.Assert(
+            r1.Kind == RegionKind.Try && r2.Kind == RegionKind.Try,
+            "Exactly overlapping finally/catch regions are illegal."
+        );
 
         //in this case, the total span of the block is the indicator
         var cmp = r1.Block.Range.CompareTo(r2.Block.Range);
@@ -145,24 +144,29 @@ sealed class Region : IEquatable<Region>
 
     public bool Equals(Region? other)
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(null, other))
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return Equals(other.Block, Block) && Equals(other.Kind, Kind);
     }
 
     public override bool Equals(object? obj)
     {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != typeof (Region)) return false;
-        return Equals((Region) obj);
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != typeof(Region))
+            return false;
+        return Equals((Region)obj);
     }
 
     public override int GetHashCode()
     {
         unchecked
         {
-            return (Block.GetHashCode()*397) ^ Kind.GetHashCode();
+            return (Block.GetHashCode() * 397) ^ Kind.GetHashCode();
         }
     }
 }

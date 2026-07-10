@@ -1,4 +1,3 @@
-
 #region
 
 using System.Collections;
@@ -15,9 +14,7 @@ public class HashPType : PType, ICilCompilerAware
 {
     #region Singleton
 
-    HashPType()
-    {
-    }
+    HashPType() { }
 
     public static HashPType Instance { get; } = new();
 
@@ -26,34 +23,42 @@ public class HashPType : PType, ICilCompilerAware
     #region PType Interface
 
     static bool _tryConvertToPair(
-        StackContext sctx, PValue inpv, [NotNullWhen(true)] out PValueKeyValuePair? result)
+        StackContext sctx,
+        PValue inpv,
+        [NotNullWhen(true)] out PValueKeyValuePair? result
+    )
     {
         result = null;
-        if (!inpv.TryConvertTo(sctx, typeof (PValueKeyValuePair), out var res))
+        if (!inpv.TryConvertTo(sctx, typeof(PValueKeyValuePair), out var res))
             return false;
         else
-            result = (PValueKeyValuePair) res.Value!;
+            result = (PValueKeyValuePair)res.Value!;
         return true;
     }
 
     public override bool IndirectCall(
-        StackContext sctx, PValue subject, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         if (subject == null)
             throw new ArgumentNullException(nameof(subject));
-        
+
         result = null;
 
         var argc = args.Length;
 
-        var pvht = (PValueHashtable) subject.Value!;
+        var pvht = (PValueHashtable)subject.Value!;
 
         if (argc == 0)
         {
-            result =
-                sctx.CreateNativePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
+            result = sctx.CreateNativePValue(
+                new PValueEnumeratorWrapper(pvht.GetPValueEnumerator())
+            );
         }
         else if (argc == 1)
         {
@@ -74,8 +79,7 @@ public class HashPType : PType, ICilCompilerAware
         ReadOnlySpan<PValue> args,
         PCall call,
         string id,
-        [NotNullWhen(true)]
-        out PValue? result
+        [NotNullWhen(true)] out PValue? result
     )
     {
         if (sctx == null)
@@ -122,9 +126,7 @@ public class HashPType : PType, ICilCompilerAware
                 {
                     result = Null.CreatePValue();
 
-                    if (args[0].IsNull)
-                    {
-                    } //Ignore this one
+                    if (args[0].IsNull) { } //Ignore this one
                     else if (_tryConvertToPair(sctx, args[0], out var pair))
                         pvht.AddOverride(pair);
                 }
@@ -186,8 +188,9 @@ public class HashPType : PType, ICilCompilerAware
                 break;
 
             case "getenumerator":
-                result =
-                    Object.CreatePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
+                result = Object.CreatePValue(
+                    new PValueEnumeratorWrapper(pvht.GetPValueEnumerator())
+                );
                 break;
 
             case "gethashcode":
@@ -195,7 +198,7 @@ public class HashPType : PType, ICilCompilerAware
                 break;
 
             case "gettype":
-                result = Object.CreatePValue(typeof (PValueHashtable));
+                result = Object.CreatePValue(typeof(PValueHashtable));
                 break;
 
             case "keys":
@@ -251,16 +254,26 @@ public class HashPType : PType, ICilCompilerAware
                 break;
 
             default:
-                return
-                    PValueHashtable.ObjectType.TryDynamicCall(
-                        sctx, subject, args, call, id, out result);
+                return PValueHashtable.ObjectType.TryDynamicCall(
+                    sctx,
+                    subject,
+                    args,
+                    call,
+                    id,
+                    out result
+                );
         }
 
         return result != null;
     }
 
     public override bool TryStaticCall(
-        StackContext sctx, ReadOnlySpan<PValue> args, PCall call, string id, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -285,25 +298,28 @@ public class HashPType : PType, ICilCompilerAware
                 break;
 
             case "createfromargs":
-                pvht = new(args.Length/2);
+                pvht = new(args.Length / 2);
                 for (var i = 0; i + 1 < args.Length; i += 2)
                     pvht.AddOverride(args[i], args[i + 1]);
                 result = new(pvht, this);
                 break;
 
             default:
-                return
-                    PValueHashtable.ObjectType.TryStaticCall(sctx, args, call, id, out result);
+                return PValueHashtable.ObjectType.TryStaticCall(sctx, args, call, id, out result);
         }
 
         return true;
     }
 
-    public override bool TryConstruct(StackContext sctx, ReadOnlySpan<PValue> args, [NotNullWhen(true)] out PValue? result)
+    public override bool TryConstruct(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
-        
+
         result = null;
 
         var argc = args.Length;
@@ -320,14 +336,16 @@ public class HashPType : PType, ICilCompilerAware
         else
         {
             var arg0 = args[0];
-            if (arg0.Type == Hash ||
-                arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>)
+            if (
+                arg0.Type == Hash
+                || arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>
+            )
             {
-                pvht = new((IDictionary<PValue, PValue>) arg0.Value!);
+                pvht = new((IDictionary<PValue, PValue>)arg0.Value!);
             }
             else if (arg0.Type == Int)
             {
-                pvht = new((int) arg0.Value!);
+                pvht = new((int)arg0.Value!);
             }
         }
 
@@ -338,13 +356,18 @@ public class HashPType : PType, ICilCompilerAware
     }
 
     protected override bool InternalConvertTo(
-        StackContext sctx, PValue subject, PType target, bool useExplicit, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        PType target,
+        bool useExplicit,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
         if (subject == null)
             throw new ArgumentNullException(nameof(subject));
-        if ((object) target == null)
+        if ((object)target == null)
             throw new ArgumentNullException(nameof(target));
 
         if (subject.Value is not PValueHashtable pvht)
@@ -354,19 +377,24 @@ public class HashPType : PType, ICilCompilerAware
 
         if (target is ObjectPType)
         {
-            var tT = ((ObjectPType) target).ClrType;
-            if (tT == typeof (IDictionary<PValue, PValue>) ||
-                tT == typeof (Dictionary<PValue, PValue>) ||
-                tT == typeof (IDictionary) ||
-                tT == typeof (IEnumerable<KeyValuePair<PValue, PValue>>) ||
-                tT == typeof (IEnumerable) ||
-                tT == typeof (ICollection<KeyValuePair<PValue, PValue>>) ||
-                tT == typeof (ICollection))
+            var tT = ((ObjectPType)target).ClrType;
+            if (
+                tT == typeof(IDictionary<PValue, PValue>)
+                || tT == typeof(Dictionary<PValue, PValue>)
+                || tT == typeof(IDictionary)
+                || tT == typeof(IEnumerable<KeyValuePair<PValue, PValue>>)
+                || tT == typeof(IEnumerable)
+                || tT == typeof(ICollection<KeyValuePair<PValue, PValue>>)
+                || tT == typeof(ICollection)
+            )
             {
                 result = new(pvht, target);
             }
-            else if (tT == typeof (IEnumerable<PValue>) || tT == typeof (IList<PValue>) ||
-                     tT == typeof (IList))
+            else if (
+                tT == typeof(IEnumerable<PValue>)
+                || tT == typeof(IList<PValue>)
+                || tT == typeof(IList)
+            )
             {
                 var lst = new List<PValue>(pvht.Count);
                 foreach (var pair in pvht)
@@ -386,7 +414,11 @@ public class HashPType : PType, ICilCompilerAware
     }
 
     protected override bool InternalConvertFrom(
-        StackContext sctx, PValue subject, bool useExplicit, [NotNullWhen(true)] out PValue? result)
+        StackContext sctx,
+        PValue subject,
+        bool useExplicit,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         if (sctx == null)
             throw new ArgumentNullException(nameof(sctx));
@@ -417,7 +449,7 @@ public class HashPType : PType, ICilCompilerAware
                     else if (os is KeyValuePair<PValue, PValue>)
                     {
                         pvht = new(1);
-                        pvht.Add((KeyValuePair<PValue, PValue>) os);
+                        pvht.Add((KeyValuePair<PValue, PValue>)os);
                     }
                 }
             }
@@ -431,15 +463,19 @@ public class HashPType : PType, ICilCompilerAware
         return result != null;
     }
 
-    public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand,
-        [NotNullWhen(true)] out PValue? result)
+    public override bool Addition(
+        StackContext sctx,
+        PValue leftOperand,
+        PValue rightOperand,
+        [NotNullWhen(true)] out PValue? result
+    )
     {
         result = null;
 
         if (leftOperand.Type is HashPType && rightOperand.Type is HashPType)
         {
-            var pvht1 = (PValueHashtable) leftOperand.Value!;
-            var pvht2 = (PValueHashtable) rightOperand.Value!;
+            var pvht1 = (PValueHashtable)leftOperand.Value!;
+            var pvht2 = (PValueHashtable)rightOperand.Value!;
 
             var pvht = new PValueHashtable(pvht1.Count + pvht2.Count);
             foreach (var pair in pvht1)
@@ -447,7 +483,7 @@ public class HashPType : PType, ICilCompilerAware
             foreach (var pair in pvht2)
                 pvht.AddOverride(pair);
 
-            result = (PValue) pvht;
+            result = (PValue)pvht;
         }
 
         return result != null;
@@ -484,8 +520,9 @@ public class HashPType : PType, ICilCompilerAware
         return CompilationFlags.PrefersCustomImplementation;
     }
 
-    static readonly MethodInfo GetHashPType =
-        typeof (PType).GetProperty(nameof(Hash))!.GetGetMethod()!;
+    static readonly MethodInfo GetHashPType = typeof(PType)
+        .GetProperty(nameof(Hash))!
+        .GetGetMethod()!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

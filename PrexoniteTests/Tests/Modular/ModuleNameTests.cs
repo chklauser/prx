@@ -14,6 +14,7 @@ public class ModuleNameTests
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}/1.2.3.4"));
     }
+
     [Test]
     public void ModuleNameToStringZeroVersion()
     {
@@ -21,6 +22,7 @@ public class ModuleNameTests
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}"));
     }
+
     [Test]
     public void ModuleNameToStringShortVersion3()
     {
@@ -28,6 +30,7 @@ public class ModuleNameTests
         var result = moduleName.ToString();
         Assert.That(result, Is.EqualTo($"{moduleName.Id}/1.2.3"));
     }
+
     [Test]
     public void ModuleNameToStringShortVersion2()
     {
@@ -53,7 +56,7 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1,2,3,4))));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1, 2, 3, 4))));
     }
 
     [Test]
@@ -63,7 +66,7 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1,2,3))));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1, 2, 3))));
     }
 
     [Test]
@@ -73,7 +76,7 @@ public class ModuleNameTests
         var result = ModuleName.TryParse(rawName, out var name);
         Assert.That(result, Is.True, "TryParse({}) is successful", rawName);
         Assert.That(name, Is.Not.Null);
-        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1,2))));
+        Assert.That(name, Is.EqualTo(new ModuleName("this.is.the.name", new(1, 2))));
     }
 
     [Test]
@@ -85,5 +88,4 @@ public class ModuleNameTests
         Assert.That(name2, Is.Not.Null);
         Assert.That(name2, Is.EqualTo(name1));
     }
-        
 }

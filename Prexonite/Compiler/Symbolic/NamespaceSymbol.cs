@@ -19,7 +19,10 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         Namespace = @namespace;
     }
 
-    public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
+    public override TResult HandleWith<TArg, TResult>(
+        ISymbolHandler<TArg, TResult> handler,
+        TArg argument
+    )
     {
         return handler.HandleNamespace(this, argument);
     }
@@ -28,14 +31,17 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
 
     public override bool Equals(Symbol? other)
     {
-        if (ReferenceEquals(other, this)) return true;
-        if (ReferenceEquals(other, null)) return false;
+        if (ReferenceEquals(other, this))
+            return true;
+        if (ReferenceEquals(other, null))
+            return false;
         return other is NamespaceSymbol nsSymbol && _equalsNonNull(nsSymbol);
     }
 
     public bool Equals(NamespaceSymbol? other)
     {
-        if (ReferenceEquals(other, this)) return true;
+        if (ReferenceEquals(other, this))
+            return true;
         return !ReferenceEquals(other, null) && _equalsNonNull(other);
     }
 
@@ -54,7 +60,9 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
         return new(position, @namespace);
     }
 
-    public override bool TryGetNamespaceSymbol([NotNullWhen(true)] out NamespaceSymbol? namespaceSymbol)
+    public override bool TryGetNamespaceSymbol(
+        [NotNullWhen(true)] out NamespaceSymbol? namespaceSymbol
+    )
     {
         namespaceSymbol = this;
         return true;
@@ -62,9 +70,16 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
 
     static readonly UnwrapHandler _unwrapHandler = new();
 
-    class UnwrapHandler : SymbolHandler<(IMessageSink? sink,ISourcePosition position,IList<Message>? errors), NamespaceSymbol?>
+    class UnwrapHandler
+        : SymbolHandler<
+            (IMessageSink? sink, ISourcePosition position, IList<Message>? errors),
+            NamespaceSymbol?
+        >
     {
-        public override NamespaceSymbol? HandleMessage(MessageSymbol self, (IMessageSink? sink,ISourcePosition position,IList<Message>? errors) argument)
+        public override NamespaceSymbol? HandleMessage(
+            MessageSymbol self,
+            (IMessageSink? sink, ISourcePosition position, IList<Message>? errors) argument
+        )
         {
             if (self.Message.Severity == MessageSeverity.Error && argument.errors != null)
             {
@@ -80,18 +95,27 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
             }
         }
 
-        protected override NamespaceSymbol? HandleSymbolDefault(Symbol self, (IMessageSink?,ISourcePosition,IList<Message>?) argument)
+        protected override NamespaceSymbol? HandleSymbolDefault(
+            Symbol self,
+            (IMessageSink?, ISourcePosition, IList<Message>?) argument
+        )
         {
             var (sink, position, errors) = argument;
-            var msg = Message.Error(string.Format(Resources.Parser_NamespaceExpected, "symbol", self), position,
-                MessageClasses.NamespaceExcepted);
+            var msg = Message.Error(
+                string.Format(Resources.Parser_NamespaceExpected, "symbol", self),
+                position,
+                MessageClasses.NamespaceExcepted
+            );
             errors?.Add(msg);
-            if(errors != null || msg.Severity != MessageSeverity.Error)
+            if (errors != null || msg.Severity != MessageSeverity.Error)
                 sink?.ReportMessage(msg);
             return null;
         }
 
-        public override NamespaceSymbol HandleNamespace(NamespaceSymbol self, (IMessageSink?,ISourcePosition,IList<Message>?) argument)
+        public override NamespaceSymbol HandleNamespace(
+            NamespaceSymbol self,
+            (IMessageSink?, ISourcePosition, IList<Message>?) argument
+        )
         {
             return self;
         }
@@ -105,8 +129,12 @@ public sealed class NamespaceSymbol : Symbol, IEquatable<NamespaceSymbol>
     /// <param name="messageSink"></param>
     /// <param name="errors">If non-null, collects instead of reports errors (other messages are reported directly); Otherwise errors are reported too.</param>
     /// <returns>The namespace symbol or null if the symbol is not actually a namespace symbol (has already been reported as an error). If an error collection list (<paramref name="errors"/>) has been supplied, can be non-null when errors are present)</returns>
-    public static NamespaceSymbol? UnwrapNamespaceSymbol(Symbol symbol, ISourcePosition symbolPosition,
-        IMessageSink? messageSink, IList<Message>? errors = null)
+    public static NamespaceSymbol? UnwrapNamespaceSymbol(
+        Symbol symbol,
+        ISourcePosition symbolPosition,
+        IMessageSink? messageSink,
+        IList<Message>? errors = null
+    )
     {
         if (symbol == null)
             throw new ArgumentNullException(nameof(symbol));

@@ -1,5 +1,3 @@
-﻿
-
 using System;
 using NUnit.Framework.Constraints;
 using Prexonite;
@@ -20,8 +18,7 @@ public static class Meta
 
     public static Constraint ContainsExact(string key, MetaEntry value)
     {
-        return
-            new ContainsKeyConstraint(key).And.Matches(new ExactEqualityConstraint(key, value));
+        return new ContainsKeyConstraint(key).And.Matches(new ExactEqualityConstraint(key, value));
     }
 
     class ExactEqualityConstraint : Constraint
@@ -29,7 +26,8 @@ public static class Meta
         readonly string _key;
         readonly MetaEntry _expectedEntry;
 
-        public ExactEqualityConstraint(string key, MetaEntry expectedEntry) : base(key, expectedEntry)
+        public ExactEqualityConstraint(string key, MetaEntry expectedEntry)
+            : base(key, expectedEntry)
         {
             if (expectedEntry == null)
                 throw new ArgumentNullException(nameof(expectedEntry));
@@ -40,7 +38,8 @@ public static class Meta
 
         #region Overrides of Constraint
 
-        public override string Description => $"meta entry '{_key}' exactly equals {_expectedEntry}";
+        public override string Description =>
+            $"meta entry '{_key}' exactly equals {_expectedEntry}";
 
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
@@ -57,7 +56,8 @@ public static class Meta
 
             var actualEntry = ihmt.Meta[_key];
 
-            return actualEntry.EntryType == _expectedEntry.EntryType && actualEntry.Equals(_expectedEntry);
+            return actualEntry.EntryType == _expectedEntry.EntryType
+                && actualEntry.Equals(_expectedEntry);
         }
 
         #endregion
@@ -67,7 +67,8 @@ public static class Meta
     {
         readonly string _key;
 
-        public ContainsKeyConstraint(string key) : base(key)
+        public ContainsKeyConstraint(string key)
+            : base(key)
         {
             _key = key ?? throw new ArgumentNullException(nameof(key));
         }

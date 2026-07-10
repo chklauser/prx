@@ -1,21 +1,20 @@
-﻿namespace Prexonite.Commands.Core;
+namespace Prexonite.Commands.Core;
 
 public class Not : PCommand
 {
     public static Not Instance { get; } = new();
 
-    Not()
-    {
-    }
+    Not() { }
 
     public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
         foreach (var arg in args)
         {
-            var b = arg.Type.ToBuiltIn() != PType.BuiltIn.Bool
-                ? (bool) arg.ConvertTo(sctx, PType.Bool, true).Value!
-                : (bool) arg.Value!;
-            if(b)
+            var b =
+                arg.Type.ToBuiltIn() != PType.BuiltIn.Bool
+                    ? (bool)arg.ConvertTo(sctx, PType.Bool, true).Value!
+                    : (bool)arg.Value!;
+            if (b)
                 return false;
         }
 

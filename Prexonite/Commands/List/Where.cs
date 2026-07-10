@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
@@ -18,24 +16,26 @@ public class Where : CoroutineCommand, ICilCompilerAware
 {
     #region Singleton
 
-    Where()
-    {
-    }
+    Where() { }
 
     public static Where Instance { get; } = new();
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
-        PValue[] args)
+    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine))]
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
-        PValue[] args)
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Coroutine)
+    )]
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -57,9 +57,8 @@ public class Where : CoroutineCommand, ICilCompilerAware
                 continue;
             foreach (var value in set)
             {
-                var include = f.IndirectCall(sctx, value).ConvertTo(sctx, PType.Bool,
-                    true);
-                if ((bool) include.Value!)
+                var include = f.IndirectCall(sctx, value).ConvertTo(sctx, PType.Bool, true);
+                if ((bool)include.Value!)
                     yield return value;
             }
         }

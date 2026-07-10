@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
@@ -14,14 +12,12 @@ public class Unpack : MacroCommand
 
     public static Unpack Instance { get; } = new();
 
-    Unpack() : base(Alias)
-    {
-    }
+    Unpack()
+        : base(Alias) { }
 
     public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands()
     {
-        yield return
-            new(Impl.Alias, Impl.Instance);
+        yield return new(Impl.Alias, Impl.Instance);
     }
 
     #endregion
@@ -35,7 +31,10 @@ public class Unpack : MacroCommand
             context.ReportMessage(
                 Message.Error(
                     $"{Alias} requires at least one argument, the id of the object to unpack.",
-                    context.Invocation.Position, MessageClasses.UnpackUsage));
+                    context.Invocation.Position,
+                    MessageClasses.UnpackUsage
+                )
+            );
             return;
         }
 
@@ -43,30 +42,34 @@ public class Unpack : MacroCommand
 
         // [| macro\unpack\impl(context, $arg0) |]
 
-        var getContext =
-            context.CreateIndirectCall(context.CreateCall(EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)));
+        var getContext = context.CreateIndirectCall(
+            context.CreateCall(EntityRef.Variable.Local.Create(MacroAliases.ContextAlias))
+        );
 
-        context.Block.Expression = context.CreateCall(EntityRef.Command.Create(Impl.Alias),
-            PCall.Get, getContext, context.Invocation.Arguments[0]);
+        context.Block.Expression = context.CreateCall(
+            EntityRef.Command.Create(Impl.Alias),
+            PCall.Get,
+            getContext,
+            context.Invocation.Arguments[0]
+        );
     }
 
     #endregion
 
     class Impl : PCommand
     {
-// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
+        // ReSharper disable MemberHidesStaticFromOuterClass // not an issue
         public const string Alias = @"macro\unpack\impl";
-// ReSharper restore MemberHidesStaticFromOuterClass
+
+        // ReSharper restore MemberHidesStaticFromOuterClass
 
         #region Singleton pattern
 
-// ReSharper disable MemberHidesStaticFromOuterClass not an issue (singleton pattern)
+        // ReSharper disable MemberHidesStaticFromOuterClass not an issue (singleton pattern)
 
         public static Impl Instance { get; } = new();
 
-        Impl()
-        {
-        }
+        Impl() { }
 
         #endregion
 
@@ -75,19 +78,25 @@ public class Unpack : MacroCommand
         public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
         {
             MacroContext? context;
-            if (args.Length < 2 || args[0].Type is not ObjectPType ||
-                (context = args[0].Value as MacroContext) == null)
+            if (
+                args.Length < 2
+                || args[0].Type is not ObjectPType
+                || (context = args[0].Value as MacroContext) == null
+            )
                 throw new PrexoniteException(_getUsage());
 
             if (args[1].TryConvertTo(sctx, true, out int id))
                 return context.RetrieveFromTransport(id);
 
             AstConstant? constant;
-            if (args[1].Type is not ObjectPType ||
-                (constant = args[1].Value as AstConstant) == null || constant.Constant is not int)
+            if (
+                args[1].Type is not ObjectPType
+                || (constant = args[1].Value as AstConstant) == null
+                || constant.Constant is not int
+            )
                 throw new PrexoniteException(_getUsage());
 
-            return context.RetrieveFromTransport((int) constant.Constant);
+            return context.RetrieveFromTransport((int)constant.Constant);
         }
 
         static string _getUsage()

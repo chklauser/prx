@@ -1,21 +1,14 @@
-
-
 namespace Prexonite.Compiler.Ast;
 
-public class AstHashLiteral : AstExpr,
-    IAstHasExpressions
+public class AstHashLiteral : AstExpr, IAstHasExpressions
 {
     public List<AstExpr> Elements = new();
 
     internal AstHashLiteral(Parser p)
-        : base(p)
-    {
-    }
+        : base(p) { }
 
     public AstHashLiteral(string file, int line, int column)
-        : base(file, line, column)
-    {
-    }
+        : base(file, line, column) { }
 
     #region IAstHasExpressions Members
 
@@ -32,8 +25,12 @@ public class AstHashLiteral : AstExpr,
         {
             if ((AstExpr?)arg == null)
                 throw new PrexoniteException(
-                    "Invalid (null) argument in HashLiteral node (" + ToString() +
-                    ") detected at position " + Elements.IndexOf(null!) + ".");
+                    "Invalid (null) argument in HashLiteral node ("
+                        + ToString()
+                        + ") detected at position "
+                        + Elements.IndexOf(null!)
+                        + "."
+                );
             oArg = _GetOptimizedNode(target, arg);
             if (!ReferenceEquals(oArg, arg))
             {
@@ -52,7 +49,7 @@ public class AstHashLiteral : AstExpr,
     {
         if (Elements.Count == 0)
         {
-            target.Emit(Position,OpCode.newobj, 0, "Hash");
+            target.Emit(Position, OpCode.newobj, 0, "Hash");
         }
         else
         {
@@ -67,11 +64,13 @@ public class AstHashLiteral : AstExpr,
                             File,
                             ", Line: ",
                             Line,
-                            "]"));
-                element.EmitCode(target,stackSemantics);
+                            "]"
+                        )
+                    );
+                element.EmitCode(target, stackSemantics);
             }
 
-            if(stackSemantics == StackSemantics.Effect)
+            if (stackSemantics == StackSemantics.Effect)
                 return;
 
             target.EmitStaticGetCall(Position, Elements.Count, "Hash", "Create", false);

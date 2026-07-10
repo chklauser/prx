@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core;
@@ -8,9 +6,7 @@ public class Boxed : PCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
-    Boxed()
-    {
-    }
+    Boxed() { }
 
     public static Boxed Instance { get; } = new();
 
@@ -46,8 +42,11 @@ public class Boxed : PCommand, ICilCompilerAware
 
     void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + GetType().Name +
-            " does not support CIL compilation via ICilCompilerAware.");
+        throw new NotSupportedException(
+            "The command "
+                + GetType().Name
+                + " does not support CIL compilation via ICilCompilerAware."
+        );
     }
 
     #endregion

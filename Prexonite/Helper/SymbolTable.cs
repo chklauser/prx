@@ -10,7 +10,8 @@ public interface ISymbolTable<TValue> : IDictionary<string, TValue>
 }
 
 [DebuggerNonUserCode]
-public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
+public class SymbolTable<TValue> : ISymbolTable<TValue>
+    where TValue : notnull
 {
     readonly Dictionary<string, TValue> _table;
 
@@ -28,7 +29,7 @@ public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 
     public virtual void Add(string key, TValue value)
     {
-        if(_table.TryGetValue(key, out var existingValue) && Equals(existingValue,value))
+        if (_table.TryGetValue(key, out var existingValue) && Equals(existingValue, value))
             return;
 
         _table.Add(key, value);
@@ -71,13 +72,16 @@ public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 
     TValue IDictionary<string, TValue>.this[string key]
     {
-        get => this[key] ?? throw new KeyNotFoundException("The given key was not present in the symbol table.");
+        get =>
+            this[key]
+            ?? throw new KeyNotFoundException("The given key was not present in the symbol table.");
         set => this[key] = value;
     }
-    
+
     public virtual TValue? this[string key]
     {
-        get => GetDefault(key, default) 
+        get =>
+            GetDefault(key, default)
             ?? throw new PrexoniteException($"Lookup of {key} in symbol table failed.");
         set
         {
@@ -108,21 +112,21 @@ public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 
     public bool Contains(KeyValuePair<string, TValue> item)
     {
-        return ((ICollection<KeyValuePair<string, TValue>>) _table).Contains(item);
+        return ((ICollection<KeyValuePair<string, TValue>>)_table).Contains(item);
     }
 
     public void CopyTo(KeyValuePair<string, TValue>[] array, int arrayIndex)
     {
-        ((ICollection<KeyValuePair<string, TValue>>) _table).CopyTo(array, arrayIndex);
+        ((ICollection<KeyValuePair<string, TValue>>)_table).CopyTo(array, arrayIndex);
     }
 
     public int Count => _table.Count;
 
-    public bool IsReadOnly => ((ICollection<KeyValuePair<string, TValue>>) _table).IsReadOnly;
+    public bool IsReadOnly => ((ICollection<KeyValuePair<string, TValue>>)_table).IsReadOnly;
 
     public bool Remove(KeyValuePair<string, TValue> item)
     {
-        return ((ICollection<KeyValuePair<string, TValue>>) _table).Remove(item);
+        return ((ICollection<KeyValuePair<string, TValue>>)_table).Remove(item);
     }
 
     #endregion
@@ -140,7 +144,7 @@ public class SymbolTable<TValue> : ISymbolTable<TValue> where TValue : notnull
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return ((ICollection<KeyValuePair<string, TValue>>) _table).GetEnumerator();
+        return ((ICollection<KeyValuePair<string, TValue>>)_table).GetEnumerator();
     }
 
     #endregion

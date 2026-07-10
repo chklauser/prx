@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Commands.Core.Operators;
 
@@ -8,9 +6,13 @@ namespace Prexonite.Compiler.Ast;
 public class AstWhileLoop : AstLoop
 {
     [DebuggerStepThrough]
-    public AstWhileLoop(ISourcePosition position, AstBlock parentBlock, bool isPrecondition = true,
-        bool isPositive = true)
-        : base(position,parentBlock)
+    public AstWhileLoop(
+        ISourcePosition position,
+        AstBlock parentBlock,
+        bool isPrecondition = true,
+        bool isPositive = true
+    )
+        : base(position, parentBlock)
     {
         IsPrecondition = isPrecondition;
         IsPositive = isPositive;
@@ -34,8 +36,10 @@ public class AstWhileLoop : AstLoop
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        if(stackSemantics == StackSemantics.Value)
-            throw new NotSupportedException("While loops do not produce values and can thus not be used as expressions.");
+        if (stackSemantics == StackSemantics.Value)
+            throw new NotSupportedException(
+                "While loops do not produce values and can thus not be used as expressions."
+            );
         if (!IsInitialized)
             throw new PrexoniteException("AstWhileLoop requires Condition to be set.");
 
@@ -53,10 +57,11 @@ public class AstWhileLoop : AstLoop
         if (Condition is AstConstant constCond)
         {
             if (
-                !constCond.ToPValue(target).TryConvertTo(
-                    target.Loader, PType.Bool, out var condValue))
-            {}
-            else if ((bool) condValue.Value! == IsPositive)
+                !constCond
+                    .ToPValue(target)
+                    .TryConvertTo(target.Loader, PType.Bool, out var condValue)
+            ) { }
+            else if ((bool)condValue.Value! == IsPositive)
                 conditionIsConstant = true;
             else
             {

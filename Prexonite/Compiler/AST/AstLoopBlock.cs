@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast;
@@ -11,16 +9,23 @@ public class AstLoopBlock : AstScopedBlock, ILoopBlock
     public const string BeginWord = "begin";
 
     [DebuggerStepThrough]
-    public AstLoopBlock(string file, int line, int column, AstBlock parentBlock, 
+    public AstLoopBlock(
+        string file,
+        int line,
+        int column,
+        AstBlock parentBlock,
         string? uid = null,
-        string? prefix = null)
-        : this (new SourcePosition(file,line,column), parentBlock, uid, prefix)
-    {
-            
-    }
+        string? prefix = null
+    )
+        : this(new SourcePosition(file, line, column), parentBlock, uid, prefix) { }
 
     [DebuggerStepThrough]
-    internal AstLoopBlock(ISourcePosition p, AstBlock parentNode, string? uid = null, string? prefix = null)
+    internal AstLoopBlock(
+        ISourcePosition p,
+        AstBlock parentNode,
+        string? uid = null,
+        string? prefix = null
+    )
         : base(p, parentNode, uid: uid, prefix: prefix)
     {
         //See other ctor!

@@ -14,10 +14,7 @@ namespace Prexonite;
 /// <summary>
 ///     A function in the Prexonite Script VM.
 /// </summary>
-public class  PFunction : IHasMetaTable,
-    IIndirectCall,
-    IStackAware,
-    IDependent<EntityRef.Function>
+public class PFunction : IHasMetaTable, IIndirectCall, IStackAware, IDependent<EntityRef.Function>
 {
     /// <summary>
     ///     The meta key under which the function's id is stored.
@@ -88,7 +85,8 @@ public class  PFunction : IHasMetaTable,
 
         if (!parentApplication.Module.Functions.Contains(declaration))
             throw new ArgumentException(
-                $"The supplied application (instance of module {parentApplication.Module.Name}) does not define the function {declaration}.");
+                $"The supplied application (instance of module {parentApplication.Module.Name}) does not define the function {declaration}."
+            );
 
         ParentApplication = parentApplication;
         Declaration = declaration;
@@ -233,16 +231,14 @@ public class  PFunction : IHasMetaTable,
     /// <param name = "suppressInitialization">A boolean indicating whether to suppress initialization of the parent application.</param>
     /// <returns>A function context for the execution of this function.</returns>
     [PublicAPI]
-    internal FunctionContext CreateFunctionContext
-    (
+    internal FunctionContext CreateFunctionContext(
         Engine engine,
         PValue[]? args,
         PVariable[]? sharedVariables,
-        bool suppressInitialization)
+        bool suppressInitialization
+    )
     {
-        return
-            new(
-                engine, this, args, sharedVariables, suppressInitialization);
+        return new(engine, this, args, sharedVariables, suppressInitialization);
     }
 
     /// <summary>
@@ -253,9 +249,11 @@ public class  PFunction : IHasMetaTable,
     /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
     /// <returns>A function context for the execution of this function.</returns>
     [PublicAPI]
-    public FunctionContext CreateFunctionContext
-    (
-        Engine engine, PValue[]? args, PVariable[]? sharedVariables)
+    public FunctionContext CreateFunctionContext(
+        Engine engine,
+        PValue[]? args,
+        PVariable[]? sharedVariables
+    )
     {
         return new(engine, this, args, sharedVariables);
     }
@@ -271,7 +269,6 @@ public class  PFunction : IHasMetaTable,
     {
         return CreateFunctionContext(sctx.ParentEngine, args);
     }
-
 
     /// <summary>
     ///     Creates a new function context for execution.
@@ -306,17 +303,18 @@ public class  PFunction : IHasMetaTable,
     public PValue Run(Engine engine, ReadOnlySpan<PValue> args, PVariable[]? sharedVariables)
     {
         var allocatedArgs = args.ToArray();
-        if (CilImplementation is {} cilImplementation)
+        if (CilImplementation is { } cilImplementation)
         {
             //Fix #8
             ParentApplication.EnsureInitialization(engine);
-            cilImplementation
-            (
+            cilImplementation(
                 this,
                 new NullContext(engine, ParentApplication, ImportedNamespaces),
                 allocatedArgs,
                 sharedVariables,
-                out var result, out _);
+                out var result,
+                out _
+            );
             return result;
         }
         else
@@ -410,9 +408,11 @@ public class  PFunction : IHasMetaTable,
     /// <summary>
     ///     The cached set of try-catch-finally blocks.
     /// </summary>
-    public ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks => Declaration.TryCatchFinallyBlocks;
+    public ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks =>
+        Declaration.TryCatchFinallyBlocks;
 
     #endregion
 
-    EntityRef.Function INamed<EntityRef.Function>.Name => ((INamed<EntityRef.Function>) Declaration).Name;
+    EntityRef.Function INamed<EntityRef.Function>.Name =>
+        ((INamed<EntityRef.Function>)Declaration).Name;
 }

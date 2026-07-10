@@ -1,5 +1,3 @@
-
-
 using Prexonite.Compiler;
 
 namespace Prexonite.Internal;
@@ -27,7 +25,8 @@ partial class Parser
 
 partial class Errors
 {
-    internal void Add(Message message) {
+    internal void Add(Message message)
+    {
         AddLast(message);
         OnMessageReceived(message);
     }

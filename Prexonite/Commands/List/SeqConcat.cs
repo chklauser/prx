@@ -1,5 +1,3 @@
-﻿
-
 using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 
@@ -11,9 +9,7 @@ public class SeqConcat : CoroutineCommand, ICilCompilerAware
 
     public static SeqConcat Instance { get; } = new();
 
-    SeqConcat()
-    {
-    }
+    SeqConcat() { }
 
     public const string Alias = "seqconcat";
 
@@ -24,7 +20,10 @@ public class SeqConcat : CoroutineCommand, ICilCompilerAware
         return CoroutineRunStatically(sctxCarrier, args);
     }
 
-    protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
+    protected static IEnumerable<PValue> CoroutineRunStatically(
+        ContextCarrier sctxCarrier,
+        PValue[] args
+    )
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -36,15 +35,20 @@ public class SeqConcat : CoroutineCommand, ICilCompilerAware
         foreach (var arg in args)
         {
             if (arg == null)
-                throw new ArgumentException("No element in seqconcat(args...) must be null.", nameof(args));
+                throw new ArgumentException(
+                    "No element in seqconcat(args...) must be null.",
+                    nameof(args)
+                );
             var xss = Map._ToEnumerable(sctx, arg);
             if (xss == null)
                 continue;
             foreach (var xsRaw in xss)
             {
                 var xs = Map._ToEnumerable(sctx, xsRaw);
-                if(xs == null)
-                    throw new ArgumentException("The elements in the sequences passed to seqconcat(..) must be sequences themselves.");
+                if (xs == null)
+                    throw new ArgumentException(
+                        "The elements in the sequences passed to seqconcat(..) must be sequences themselves."
+                    );
                 foreach (var x in xs)
                     yield return x;
             }

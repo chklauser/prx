@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -10,9 +8,7 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
 {
     #region Singleton
 
-    ConsolePrintLine()
-    {
-    }
+    ConsolePrintLine() { }
 
     public static ConsolePrintLine Instance { get; } = new();
 
@@ -64,17 +60,25 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
     }
 
     //Fix #10
-    internal static readonly MethodInfo ConsoleWriteLineMethodString =
-        typeof (Console).GetMethod("WriteLine", [typeof (string)])!;
+    internal static readonly MethodInfo ConsoleWriteLineMethodString = typeof(Console).GetMethod(
+        "WriteLine",
+        [typeof(string)]
+    )!;
 
-    internal static readonly MethodInfo ConsoleWriteLineMethod =
-        typeof (Console).GetMethod("WriteLine", Type.EmptyTypes)!;
+    internal static readonly MethodInfo ConsoleWriteLineMethod = typeof(Console).GetMethod(
+        "WriteLine",
+        Type.EmptyTypes
+    )!;
 
-    internal static readonly MethodInfo ConsoleWriteMethod =
-        typeof (Console).GetMethod("Write", [typeof (string)])!;
+    internal static readonly MethodInfo ConsoleWriteMethod = typeof(Console).GetMethod(
+        "Write",
+        [typeof(string)]
+    )!;
 
-    internal static readonly MethodInfo PValueCallToString =
-        typeof (PValue).GetMethod("CallToString", [typeof (StackContext)])!;
+    internal static readonly MethodInfo PValueCallToString = typeof(PValue).GetMethod(
+        "CallToString",
+        [typeof(StackContext)]
+    )!;
 
     /// <summary>
     ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -120,8 +124,8 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
     #region Implementation of ICilExtension
 
     /// <summary>
-    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
-    /// 
+    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension.
+    ///
     ///     <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see
     ///       cref = "ICilCompilerAware" /> and finally the built-in mechanisms.</para>
     ///     <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see
@@ -144,8 +148,12 @@ public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
     /// <param name = "ins">The instruction that "calls" the CIL extension. Usually a command call.</param>
     /// <param name = "staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
     /// <param name = "dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
-    public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-        int dynamicArgc)
+    public void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         var text = string.Concat(staticArgv.Select(StaticPrint._ToString));
 

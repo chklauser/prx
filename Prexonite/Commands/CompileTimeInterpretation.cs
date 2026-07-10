@@ -1,5 +1,3 @@
-
-
 using Prexonite.Modular;
 
 namespace Prexonite.Commands;

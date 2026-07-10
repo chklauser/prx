@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using Prexonite.Properties;
 
@@ -18,13 +16,15 @@ public class LastAccessCache<T> : IObjectCache<T>
     /// <summary>
     /// Also acts as a synch root.
     /// </summary>
-    readonly Dictionary<T, LinkedListNode<T>> _pointerTable =
-        new();
+    readonly Dictionary<T, LinkedListNode<T>> _pointerTable = new();
 
     public LastAccessCache(int capacity)
     {
         if (capacity <= 0)
-            throw new ArgumentException(Resources.LastAccessCache_CapacityMustBePositive, nameof(capacity));
+            throw new ArgumentException(
+                Resources.LastAccessCache_CapacityMustBePositive,
+                nameof(capacity)
+            );
 
         Capacity = capacity;
     }
@@ -49,17 +49,19 @@ public class LastAccessCache<T> : IObjectCache<T>
 
     void _insert(T name)
     {
-        if (_accessOrder.Count > Capacity*2)
+        if (_accessOrder.Count > Capacity * 2)
             _truncate();
         var node = _accessOrder.AddFirst(name);
-        _pointerTable.Add(name,node);
+        _pointerTable.Add(name, node);
     }
 
     void _truncate()
     {
-        Debug.Assert(_accessOrder.Count >= Capacity,
-            "Access order linked list of last access cache should be truncated but has less than $Capacity entries.");
-            
+        Debug.Assert(
+            _accessOrder.Count >= Capacity,
+            "Access order linked list of last access cache should be truncated but has less than $Capacity entries."
+        );
+
         var buf = new T[Capacity];
         var i = 0;
         foreach (var n in _accessOrder.Take(Capacity))

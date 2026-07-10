@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
 
@@ -7,14 +5,11 @@ namespace Prexonite.Commands.Core;
 
 public class CreateModuleName : PCommand, ICilCompilerAware
 {
-
     #region Singleton pattern
 
     public static CreateModuleName Instance { get; } = new();
 
-    CreateModuleName()
-    {
-    }
+    CreateModuleName() { }
 
     #endregion
 
@@ -27,16 +22,16 @@ public class CreateModuleName : PCommand, ICilCompilerAware
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        if(args.Length < 1)
+        if (args.Length < 1)
             throw new PrexoniteException(Alias + "(...) requires at least one argument.");
 
         PValue rawVersion;
-            
-        if(args.Length == 1)
+
+        if (args.Length == 1)
         {
-            if(args[0].Type == PType.Object[typeof(MetaEntry)])
+            if (args[0].Type == PType.Object[typeof(MetaEntry)])
             {
-                var entry = (MetaEntry) args[0].Value!;
+                var entry = (MetaEntry)args[0].Value!;
                 if (ModuleName.TryParse(entry, out var moduleName))
                     return sctx.CreateNativePValue(sctx.Cache[moduleName]);
                 else
@@ -52,13 +47,13 @@ public class CreateModuleName : PCommand, ICilCompilerAware
                     return PType.Null;
             }
         }
-        else if((rawVersion = args[1]).Type.Equals(PType.Object[typeof(Version)]))
+        else if ((rawVersion = args[1]).Type.Equals(PType.Object[typeof(Version)]))
         {
             var raw = args[0].CallToString(sctx);
 
-            return
-                sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw,
-                    (Version) rawVersion.Value!)]);
+            return sctx.CreateNativePValue(
+                sctx.Cache[new ModuleName(raw, (Version)rawVersion.Value!)]
+            );
         }
         else
         {
@@ -78,7 +73,8 @@ public class CreateModuleName : PCommand, ICilCompilerAware
 
     public void ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + Alias +
-            " does provide a custom cil implementation. ");
+        throw new NotSupportedException(
+            "The command " + Alias + " does provide a custom cil implementation. "
+        );
     }
 }

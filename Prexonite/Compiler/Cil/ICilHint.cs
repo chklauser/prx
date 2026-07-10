@@ -1,19 +1,23 @@
-﻿
-
 namespace Prexonite.Compiler.Cil;
 
 /// <summary>
 ///     A cil hint. Can be serialized to a meta entry for storage.
 /// </summary>
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Cil))]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = nameof(Cil)
+)]
 public interface ICilHint
 {
     /// <summary>
     ///     The key under which this CIL hint is stored. This key is used to deserialize the hint into the correct format.
     /// </summary>
-    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Cil))]
+    [SuppressMessage(
+        "Microsoft.Naming",
+        "CA1704:IdentifiersShouldBeSpelledCorrectly",
+        MessageId = nameof(Cil)
+    )]
     string CilKey { get; }
 
     /// <summary>
@@ -23,8 +27,11 @@ public interface ICilHint
     MetaEntry[] GetFields();
 }
 
-[SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Cil))]
+[SuppressMessage(
+    "Microsoft.Naming",
+    "CA1704:IdentifiersShouldBeSpelledCorrectly",
+    MessageId = nameof(Cil)
+)]
 public static class CilHintExtensions
 {
     extension(ICilHint hint)
@@ -42,7 +49,7 @@ public static class CilHintExtensions
             entry[0] = key;
             Array.Copy(fields, 0, entry, 1, fields.Length);
 
-            return (MetaEntry) entry;
+            return (MetaEntry)entry;
         }
     }
 }

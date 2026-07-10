@@ -1,5 +1,3 @@
-﻿
-
 using System.Text;
 using Prexonite.Properties;
 
@@ -15,8 +13,11 @@ class StreamSource : ISource, IDisposable
     {
         if (stream == null)
             throw new ArgumentNullException(nameof(stream));
-        if(!stream.CanRead)
-            throw new ArgumentException(Resources.Exception_StreamSource_CannotUseWriteOnlyStream, nameof(stream));
+        if (!stream.CanRead)
+            throw new ArgumentException(
+                Resources.Exception_StreamSource_CannotUseWriteOnlyStream,
+                nameof(stream)
+            );
 
         _stream = stream;
         _encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
@@ -39,7 +40,7 @@ class StreamSource : ISource, IDisposable
     public bool TryOpen([NotNullWhen(true)] out TextReader? reader)
     {
         object? streamObject = _stream;
-        if(streamObject == null)
+        if (streamObject == null)
         {
             reader = null;
             return false;
@@ -48,14 +49,14 @@ class StreamSource : ISource, IDisposable
         {
             lock (streamObject)
             {
-                if(_stream == null)
+                if (_stream == null)
                 {
                     reader = null;
                     return false;
                 }
                 else
                 {
-                    reader = new StreamReader(_stream,_encoding);
+                    reader = new StreamReader(_stream, _encoding);
                     if (IsSingleUse)
                         _stream = null;
                     return true;
@@ -71,7 +72,7 @@ class StreamSource : ISource, IDisposable
     public void Dispose()
     {
         var d = _stream;
-        if(d != null)
+        if (d != null)
         {
             lock (d)
             {

@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
@@ -18,11 +16,17 @@ public class LoaderOptions
         ExternalSymbols = new EmptySymbolView<Symbol>();
     }
 
-    public LoaderOptions(Engine parentEngine, Application targetApplication, ISymbolView<Symbol>? externalSymbols)
+    public LoaderOptions(
+        Engine parentEngine,
+        Application targetApplication,
+        ISymbolView<Symbol>? externalSymbols
+    )
     {
         ParentEngine = parentEngine ?? throw new ArgumentNullException(nameof(parentEngine));
-        TargetApplication = targetApplication ?? throw new ArgumentNullException(nameof(targetApplication));
-        ExternalSymbols = externalSymbols ?? throw new ArgumentNullException(nameof(externalSymbols));
+        TargetApplication =
+            targetApplication ?? throw new ArgumentNullException(nameof(targetApplication));
+        ExternalSymbols =
+            externalSymbols ?? throw new ArgumentNullException(nameof(externalSymbols));
     }
 
     #endregion
@@ -89,9 +93,9 @@ public class LoaderOptions
     bool? _preflightModeEnabled;
 
     /// <summary>
-    /// Preflight mode causes the parser to abort at the 
-    /// first non-meta construct, giving the user the opportunity 
-    /// to inspect a file's "header" without fully compiling 
+    /// Preflight mode causes the parser to abort at the
+    /// first non-meta construct, giving the user the opportunity
+    /// to inspect a file's "header" without fully compiling
     /// that file.
     /// </summary>
     public bool PreflightModeEnabled
@@ -116,7 +120,7 @@ public class LoaderOptions
     string? _storeNewLine;
 
     /// <summary>
-    /// The line separator to use when storing a compiled Prexonite program. 
+    /// The line separator to use when storing a compiled Prexonite program.
     /// </summary>
     /// <see cref="Loader.Store(System.Text.StringBuilder)"/>
     [PublicAPI]
@@ -125,7 +129,7 @@ public class LoaderOptions
         get => _storeNewLine ?? "\n";
         set => _storeNewLine = value;
     }
-    
+
     /// <summary>
     /// If set, then `add` and `require` (transclusion) is only allowed once for each file. This ensures that
     /// the order in which code is loaded into the module is deterministic.

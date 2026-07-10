@@ -26,38 +26,41 @@ namespace at.jku.ssw.Coco
     {
         public static GenerationResult Generate(GeneratorOptions options)
         {
-            if (options == null) throw new ArgumentNullException(nameof(options));
-            if (options.Grammar == null) throw new ArgumentException("The grammar is required.", nameof(options));
-            if (options.ParserFrame == null) throw new ArgumentException("The parser frame is required.", nameof(options));
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+            if (options.Grammar == null)
+                throw new ArgumentException("The grammar is required.", nameof(options));
+            if (options.ParserFrame == null)
+                throw new ArgumentException("The parser frame is required.", nameof(options));
             if (options.GenerateScanner && options.ScannerFrame == null)
-                throw new ArgumentException("The scanner frame is required when scanner generation is enabled.", nameof(options));
+                throw new ArgumentException(
+                    "The scanner frame is required when scanner generation is enabled.",
+                    nameof(options)
+                );
 
             var trace = new StringWriter();
             try
             {
                 using var grammar = new MemoryStream(Encoding.UTF8.GetBytes(options.Grammar));
                 var scanner = new Scanner(grammar);
-                var parser = new Parser(scanner)
-                {
-                    trace = trace
-                };
+                var parser = new Parser(scanner) { trace = trace };
 
                 parser.tab = new Tab(parser)
                 {
                     srcName = options.SourceName ?? "grammar.atg",
                     srcDir = "",
-                    nsName = options.Namespace
+                    nsName = options.Namespace,
                 };
                 parser.dfa = new DFA(parser)
                 {
                     Frame = options.ScannerFrame,
-                    FrameName = "Scanner.frame"
+                    FrameName = "Scanner.frame",
                 };
                 parser.pgen = new ParserGen(parser)
                 {
                     DirectDebug = options.DirectDebug,
                     Frame = options.ParserFrame,
-                    FrameName = options.ParserFrameName ?? "Parser.frame"
+                    FrameName = options.ParserFrameName ?? "Parser.frame",
                 };
 
                 if (options.DirectDebugTrace != null)
@@ -74,7 +77,8 @@ namespace at.jku.ssw.Coco
                     parser.errors.count == 0,
                     parser.pgen.GeneratedSource,
                     options.GenerateScanner ? parser.dfa.GeneratedSource : null,
-                    trace.ToString());
+                    trace.ToString()
+                );
             }
             catch (IOException ex)
             {

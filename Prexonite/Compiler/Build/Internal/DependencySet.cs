@@ -1,11 +1,9 @@
-﻿
-
 using System.Collections.ObjectModel;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal;
 
-class DependencySet : KeyedCollection<string,ModuleName>, ISet<ModuleName>
+class DependencySet : KeyedCollection<string, ModuleName>, ISet<ModuleName>
 {
     readonly HashSet<ModuleName> _nameSet = new();
     readonly ModuleName _correspondingModule;
@@ -78,9 +76,9 @@ class DependencySet : KeyedCollection<string,ModuleName>, ISet<ModuleName>
 
     bool ISet<ModuleName>.Add(ModuleName item)
     {
-        if(TryGetValue(GetKeyForItem(item),out var existing))
+        if (TryGetValue(GetKeyForItem(item), out var existing))
         {
-            if(existing == item)
+            if (existing == item)
             {
                 return false;
             }
@@ -89,7 +87,7 @@ class DependencySet : KeyedCollection<string,ModuleName>, ISet<ModuleName>
                 _throwConflict(item, existing);
                 return false;
             }
-        } 
+        }
         else
         {
             Add(item);

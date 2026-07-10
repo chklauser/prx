@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 
@@ -11,10 +9,7 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
 
     public static CreateSourcePosition Instance { get; } = new();
 
-    CreateSourcePosition()
-    {
-            
-    }
+    CreateSourcePosition() { }
 
     public const string Alias = "create_source_position";
 
@@ -33,11 +28,12 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
         }
 
         var file = args[0].CallToString(sctx);
-        int? line, column;
+        int? line,
+            column;
 
-        if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance,true,out var box))
+        if (args.Length >= 2 && args[1].TryConvertTo(sctx, IntPType.Instance, true, out var box))
         {
-            line = (int) box.Value!;
+            line = (int)box.Value!;
         }
         else
         {
@@ -46,7 +42,7 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
 
         if (args.Length >= 3 && args[2].TryConvertTo(sctx, IntPType.Instance, true, out box))
         {
-            column = (int) box.Value!;
+            column = (int)box.Value!;
         }
         else
         {
@@ -63,6 +59,8 @@ public class CreateSourcePosition : PCommand, ICilCompilerAware
 
     public void ImplementInCil(CompilerState state, Instruction ins)
     {
-        throw new NotSupportedException("The command " + Alias + " does not provide a custom CIL implementation.");
+        throw new NotSupportedException(
+            "The command " + Alias + " does not provide a custom CIL implementation."
+        );
     }
 }

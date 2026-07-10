@@ -1,4 +1,3 @@
-
 #define UseCil
 
 using System;
@@ -90,13 +89,18 @@ public class VMTestsBase
     protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
     {
         _compile(ldr, input);
-        Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == MessageSeverity.Error),
-            "Errors expected, but none were raised.");
+        Assert.AreNotEqual(
+            0,
+            ldr.Errors.Count(m => m.Severity == MessageSeverity.Error),
+            "Errors expected, but none were raised."
+        );
         foreach (var keyword in keywords)
         {
             var word = keyword;
-            Assert.IsTrue(ldr.Errors.Any(m => m.Text.Contains(word)),
-                "Expected keyword " + word + " in one of the error messages.");
+            Assert.IsTrue(
+                ldr.Errors.Any(m => m.Text.Contains(word)),
+                "Expected keyword " + word + " in one of the error messages."
+            );
         }
     }
 
@@ -117,7 +121,7 @@ public class VMTestsBase
             foreach (var s in ldr.Infos)
                 TestContext.WriteLine("INFO: " + s);
 
-            if(!SkipStore)
+            if (!SkipStore)
                 TestContext.WriteLine(ldr.StoreInString());
         }
     }
@@ -133,7 +137,6 @@ public class VMTestsBase
     {
         var sb = new StringBuilder();
         ldr.Store(sb);
-
 
         //Create a new engine
         SetupCompilerEngine();
@@ -176,28 +179,47 @@ public class VMTestsBase
         ExpectReturnValue(target.Meta[Application.EntryKey], assertion, args);
     }
 
-    protected void ExpectNamed<T>(string functionId, T expectedReturnValue, params ReadOnlySpan<PValue> args)
+    protected void ExpectNamed<T>(
+        string functionId,
+        T expectedReturnValue,
+        params ReadOnlySpan<PValue> args
+    )
     {
         ExpectReturnValue(functionId, expectedReturnValue, args);
     }
 
-    protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, ReadOnlySpan<PValue> args)
+    protected void ExpectReturnValue<T>(
+        string functionId,
+        T expectedReturnValue,
+        ReadOnlySpan<PValue> args
+    )
     {
-        ExpectReturnValue(functionId, rv =>
-        {
-            var expected = engine.CreateNativePValue(expectedReturnValue);
-            AssertPValuesAreEqual(expected, rv);
-        }, args);
+        ExpectReturnValue(
+            functionId,
+            rv =>
+            {
+                var expected = engine.CreateNativePValue(expectedReturnValue);
+                AssertPValuesAreEqual(expected, rv);
+            },
+            args
+        );
     }
 
-    protected void ExpectReturnValue(string functionId, Action<PValue> assertion, ReadOnlySpan<PValue> args)
+    protected void ExpectReturnValue(
+        string functionId,
+        Action<PValue> assertion,
+        ReadOnlySpan<PValue> args
+    )
     {
         if (assertion == null)
             throw new ArgumentNullException(nameof(assertion));
 
         foreach (var value in args)
         {
-            if ((PValue?)value == null) throw new ArgumentException("Arguments must not contain naked CLR null references. Use `PType.Null`.");
+            if ((PValue?)value == null)
+                throw new ArgumentException(
+                    "Arguments must not contain naked CLR null references. Use `PType.Null`."
+                );
         }
 
         if (!target.Functions.Contains(functionId))
@@ -216,14 +238,16 @@ public class VMTestsBase
         catch (AccessViolationException)
         {
             TestContext.WriteLine(
-                "Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
+                "Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)"
+            );
             Compiler.StoreDebugImplementation(target, engine);
             throw;
         }
         catch (InvalidProgramException)
         {
             TestContext.WriteLine(
-                "Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
+                "Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)"
+            );
             Compiler.StoreDebugImplementation(target, engine);
             throw;
         }
@@ -236,13 +260,17 @@ public class VMTestsBase
         Assert.AreEqual(
             expected.Type,
             rv.Type,
-            $"Return value is expected to be of type {expected.Type} and not {rv.Type}. Returned {rv}.");
+            $"Return value is expected to be of type {expected.Type} and not {rv.Type}. Returned {rv}."
+        );
         if (expected.Type == PType.List)
         {
-            var expectedL = (List<PValue>) expected.Value!;
-            var rvL = (List<PValue>) rv.Value!;
-            Assert.AreEqual(expectedL.Count, rvL.Count,
-                $"Returned list differs in length. Elements returned {rvL.ToEnumerationString()}");
+            var expectedL = (List<PValue>)expected.Value!;
+            var rvL = (List<PValue>)rv.Value!;
+            Assert.AreEqual(
+                expectedL.Count,
+                rvL.Count,
+                $"Returned list differs in length. Elements returned {rvL.ToEnumerationString()}"
+            );
 
             for (var i = 0; i < expectedL.Count; i++)
             {
@@ -256,8 +284,8 @@ public class VMTestsBase
             Assert.AreEqual(
                 expected.Value,
                 rv.Value,
-                "Return value is expected to be " + expected + " and not " +
-                rv);
+                "Return value is expected to be " + expected + " and not " + rv
+            );
         }
     }
 
@@ -275,8 +303,11 @@ public class VMTestsBase
     static Action<PValue> _buildIsNullAssertion(string functionId)
     {
         return v =>
-            Assert.That(v.IsNull, Is.True,
-                $"Value returned from {functionId} is expected to be a null reference, was {v} instead.");
+            Assert.That(
+                v.IsNull,
+                Is.True,
+                $"Value returned from {functionId} is expected to be a null reference, was {v} instead."
+            );
     }
 
     protected PValue GetReturnValueNamed(string functionId, params PValue[] args)
@@ -286,7 +317,7 @@ public class VMTestsBase
 
     protected PValue GetReturnValueNamedExplicit(string functionId, PValue[] args)
     {
-        if (target.Functions[functionId] is not {} func)
+        if (target.Functions[functionId] is not { } func)
             throw new PrexoniteException("Function " + functionId + " cannot be found.");
         var fctx = func.CreateFunctionContext(engine, args);
         engine.Stack.AddLast(fctx);
@@ -298,15 +329,20 @@ public class VMTestsBase
         return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
     }
 
-    protected Symbol LookupSymbolEntry(ISymbolView<Symbol> store,string symbolicId)
+    protected Symbol LookupSymbolEntry(ISymbolView<Symbol> store, string symbolicId)
     {
-        Assert.IsTrue(store.TryGet(symbolicId, out var symbol),
-            $"Expected to find symbol {symbolicId} but there is no such entry.");
+        Assert.IsTrue(
+            store.TryGet(symbolicId, out var symbol),
+            $"Expected to find symbol {symbolicId} but there is no such entry."
+        );
         return symbol!;
     }
 
-    protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,
-        PValue pFalse)
+    protected void BoolTable4(
+        Func<bool, bool, bool, bool, string> main,
+        PValue pTrue,
+        PValue pFalse
+    )
     {
         Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
         Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);

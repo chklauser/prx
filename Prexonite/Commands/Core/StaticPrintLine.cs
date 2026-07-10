@@ -1,5 +1,3 @@
-
-
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -10,9 +8,7 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
 {
     #region Singleton
 
-    StaticPrintLine()
-    {
-    }
+    StaticPrintLine() { }
 
     public static StaticPrintLine Instance { get; } = new();
 
@@ -70,8 +66,8 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
     #region Implementation of ICilExtension
 
     /// <summary>
-    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
-    /// 
+    ///     Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension.
+    ///
     ///     <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see
     ///       cref = "ICilCompilerAware" /> and finally the built-in mechanisms.</para>
     ///     <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see
@@ -85,8 +81,12 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
         return dynamicArgc <= 0 && staticArgv.All(ctv => !ctv.IsReference);
     }
 
-    public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
-        int dynamicArgc)
+    public void Implement(
+        CompilerState state,
+        Instruction ins,
+        CompileTimeValue[] staticArgv,
+        int dynamicArgc
+    )
     {
         var text = string.Concat(staticArgv.Select(StaticPrint._ToString));
 
@@ -105,10 +105,10 @@ public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
         }
     }
 
-    static readonly MethodInfo _textWriterWriteLineMethod = typeof (TextWriter).
-        GetMethod(
-            "WriteLine",
-            [typeof (string)])!;
+    static readonly MethodInfo _textWriterWriteLineMethod = typeof(TextWriter).GetMethod(
+        "WriteLine",
+        [typeof(string)]
+    )!;
 
     #endregion
 }

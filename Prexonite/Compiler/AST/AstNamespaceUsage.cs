@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Properties;
 
@@ -9,7 +7,7 @@ namespace Prexonite.Compiler.Ast;
 /// A reference to a namespace. Used temporarily while resolving qualified names.
 /// </summary>
 /// <remarks>
-/// <para>Does not have a meaningful translation into executable code, 
+/// <para>Does not have a meaningful translation into executable code,
 /// but is available for diagnostic and meta programming purposes</para>
 /// <para>
 /// Naked namespace usages (without a dot following them) can be used as arguments to macros.
@@ -21,7 +19,8 @@ public class AstNamespaceUsage : AstGetSetImplBase
 {
     QualifiedId? _referencePath;
 
-    public AstNamespaceUsage(ISourcePosition position, PCall call, Namespace @namespace) : base(position, call)
+    public AstNamespaceUsage(ISourcePosition position, PCall call, Namespace @namespace)
+        : base(position, call)
     {
         Namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
     }
@@ -35,9 +34,9 @@ public class AstNamespaceUsage : AstGetSetImplBase
     /// It only consists of the qualified id as it appears at the usage site.
     /// </para>
     /// <para>
-    /// The reference path does not include prefixes imported into the current scope. 
+    /// The reference path does not include prefixes imported into the current scope.
     /// Consequently, it needs to be evaluated in the same context/scope that produced it,
-    /// otherwise it is meaningless. 
+    /// otherwise it is meaningless.
     /// </para>
     /// </remarks>
     public QualifiedId? ReferencePath
@@ -45,8 +44,10 @@ public class AstNamespaceUsage : AstGetSetImplBase
         get => _referencePath;
         set
         {
-            if(_referencePath != null)
-                throw new InvalidOperationException("Can only assign namespace usage reference path once.");
+            if (_referencePath != null)
+                throw new InvalidOperationException(
+                    "Can only assign namespace usage reference path once."
+                );
             _referencePath = value;
         }
     }
@@ -55,8 +56,14 @@ public class AstNamespaceUsage : AstGetSetImplBase
 
     protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
     {
-        target.Loader.ReportMessage(Message.Error(Resources.Parser_ExpectedEntityFoundNamespace, Position, MessageClasses.ExpectedEntityFoundNamespace));
-        if(stackSemantics == StackSemantics.Value)
+        target.Loader.ReportMessage(
+            Message.Error(
+                Resources.Parser_ExpectedEntityFoundNamespace,
+                Position,
+                MessageClasses.ExpectedEntityFoundNamespace
+            )
+        );
+        if (stackSemantics == StackSemantics.Value)
             target.EmitNull(Position);
     }
 

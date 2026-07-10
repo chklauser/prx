@@ -1,18 +1,19 @@
-
-
 using Prexonite.Commands.Core.Operators;
 
 namespace Prexonite.Compiler.Ast;
 
-public class AstCondition : AstNode,
-    IAstHasBlocks,
-    IAstHasExpressions
+public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
 {
-    public AstCondition(ISourcePosition p, AstBlock parentBlock, AstExpr condition, bool isNegative = false)
+    public AstCondition(
+        ISourcePosition p,
+        AstBlock parentBlock,
+        AstExpr condition,
+        bool isNegative = false
+    )
         : base(p)
     {
-        IfBlock = new(p,parentBlock,prefix: "if");
-        ElseBlock = new(p,parentBlock,prefix:"else");
+        IfBlock = new(p, parentBlock, prefix: "if");
+        ElseBlock = new(p, parentBlock, prefix: "else");
         Condition = condition ?? throw new ArgumentNullException(nameof(condition));
         IsNegative = isNegative;
     }
@@ -56,9 +57,13 @@ public class AstCondition : AstNode,
         //Constant conditions
         if (Condition is AstConstant constCond)
         {
-            if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out var condValue))
+            if (
+                !constCond
+                    .ToPValue(target)
+                    .TryConvertTo(target.Loader, PType.Bool, out var condValue)
+            )
                 goto continueFull;
-            else if ((bool) condValue.Value! ^ IsNegative)
+            else if ((bool)condValue.Value! ^ IsNegative)
                 IfBlock.EmitEffectCode(target);
             else
                 ElseBlock.EmitEffectCode(target);
@@ -87,12 +92,8 @@ public class AstCondition : AstNode,
         _depth++;
 
         //Emit
-        var ifGoto = IfBlock.IsSingleStatement
-            ? IfBlock[0] as AstExplicitGoTo
-            : null;
-        var elseGoto = ElseBlock.IsSingleStatement
-            ? ElseBlock[0] as AstExplicitGoTo
-            : null;
+        var ifGoto = IfBlock.IsSingleStatement ? IfBlock[0] as AstExplicitGoTo : null;
+        var elseGoto = ElseBlock.IsSingleStatement ? ElseBlock[0] as AstExplicitGoTo : null;
 
         if (ifGoto != null && elseGoto != null)
         {
@@ -102,7 +103,8 @@ public class AstCondition : AstNode,
                 Condition,
                 ifGoto.Destination,
                 elseGoto.Destination,
-                !IsNegative);
+                !IsNegative
+            );
         }
         else if (ifGoto != null)
         {
@@ -113,8 +115,7 @@ public class AstCondition : AstNode,
         else if (elseGoto != null)
         {
             //if => block / else => jump
-            AstLazyLogical.EmitJumpCondition(
-                target, Condition, elseGoto.Destination, IsNegative); //inverted
+            AstLazyLogical.EmitJumpCondition(target, Condition, elseGoto.Destination, IsNegative); //inverted
             IfBlock.EmitEffectCode(target);
         }
         else

@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using JetBrains.Annotations;
 
@@ -83,7 +81,11 @@ public abstract class MExpr
     }
 
     [ContractAnnotation("=> true, arg1: notnull, arg2: notnull; =>false,arg1: null,arg2: null")]
-    public bool TryMatchHead(string head, [NotNullWhen(true)] out MExpr? arg1, [NotNullWhen(true)] out MExpr? arg2)
+    public bool TryMatchHead(
+        string head,
+        [NotNullWhen(true)] out MExpr? arg1,
+        [NotNullWhen(true)] out MExpr? arg2
+    )
     {
         if (TryMatchHead(head, out List<MExpr>? args) && args.Count == 2)
         {
@@ -120,7 +122,9 @@ public abstract class MExpr
         }
     }
 
-    [ContractAnnotation("=> true, arg1: notnull, arg2: notnull, arg3: notnull; =>false,arg1: null,arg2: null, arg3: notnull")]
+    [ContractAnnotation(
+        "=> true, arg1: notnull, arg2: notnull, arg3: notnull; =>false,arg1: null,arg2: null, arg3: notnull"
+    )]
     public bool TryMatchHead(
         string head,
         [NotNullWhen(true)] out MExpr? arg1,
@@ -183,12 +187,12 @@ public abstract class MExpr
         }
     }
 
-
     #endregion
 
     public sealed class MAtom : MExpr, IEquatable<MAtom>
     {
-        public MAtom(ISourcePosition position, object? value) : base(position)
+        public MAtom(ISourcePosition position, object? value)
+            : base(position)
         {
             Value = value;
         }
@@ -224,15 +228,19 @@ public abstract class MExpr
 
         public bool Equals(MAtom? other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
             return Equals(Value, other.Value);
         }
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
             return obj is MAtom atom && Equals(atom);
         }
 
@@ -247,16 +255,20 @@ public abstract class MExpr
         readonly string _head;
         readonly List<MExpr> _args;
 
-        public MList(ISourcePosition position, string head, IEnumerable<MExpr> args) : base(position)
+        public MList(ISourcePosition position, string head, IEnumerable<MExpr> args)
+            : base(position)
         {
-            if (args == null) throw new ArgumentNullException(nameof(args));
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
             _head = head ?? throw new ArgumentNullException(nameof(head));
             _args = new(args);
         }
 
-        public MList(ISourcePosition position, string head, MExpr arg) : base(position)
+        public MList(ISourcePosition position, string head, MExpr arg)
+            : base(position)
         {
-            if (arg == null) throw new ArgumentNullException(nameof(arg));
+            if (arg == null)
+                throw new ArgumentNullException(nameof(arg));
             _head = head ?? throw new ArgumentNullException(nameof(head));
             _args = [arg];
         }
@@ -268,9 +280,11 @@ public abstract class MExpr
             _args = [];
         }
 
-        public MList(ISourcePosition position, string head, object arg) : base(position)
+        public MList(ISourcePosition position, string head, object arg)
+            : base(position)
         {
-            if (arg == null) throw new ArgumentNullException(nameof(arg));
+            if (arg == null)
+                throw new ArgumentNullException(nameof(arg));
             _head = head ?? throw new ArgumentNullException(nameof(head));
             _args = [new MAtom(position, arg)];
         }
@@ -287,20 +301,20 @@ public abstract class MExpr
                     builder.Write(_args[0]);
                     break;
                 default:
-                {
-                    builder.Write("(");
-                    var first = true;
-                    foreach (var mExpr in _args)
                     {
-                        if (!first)
-                            builder.Write(",");
-                        else
-                            first = false;
-                        Debug.Assert(mExpr != null,"MExpr contains null element in list.");
-                        mExpr.ToString(builder);
+                        builder.Write("(");
+                        var first = true;
+                        foreach (var mExpr in _args)
+                        {
+                            if (!first)
+                                builder.Write(",");
+                            else
+                                first = false;
+                            Debug.Assert(mExpr != null, "MExpr contains null element in list.");
+                            mExpr.ToString(builder);
+                        }
+                        builder.Write(")");
                     }
-                    builder.Write(")");
-                }
                     break;
             }
         }
@@ -327,15 +341,19 @@ public abstract class MExpr
 
         public bool Equals(MList? other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
             return string.Equals(_head, other._head) && _args.Equals(other._args);
         }
 
         public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
             return obj is MList list && Equals(list);
         }
 
@@ -343,9 +361,8 @@ public abstract class MExpr
         {
             unchecked
             {
-                return (_head.GetHashCode()*397) ^ _args.GetHashCode();
+                return (_head.GetHashCode() * 397) ^ _args.GetHashCode();
             }
         }
     }
-
 }

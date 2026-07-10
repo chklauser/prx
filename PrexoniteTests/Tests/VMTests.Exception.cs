@@ -1,4 +1,3 @@
-﻿
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
@@ -50,7 +49,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
 
         Expect("001234--");
     }
@@ -82,7 +82,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
 
         Expect("001234--");
     }
@@ -114,7 +115,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
 
         Expect("012345");
     }
@@ -149,7 +151,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
         try
         {
             Expect("012345");
@@ -160,8 +163,8 @@ public abstract partial class VMTests
         }
 
         var pxs = target.Variables["xs"]!.Value;
-        Assert.IsInstanceOf(typeof (ListPType), pxs.Type, "xs must be a ~List.");
-        var xs = (List<PValue>) pxs.Value!;
+        Assert.IsInstanceOf(typeof(ListPType), pxs.Type, "xs must be a ~List.");
+        var xs = (List<PValue>)pxs.Value!;
         Assert.AreEqual("0", xs[0].CallToString(sctx));
         Assert.AreEqual("1", xs[1].CallToString(sctx));
         Assert.AreEqual("2", xs[2].CallToString(sctx));
@@ -192,7 +195,8 @@ public abstract partial class VMTests
                 return xs.ToString;
             }
 
-            """);
+            """
+        );
         Expect("[ 0, 1, 2, 3 ]");
     }
 
@@ -224,7 +228,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
         Expect("0123345");
     }
 
@@ -270,7 +275,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
         try
         {
             Expect("0123445");
@@ -318,7 +324,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
         Expect("0123345");
     }
 
@@ -365,7 +372,8 @@ public abstract partial class VMTests
                 return tos(xs);
             }
 
-            """);
+            """
+        );
         Expect("01233i45");
     }
 
@@ -405,8 +413,9 @@ public abstract partial class VMTests
                 return sum;
             }
 
-            """);
-        Expect((1 + 4 + 2 + 5 + 1)*20, 1);
+            """
+        );
+        Expect((1 + 4 + 2 + 5 + 1) * 20, 1);
     }
 
     [Test]
@@ -429,7 +438,8 @@ public abstract partial class VMTests
                 return r;
             }
 
-            """);
+            """
+        );
         Expect("NO_ERROR, REALLY");
     }
 
@@ -474,9 +484,10 @@ public abstract partial class VMTests
                 return sb.ToString;
             }
 
-            """);
+            """
+        );
 
-        var xs = new List<PValue> {4, "Hello", 3.4};
+        var xs = new List<PValue> { 4, "Hello", 3.4 };
 
         Expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
     }
@@ -495,8 +506,9 @@ public abstract partial class VMTests
                 return -1;
             }
 
-            """);
-        var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
+            """
+        );
+        var xs = (PValue)new List<PValue> { 1, 2, 3, 4, 7, 15 };
 
         Expect(7, xs);
     }
@@ -522,18 +534,21 @@ public abstract partial class VMTests
                 return z;
             }
 
-            """);
+            """
+        );
 
         if (CompileToCil)
         {
             var main = target.Functions["main"];
             Assert.IsFalse(main!.Meta[PFunction.VolatileKey], "main must not be volatile.");
-            Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey),
-                "main must not have a deficiency");
+            Assert.IsFalse(
+                main.Meta.ContainsKey(PFunction.DeficiencyKey),
+                "main must not have a deficiency"
+            );
             Assert.IsTrue(main.HasCilImplementation, "main must have CIL implementation.");
         }
 
-        Expect(6, true, (PValue) new List<PValue> {1, 2, 3});
+        Expect(6, true, (PValue)new List<PValue> { 1, 2, 3 });
     }
 
     [Test]
@@ -554,7 +569,8 @@ public abstract partial class VMTests
                 }
             }
 
-            """);
+            """
+        );
 
         var func = target.Functions["main"];
 
@@ -566,7 +582,13 @@ public abstract partial class VMTests
             var nullContext = new NullContext(engine, target, new List<string>());
             Assert.IsTrue(func!.HasCilImplementation, "main must have CIL implementation.");
             func.CilImplementation!(
-                func, nullContext, emptyArgV, emptyEnvironment, out var value, out var returnMode);
+                func,
+                nullContext,
+                emptyArgV,
+                emptyEnvironment,
+                out var value,
+                out var returnMode
+            );
             Assert.AreEqual(value.Type, PType.Null);
             Assert.AreEqual(returnMode, ReturnMode.Continue);
         }
@@ -597,10 +619,10 @@ public abstract partial class VMTests
             after:
             }
 
-            """);
+            """
+        );
 
         var func = target.Functions["main"];
-
 
         if (CompileToCil)
         {
@@ -633,16 +655,21 @@ public abstract partial class VMTests
                 return t;
             }
 
-            """);
+            """
+        );
 
         var mainTable = target.Functions["main"]!.Meta;
 
         if (CompileToCil)
         {
-            Assert.IsTrue(mainTable[PFunction.VolatileKey].Switch,
-                "return from finally is illegal in CIL");
-            Assert.IsTrue(mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
-                "deficiency must be related to SEH.");
+            Assert.IsTrue(
+                mainTable[PFunction.VolatileKey].Switch,
+                "return from finally is illegal in CIL"
+            );
+            Assert.IsTrue(
+                mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
+                "deficiency must be related to SEH."
+            );
         }
         Expect("tn", false);
     }
@@ -667,11 +694,14 @@ public abstract partial class VMTests
                 return t;
             }
 
-            """);
+            """
+        );
 
         ExpectNull();
-        Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"]!.Value).Value!,
-            "trace does not match");
+        Assert.IsTrue(
+            (bool)((PValue)"t").Equality(sctx, target.Variables["t"]!.Value).Value!,
+            "trace does not match"
+        );
     }
 
     [Test]
@@ -689,11 +719,14 @@ public abstract partial class VMTests
                     t += "f";
                 }
             }
-            """);
+            """
+        );
 
         ExpectNull();
-        Assert.IsTrue((bool) target.Variables["t"]!.Value.Equality(sctx, "tf").Value!,
-            "Unexpected trace");
+        Assert.IsTrue(
+            (bool)target.Variables["t"]!.Value.Equality(sctx, "tf").Value!,
+            "Unexpected trace"
+        );
     }
 
     [Test]
@@ -740,12 +773,15 @@ public abstract partial class VMTests
                 return t;
             }
 
-            """);
+            """
+        );
         if (CompileToCil)
         {
             Assert.IsNotNull(target.Functions["main"], "function main must exist.");
-            Assert.IsFalse(target.Functions["main"]!.Meta[PFunction.VolatileKey].Switch,
-                "should compile to cil successfully");
+            Assert.IsFalse(
+                target.Functions["main"]!.Meta[PFunction.VolatileKey].Switch,
+                "should compile to cil successfully"
+            );
         }
         Expect("t1e1t2e2t3e3", true, false);
     }
@@ -753,46 +789,47 @@ public abstract partial class VMTests
     [Test]
     public void ReturnFromCatch()
     {
-        Compile
-        ("""
+        Compile(
+            """
 
 
-         var lastCode = -1;
-         var buffer = new System::Text::StringBuilder;
-         function green f => f.();
-         var errors = [];
-         var ldrErrors = ["error1","error2"];
+            var lastCode = -1;
+            var buffer = new System::Text::StringBuilder;
+            function green f => f.();
+            var errors = [];
+            var ldrErrors = ["error1","error2"];
 
-         function main()
-         {
-             try 
-             {
-                 var exc = null;
-                 lastCode = buffer.ToString; //Save the code for error reporting            
-             } 
-             catch(exc)
-             {
-                 //Exceptions are truly exceptional, so they should be printed
-                 // out right away.
-                 green = () =>
-         		{
-         			println(exc);
-         			exc = null;
-         			foreach(var err in errors)
-         				println(err);
-         		};
-         		return false;
-             }
-             finally
-             {
-                 //Save errors for review and clean up.
-                 buffer.Length = 0;
-                 errors = ~List.CreateFromList(ldrErrors);            
-             }
-             println(errors.Count);
-             return errors.Count == 0;
-         }
-         """);
+            function main()
+            {
+                try 
+                {
+                    var exc = null;
+                    lastCode = buffer.ToString; //Save the code for error reporting            
+                } 
+                catch(exc)
+                {
+                    //Exceptions are truly exceptional, so they should be printed
+                    // out right away.
+                    green = () =>
+            		{
+            			println(exc);
+            			exc = null;
+            			foreach(var err in errors)
+            				println(err);
+            		};
+            		return false;
+                }
+                finally
+                {
+                    //Save errors for review and clean up.
+                    buffer.Length = 0;
+                    errors = ~List.CreateFromList(ldrErrors);            
+                }
+                println(errors.Count);
+                return errors.Count == 0;
+            }
+            """
+        );
 
         Expect(false);
     }

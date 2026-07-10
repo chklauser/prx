@@ -1,5 +1,3 @@
-﻿
-
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
@@ -11,16 +9,23 @@ public static class AstFactoryExtensions
 {
     extension(IAstFactory factory)
     {
-        public AstGetSet Call(ISourcePosition position, EntityRef entity,
-            PCall call = PCall.Get, params AstExpr[] arguments)
+        public AstGetSet Call(
+            ISourcePosition position,
+            EntityRef entity,
+            PCall call = PCall.Get,
+            params AstExpr[] arguments
+        )
         {
             var c = factory.IndirectCall(position, factory.Reference(position, entity), call);
             c.Arguments.AddRange(arguments);
             return c;
         }
 
-        public AstExpr ExprFor(ISourcePosition position, QualifiedId qualifiedId,
-            ISymbolView<Symbol> scope)
+        public AstExpr ExprFor(
+            ISourcePosition position,
+            QualifiedId qualifiedId,
+            ISymbolView<Symbol> scope
+        )
         {
             var currentScope = scope;
             for (var i = 0; i < qualifiedId.Count; i++)
@@ -39,16 +44,22 @@ public static class AstFactoryExtensions
 
                 if (expr is not AstNamespaceUsage nsUsage)
                 {
-                    factory.ReportMessage(Message.Error(
-                        string.Format(Resources.Parser_NamespaceExpected, qualifiedId[i], sym),
-                        position, MessageClasses.NamespaceExcepted));
+                    factory.ReportMessage(
+                        Message.Error(
+                            string.Format(Resources.Parser_NamespaceExpected, qualifiedId[i], sym),
+                            position,
+                            MessageClasses.NamespaceExcepted
+                        )
+                    );
                     return factory.IndirectCall(position, factory.Null(position));
                 }
 
                 currentScope = nsUsage.Namespace;
             }
 
-            throw new InvalidOperationException("Failed to resolve qualified Id (program control should never reach this point)");
+            throw new InvalidOperationException(
+                "Failed to resolve qualified Id (program control should never reach this point)"
+            );
         }
     }
 }

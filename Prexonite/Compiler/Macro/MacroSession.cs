@@ -1,5 +1,3 @@
-﻿
-
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -35,9 +33,9 @@ public class MacroSession : IDisposable
     {
         Target = target ?? throw new ArgumentNullException(nameof(target));
         Factory = Target.Factory;
-            
+
         GlobalSymbols = SymbolStore.Create(Target.Loader.Symbols);
-        OuterVariables = [..Target.OuterVariables];
+        OuterVariables = [.. Target.OuterVariables];
 
         _buildCommandToken = target.Loader.RequestBuildCommands();
     }
@@ -63,8 +61,7 @@ public class MacroSession : IDisposable
         {
             if (_options == null)
             {
-                _options = new(Target.Loader.ParentEngine,
-                    Target.Loader.ParentApplication);
+                _options = new(Target.Loader.ParentEngine, Target.Loader.ParentApplication);
                 _options.InheritFrom(Target.Loader.Options);
             }
             return Target.Loader.Options;
@@ -82,8 +79,8 @@ public class MacroSession : IDisposable
     /// </summary>
     /// <returns>The (physical) id of a free temporary variable.</returns>
     /// <remarks>
-    ///     If a temporary variable is not freed during a macro expansion session, 
-    ///     it will no longer be considered a temporary variable and cannot be freed in 
+    ///     If a temporary variable is not freed during a macro expansion session,
+    ///     it will no longer be considered a temporary variable and cannot be freed in
     ///     subsequent expansions
     /// </remarks>
     public string AllocateTemporaryVariable()
@@ -103,8 +100,9 @@ public class MacroSession : IDisposable
     {
         if (_releaseList.Contains(temporaryVariable))
         {
-            throw new PrexoniteException("Cannot release temporary variable " +
-                temporaryVariable + " twice!");
+            throw new PrexoniteException(
+                "Cannot release temporary variable " + temporaryVariable + " twice!"
+            );
         }
         _releaseList.Add(temporaryVariable);
     }
@@ -153,8 +151,11 @@ public class MacroSession : IDisposable
         public string? HumanId { get; protected set; }
 
         [MemberNotNull(nameof(HumanId))]
-        public abstract void Initialize(CompilerTarget target, AstGetSet macroNode,
-            bool justEffect);
+        public abstract void Initialize(
+            CompilerTarget target,
+            AstGetSet macroNode,
+            bool justEffect
+        );
 
         public void Expand(CompilerTarget target, MacroContext context)
         {
@@ -171,25 +172,36 @@ public class MacroSession : IDisposable
     {
         public override void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect)
         {
-            var expansion = (AstExpand) macroNode;
+            var expansion = (AstExpand)macroNode;
 
             MacroCommand = null;
 
-            if(!expansion.Entity.TryGetMacroCommand(out var mcmdRef))
-                throw new InvalidOperationException(string.Format(Resources.MacroCommandExpander_MacroCommandExpected, expansion.Entity));
+            if (!expansion.Entity.TryGetMacroCommand(out var mcmdRef))
+                throw new InvalidOperationException(
+                    string.Format(
+                        Resources.MacroCommandExpander_MacroCommandExpected,
+                        expansion.Entity
+                    )
+                );
             MacroCommand? mcmd;
-            if (mcmdRef.TryGetEntity(target.Loader, out var value) && (mcmd = value.Value as MacroCommand) != null)
+            if (
+                mcmdRef.TryGetEntity(target.Loader, out var value)
+                && (mcmd = value.Value as MacroCommand) != null
+            )
             {
                 HumanId = mcmdRef.Id;
                 MacroCommand = mcmd;
             }
             else
             {
-                target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                    string.Format(
-                        Resources.MacroCommandExpander_CannotFindMacro,
-                        mcmdRef.Id),
-                    macroNode.Position, MessageClasses.NoSuchMacroCommand));
+                target.Loader.ReportMessage(
+                    Message.Create(
+                        MessageSeverity.Error,
+                        string.Format(Resources.MacroCommandExpander_CannotFindMacro, mcmdRef.Id),
+                        macroNode.Position,
+                        MessageClasses.NoSuchMacroCommand
+                    )
+                );
                 HumanId = "cannot_find_macro_command";
             }
         }
@@ -208,8 +220,11 @@ public class MacroSession : IDisposable
 
         public string? HumanId { get; protected set; }
 
-        public abstract void Initialize(CompilerTarget target, AstGetSet macroNode,
-            bool justEffect);
+        public abstract void Initialize(
+            CompilerTarget target,
+            AstGetSet macroNode,
+            bool justEffect
+        );
 
         public void Expand(CompilerTarget target, MacroContext context)
         {
@@ -242,7 +257,8 @@ public class MacroSession : IDisposable
             var macroBlock = ast as AstBlock;
 
             // ReSharper disable JoinDeclarationAndInitializer
-            AstExpr? ce, fe;
+            AstExpr? ce,
+                fe;
             IEnumerable<AstNode>? fs;
             // ReSharper restore JoinDeclarationAndInitializer
             //determine ce
@@ -280,22 +296,30 @@ public class MacroSession : IDisposable
             var successRaw = _invokeMacroFunction(target, context);
             if (successRaw.Type != PType.Bool)
             {
-                context.ReportMessage(Message.Create(MessageSeverity.Error,
-                    Resources.MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean,
-                    context.Invocation.Position,
-                    MessageClasses.PartialMacroMustReturnBoolean));
+                context.ReportMessage(
+                    Message.Create(
+                        MessageSeverity.Error,
+                        Resources.MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean,
+                        context.Invocation.Position,
+                        MessageClasses.PartialMacroMustReturnBoolean
+                    )
+                );
                 _setupDefaultExpression(context);
                 return false;
             }
 
-            return (bool) successRaw.Value!;
+            return (bool)successRaw.Value!;
         }
 
-        void _implementMergeRules(MacroContext context, AstExpr? ce,
-            IEnumerable<AstNode>? fs, AstExpr? fe)
+        void _implementMergeRules(
+            MacroContext context,
+            AstExpr? ce,
+            IEnumerable<AstNode>? fs,
+            AstExpr? fe
+        )
         {
             var contextBlock = context.Block;
-            //cs  is already stored in contextBlock, 
+            //cs  is already stored in contextBlock,
             //  the rules position cs always at the beginning, thus no need to handle cs.
 
             //At this point
@@ -312,22 +336,35 @@ public class MacroSession : IDisposable
                 {
                     //Might at a later point become a warning
                     var invocationPosition = context.Invocation.Position;
-                    context.ReportMessage(Message.Create(MessageSeverity.Info,
-                        string.Format(
-                            Resources.MacroFunctionExpander__UsedTemporaryVariable,
-                            HumanId),
-                        invocationPosition, MessageClasses.BlockMergingUsesVariable));
+                    context.ReportMessage(
+                        Message.Create(
+                            MessageSeverity.Info,
+                            string.Format(
+                                Resources.MacroFunctionExpander__UsedTemporaryVariable,
+                                HumanId
+                            ),
+                            invocationPosition,
+                            MessageClasses.BlockMergingUsesVariable
+                        )
+                    );
 
                     var tmpV = context.AllocateTemporaryVariable();
 
                     //Generate assignment to temporary variable
-                    var tmpVRef = context.Factory.Reference(invocationPosition, EntityRef.Variable.Local.Create(tmpV));
-                    var assignTmpV = context.Factory.IndirectCall(invocationPosition,tmpVRef,PCall.Set);
+                    var tmpVRef = context.Factory.Reference(
+                        invocationPosition,
+                        EntityRef.Variable.Local.Create(tmpV)
+                    );
+                    var assignTmpV = context.Factory.IndirectCall(
+                        invocationPosition,
+                        tmpVRef,
+                        PCall.Set
+                    );
                     assignTmpV.Arguments.Add(ce);
                     contextBlock.Add(assignTmpV);
 
                     //Generate lookup of computed value
-                    ce = context.Factory.IndirectCall(invocationPosition,tmpVRef);
+                    ce = context.Factory.IndirectCall(invocationPosition, tmpVRef);
                 }
             }
 
@@ -360,8 +397,9 @@ public class MacroSession : IDisposable
 
             //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
             var macroInvocation = context.Invocation;
-            var arguments =
-                macroInvocation.Arguments.Select(target.Loader.CreateNativePValue).ToArray();
+            var arguments = macroInvocation
+                .Arguments.Select(target.Loader.CreateNativePValue)
+                .ToArray();
             var parentApplication = MacroFunction!.ParentApplication;
             try
             {
@@ -384,9 +422,17 @@ public class MacroSession : IDisposable
             MacroFunction = null;
 
             if (!expansion.Entity.TryGetFunction(out var functionRef))
-                throw new InvalidOperationException(string.Format(Resources.MacroFunctionExpander_ExpectedFunctionReference, expansion.Entity));
+                throw new InvalidOperationException(
+                    string.Format(
+                        Resources.MacroFunctionExpander_ExpectedFunctionReference,
+                        expansion.Entity
+                    )
+                );
             PFunction? func;
-            if (functionRef.TryGetEntity(target.Loader, out var value) && (func = value.Value as PFunction) != null)
+            if (
+                functionRef.TryGetEntity(target.Loader, out var value)
+                && (func = value.Value as PFunction) != null
+            )
             {
                 HumanId = functionRef.Id;
                 MacroFunction = func;
@@ -399,8 +445,13 @@ public class MacroSession : IDisposable
                         string.Format(
                             Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
                             functionRef,
-                            target.Function.Id, target.Loader.ParentApplication.Module.Name),
-                        macroNode.Position, MessageClasses.NoSuchMacroFunction));
+                            target.Function.Id,
+                            target.Loader.ParentApplication.Module.Name
+                        ),
+                        macroNode.Position,
+                        MessageClasses.NoSuchMacroFunction
+                    )
+                );
                 HumanId = "could_not_resolve_macro_function";
             }
         }
@@ -424,11 +475,13 @@ public class MacroSession : IDisposable
             if (_invocations.Contains(invocation))
             {
                 target.Loader.ReportMessage(
-                    Message.Create(MessageSeverity.Error,
-                        string.Format(
-                            Resources.MacroSession_MacroNotReentrant,
-                            expander.HumanId),
-                        invocation.Position, MessageClasses.MacroNotReentrant));
+                    Message.Create(
+                        MessageSeverity.Error,
+                        string.Format(Resources.MacroSession_MacroNotReentrant, expander.HumanId),
+                        invocation.Position,
+                        MessageClasses.MacroNotReentrant
+                    )
+                );
                 return CreateNeutralExpression(invocation);
             }
             _invocations.Add(invocation);
@@ -437,7 +490,7 @@ public class MacroSession : IDisposable
             {
                 var cub = target.CurrentBlock;
                 var r = action();
-                if(!ReferenceEquals(cub,target.CurrentBlock))
+                if (!ReferenceEquals(cub, target.CurrentBlock))
                     throw new PrexoniteException("Macro must restore previous lexical scope.");
                 return r;
             }
@@ -463,8 +516,12 @@ public class MacroSession : IDisposable
                                 MessageSeverity.Error,
                                 string.Format(
                                     Resources.MacroSession_MacroCannotBeAppliedPartially,
-                                    expander.HumanId), invocation.Position,
-                                MessageClasses.PartialApplicationNotSupported));
+                                    expander.HumanId
+                                ),
+                                invocation.Position,
+                                MessageClasses.PartialApplicationNotSupported
+                            )
+                        );
                         return CreateNeutralExpression(invocation);
                     }
                 }
@@ -501,16 +558,23 @@ public class MacroSession : IDisposable
         return node;
     }
 
-    static void _reportException(MacroContext context, IMacroExpander expander,
-        Exception e)
+    static void _reportException(MacroContext context, IMacroExpander expander, Exception e)
     {
-        context.ReportMessage(Message.Create(MessageSeverity.Error,
-            string.Format(
-                Resources.MacroSession_ExceptionDuringExpansionOfMacro,
-                expander.HumanId, context.Function.LogicalId,
-                e.Message), context.Invocation.Position, MessageClasses.ExceptionDuringCompilation));
+        context.ReportMessage(
+            Message.Create(
+                MessageSeverity.Error,
+                string.Format(
+                    Resources.MacroSession_ExceptionDuringExpansionOfMacro,
+                    expander.HumanId,
+                    context.Function.LogicalId,
+                    e.Message
+                ),
+                context.Invocation.Position,
+                MessageClasses.ExceptionDuringCompilation
+            )
+        );
 #if DEBUG
-            Console.WriteLine(e);
+        Console.WriteLine(e);
 #endif
     }
 
@@ -524,8 +588,13 @@ public class MacroSession : IDisposable
     public static AstGetSet CreateNeutralExpression(AstGetSet invocation)
     {
         var nullLiteral = new AstNull(invocation.File, invocation.Line, invocation.Column);
-        var call = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column,
-            invocation.Call, nullLiteral);
+        var call = new AstIndirectCall(
+            invocation.File,
+            invocation.Line,
+            invocation.Column,
+            invocation.Call,
+            nullLiteral
+        );
         if (invocation.Call == PCall.Set)
             call.Arguments.Add(new AstNull(invocation.File, invocation.Line, invocation.Column));
 
@@ -551,44 +620,53 @@ public class MacroSession : IDisposable
         return expander;
     }
 
-    static void _reportMacroNodeNotMacro(CompilerTarget target, string implName, AstGetSet invocation)
+    static void _reportMacroNodeNotMacro(
+        CompilerTarget target,
+        string implName,
+        AstGetSet invocation
+    )
     {
         target.Loader.ReportMessage(
-            Message.Create(MessageSeverity.Error,
-                string.Format(
-                    Resources.MacroSession_NotAMacro,
-                    implName),
-                invocation.Position, MessageClasses.NotAMacro));
+            Message.Create(
+                MessageSeverity.Error,
+                string.Format(Resources.MacroSession_NotAMacro, implName),
+                invocation.Position,
+                MessageClasses.NotAMacro
+            )
+        );
     }
 
     /// <summary>
-    ///     Provides macro environment to its implementing function. The resulting closure 
+    ///     Provides macro environment to its implementing function. The resulting closure
     ///     implements the expansion of the macro.
     /// </summary>
     /// <param name = "sctx">The stack context to use for wrapping the context.</param>
     /// <param name = "func">The implementation of the macro.</param>
     /// <param name = "context">The macro context for this expansion.</param>
     /// <returns>A closure that implements the expansion of this macro.</returns>
-    public static Closure PrepareMacroImplementation(StackContext sctx, PFunction func,
-        MacroContext context)
+    public static Closure PrepareMacroImplementation(
+        StackContext sctx,
+        PFunction func,
+        MacroContext context
+    )
     {
-        var contextVar =
-            CompilerTarget.CreateReadonlyVariable(sctx.CreateNativePValue(context));
+        var contextVar = CompilerTarget.CreateReadonlyVariable(sctx.CreateNativePValue(context));
 
-        var env = new SymbolTable<PVariable>(1) {{MacroAliases.ContextAlias, contextVar}};
+        var env = new SymbolTable<PVariable>(1) { { MacroAliases.ContextAlias, contextVar } };
 
-        var sharedVariables =
-            func.Meta[PFunction.SharedNamesKey].List
-                .Select(entry =>
+        var sharedVariables = func.Meta[PFunction.SharedNamesKey]
+            .List.Select(entry =>
+            {
+                if (env[entry.Text] is not { } v)
                 {
-                    if (env[entry.Text] is not { } v)
-                    {
-                        throw new PrexoniteException($"Macro references non-supported context variable {entry.Text}.");
-                    }
+                    throw new PrexoniteException(
+                        $"Macro references non-supported context variable {entry.Text}."
+                    );
+                }
 
-                    return v;
-                }).
-                ToArray();
+                return v;
+            })
+            .ToArray();
         return new(func, sharedVariables);
     }
 
@@ -617,6 +695,7 @@ public class MacroSession : IDisposable
             return _transportStore[id];
         else
             throw new PrexoniteException(
-                $"No object with id {id} in transport through this macro session.");
+                $"No object with id {id} in transport through this macro session."
+            );
     }
 }
