@@ -24,14 +24,14 @@ dotnet test --filter "FullyQualifiedName~TestName"
 - **Prexonite**: Core language library (VM, compiler, type system, standard library)
 - **PrexoniteTests**: NUnit test suite with .pxs integration tests
 - **Prx**: Command-line REPL and script runner
-- **PxCoco**: Modified Coco/R parser generator (build-time tool)
+- **PxCoco**: Modified Coco/R incremental source generator
 
 # High-Level Architecture
 
 ## Compilation Pipeline
 
 1. **Lexical Analysis** (`Compiler/Lexer.cs`) - Generated from `Prexonite.lex` via CSFlex
-2. **Parsing** (`Compiler/Parser.cs`) - Generated from merged `.atg` grammar fragments via PxCoco
+2. **Parsing** - Generated from `.atg` `AdditionalFiles` by the PxCoco source generator
 3. **AST Construction** (`Compiler/AST/`) - 50+ node types representing language constructs
 4. **Macro Expansion** (`Compiler/Macro/`) - Compile-time AST transformation (macros run during compilation)
 5. **Symbol Resolution** (`Compiler/Symbolic/`) - Namespace imports and qualified name resolution
@@ -117,8 +117,8 @@ Embedded scripts in `prxlib/`:
 
 # Build-Time Code Generation
 
-- **Grammar Assembly**: `.atg` fragments merged via MSBuild into `Prexonite__gen.atg`
-- **Parser Generation**: PxCoco generates `Parser.cs` from grammar
+- **Grammar Assembly**: `.atg` fragments are ordered and merged in memory by the PxCoco source generator
+- **Parser Generation**: PxCoco emits parser/scanner sources directly into the Roslyn compilation
 - **Lexer Generation**: CSFlex generates `Lexer.cs` from `Prexonite.lex`
 - **Test fixture generation**: `PrexoniteTests.Generators` generates NUnit fixtures from the JSON test configurations
 
@@ -160,4 +160,4 @@ Embedded scripts in `prxlib/`:
 
 ## Modify Grammar
 1. Edit `.atg` fragments in `Compiler/Grammar/`
-2. Rebuild to regenerate parser via PxCoco
+2. Rebuild; the PxCoco incremental generator observes the grammar through `AdditionalFiles`

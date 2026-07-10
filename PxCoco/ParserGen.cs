@@ -40,8 +40,7 @@ using System.IO;
 using System.Collections;
 using System.Text;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using PxCoco.Msbuild;
+using System.Globalization;
 
 namespace at.jku.ssw.Coco {
 
@@ -68,9 +67,9 @@ public class ParserGen {
 
     int errorNr;      // highest parser error number
 	Symbol curSy;     // symbol whose production is currently generated
-	FileStream fram;  // parser frame file
+	TextReader fram;  // parser frame
     int frameLineNumber = 1;
-	StreamWriter gen; // generated parser source file
+	TextWriter gen; // generated parser source
 	StringWriter err; // generated parser error messages
 	ArrayList symSet = new ArrayList();
 	
@@ -79,6 +78,13 @@ public class ParserGen {
 	Errors errors;
 	Buffer buffer;
     private string _relativePathRoot;
+    private StringBuilder _generatedSource;
+
+    public string Frame { get; set; }
+
+    public string FrameName { get; set; } = "Parser.frame";
+
+    public string GeneratedSource => _generatedSource?.ToString();
 
     void Indent (int n) {
 		for (int i = 1; i <= n; i++) gen.Write('\t');
@@ -121,16 +127,16 @@ public class ParserGen {
             return path;
         }
 
-        return Platform.GetRelativePath(RelativePathRoot, path);
+        return Path.GetRelativePath(RelativePathRoot, path);
     }
 
 	
 	void CopyFramePart (string stop) {
 		char startCh = stop[0];
 		int endOfStopString = stop.Length-1;
-		int ch = fram.ReadByte();
+		int ch = fram.Read();
         if ((!DirectDebug) && ch != EOF)
-            gen.WriteLine("\n#line {0} \"{1}\" //FRAME", frameLineNumber, _pathForLineDirective(fram.Name));
+			gen.WriteLine("\n#line {0} \"{1}\" //FRAME", frameLineNumber, _pathForLineDirective(FrameName));
 		while (ch != EOF)
 			if (ch == startCh) {
 				int i = 0;
@@ -144,12 +150,12 @@ public class ParserGen {
                         frameLineNumber++;
                         return; // stop[0..i] found
                     }
-					ch = fram.ReadByte(); i++;
+					ch = fram.Read(); i++;
 				} while (ch == stop[i]);
 				// stop[0..i-1] found; continue with last read character
 				gen.Write(stop.Substring(0, i));
 			} else {
-				gen.Write((char)ch); ch = fram.ReadByte();
+				gen.Write((char)ch); ch = fram.Read();
                 if (ch == (byte)ParserGen.LF)
                     frameLineNumber++;
 			}
@@ -468,28 +474,15 @@ public class ParserGen {
 	}
 	
 	void OpenGen(bool backUp) { /* pdt */
-		try {
-			string fn = tab.srcDir + "Parser.cs"; /* pdt */
-			if (File.Exists(fn) && backUp) File.Copy(fn, fn + ".old", true);
-			gen = new StreamWriter(new FileStream(fn, FileMode.Create)); /* pdt */
-		} catch (IOException) {
-			throw new FatalError("Cannot generate parser file");
-		}
+		_generatedSource = new StringBuilder();
+		gen = new StringWriter(_generatedSource, CultureInfo.InvariantCulture);
 	}
 
 	public void WriteParser () {
 		int oldPos = buffer.Pos;  // Pos is modified by CopySourcePart
 		symSet.Add(tab.allSyncSets);
-		string fr = tab.srcDir + "Parser.frame";
-		if (!File.Exists(fr)) {
-			if (tab.frameDir != null) fr = tab.frameDir.Trim() + Path.DirectorySeparatorChar + "Parser.frame";
-			if (!File.Exists(fr)) throw new FatalError("Cannot find Parser.frame");
-		}
-		try {
-			fram = new FileStream(fr, FileMode.Open, FileAccess.Read, FileShare.Read);
-		} catch (IOException) {
-			throw new FatalError("Cannot open Parser.frame.");
-		}
+		if (Frame == null) throw new FatalError("Cannot find Parser.frame");
+		fram = new StringReader(Frame);
 		OpenGen(true); /* pdt */
 		err = new StringWriter();
 		foreach (Symbol sym in tab.terminals) GenErrorMsg(tErr, sym);
@@ -518,7 +511,7 @@ public class ParserGen {
 		CopyFramePart("$$$");
 		/* AW 2002-12-20 close namespace, if it exists */
 		if (tab.nsName != null && tab.nsName.Length > 0) gen.Write("}");
-		gen.Close();
+		gen.Flush();
 		buffer.Pos = oldPos;
 	}
 	

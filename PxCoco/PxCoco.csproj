@@ -1,46 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <!-- Override defaults from Directory.Build.props for legacy project -->
-    <TargetFramework />
-    <TargetFrameworks>net6.0;net48</TargetFrameworks>
-    <LangVersion>7.3</LangVersion>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsRoslynComponent>true</IsRoslynComponent>
     <Nullable>disable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <IsTool>true</IsTool>
-    <Title>Prexonite Coco/R</Title>
-    <PackageDescription>Coco/R is a compiler generator, which takes an attributed grammar of a source language and generates a scanner and a parser for this language. The scanner works as a deterministic finite automaton. The parser uses recursive descent. LL(1) conflicts can be resolved by a multi-symbol lookahead or by semantic checks. Thus the class of accepted grammars is LL(k) for an arbitrary k. The 'Prexonite' version is slightly modified and extended with MSBuild tasks.</PackageDescription>
-    <Description>$(PackageDescription)</Description>
-    <Copyright>Copyright (c) 1990, 2005 Hanspeter Moessenboeck, University of Linz
-extended by M. Loeberbauer &amp; A. Woess, Univ. of Linz
-with improvements by Pat Terry, Rhodes University. Prexonite extensions by Christian Klauser</Copyright>
-
-     <!-- Suppresses the warnings about the package not having assemblies in lib/*/.dll.-->
-    <NoPackageAnalysis>true</NoPackageAnalysis>
-    <!-- Change the default location where NuGet will put the build output -->
-    <BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
-  </PropertyGroup>
-
- <PropertyGroup>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-</PropertyGroup>
-
-<ItemGroup>
-    <None Include="licenses\LICENSE.txt" Pack="true" PackagePath="" />
-    <Content Include="build\PxCoco.props" PackagePath="build\" />
-    <Content Include="buildMultiTargeting\PxCoco.props" PackagePath="buildMultiTargeting\" />
-</ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Framework" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" />
-    <!-- marks all packages as 'local only' so they don't end up in the nuspec -->
-    <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp">
+      <HintPath>$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="../Tools/Parser.frame" LogicalName="PxCoco.Parser.frame" />
+    <EmbeddedResource Include="../Tools/Scanner.frame" LogicalName="PxCoco.Scanner.frame" />
   </ItemGroup>
 
 </Project>
