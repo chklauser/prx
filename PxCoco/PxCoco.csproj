@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <!-- Override defaults from Directory.Build.props for legacy project -->
+    <TargetFramework />
     <TargetFrameworks>net6.0;net48</TargetFrameworks>
     <LangVersion>7.3</LangVersion>
     <Nullable>disable</Nullable>
