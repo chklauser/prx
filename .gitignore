@@ -97,7 +97,6 @@ Prexonite/Parser.cs
 Prexonite/Parser.cs.old
 Prexonite/Scanner.cs
 Prexonite/Scanner.cs.old
-Prexonite/Commands/Core/Operators/Operators.cs
 PrexoniteTests/OldPrexoniteTests.csproj.xml
 PrexoniteTests/Tests/Configurations/PsrUnitTests.cs
 PrexoniteTests/Tests/Configurations/VMTestConfigurations.cs

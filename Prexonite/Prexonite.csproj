@@ -50,18 +50,14 @@
     <EmbeddedResource Include="prxlib\prx.v2.prelude.pxs" />
     <EmbeddedResource Include="prxlib\sys.pxs" />
     <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
-    <TextTemplate Include="**\*.tt" />
-
     <!-- Generated files (tracked manually because they might only appear in the middle of the build process and, 
          in that case, would not be discovered automaticaly. -->
     <Compile Remove="$(ProjectDir)\Compiler\Parser.cs" />
     <Compile Remove="$(ProjectDir)\Internal\Parser.cs" />
     <Compile Remove="$(ProjectDir)\Internal\Scanner.cs" />
-    <Compile Remove="Commands\Core\Operators\Operators.cs" />
     <Compile Include="$(ProjectDir)\Compiler\Parser.cs" />
     <Compile Include="$(ProjectDir)\Internal\Parser.cs" />
     <Compile Include="$(ProjectDir)\Internal\Scanner.cs" />
-    <Compile Include="Commands\Core\Operators\Operators.cs" />
     <None Remove="Compiler\Lexer.cs~" />
   </ItemGroup>
   <ItemGroup>
@@ -107,16 +103,6 @@
   </Target>
   <Target Name="PrexoniteScanner" Outputs="$(ProjectDir)/Compiler/Lexer.cs" Inputs="$(ProjectDir)/Compiler/$(PrexoniteScannerDefinition)">
     <Exec Command="&quot;../$(ToolsDirectory)/csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)/Compiler" />
-  </Target>
-  
-  <!-- Text Template -->
-  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
-    <!-- https://notquitepure.info/2018/12/12/T4-Templates-at-Build-Time-With-Dotnet-Core/ -->
-    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tool run t4 -I=%(TextTemplate.RelativeDir) %(TextTemplate.Identity)" />
-  </Target>
-
-  <Target Name="TextTemplateClean" AfterTargets="Clean">
-    <Delete Files="@(Generated)" />
   </Target>
   
   <Target Name="PrexoniteParserClean" AfterTargets="Clean">
