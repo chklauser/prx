@@ -17,7 +17,7 @@ jobs:
             build_platform: windows-2022
             runtime_ident: win-x64
           - os: linux
-            build_platform: ubuntu-20.04
+            build_platform: ubuntu-24.04
             runtime_ident: linux-x64
     name: Release Prexonite on ${{ matrix.os }}
     runs-on: ${{ matrix.build_platform }}
@@ -39,15 +39,16 @@ jobs:
           echo "Version: $ver"
           echo "::set-output name=version::$ver"
         shell: bash
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4.0.0
+        uses: actions/setup-dotnet@v4
         with:
+          global-json-file: global.json
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
         env:
           # Use a personal access token (publishing with the GITHUB_TOKEN is somehow not possible)
           NUGET_AUTH_TOKEN: '${{secrets.CICD_PAT}}'
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           # Look to see if there is a cache hit for the corresponding requirements file
@@ -56,8 +57,6 @@ jobs:
             ${{ runner.os }}-nuget
       - name: Install dependencies
         run: dotnet restore --runtime ${{ matrix.runtime_ident }} --lock-file-path=./packages.lock.json --verbosity=normal
-      - name: Install tools
-        run: dotnet tool restore --verbosity=normal 
       - name: Build
         run: dotnet build --configuration=Release --no-restore --verbosity=normal -p:Version=${{steps.determine-version.outputs.version}}
       - name: Test
@@ -70,7 +69,7 @@ jobs:
       - name: Prepare Binary ZIP
         run: |
           ver='${{steps.determine-version.outputs.version}}'
-          cd Prx/bin/Release/net8.0/${{ matrix.runtime_ident }} && \
+          cd Prx/bin/Release/net10.0/${{ matrix.runtime_ident }} && \
             mkdir zip-env && \
             mv publish "zip-env/prexonite-v$ver"
         shell: bash
@@ -78,7 +77,7 @@ jobs:
         uses: thedoctor0/zip-release@0.6.1
         with:
           filename: prexonite-v${{steps.determine-version.outputs.version}}-${{ matrix.runtime_ident }}.zip
-          directory: Prx/bin/Release/net8.0/${{ matrix.runtime_ident }}/zip-env
+          directory: Prx/bin/Release/net10.0/${{ matrix.runtime_ident }}/zip-env
       - name: Push Prexonite Package (windows-only)
         if: matrix.os == 'windows'
         run: dotnet nuget push Prexonite/bin/Release/Prexonite.${{steps.determine-version.outputs.version}}.nupkg

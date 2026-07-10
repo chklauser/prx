@@ -27,17 +27,14 @@ jobs:
           $ver = $env:BUILD_SOURCEBRANCH.remove(0,19)
           Write-Host "::set-output name=version::$ver"
           Write-Host Version: $ver
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v1.7.2
+        uses: actions/setup-dotnet@v4
         env:
           # Use a personal access token (publishing with the GITHUB_TOKEN is somehow not possible)
           NUGET_AUTH_TOKEN: '${{secrets.CICD_PAT}}'
         with:
-          # version 5.0 used for T4
-          dotnet-version: |
-            8.0.x
-            5.0.x
+          global-json-file: global.json
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
       - name: Install dependencies (Win)
         run: dotnet restore PxCoco/PxCoco.csproj

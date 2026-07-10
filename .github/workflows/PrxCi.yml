@@ -28,19 +28,20 @@ jobs:
           - os: windows
             build_platform: windows-2022
           - os: linux
-            build_platform: ubuntu-20.04
+            build_platform: ubuntu-24.04
     name: Build & Test Prexonite on ${{ matrix.os }}
     runs-on: ${{ matrix.build_platform }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Setup .NET SDK 
-        uses: actions/setup-dotnet@v4.0.0
+        uses: actions/setup-dotnet@v4
         with:
+          global-json-file: global.json
           source-url: 'https://nuget.pkg.github.com/chklauser/index.json'
         env:
           NUGET_AUTH_TOKEN: '${{secrets.GITHUB_TOKEN}}'
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           # Look to see if there is a cache hit for the corresponding requirements file
@@ -49,8 +50,6 @@ jobs:
             ${{ runner.os }}-nuget
       - name: Install dependencies
         run: dotnet restore --lock-file-path=./packages.lock.json --verbosity=normal
-      - name: Install tools
-        run: dotnet tool restore --verbosity=normal 
       - name: Build
         run: dotnet build --no-restore --verbosity=normal
       - name: Test
@@ -59,4 +58,3 @@ jobs:
         # Will build Release version. This is intentional to make sure
         # that the Release configuration also works.
         run: dotnet pack --verbosity=normal
-
