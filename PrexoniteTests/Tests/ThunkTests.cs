@@ -90,22 +90,37 @@ public abstract class ThunkTests : VMTestsBase
         Compile(
             """
 
-            function _consT hT tT = hT.force : tT;
+            function _consT hT tT = [hT,tT];
+            function _headT xsT = xsT.force[0];
+            function _tailT xsT = xsT.force[1];
             function _refT xT = xT.force.();
+            function _addT x1 x2 = x1.force + x2.force;
 
-            function repeatT(x)
+            function main(x1)
             {
-                var xsT;
-                xsT = thunk(->_consT,x,thunk(->_refT,->xsT));
-                return xsT;
-            }
+                function repeatT(x)
+                {
+                    var xsT;
+                    xsT = thunk(->_consT,x,thunk(->_refT,->xsT));
+                    return xsT;
+                }
 
-            function main(x,n) = foldl((a,b) => a + b,0) << take(n) << toseq << repeatT << x;
+                var x1s = repeatT(x1);
+                var y1 = thunk(->_headT,x1s);
+                var y1s = thunk(->_tailT,x1s);
+                var z1 = thunk(->_headT,y1s);
+                var z1s = thunk(->_tailT,y1s);
+                var a1 = thunk(->_headT,z1s);
+
+                var result = thunk(->_addT,y1,thunk(->_addT,z1,a1));
+
+                return result.force;
+            }
 
             """
         );
 
-        Expect(12, 4, 3);
+        Expect(12, 4);
     }
 
     [Test]

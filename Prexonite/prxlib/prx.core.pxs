@@ -13,7 +13,7 @@ namespace prx.core
       takewhile,except,range, reverse, headtail, append, sum, contains,
       create_enumerator,seqconcat);
 
-  namespace nonstrict export(*),prx.prim(thunk,asthunk => to_thunk,force,toseq => to_seq);
+  namespace nonstrict export(*),prx.prim(thunk,asthunk => to_thunk,force);
 
   namespace rt
   {
