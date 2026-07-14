@@ -1024,20 +1024,6 @@ partial class Parser
         return varTok.kind != _var && varTok.kind != _ref;
     }
 
-    static IEnumerable<string> let_bindings(CompilerTarget ft)
-    {
-        var lets = new HashSet<string>(Engine.DefaultStringComparer);
-        for (var ct = ft; ct != null; ct = ct.ParentTarget)
-            lets.UnionWith(ct.Function.Meta[PFunction.LetKey].List.Select(e => e.Text));
-        return lets;
-    }
-
-    static void mark_as_let(PFunction f, string local)
-    {
-        f.Meta[PFunction.LetKey] = (MetaEntry)
-            f.Meta[PFunction.LetKey].List.Union([(MetaEntry)local]).ToArray();
-    }
-
     #region Assemble Invocation of Symbol
 
     class ReferenceTransformer : SymbolHandler<int, Tuple<Symbol, bool>>

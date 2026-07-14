@@ -113,8 +113,6 @@ TOKENS
     then
 	uusing //Coco/R does not accept "using" as a token name.
 	macro
-	lazy
-	let
 	method
 	this
     namespace

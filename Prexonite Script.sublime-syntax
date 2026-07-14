@@ -241,7 +241,7 @@ contexts:
         - include: verbatim-escape-sequences
         - include: interpolation
   storage-keywords:
-    - match: '(?i)(?<!\.)\b(var|ref|function|command|macro|lazy)\b(?!\$|''|\\|\p{Alnum})'
+    - match: '(?i)(?<!\.)\b(var|ref|function|command|macro)\b(?!\$|''|\\|\p{Alnum})'
       scope: storage.type.interpretation.source.pxs
   verbatim-escape-sequences:
     - match: '""'

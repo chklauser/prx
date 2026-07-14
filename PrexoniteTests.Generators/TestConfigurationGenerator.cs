@@ -349,7 +349,7 @@ public sealed class TestConfigurationGenerator : IIncrementalGenerator
             {
                 "PrexoniteTests.Tests.VMTests",
                 "PrexoniteTests.Tests.PartialApplication",
-                "PrexoniteTests.Tests.Lazy",
+                "PrexoniteTests.Tests.ThunkTests",
                 "PrexoniteTests.Tests.Translation",
                 "PrexoniteTests.Tests.BuiltInTypeTests",
                 "PrexoniteTests.Tests.ShellExtensions",

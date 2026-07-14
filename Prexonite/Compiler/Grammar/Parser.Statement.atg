@@ -22,7 +22,6 @@ SimpleStatement<AstBlock block>
 |   GetSetComplex<block>
 |   Return<block>
 |   Throw<block>
-|   LetBindingStmt<block>
 .
 
 StructureStatement<AstBlock block>
@@ -536,19 +535,7 @@ NestedFunction<AstBlock block>
                                     CompilerTarget ft = FunctionTargets[func]!;
                                     var pos = GetPosition();
                                     var setVar = Create.IndirectCall(pos,Create.Reference(pos,EntityRef.Variable.Local.Create(logicalId)),PCall.Set);
-                                    if(func.Meta[PFunction.LazyKey].Switch)
-                                    {
-                                        //Capture environment by value                                        
-                                        var ps = ft._ToCaptureByValue(let_bindings(ft));
-                                        ft._DetermineSharedNames(); //Need to re-determine shared names since
-                                                                    // _ToCaptureByValue does not automatically modify shared names
-                                        var clos = Create.CreateClosure(pos,  EntityRef.Function.Create(func.Id, 
-                                                func.ParentApplication.Module.Name));
-                                        var callStub = Create.IndirectCall(pos, clos);
-                                        callStub.Arguments.AddRange(ps(this));
-                                        setVar.Arguments.Add(callStub);
-                                    }
-                                    else if(ft.OuterVariables.Count > 0)
+                                    if(ft.OuterVariables.Count > 0)
                                     {                                        
                                         setVar.Arguments.Add( Create.CreateClosure(GetPosition(),  EntityRef.Function.Create(func.Id, 
                                                 func.ParentApplication.Module.Name)) );                                        
@@ -559,34 +546,6 @@ NestedFunction<AstBlock block>
                                     }
                                     block.Add(setVar);
                                 .)
-.
-
-LetBindingStmt<AstBlock block>
-=
-    let LetBinder<block> { comma LetBinder<block> }
-.
-
-LetBinder<AstBlock block>
-                                (.  string id;
-                                    AstExpr thunk;
-                                    ensureHasTarget();
-                                .)
-=                               (.  var position = GetPosition(); .)
-    Id<out id>                  (.  //Declare local "let" variable
-                                    _ensureDefinedLocal(id,id,false,position,false);
-                                    mark_as_let(target.Function, id);
-                                    if(la.kind == _assign)
-                                        _inject(_lazy,"lazy"); 
-                                .)
-    [   assign                      
-        LazyExpression<out thunk>   
-                                (.  
-                                    //Assign thunk to that variable
-                                    var assign = Create.Call(position, EntityRef.Variable.Local.Create(id), PCall.Set);
-                                    assign.Arguments.Add(thunk);
-                                    block.Add(assign);
-                                .)
-    ]
 .
 
 TryCatchFinally<AstBlock block>

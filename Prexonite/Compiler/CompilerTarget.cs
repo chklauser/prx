@@ -563,50 +563,6 @@ public class CompilerTarget : IHasMetaTable
 
     #endregion
 
-    #region Lambda lifting (capture by value)
-
-    /// <summary>
-    ///     Promotes captured variables to function parameters.
-    /// </summary>
-    /// <param name = "keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
-    /// <returns>A list of expressions (get self) that should be added to the arguments list of any call to the lifted function.</returns>
-    internal Func<Parser, IList<AstExpr>> _ToCaptureByValue(IEnumerable<string> keepByRef)
-    {
-        keepByRef = new HashSet<string>(keepByRef);
-        var toPromote = OuterVariables.Except(keepByRef).ToList();
-
-        //Declare locally, remove from outer variables and add as parameter to the end
-        var exprs = new List<Func<Parser, AstExpr>>();
-        foreach (var outer in toPromote)
-        {
-            if (Symbols.TryGet(outer, out var sym))
-                Symbols.Declare(outer, sym);
-            OuterVariables.Remove(outer);
-            Function.Parameters.Add(outer);
-            {
-                //Copy the value for capture by value in closure
-                var byValOuter = outer;
-                exprs.Add(p =>
-                {
-                    var pos = p.GetPosition();
-                    return Factory.IndirectCall(
-                        pos,
-                        Factory.Reference(
-                            pos,
-                            Loader.Cache.EntityRefs.GetCached(
-                                EntityRef.Variable.Local.Create(byValOuter)
-                            )
-                        )
-                    );
-                });
-            }
-        }
-
-        return p => exprs.Select(e => e(p)).ToList();
-    }
-
-    #endregion
-
     #endregion
 
     #region Source Mapping
