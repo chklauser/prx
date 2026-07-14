@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 
@@ -105,6 +106,29 @@ public abstract class ThunkTests : VMTestsBase
         );
 
         Expect(12, 4, 3);
+    }
+
+    [Test]
+    public void AsThunkPreservesThunksAndWrapsValues()
+    {
+        Compile(
+            """
+
+            function main(value)
+            {
+                var wrapped = asthunk(value);
+                var pending = thunk(() => value);
+                var existing = asthunk(pending);
+                var before = pending.evaluated;
+                var same = existing == pending;
+                var result = existing.force;
+                return [wrapped.evaluated,wrapped.force,before,same,result,pending.evaluated];
+            }
+
+            """
+        );
+
+        Expect(new List<PValue> { true, 42, false, true, 42, true }, 42);
     }
 
     [Test]
