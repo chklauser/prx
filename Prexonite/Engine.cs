@@ -643,7 +643,6 @@ public partial class Engine
         Commands.AddEngineCommand(ThunkAlias, ThunkCommand.Instance);
         Commands.AddEngineCommand(AsThunkAlias, AsThunkCommand.Instance);
         Commands.AddEngineCommand(ForceAlias, ForceCommand.Instance);
-        Commands.AddEngineCommand(ToSeqAlias, ToSeqCommand.Instance);
 
         // There is a macro that uses the same alias (Call_MemberAlias)
         //  it has the same purpose. For backwards compatibility,
@@ -902,7 +901,6 @@ public partial class Engine
     public const string ThunkAlias = "thunk";
     public const string AsThunkAlias = "asthunk";
     public const string ForceAlias = "force";
-    public const string ToSeqAlias = "toseq";
 
     /// <summary>
     ///     Alias used for the <c>caller</c> command.

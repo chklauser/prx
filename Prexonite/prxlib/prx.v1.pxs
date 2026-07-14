@@ -22,7 +22,6 @@ namespace prx.v1 {
             thunk,
             asthunk,
             force,
-            toseq,
             call\member\perform,
             caller,
             pair,

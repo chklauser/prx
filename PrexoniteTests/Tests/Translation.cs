@@ -361,7 +361,6 @@ public abstract class Translation : VMTestsBase
               thunk = ref command "thunk",
               asthunk = ref command "asthunk",
               force = ref command "force",
-              toseq = ref command "toseq",
               call\member = expand macro command "call\\member",
               call\member\perform = ref command "call\\member\\perform",
               caller = ref command "caller",
