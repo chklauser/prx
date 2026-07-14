@@ -191,10 +191,6 @@ partial class Lexer
                     return Parser._not;
                 case "macro":
                     return Parser._macro;
-                case "lazy":
-                    return Parser._lazy;
-                case "let":
-                    return Parser._let;
                 case "namespace":
                     return Parser._namespace;
                 case "null":

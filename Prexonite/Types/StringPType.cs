@@ -346,8 +346,6 @@ public class StringPType : PType, ICilCompilerAware
             "inline",
             "is",
             "label",
-            "lazy",
-            "let",
             "local",
             "macro",
             "mod",

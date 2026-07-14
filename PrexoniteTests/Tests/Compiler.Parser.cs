@@ -4132,7 +4132,7 @@ indloc.1 a
     }
 
     [Test]
-    public void NestedDerivedCapture()
+    public void NestedCoroutineCapture()
     {
         _compile(
             """
@@ -4141,7 +4141,6 @@ indloc.1 a
             {
                 var x;
                 coroutine nested = x;
-                lazy nested = x;
             }
 
             """

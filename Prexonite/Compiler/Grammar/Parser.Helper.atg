@@ -61,8 +61,6 @@ DotId<out string id>               (.  id = "\\NoId\\"; .) //<-- should never su
     |   then
     |   uusing
     |   macro
-    |   lazy
-    |   let
     |   method
     |   this
     |   namespace
@@ -185,8 +183,6 @@ MId<out String id>	            (.  id = "an\\invalid\\MId"; .)
 |	then
 |	uusing //Coco/R does not accept "using" as a token name.
 |	macro
-|	lazy
-|	let
 |	method
 |	this
 |	bitAnd

@@ -381,18 +381,20 @@ public abstract partial class VMTests : VMTestsBase
         Compile(
             """
 
-            function fib_rec(n, /*lazy*/ fibT, ref combine) = 
+            function fib_rec(n, /*thunk*/ fibT, ref combine) =
                 if(n <= 0) 0 else if(n <= 2) 1 else combine(force(fibT).(n-1), force(fibT).(n-2));
 
             function main(n,m, i)
             {
                 //Simple, background
-                let simple_fib = fib_rec(?, simple_fib, ? + ?);
+                var simple_fib;
+                simple_fib = thunk(() => fib_rec(?, simple_fib, ? + ?));
                 var f1 = call\async(fib_rec(?),[?, simple_fib, ? + ?]);
                 println(var c1 = f1.(n));
                 
                 //Recursive, background
-                let rec_fib = call\async(fib_rec(?), [?, rec_fib, (ca,cb) => ca.receive + cb.receive]);
+                var rec_fib;
+                rec_fib = thunk(() => call\async(fib_rec(?), [?, rec_fib, (ca,cb) => ca.receive + cb.receive]));
                 var f2 = force(rec_fib);
                 println(var c2 = f2.(m));
 

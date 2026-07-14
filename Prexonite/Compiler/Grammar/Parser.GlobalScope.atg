@@ -526,19 +526,16 @@ FunctionDefinition<out PFunction func>
                                         bool isNested = target != null; 
                                         bool isCoroutine = false;
                                         bool isMacro = false;
-                                        bool isLazy = false;
-                                        PFunction? derBody = null; //The derived (coroutine/lazy) body function (carries a different name)
-                                        PFunction? derStub = null; //The derived (coroutine/lazy) stub function (carries the name(s) specified)
+                                        PFunction? derBody = null; //The derived coroutine body function (carries a different name)
+                                        PFunction? derStub = null; //The derived coroutine stub function (carries the name(s) specified)
                                         string derId; //The name of the derived stub
-                                        CompilerTarget? ct = null;   //The compiler target for the function (as mentioned in the source code)
-                                        CompilerTarget? cst = null;  //The compiler target for a stub (coroutine/lazy)
+                                        CompilerTarget? cst = null;  //The compiler target for a coroutine stub
                                         Symbol? symEntry = null;
                                         ISourcePosition position;
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
 =    
-  (   lazy [function]             (.  isLazy = true; .)
-  |   function
+  (   function
   |   coroutine                   (.  isCoroutine = true; .)
   |   macro [function]            (.  isMacro = true; .)
   )                               (.  position = GetPosition(); .)
@@ -554,8 +551,6 @@ FunctionDefinition<out PFunction func>
                                                 Loader.ReportMessage(Message.Error("Cannot define initialization code inside another function.",position,MessageClasses.IllegalInitializationFunction));
                                             if(isCoroutine)
                                                 Loader.ReportMessage(Message.Error("Cannot define initialization code as a coroutine.",position,MessageClasses.IllegalInitializationFunction));
-                                            if(isLazy)
-                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a lazy function.",position,MessageClasses.IllegalInitializationFunction));
                                             if(isMacro)
                                                 Loader.ReportMessage(Message.Error("Cannot define initialization code as a macro function.",position,MessageClasses.IllegalInitializationFunction));
                                         }
@@ -596,8 +591,6 @@ FunctionDefinition<out PFunction func>
                                                 ensureHasTarget();
                                                 localId ??= generateLocalId("inner");
                                                  func.Meta[PFunction.LogicalIdKey] = localId;
-                                                 if(isLazy)
-                                                    mark_as_let(target.Function,localId);
                                             }
                                             
                                             Loader.CreateFunctionTarget(func, target, position);
@@ -605,7 +598,7 @@ FunctionDefinition<out PFunction func>
                                         CompilerTarget ft = FunctionTargets[func]!;
                                         
                                         //Generate derived stub
-                                        if(isCoroutine || isLazy)
+                                        if(isCoroutine)
                                         {
                                             derStub = func;
                                             
@@ -614,25 +607,16 @@ FunctionDefinition<out PFunction func>
                                             derBody = TargetApplication.CreateFunction(derId);
                                             Loader.CreateFunctionTarget(derBody, ft, position);
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
-                                            if(isCoroutine)
-                                            {
-                                                derBody.Meta[PFunction.VolatileKey] = true;
-                                                derBody.Meta[PFunction.DeficiencyKey] = "Coroutine body can only be executed by VM anyway.";
-                                                derBody.Meta[Coroutine.IsCoroutineKey] = true;
-                                            }
+                                            derBody.Meta[PFunction.VolatileKey] = true;
+                                            derBody.Meta[PFunction.DeficiencyKey] = "Coroutine body can only be executed by VM anyway.";
+                                            derBody.Meta[Coroutine.IsCoroutineKey] = true;
 
                                             //Swap compiler target references
                                             // -> Compile source code into derived body
                                             // -> Let derived stub have the physical function id
-                                            ct = FunctionTargets[derBody];
                                             cst = ft;
                                         }
                                         
-                                        if(isNested) //Link to parent in case of a nested function
-                                        {                                           
-                                            if(isLazy && ct != null)
-                                                ft = ct;
-                                        }                                        
                                   .)
     [   lpar
       [    FormalArg<ft> 
@@ -654,17 +638,7 @@ FunctionDefinition<out PFunction func>
         {   [comma]
             FormalArg<ft>
         }
-  ]                                (.  if(isNested && isLazy){ // keep this assignment for maintainability
-                                    // ReSharper disable RedundantAssignment
-                                           if(cst == null){
-                                               Loader.ReportMessage(Message.Error("Internal compiler error: generated lazy function target not available.",
-                                               			GetPosition(),
-                                               			null));
-                                           }
-                                           ft = cst!;
-                                    // ReSharper restore RedundantAssignment
-                                       }
-                                      
+  ]                                (.
                                       if(target == null && 
                                           (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
                                           (!isNested))
@@ -687,10 +661,10 @@ FunctionDefinition<out PFunction func>
                                             primaryAlias = null;
                                         }
                                       
-                                      //Target the derived (coroutine/lazy) body instead of the stub
-                                        if(isCoroutine || isLazy) {
+                                      //Target the derived coroutine body instead of the stub
+                                        if(isCoroutine) {
                                             if(derBody == null) {
-                                                Loader.ReportMessage(Message.Error("Internal compiler error: generated lazy/coroutine function target not available.",
+                                                Loader.ReportMessage(Message.Error("Internal compiler error: generated coroutine function target not available.",
                                             			GetPosition(),
                                             			null));
                                             }
@@ -732,23 +706,6 @@ FunctionDefinition<out PFunction func>
                                             func!.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                         }
 
-                                        //Copy stub parameters to body of lazy function
-                                        if(isLazy && !isNested)
-                                        {
-                                            foreach(var kvp in cst!.Symbols.LocalDeclarations)
-                                            {
-                                                var paramId = kvp.Key;
-                                                var s = kvp.Value.ToSymbolEntry();
-                                                //Lazy functions cannot have ref parameters
-                                                if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
-                                                    Loader.ReportMessage(Message.Error(
-                                                        "Lazy functions can only have value parameters (ref is not allowed)",
-                                                        GetPosition(),
-                                                        MessageClasses.RefInLazyFunction));
-                                                ct!.Function.Parameters.Add(s.InternalId!);
-                                                ct.Symbols.Declare(paramId, kvp.Value);
-                                            }
-                                        }
                                     .)
     [                               (.  _pushLexerState(Lexer.Transfer);
                                         var importBuilder = SymbolStoreBuilder.Create();
@@ -769,7 +726,7 @@ FunctionDefinition<out PFunction func>
                                     .)
     ]
                                     (.
-                                        if(isLazy || isCoroutine)
+                                        if(isCoroutine)
                                         {
                                           //Push the stub, because it is the lexical parent of the body
                                           _PushScope(cst!);
@@ -792,7 +749,7 @@ FunctionDefinition<out PFunction func>
         semicolon
     )                               (.  _popLexerState();
                                         _PopScope(FunctionTargets[func!]!);
-                    if(isLazy || isCoroutine)
+                    if(isCoroutine)
                     {
                       _PopScope(cst!);
                     }
@@ -815,7 +772,7 @@ FunctionDefinition<out PFunction func>
                                             else
                                             {
                                                 try {
-                                                //Apply compiler hooks for all kinds of functions (lazy/coroutine/macro)
+                                                //Apply compiler hooks for all kinds of functions (coroutine/macro)
                                                 FunctionTargets[func]!.ExecuteCompilerHooks();
                                                 //Emit code for top-level block
                                                 Ast[func].EmitCode(FunctionTargets[func]!, true, StackSemantics.Effect);
@@ -849,74 +806,6 @@ FunctionDefinition<out PFunction func>
                                                     MessageClasses.ParserInternal));
                                             }
                                           }
-                                          else if(isLazy)
-                                          {
-                                              derStub!.Meta[PFunction.LazyKey] = true;
-                                              derStub.Meta["strict"] = true;
-                                          
-                                              //Stub has to be returned into the physical slot mentioned in the source code
-                                              func = derStub;
-                                              
-                                              //Generate code for the stub
-                                              AstExpr retVal;                                            
-                                                
-                                                if(isNested)
-                                                {
-                                                    //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
-                                                    
-                                                    //Generate stub code
-                                                    retVal = Create.CreateClosure(position, EntityRef.Function.Create(ct!.Function.Id, 
-                                                                    ct.Function.ParentApplication.Module.Name));
-                                                    
-                                                    //Inject asthunk-conversion code into body
-                                                    var inject = derStub.Parameters.Select(par => 
-                                                    {
-                                                      var getParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
-                                                      var asThunkCall = Create.Call(position, EntityRef.Command.Create(Engine.AsThunkAlias));
-                                                      asThunkCall.Arguments.Add(getParam);
-                                                      var setParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
-                                                      setParam.Arguments.Add(asThunkCall);
-                                                      return (AstNode) setParam;
-                                                    });
-                                                    ct.Ast.InsertRange(0,inject);
-                                                }
-                                                else
-                                                {                                                    
-                                                    //Global lazy functions don't technically need a stub. Might be removed later on
-                                                    var call = Create.Call(position,EntityRef.Function.Create(ct!.Function.Id, TargetModule.Name));
-                                                    
-                                                    //Generate code for arguments (each wrapped in a `asThunk` command call)
-                                                  foreach(var par in derStub.Parameters)
-                                                  {
-                                                      var getParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
-                                                          
-                                                      var asThunkCall = Create.Call(position, EntityRef.Command.Create(Engine.AsThunkAlias));
-                                                          
-                                                      asThunkCall.Arguments.Add(getParam);
-                                                      call.Arguments.Add(asThunkCall);
-                                                  }
-                                                  
-                                                  retVal = call;
-                                                }                                    
-                                              
-                                              
-                                              //Assemble return statement
-                                              var ret = new AstReturn(this, ReturnVariant.Exit);
-                                              ret.Expression = retVal;
-                                              
-                                              cst!.Ast.Add(ret);
-                                              
-                                              try {
-                                                  //Emit code for stub
-                                                  cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
-                                                  cst.FinishTarget();
-                                              } catch(Exception e) {
-                                                  Loader.ReportMessage(Message.Error(
-                                                    "Exception during compilation of lazy function stub for " + id + ". " + e,
-                                                    GetPosition(),
-                                                    MessageClasses.ParserInternal));
-                                              }
-                                          }
                                         }
                                     .)
 .
@@ -928,9 +817,7 @@ FormalArg<CompilerTarget ft>        (.  string id;
 =
   [ var | ref                       (.  isAutodereferenced = true; .)
   ]                                 (.  idPos = GetPosition(); .)
-  Id<out id>                        (.  //Note: lazy functions need to copy the
-                                        //  parameters of the stub to the body!
-                                        ft.Function.Parameters.Add(id); 
+  Id<out id>                        (.  ft.Function.Parameters.Add(id);
                                         var sym = Symbol.CreateDereference(Symbol.CreateReference(
                                             EntityRef.Variable.Local.Create(id),idPos),idPos);
                                         if(isAutodereferenced)

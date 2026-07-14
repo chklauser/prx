@@ -71,15 +71,6 @@ function create_terminator (obj, termination)
     return struct;   
 }
 
-function create_lazy\impl(factory) = lazy factory.();
-macro create_lazy()
-{
-    macro\report_warning("create_lazy is deprecated, use the lazy keyword instead.");
-    var f = ast\func(->create_lazy\impl.Id);
-    f.Arguments.AddRange(var args);
-    return f;
-}
-
 macro swap(x,y)
 {
     if(not (ast_is_GetSet(x) and ast_is_GetSet(y)))

@@ -51,7 +51,6 @@ public static class MessageClasses
     public const string LoopExprNotSupported = "P.LoopExprNotSupported";
     public const string TupleNotSupported = "P.TupleNotSupported";
     public const string FunctionOverridingNotAllowed = "P.FunctionOverridingNotAllowed";
-    public const string RefInLazyFunction = "P.RefInLazyFunction";
     public const string ReturnValueAssignment = "P.ReturnValueAssignment";
     public const string CatchWithoutException = "P.CatchWithoutException";
 

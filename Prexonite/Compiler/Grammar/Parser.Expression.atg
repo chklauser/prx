@@ -297,7 +297,6 @@ Primary<out AstExpr? expr>
 |   CoroutineCreation<out expr>
 |	LoopExpr<out expr>
 |   ThrowExpression<out var th>			(. expr = th; .)
-|   LazyExpression<out expr>
 |   PrimaryForGetSetComplex<out expr>
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
@@ -469,56 +468,6 @@ implementation
                                             }
                                             
                                             expr = Create.CreateClosure(position,EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name));
-                                        .)
-.
-
-LazyExpression<out AstExpr expr>
-                                        (.  PFunction func = TargetApplication.CreateFunction(generateLocalId());
-		                                    ensureHasTarget();
-                                            func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
-                                            func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            Loader.CreateFunctionTarget(func, target, GetPosition());
-                                            CompilerTarget ft = FunctionTargets[func]!;
-                                            ISourcePosition position;
-                                            
-                                            //Switch to nested target
-                                            _PushScope(ft);
-                                        .)
-=                                       
-lazy                                    (.  position = GetPosition(); .)
-(   lbrace
-    { Statement<ft.Ast> }
-    rbrace
-|                                       (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
-    Expr<out ret.Expression>            (.  ft.Ast.Add(ret); .)
-)                                       
-                                        (.
-                                            //Turn into capture by value
-                                            var cap = ft._ToCaptureByValue(let_bindings(ft));
-                                            
-                                            //Restore parent target
-                                            _PopScope(ft);
-                                            
-                                            //Finish nested function
-                                            if(errors.count == 0)
-                                            {
-                                                try {
-													Ast[func].EmitCode(ft,true,StackSemantics.Effect);
-													ft.FinishTarget();
-                                                } catch(Exception e) {
-                                                    Loader.ReportMessage(Message.Error(
-                                                        "Exception during compilation of lazy expression.\n" + e,
-                                                        GetPosition(),
-                                                        MessageClasses.ParserInternal));
-                                                }
-                                            }
-                                            
-                                            //Construct expr (appears in the place of lazy expression)
-                                            var clo = Create.CreateClosure(position,EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name));
-                                            var thunk = Create.IndirectCall(position,Create.Reference(position,EntityRef.Command.Create(Engine.ThunkAlias)));
-                                            thunk.Arguments.Add(clo);
-                                            thunk.Arguments.AddRange(cap(this)); //Add captured values
-                                            expr = thunk;
                                         .)
 .
 
