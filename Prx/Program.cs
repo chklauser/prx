@@ -87,7 +87,7 @@ static class Program
 
         #region Stopwatch commands
 
-        //prx.exe provides these three additional commands for high speed access to a stopwatch from your script code
+        //prx provides these three additional commands for high speed access to a stopwatch from your script code
         var timer = new Stopwatch();
         engine.Commands.AddHostCommand(
             @"timer\start",

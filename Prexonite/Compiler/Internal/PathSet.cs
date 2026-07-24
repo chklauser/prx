@@ -46,7 +46,7 @@ sealed class PathSet : ICollection<string>
         if (!path.StartsWith(ResourceSpec.Prefix))
         {
             path = Path.GetFullPath(path);
-            if (OperatingSystem.IsMacOS() || OperatingSystem.IsWindows())
+            if (OperatingSystem.IsMacOS())
             {
                 // PRX-58 This generalization is of course not correct, but there currently is no convenient API
                 // to get a canonical path.

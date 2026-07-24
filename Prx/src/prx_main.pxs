@@ -277,7 +277,7 @@ namespace prx.cli
         "\n"+
         "--verbose -v          enables additional output.\n"+
         "--header -h           extracts declarations (only with -c).\n"+
-        "--no-tab -b           disables tab completion (tab completion only supported on windows).\n"+
+        "--no-tab -b           disables tab completion.\n"+
         "-- -a                 forwards the rest of the arguments to the executing script.\n" +
         "--debug -d            enables debugging mode\n" +
         "--search-path <path>  also searches for files/modules in that directory.\n" + 

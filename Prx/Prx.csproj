@@ -18,10 +18,7 @@
       <PropertyGroup>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))"
-          >win-x64</RuntimeIdentifier>
-        <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Linux'))"
-          >linux-x64</RuntimeIdentifier>
+        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
         <!-- Ready to run makes a HUGE difference in terms of startup time. 
              Reduces startup time from ~820ms down to ~210ms.  -->
         <PublishReadyToRun>true</PublishReadyToRun>
