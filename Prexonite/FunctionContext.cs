@@ -193,10 +193,7 @@ public class FunctionContext : StackContext
                 message: $"Stack-overflow in Prexonite code: {this}"
             );
 
-        if (_useVirtualStackInstead)
-            _useVirtualStackInstead = false;
-        else
-            _stack.Push(val ?? NullPType.CreateValue());
+        _stack.Push(val ?? NullPType.CreateValue());
     }
 
     [DebuggerStepThrough]
@@ -250,21 +247,6 @@ public class FunctionContext : StackContext
     public bool Step(StackContext lastContext)
     {
         return _performNextCycle(lastContext, true);
-    }
-
-    /// <summary>
-    ///     <see cref = "_UseVirtualMachineStackInstead" />
-    /// </summary>
-    bool _useVirtualStackInstead;
-
-    /// <summary>
-    ///     When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this
-    ///     method to instruct the calling function context to use the result of the virtual machine stack successor instead. (The return value of the managed code is discarded)
-    /// </summary>
-    internal void _UseVirtualMachineStackInstead()
-    {
-        _useVirtualStackInstead = true;
-        _fetchReturnValue = true;
     }
 
     /// <summary>

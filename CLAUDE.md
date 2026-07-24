@@ -46,7 +46,6 @@ dotnet test --filter "FullyQualifiedName~TestName"
 - **StackContext** hierarchy: Abstract execution context (stack frames) with implementations:
   - `FunctionContext`: Interpreted bytecode execution
   - `CilFunctionContext`: JIT-compiled native execution
-  - `CoroutineContext`, `CooperativeContext`: Concurrency support
 - **Instruction Set** (`Instruction.cs`): Stack-based opcodes (load, store, call, jump, operators)
 - **PValue** (`PValue.cs`): Universal value container `(object Value, PType Type)` with dynamic dispatch
 

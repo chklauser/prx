@@ -1,16 +1,13 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands.Lazy;
+using Prexonite.Types;
 
 namespace PrexoniteTests.Tests;
 
 public abstract class ThunkTests : VMTestsBase
 {
-    protected ThunkTests()
-    {
-        CompileToCil = false;
-    }
-
     [Test]
     public void SingularThunk()
     {
@@ -147,6 +144,54 @@ public abstract class ThunkTests : VMTestsBase
     }
 
     [Test]
+    public void ThunkMemoizesItsValue()
+    {
+        Compile(
+            """
+
+            function main()
+            {
+                var calls = 0;
+                var value = thunk(() => { calls++; return 42; });
+                return [value.evaluated,value.force,value.evaluated,value.force,calls];
+            }
+
+            """
+        );
+
+        Expect(new List<PValue> { false, 42, true, 42, 1 });
+    }
+
+    [Test]
+    public void ThunkMemoizesExceptions()
+    {
+        var calls = 0;
+        var expected = new InvalidOperationException("Expected failure.");
+        var expression = new PValue(
+            new ProvidedFunction(
+                (_, _) =>
+                {
+                    calls++;
+                    throw expected;
+                }
+            ),
+            PType.Object[typeof(IIndirectCall)]
+        );
+        var thunk = Thunk.NewExpression(expression, []);
+
+        Assert.That(
+            Assert.Throws<InvalidOperationException>(() => thunk.Force(sctx)),
+            Is.SameAs(expected)
+        );
+        Assert.That(
+            Assert.Throws<InvalidOperationException>(() => thunk.Force(sctx)),
+            Is.SameAs(expected)
+        );
+        Assert.That(calls, Is.EqualTo(1));
+        Assert.That(thunk.IsEvaluated, Is.False);
+    }
+
+    [Test]
     public void RemovedKeywordsAreOrdinaryIdentifiers()
     {
         Compile(
@@ -165,4 +210,14 @@ public abstract class ThunkTests : VMTestsBase
 
         Expect(42, 42);
     }
+
+    sealed class ProvidedFunction(ProvidedFunctionImpl function) : IIndirectCall
+    {
+        public PValue IndirectCall(StackContext sctx, params ReadOnlySpan<PValue> args)
+        {
+            return function(sctx, args);
+        }
+    }
+
+    delegate PValue ProvidedFunctionImpl(StackContext sctx, ReadOnlySpan<PValue> args);
 }

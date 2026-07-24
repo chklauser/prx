@@ -181,7 +181,7 @@ static class Program
                             f = (PFunction)carg.Value!;
                             rctx = f.CreateFunctionContext(e, rargs);
                         }
-                        else if (clrType == typeof(Closure) && clrType != typeof(Continuation))
+                        else if (clrType == typeof(Closure))
                         {
                             var c = (Closure)carg.Value!;
                             rctx = c.CreateFunctionContext(sctx, rargs);
