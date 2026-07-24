@@ -2,6 +2,6 @@
 
 set -euo pipefail
 
-root="$(git rev-parse --show-toplevel)"
+root="$(jj root)"
 dotnet tool restore --tool-manifest "$root/dotnet-tools.json" >/dev/null
 dotnet csharpier format "$root"
