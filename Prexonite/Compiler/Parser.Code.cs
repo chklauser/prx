@@ -1545,7 +1545,6 @@ partial class Parser
     {
         { "indarg", null },
         { "inda", null },
-        { "tail", null },
     };
 
     readonly string?[,] asmQualidArgGroup =

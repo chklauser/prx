@@ -842,19 +842,6 @@ public class FunctionContext : StackContext
                     left = Pop();
                     goto doIndloc;
 
-                case OpCode.tail:
-                    _fillArgs(argc, out argv);
-                    left = Pop();
-
-                    var stack = _parentEngine.Stack;
-                    stack.Remove(
-                        stack.FindLast(this)
-                            ?? throw new PrexoniteException("tail call executed off stack")
-                    );
-
-                    stack.AddLast(Call.CreateStackContext(this, left, argv));
-                    return false;
-
                 #endregion
 
                 #region ENGINE CALLS

@@ -392,8 +392,6 @@ public abstract class Translation : VMTestsBase
               frequency = ref command "frequency",
               groupby = ref command "groupby",
               intersect = ref command "intersect",
-              call\tail = expand macro command "call\\tail",
-              call\tail\perform = ref command "call\\tail\\perform",
               list = ref command "list",
               each = ref command "each",
               exists = ref command "exists",
