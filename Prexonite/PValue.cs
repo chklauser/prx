@@ -64,6 +64,10 @@ public sealed class PValue : DynamicObject, IIndirectCall, IObject
     /// <param name = "type">The type of the value inside the Prexonite VM.</param>
     [DebuggerStepThrough]
     public PValue(object? value, PType type)
+        : this(value, type, false) { }
+
+    [DebuggerStepThrough]
+    PValue(object? value, PType type, bool isTypeLocked)
     {
         if (value == null)
             type = NullPType.Instance;
@@ -72,6 +76,7 @@ public sealed class PValue : DynamicObject, IIndirectCall, IObject
 
         Value = value;
         Type = type;
+        IsTypeLocked = isTypeLocked;
     }
 
     /// <summary>
@@ -86,6 +91,20 @@ public sealed class PValue : DynamicObject, IIndirectCall, IObject
     /// </summary>
     /// <value>An instance of <see cref = "PType" />.</value>
     public PType Type { get; }
+
+    /// <summary>
+    ///     Indicates that this value is the immediate result of an explicit Prexonite conversion.
+    ///     CLR member resolution must not implicitly convert such a value again.
+    /// </summary>
+    public bool IsTypeLocked { get; }
+
+    /// <summary>
+    ///     Returns a copy whose type is locked for CLR overload resolution.
+    /// </summary>
+    internal PValue WithTypeLock()
+    {
+        return IsTypeLocked ? this : new(Value, Type, true);
+    }
 
     #endregion
 

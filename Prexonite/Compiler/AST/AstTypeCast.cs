@@ -60,9 +60,8 @@ public class AstTypecast : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
         if (Type is not AstConstantTypeExpression constType)
             return false;
 
-        //Constant cast
-        if (Subject is AstConstant constSubject)
-            return _tryOptimizeConstCast(target, constSubject, constType, out expr);
+        // An explicit conversion carries a runtime type lock used by CLR overload resolution.
+        // Folding it to an ordinary constant would lose that marker.
 
         //Redundant cast
         AstTypecast? castSubject;
@@ -81,31 +80,6 @@ public class AstTypecast : AstExpr, IAstHasExpressions, IAstPartiallyApplicable
         }
 
         return false;
-    }
-
-    bool _tryOptimizeConstCast(
-        CompilerTarget target,
-        AstConstant constSubject,
-        AstConstantTypeExpression constType,
-        [NotNullWhen(true)] out AstExpr? expr
-    )
-    {
-        expr = null;
-        PType type;
-        try
-        {
-            type = target.Loader.ConstructPType(constType.TypeExpression);
-        }
-        catch (PrexoniteException)
-        {
-            //ignore, cast failed. cannot be optimized
-            return false;
-        }
-
-        if (constSubject.ToPValue(target).TryConvertTo(target.Loader, type, out var result))
-            return AstConstant.TryCreateConstant(target, Position, result, out expr);
-        else
-            return false;
     }
 
     public NodeApplicationState CheckNodeApplicationState()

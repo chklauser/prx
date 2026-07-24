@@ -569,7 +569,14 @@ public class CompilerTestBaseParser : CompilerTestBase
              label   endif2
 
             //Constant
+             ldc.bool true
+             cast.const Bool
+             jump.f  elseConstant
             @func.0  action1
+             jump    endifConstant
+             label   elseConstant
+            @func.0  action2
+             label   endifConstant
 
             //Complex
              ldc.string  "===========COMPLEX============"

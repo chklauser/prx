@@ -16,6 +16,8 @@ namespace Prexonite;
 /// </summary>
 public class PFunction : IHasMetaTable, IIndirectCall, IStackAware, IDependent<EntityRef.Function>
 {
+    ObjectMemberCallSiteTable? _objectMemberCallSites;
+
     /// <summary>
     ///     The meta key under which the function's id is stored.
     /// </summary>
@@ -158,6 +160,12 @@ public class PFunction : IHasMetaTable, IIndirectCall, IStackAware, IDependent<E
     public bool HasCilImplementation => Declaration.HasCilImplementation;
 
     public bool IsMacro => Declaration.IsMacro;
+
+    internal ObjectMemberCallSiteTable ObjectMemberCallSites =>
+        LazyInitializer.EnsureInitialized(
+            ref _objectMemberCallSites,
+            () => new ObjectMemberCallSiteTable(Code.Count)
+        );
 
     #endregion
 

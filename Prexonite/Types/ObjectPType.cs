@@ -167,6 +167,29 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
         id ??= "";
 
+        if (TryDynamicCallOverride(sctx, subject, args, call, id, suppressIObject, out result))
+            return true;
+
+        var resolution = _resolveDynamicMembers(sctx, subject, args, call, id);
+        if (resolution.Candidates.Length == 1)
+            resolvedMember = resolution.Candidates[0];
+        var ret = _try_execute(resolution.Candidates, resolution.Conditions, subject, out result);
+        if (!ret)
+            resolvedMember = null;
+        return ret;
+    }
+
+    internal bool TryDynamicCallOverride(
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id,
+        bool suppressIObject,
+        [NotNullWhen(true)] out PValue? result
+    )
+    {
+        result = null;
         if (
             !suppressIObject
             && subject.Value is IObject iobj
@@ -174,7 +197,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         )
             return true;
 
-        //Special interop members
+        // Special interop members do not use CLR reflection and remain outside call sites.
         switch (id.ToLowerInvariant())
         {
             case @"\implements":
@@ -202,6 +225,29 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 return true;
         }
 
+        return false;
+    }
+
+    internal MemberBinding BindDynamicMember(
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id
+    )
+    {
+        var resolution = _resolveDynamicMembers(sctx, subject, args, call, id);
+        return new(this, args, call, id, false, subject.Value is Array, resolution.Candidates);
+    }
+
+    (CallConditions Conditions, ImmutableArray<MemberInfo> Candidates) _resolveDynamicMembers(
+        StackContext sctx,
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id
+    )
+    {
         var cond = new CallConditions(sctx, args.ToImmutableArray().AsMemory(), call, id);
         MemberTypes mtypes;
         MemberFilter filter;
@@ -210,7 +256,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             filter = _member_filter;
 
             if (id.LastIndexOf('\\') == 0)
-                return false; //Default index accessors do not accept calling directives
+                return (cond, []);
             mtypes =
                 MemberTypes.Event | MemberTypes.Field | MemberTypes.Method | MemberTypes.Property;
         }
@@ -255,14 +301,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             )
             .ToImmutableArray();
 
-        if (candidates.Length == 1)
-            resolvedMember = candidates[0];
-
-        var ret = _try_execute(candidates, cond, subject, out result);
-        if (!ret) //Call did not succeed -> member invalid
-            resolvedMember = null;
-
-        return ret;
+        return (cond, candidates);
     }
 
     public override bool TryStaticCall(
@@ -291,6 +330,33 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         result = null;
         resolvedMember = null;
 
+        var resolution = _resolveStaticMembers(sctx, args, call, id);
+        if (resolution.Candidates.Length == 1)
+            resolvedMember = resolution.Candidates[0];
+        var ret = _try_execute(resolution.Candidates, resolution.Conditions, null, out result);
+        if (!ret)
+            resolvedMember = null;
+        return ret;
+    }
+
+    internal MemberBinding BindStaticMember(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id
+    )
+    {
+        var resolution = _resolveStaticMembers(sctx, args, call, id);
+        return new(this, args, call, id, true, false, resolution.Candidates);
+    }
+
+    (CallConditions Conditions, ImmutableArray<MemberInfo> Candidates) _resolveStaticMembers(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        PCall call,
+        string id
+    )
+    {
         var cond = new CallConditions(sctx, args.ToImmutableArray().AsMemory(), call, id);
         MemberTypes mtypes;
         MemberFilter filter;
@@ -298,7 +364,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         {
             filter = _member_filter;
             if (id.LastIndexOf('\\') == 0)
-                return false; //Default index accessors do not accept calling directives
+                return (cond, []);
             mtypes =
                 MemberTypes.Event | MemberTypes.Field | MemberTypes.Method | MemberTypes.Property;
         }
@@ -324,13 +390,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             )
             .ToImmutableArray(); //Filter
 
-        if (candidates.Length == 1)
-            resolvedMember = candidates[0];
-
-        var ret = _try_execute(candidates, cond, null, out result);
-        if (!ret) //Call did not succeed -> member invalid
-            resolvedMember = null;
-        return ret;
+        return (cond, candidates);
     }
 
     bool _try_call_conversion_operator(
@@ -572,7 +632,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 for (var i = 0; i < cargs.Length; i++)
                 {
                     var arg = sargs.Span[i];
-                    if (!arg.IsNull) //Neither Type-locked nor null
+                    if (!(arg.IsTypeLocked || arg.IsNull))
                     {
                         var pTy = parameters[i].ParameterType;
                         var aTy = arg.ClrType;
@@ -621,7 +681,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
                 else
                 {
                     var arg = cond.Args.Span[0];
-                    if (!(arg.IsNull)) //Neither Type-locked nor null
+                    if (!(arg.IsTypeLocked || arg.IsNull))
                     {
                         var paramTy = field.FieldType;
                         var argTy = arg.ClrType;
@@ -717,6 +777,86 @@ public sealed class ObjectPType : PType, ICilCompilerAware
             sb.Length -= 2;
         sb.Append(").");
         throw new InvalidCallException(sb.ToString());
+    }
+
+    internal sealed class MemberBinding
+    {
+        readonly ObjectPType _owner;
+        readonly Type?[] _argumentTypes;
+        readonly PType[] _argumentPTypes;
+        readonly bool[] _argumentTypeLocks;
+        readonly PCall _call;
+        readonly string _id;
+        readonly bool _isStatic;
+        readonly bool _subjectIsArray;
+        readonly ImmutableArray<MemberInfo> _candidates;
+
+        internal MemberBinding(
+            ObjectPType owner,
+            ReadOnlySpan<PValue> args,
+            PCall call,
+            string id,
+            bool isStatic,
+            bool subjectIsArray,
+            ImmutableArray<MemberInfo> candidates
+        )
+        {
+            _owner = owner;
+            _call = call;
+            _id = id;
+            _isStatic = isStatic;
+            _subjectIsArray = subjectIsArray;
+            _candidates = candidates;
+            _argumentTypes = new Type?[args.Length];
+            _argumentPTypes = new PType[args.Length];
+            _argumentTypeLocks = new bool[args.Length];
+            for (var i = 0; i < args.Length; i++)
+            {
+                _argumentTypes[i] = args[i].ClrType;
+                _argumentPTypes[i] = args[i].Type;
+                _argumentTypeLocks[i] = args[i].IsTypeLocked;
+            }
+        }
+
+        internal bool MatchesDynamic(PValue subject, ReadOnlySpan<PValue> args)
+        {
+            return !_isStatic
+                && ReferenceEquals(subject.Type, _owner)
+                && (subject.Value is Array) == _subjectIsArray
+                && _argumentsMatch(args);
+        }
+
+        internal bool MatchesStatic(ObjectPType objectType, ReadOnlySpan<PValue> args)
+        {
+            return _isStatic && ReferenceEquals(objectType, _owner) && _argumentsMatch(args);
+        }
+
+        bool _argumentsMatch(ReadOnlySpan<PValue> args)
+        {
+            if (args.Length != _argumentTypes.Length)
+                return false;
+
+            for (var i = 0; i < args.Length; i++)
+                if (
+                    args[i].ClrType != _argumentTypes[i]
+                    || !ReferenceEquals(args[i].Type, _argumentPTypes[i])
+                    || args[i].IsTypeLocked != _argumentTypeLocks[i]
+                )
+                    return false;
+
+            return true;
+        }
+
+        internal PValue Invoke(StackContext sctx, PValue? subject, PValue[] args)
+        {
+            var cond = new CallConditions(sctx, args.AsMemory(), _call, _id);
+            if (_try_execute(_candidates, cond, subject, out var result))
+                return result;
+
+            throw _isStatic
+                ? _owner._createStaticCallException(args, _id)
+                : _createDynamicCallException(subject!, args, _id);
+        }
     }
 
     [DebuggerStepThrough]
@@ -818,7 +958,8 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         {
             //Get+Field = 0 Parameters, Set+Field = 1 Parameter
             FieldInfo when cond.Call == PCall.Get => cond.Args.Length == 0,
-            FieldInfo => cond.Args.Length == 1,
+            FieldInfo field => cond.Args.Length == 1
+                && _type_lock_allows(cond.Args.Span[0], field.FieldType),
             PropertyInfo property when cond.Call == PCall.Get => property.CanRead
                 && _method_filter(property.GetGetMethod()!, cond),
             //cond.Call == PCall.Set
@@ -877,6 +1018,12 @@ public sealed class ObjectPType : PType, ICilCompilerAware
         if (cond.Args.Length != parameters.Length)
             return false;
 
+        // An explicit Prexonite conversion locks the resulting CLR type. This lets callers
+        // rule out overloads which would require another automatic conversion.
+        for (var i = 0; i < parameters.Length; i++)
+            if (!_type_lock_allows(cond.Args.Span[i], parameters[i].ParameterType))
+                return false;
+
         //optional Criteria No.3: Return types must match
         if (cond.ReturnType != null && method is MethodInfo methodInfo)
         {
@@ -893,6 +1040,15 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
         //The method is a candidate
         return true;
+    }
+
+    static bool _type_lock_allows(PValue arg, Type parameterType)
+    {
+        if (!arg.IsTypeLocked || arg.IsNull)
+            return true;
+
+        var argumentType = arg.ClrType;
+        return parameterType == argumentType || parameterType.IsAssignableFrom(argumentType);
     }
 
     public override bool IndirectCall(
@@ -923,24 +1079,31 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     )
     {
         if (!tryDynamicCall(sctx, subject, args, call, id, out var result, out resolvedMember))
-        {
-            var sb = new StringBuilder();
-            sb.Append("Cannot resolve call '");
-            sb.Append(id);
-            sb.Append("' on object of type ");
-            sb.Append(subject.IsNull ? "null" : subject.ClrType!.FullName);
-            sb.Append(" with (");
-            foreach (var arg in args)
-            {
-                sb.Append(arg);
-                sb.Append(", ");
-            }
-            if (args.Length > 0)
-                sb.Length -= 2;
-            sb.Append(").");
-            throw new InvalidCallException(sb.ToString());
-        }
+            throw _createDynamicCallException(subject, args, id);
         return result;
+    }
+
+    static InvalidCallException _createDynamicCallException(
+        PValue subject,
+        ReadOnlySpan<PValue> args,
+        string id
+    )
+    {
+        var sb = new StringBuilder();
+        sb.Append("Cannot resolve call '");
+        sb.Append(id);
+        sb.Append("' on object of type ");
+        sb.Append(subject.IsNull ? "null" : subject.ClrType!.FullName);
+        sb.Append(" with (");
+        foreach (var arg in args)
+        {
+            sb.Append(arg);
+            sb.Append(", ");
+        }
+        if (args.Length > 0)
+            sb.Length -= 2;
+        sb.Append(").");
+        return new(sb.ToString());
     }
 
     public override PValue DynamicCall(
@@ -963,24 +1126,27 @@ public sealed class ObjectPType : PType, ICilCompilerAware
     )
     {
         if (!tryStaticCall(sctx, args, call, id, out var result, out resolvedMember))
-        {
-            var sb = new StringBuilder();
-            sb.Append("Cannot resolve static call '");
-            sb.Append(id);
-            sb.Append("' on type ");
-            sb.Append(ClrType.FullName);
-            sb.Append(" with (");
-            foreach (var arg in args)
-            {
-                sb.Append(arg);
-                sb.Append(", ");
-            }
-            if (args.Length > 0)
-                sb.Length -= 2;
-            sb.Append(").");
-            throw new InvalidCallException(sb.ToString());
-        }
+            throw _createStaticCallException(args, id);
         return result;
+    }
+
+    InvalidCallException _createStaticCallException(ReadOnlySpan<PValue> args, string id)
+    {
+        var sb = new StringBuilder();
+        sb.Append("Cannot resolve static call '");
+        sb.Append(id);
+        sb.Append("' on type ");
+        sb.Append(ClrType.FullName);
+        sb.Append(" with (");
+        foreach (var arg in args)
+        {
+            sb.Append(arg);
+            sb.Append(", ");
+        }
+        if (args.Length > 0)
+            sb.Length -= 2;
+        sb.Append(").");
+        return new(sb.ToString());
     }
 
     public override PValue StaticCall(StackContext sctx, PValue[] args, PCall call, string id)
