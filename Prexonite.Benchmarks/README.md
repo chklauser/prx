@@ -1,14 +1,18 @@
 # Object member dispatch benchmarks
 
-This project compares the original uncached `ObjectPType` resolver with the interpreter's cached
-`CallSite<T>` path. Both implementations run side by side against the same Prexonite build:
+This project compares the original uncached `ObjectPType` resolver with the cached `CallSite<T>`
+paths used by the interpreter and CIL compiler. Both implementations run side by side against the
+same Prexonite build:
 
 - `Uncached*` calls `PValue.DynamicCall` or `ObjectPType.StaticCall`, which still perform member
-  discovery, filtering, and overload ranking on every invocation. This is also the path currently
-  used by CIL-compiled member calls.
+  discovery, filtering, and overload ranking on every invocation. This is the path CIL-compiled
+  member calls used before callsite emission was added.
 - `Cached*` invokes a pre-warmed `DynamicObjectMemberCallSite` or
   `StaticObjectMemberCallSite`. It reuses the resolved candidate plan while preserving Prexonite's
   conversions and reflection invocation.
+- `CilObjectMemberCallBenchmarks` invokes paired generated functions directly. Its `Uncached*`
+  functions are compiled with the diagnostic callsite opt-out, so the generated-function frame,
+  argument handling, and return handling are identical on both sides.
 
 The suite deliberately separates the easy steady-state case from costly cache behavior:
 
@@ -24,8 +28,10 @@ Run the benchmarks from the repository root in Release mode:
 
 ```bash
 dotnet build -c Release -m:1 Prexonite.Benchmarks/Prexonite.Benchmarks.csproj
-dotnet run -c Release --no-build --project Prexonite.Benchmarks -- --filter '*ObjectMemberCallBenchmarks*'
+dotnet run -c Release --no-build --project Prexonite.Benchmarks -- --filter '*Prexonite.Benchmarks.ObjectMemberCallBenchmarks.*'
 ```
+
+Use `--filter '*CilObjectMemberCallBenchmarks*'` to run only the CIL-generated function suite.
 
 The default configuration is intended for a desktop that may experience unrelated load:
 

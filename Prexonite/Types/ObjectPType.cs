@@ -828,7 +828,7 @@ public sealed class ObjectPType : PType, ICilCompilerAware
 
         internal bool MatchesStatic(ObjectPType objectType, ReadOnlySpan<PValue> args)
         {
-            return _isStatic && ReferenceEquals(objectType, _owner) && _argumentsMatch(args);
+            return _isStatic && objectType.ClrType == _owner.ClrType && _argumentsMatch(args);
         }
 
         bool _argumentsMatch(ReadOnlySpan<PValue> args)
