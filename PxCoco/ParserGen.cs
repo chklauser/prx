@@ -32,7 +32,7 @@ Coco/R itself) does not fall under the GNU General Public License.
  * CoCo/R to better fit my needs. The code generator now uses the symbolic
  * constants whenever possible.
  *
- * To distinguish CoCo/R and from my version, I called my executable PxCoco.exe
+ * To distinguish CoCo/R and from my version, I called my executable PxCoco
  */
 
 using System;

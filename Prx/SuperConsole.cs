@@ -35,7 +35,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
-using Prx.Win32;
 
 //Removed references to IronPython (-P)
 
@@ -383,10 +382,9 @@ public abstract class SuperConsole
         }
         else
         {
-            //c = key.KeyChar;
-            var us = User32.ToUnicode(key, true);
-            if (us.Length > 0)
-                Insert(us[0]);
+            var character = key.KeyChar;
+            if (character != '\0')
+                Insert(character);
         }
     }
 
@@ -809,8 +807,7 @@ public abstract class SuperConsole
 
     //Made FinalLineText static  (-P)
 
-    static string FinalLineText =>
-        Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
+    static string FinalLineText => "\x04";
 
     public void Write(string text, Style style)
     {
