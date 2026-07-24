@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.RegularExpressions" />
     <ProjectReference Include="..\Prexonite\Prexonite.csproj" />
     <ProjectReference
       Include="..\PrexoniteTests.Generators\PrexoniteTests.Generators.csproj"

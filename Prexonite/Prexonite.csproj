@@ -67,7 +67,6 @@
       <StronglyTypedClassName>Resources</StronglyTypedClassName>
     </EmbeddedResource>
     <Compile Remove="Properties/Resources.Designer.cs" />
-    <Compile Include="Properties/Resources.Designer.cs" />
   </ItemGroup>
 
   <!-- NUGET References -->

@@ -15,10 +15,13 @@ public static class SourcePositionExtensions
                     && positionA.Column == positionB.Column
                     && positionA.File.Equals(positionB.File, StringComparison.Ordinal);
         }
+    }
 
+    extension(ISourcePosition position)
+    {
         public string GetSourcePositionString()
         {
-            return $"{positionA.Line}: line {positionA.Line}, col {positionA.Column}";
+            return $"{position.Line}: line {position.Line}, col {position.Column}";
         }
     }
 }
