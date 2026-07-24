@@ -60,6 +60,7 @@ publish
 [Oo]bj
 sql
 TestResults
+BenchmarkDotNet.Artifacts
 *.Cache
 ClientBin
 stylecop.*
