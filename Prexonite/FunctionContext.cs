@@ -1,7 +1,6 @@
 #region Namespace Imports
 
 using System.Diagnostics;
-using System.Reflection;
 using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
@@ -301,10 +300,8 @@ public class FunctionContext : StackContext
             var t = ins.GenericArgument as PType;
             PVariable? pvar;
             PFunction? func;
-            //used by static calls
             int idx;
             string methodId;
-            MemberInfo? member;
 
             #region OPCODE HANDLING
 
@@ -656,7 +653,7 @@ public class FunctionContext : StackContext
                 case OpCode.cast_arg:
                     t = (PType)(Pop().Value ?? PType.Null);
                     cast_type:
-                    Push(Pop().ConvertTo(this, t, true));
+                    Push(Pop().ConvertTo(this, t, true).WithTypeLock());
                     break;
 
                 #endregion
@@ -670,7 +667,27 @@ public class FunctionContext : StackContext
                 case OpCode.get:
                     _fillArgs(argc, out argv);
                     left = Pop();
-                    right = left.DynamicCall(this, argv, PCall.Get, id!);
+                    if (left.Type is ObjectPType getObjectType)
+                    {
+                        if (
+                            !getObjectType.TryDynamicCallOverride(
+                                this,
+                                left,
+                                argv,
+                                PCall.Get,
+                                id!,
+                                false,
+                                out var overrideResult
+                            )
+                        )
+                            right = Implementation
+                                .ObjectMemberCallSites.GetDynamic(Pointer - 1, PCall.Get, id!)
+                                .Invoke(this, left, argv);
+                        else
+                            right = overrideResult;
+                    }
+                    else
+                        right = left.DynamicCall(this, argv, PCall.Get, id!);
                     if (!justEffect)
                         Push(right);
                     needToReturn = true;
@@ -678,7 +695,25 @@ public class FunctionContext : StackContext
                 case OpCode.set:
                     _fillArgs(argc, out argv);
                     left = Pop();
-                    left.DynamicCall(this, argv, PCall.Set, id!);
+                    if (left.Type is ObjectPType setObjectType)
+                    {
+                        if (
+                            !setObjectType.TryDynamicCallOverride(
+                                this,
+                                left,
+                                argv,
+                                PCall.Set,
+                                id!,
+                                false,
+                                out _
+                            )
+                        )
+                            Implementation
+                                .ObjectMemberCallSites.GetDynamic(Pointer - 1, PCall.Set, id!)
+                                .Invoke(this, left, argv);
+                    }
+                    else
+                        left.DynamicCall(this, argv, PCall.Set, id!);
                     needToReturn = true;
                     break;
 
@@ -695,10 +730,7 @@ public class FunctionContext : StackContext
                         );
                     needToReturn = true;
                     methodId = id[(idx + 2)..];
-                    member = ins.GenericArgument as MemberInfo;
-                    if (member != null)
-                        goto callByMemberGet;
-                    else if ((object?)t != null)
+                    if ((object?)t != null)
                     {
                         // nothing
                     }
@@ -708,24 +740,13 @@ public class FunctionContext : StackContext
                         var typeExpr = id[..idx];
                         t = ConstructPType(typeExpr);
                         ins.GenericArgument = t;
-                        if (t is ObjectPType objT)
-                        {
-                            //Try to get a member info
-                            right = objT.StaticCall(this, argv, PCall.Get, methodId, out member);
-                            if (!justEffect)
-                                Push(right);
-                            if (member != null)
-                                ins.GenericArgument = member;
-                            break;
-                        }
                     }
 
-                    right = t.StaticCall(this, argv, PCall.Get, methodId);
-                    if (!justEffect)
-                        Push(right);
-                    break;
-                    callByMemberGet:
-                    right = ObjectPType._execute(this, member, argv, PCall.Get, methodId, null);
+                    right = t is ObjectPType staticGetObjectType
+                        ? Implementation
+                            .ObjectMemberCallSites.GetStatic(Pointer - 1, PCall.Get, methodId)
+                            .Invoke(this, staticGetObjectType, argv)
+                        : t.StaticCall(this, argv, PCall.Get, methodId);
                     if (!justEffect)
                         Push(right);
                     break;
@@ -739,10 +760,7 @@ public class FunctionContext : StackContext
                         );
                     needToReturn = true;
                     methodId = id[(idx + 2)..];
-                    member = ins.GenericArgument as MemberInfo;
-                    if (member != null)
-                        goto callByMemberSet;
-                    else if ((object?)t != null)
+                    if ((object?)t != null)
                     {
                         // nothing
                     }
@@ -752,21 +770,14 @@ public class FunctionContext : StackContext
                         var typeExpr = id[..idx];
                         t = ConstructPType(typeExpr);
                         ins.GenericArgument = t;
-                        if (t is ObjectPType)
-                        {
-                            //Try to get a member info
-                            var objT = (ObjectPType)t;
-                            objT.StaticCall(this, argv, PCall.Set, methodId, out member);
-                            if (member != null)
-                                ins.GenericArgument = member;
-                            break;
-                        }
                     }
 
-                    t.StaticCall(this, argv, PCall.Set, methodId);
-                    break;
-                    callByMemberSet:
-                    ObjectPType._execute(this, member, argv, PCall.Set, methodId, null);
+                    if (t is ObjectPType staticSetObjectType)
+                        Implementation
+                            .ObjectMemberCallSites.GetStatic(Pointer - 1, PCall.Set, methodId)
+                            .Invoke(this, staticSetObjectType, argv);
+                    else
+                        t.StaticCall(this, argv, PCall.Set, methodId);
                     break;
 
                 #endregion

@@ -330,16 +330,15 @@ public static class Runtime
 
     public static PValue CastConst(PValue obj, PType type, StackContext sctx)
     {
-        return obj.ConvertTo(sctx, type, true);
+        return obj.ConvertTo(sctx, type, true).WithTypeLock();
     }
 
     public static PValue Cast(PValue obj, PValue type, StackContext sctx)
     {
-        return obj.ConvertTo(
-            sctx,
-            (PType)(type.Value ?? throw new PrexoniteException("Cast requires a type value.")),
-            true
+        var target = (PType)(
+            type.Value ?? throw new PrexoniteException("Cast requires a type value.")
         );
+        return obj.ConvertTo(sctx, target, true).WithTypeLock();
     }
 
     //[System.Diagnostics.DebuggerHidden]
