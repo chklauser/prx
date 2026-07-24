@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/format-csharp.sh\"",
+            "command": "bash \"$(jj root)/.codex/hooks/format-csharp.sh\"",
             "timeout": 600,
             "statusMessage": "Formatting C# with CSharpier"
           }
