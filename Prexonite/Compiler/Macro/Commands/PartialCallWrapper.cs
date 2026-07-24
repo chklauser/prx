@@ -153,9 +153,8 @@ public class PartialCallWrapper : PartialMacroCommand
     /// <param name="context"></param>
     /// <returns></returns>
     /// <remarks>
-    /// <para>For call and call\async, for instance, two arguments need to be passed to call\star
-    /// unprocessed: the reference to the call implementation (<c>call(?)</c> or <c>call\async(?)</c>)
-    /// and the call target.</para>
+    /// <para>For <c>call</c>, two arguments need to be passed to <c>call\star</c>
+    /// unprocessed: the reference to the call implementation (<c>call(?)</c>) and the call target.</para>
     /// <para>In the case of <c>call\member</c>, however, there is an additional argument to be
     /// protected: the member id.</para></remarks>
     protected virtual int GetPassThroughArguments(MacroContext context)

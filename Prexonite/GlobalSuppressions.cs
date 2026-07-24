@@ -44,13 +44,6 @@
     "CA1704:IdentifiersShouldBeSpelledCorrectly",
     MessageId = nameof(Prexonite),
     Scope = "namespace",
-    Target = "Prexonite.Commands.Concurrency"
-)]
-[assembly: SuppressMessage(
-    "Microsoft.Naming",
-    "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Prexonite),
-    Scope = "namespace",
     Target = "Prexonite.Commands.Core"
 )]
 [assembly: SuppressMessage(
@@ -115,13 +108,6 @@
     MessageId = nameof(Prexonite),
     Scope = "namespace",
     Target = "Prexonite.Compiler.Cil"
-)]
-[assembly: SuppressMessage(
-    "Microsoft.Naming",
-    "CA1704:IdentifiersShouldBeSpelledCorrectly",
-    MessageId = nameof(Prexonite),
-    Scope = "namespace",
-    Target = "Prexonite.Concurrency"
 )]
 [assembly: SuppressMessage(
     "Microsoft.Naming",
