@@ -44,13 +44,9 @@ public abstract partial class VMTests : VMTestsBase
                 var ver1 =    map( x => x + 1,   args);
                 var ver2 = my_map( x => x + k++, args);
 
-                ref y = coroutine() =>
-                {
-                    foreach(var yy in ver1)
-                        yield yy;
-                };
+                var y = ver1.GetEnumerator;
 
-                var diff = map( x => x - y, ver2);
+                var diff = map( x => { y.MoveNext; return x - y.Current; }, ver2);
                 return foldl( (l,r) => l + r, "",diff);
             }
 
@@ -67,10 +63,7 @@ public abstract partial class VMTests : VMTestsBase
             """
 
             function main() {
-                coroutine f(n) {
-                    for(var i = 1; i <= n; i++)
-                        yield i;
-                }
+                function f(n) = 1.To(n);
                 return var args >> flat_map(f(?), [1,0], []) >> foldl( (l,r) => l + "," + r, "");
             }
 
@@ -649,18 +642,17 @@ public abstract partial class VMTests : VMTestsBase
     #endregion
 
     [Test]
-    public void CreateEnumeratorCommand()
+    public void CreateEnumerableAndEnumeratorCommands()
     {
         Compile(
             """
 
             function main(xs)
             {
-                var s = new Structure;
                 var cM = 0;
                 var cC = 0;
                 var cD = 0;
-                s.\\("GetEnumerator") = () =>
+                var s = create_enumerable(() =>
                 {
                     var e = xs.GetEnumerator;
                     return new enumerator(
@@ -668,15 +660,17 @@ public abstract partial class VMTests : VMTestsBase
                         () => {cC++; return e.Current; },
                         () => {cD++; dispose(e);       },
                     );
-                };
+                });
 
-                return "M$cM.C$cC.D$cD: " + foldl(?+?,"",s) + " :M$cM.C$cC.D$cD";
+                var first = foldl(?+?,"",s);
+                var second = foldl(?+?,"",s);
+                return "M0.C0.D0: " + first + second + " :M$cM.C$cC.D$cD";
             }
 
             """
         );
 
-        Expect("M0.C0.D0: abc :M4.C3.D1", (PValue)new List<PValue> { "a", "b", "c" });
+        Expect("M0.C0.D0: abcabc :M8.C6.D2", (PValue)new List<PValue> { "a", "b", "c" });
     }
 
     [Test]

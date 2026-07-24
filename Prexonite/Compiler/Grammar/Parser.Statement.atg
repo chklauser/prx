@@ -498,10 +498,7 @@ Return<AstBlock block>          (.  AstReturn? ret = null;
                                 .)
 =
 (   
-    (
-        return                  (.  ret = new AstReturn(this, ReturnVariant.Exit); .)
-    |   yield                   (.  ret = new AstReturn(this, ReturnVariant.Continue); .)
-    )
+    return                      (.  ret = new AstReturn(this, ReturnVariant.Exit); .)
     [   Expr<out expr>          (.  ret.Expression = expr; .)
     |   assign                  (.  ret.ReturnVariant = ReturnVariant.Set; .)
         Expr<out expr>          (.  ret.Expression = expr; .)

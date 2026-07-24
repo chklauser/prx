@@ -86,7 +86,6 @@ TOKENS
 	add
 	continue
 	break
-	yield
 	or
 	and
 	xor
@@ -98,7 +97,6 @@ TOKENS
 	unless
 	else
 	new
-	coroutine
 	from
 	do
 	does

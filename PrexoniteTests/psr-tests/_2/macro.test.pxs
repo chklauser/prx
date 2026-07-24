@@ -606,18 +606,11 @@ macro test_ast_const[test]
 macro test_ast_ret[test]
 {
     assert_eq(macro_reference(ast.$return),macro_reference(ast.$return));
-    assert_eq(macro_reference(ast.$yield),macro_reference(ast.$yield));
-
     var a = ast.const(3);
     var n = ast.$return(a);
     assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");
     assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Exit),"ast\\ret should use ReturnVariant.Exit. Actual $(boxed(n))");
     assert_eq(n.Expression,a,"Expression of ast\\ret doesn't match.");
-
-    var n = ast.$yield;
-    assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");
-    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Continue),"ast\\ret\\continue should use ReturnVariant.Continue. Actual $(boxed(n))");
-    assert(n.Expression is null,"Expression of ast\\ret\\continue isn't null.");
 
     var n = ast.$break;
     assert(ast.is_Return(n),"$(boxed(n)) is expected to be a Return node");

@@ -734,7 +734,6 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                         return;
                     //ARG INSTRUCTIONS
                     case OpCode.indarg:
-                    case OpCode.newcor:
                     case OpCode.tail:
                         buffer.Append(".");
                         buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
@@ -869,7 +868,6 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                 return Equals(ModuleName, other.ModuleName);
             //ARG INSTRUCTIONS
             case OpCode.indarg:
-            case OpCode.newcor:
             case OpCode.tail:
                 return Arguments == other.Arguments && JustEffect == other.JustEffect;
             case OpCode.rot:
@@ -1023,7 +1021,6 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                 case OpCode.get:
                 case OpCode.indarg:
                 case OpCode.tail:
-                case OpCode.newcor:
                     return -Arguments - 1 + (JustEffect ? 0 : 1);
 
                 case OpCode.indloc:
@@ -1154,11 +1151,10 @@ public enum OpCode
     ldglob, //ldglob        loads the value of a global variable
     stglob, //stglob        stores a value into a global variable
 
-    //Construction (4)
+    //Construction (3)
     newobj, //newobj        creates a new instance of a specified type
     newtype, //newtype       creates a new type instance
     newclo, //newclo        creates a new closure
-    newcor, //newcor        creates a new coroutine
 
     //Operators (23)
     //  - unary

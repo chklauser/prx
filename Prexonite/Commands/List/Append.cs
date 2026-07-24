@@ -2,7 +2,7 @@ using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
 
-public class Append : CoroutineCommand, ICilCompilerAware
+public class Append : EnumerableCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
@@ -12,17 +12,12 @@ public class Append : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+    protected override IEnumerable<PValue> EnumerableRun(ContextCarrier sctxCarrier, PValue[] args)
     {
-        return CoroutineRunStatically(sctxCarrier, args);
+        return EnumerableRunStatically(sctxCarrier, args);
     }
 
-    [SuppressMessage(
-        "Microsoft.Naming",
-        "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine)
-    )]
-    protected static IEnumerable<PValue> CoroutineRunStatically(
+    protected static IEnumerable<PValue> EnumerableRunStatically(
         ContextCarrier sctxCarrier,
         PValue[]? args
     )
@@ -53,10 +48,8 @@ public class Append : CoroutineCommand, ICilCompilerAware
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
-        carrier.StackContext = corctx;
-        return sctx.CreateNativePValue(new Coroutine(corctx));
+        var carrier = new ContextCarrier(sctx);
+        return CreatePValue(sctx, EnumerableRunStatically(carrier, args));
     }
 
     public void ImplementInCil(CompilerState state, Instruction ins)

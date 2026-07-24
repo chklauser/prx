@@ -42,7 +42,7 @@ public sealed class Call_Member : PCommand
     /// </remarks>
     /// <param name = "sctx">The stack context in which to call the callable argument.</param>
     /// <param name = "args">A list of the form [ obj, id, arg1, arg2, arg3, ..., argn].<br />
-    ///     Lists and coroutines are expanded.</param>
+    ///     Lists and sequences are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
     public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {
@@ -77,7 +77,7 @@ public sealed class Call_Member : PCommand
     /// <param name = "obj">The obj to call.</param>
     /// <param name = "id">The id of the member to call.</param>
     /// <param name = "args">The array of arguments to pass to the member call.<br />
-    ///     Lists and coroutines are expanded.</param>
+    ///     Lists and sequences are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
     public PValue Run(StackContext sctx, PValue obj, string id, params PValue[] args)
@@ -93,7 +93,7 @@ public sealed class Call_Member : PCommand
     /// <param name = "isSet">Indicates whether to perform a Set-call.</param>
     /// <param name = "id">The id of the member to call.</param>
     /// <param name = "args">The array of arguments to pass to the member call.<br />
-    ///     Lists and coroutines are expanded.</param>
+    ///     Lists and sequences are expanded.</param>
     /// <returns>The result returned by the member call.</returns>
     /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
     public PValue Run(

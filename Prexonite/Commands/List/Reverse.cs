@@ -2,7 +2,7 @@ using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
 
-public class Reverse : CoroutineCommand, ICilCompilerAware
+public class Reverse : EnumerableCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
@@ -12,12 +12,12 @@ public class Reverse : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+    protected override IEnumerable<PValue> EnumerableRun(ContextCarrier sctxCarrier, PValue[] args)
     {
-        return CoroutineRunStatically(sctxCarrier, args);
+        return EnumerableRunStatically(sctxCarrier, args);
     }
 
-    static IEnumerable<PValue> CoroutineRunStatically(
+    static IEnumerable<PValue> EnumerableRunStatically(
         ContextCarrier sctxCarrier,
         IEnumerable<PValue> args
     )
@@ -43,10 +43,8 @@ public class Reverse : CoroutineCommand, ICilCompilerAware
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     // ReSharper restore UnusedMember.Global
     {
-        var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
-        carrier.StackContext = corctx;
-        return sctx.CreateNativePValue(new Coroutine(corctx));
+        var carrier = new ContextCarrier(sctx);
+        return CreatePValue(sctx, EnumerableRunStatically(carrier, args));
     }
 
     #region ICilCompilerAware Members

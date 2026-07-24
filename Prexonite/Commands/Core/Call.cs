@@ -52,7 +52,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
     /// <seealso cref = "IIndirectCall" />
     /// <param name = "sctx">The stack context in which to call the callable argument.</param>
     /// <param name = "args">A list of the form [ ref f, arg1, arg2, arg3, ..., argn].<br />
-    ///     Lists and coroutines are expanded.</param>
+    ///     Lists and sequences are expanded.</param>
     /// <returns>The result returned by <see cref = "IIndirectCall.IndirectCall" /> or PValue Null if no callable object has been passed.</returns>
     public static PValue RunStatically(StackContext sctx, PValue[]? args)
     {
@@ -92,7 +92,7 @@ public sealed class Call : StackAwareCommand, ICilCompilerAware
     /// <seealso cref = "IIndirectCall" />
     /// <param name = "sctx">The stack context in which to call the callable argument.</param>
     /// <param name = "args">A list of the form [ ref f, arg1, arg2, arg3, ..., argn].<br />
-    ///     Lists and coroutines are expanded.</param>
+    ///     Lists and sequences are expanded.</param>
     /// <returns>The result returned by <see cref = "IIndirectCall.IndirectCall" /> or PValue Null if no callable object has been passed.</returns>
     public override PValue Run(StackContext sctx, ReadOnlySpan<PValue> args)
     {

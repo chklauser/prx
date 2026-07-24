@@ -1,25 +1,20 @@
 
 
-coroutine zip(xs,ys)
+function zip(xs,ys) = create_enumerable(() =>
 {
-	using(var xsE = xs.GetEnumerator)
-	using(var ysE = ys.GetEnumerator)
-		while(xsE.MoveNext and ysE.MoveNext)
-			yield xsE.Current : ysE.Current;
-}
+    var xsE = xs.GetEnumerator;
+    var ysE = ys.GetEnumerator;
+    return new enumerator(
+        () => xsE.MoveNext and ysE.MoveNext,
+        () => xsE.Current : ysE.Current,
+        () => { dispose(xsE); dispose(ysE); }
+    );
+});
 
 function repeatable(xs)
 {
 
     var rep = [];
-
-    // coroutine tee\cor
-    // {
-        // foreach(var x in xs)
-        // {
-            // yield rep[] = x;
-        // }
-    // }
 
     function tee\cor
     {

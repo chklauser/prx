@@ -318,19 +318,6 @@ public class AstFactoryBridge : IObject, IIndirectCall
                 node = _base.CreateClosure(position, funcRef);
                 break;
             }
-            case "createcoroutine":
-            {
-                if (!_require(sctx, args, ref i, out AstExpr? expr))
-                {
-                    detailedError =
-                        "CreateCoroutine(position, generatorExpr~AstExpr), generatorExpr is missing.";
-                    return false;
-                }
-
-                node = _base.CreateCoroutine(position, expr);
-                break;
-            }
-
             case "keyvaluepair":
             {
                 const string sig = "KeyValuePair(position, key~AstExpr, value~AstExpr)";

@@ -378,47 +378,6 @@ public abstract partial class VMTests
     }
 
     [Test]
-    public void CrossForeachTryCatch()
-    {
-        Compile(
-            """
-
-            coroutine mayFail
-            {
-                yield 1;
-                yield 2;
-                throw "I failed";
-                yield 3;
-            }
-
-            function main(sum)
-            {
-                try
-            	{
-                    ref mightFail = mayFail;
-            		foreach(var sourceFile in [4,5,6])
-            		{
-            			sum+=sourceFile + mightFail;
-            		}
-            	}
-            	catch(var exc)
-            	{
-                    println(exc);
-                    sum*=2;
-            	}
-            	finally
-            	{
-                    sum*=10;        
-            	}
-                return sum;
-            }
-
-            """
-        );
-        Expect((1 + 4 + 2 + 5 + 1) * 20, 1);
-    }
-
-    [Test]
     public void HarmlessTryFinally()
     {
         Compile(
@@ -630,48 +589,6 @@ public abstract partial class VMTests
         }
 
         ExpectNull();
-    }
-
-    [Test]
-    public void ReturnFromFinally()
-    {
-        Compile(
-            """
-
-            var t = "";
-            function trace x = t += x;
-
-            function main(x)
-            {
-                try {
-                    trace("t");
-                } finally {
-                    if(x)
-                        yield t;
-                    else 
-                        trace("n");
-                }
-
-                return t;
-            }
-
-            """
-        );
-
-        var mainTable = target.Functions["main"]!.Meta;
-
-        if (CompileToCil)
-        {
-            Assert.IsTrue(
-                mainTable[PFunction.VolatileKey].Switch,
-                "return from finally is illegal in CIL"
-            );
-            Assert.IsTrue(
-                mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
-                "deficiency must be related to SEH."
-            );
-        }
-        Expect("tn", false);
     }
 
     [Test]

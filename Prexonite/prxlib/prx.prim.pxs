@@ -109,6 +109,7 @@ namespace prx.prim
     (-.) = ref command "negation",
     $complement = ref command "complement",
     $not = ref command "not",
+    create_enumerable = ref command "create_enumerable",
     create_enumerator = ref command "create_enumerator",
     create_module_name = ref command "create_module_name",
     get_unscoped_ast_factory = ref command "get_unscoped_ast_factory",

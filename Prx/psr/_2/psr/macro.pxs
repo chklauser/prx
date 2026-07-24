@@ -115,7 +115,6 @@ export(*), psr.macro.v1(
     ast\member => member,
     ast\const => const,
     ast\ret\val => $return,
-    ast\ret\continue => $yield,
     ast\ret\break => $break,
     ast\ret\set => return_set,
     ast\run => run,

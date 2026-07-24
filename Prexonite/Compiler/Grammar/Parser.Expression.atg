@@ -294,7 +294,6 @@ Primary<out AstExpr? expr>
 =   IF(isLambdaExpression())
     LambdaExpression<out expr>
 |	HashLiteral<out expr>
-|   CoroutineCreation<out expr>
 |	LoopExpr<out expr>
 |   ThrowExpression<out var th>			(. expr = th; .)
 |   PrimaryForGetSetComplex<out expr>
@@ -414,16 +413,6 @@ ObjectCreation<out AstExpr expr>
                                             expr = type;
                                         .)
     Arguments<type.Arguments>
-.
-
-CoroutineCreation<out AstExpr expr>
-                                        (.  
-                                            AstCreateCoroutine cor; 
-                                            AstExpr iexpr;
-                                        .)
-=
-    coroutine Expr<out iexpr>           (.   expr = cor = Create.CreateCoroutine(GetPosition(), iexpr); .)
-    [ for Arguments<cor.Arguments> ]
 .
 
 LambdaExpression<out AstExpr expr>

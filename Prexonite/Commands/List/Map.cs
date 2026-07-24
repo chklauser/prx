@@ -16,7 +16,7 @@ namespace Prexonite.Commands.List;
 ///         return nlst;
 ///         }</code>
 /// </remarks>
-public class Map : CoroutineCommand, ICilCompilerAware
+public class Map : EnumerableCommand, ICilCompilerAware
 {
     #region Singleton
 
@@ -83,12 +83,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         }
     }
 
-    [SuppressMessage(
-        "Microsoft.Naming",
-        "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine)
-    )]
-    protected static IEnumerable<PValue> CoroutineRun(
+    protected static IEnumerable<PValue> EnumerableRun(
         ContextCarrier sctxCarrier,
         IIndirectCall? f,
         IEnumerable<PValue> source
@@ -105,13 +100,8 @@ public class Map : CoroutineCommand, ICilCompilerAware
     /// </summary>
     /// <param name = "sctxCarrier">The stack context in which to call the supplied function.</param>
     /// <param name = "args">The list of arguments to be passed to the command.</param>
-    /// <returns>A coroutine that maps the.</returns>
-    [SuppressMessage(
-        "Microsoft.Naming",
-        "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine)
-    )]
-    protected static IEnumerable<PValue> CoroutineRunStatically(
+    /// <returns>A lazy sequence containing the mapped values.</returns>
+    protected static IEnumerable<PValue> EnumerableRunStatically(
         ContextCarrier sctxCarrier,
         PValue[] args
     )
@@ -149,7 +139,7 @@ public class Map : CoroutineCommand, ICilCompilerAware
         }
 
         //Note: need to forward element because this method must remain lazy.
-        foreach (var value in CoroutineRun(sctxCarrier, f, source))
+        foreach (var value in EnumerableRun(sctxCarrier, f, source))
         {
             yield return value;
         }
@@ -163,10 +153,8 @@ public class Map : CoroutineCommand, ICilCompilerAware
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
-        carrier.StackContext = corctx;
-        return sctx.CreateNativePValue(new Coroutine(corctx));
+        var carrier = new ContextCarrier(sctx);
+        return CreatePValue(sctx, EnumerableRunStatically(carrier, args));
     }
 
     #region ICilCompilerAware Members
@@ -193,8 +181,8 @@ public class Map : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+    protected override IEnumerable<PValue> EnumerableRun(ContextCarrier sctxCarrier, PValue[] args)
     {
-        return CoroutineRunStatically(sctxCarrier, args);
+        return EnumerableRunStatically(sctxCarrier, args);
     }
 }

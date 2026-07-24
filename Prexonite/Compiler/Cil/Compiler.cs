@@ -1347,13 +1347,6 @@ public static class Compiler
                     state.EmitNewClo(id!, moduleName);
                     break;
 
-                case OpCode.newcor:
-                    state.FillArgv(argc);
-                    state.EmitLoadLocal(state.SctxLocal);
-                    state.ReadArgv(argc);
-                    state.Il.EmitCall(OpCodes.Call, Runtime.NewCoroutineMethod, null);
-                    break;
-
                 #endregion
 
                 #region OPERATORS

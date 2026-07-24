@@ -36,15 +36,12 @@ function test\load_plugins
     
     function trace(f,xs)
     {
-        return coroutine () => {
-            foreach(var x in xs)
-            {
-                if(test\diagnostics) {
-                    println(f.(x));
-                }
-                yield x;
+        return map(x => {
+            if(test\diagnostics) {
+                println(f.(x));
             }
-        };
+            return x;
+        }, xs);
     }
     
     var plugins_key = @"test\plugins";

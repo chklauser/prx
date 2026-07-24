@@ -20,12 +20,14 @@ namespace prx.cli.repl
 
     var evalStep = 1; //<-- helps to make identifiers unique
 
-    coroutine tabHook(prefix, root)
+    function tabHook(prefix, root)
     {
+        var result = [];
+
         //User supplied entries
         foreach(var e in app.Meta["Tab"].List)
             if(e.Text.Length > 0)
-                yield e.Text;
+                result[] = e.Text;
 
         var hideKeys = [ "hidden", "private" ];
         function isHidden(func)
@@ -47,24 +49,15 @@ namespace prx.cli.repl
         
         //Add symbols (the declarations, not the physical names)
         foreach(var symbol in ldr.Symbols)
-            yield symbol.key;
+            result[] = symbol.key;
         
         //A collection of common usages
-        yield "ToString";
-        yield "foreach";
-        yield "function";
-        yield "StringBuilder";
-        yield "System";
-        yield "Text";
-        yield "Prexonite";
-        yield "Null";
-        yield "String";
-        yield "List";
-        yield "Hash";
-        yield "Int";
-        yield "Real";
-        yield "Bool";
-        yield "Structure";
+        result += [
+            "ToString", "foreach", "function", "StringBuilder", "System", "Text",
+            "Prexonite", "Null", "String", "List", "Hash", "Int", "Real", "Bool",
+            "Structure"
+        ];
+        return result;
     }
 
     function prx\interactive()

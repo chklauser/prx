@@ -53,11 +53,20 @@ function create_stack as create_mutable_stack()
     }
     
     function ToString self = xs.ToString;
-    function GetEnumerator self = (coroutine () =>
+    function GetEnumerator self
     {
-        while(count > 0)
-            yield pop;
-    }).GetEnumerator;
+        var current;
+        return new enumerator(
+            () => {
+                if(count <= 0)
+                    return false;
+                current = pop;
+                return true;
+            },
+            () => current,
+            () => null
+        );
+    }
     
     return struct;
 }
