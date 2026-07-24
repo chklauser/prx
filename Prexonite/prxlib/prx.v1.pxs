@@ -59,7 +59,6 @@ namespace prx.v1 {
             frequency,
             groupby,
             intersect,
-            call\tail\perform,
             list,
             each,
             exists,
@@ -113,7 +112,6 @@ namespace prx.v1 {
         macro command:
             call,
             call\member,
-            call\tail,
             call\sub,
             call\sub\interpret,
             macro\pack,

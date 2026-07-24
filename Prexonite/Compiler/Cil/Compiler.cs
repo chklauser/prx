@@ -440,7 +440,6 @@ public static class Compiler
                         return false;
                     }
                     break;
-                case OpCode.tail:
                 case OpCode.invalid:
                     reason = "Unsupported instruction " + ins;
                     return false;
@@ -1594,11 +1593,6 @@ public static class Compiler
                     state.FillArgv(argc);
                     state.EmitIndirectCall(argc, justEffect);
                     break;
-
-                case OpCode.tail:
-                    throw new PrexoniteException(
-                        "Cannot compile tail instruction to CIL. Qualification should have failed."
-                    );
 
                 #endregion
 

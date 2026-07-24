@@ -734,7 +734,6 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                         return;
                     //ARG INSTRUCTIONS
                     case OpCode.indarg:
-                    case OpCode.tail:
                         buffer.Append(".");
                         buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
                         return;
@@ -868,7 +867,6 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
                 return Equals(ModuleName, other.ModuleName);
             //ARG INSTRUCTIONS
             case OpCode.indarg:
-            case OpCode.tail:
                 return Arguments == other.Arguments && JustEffect == other.JustEffect;
             case OpCode.rot:
                 return Arguments == other.Arguments
@@ -1020,7 +1018,6 @@ public sealed class Instruction : ICloneable, IEquatable<Instruction>
 
                 case OpCode.get:
                 case OpCode.indarg:
-                case OpCode.tail:
                     return -Arguments - 1 + (JustEffect ? 0 : 1);
 
                 case OpCode.indloc:
@@ -1222,13 +1219,11 @@ public enum OpCode
     sget, //sget          performs a static get call
     sset, //sset          performs a static set call
 
-    //Calls (4)
+    //Calls (3)
     func, //func          performs a function call
     cmd, //cmd           performs a command call
     indarg, //indarg        performs an indirect call on an operand
-    tail,
 
-    //tail            performs an indirect call (tries to turn it into an optimized tail call)
     //Indirect calls (3)
     indloc, //indloc        performs an indirect call on a local variable by name
     indloci, //indloci      performs an indriect call on a local variable by index

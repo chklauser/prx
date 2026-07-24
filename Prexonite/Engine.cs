@@ -716,12 +716,6 @@ public partial class Engine
 
         Commands.AddEngineCommand(IntersectAlias, new Intersect());
 
-        // There is a macro that uses the same alias (Call_TailAlias)
-        //  it has the same purpose. For backwards compatibility,
-        //  the command table will retain the old binding.
-        Commands.AddEngineCommand(Call_TailAlias, Call_Tail.Instance);
-        Commands.AddEngineCommand(Call_Tail.Alias, Call_Tail.Instance);
-
         Commands.AddEngineCommand(ListAlias, List.Instance);
 
         Commands.AddEngineCommand(EachAlias, Each.Instance);
@@ -1055,13 +1049,6 @@ public partial class Engine
     ///     Alias used for the distinct command.
     /// </summary>
     public const string UniqueAlias = "unique";
-
-    /// <summary>
-    ///     Alias used for the call\tail command.
-    ///     If you intend to refer to the <see cref = "Call_Tail" /> command,
-    ///     use <see cref = "Call_Tail.Alias" />.
-    /// </summary>
-    public const string Call_TailAlias = @"call\tail";
 
     /// <summary>
     ///     Alias used for the list command.

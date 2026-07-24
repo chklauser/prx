@@ -558,7 +558,6 @@ public class Loader : StackContext, IMessageSink
         // Call/* macros
         _addMacroCommand(Call.Instance.Partial);
         _addMacroCommand(Call_Member.Instance.Partial);
-        _addMacroCommand(Call_Tail.Instance.Partial);
         _addCallMacro();
 
         // Type conversions / type checks / static calls on built-ins
