@@ -3,8 +3,7 @@ using Prexonite.Compiler.Cil;
 namespace Prexonite.Commands.Lazy;
 
 /// <summary>
-///     Turns values in WHNF into thunks and leaves existing thunks alone. This helps
-///     building functions that can be callled with both strict and lazy arguments.
+///     Wraps values in already-evaluated thunks and leaves existing thunks alone.
 /// </summary>
 public class AsThunkCommand : PCommand, ICilCompilerAware
 {
