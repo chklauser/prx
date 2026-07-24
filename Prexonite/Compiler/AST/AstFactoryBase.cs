@@ -784,11 +784,6 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         return new AstCreateClosure(position, function);
     }
 
-    public AstCreateCoroutine CreateCoroutine(ISourcePosition position, AstExpr function)
-    {
-        return new(position.File, position.Line, position.Column) { Expression = function };
-    }
-
     public AstExpr KeyValuePair(ISourcePosition position, AstExpr key, AstExpr value)
     {
         return new AstKeyValuePair(position.File, position.Line, position.Column, key, value);

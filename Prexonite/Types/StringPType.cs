@@ -312,7 +312,7 @@ public class StringPType : PType, ICilCompilerAware
 
     public static bool IsReservedWord(string word)
     {
-        //The shortest word is "f" and the longest "coroutine".
+        //The longest reserved words have eight characters.
         //Spaces are most common in strings, but forbidden in Ids
         if (word.Length < 1 || word.Length > 9 || word.Contains(" "))
             return false;
@@ -327,7 +327,6 @@ public class StringPType : PType, ICilCompilerAware
             "build",
             "command",
             "continue",
-            "coroutine",
             "catch",
             "declare",
             "disabled",
@@ -367,7 +366,6 @@ public class StringPType : PType, ICilCompilerAware
             "var",
             "while",
             "xor",
-            "yield",
 
             #endregion
         };

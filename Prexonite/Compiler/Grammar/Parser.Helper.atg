@@ -34,7 +34,6 @@ DotId<out string id>               (.  id = "\\NoId\\"; .) //<-- should never su
     |   in
     |   to
     |   continue
-    |   yield
     |   break
     |   or
     |   and
@@ -45,7 +44,6 @@ DotId<out string id>               (.  id = "\\NoId\\"; .) //<-- should never su
     |   unless
     |   else
     |   new
-    |   coroutine
     |   from
     |   do
     |   does
@@ -157,7 +155,6 @@ MId<out String id>	            (.  id = "an\\invalid\\MId"; .)
 |	to
 |	continue
 |	break
-|	yield
 |	or
 |	and
 |	xor
@@ -168,7 +165,6 @@ MId<out String id>	            (.  id = "an\\invalid\\MId"; .)
 |	unless
 |	else
 |	new
-|	coroutine
 |	from
 |	do
 |	does

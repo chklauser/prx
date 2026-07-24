@@ -1377,7 +1377,6 @@ partial class Parser
         tab.Add("cast", OpCode.cast_const);
         tab.Add("ret", OpCode.ret_value);
         tab.Add("ret.val", OpCode.ret_value);
-        tab.Add("yield", OpCode.ret_continue);
         tab.Add("exit", OpCode.ret_exit);
         tab.Add("break", OpCode.ret_break);
         tab.Add("continue", OpCode.ret_continue);
@@ -1388,7 +1387,6 @@ partial class Parser
         tab.Add("dec", OpCode.decloc);
         tab.Add("deci", OpCode.decloci);
         tab.Add("inda", OpCode.indarg);
-        tab.Add("cor", OpCode.newcor);
         tab.Add("exception", OpCode.exc);
         tab.Add("ldnull", OpCode.ldc_null);
 
@@ -1479,7 +1477,6 @@ partial class Parser
         { "ret", "exit" },
         { "break", null },
         { "continue", null },
-        { "yield", null },
         { "exit", null },
         { "try", null },
         { "throw", null },
@@ -1548,8 +1545,6 @@ partial class Parser
     {
         { "indarg", null },
         { "inda", null },
-        { "newcor", null },
-        { "cor", null },
         { "tail", null },
     };
 

@@ -789,6 +789,8 @@ public partial class Engine
 
         OperatorCommands.AddToEngine(this);
 
+        Commands.AddEngineCommand(CreateEnumerable.Alias, CreateEnumerable.Instance);
+
         Commands.AddEngineCommand(CreateEnumerator.Alias, CreateEnumerator.Instance);
 
         Commands.AddEngineCommand(CreateModuleName.Alias, CreateModuleName.Instance);

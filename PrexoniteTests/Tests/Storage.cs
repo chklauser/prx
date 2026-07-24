@@ -138,9 +138,7 @@ public class Storage : CompilerTestBase
         Loader ldr = _compile(
             @"
 
-coroutine mapf(ref f, xs) does
-    foreach(var x in xs)
-        yield a => f(a,x);
+function mapf(ref f, xs) = map(x => a => f(a,x), xs);
 
 
 "

@@ -8631,53 +8631,6 @@
             </Issue>
            </Message>
           </Messages>
-          <Members>
-           <Member Name="Coroutine">
-            <Messages>
-             <Message Id="Coroutine" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Excluded" Created="2006-12-28 23:51:27Z">
-              <Issue Name="Member">
-               <Item>Coroutine</Item>
-               <Item>SymbolInterpretations.Coroutine</Item>
-              </Issue>
-              <Notes>
-               <User Name="Christian">
-                <Note Id="3" />
-               </User>
-              </Notes>
-             </Message>
-            </Messages>
-           </Member>
-           <Member Name="GlobalCoroutineVariable">
-            <Messages>
-             <Message Id="Coroutine" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Excluded" Created="2006-12-28 23:51:27Z">
-              <Issue Name="Member">
-               <Item>Coroutine</Item>
-               <Item>SymbolInterpretations.GlobalCoroutineVariable</Item>
-              </Issue>
-              <Notes>
-               <User Name="Christian">
-                <Note Id="3" />
-               </User>
-              </Notes>
-             </Message>
-            </Messages>
-           </Member>
-           <Member Name="LocalCoroutineVariable">
-            <Messages>
-             <Message Id="Coroutine" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Excluded" Created="2006-12-28 23:51:27Z">
-              <Issue Name="Member">
-               <Item>Coroutine</Item>
-               <Item>SymbolInterpretations.LocalCoroutineVariable</Item>
-              </Issue>
-              <Notes>
-               <User Name="Christian">
-                <Note Id="3" />
-               </User>
-              </Notes>
-             </Message>
-            </Messages>
-           </Member>
-          </Members>
          </Type>
          <Type Name="UnaryOperators">
           <Messages>

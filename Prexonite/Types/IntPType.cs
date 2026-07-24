@@ -97,12 +97,7 @@ public sealed class IntPType : PType, ICilCompilerAware
                 var step = (int)stepPv.Value!;
 
                 result = sctx.CreateNativePValue(
-                    new Coroutine(
-                        new CoroutineContext(
-                            sctx,
-                            _generateIntegerRange(lowerLimit, step, upperLimit)
-                        )
-                    )
+                    new PValueEnumerable(_generateIntegerRange(lowerLimit, step, upperLimit))
                 );
                 break;
         }

@@ -3,7 +3,7 @@ using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List;
 
-public class SeqConcat : CoroutineCommand, ICilCompilerAware
+public class SeqConcat : EnumerableCommand, ICilCompilerAware
 {
     #region Singleton pattern
 
@@ -15,12 +15,12 @@ public class SeqConcat : CoroutineCommand, ICilCompilerAware
 
     #endregion
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+    protected override IEnumerable<PValue> EnumerableRun(ContextCarrier sctxCarrier, PValue[] args)
     {
-        return CoroutineRunStatically(sctxCarrier, args);
+        return EnumerableRunStatically(sctxCarrier, args);
     }
 
-    protected static IEnumerable<PValue> CoroutineRunStatically(
+    protected static IEnumerable<PValue> EnumerableRunStatically(
         ContextCarrier sctxCarrier,
         PValue[] args
     )
@@ -58,10 +58,8 @@ public class SeqConcat : CoroutineCommand, ICilCompilerAware
     [PublicAPI]
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
-        carrier.StackContext = corctx;
-        return sctx.CreateNativePValue(new Coroutine(corctx));
+        var carrier = new ContextCarrier(sctx);
+        return CreatePValue(sctx, EnumerableRunStatically(carrier, args));
     }
 
     #region ICilCompilerAware Members

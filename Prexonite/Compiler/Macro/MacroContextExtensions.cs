@@ -142,11 +142,6 @@ public static class MacroContextExtensions
             return context.Factory.CreateClosure(context.Invocation.Position, function);
         }
 
-        public AstCreateCoroutine CreateCreateCoroutine(AstExpr function)
-        {
-            return context.Factory.CreateCoroutine(context.Invocation.Position, function);
-        }
-
         public AstExpr CreateKeyValuePair(AstExpr key, AstExpr value)
         {
             return context.Factory.KeyValuePair(context.Invocation.Position, key, value);

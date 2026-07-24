@@ -177,8 +177,6 @@ partial class Lexer
                     return Parser._asm;
                 case "command":
                     return Parser._command;
-                case "coroutine":
-                    return Parser._coroutine;
                 case "function":
                     return Parser._function;
                 case "method":
@@ -223,8 +221,6 @@ partial class Lexer
                     return Parser._static;
                 case "return":
                     return Parser._return;
-                case "yield":
-                    return Parser._yield;
                 case "in":
                     return Parser._in;
                 case "continue":

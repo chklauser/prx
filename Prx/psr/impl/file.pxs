@@ -15,41 +15,34 @@ function file_open_write(path) = new ::StreamWriter(::File.OpenWrite(path), Syst
 declare dispose as file_close;
 
 function file_lines(file) =
-    if(file is String)
-        coroutine () =>
-        {
-            using(file = file_open(file))
-            while((var l = file.ReadLine) is not Null)
-                yield l;
-        }
-    else
-        coroutine () =>
-        {
-            while((var l = file.ReadLine) is not Null)
-                yield l;
-        };
+    create_enumerable(() =>
+    {
+        var ownsFile = file is String;
+        var stream = if(ownsFile) file_open(file) else file;
+        var current;
+        return new enumerator(
+            () => (current = stream.ReadLine) is not Null,
+            () => current,
+            () => if(ownsFile) dispose(stream) else null
+        );
+    });
 
 function file_characters(file) =
-    if(file is String)
-        coroutine () =>
-        {
-            using(file = file_open(file))
-            while((var c = file.Read) != -1)
-                yield char(c);
-        }
-    else
-        coroutine () =>
-        {
-            while((var c = file.Read) != -1)
-                yield char(c);
-        };
+    create_enumerable(() =>
+    {
+        var ownsFile = file is String;
+        var stream = if(ownsFile) file_open(file) else file;
+        var current;
+        return new enumerator(
+            () => (current = stream.Read) != -1,
+            () => char(current),
+            () => if(ownsFile) dispose(stream) else null
+        );
+    });
 
 declare file_characters as file_chars;
 
-coroutine file_words(file) does
-    foreach(var line in file_lines(file))
-    foreach(var word in line.Split)
-        yield word;
+function file_words(file) = flat_map(?.Split, file_lines(file));
 
 function file_change_extension(path, extension) =
     ::Path.ChangeExtension(path~String, extension~String);

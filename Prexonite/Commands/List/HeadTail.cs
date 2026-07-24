@@ -56,9 +56,7 @@ public class HeadTail : PCommand, ICilCompilerAware
             new List<PValue>
             {
                 head,
-                sctx.CreateNativePValue(
-                    new Coroutine(new CoroutineContext(sctx, _tail(sctx, nextX, nextArg)))
-                ),
+                sctx.CreateNativePValue(new PValueEnumerable(_tail(sctx, nextX, nextArg))),
             };
     }
 

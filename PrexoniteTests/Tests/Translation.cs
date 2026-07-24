@@ -243,14 +243,7 @@ public abstract class Translation : VMTestsBase
             function main()
             {
                 var ys = [];
-                coroutine trace(t,xs)
-                {
-                    foreach(var x in xs)
-                    {
-                        ys[] = t:x;
-                        yield x;
-                    }
-                } 
+                function trace(t,xs) = map(x => { ys[] = t:x; return x; }, xs);
                 ([1,2]) >> trace(33) >> all >> println;
                 return (var args >> trace(77) >> map(?~String) >> foldl((l,r) => l + " " + r, "")) + ys;
             }
@@ -449,6 +442,7 @@ public abstract class Translation : VMTestsBase
               (-.) = ref command "negation",
               $complement = ref command "complement",
               $not = ref command "not",
+              create_enumerable = ref command "create_enumerable",
               create_enumerator = ref command "create_enumerator",
               create_module_name = ref command "create_module_name",
               seqconcat = ref command "seqconcat",

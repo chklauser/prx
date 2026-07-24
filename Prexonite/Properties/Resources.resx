@@ -277,9 +277,6 @@
   <data name="MacroCommandExpander_CannotFindMacro" xml:space="preserve">
     <value>Cannot find macro command named `{0}`</value>
   </data>
-  <data name="AstReturn_Warn_YieldInProtectedBlock" xml:space="preserve">
-    <value>Detected possible return (yield) from within a protected block (try-catch-finally, using, foreach). This Prexonite implementation cannot guarantee that cleanup code is executed. </value>
-  </data>
   <data name="AstModifyingAssignment_No_RHS" xml:space="preserve">
     <value>Invalid modifying assignment: No RHS.</value>
   </data>

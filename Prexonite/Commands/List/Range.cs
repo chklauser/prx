@@ -6,17 +6,17 @@ namespace Prexonite.Commands.List;
 ///     Restricts sequences  to a given range. <br />
 ///     <code>range(index, count, xs) = xs >> skip(index) >> limit(count);</code>
 /// </summary>
-public class Range : CoroutineCommand, ICilCompilerAware
+public class Range : EnumerableCommand, ICilCompilerAware
 {
     Range() { }
 
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+    protected override IEnumerable<PValue> EnumerableRun(ContextCarrier sctxCarrier, PValue[] args)
     {
-        return coroutineRunStatically(sctxCarrier, args);
+        return enumerableRunStatically(sctxCarrier, args);
     }
 
     //function range(index, count, xs) = xs >> skip(index) >> limit(count);
-    static IEnumerable<PValue> coroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
+    static IEnumerable<PValue> enumerableRunStatically(ContextCarrier sctxCarrier, PValue[] args)
     {
         if (sctxCarrier == null)
             throw new ArgumentNullException(nameof(sctxCarrier));
@@ -62,10 +62,8 @@ public class Range : CoroutineCommand, ICilCompilerAware
 
     public static PValue RunStatically(StackContext sctx, PValue[] args)
     {
-        var carrier = new ContextCarrier();
-        var corctx = new CoroutineContext(sctx, coroutineRunStatically(carrier, args));
-        carrier.StackContext = corctx;
-        return sctx.CreateNativePValue(new Coroutine(corctx));
+        var carrier = new ContextCarrier(sctx);
+        return CreatePValue(sctx, enumerableRunStatically(carrier, args));
     }
 
     public static Range Instance { get; } = new();

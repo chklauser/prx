@@ -150,9 +150,9 @@ contexts:
     - include: null-literal
     - match: (?i)(?<!\.)\b(static)\b
       scope: storage.modifier.source.pxs
-    - match: '(?i)(?<!\.)\b(if|else|unless|while|until|do|for|foreach|in|using|throw|try|catch|finally|return|yield|break|continue|this|method|namespace|import|export)\b(?!\$|''|\\|\p{Alnum})'
+    - match: '(?i)(?<!\.)\b(if|else|unless|while|until|do|for|foreach|in|using|throw|try|catch|finally|return|break|continue|this|method|namespace|import|export)\b(?!\$|''|\\|\p{Alnum})'
       scope: keyword.control.source.pxs
-    - match: '(?i)(?<!\.)\b(and|or|mod|coroutine|as|new)\b(?!\$|''|\\|\p{Alnum})'
+    - match: '(?i)(?<!\.)\b(and|or|mod|as|new)\b(?!\$|''|\\|\p{Alnum})'
       scope: keyword.operator.source.pxs
     - match: (\+|-|\+\+|--|\*|/|==|!=|<|>|<=|>=|\|>|<\||=>|\?|\.|:|\^|\||&|=|\?\?|>>|<<|->)
       scope: keyword.operator.source.pxs

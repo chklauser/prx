@@ -1,8 +1,8 @@
 namespace Prexonite.Commands.List;
 
-public class Frequency : CoroutineCommand
+public class Frequency : EnumerableCommand
 {
-    protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+    protected override IEnumerable<PValue> EnumerableRun(ContextCarrier sctxCarrier, PValue[] args)
     {
         if (args == null)
             throw new ArgumentNullException(nameof(args));

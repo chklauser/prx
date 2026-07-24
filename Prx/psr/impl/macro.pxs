@@ -1245,7 +1245,7 @@ macro ast\ret\val as ast\ret(expr)
     return macro\newclo(ast\ret\generic_proc).(expr,"exit");
 }
 
-macro ast\ret\continue as ast\yield(expr)
+macro ast\ret\continue(expr)
 {
     return macro\newclo(ast\ret\generic_proc).(expr,"continue");
 }

@@ -42,15 +42,6 @@ public static class Runtime
         nameof(LoadGlobalVariableReference)
     )!;
 
-    [SuppressMessage(
-        "Microsoft.Naming",
-        "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine)
-    )]
-    public static readonly MethodInfo NewCoroutineMethod = typeof(Runtime).GetMethod(
-        nameof(NewCoroutine)
-    )!;
-
     public static readonly MethodInfo WrapPVariableMethod = typeof(Runtime).GetMethod(
         nameof(WrapPVariable)
     )!;
@@ -442,48 +433,6 @@ public static class Runtime
     public static PValue CreateList(StackContext sctx, params PValue[] args)
     {
         return PType.List.CreatePValue(args);
-    }
-
-    [SuppressMessage(
-        "Microsoft.Naming",
-        "CA1704:IdentifiersShouldBeSpelledCorrectly",
-        MessageId = nameof(Coroutine)
-    )]
-    public static PValue NewCoroutine(PValue routine, StackContext sctx, PValue[] argv)
-    {
-        var routineobj = routine.Value;
-
-        if (routineobj == null)
-        {
-            return PType.Null.CreatePValue();
-        }
-        else
-        {
-            StackContext corctx;
-            IStackAware? routinesa;
-            if ((routinesa = routineobj as IStackAware) != null)
-                corctx = routinesa.CreateStackContext(sctx, argv);
-            else
-                corctx = (StackContext)(
-                    routine
-                        .DynamicCall(
-                            sctx,
-                            new[]
-                            {
-                                PType.Object.CreatePValue(sctx.ParentEngine),
-                                PType.Object.CreatePValue(argv),
-                            },
-                            PCall.Get,
-                            "CreateStackContext"
-                        )
-                        .Value
-                    ?? throw new PrexoniteException(
-                        "CreateStackContext of function used as co-routine must not return null."
-                    )
-                );
-
-            return PType.Object[typeof(Coroutine)].CreatePValue(new Coroutine(corctx));
-        }
     }
 
     public static PValue WrapPVariable(PVariable pv)

@@ -524,19 +524,13 @@ FunctionDefinition<out PFunction func>
                                         string? id = null; //The logical id (given in the source code)
                                         string? funcId; //The "physical" function id
                                         bool isNested = target != null; 
-                                        bool isCoroutine = false;
                                         bool isMacro = false;
-                                        PFunction? derBody = null; //The derived coroutine body function (carries a different name)
-                                        PFunction? derStub = null; //The derived coroutine stub function (carries the name(s) specified)
-                                        string derId; //The name of the derived stub
-                                        CompilerTarget? cst = null;  //The compiler target for a coroutine stub
                                         Symbol? symEntry = null;
                                         ISourcePosition position;
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
 =    
   (   function
-  |   coroutine                   (.  isCoroutine = true; .)
   |   macro [function]            (.  isMacro = true; .)
   )                               (.  position = GetPosition(); .)
   (   Id<out id>                  (.  primaryAlias = id; .)
@@ -549,8 +543,6 @@ FunctionDefinition<out PFunction func>
                                             func = TargetApplication._InitializationFunction;
                                             if(isNested)
                                                 Loader.ReportMessage(Message.Error("Cannot define initialization code inside another function.",position,MessageClasses.IllegalInitializationFunction));
-                                            if(isCoroutine)
-                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a coroutine.",position,MessageClasses.IllegalInitializationFunction));
                                             if(isMacro)
                                                 Loader.ReportMessage(Message.Error("Cannot define initialization code as a macro function.",position,MessageClasses.IllegalInitializationFunction));
                                         }
@@ -596,27 +588,6 @@ FunctionDefinition<out PFunction func>
                                             Loader.CreateFunctionTarget(func, target, position);
                                         }
                                         CompilerTarget ft = FunctionTargets[func]!;
-                                        
-                                        //Generate derived stub
-                                        if(isCoroutine)
-                                        {
-                                            derStub = func;
-                                            
-                                            //Create derived body function
-                                            derId = ft.GenerateLocalId();
-                                            derBody = TargetApplication.CreateFunction(derId);
-                                            Loader.CreateFunctionTarget(derBody, ft, position);
-                                            derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
-                                            derBody.Meta[PFunction.VolatileKey] = true;
-                                            derBody.Meta[PFunction.DeficiencyKey] = "Coroutine body can only be executed by VM anyway.";
-                                            derBody.Meta[Coroutine.IsCoroutineKey] = true;
-
-                                            //Swap compiler target references
-                                            // -> Compile source code into derived body
-                                            // -> Let derived stub have the physical function id
-                                            cst = ft;
-                                        }
-                                        
                                   .)
     [   lpar
       [    FormalArg<ft> 
@@ -661,15 +632,6 @@ FunctionDefinition<out PFunction func>
                                             primaryAlias = null;
                                         }
                                       
-                                      //Target the derived coroutine body instead of the stub
-                                        if(isCoroutine) {
-                                            if(derBody == null) {
-                                                Loader.ReportMessage(Message.Error("Internal compiler error: generated coroutine function target not available.",
-                                            			GetPosition(),
-                                            			null));
-                                            }
-                                            func = derBody!;
-                                        }
                                         if((PFunction?)func is null) {
                                            Loader.ReportMessage(Message.Error("Internal compiler error: Function unexpectedly unavailable.",
                                                     GetPosition(),
@@ -724,13 +686,8 @@ FunctionDefinition<out PFunction func>
                                         }
                                         _popLexerState(); 
                                     .)
-    ]
+                                    ]
                                     (.
-                                        if(isCoroutine)
-                                        {
-                                          //Push the stub, because it is the lexical parent of the body
-                                          _PushScope(cst!);
-                                        }
                                         _PushScope(FunctionTargets[func!]!);
                                         Debug.Assert(target != null); // Mostly to tell ReSharper that target is not null.
                                         _pushLexerState(LocalState);
@@ -749,10 +706,6 @@ FunctionDefinition<out PFunction func>
         semicolon
     )                               (.  _popLexerState();
                                         _PopScope(FunctionTargets[func!]!);
-                    if(isCoroutine)
-                    {
-                      _PopScope(cst!);
-                    }
                                         //Compile AST
                                         if(errors.count == 0)
                                         {
@@ -772,7 +725,7 @@ FunctionDefinition<out PFunction func>
                                             else
                                             {
                                                 try {
-                                                //Apply compiler hooks for all kinds of functions (coroutine/macro)
+                                                //Apply compiler hooks for all kinds of functions
                                                 FunctionTargets[func]!.ExecuteCompilerHooks();
                                                 //Emit code for top-level block
                                                 Ast[func].EmitCode(FunctionTargets[func]!, true, StackSemantics.Effect);
@@ -785,27 +738,6 @@ FunctionDefinition<out PFunction func>
                                                 }
                                             }                                       
                                             
-                                          if(isCoroutine)
-                                          {
-                                             try {
-                                                //Stub has to be returned into the physical slot mentioned in the source code
-                                                func = derStub!;
-                                                //Generate code for the stub
-                                                AstCreateCoroutine crcor = Create.CreateCoroutine(position, Create.CreateClosure(position,EntityRef.Function.Create(derBody!.Id,derBody.ParentApplication.Module.Name)));
-                    
-                                                AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
-                                                retst.Expression = crcor;
-                                                cst!.Ast.Add(retst);
-                                                //Emit code for top-level block
-                                                cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
-                                                cst.FinishTarget();
-                                            } catch(Exception e) {
-                                                Loader.ReportMessage(Message.Error(
-                                                    "Exception during compilation of coroutine stub for " + id + ". " + e,
-                                                    GetPosition(),
-                                                    MessageClasses.ParserInternal));
-                                            }
-                                          }
                                         }
                                     .)
 .

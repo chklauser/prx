@@ -1,5 +1,3 @@
-using Prexonite.Properties;
-
 namespace Prexonite.Compiler.Ast;
 
 public class AstReturn : AstNode, IAstHasExpressions
@@ -29,10 +27,6 @@ public class AstReturn : AstNode, IAstHasExpressions
                 "Return nodes cannot be used with value stack semantics. (They don't produce any values)"
             );
 
-        var warned = false;
-        if (target.Function.Meta[Coroutine.IsCoroutineKey].Switch)
-            _warnInCoroutines(target, ref warned);
-
         if (Expression != null)
         {
             _OptimizeNode(target, ref Expression);
@@ -58,7 +52,6 @@ public class AstReturn : AstNode, IAstHasExpressions
                 {
                     Expression.EmitValueCode(target);
                     target.Emit(Position, OpCode.ret_set);
-                    _warnInCoroutines(target, ref warned);
                 }
                 target.Emit(Position, OpCode.ret_continue);
                 break;
@@ -66,33 +59,6 @@ public class AstReturn : AstNode, IAstHasExpressions
                 target.Emit(Position, OpCode.ret_break);
                 break;
         }
-    }
-
-    void _warnInCoroutines(CompilerTarget target, ref bool warned)
-    {
-        if (!warned && _isInProtectedBlock(target))
-        {
-            target.Loader.ReportMessage(
-                Message.Create(
-                    MessageSeverity.Warning,
-                    Resources.AstReturn_Warn_YieldInProtectedBlock,
-                    Position,
-                    MessageClasses.YieldFromProtectedBlock
-                )
-            );
-            warned = true;
-        }
-    }
-
-    static bool _isInProtectedBlock(CompilerTarget target)
-    {
-        return target
-            .ScopeBlocks.OfType<AstScopedBlock>()
-            .Any(sb =>
-                sb.LexicalScope is AstForeachLoop
-                || sb.LexicalScope is AstTryCatchFinally
-                || sb.LexicalScope is AstUsing
-            );
     }
 
     void _emitTailCallExit(CompilerTarget target)
@@ -205,7 +171,7 @@ public class AstReturn : AstNode, IAstHasExpressions
         {
             ReturnVariant.Exit => Expression != null ? "return {0};" : "return;",
             ReturnVariant.Set => "return = {0};",
-            ReturnVariant.Continue => Expression != null ? "yield {0};" : "continue;",
+            ReturnVariant.Continue => "continue;",
             ReturnVariant.Break => "break;",
             _ => "",
         };

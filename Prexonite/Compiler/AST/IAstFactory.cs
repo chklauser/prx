@@ -30,7 +30,6 @@ public interface IAstFactory : IMessageSink
     );
     AstExpr Constant(ISourcePosition position, object? constant);
     AstExpr CreateClosure(ISourcePosition position, EntityRef.Function function);
-    AstCreateCoroutine CreateCoroutine(ISourcePosition position, AstExpr function);
     AstExpr KeyValuePair(ISourcePosition position, AstExpr key, AstExpr value);
     AstExpr ListLiteral(ISourcePosition position, IEnumerable<AstExpr> elements);
     AstExpr HashLiteral(ISourcePosition position, IEnumerable<AstExpr> elements);

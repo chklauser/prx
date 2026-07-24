@@ -559,43 +559,6 @@ public class FunctionContext : StackContext
                     }
                     break;
 
-                case OpCode.newcor:
-                    _fillArgs(argc, out argv);
-
-                    var routine = Pop();
-                    var routineobj = routine.Value;
-                    if (routineobj == null)
-                    {
-                        Push(PType.Null.CreatePValue());
-                    }
-                    else
-                    {
-                        StackContext corctx;
-                        if (routineobj is IStackAware routinesa)
-                            corctx = routinesa.CreateStackContext(this, argv);
-                        else
-                            corctx = (StackContext)(
-                                routine
-                                    .DynamicCall(
-                                        this,
-                                        new[]
-                                        {
-                                            PType.Object.CreatePValue(ParentEngine),
-                                            PType.Object.CreatePValue(argv),
-                                        },
-                                        PCall.Get,
-                                        "CreateStackContext"
-                                    )
-                                    .Value
-                                ?? throw new PrexoniteException(
-                                    "Expected a StackContext from calling CreateStackContext"
-                                )
-                            );
-
-                        Push(PType.Object[typeof(Coroutine)].CreatePValue(new Coroutine(corctx)));
-                    }
-                    break;
-
                 #endregion
 
                 #region OPERATORS

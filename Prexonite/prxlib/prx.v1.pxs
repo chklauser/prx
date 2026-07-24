@@ -107,6 +107,7 @@ namespace prx.v1 {
             (-.),
             $complement,
             $not,
+            create_enumerable,
             create_enumerator,
             create_module_name,
             create_source_position,

@@ -162,263 +162,6 @@ namespace PrexoniteTests.Tests
         }
 
         [Test]
-        public void CoroutineSimple()
-        {
-            Compile(
-                """
-
-                function main(a,b,c)
-                {
-                    ref f = coroutine (x,y,z) => 
-                    { 
-                        yield x; 
-                        yield y; 
-                        yield z;
-                    } for (a,b,c);
-
-                    return f + f + f;
-                }
-
-                """
-            );
-            Expect("abc", "a", "b", "c");
-        }
-
-        [Test]
-        public void CoroutineFunction()
-        {
-            Compile(
-                """
-
-                function subrange(lst, index, count) does
-                    for(var i = index; i < index+count; i++)
-                        yield lst[i];
-
-                function main
-                {
-                    var f = coroutine -> subrange for ( var args, 2, 3 );
-                    var buffer = new System::Text::StringBuilder;
-                    foreach(var e in f)
-                        buffer.Append(e);
-                    return buffer.ToString;
-                }
-
-                """
-            );
-
-            Expect("cde", "a", "b", "c", "d", "e", "f", "g");
-        }
-
-        [Test]
-        public void CoroutineComplex()
-        {
-            Compile(
-                """
-
-                function map(ref f, var lst) = coroutine () =>
-                {
-                    foreach(var x in lst)
-                        yield f(x);
-                };
-
-                function where(ref predicate, var lst) = coroutine()=>
-                {
-                    foreach(var x in lst)
-                        if(predicate(x))
-                            yield x;
-                };
-
-                function limit(n, var lst) = coroutine() =>
-                {
-                    foreach(var x in lst)
-                        if(n-- > 0)
-                            yield x;
-                };
-
-                function skip(n, var lst) = coroutine() =>
-                {
-                    foreach(var x in lst)
-                        if(n-- <= 0)
-                            yield x;
-                };
-
-                function foldl(ref f, var left, var lst)
-                {
-                    foreach(var right in lst)
-                        left = f(left, right);
-                    return left;
-                }
-
-                function curry(ref f) = a => b => f(a,b);
-
-                function chain() does
-                var args; and return lst =>
-                {
-                    foreach(ref filter in var args)
-                        lst = filter(lst);
-                    return lst;
-                };
-
-                function main()
-                {
-                    function toString(lst) = foldl( (l,r) => l + r, "", lst);
-                    ref filterChain = chain(
-                        curry(->skip)   .(2),
-                        curry(->map)    .(x => 3*x),
-                        curry(->where)  .(x => x mod 2 == 0),
-                        curry(->limit)  .(3)
-                    );
-
-                    return toString(filterChain(var args));
-                }
-
-                """
-            );
-            var lst = new List<PValue>();
-            var buffer = new StringBuilder();
-            var nums = 0;
-            for (var i = 0; i < 20; i++)
-            {
-                lst.Add(i);
-                if (i < 2)
-                    continue;
-                if (i * 3 % 2 != 0)
-                    continue;
-                if (nums > 2)
-                    continue;
-                buffer.Append(i * 3);
-                nums++;
-            }
-            Expect(buffer.ToString(), lst.ToArray());
-        }
-
-        /// <summary>
-        ///     Makes sure that coroutines do not return an unnecessary null at the end.
-        /// </summary>
-        [Test]
-        public void CoroutineNoNull()
-        {
-            Compile(
-                """
-
-                function main()
-                {
-                    var c = coroutine() => 
-                    {
-                        yield 0;
-                        yield 1;
-                        yield 2;
-                        yield 3;
-                    };
-
-                    var buffer = new System::Text::StringBuilder;
-                    foreach(var ce in c)
-                    {
-                        buffer.Append("=>");
-                        buffer.Append(ce);
-                        buffer.Append("\n");
-                    }
-
-                    return buffer.ToString;
-                }
-
-                """
-            );
-            Expect("=>0\n=>1\n=>2\n=>3\n");
-        }
-
-        [Test]
-        public void CoroutineRecursive()
-        {
-            Compile(
-                """
-
-                coroutine unfolded(lst)
-                {
-                    foreach(var x in lst)
-                        if(x is List || x is ::Prexonite::$Coroutine)
-                            foreach(var y in unfolded(x))
-                                yield y;
-                        else
-                            yield x;
-                }
-
-                function main()
-                {
-                    var args;
-                    var buffer = new System::Text::StringBuilder();
-                    foreach(var a in unfolded(args))
-                    {
-                        buffer.Append(a);
-                        buffer.Append(".");
-                    }
-                    if(buffer.Length > 0)
-                        buffer.Length -= 1;
-                    return buffer.ToString;
-                }
-
-                """
-            );
-
-            var args = new List<PValue>();
-            var sub1 = new List<PValue>();
-            var sub2 = new List<PValue>();
-            var sub21 = new List<PValue>();
-
-            args.Add(1);
-            args.Add(2);
-            args.Add(PType.List.CreatePValue(sub1));
-            sub1.Add(3);
-            sub1.Add(4);
-            sub1.Add(5);
-            args.Add(6);
-            args.Add(PType.List.CreatePValue(sub2));
-            sub2.Add(7);
-            sub2.Add(PType.List.CreatePValue(sub21));
-            sub21.Add(8);
-            sub21.Add(9);
-            sub21.Add(10);
-            sub2.Add(11);
-            sub2.Add(12);
-            args.Add(13);
-            args.Add(14);
-
-            Expect("1.2.3.4.5.6.7.8.9.10.11.12.13.14", PType.List.CreatePValue(args));
-        }
-
-        [Test]
-        public void CoroutineFib()
-        {
-            Compile(
-                """
-
-                var numbers = [];
-
-                declare function fib;
-
-                ref nextfib = coroutine() =>
-                {
-                    yield 1;
-                    yield 1;
-                    for(var i = 3; true; i++)
-                        yield fib(i-1) + fib(i-2);
-                };
-
-                function fib(n)
-                {
-                    while(numbers.Count < n)
-                        numbers[] = nextfib;
-
-                    return numbers[n-1];
-                }
-
-                """
-            );
-
-            ExpectNamed("fib", _fibonacci(6), 6);
-        }
-
-        [Test]
         public void Hashes()
         {
             Compile(
@@ -432,19 +175,19 @@ namespace PrexoniteTests.Tests
                     return h;
                 }
 
-                coroutine reader(xs) does
-                    foreach(var x in xs)
-                        yield x;
-
                 function main()
                 {
                     var h = mapToHash( x => (x+1)*2, var args);
-                    ref keys = reader(h.Keys);
-                    ref values = reader(h.Values);
+                    var keys = h.Keys.GetEnumerator;
+                    var values = h.Values.GetEnumerator;
 
                     var diff = 0;
                     for(var i = 0; i < h.Count; i++)
-                        diff += values - keys;
+                    {
+                        keys.MoveNext;
+                        values.MoveNext;
+                        diff += values.Current - keys.Current;
+                    }
                     return diff;
                 }
 
@@ -457,6 +200,25 @@ namespace PrexoniteTests.Tests
                 8, //10
             };
             Expect(4 + 5 + 10, xs);
+        }
+
+        [Test]
+        public void RemovedCoroutineKeywordsCanBeUsedAsIdentifiers()
+        {
+            Compile(
+                """
+
+                function main()
+                {
+                    var coroutine = 1;
+                    var yield = 2;
+                    return coroutine + yield;
+                }
+
+                """
+            );
+
+            Expect(3);
         }
 
         [Test]
@@ -570,15 +332,22 @@ namespace PrexoniteTests.Tests
             Compile(
                 """
 
-                coroutine fetch(xs) does 
-                    foreach(var x in xs)
-                        yield x;
-
-                coroutine blit(xs, ys) does
-                    ref nextY = fetch(ys); and
-                    foreach(var x in xs)
-                        var y = nextY; and
-                        yield x ?? y ?? "?";
+                function blit(xs, ys) = create_enumerable(() =>
+                {
+                    var i = 0;
+                    var current;
+                    return new enumerator(
+                        () => {
+                            if(i >= xs.Count)
+                                return false;
+                            current = xs[i] ?? ys[i] ?? "?";
+                            i++;
+                            return true;
+                        },
+                        () => current,
+                        () => null
+                    );
+                });
 
                 function main()
                 {
@@ -599,28 +368,6 @@ namespace PrexoniteTests.Tests
             Compile(
                 """
 
-                coroutine where(ref f, xs) does foreach(var x in xs)
-                    if(f(x))
-                        yield x;
-
-                coroutine limit(max, xs) does
-                    var i = 0; and
-                    foreach(var x in xs)
-                        if(i++ >= max)
-                            break;
-                        else
-                            yield x;
-
-                coroutine skip(cnt, xs) does
-                    var i = 0; and
-                    foreach(var x in xs)
-                        if(i++ >= cnt)
-                            yield x;
-
-                coroutine map(ref f, xs) does
-                    foreach(var x in xs)
-                        yield f(x);
-
                 function main(sep) = foldl( (l,r) => $l + " " + $r, "BEGIN")
                     << limit(3) << map( x => x.Length + sep + x ) << where( x => x.Length >= 3 ) << skip(1) << var args;
 
@@ -635,28 +382,6 @@ namespace PrexoniteTests.Tests
         {
             Compile(
                 """
-
-                coroutine where(ref f, xs) does foreach(var x in xs)
-                    if(f(x))
-                        yield x;
-
-                coroutine limit(max, xs) does
-                    var i = 0; and
-                    foreach(var x in xs)
-                        if(i++ >= max)
-                            break;
-                        else
-                            yield x;
-
-                coroutine skip(cnt, xs) does
-                    var i = 0; and
-                    foreach(var x in xs)
-                        if(i++ >= cnt)
-                            yield x;
-
-                coroutine map(ref f, xs) does
-                    foreach(var x in xs)
-                        yield f(x);
 
                 function main(sep) = 
                     var args >> 
@@ -1126,11 +851,6 @@ function main(a,b)
                     return 5;
                 }
 
-                function ret_yield()
-                {
-                    yield 6;
-                }
-
                 function ret_continue()
                 {
                     continue;
@@ -1145,7 +865,6 @@ function main(a,b)
             );
 
             _testReturnMode("ret_exit", ReturnMode.Exit, 5);
-            _testReturnMode("ret_yield", ReturnMode.Continue, 6);
             _testReturnMode("ret_continue", ReturnMode.Continue, PType.Null);
             _testReturnMode("ret_break", ReturnMode.Break, PType.Null);
         }

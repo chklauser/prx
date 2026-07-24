@@ -60,7 +60,6 @@ public static class MessageClasses
 
     public const string ReferenceToMacro = "C.ReferenceToMacro";
     public const string InvalidReference = "C.InvalidReference";
-    public const string YieldFromProtectedBlock = "C.YieldFromProtectedBlock";
     public const string ParameterNameReserved = "C.ParameterNameReserved";
     public const string InvalidModifyingAssignment = "C.InvalidModifyingAssignment";
     public const string PartialApplicationNotSupported = "C.PartialApplicationNotSupported";

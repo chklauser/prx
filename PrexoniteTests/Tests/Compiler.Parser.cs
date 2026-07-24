@@ -2255,79 +2255,6 @@ public class CompilerTestBaseParser : CompilerTestBase
     }
 
     [Test]
-    public void CoroutineCreation()
-    {
-        _compile(
-            """
-
-            function subrange(lst, index, count)
-            {
-                for(var i = index; i < index + count; i++)
-                    yield lst[i];
-            }
-
-            function main()
-            {
-                var lst;
-                ref oneToFive = coroutine -> subrange for (lst,1,5);
-                var even = coroutine () => 
-                {
-                    foreach(var x in lst)
-                        yield x;
-                };
-                return null;
-            }
-
-            """
-        );
-        Expect(
-            """
-
-            var lst, oneToFive, even
-            ldr.func    subrange
-            ldloc       lst
-            ldc.int     1
-            ldc.int     5
-            newcor.3
-            stloc       oneToFive
-            newclo      main\0
-            newcor.0
-            stloc       even     
-            ldnull
-            ret.val 
-
-            """
-        );
-
-        Expect(
-            @"subrange",
-            """
-
-            var lst, index, count,i
-            ldloc   index
-            stloc   i
-            jump    condition
-            label   begin
-            ldloc   lst
-            ldloc   i
-            get.1   ""
-            ret.set
-            yield
-            label continue
-            inc     i
-            label condition
-            ldloc   i
-            ldloc   index
-            ldloc   count
-            add
-            clt
-            jump.t  begin
-
-            """
-        );
-    }
-
-    [Test]
     public void BugIllegalHide()
     {
         _compile(
@@ -2357,73 +2284,6 @@ public class CompilerTestBaseParser : CompilerTestBase
             @cmd.1  println
             ldnull
             ret.val
-
-            """
-        );
-    }
-
-    [Test]
-    public void CoroutineFunctionDefinitions()
-    {
-        _compile(
-            """
-
-            coroutine where(lst, ref predicate) does
-                foreach(var e in lst)
-                    if(predicate(e))
-                        yield(e);
-
-            function main()
-            {
-                coroutine skip(lst, num)
-                {
-                    foreach(var e in lst)
-                        if(num-- > 0)
-                            yield e;
-                }
-
-                return where(skip([1,2,3],1),x=>x mod 2==0);
-            }
-
-            """
-        );
-
-        Expect(
-            """
-
-            var skip
-            ldr.func  main\skip0  //the nested function does not need to be a closure, so it is not
-            stloc   skip
-            ldc.int 1
-            ldc.int 2
-            ldc.int 3
-            cmd.3   list
-            ldc.int 1
-            indloc.2 skip
-            ldr.func main\1 //no need for a closure
-            func.2  where
-            ret.val
-
-            """
-        );
-
-        Expect(
-            "where",
-            """
-
-            newclo  where\0
-            newcor.0
-            ret.value
-
-            """
-        );
-        Expect(
-            @"main\skip0",
-            """
-
-            newclo  main\skip0\0
-            newcor.0
-            ret.value
 
             """
         );
@@ -4125,22 +3985,6 @@ indloc.1 a
                 runInDifferentColor( () => print(q), 
                     if(color != null) color else ::Console.ForegroundColor);
             	return readline;
-            }
-
-            """
-        );
-    }
-
-    [Test]
-    public void NestedCoroutineCapture()
-    {
-        _compile(
-            """
-
-            function parent
-            {
-                var x;
-                coroutine nested = x;
             }
 
             """
