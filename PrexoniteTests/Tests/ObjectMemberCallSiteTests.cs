@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Compiler;
 using Prexonite.Types;
+using CilCompiler = Prexonite.Compiler.Cil.Compiler;
 
 namespace PrexoniteTests.Tests;
 
@@ -180,6 +182,149 @@ public class ObjectMemberCallSiteCilCompatibilityTests : VMTestsBase
             "type locked",
             engine.CreateNativePValue(new ObjectMemberCallSiteTests.OverloadProbe())
         );
+    }
+
+    [Test]
+    public void CilCallSiteDistinguishesExplicitlyConvertedArguments()
+    {
+        Compile(
+            """
+            function invokeProbe(target, value) = target.Select(value, 2, 3);
+
+            function main(target, value) =
+                [invokeProbe(target, value),
+                 invokeProbe(target, value~Int),
+                 invokeProbe(target, value)];
+            """
+        );
+
+        Expect(
+            result =>
+            {
+                var values = (List<PValue>)result.Value!;
+                Assert.That(
+                    values.Select(value => value.Value),
+                    Is.EqualTo(
+                        new[] { "automatic conversion", "type locked", "automatic conversion" }
+                    )
+                );
+            },
+            engine.CreateNativePValue(new ObjectMemberCallSiteTests.OverloadProbe()),
+            PType.Int.CreatePValue(1)
+        );
+
+        var function = target.Functions["invokeProbe"]!;
+        Assert.That(function.HasCilImplementation, Is.True);
+        Assert.That(
+            function
+                .ObjectMemberCallSites.GetExisting(_callOffset(function, OpCode.get, "Select"))!
+                .BindingCount,
+            Is.EqualTo(2)
+        );
+    }
+
+    [Test]
+    public void CilCallSiteDistinguishesPTypeTagsForTheSameClrType()
+    {
+        Compile("function main(target, value) = target.Accept(value);");
+        var probe = engine.CreateNativePValue(new ObjectMemberCallSiteTests.OverloadProbe());
+
+        Expect("accepted", probe, PType.Int.CreatePValue(1));
+        Expect("accepted", probe, PType.Object[typeof(int)].CreatePValue(1));
+        Expect("accepted", probe, PType.Int.CreatePValue(2));
+
+        var function = target.Functions["main"]!;
+        Assert.That(
+            function
+                .ObjectMemberCallSites.GetExisting(_callOffset(function, OpCode.get, "Accept"))!
+                .BindingCount,
+            Is.EqualTo(2)
+        );
+    }
+
+    [Test]
+    public void CilStaticCallSiteDistinguishesExplicitConversions()
+    {
+        engine.RegisterAssembly(typeof(ObjectMemberCallSiteStaticProbe).Assembly);
+        Compile(
+            """
+            function invokeProbe(value) =
+                PrexoniteTests::Tests::ObjectMemberCallSiteStaticProbe.Select(value, 2, 3);
+
+            function main(value) =
+                [invokeProbe(value), invokeProbe(value~Int), invokeProbe(value)];
+            """
+        );
+
+        Expect(
+            result =>
+            {
+                var values = (List<PValue>)result.Value!;
+                Assert.That(
+                    values.Select(value => value.Value),
+                    Is.EqualTo(
+                        new[] { "automatic conversion", "type locked", "automatic conversion" }
+                    )
+                );
+            },
+            PType.Int.CreatePValue(1)
+        );
+
+        var function = target.Functions["invokeProbe"]!;
+        var callOffset = function.Code.FindIndex(instruction =>
+            instruction.OpCode == OpCode.sget && instruction.Id!.EndsWith("::Select")
+        );
+        Assert.That(
+            function.ObjectMemberCallSites.GetExisting(callOffset)!.BindingCount,
+            Is.EqualTo(2)
+        );
+    }
+
+    [Test]
+    public void CilObjectOverrideDoesNotCreateAReflectionCallSite()
+    {
+        Compile("function main(target) = target.answer();");
+        var callable = new MemberCallable { Name = "callsite override" };
+        callable.Expect("answer", [], returns: PType.Int.CreatePValue(42));
+
+        Expect(42, engine.CreateNativePValue(callable));
+
+        var function = target.Functions["main"]!;
+        Assert.That(
+            function.ObjectMemberCallSites.GetExisting(_callOffset(function, OpCode.get, "answer")),
+            Is.Null
+        );
+        callable.AssertCalledAll();
+    }
+
+    [Test]
+    public void CilCallSitesCanBeDisabledForDiagnosticComparison()
+    {
+        var loader = new Loader(options);
+        loader.LoadFromString("function main(target) = target.Accept(1);");
+        Assert.That(loader.ErrorCount, Is.Zero);
+        var function = target.Functions["main"]!;
+        function.Meta[CilCompiler.DisableObjectMemberCallSitesKey] = true;
+        CilCompiler.Compile(target, engine);
+
+        Expect(
+            "accepted",
+            engine.CreateNativePValue(new ObjectMemberCallSiteTests.OverloadProbe())
+        );
+
+        Assert.That(
+            function.ObjectMemberCallSites.GetExisting(_callOffset(function, OpCode.get, "Accept")),
+            Is.Null
+        );
+    }
+
+    static int _callOffset(PFunction function, OpCode opCode, string id)
+    {
+        var callOffset = function.Code.FindIndex(instruction =>
+            instruction.OpCode == opCode && instruction.Id == id
+        );
+        Assert.That(callOffset, Is.GreaterThanOrEqualTo(0));
+        return callOffset;
     }
 }
 

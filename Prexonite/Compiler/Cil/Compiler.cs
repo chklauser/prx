@@ -17,6 +17,10 @@ namespace Prexonite.Compiler.Cil;
 [SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
 public static class Compiler
 {
+    // Retains the former generated IL for correctness/performance comparisons.
+    internal const string DisableObjectMemberCallSitesKey =
+        @"\cil_disable_object_member_call_sites";
+
     #region Public interface and LCG Setup
 
     public static void Compile(Application app, Engine targetEngine)
@@ -1490,22 +1494,48 @@ public static class Compiler
 
                 case OpCode.get:
                     state.FillArgv(argc);
-                    state.EmitLoadLocal(state.SctxLocal);
-                    state.ReadArgv(argc);
-                    state.EmitLdcI4((int)PCall.Get);
-                    state.Il.Emit(OpCodes.Ldstr, id!);
-                    state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                    if (state.Source.Meta[DisableObjectMemberCallSitesKey].Switch)
+                    {
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Get);
+                        state.Il.Emit(OpCodes.Ldstr, id!);
+                        state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                    }
+                    else
+                    {
+                        state.EmitLoadArg(CompilerState.ParamSourceIndex);
+                        state.EmitLdcI4(instructionIndex);
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Get);
+                        state.Il.Emit(OpCodes.Ldstr, id!);
+                        state.EmitCall(Runtime.CallDynamicObjectMemberMethod);
+                    }
                     if (justEffect)
                         state.Il.Emit(OpCodes.Pop);
                     break;
 
                 case OpCode.set:
                     state.FillArgv(argc);
-                    state.EmitLoadLocal(state.SctxLocal);
-                    state.ReadArgv(argc);
-                    state.EmitLdcI4((int)PCall.Set);
-                    state.Il.Emit(OpCodes.Ldstr, id!);
-                    state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                    if (state.Source.Meta[DisableObjectMemberCallSitesKey].Switch)
+                    {
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Set);
+                        state.Il.Emit(OpCodes.Ldstr, id!);
+                        state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
+                    }
+                    else
+                    {
+                        state.EmitLoadArg(CompilerState.ParamSourceIndex);
+                        state.EmitLdcI4(instructionIndex);
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Set);
+                        state.Il.Emit(OpCodes.Ldstr, id!);
+                        state.EmitCall(Runtime.CallDynamicObjectMemberMethod);
+                    }
                     state.Il.Emit(OpCodes.Pop);
                     break;
 
@@ -1528,11 +1558,24 @@ public static class Compiler
                     methodId = id[(idx + 2)..];
                     typeExpr = id[..idx];
                     state.EmitLoadType(typeExpr);
-                    state.EmitLoadLocal(state.SctxLocal);
-                    state.ReadArgv(argc);
-                    state.EmitLdcI4((int)PCall.Get);
-                    state.Il.Emit(OpCodes.Ldstr, methodId);
-                    state.EmitVirtualCall(Runtime.StaticCallMethod);
+                    if (state.Source.Meta[DisableObjectMemberCallSitesKey].Switch)
+                    {
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Get);
+                        state.Il.Emit(OpCodes.Ldstr, methodId);
+                        state.EmitVirtualCall(Runtime.StaticCallMethod);
+                    }
+                    else
+                    {
+                        state.EmitLoadArg(CompilerState.ParamSourceIndex);
+                        state.EmitLdcI4(instructionIndex);
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Get);
+                        state.Il.Emit(OpCodes.Ldstr, methodId);
+                        state.EmitCall(Runtime.CallStaticObjectMemberMethod);
+                    }
                     if (justEffect)
                         state.Il.Emit(OpCodes.Pop);
                     break;
@@ -1547,11 +1590,24 @@ public static class Compiler
                     methodId = id[(idx + 2)..];
                     typeExpr = id[..idx];
                     state.EmitLoadType(typeExpr);
-                    state.EmitLoadLocal(state.SctxLocal);
-                    state.ReadArgv(argc);
-                    state.EmitLdcI4((int)PCall.Set);
-                    state.Il.Emit(OpCodes.Ldstr, methodId);
-                    state.EmitVirtualCall(Runtime.StaticCallMethod);
+                    if (state.Source.Meta[DisableObjectMemberCallSitesKey].Switch)
+                    {
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Set);
+                        state.Il.Emit(OpCodes.Ldstr, methodId);
+                        state.EmitVirtualCall(Runtime.StaticCallMethod);
+                    }
+                    else
+                    {
+                        state.EmitLoadArg(CompilerState.ParamSourceIndex);
+                        state.EmitLdcI4(instructionIndex);
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.ReadArgv(argc);
+                        state.EmitLdcI4((int)PCall.Set);
+                        state.Il.Emit(OpCodes.Ldstr, methodId);
+                        state.EmitCall(Runtime.CallStaticObjectMemberMethod);
+                    }
                     state.Il.Emit(OpCodes.Pop);
                     break;
 

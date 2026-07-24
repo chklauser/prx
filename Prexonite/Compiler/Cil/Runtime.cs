@@ -97,6 +97,34 @@ public static class Runtime
             [typeof(StackContext), typeof(PValue[]), typeof(PCall), typeof(string)]
         )!;
 
+    public static MethodInfo CallDynamicObjectMemberMethod { get; } =
+        typeof(Runtime).GetMethod(
+            nameof(CallDynamicObjectMember),
+            [
+                typeof(PValue),
+                typeof(PFunction),
+                typeof(int),
+                typeof(StackContext),
+                typeof(PValue[]),
+                typeof(PCall),
+                typeof(string),
+            ]
+        )!;
+
+    public static MethodInfo CallStaticObjectMemberMethod { get; } =
+        typeof(Runtime).GetMethod(
+            nameof(CallStaticObjectMember),
+            [
+                typeof(PType),
+                typeof(PFunction),
+                typeof(int),
+                typeof(StackContext),
+                typeof(PValue[]),
+                typeof(PCall),
+                typeof(string),
+            ]
+        )!;
+
     public static MethodInfo CallInternalFunctionMethod { get; } =
         typeof(Runtime).GetMethod(nameof(CallInternalFunction))!;
 
@@ -136,6 +164,44 @@ public static class Runtime
     // ReSharper restore InconsistentNaming
 
     // ReSharper disable UnusedMember.Global
+    public static PValue CallDynamicObjectMember(
+        PValue subject,
+        PFunction source,
+        int instructionOffset,
+        StackContext sctx,
+        PValue[] args,
+        PCall call,
+        string id
+    )
+    {
+        if (subject.Type is not ObjectPType objectType)
+            return subject.DynamicCall(sctx, args, call, id);
+
+        if (objectType.TryDynamicCallOverride(sctx, subject, args, call, id, false, out var result))
+            return result;
+
+        return source
+            .ObjectMemberCallSites.GetDynamic(instructionOffset, call, id)
+            .Invoke(sctx, subject, args);
+    }
+
+    public static PValue CallStaticObjectMember(
+        PType type,
+        PFunction source,
+        int instructionOffset,
+        StackContext sctx,
+        PValue[] args,
+        PCall call,
+        string id
+    )
+    {
+        return type is ObjectPType objectType
+            ? source
+                .ObjectMemberCallSites.GetStatic(instructionOffset, call, id)
+                .Invoke(sctx, objectType, args)
+            : type.StaticCall(sctx, args, call, id);
+    }
+
     public static PValue LoadGlobalVariableReferenceAsPValue(
         StackContext sctx,
         string id,
