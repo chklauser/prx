@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
 using Prexonite.Commands;
-using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Commands.Core.PartialApplication;
@@ -749,15 +748,6 @@ public partial class Engine
 
         Commands.AddEngineCommand(Contains.Alias, Contains.Instance);
 
-        Commands.AddEngineCommand(ChanAlias, Chan.Instance);
-
-        Commands.AddEngineCommand(SelectAlias, Select.Instance);
-
-        Commands.AddEngineCommand(Call_AsyncAlias, CallAsync.Instance);
-        Commands.AddEngineCommand(CallAsync.Alias, CallAsync.Instance);
-
-        Commands.AddEngineCommand(AsyncSeqAlias, AsyncSeq.Instance);
-
         Commands.AddEngineCommand(CallSubPerformAlias, CallSubPerform.Instance);
 
         Commands.AddEngineCommand(PartialCallAlias, new PartialCallCommand());
@@ -872,21 +862,6 @@ public partial class Engine
     ///     use <see cref = "Call.Alias" />.
     /// </summary>
     public const string CallAlias = "call";
-
-    /// <summary>
-    ///     Alias used for the <c>call\async</c> command.
-    /// </summary>
-    public const string Call_AsyncAlias = @"call\async";
-
-    /// <summary>
-    ///     Alias used for the "async_seq" command.
-    /// </summary>
-    public const string AsyncSeqAlias = @"async_seq";
-
-    /// <summary>
-    ///     Alias used for the "chan" command.
-    /// </summary>
-    public const string ChanAlias = "chan";
 
     /// <summary>
     ///     Alias used for the "select" command.

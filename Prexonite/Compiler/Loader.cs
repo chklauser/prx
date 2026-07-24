@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
 using Prexonite.Commands;
-using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
@@ -560,7 +559,6 @@ public class Loader : StackContext, IMessageSink
         _addMacroCommand(Call.Instance.Partial);
         _addMacroCommand(Call_Member.Instance.Partial);
         _addMacroCommand(Call_Tail.Instance.Partial);
-        _addMacroCommand(CallAsync.Instance.Partial);
         _addCallMacro();
 
         // Type conversions / type checks / static calls on built-ins

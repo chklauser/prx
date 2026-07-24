@@ -106,8 +106,3 @@ export(*), prx.prim(
   call\member,
   call\sub
 );
-
-namespace prx.experimental
-{
-  namespace csp export(*), prx.prim(chan,async_seq,call\async,select);
-}

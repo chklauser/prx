@@ -57,6 +57,20 @@ public abstract partial class VMTests : VMTestsBase
     }
 
     [Test]
+    public void SelectRemainsMapAlias()
+    {
+        Compile(
+            """
+
+            function main() = foldl((a, b) => a + b, 0, select(x => x * 2, [1, 2, 3]));
+
+            """
+        );
+
+        Expect(12);
+    }
+
+    [Test]
     public void FlatMapImplementation()
     {
         Compile(
@@ -369,45 +383,6 @@ public abstract partial class VMTests : VMTestsBase
     delegate PValue ProvidedFunctionImpl(StackContext sctx, ReadOnlySpan<PValue> args);
 
     [Test]
-    public void CallAsyncCommandImplementation()
-    {
-        Compile(
-            """
-
-            function fib_rec(n, /*thunk*/ fibT, ref combine) =
-                if(n <= 0) 0 else if(n <= 2) 1 else combine(force(fibT).(n-1), force(fibT).(n-2));
-
-            function main(n,m, i)
-            {
-                //Simple, background
-                var simple_fib;
-                simple_fib = thunk(() => fib_rec(?, simple_fib, ? + ?));
-                var f1 = call\async(fib_rec(?),[?, simple_fib, ? + ?]);
-                println(var c1 = f1.(n));
-                
-                //Recursive, background
-                var rec_fib;
-                rec_fib = thunk(() => call\async(fib_rec(?), [?, rec_fib, (ca,cb) => ca.receive + cb.receive]));
-                var f2 = force(rec_fib);
-                println(var c2 = f2.(m));
-
-                //No lazyness involved
-                function sfib(n) = if(n <= 0) 0 else if(n <= 2) 1 else sfib(n-1) + sfib(n-2);
-                var c3 = call\async(sfib(?),[i]);
-
-                println(var r = [c1.receive, c2.receive, c3.receive]);
-                return r;
-            }
-
-            """
-        );
-        //fib 8 = 21
-        //fib 7 = 13
-        //fib 6 = 8
-        Expect(new List<PValue> { 8, 13, 21 }, 6, 7, 8);
-    }
-
-    [Test]
     public void UnbindCommandImplementation()
     {
         Compile(
@@ -482,23 +457,6 @@ public abstract partial class VMTests : VMTestsBase
         Compile("""function main = [1,2,3,4,5] >> reverse >> foldl((a,b) => a + b,"");""");
 
         Expect("54321");
-    }
-
-    [Test]
-    public void AsyncSeqSemantics()
-    {
-        Compile(
-            """
-
-            function main(xs)
-            {
-                return foldl((a,b) => a + ">" + b, "") << async_seq(xs);
-            }
-
-            """
-        );
-
-        Expect(">1>2>3", (PValue)new List<PValue> { 1, 2, 3 });
     }
 
     #region Call\*
