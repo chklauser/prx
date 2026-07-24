@@ -5,6 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Benchmark dependencies -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+
     <!-- Runtime dependencies -->
     <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
 

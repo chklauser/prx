@@ -22,4 +22,5 @@ using System.Runtime.InteropServices;
 // Makes internal members of Prexonite visible to the unit testing project
 //  PrexoniteTests.
 [assembly: InternalsVisibleTo("PrexoniteTests")]
+[assembly: InternalsVisibleTo("Prexonite.Benchmarks")]
 [assembly: InternalsVisibleTo("Prx")]

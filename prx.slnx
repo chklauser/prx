@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="CSFlex/CSFlex.csproj" />
   <Project Path="Prexonite/Prexonite.csproj" />
+  <Project Path="Prexonite.Benchmarks/Prexonite.Benchmarks.csproj" />
   <Project Path="PrexoniteTests/PrexoniteTests.csproj" />
   <Project Path="PrexoniteTests.Generators/PrexoniteTests.Generators.csproj" />
   <Project Path="Prx/Prx.csproj" />
