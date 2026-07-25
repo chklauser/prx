@@ -150,6 +150,80 @@ public class ObjectMemberCallSiteTests : VMTestsBase
         );
     }
 
+    [Test]
+    public void InterpreterCallSiteRetainsFourBindingsAfterBecomingMegamorphic()
+    {
+        Compile("function main(target, value) = target.Accept(value);");
+        var probe = engine.CreateNativePValue(new OverloadProbe());
+        var shapes = CreateDistinctIntShapes();
+
+        foreach (var shape in shapes)
+            Expect("accepted", probe, shape);
+
+        var function = target.Functions["main"]!;
+        var callOffset = function.Code.FindIndex(instruction =>
+            instruction.OpCode == OpCode.get && instruction.Id == "Accept"
+        );
+        var site = function.ObjectMemberCallSites.GetExisting(callOffset)!;
+        Assert.That(site.IsMegamorphic, Is.True);
+        Assert.That(site.CachedBindingCount, Is.EqualTo(4));
+        Assert.That(site.BindingCount, Is.EqualTo(5));
+
+        Expect("accepted", probe, shapes[^1]);
+        Assert.That(site.BindingCount, Is.EqualTo(5), "The newest shape should remain cached.");
+
+        Expect("accepted", probe, shapes[0]);
+        Expect("accepted", probe, shapes[0]);
+        Assert.That(
+            site.BindingCount,
+            Is.EqualTo(7),
+            "An evicted shape should be resolved afresh on every megamorphic miss."
+        );
+
+        Expect("accepted", probe, shapes[1]);
+        Assert.That(site.BindingCount, Is.EqualTo(7), "Retained shapes should still hit.");
+    }
+
+    [Test]
+    public void InterpreterStaticCallSiteUsesTheSameMegamorphicPolicy()
+    {
+        engine.RegisterAssembly(typeof(ObjectMemberCallSiteStaticProbe).Assembly);
+        Compile(
+            "function main(value) = "
+                + "PrexoniteTests::Tests::ObjectMemberCallSiteStaticProbe.Accept(value);"
+        );
+        var shapes = CreateDistinctIntShapes();
+
+        for (var i = 0; i < shapes.Length; i++)
+            Expect(i + 1, shapes[i]);
+
+        var function = target.Functions["main"]!;
+        var callOffset = function.Code.FindIndex(instruction =>
+            instruction.OpCode == OpCode.sget && instruction.Id!.EndsWith("::Accept")
+        );
+        var site = function.ObjectMemberCallSites.GetExisting(callOffset)!;
+        Assert.That(site.IsMegamorphic, Is.True);
+        Assert.That(site.CachedBindingCount, Is.EqualTo(4));
+        Assert.That(site.BindingCount, Is.EqualTo(5));
+
+        Expect(5, shapes[^1]);
+        Assert.That(site.BindingCount, Is.EqualTo(5));
+        Expect(1, shapes[0]);
+        Assert.That(site.BindingCount, Is.EqualTo(6));
+    }
+
+    internal static PValue[] CreateDistinctIntShapes()
+    {
+        return
+        [
+            PType.Int.CreatePValue(1),
+            PType.Object[typeof(int)].CreatePValue(2),
+            new ObjectPType(typeof(int)).CreatePValue(3),
+            new ObjectPType(typeof(int)).CreatePValue(4),
+            new ObjectPType(typeof(int)).CreatePValue(5),
+        ];
+    }
+
     public sealed class OverloadProbe
     {
         public string Select(double value, int second, int third)
@@ -318,6 +392,33 @@ public class ObjectMemberCallSiteCilCompatibilityTests : VMTestsBase
         );
     }
 
+    [Test]
+    public void CilCallSiteRetainsFourBindingsAfterBecomingMegamorphic()
+    {
+        Compile("function main(target, value) = target.Accept(value);");
+        var probe = engine.CreateNativePValue(new ObjectMemberCallSiteTests.OverloadProbe());
+        var shapes = ObjectMemberCallSiteTests.CreateDistinctIntShapes();
+
+        foreach (var shape in shapes)
+            Expect("accepted", probe, shape);
+
+        var function = target.Functions["main"]!;
+        var site = function.ObjectMemberCallSites.GetExisting(
+            _callOffset(function, OpCode.get, "Accept")
+        )!;
+        Assert.That(site.IsMegamorphic, Is.True);
+        Assert.That(site.CachedBindingCount, Is.EqualTo(4));
+        Assert.That(site.BindingCount, Is.EqualTo(5));
+
+        Expect("accepted", probe, shapes[^1]);
+        Assert.That(site.BindingCount, Is.EqualTo(5));
+        Expect("accepted", probe, shapes[0]);
+        Expect("accepted", probe, shapes[0]);
+        Assert.That(site.BindingCount, Is.EqualTo(7));
+        Expect("accepted", probe, shapes[1]);
+        Assert.That(site.BindingCount, Is.EqualTo(7));
+    }
+
     static int _callOffset(PFunction function, OpCode opCode, string id)
     {
         var callOffset = function.Code.FindIndex(instruction =>
@@ -338,5 +439,10 @@ public static class ObjectMemberCallSiteStaticProbe
     public static string Select(int value, double second, double third)
     {
         return "type locked";
+    }
+
+    public static int Accept(object value)
+    {
+        return (int)value;
     }
 }

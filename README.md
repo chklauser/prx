@@ -32,7 +32,7 @@ somewhat object-aware<sup><a href="#f3">3</a></sup>, interpreted<sup><a href="#f
   looking for <code>.prototype</code> will be in vain.
     </li>
     <li>      
-      <a name="f4">&nbsp;</a>Technically speaking, Prexonite Script is actually being compiled. Three times. A significant portion of Prexonite code runs as x86, directly on your CPU. But wait until you hear the best part: It doesn't matter since  most performance is wasted  on insisting that every method invocation must do a full overload resolution. You know, in case those pesky methods swapped places since the last loop iteration. 
+      <a name="f4">&nbsp;</a>Technically speaking, Prexonite Script is actually being compiled. Three times. A significant portion of Prexonite code runs as native machine code. And, after a mere couple of decades, CLR member calls even remember their overload resolution. We still check the answer&mdash;this is a dynamically typed abomination&mdash;but the pesky methods no longer need to prove that they have not swapped places since the last loop iteration.
     </li>
   </ol>
 </div>

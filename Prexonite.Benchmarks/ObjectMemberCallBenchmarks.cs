@@ -259,19 +259,31 @@ public class ObjectMemberCallBenchmarks
     void _assertForcedRebinding()
     {
         var receiverBindings = _freshReceiverTagSite.BindingCount;
-        _assertResult(CachedFreshReceiverTag(), 42);
-        _assertResult(CachedFreshReceiverTag(), 42);
-        if (_freshReceiverTagSite.BindingCount != receiverBindings + 2)
+        for (var i = 0; i < ObjectMemberCallSite.MaxPolymorphicBindingCount + 2; i++)
+            _assertResult(CachedFreshReceiverTag(), 42);
+        if (
+            _freshReceiverTagSite.BindingCount
+                != receiverBindings + ObjectMemberCallSite.MaxPolymorphicBindingCount + 2
+            || !_freshReceiverTagSite.IsMegamorphic
+            || _freshReceiverTagSite.CachedBindingCount
+                != ObjectMemberCallSite.MaxPolymorphicBindingCount
+        )
             throw new InvalidOperationException(
-                "Fresh receiver tags did not force the call site to rebind."
+                "Fresh receiver tags did not saturate the call site and continue rebinding."
             );
 
         var argumentBindings = _freshArgumentTagSite.BindingCount;
-        _assertResult(CachedFreshArgumentTag(), 1);
-        _assertResult(CachedFreshArgumentTag(), 1);
-        if (_freshArgumentTagSite.BindingCount != argumentBindings + 2)
+        for (var i = 0; i < ObjectMemberCallSite.MaxPolymorphicBindingCount + 2; i++)
+            _assertResult(CachedFreshArgumentTag(), 1);
+        if (
+            _freshArgumentTagSite.BindingCount
+                != argumentBindings + ObjectMemberCallSite.MaxPolymorphicBindingCount + 2
+            || !_freshArgumentTagSite.IsMegamorphic
+            || _freshArgumentTagSite.CachedBindingCount
+                != ObjectMemberCallSite.MaxPolymorphicBindingCount
+        )
             throw new InvalidOperationException(
-                "Fresh argument tags did not force the call site to rebind."
+                "Fresh argument tags did not saturate the call site and continue rebinding."
             );
     }
 

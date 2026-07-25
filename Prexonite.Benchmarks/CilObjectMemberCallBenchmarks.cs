@@ -24,6 +24,7 @@ public class CilObjectMemberCallBenchmarks
     PValue[] _subjectArgs = null!;
     PValue[][] _polymorphicArgs = null!;
     PValue[][] _lateGuardMissArgs = null!;
+    PValue[][] _megamorphicArgs = null!;
     PValue[] _cachedFreshReceiverArgs = null!;
     PValue[] _uncachedFreshReceiverArgs = null!;
 
@@ -39,10 +40,14 @@ public class CilObjectMemberCallBenchmarks
     CompiledBenchmark _uncachedLateGuardMiss;
     CompiledBenchmark _cachedFreshReceiver;
     CompiledBenchmark _uncachedFreshReceiver;
+    CompiledBenchmark _cachedMegamorphic;
+    CompiledBenchmark _uncachedMegamorphic;
     int _cachedPolymorphicIndex;
     int _uncachedPolymorphicIndex;
     int _cachedLateGuardMissIndex;
     int _uncachedLateGuardMissIndex;
+    int _cachedMegamorphicIndex;
+    int _uncachedMegamorphicIndex;
 
     [GlobalSetup]
     public void Setup()
@@ -60,6 +65,14 @@ public class CilObjectMemberCallBenchmarks
         [
             [_subject, PType.Object[typeof(int)].CreatePValue(16)],
             [_subject, PType.Object[typeof(string)].CreatePValue("sixteen")],
+        ];
+        _megamorphicArgs =
+        [
+            [_subject, PType.Int.CreatePValue(1)],
+            [_subject, PType.Object[typeof(int)].CreatePValue(2)],
+            [_subject, new ObjectPType(typeof(int)).CreatePValue(3)],
+            [_subject, new ObjectPType(typeof(int)).CreatePValue(4)],
+            [_subject, new ObjectPType(typeof(int)).CreatePValue(5)],
         ];
         _cachedFreshReceiverArgs = new PValue[1];
         _uncachedFreshReceiverArgs = new PValue[1];
@@ -93,6 +106,8 @@ public class CilObjectMemberCallBenchmarks
         _uncachedLateGuardMiss = _getCompiled("uncachedLateGuardMiss");
         _cachedFreshReceiver = _getCompiled("cachedFreshReceiver");
         _uncachedFreshReceiver = _getCompiled("uncachedFreshReceiver");
+        _cachedMegamorphic = _getCompiled("cachedMegamorphic");
+        _uncachedMegamorphic = _getCompiled("uncachedMegamorphic");
 
         _assertResult(_cachedZero.Invoke(_sctx, _subjectArgs), 42);
         _assertResult(_uncachedZero.Invoke(_sctx, _subjectArgs), 42);
@@ -106,6 +121,9 @@ public class CilObjectMemberCallBenchmarks
         _assertResult(_cachedLateGuardMiss.Invoke(_sctx, _lateGuardMissArgs[0]), 16);
         _assertResult(_cachedLateGuardMiss.Invoke(_sctx, _lateGuardMissArgs[1]), 16);
         _assertResult(_uncachedLateGuardMiss.Invoke(_sctx, _lateGuardMissArgs[0]), 16);
+        foreach (var args in _megamorphicArgs)
+            _assertResult(_cachedMegamorphic.Invoke(_sctx, args), args[1].Value!);
+        _assertResult(_uncachedMegamorphic.Invoke(_sctx, _megamorphicArgs[0]), 1);
 
         _assertStableBindingCount(_cachedZero, 1);
         _assertStableBindingCount(_cachedPolymorphic, 2);
@@ -117,6 +135,8 @@ public class CilObjectMemberCallBenchmarks
         _assertUncached(_uncachedStatic);
         _assertUncached(_uncachedWide);
         _assertUncached(_uncachedLateGuardMiss);
+        _assertUncached(_uncachedMegamorphic);
+        _assertMegamorphicSite();
         _assertForcedReceiverRebinding();
     }
 
@@ -219,6 +239,40 @@ public class CilObjectMemberCallBenchmarks
         return _cachedFreshReceiver.Invoke(_sctx, _cachedFreshReceiverArgs);
     }
 
+    [Benchmark(Baseline = true)]
+    [BenchmarkCategory("CIL megamorphic retained hit")]
+    public PValue UncachedMegamorphicRetainedHit()
+    {
+        return _uncachedMegamorphic.Invoke(_sctx, _megamorphicArgs[^1]);
+    }
+
+    [Benchmark]
+    [BenchmarkCategory("CIL megamorphic retained hit")]
+    public PValue CachedMegamorphicRetainedHit()
+    {
+        return _cachedMegamorphic.Invoke(_sctx, _megamorphicArgs[^1]);
+    }
+
+    [Benchmark(Baseline = true)]
+    [BenchmarkCategory("CIL megamorphic five-shape cycle")]
+    public PValue UncachedMegamorphicFiveShapeCycle()
+    {
+        return _uncachedMegamorphic.Invoke(
+            _sctx,
+            _megamorphicArgs[_uncachedMegamorphicIndex++ % _megamorphicArgs.Length]
+        );
+    }
+
+    [Benchmark]
+    [BenchmarkCategory("CIL megamorphic five-shape cycle")]
+    public PValue CachedMegamorphicFiveShapeCycle()
+    {
+        return _cachedMegamorphic.Invoke(
+            _sctx,
+            _megamorphicArgs[_cachedMegamorphicIndex++ % _megamorphicArgs.Length]
+        );
+    }
+
     CompiledBenchmark _getCompiled(string id)
     {
         var function =
@@ -273,18 +327,43 @@ public class CilObjectMemberCallBenchmarks
             _cachedFreshReceiver.CallOffset
         );
         var bindingsBefore = siteBefore?.BindingCount ?? 0;
-        _assertResult(CachedFreshReceiver(), 42);
-        _assertResult(CachedFreshReceiver(), 42);
+        for (var i = 0; i < ObjectMemberCallSite.MaxPolymorphicBindingCount + 2; i++)
+            _assertResult(CachedFreshReceiver(), 42);
         _assertResult(UncachedFreshReceiver(), 42);
 
         var site = _cachedFreshReceiver.Function.ObjectMemberCallSites.GetExisting(
             _cachedFreshReceiver.CallOffset
         );
-        if (site?.BindingCount != bindingsBefore + 2)
+        if (
+            site?.BindingCount
+                != bindingsBefore + ObjectMemberCallSite.MaxPolymorphicBindingCount + 2
+            || site.IsMegamorphic != true
+            || site.CachedBindingCount != ObjectMemberCallSite.MaxPolymorphicBindingCount
+        )
             throw new InvalidOperationException(
-                "Fresh receiver tags did not force the compiled call site to rebind."
+                "Fresh receiver tags did not saturate the compiled call site and continue rebinding."
             );
         _assertUncached(_uncachedFreshReceiver);
+    }
+
+    void _assertMegamorphicSite()
+    {
+        var site = _cachedMegamorphic.Function.ObjectMemberCallSites.GetExisting(
+            _cachedMegamorphic.CallOffset
+        );
+        if (site?.IsMegamorphic != true)
+            throw new InvalidOperationException(
+                "The five-shape compiled benchmark site did not become megamorphic."
+            );
+        if (site.CachedBindingCount != ObjectMemberCallSite.MaxPolymorphicBindingCount)
+            throw new InvalidOperationException(
+                $"The megamorphic site retained {site.CachedBindingCount} bindings; expected "
+                    + $"{ObjectMemberCallSite.MaxPolymorphicBindingCount}."
+            );
+        if (site.BindingCount != 5)
+            throw new InvalidOperationException(
+                $"The megamorphic site performed {site.BindingCount} initial bindings; expected 5."
+            );
     }
 
     readonly record struct CompiledBenchmark(
@@ -322,6 +401,9 @@ public class CilObjectMemberCallBenchmarks
 
         function cachedFreshReceiver(target) = target.Exact(17, 25);
         function uncachedFreshReceiver(target) = target.Exact(17, 25);
+
+        function cachedMegamorphic(target, value) = target.Shape(value);
+        function uncachedMegamorphic(target, value) = target.Shape(value);
         """;
 }
 
@@ -340,6 +422,11 @@ public sealed class CilDispatchProbe
     public static int StaticExact(int left, int right)
     {
         return left + right;
+    }
+
+    public object Shape(object value)
+    {
+        return value;
     }
 
     public string Overloaded(double value, int second, int third)

@@ -21,8 +21,11 @@ The suite deliberately separates the easy steady-state case from costly cache be
 - `Late guard miss` changes only argument 16, so a failed rule pays for 15 successful guard checks
   before the call site updates to its other pre-warmed rule.
 - `Rebind: receiver tag` and `Rebind: argument tag` supply a fresh `ObjectPType` reference on every
-  invocation. Setup verifies that every cached invocation really creates a new binding; these are
-  intentional deoptimization/unstable-shape cases rather than cache hits.
+  invocation. The sites are saturated during setup, so these measure the sticky megamorphic
+  fallback rather than an ever-growing polymorphic rule chain.
+- `CIL megamorphic retained hit` saturates a site and then repeatedly uses its newest retained
+  binding. `CIL megamorphic five-shape cycle` rotates through five shapes, so four hit retained
+  bindings while the evicted shape is resolved afresh on every cycle.
 
 Run the benchmarks from the repository root in Release mode:
 
