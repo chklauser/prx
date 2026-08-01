@@ -588,6 +588,154 @@ public sealed class PatternMatchingTests : VMTestsBase
         Expect(4, 4);
     }
 
+    [Test]
+    public void MatchSelectsTheFirstSuccessfulArmAndScopesItsCaptures()
+    {
+        Compile(
+            """
+            pattern_matching enabled;
+
+            function main(value) = match (value)
+            {
+                [a, b] when a > 0 -> "$a:$b";
+                String as text    -> text;
+                _                 -> "fallback";
+            };
+            """
+        );
+
+        Expect("2:3", engine.CreateNativePValue(new List<PValue> { 2, 3 }));
+        Expect("hello", "hello");
+        Expect("fallback", -1);
+    }
+
+    [Test]
+    public void MatchEvaluatesItsSubjectOnceAndDefaultsToNull()
+    {
+        Compile(
+            """
+            pattern_matching enabled;
+
+            function once(x)
+            {
+                var result = match (x++)
+                {
+                    3 -> "three";
+                    _ -> "other";
+                };
+                return [result, x];
+            }
+
+            function no_match(value) = match (value) { > 10 -> "large" };
+            """
+        );
+
+        ExpectNamed("once", new List<PValue> { "three", 4 }, 3);
+        ExpectReturnValue(
+            "no_match",
+            value => Assert.That(value.IsNull, Is.True),
+            new PValue[] { 5 }
+        );
+    }
+
+    [Test]
+    public void MatchGuardDelimiterDoesNotCompeteWithLambdaArrows()
+    {
+        Compile(
+            """
+            pattern_matching enabled;
+
+            function guarded(value, null_allowed) = match (value)
+            {
+                null when null_allowed -> true;
+                _ when (x => x + 1) != null -> false;
+                _ -> null;
+            };
+
+            function rhs_lambda(value)
+            {
+                var increment = match (value) { _ -> x => x + 1 };
+                return increment.(4);
+            }
+            """
+        );
+
+        ExpectNamed("guarded", true, PType.Null, true);
+        ExpectNamed("guarded", false, 12, false);
+        ExpectNamed("rhs_lambda", 5, "anything");
+    }
+
+    [Test]
+    public void MatchIsContextualAndComposesAsAPrimaryExpression()
+    {
+        Compile(
+            """
+            pattern_matching enabled;
+
+            function match(x) = x + 1;
+            function ordinary(value) = match(value);
+            function nested(value) = 10 + match (value) { 2 -> 3; _ -> 0 };
+            function lambda_subject = match (x => x + 1) { _ -> true };
+            """
+        );
+
+        ExpectNamed("ordinary", 5, 4);
+        ExpectNamed("nested", 13, 2);
+        ExpectNamed("lambda_subject", true);
+    }
+
+    [Test]
+    public void MatchArmsHaveIndependentBindingsAndStrictEffects()
+    {
+        Compile(
+            """
+            pattern_matching enabled;
+
+            var probes = 0;
+            function view_counted(value)
+            {
+                probes++;
+                return null;
+            }
+
+            function main(value)
+            {
+                probes = 0;
+                var selected = match (value)
+                {
+                    counted(item) -> item;
+                    [item]        -> item;
+                    _             -> null;
+                };
+                return [selected, probes];
+            }
+            """
+        );
+
+        Expect(new List<PValue> { 7, 1 }, engine.CreateNativePValue(new List<PValue> { 7 }));
+    }
+
+    [Test]
+    public void MatchArmBindingsDoNotLeak()
+    {
+        CompileInvalid(
+            """
+            pattern_matching enabled;
+
+            function main(value)
+            {
+                var selected = match (value)
+                {
+                    [item] -> item;
+                    _      -> item;
+                };
+                return item;
+            }
+            """,
+            "has not been resolved"
+        );
+    }
+
     public sealed record Policy(string Name);
 
     public sealed record Envelope(Policy Policy);

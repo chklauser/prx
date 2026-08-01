@@ -50,6 +50,14 @@ public interface IAstFactory : IMessageSink
         AstPattern pattern,
         IEnumerable<PatternCapture> captures
     );
+    AstMatchArm MatchArm(ISourcePosition position, AstPattern pattern, AstExpr expression);
+    AstExpr MatchExpression(
+        ISourcePosition position,
+        AstExpr subject,
+        string subjectLocal,
+        string resultLocal,
+        IEnumerable<AstMatchArm> arms
+    );
     AstObjectCreation CreateObject(ISourcePosition position, AstTypeExpr type);
     AstExpr Typecheck(ISourcePosition position, AstExpr operand, AstTypeExpr type);
     AstExpr Typecast(ISourcePosition position, AstExpr operand, AstTypeExpr type);
