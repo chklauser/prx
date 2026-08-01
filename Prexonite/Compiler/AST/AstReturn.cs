@@ -138,12 +138,12 @@ public class AstReturn : AstNode, IAstHasExpressions
         //              expr1
         //          else
         //              expr2
-        var retif = new AstCondition(
-            Position,
-            target.CurrentBlock,
-            cond.Condition,
-            cond.IsNegative
-        );
+        var retif = new AstCondition(Position, target.CurrentBlock, cond.Condition, cond.IsNegative)
+        {
+            PatternCaptures = cond.PatternCaptures,
+            IfCaptureOutcome = cond.IfCaptureOutcome,
+            ElseCaptureOutcome = cond.ElseCaptureOutcome,
+        };
 
         var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
         {

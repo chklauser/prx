@@ -27,6 +27,9 @@ public class Loader : StackContext, IMessageSink
 
     public const string SuppressPrimarySymbol = "\\sps";
 
+    /// <summary>The application-level gate for binding pattern matching.</summary>
+    public const string PatternMatchingKey = "pattern_matching";
+
     #endregion
 
     #region Construction
@@ -85,6 +88,47 @@ public class Loader : StackContext, IMessageSink
     #region Options
 
     public LoaderOptions Options { [DebuggerStepThrough] get; }
+
+    /// <summary>
+    /// The frozen application-level pattern-matching mode. This deliberately lives outside
+    /// the mutable application meta table.
+    /// </summary>
+    public bool PatternMatchingEnabled { get; private set; }
+
+    public bool IsPatternMatchingModeFrozen { get; private set; }
+
+    internal bool TrySetPatternMatchingMode(bool enabled, ISourcePosition position)
+    {
+        if (IsPatternMatchingModeFrozen)
+        {
+            if (PatternMatchingEnabled != enabled)
+            {
+                ReportMessage(
+                    Message.Error(
+                        $"Conflicting {PatternMatchingKey} setting. The application mode is already frozen as {(PatternMatchingEnabled ? "enabled" : "disabled")}.",
+                        position,
+                        MessageClasses.PatternMatchingModeConflict
+                    )
+                );
+                return false;
+            }
+
+            return true;
+        }
+
+        PatternMatchingEnabled = enabled;
+        IsPatternMatchingModeFrozen = true;
+        return true;
+    }
+
+    internal void FreezePatternMatchingMode()
+    {
+        if (!IsPatternMatchingModeFrozen)
+        {
+            PatternMatchingEnabled = false;
+            IsPatternMatchingModeFrozen = true;
+        }
+    }
 
     #endregion
 

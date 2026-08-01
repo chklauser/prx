@@ -91,6 +91,17 @@ public class CompilerTarget : IHasMetaTable
 
     public CompilerTarget? ParentTarget { [DebuggerStepThrough] get; }
 
+    internal ICollection<PatternCapture> PatternCaptures { get; } = new List<PatternCapture>();
+
+    public bool PatternMatchingEnabled { get; private set; }
+
+    internal void RefreshPatternMatchingMode()
+    {
+        PatternMatchingEnabled = Function.Meta.ContainsKey(Loader.PatternMatchingKey)
+            ? Function.Meta[Loader.PatternMatchingKey].Switch
+            : ParentTarget?.PatternMatchingEnabled ?? Loader.PatternMatchingEnabled;
+    }
+
     int _nestedIdCounter;
 
     #endregion
@@ -118,6 +129,7 @@ public class CompilerTarget : IHasMetaTable
         Loader = loader;
         Function = function;
         ParentTarget = parentTarget;
+        RefreshPatternMatchingMode();
         ImportScope = SymbolStore.Create(parentTarget?.Symbols ?? loader.Symbols);
         Ast = AstBlock.CreateRootBlock(
             position ?? new SourcePosition("", -1, -1),

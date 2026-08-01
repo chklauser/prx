@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using Prexonite.Commands;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
+using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
@@ -16,6 +18,576 @@ namespace Prexonite.Compiler;
 
 partial class Parser
 {
+    sealed class PatternBindingRoot
+    {
+        readonly Dictionary<string, PatternCapture> _captures = new(
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        public IReadOnlyCollection<PatternCapture> Captures => _captures.Values;
+
+        public PatternCapture GetOrCreate(
+            Parser parser,
+            string name,
+            ISourcePosition position,
+            bool isExplicit
+        )
+        {
+            if (_captures.TryGetValue(name, out var existing))
+            {
+                if (isExplicit)
+                    existing.IsExplicit = true;
+                return existing;
+            }
+
+            parser.ensureHasTarget();
+            var physicalId = parser.generateLocalId("pattern\\capture\\" + name);
+            var publicId = parser.generateLocalId("pattern\\public\\" + name);
+            parser.target.Function.Variables.Add(physicalId);
+            parser.target.Function.Variables.Add(publicId);
+            var capture = new PatternCapture(name, physicalId, publicId, position, isExplicit);
+            _captures.Add(name, capture);
+            parser.target.PatternCaptures.Add(capture);
+            return capture;
+        }
+    }
+
+    PatternBindingRoot? _bindingRoot;
+    int _bindingRootDepth;
+    readonly Stack<SymbolStore> _captureOverlays = new();
+    readonly Stack<BindingOutcome> _captureEnvironments = new();
+    readonly Stack<string> _patternSubjectLocals = new();
+    bool _moduleHeaderOpen = true;
+
+    void _freezePatternMatchingMode()
+    {
+        _moduleHeaderOpen = false;
+        Loader.FreezePatternMatchingMode();
+    }
+
+    bool _observeMetaAssignment(IHasMetaTable metaTable, string key, MetaEntry entry)
+    {
+        if (
+            !ReferenceEquals(metaTable, TargetApplication)
+            || !Engine.StringsAreEqual(key, Loader.PatternMatchingKey)
+        )
+            return true;
+        if (!_moduleHeaderOpen)
+        {
+            Loader.ReportMessage(
+                Message.Error(
+                    $"{Loader.PatternMatchingKey} must appear in the module header before the first non-meta construct.",
+                    GetPosition(),
+                    MessageClasses.PatternMatchingModeLate
+                )
+            );
+            return false;
+        }
+        return Loader.TrySetPatternMatchingMode(entry.Switch, GetPosition());
+    }
+
+    void _enterBindingRoot()
+    {
+        if (_bindingRootDepth++ == 0)
+            _bindingRoot = new PatternBindingRoot();
+    }
+
+    void _leaveBindingRoot()
+    {
+        if (--_bindingRootDepth == 0)
+            _bindingRoot = null;
+    }
+
+    BindingFlow _bindingFlowOf(AstExpr expression) => AstBindingAnd.BindingFlowFor(expression);
+
+    void _pushCaptureEnvironment(BindingOutcome outcome, bool usePublicSlots = false)
+    {
+        if (_captureEnvironments.Count > 0)
+            outcome = BindingOutcome.Sequence(_captureEnvironments.Peek(), outcome);
+        // Keep only the capture declarations here. Symbols composes these overlays with the
+        // current compiler scope dynamically, so entering a nested function or lambda while
+        // parsing a consumer branch does not hide that nested scope's parameters and locals.
+        var overlay = SymbolStore.Create();
+        if (_bindingRoot != null)
+        {
+            foreach (var capture in _bindingRoot.Captures)
+            {
+                if (outcome.IsReachable && outcome.Captures.Contains(capture))
+                {
+                    overlay.Declare(
+                        capture.Name,
+                        capture.CreateReadSymbol(GetPosition(), usePublicSlots)
+                    );
+                }
+                else
+                {
+                    var message = Message.Error(
+                        $"Pattern binding {capture.Name} is not available on this control-flow route.",
+                        GetPosition(),
+                        MessageClasses.PatternBindingUnavailable
+                    );
+                    overlay.Declare(
+                        capture.Name,
+                        Symbol.CreateMessage(message, Symbol.CreateNil(GetPosition()))
+                    );
+                }
+            }
+        }
+        _captureOverlays.Push(overlay);
+        _captureEnvironments.Push(outcome);
+    }
+
+    void _popCaptureEnvironment()
+    {
+        _captureEnvironments.Pop();
+        _captureOverlays.Pop();
+    }
+
+    AstPattern _createBindingPattern(string name, ISourcePosition position, bool isExplicit)
+    {
+        ensureHasTarget();
+        _bindingRoot ??= new PatternBindingRoot();
+        var capture = _bindingRoot.GetOrCreate(this, name, position, isExplicit);
+        if (
+            _captureEnvironments.Count > 0
+            && _captureEnvironments.Peek().IsReachable
+            && _captureEnvironments.Peek().Captures.Contains(capture)
+        )
+        {
+            Loader.ReportMessage(
+                Message.Error(
+                    $"Pattern binding {name} is acquired more than once on the same route. Use == {name} for a value pattern.",
+                    position,
+                    MessageClasses.PatternBindingDuplicate
+                )
+            );
+        }
+        return new AstBindPattern(position, capture);
+    }
+
+    string _createPatternTemporary(string prefix)
+    {
+        ensureHasTarget();
+        var id = generateLocalId("pattern\\" + prefix);
+        target.Function.Variables.Add(id);
+        return id;
+    }
+
+    AstExpr _patternLocalReference(ISourcePosition position, string id)
+    {
+        return Create.ExprFor(
+            position,
+            Symbol.CreateDereference(
+                Symbol.CreateReference(EntityRef.Variable.Local.Create(id), position),
+                position
+            )
+        );
+    }
+
+    AstExpr _currentPatternSubject(ISourcePosition position) =>
+        _patternLocalReference(position, _patternSubjectLocals.Peek());
+
+    bool _isPatternAcquisitionSlot(AstExpr? expression, out PatternCapture? capture)
+    {
+        capture = null;
+        var reference = expression switch
+        {
+            AstIndirectCall { Subject: AstReference indirectReference } => indirectReference,
+            AstReference directReference => directReference,
+            _ => null,
+        };
+        if (
+            _bindingRoot == null
+            || reference == null
+            || !reference.Entity.TryGetLocalVariable(out var local)
+        )
+            return false;
+        capture = _bindingRoot.Captures.FirstOrDefault(c =>
+            Engine.StringsAreEqual(c.PhysicalId, local.Id)
+        );
+        return capture != null;
+    }
+
+    void _rejectPatternCaptureMutation(AstExpr? expression, ISourcePosition position)
+    {
+        if (!_isPatternAcquisitionSlot(expression, out var capture))
+            return;
+        Loader.ReportMessage(
+            Message.Error(
+                $"Pattern binding {capture!.Name} is read-only while matching is still in progress.",
+                position,
+                MessageClasses.PatternBindingReadOnly
+            )
+        );
+    }
+
+    AstExpr _patternHelper(ISourcePosition position, string id, params AstExpr[] arguments) =>
+        Create.Call(position, EntityRef.Command.Create(id), PCall.Get, arguments);
+
+    AstPatternTest _createPatternTest(
+        ISourcePosition position,
+        AstExpr subject,
+        string subjectLocal,
+        AstPattern pattern
+    )
+    {
+        _bindingRoot ??= new PatternBindingRoot();
+        return new(
+            position,
+            subject,
+            subjectLocal,
+            pattern,
+            pattern.GetCaptures().Distinct().ToArray()
+        );
+    }
+
+    bool _isWildcardPattern() => la.kind == _id && la.val == "_";
+
+    bool _isContextualWhen() => la.kind == _id && Engine.StringsAreEqual(la.val, "when");
+
+    bool _isShiftedPatternName()
+    {
+        if (la.kind != _id)
+            return false;
+        return Symbols.TryGet(Loader.TypeCheckPrefix + la.val, out _);
+    }
+
+    bool _isViewPattern()
+    {
+        if (la.kind != _id)
+            return false;
+        scanner.ResetPeek();
+        var next = scanner.Peek();
+        while (next.kind == _dot)
+        {
+            if (scanner.Peek().kind != _id)
+                return false;
+            next = scanner.Peek();
+        }
+        return next.kind == _lpar;
+    }
+
+    AstPattern _combinePatternAnd(ISourcePosition position, AstPattern? left, AstPattern right) =>
+        left == null ? right : new AstPatternAnd(position, left, right);
+
+    AstPattern _relationalPattern(ISourcePosition position, BinaryOperator op, AstExpr operand)
+    {
+        var condition = Create.BinaryOperation(
+            position,
+            _currentPatternSubject(position),
+            op,
+            operand
+        );
+        return new AstExpressionPattern(position, condition);
+    }
+
+    AstPattern _predicateEscapePattern(ISourcePosition position, AstExpr callable)
+    {
+        var invocation = Create.IndirectCall(position, callable);
+        invocation.Arguments.Add(_currentPatternSubject(position));
+        return new AstExpressionPattern(position, invocation);
+    }
+
+    AstGetSet _resolveShiftedPatternCall(ISourcePosition position, string prefix, string id)
+    {
+        var shifted = prefix + id;
+        if (
+            Symbols.TryGet(shifted, out var symbol)
+            && Create.ExprFor(position, symbol) is AstGetSet call
+        )
+            return call;
+
+        Loader.ReportMessage(
+            Message.Error(
+                $"Cannot find {shifted} in scope.",
+                position,
+                MessageClasses.ShiftedSymbolRequired
+            )
+        );
+        return _NullNode(position);
+    }
+
+    AstGetSet _resolveShiftedPatternCall(
+        ISourcePosition position,
+        string prefix,
+        IReadOnlyList<string> path
+    )
+    {
+        if (path.Count == 1)
+            return _resolveShiftedPatternCall(position, prefix, path[0]);
+
+        AstNamespaceUsage? current = null;
+        if (
+            Symbols.TryGet(path[0], out var root)
+            && Create.ExprFor(position, root) is AstNamespaceUsage rootNamespace
+        )
+            current = rootNamespace;
+
+        for (var i = 1; current != null && i < path.Count - 1; i++)
+        {
+            current =
+                current.Namespace.TryGet(path[i], out _)
+                && _useSymbolFromNamespace(current, path[i], position) is AstNamespaceUsage child
+                    ? child
+                    : null;
+        }
+
+        var shifted = prefix + path[^1];
+        if (
+            current != null
+            && current.Namespace.TryGet(shifted, out _)
+            && _useSymbolFromNamespace(current, shifted, position) is AstGetSet call
+        )
+            return call;
+
+        Loader.ReportMessage(
+            Message.Error(
+                $"Cannot find {string.Join('.', path.Take(path.Count - 1).Append(shifted))} in scope.",
+                position,
+                MessageClasses.ShiftedSymbolRequired
+            )
+        );
+        return _NullNode(position);
+    }
+
+    AstPattern _propertyMemberPattern(
+        ISourcePosition position,
+        AstExpr subject,
+        string memberName,
+        string valueLocal,
+        AstPattern valuePattern
+    )
+    {
+        var probeLocal = _createPatternTemporary("member\\probe");
+        var probe = _patternHelper(
+            position,
+            PatternMemberProbe.Alias,
+            subject,
+            Create.Constant(position, memberName)
+        );
+        var handled = _patternHelper(
+            position,
+            PatternOutputAt.Alias,
+            _patternLocalReference(position, probeLocal),
+            Create.Constant(position, 0)
+        );
+        var value = _patternHelper(
+            position,
+            PatternOutputAt.Alias,
+            _patternLocalReference(position, probeLocal),
+            Create.Constant(position, 1)
+        );
+        var body = new AstPatternAnd(
+            position,
+            new AstExpressionPattern(position, handled),
+            new AstExtractPattern(position, value, valueLocal, valuePattern, false)
+        );
+        return new AstExtractPattern(position, probe, probeLocal, body, false);
+    }
+
+    bool _tryCreatePatternMacro(
+        AstGetSet invocation,
+        ISourcePosition position,
+        [NotNullWhen(true)] out AstPattern? pattern
+    )
+    {
+        pattern = null;
+        if (invocation is not AstExpand expansion)
+            return false;
+
+        string macroId;
+        PatternMacroSignature signature;
+        Func<CompilerTarget, PatternMacroExpansionContext, AstPattern> expand;
+        if (
+            expansion.Entity.TryGetMacroCommand(out var macroReference)
+            && macroReference.TryGetEntity(Loader, out var commandEntity)
+            && commandEntity.Value is PatternMacroCommand command
+        )
+        {
+            macroId = command.Id;
+            try
+            {
+                signature = command.InvokeDescribePattern(
+                    new PatternMacroDescribeContext(invocation)
+                );
+            }
+            catch (Exception exception)
+            {
+                Loader.ReportMessage(
+                    Message.Error(
+                        $"Pattern macro {macroId} failed while describing its captures: {exception.Message}",
+                        position,
+                        MessageClasses.PatternMacroSignatureMismatch
+                    )
+                );
+                pattern = new AstExpressionPattern(position, Create.Constant(position, false));
+                return true;
+            }
+            expand = (_, context) => command.InvokeExpandPattern(context);
+        }
+        else if (
+            expansion.Entity.TryGetFunction(out var functionReference)
+            && functionReference.TryGetEntity(Loader, out var functionEntity)
+            && functionEntity.Value is PFunction function
+            && function.Meta[ScriptPatternMacroRuntime.PatternMacroKey].Switch
+        )
+        {
+            macroId = function.LogicalId;
+            try
+            {
+                ensureHasTarget();
+                signature = ScriptPatternMacroRuntime.Describe(target, function, invocation);
+            }
+            catch (Exception exception)
+            {
+                Loader.ReportMessage(
+                    Message.Error(
+                        $"Script pattern macro {macroId} failed while describing its captures: {exception.Message}",
+                        position,
+                        MessageClasses.PatternMacroSignatureMismatch
+                    )
+                );
+                pattern = new AstExpressionPattern(position, Create.Constant(position, false));
+                return true;
+            }
+            expand = (compilerTarget, context) =>
+                ScriptPatternMacroRuntime.Expand(compilerTarget, function, invocation, context);
+        }
+        else
+        {
+            return false;
+        }
+
+        try
+        {
+            _bindingRoot ??= new PatternBindingRoot();
+            var exported = new Dictionary<string, PatternCapture>(StringComparer.OrdinalIgnoreCase);
+            foreach (var description in signature.Captures)
+            {
+                var capture = _bindingRoot.GetOrCreate(this, description.Name, position, true);
+                if (
+                    _captureEnvironments.Count > 0
+                    && _captureEnvironments.Peek().IsReachable
+                    && _captureEnvironments.Peek().Captures.Contains(capture)
+                )
+                {
+                    Loader.ReportMessage(
+                        Message.Error(
+                            $"Pattern macro {macroId} reacquires {description.Name} on a route where it is already available.",
+                            position,
+                            MessageClasses.PatternBindingDuplicate
+                        )
+                    );
+                }
+                exported.Add(description.Name, capture);
+            }
+            pattern = new AstPatternMacro(
+                position,
+                macroId,
+                invocation,
+                _patternSubjectLocals.Peek(),
+                signature,
+                exported,
+                expand
+            );
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Loader.ReportMessage(
+                Message.Error(
+                    $"Pattern macro {macroId} failed while freezing its captures: {exception.Message}",
+                    position,
+                    MessageClasses.PatternMacroSignatureMismatch
+                )
+            );
+            pattern = new AstExpressionPattern(position, Create.Constant(position, false));
+            return true;
+        }
+    }
+
+    IReadOnlyCollection<PatternCapture> _patternCapturesOf(AstExpr expression)
+    {
+        var captures = new HashSet<PatternCapture>();
+        void collect(AstExpr node)
+        {
+            switch (node)
+            {
+                case AstPatternTest test:
+                    captures.UnionWith(test.Captures);
+                    break;
+                case AstBindingBinary binary:
+                    collect(binary.Left);
+                    collect(binary.Right);
+                    break;
+                case AstBindingNot not:
+                    collect(not.Operand);
+                    break;
+            }
+        }
+        collect(expression);
+        return captures;
+    }
+
+    void _declarePatternCaptures(
+        SymbolStore symbols,
+        IReadOnlyCollection<PatternCapture> captures,
+        BindingOutcome valid,
+        bool errorsForInvalid
+    )
+    {
+        foreach (var capture in captures)
+        {
+            if (valid.IsReachable && valid.Captures.Contains(capture))
+            {
+                symbols.Declare(capture.Name, capture.CreateReadSymbol(GetPosition(), true));
+            }
+            else if (errorsForInvalid)
+            {
+                var message = Message.Error(
+                    $"Pattern binding {capture.Name} is not available on this control-flow route.",
+                    GetPosition(),
+                    MessageClasses.PatternBindingUnavailable
+                );
+                symbols.Declare(
+                    capture.Name,
+                    Symbol.CreateMessage(message, Symbol.CreateNil(GetPosition()))
+                );
+            }
+        }
+    }
+
+    void _promotePatternCaptures(SymbolStore symbols, IReadOnlyCollection<PatternCapture> captures)
+    {
+        foreach (var capture in captures)
+            symbols.Declare(capture.Name, capture.CreateReadSymbol(GetPosition(), true));
+    }
+
+    void _reportUnusedPatternBindings(CompilerTarget compilerTarget)
+    {
+        const string warningKey = "warn_unused_pattern_bindings";
+        var enabled = compilerTarget.Function.Meta.ContainsKey(warningKey)
+            ? compilerTarget.Function.Meta[warningKey].Switch
+            : TargetApplication.Meta[warningKey].Switch;
+        if (!enabled)
+            return;
+
+        foreach (
+            var capture in compilerTarget
+                .PatternCaptures.Where(c => !c.IsExplicit && c.SourceReadCount == 0)
+                .Distinct()
+        )
+        {
+            Loader.ReportMessage(
+                Message.Warning(
+                    $"Implicit pattern binding {capture.Name} is never read. Use var {capture.Name} to document an intentional binding or _ to discard it.",
+                    capture.Position,
+                    MessageClasses.UnusedPatternBinding
+                )
+            );
+        }
+    }
+
     [DebuggerStepThrough]
     internal Parser(IScanner scanner, Loader loader)
         : this(scanner)
@@ -38,6 +610,9 @@ partial class Parser
     /// that file.
     /// </summary>
     public bool PreflightModeEnabled => Loader.Options.PreflightModeEnabled;
+
+    public bool PatternMatchingEnabled =>
+        target?.PatternMatchingEnabled ?? Loader.PatternMatchingEnabled;
 
     public Application TargetApplication
     {
@@ -66,7 +641,16 @@ partial class Parser
     public SymbolStore Symbols
     {
         [DebuggerStepThrough]
-        get => target?.CurrentBlock.Symbols ?? Loader.Symbols;
+        get
+        {
+            var symbols = target?.CurrentBlock.Symbols ?? Loader.Symbols;
+            foreach (var overlay in _captureOverlays.Reverse())
+            {
+                overlay.ExternalScope = symbols;
+                symbols = overlay;
+            }
+            return symbols;
+        }
     }
 
     DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)

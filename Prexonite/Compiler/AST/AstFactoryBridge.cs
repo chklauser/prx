@@ -390,6 +390,61 @@ public class AstFactoryBridge : IObject, IIndirectCall
                 break;
             }
 
+            case "patternwildcard":
+            {
+                node = _base.PatternWildcard(position);
+                break;
+            }
+            case "patternbind":
+            {
+                if (!_require(sctx, args, ref i, out PatternCapture? capture))
+                {
+                    detailedError =
+                        "PatternBind(position, capture~PatternCapture), capture is missing.";
+                    return false;
+                }
+                node = _base.PatternBind(position, capture);
+                break;
+            }
+            case "patternexpression":
+            {
+                if (!_require(sctx, args, ref i, out AstExpr? condition))
+                {
+                    detailedError =
+                        "PatternExpression(position, condition~AstExpr), condition is missing.";
+                    return false;
+                }
+                node = _base.PatternExpression(position, condition);
+                break;
+            }
+            case "patternand":
+            case "patternor":
+            {
+                if (
+                    !_require(sctx, args, ref i, out AstPattern? left)
+                    || !_require(sctx, args, ref i, out AstPattern? right)
+                )
+                {
+                    detailedError =
+                        "PatternAnd/PatternOr(position, left~AstPattern, right~AstPattern), operand is missing.";
+                    return false;
+                }
+                node = id.Equals("patternand", StringComparison.OrdinalIgnoreCase)
+                    ? _base.PatternAnd(position, left, right)
+                    : _base.PatternOr(position, left, right);
+                break;
+            }
+            case "patternnot":
+            {
+                if (!_require(sctx, args, ref i, out AstPattern? operand))
+                {
+                    detailedError = "PatternNot(position, operand~AstPattern), operand is missing.";
+                    return false;
+                }
+                node = _base.PatternNot(position, operand);
+                break;
+            }
+
             case "objectcreation":
                 throw new PrexoniteException(
                     "Cannot construct \"ObjectCreation\". Did you mean \"CreateObject\"?"

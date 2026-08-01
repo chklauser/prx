@@ -1113,6 +1113,25 @@ public abstract partial class VMTests
     }
 
     [Test]
+    public void ConditionalExpressionLambdaParametersRemainInScope()
+    {
+        Compile(
+            """
+            function choose(flag) =
+                if (flag)
+                    f => f + 1
+                else
+                    f => f * 2;
+
+            function main(flag) = choose(flag).(3);
+            """
+        );
+
+        Expect(4, true);
+        Expect(6, false);
+    }
+
+    [Test]
     public void Lambda()
     {
         Compile(

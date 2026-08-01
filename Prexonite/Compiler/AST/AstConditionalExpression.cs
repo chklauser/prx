@@ -30,6 +30,9 @@ public class AstConditionalExpression : AstExpr, IAstHasExpressions
     public required AstExpr ElseExpression;
     public AstExpr Condition;
     public bool IsNegative;
+    public IReadOnlyCollection<PatternCapture> PatternCaptures { get; set; } = [];
+    public BindingOutcome IfCaptureOutcome { get; set; } = BindingOutcome.Empty;
+    public BindingOutcome ElseCaptureOutcome { get; set; } = BindingOutcome.Empty;
     static int _depth;
 
     #region IAstHasExpressions Members
@@ -90,9 +93,11 @@ public class AstConditionalExpression : AstExpr, IAstHasExpressions
         //Emit
         //if => block / else => block
         AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
+        AstPattern.EmitConsumerCopies(target, Position, PatternCaptures, IfCaptureOutcome);
         IfExpression.EmitCode(target, stackSemantics);
         target.EmitJump(Position, endLabel);
         target.EmitLabel(Position, elseLabel);
+        AstPattern.EmitConsumerCopies(target, Position, PatternCaptures, ElseCaptureOutcome);
         ElseExpression.EmitCode(target, stackSemantics);
         target.EmitLabel(Position, endLabel);
 

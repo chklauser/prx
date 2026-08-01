@@ -12,7 +12,8 @@ Statement<AstBlock block>
 	|   [ SimpleStatement<block> ] semicolon
 	|   StructureStatement<block>
 )
-{	and Statement<block> 
+{   IF(!PatternMatchingEnabled && la.kind == _and)
+    and Statement<block>
 }
 .
 
@@ -67,8 +68,10 @@ PrimaryForGetSetComplex<out expr>       (.  complex = expr as AstGetSet; .)
                                                 complex = Create.IndirectCall(pos,Create.Null(pos));
                                             }                                            
                                         .)
-    (   inc                             (.  block.Add(Create.UnaryOperation(pos, UnaryOperator.PostIncrement, complex)); .)
-    |   dec                             (.  block.Add(Create.UnaryOperation(pos, UnaryOperator.PostDecrement, complex)); .)
+    (   inc                             (.  _rejectPatternCaptureMutation(complex, pos);
+                                            block.Add(Create.UnaryOperation(pos, UnaryOperator.PostIncrement, complex)); .)
+    |   dec                             (.  _rejectPatternCaptureMutation(complex, pos);
+                                            block.Add(Create.UnaryOperation(pos, UnaryOperator.PostDecrement, complex)); .)
     |   Assignment<complex, out node>   (.  if(complex == null && node == null)
                                             {
                                                 // An error ocurred during parsing prior to this point.
@@ -195,7 +198,8 @@ GetInitiator<out AstExpr _complex>
 |   pointer                             (.  var ptrCount = 1; .)
     {   pointer                         (.  ptrCount++; .)
     }
-    Id<out id>                          (.  complex = _assembleReference(id, ptrCount); .)
+    Id<out id>                          (.  complex = _assembleReference(id, ptrCount);
+                                            _rejectPatternCaptureMutation(complex, GetPosition()); .)
 |   question
     [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? placeholderIndex : null); .)
 )                                       (.  _complex = complex ?? Create.Null(GetPosition()); .)
@@ -340,7 +344,8 @@ Assignment<AstGetSet lvalue, out AstNode node>
 									node = lvalue;
                                     ISourcePosition position;
 								.)
-=                               (.  position = GetPosition(); .)
+=                               (.  position = GetPosition();
+                                    _rejectPatternCaptureMutation(lvalue, position); .)
 (                               
 	(   ( assign )              (.  setModifier = BinaryOperator.None; .)
 	|   plus assign             (.  setModifier = BinaryOperator.Addition; .)
@@ -371,7 +376,9 @@ Assignment<AstGetSet lvalue, out AstNode node>
 .
 
 Condition<AstBlock block>
-                                (. AstExpr expr; bool isNegative = false; .)
+                                (. AstExpr expr; bool isNegative = false;
+                                   BindingFlow conditionFlow;
+                                   IReadOnlyCollection<PatternCapture> conditionCaptures; .)
 =
     (   if                      (.  /* isNegative is already false */ .)
     |   unless                  (.  isNegative = true; .)
@@ -379,7 +386,16 @@ Condition<AstBlock block>
     
     lpar Expr<out expr> rpar    (.  if(expr == null)
                                         expr = _createUnknownExpr();
+                                    conditionFlow = _bindingFlowOf(expr);
+                                    conditionCaptures = _patternCapturesOf(expr);
                                     AstCondition cond = Create.Condition(GetPosition(), expr, isNegative);
+                                    var ifOutcome = isNegative ? conditionFlow.WhenFalse : conditionFlow.WhenTrue;
+                                    var elseOutcome = isNegative ? conditionFlow.WhenTrue : conditionFlow.WhenFalse;
+                                    cond.PatternCaptures = conditionCaptures;
+                                    cond.IfCaptureOutcome = ifOutcome;
+                                    cond.ElseCaptureOutcome = elseOutcome;
+                                    _declarePatternCaptures(cond.IfBlock.Symbols, conditionCaptures, ifOutcome, true);
+                                    _declarePatternCaptures(cond.ElseBlock.Symbols, conditionCaptures, elseOutcome, true);
                                     _PushScope(cond.IfBlock);
                                 .)
     
@@ -390,7 +406,8 @@ Condition<AstBlock block>
     [   else                    (.  _PushScope(cond.ElseBlock); .)
         StatementBlock<cond.ElseBlock> 
                                 (.  _PopScope(cond.ElseBlock); .)
-    ]                           (.  block.Add(cond); .)
+    ]                           (.  block.Add(cond);
+                                    _promotePatternCaptures(block.Symbols, conditionCaptures); .)
 .
 
 WhileLoop<AstBlock block>
@@ -401,7 +418,13 @@ WhileLoop<AstBlock block>
 (   (   while  | until          (.  loop.IsPositive = false; .)    
     )                           
     lpar Expr<out loop.Condition> rpar
-                                (.  _PushScope(loop.Block); //EndBlock is common for both loops
+                                (.  var loopFlow = _bindingFlowOf(loop.Condition);
+                                    var loopCaptures = _patternCapturesOf(loop.Condition);
+                                    var enterOutcome = loop.IsPositive ? loopFlow.WhenTrue : loopFlow.WhenFalse;
+                                    loop.PatternCaptures = loopCaptures;
+                                    loop.EnterCaptureOutcome = enterOutcome;
+                                    _declarePatternCaptures(loop.Block.Symbols, loopCaptures, enterOutcome, true);
+                                    _PushScope(loop.Block); //EndBlock is common for both loops
                                 .)
     StatementBlock<loop.Block> 
     
@@ -432,13 +455,21 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
         (   while
         |   until               (.  loop.IsPositive = false; .)
         )						(.  _PopScope(loop.NextIteration); .)
-        Expr<out condition>		(.	loop.Condition = condition; 
+		Expr<out condition>		(.	loop.Condition = condition;
+                                    if(_patternCapturesOf(condition).Count > 0)
+                                        Loader.ReportMessage(Message.Error(
+                                            "Pattern bindings are not supported in for-loop conditions.",
+                                            GetPosition(), MessageClasses.PatternBindingInForCondition));
 									_PushScope(loop.NextIteration);
 								.)
     |   [   while
         |   until               (.  loop.IsPositive = false; .)
         ]       
-        Expr<out condition>		(.	loop.Condition = condition; .)
+        Expr<out condition>		(.	loop.Condition = condition;
+                                    if(_patternCapturesOf(condition).Count > 0)
+                                        Loader.ReportMessage(Message.Error(
+                                            "Pattern bindings are not supported in for-loop conditions.",
+                                            GetPosition(), MessageClasses.PatternBindingInForCondition)); .)
         semicolon				(.	_PushScope(loop.NextIteration); .)
         SimpleStatement<loop.NextIteration>
         [ semicolon ]

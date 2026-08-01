@@ -1,3 +1,6 @@
+// Deprecated: constructor/deconstructor assignment patterns are retained for
+// pattern_matching disabled compatibility. New code should use `is` patterns and
+// shifted view_ functions (the runtime supplies view_kvp as a migration view).
 
 
 function zip(xs,ys) = create_enumerable(() =>

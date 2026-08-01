@@ -493,6 +493,7 @@ namespace prx.cli
                 // The easiest, if not the fastest, way to do this, is by compiling the
                 // following snippet of Prexonite Script:
                 entryDesc = plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromString(@"
+                    pattern_matching enabled;
                     Name interactive_app;
                     "),
                     System::Threading::CancellationToken.None).Result;
