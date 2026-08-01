@@ -2,6 +2,15 @@ namespace Prexonite.Compiler;
 
 public static class MessageClasses
 {
+    public const string PatternMatchingModeConflict = "P.PatternMatchingModeConflict";
+    public const string PatternMatchingModeLate = "P.PatternMatchingModeLate";
+    public const string PatternBindingUnavailable = "P.PatternBindingUnavailable";
+    public const string PatternBindingDuplicate = "P.PatternBindingDuplicate";
+    public const string PatternBindingReadOnly = "P.PatternBindingReadOnly";
+    public const string PatternBindingInForCondition = "P.PatternBindingInForCondition";
+    public const string PatternMacroPositionRequired = "P.PatternMacroPositionRequired";
+    public const string PatternMacroSignatureMismatch = "P.PatternMacroSignatureMismatch";
+    public const string UnusedPatternBinding = "P.UnusedPatternBinding";
     public const string SelfAssembly = "SA.Error";
     public const string NoSymbolEntryEquivalentToSymbol = "ES.NoSymbolEntryEquivalentToSymbol";
     public const string InvalidSymbolInterpretation = "ES.InvalidSymbolInterpretation";

@@ -107,7 +107,13 @@ public abstract class AstLazyLogical : AstExpr, IAstHasExpressions
                 Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty,
                 nameof(targetLabel)
             );
-        if (cond is AstLazyLogical logical)
+        if (cond is IAstJumpCondition jumpCondition)
+        {
+            var continueLabel = "Continue\\Binding\\" + Guid.NewGuid().ToString("N");
+            jumpCondition.EmitJumpCondition(target, targetLabel, continueLabel);
+            target.EmitLabel(cond.Position, continueLabel);
+        }
+        else if (cond is AstLazyLogical logical)
         {
             var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
             logical.EmitCode(target, targetLabel, continueLabel);
@@ -169,7 +175,11 @@ public abstract class AstLazyLogical : AstExpr, IAstHasExpressions
             alternativeLabel = targetLabel;
             targetLabel = tmpLabel;
         }
-        if (logical != null)
+        if (cond is IAstJumpCondition jumpCondition)
+        {
+            jumpCondition.EmitJumpCondition(target, targetLabel, alternativeLabel);
+        }
+        else if (logical != null)
         {
             logical.EmitCode(target, targetLabel, alternativeLabel);
         }
@@ -212,7 +222,13 @@ public abstract class AstLazyLogical : AstExpr, IAstHasExpressions
                 Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty,
                 nameof(targetLabel)
             );
-        if (cond is AstLazyLogical logical)
+        if (cond is IAstJumpCondition jumpCondition)
+        {
+            var continueLabel = "Continue\\Binding\\" + Guid.NewGuid().ToString("N");
+            jumpCondition.EmitJumpCondition(target, continueLabel, targetLabel);
+            target.EmitLabel(cond.Position, continueLabel);
+        }
+        else if (cond is AstLazyLogical logical)
         {
             var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
             logical.EmitCode(target, continueLabel, targetLabel); //inverted

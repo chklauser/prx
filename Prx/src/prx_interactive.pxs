@@ -90,6 +90,9 @@ namespace prx.cli.repl
         
         var buffer = new ::StringBuilder;
         //Compile some standard code into the interactive application
+        //This is the first contribution made through the REPL loader. Freeze the
+        //interactive module in matching mode before any user input is compiled.
+        buffer.AppendLine("pattern_matching enabled;");
         buffer.AppendLine("var prompt = null;");
         if(Not app.Functions.Contains("exit"))
             buffer.AppendLine("function exit(c) namespace import sys.* does System::Environment.Exit(c ?? 0);");

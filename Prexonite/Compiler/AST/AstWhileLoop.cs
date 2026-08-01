@@ -21,6 +21,8 @@ public class AstWhileLoop : AstLoop
     public AstExpr? Condition;
     public bool IsPrecondition { get; set; }
     public bool IsPositive { get; set; }
+    public IReadOnlyCollection<PatternCapture> PatternCaptures { get; set; } = [];
+    public BindingOutcome EnterCaptureOutcome { get; set; } = BindingOutcome.Empty;
 
     public override AstExpr[] Expressions
     {
@@ -83,6 +85,13 @@ public class AstWhileLoop : AstLoop
             {
                 target.EmitLabel(Position, Block.ContinueLabel);
                 target.EmitLabel(Position, Block.BeginLabel);
+                if (IsPrecondition)
+                    AstPattern.EmitConsumerCopies(
+                        target,
+                        Position,
+                        PatternCaptures,
+                        EnterCaptureOutcome
+                    );
                 Block.EmitEffectCode(target);
                 target.EmitJump(Position, Block.ContinueLabel);
             }
@@ -92,6 +101,13 @@ public class AstWhileLoop : AstLoop
                     target.EmitJump(Position, Block.ContinueLabel);
 
                 target.EmitLabel(Position, Block.BeginLabel);
+                if (IsPrecondition)
+                    AstPattern.EmitConsumerCopies(
+                        target,
+                        Position,
+                        PatternCaptures,
+                        EnterCaptureOutcome
+                    );
                 Block.EmitEffectCode(target);
 
                 _emitCondition(target);
@@ -100,6 +116,13 @@ public class AstWhileLoop : AstLoop
         else //Body does not exist -> Condition loop
         {
             target.EmitLabel(Position, Block.BeginLabel);
+            if (IsPrecondition)
+                AstPattern.EmitConsumerCopies(
+                    target,
+                    Position,
+                    PatternCaptures,
+                    EnterCaptureOutcome
+                );
             _emitCondition(target);
         }
 

@@ -22,18 +22,22 @@ DeclarationLevel
 =
 {   [                       (.  if(PreflightModeEnabled)
                                 {
+                                    _freezePatternMatchingMode();
                                     ViolentlyAbortParse();
                                     return;
-                                } 
+                                }
+                                _freezePatternMatchingMode();
                             .)
         GlobalVariableDefinition
     |   MetaAssignment<TargetApplication>
     ]   SYNC semicolon
 |                           (.  if(PreflightModeEnabled)
                                 {
+                                    _freezePatternMatchingMode();
                                     ViolentlyAbortParse();
                                     return;
-                                } 
+                                }
+                                _freezePatternMatchingMode();
                             .)
     (   Declaration2
     |   GlobalCode
@@ -80,8 +84,8 @@ MetaAssignment<IHasMetaTable metaTable>    (. string? key = null; MetaEntry? ent
                                         "Meta assignment did not generate an entry.",
                                         GetPosition(),
                                         MessageClasses.ParserInternal));
-                               else 
-                                    metaTable.Meta[key] = entry; 
+                               else if(_observeMetaAssignment(metaTable, key, entry))
+                                    metaTable.Meta[key] = entry;
                             .)    
 .
 
@@ -478,7 +482,8 @@ GlobalCode                (.  PFunction func = TargetApplication._Initialization
                           throw new PrexoniteException("Internal compilation error: InitializeFunction got lost.");
                   .)
 =
-                  (.  _PushScope(ft); 
+                  (.  ft.RefreshPatternMatchingMode();
+                      _PushScope(ft);
                       _pushLexerState(LocalState);
                   .)
   lbrace          (.  position = GetPosition(); .)
@@ -688,6 +693,7 @@ FunctionDefinition<out PFunction func>
                                     .)
                                     ]
                                     (.
+                                        FunctionTargets[func!]!.RefreshPatternMatchingMode();
                                         _PushScope(FunctionTargets[func!]!);
                                         Debug.Assert(target != null); // Mostly to tell ReSharper that target is not null.
                                         _pushLexerState(LocalState);
@@ -725,6 +731,7 @@ FunctionDefinition<out PFunction func>
                                             else
                                             {
                                                 try {
+                                                _reportUnusedPatternBindings(FunctionTargets[func]!);
                                                 //Apply compiler hooks for all kinds of functions
                                                 FunctionTargets[func]!.ExecuteCompilerHooks();
                                                 //Emit code for top-level block

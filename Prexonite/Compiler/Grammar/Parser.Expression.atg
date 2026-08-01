@@ -4,17 +4,66 @@ Expr<out AstExpr expr>		    (.
     expr = _NullNode(GetPosition());
     AstExpr ifExpr;
     AstExpr elseExpr;
+    IReadOnlyCollection<PatternCapture> conditionalCaptures = [];
+    BindingOutcome conditionalThen = BindingOutcome.Empty;
+    BindingOutcome conditionalElse = BindingOutcome.Empty;
+    _enterBindingRoot();
 .)
 =
-	AtomicExpr<out expr>   
+(   ( IF(PatternMatchingEnabled) BindingBooleanExpr<out expr>
+    | AtomicExpr<out expr>
+    )
 |										(.	bool isNegated = false; ISourcePosition pos = GetPosition(); .)
 	(	if
 	|	unless							(.	isNegated = true; .)
 	)
-	lpar Expr<out expr> rpar
-	Expr<out ifExpr>
+	lpar Expr<out expr> rpar             (. var conditionFlow = _bindingFlowOf(expr);
+                                           conditionalCaptures = _patternCapturesOf(expr);
+                                           conditionalThen = isNegated ? conditionFlow.WhenFalse : conditionFlow.WhenTrue;
+                                           conditionalElse = isNegated ? conditionFlow.WhenTrue : conditionFlow.WhenFalse;
+                                           _pushCaptureEnvironment(conditionalThen, true); .)
+	Expr<out ifExpr>                     (. _popCaptureEnvironment();
+                                           _pushCaptureEnvironment(conditionalElse, true); .)
     else
-    Expr<out elseExpr>                  (.  expr = Create.ConditionalExpression(pos, expr, ifExpr, elseExpr, isNegated); .)
+    Expr<out elseExpr>                  (.  _popCaptureEnvironment();
+                                            expr = Create.ConditionalExpression(pos, expr, ifExpr, elseExpr, isNegated);
+                                            if(expr is AstConditionalExpression conditional)
+                                            {
+                                                conditional.PatternCaptures = conditionalCaptures;
+                                                conditional.IfCaptureOutcome = conditionalThen;
+                                                conditional.ElseCaptureOutcome = conditionalElse;
+                                            } .)
+)                                       (.  _leaveBindingRoot(); .)
+.
+
+BindingBooleanExpr<out AstExpr expr>
+                                        (. AstExpr lhs, rhs; .)
+=
+    BindingAndExpr<out lhs>             (. expr = lhs; .)
+    { symbolicOr                        (. var position = GetPosition();
+                                           _pushCaptureEnvironment(_bindingFlowOf(expr).WhenFalse); .)
+      BindingAndExpr<out rhs>           (. _popCaptureEnvironment();
+                                           expr = new AstBindingOr(position, expr, rhs); .)
+    }
+.
+
+BindingAndExpr<out AstExpr expr>
+                                        (. AstExpr lhs, rhs; .)
+=
+    BindingUnaryExpr<out lhs>           (. expr = lhs; .)
+    { symbolicAnd                       (. var position = GetPosition();
+                                           _pushCaptureEnvironment(_bindingFlowOf(expr).WhenTrue); .)
+      BindingUnaryExpr<out rhs>         (. _popCaptureEnvironment();
+                                           expr = new AstBindingAnd(position, expr, rhs); .)
+    }
+.
+
+BindingUnaryExpr<out AstExpr expr>
+                                        (. bool invert = false; var position = GetPosition(); .)
+=
+    { symbolicNot                       (. invert = !invert; .)
+    }
+    AtomicExpr<out expr>                (. if(invert) expr = new AstBindingNot(position, expr); .)
 .
 
 
@@ -57,7 +106,9 @@ OrExpr<out AstExpr expr>
 										(. AstExpr lhs, rhs; .)
 =
 	AndExpr<out lhs>                    (.  expr = lhs; .)
-    [   or OrExpr<out rhs>              (.  expr = new AstLogicalOr(this, lhs, rhs); .)
+    [   IF(!PatternMatchingEnabled && (la.kind == _or || la.kind == _symbolicOr))
+        (or | symbolicOr) OrExpr<out rhs>
+                                        (.  expr = new AstLogicalOr(this, lhs, rhs); .)
     ]
 
 .
@@ -66,7 +117,9 @@ AndExpr<out AstExpr expr>
                                         (. AstExpr? lhs; AstExpr rhs; .)
 =
     DeltaExpr<out lhs>                  (.  expr = lhs ??= Create.Null(GetPosition()); .)
-    [   and AndExpr<out rhs>            (.  expr = new AstLogicalAnd(this, lhs, rhs); .)
+    [   IF(!PatternMatchingEnabled && (la.kind == _and || la.kind == _symbolicAnd))
+        (and | symbolicAnd) AndExpr<out rhs>
+                                        (.  expr = new AstLogicalAnd(this, lhs, rhs); .)
     ]
 .
 
@@ -112,7 +165,9 @@ BitAndExpr<out AstExpr? expr>
 NotExpr<out AstExpr? expr>
                                         (. AstExpr? lhs; bool isNot = false; .)
 =
-    [   not                             (.  isNot = true; .)
+    [   IF(!PatternMatchingEnabled && (la.kind == _not || la.kind == _symbolicNot))
+        (not | symbolicNot)
+                                        (.  isNot = true; .)
     ]
     EqlExpr<out lhs>                    (.  expr = isNot && lhs != null ? Create.UnaryOperation(GetPosition(), UnaryOperator.LogicalNot, lhs) : lhs; .)
 .
@@ -198,6 +253,7 @@ AssignExpr<out AstExpr? expr>     (.  AstGetSet assignment; BinaryOperator setMo
                                             } else {
                                                 assignment = lvalue;
                                             }
+                                            _rejectPatternCaptureMutation(assignment, position);
                                             assignment.Call = PCall.Set;
                                         .)
         (
@@ -235,13 +291,19 @@ PostfixUnaryExpr<out AstExpr? expr>
                                         (.  type?.Arguments.Add(expr);  
                                             expr = type ?? Create.Null(GetPosition()); 
                                         .)
-    |   is	                            
-        [ not						    (.	isInverted = true;.) 
-        ]
-    	TypeExpr<out type, _typeCheckShift>         
-    		                            (.  if (type == null)
+    |   is
+        ( IF(PatternMatchingEnabled)   (. var patternSubject = _createPatternTemporary("subject");
+                                           _patternSubjectLocals.Push(patternSubject);
+                                           AstPattern pattern; .)
+          Pattern<out pattern>         (. _patternSubjectLocals.Pop();
+                                           expr = _createPatternTest(position, expr ?? Create.Null(position), patternSubject, pattern); .)
+        | IF(!PatternMatchingEnabled)
+          [ not						    (.	isInverted = true;.)
+          ]
+	      TypeExpr<out type, _typeCheckShift>
+		                            (.  if (type == null)
                                             {
-                                            	var lastPos = GetPosition();
+	                                                var lastPos = GetPosition();
                                                 Loader.ReportMessage(Message.Error(Resources.TypeCheck_ExpectedTypeExpression, lastPos, MessageClasses.TypeExpressionExpected));
                                                 expr = Create.Constant(GetPosition(), false);
                                             } else {
@@ -255,12 +317,229 @@ PostfixUnaryExpr<out AstExpr? expr>
                                                       )
                                                     : type;
                                             }
-    									.)
-    |   inc                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostIncrement, expr ?? _NullNode(GetPosition())); .)
-    |   dec                             (.  expr = Create.UnaryOperation(position, UnaryOperator.PostDecrement, expr ?? _NullNode(GetPosition())); .)
+										.)
+        )
+    |   inc                             (.  _rejectPatternCaptureMutation(expr, position);
+                                           expr = Create.UnaryOperation(position, UnaryOperator.PostIncrement, expr ?? _NullNode(GetPosition())); .)
+    |   dec                             (.  _rejectPatternCaptureMutation(expr, position);
+                                           expr = Create.UnaryOperation(position, UnaryOperator.PostDecrement, expr ?? _NullNode(GetPosition())); .)
     |   GetSetExtension<expr, out extension>
                                         (.  expr = extension; .)
     }
+.
+
+Pattern<out AstPattern pattern>
+                                        (. AstPattern guardPattern; AstExpr guard; string whenId; .)
+=
+    PatternOr<out pattern>
+    [ IF(_isContextualWhen())
+      Id<out whenId>                    (. var position = GetPosition();
+                                           _pushCaptureEnvironment(pattern.Flow.WhenTrue); .)
+      BindingBooleanExpr<out guard>     (. _popCaptureEnvironment();
+                                           guardPattern = new AstExpressionPattern(position, guard);
+                                           pattern = new AstPatternAnd(position, pattern, guardPattern); .)
+    ]
+.
+
+PatternOr<out AstPattern pattern>
+                                        (. AstPattern rhs; .)
+=
+    PatternAnd<out pattern>
+    { or                                (. var position = GetPosition();
+                                           _pushCaptureEnvironment(pattern.Flow.WhenFalse); .)
+      PatternAnd<out rhs>               (. _popCaptureEnvironment();
+                                           pattern = new AstPatternOr(position, pattern, rhs); .)
+    }
+.
+
+PatternAnd<out AstPattern pattern>
+                                        (. AstPattern rhs; .)
+=
+    PatternUnary<out pattern>
+    { and                               (. var position = GetPosition();
+                                           _pushCaptureEnvironment(pattern.Flow.WhenTrue); .)
+      PatternUnary<out rhs>             (. _popCaptureEnvironment();
+                                           pattern = new AstPatternAnd(position, pattern, rhs); .)
+    }
+.
+
+PatternUnary<out AstPattern pattern>
+                                        (. var position = GetPosition();
+                                           pattern = new AstWildcardPattern(position); .)
+=
+    not PatternUnary<out pattern>       (. pattern = new AstPatternNot(position, pattern); .)
+|   PatternAlias<out pattern>
+.
+
+PatternAlias<out AstPattern pattern>
+                                        (. string alias; .)
+=
+    PatternPrimary<out pattern>
+    [ as [var] Id<out alias>            (. var position = GetPosition();
+                                           _pushCaptureEnvironment(pattern.Flow.WhenTrue);
+                                           var binder = _createBindingPattern(alias, position, true);
+                                           _popCaptureEnvironment();
+                                           pattern = new AstPatternAnd(position, pattern, binder); .)
+    ]
+.
+
+PatternPrimary<out AstPattern pattern>
+                                        (. var position = GetPosition();
+                                           pattern = new AstWildcardPattern(position);
+                                           string id;
+                                           AstExpr literal;
+                                           AstExpr? operand;
+                                           AstGetSet? predicate;
+                                           BinaryOperator relationalOperator = BinaryOperator.None; .)
+=
+    IF(_isWildcardPattern()) Id<out id> (. pattern = new AstWildcardPattern(position); .)
+|   var Id<out id>                     (. pattern = _createBindingPattern(id, position, true); .)
+|   Constant<out literal>              (. pattern = _relationalPattern(position, BinaryOperator.Equality, literal); .)
+|   ( eq                               (. relationalOperator = BinaryOperator.Equality; .)
+    | ne                               (. relationalOperator = BinaryOperator.Inequality; .)
+    | lt                               (. relationalOperator = BinaryOperator.LessThan; .)
+    | le                               (. relationalOperator = BinaryOperator.LessThanOrEqual; .)
+    | gt                               (. relationalOperator = BinaryOperator.GreaterThan; .)
+    | ge                               (. relationalOperator = BinaryOperator.GreaterThanOrEqual; .)
+    ) DeltaExpr<out operand>            (. pattern = _relationalPattern(position, relationalOperator, operand ?? Create.Null(position)); .)
+|   question lpar Expr<out literal> rpar
+                                        (. pattern = _predicateEscapePattern(position, literal); .)
+|   IF(_isViewPattern()) ViewPattern<out pattern>
+|   IF(_isShiftedPatternName())
+    TypeExpr<out predicate, _typeCheckShift>
+                                        (. predicate ??= _NullNode(position);
+                                           predicate.Arguments.Add(_currentPatternSubject(position));
+                                           if(!_tryCreatePatternMacro(predicate, position, out pattern))
+                                               pattern = new AstExpressionPattern(position, predicate); .)
+|   Id<out id>                          (. pattern = _createBindingPattern(id, position, false); .)
+|   lpar Pattern<out pattern> rpar
+|   ListPattern<out pattern>
+|   PropertyPattern<out pattern>
+.
+
+ViewPattern<out AstPattern pattern>
+                                        (. var position = GetPosition();
+                                           string id;
+                                           var viewPath = new List<string>();
+                                           AstPattern? outputs = null;
+                                           AstPattern outputPattern;
+                                           int outputIndex = 0;
+                                           var subject = _currentPatternSubject(position); .)
+=
+    Id<out id>                          (. viewPath.Add(id); .)
+    { dot Id<out id>                    (. viewPath.Add(id); .)
+    }                                   (. var call = _resolveShiftedPatternCall(position, "view_", viewPath);
+                                           call.Arguments.Add(subject);
+                                           var resultLocal = _createPatternTemporary("view\\result"); .)
+    lpar
+    [                                   (. var outputLocal = _createPatternTemporary("view\\output");
+                                           _patternSubjectLocals.Push(outputLocal); .)
+      Pattern<out outputPattern>        (. _patternSubjectLocals.Pop();
+                                           var nextExtraction = _patternHelper(position, "pattern\\output\\at",
+                                               _patternLocalReference(position, resultLocal), Create.Constant(position, outputIndex++));
+                                           outputs = _combinePatternAnd(position, outputs,
+                                               new AstExtractPattern(position, nextExtraction, outputLocal, outputPattern, false)); .)
+      { comma                           (. _pushCaptureEnvironment(outputs!.Flow.WhenTrue);
+                                           outputLocal = _createPatternTemporary("view\\output");
+                                           _patternSubjectLocals.Push(outputLocal); .)
+        Pattern<out outputPattern>      (. _patternSubjectLocals.Pop();
+                                           _popCaptureEnvironment();
+                                           var extraction = _patternHelper(position, "pattern\\output\\at",
+                                               _patternLocalReference(position, resultLocal), Create.Constant(position, outputIndex++));
+                                           outputs = _combinePatternAnd(position, outputs,
+                                               new AstExtractPattern(position, extraction, outputLocal, outputPattern, false)); .)
+      }
+    ] rpar                              (. outputs ??= new AstWildcardPattern(position);
+                                           pattern = new AstExtractPattern(position, call, resultLocal, outputs, true); .)
+.
+
+ListPattern<out AstPattern pattern>
+                                        (. var position = GetPosition();
+                                           var subject = _currentPatternSubject(position);
+                                           AstPattern? elements = null;
+                                           AstPattern elementPattern;
+                                           string elementLocal;
+                                           int elementIndex = 0;
+                                           bool hasRest = false; .)
+=
+    lbrack
+    [ ( times                            (. hasRest = true;
+                                           elementLocal = _createPatternTemporary("list\\rest");
+                                           _patternSubjectLocals.Push(elementLocal); .)
+        Pattern<out elementPattern>     (. _patternSubjectLocals.Pop();
+                                           var slice = _patternHelper(position, "pattern\\list\\slice",
+                                               subject, Create.Constant(position, elementIndex));
+                                           elements = new AstExtractPattern(position, slice, elementLocal, elementPattern, false); .)
+      |                                 (. elementLocal = _createPatternTemporary("list\\element");
+                                           _patternSubjectLocals.Push(elementLocal); .)
+        Pattern<out elementPattern>     (. _patternSubjectLocals.Pop();
+                                           var at = _patternHelper(position, "pattern\\output\\at",
+                                               subject, Create.Constant(position, elementIndex++));
+                                           elements = new AstExtractPattern(position, at, elementLocal, elementPattern, false); .)
+        { comma
+          ( times                       (. hasRest = true;
+                                           _pushCaptureEnvironment(elements!.Flow.WhenTrue);
+                                           elementLocal = _createPatternTemporary("list\\rest");
+                                           _patternSubjectLocals.Push(elementLocal); .)
+            Pattern<out elementPattern> (. _patternSubjectLocals.Pop();
+                                           _popCaptureEnvironment();
+                                           var slice = _patternHelper(position, "pattern\\list\\slice",
+                                               subject, Create.Constant(position, elementIndex));
+                                           elements = _combinePatternAnd(position, elements,
+                                               new AstExtractPattern(position, slice, elementLocal, elementPattern, false)); .)
+          |                             (. _pushCaptureEnvironment(elements!.Flow.WhenTrue);
+                                           elementLocal = _createPatternTemporary("list\\element");
+                                           _patternSubjectLocals.Push(elementLocal); .)
+            Pattern<out elementPattern> (. _patternSubjectLocals.Pop();
+                                           _popCaptureEnvironment();
+                                           var nextAt = _patternHelper(position, "pattern\\output\\at",
+                                               subject, Create.Constant(position, elementIndex++));
+                                           elements = _combinePatternAnd(position, elements,
+                                               new AstExtractPattern(position, nextAt, elementLocal, elementPattern, false)); .)
+          )
+        }
+      )
+    ] rbrack                            (. var shape = _patternHelper(position, "pattern\\list\\shape",
+                                               subject, Create.Constant(position, elementIndex), Create.Constant(position, hasRest));
+                                           pattern = new AstExpressionPattern(position, shape);
+                                           if(elements != null)
+                                               pattern = new AstPatternAnd(position, pattern, elements); .)
+.
+
+PropertyPattern<out AstPattern pattern>
+                                        (. var position = GetPosition();
+                                           var subject = _currentPatternSubject(position);
+                                           AstPattern? members = null;
+                                           AstPattern memberPattern;
+                                           string memberName;
+                                           string memberLocal; .)
+=
+    lbrace
+    [ PatternMemberName<out memberName> colon
+                                        (. memberLocal = _createPatternTemporary("member\\value");
+                                           _patternSubjectLocals.Push(memberLocal); .)
+      Pattern<out memberPattern>        (. _patternSubjectLocals.Pop();
+                                           members = _propertyMemberPattern(position, subject, memberName, memberLocal, memberPattern); .)
+      { comma PatternMemberName<out memberName> colon
+                                        (. _pushCaptureEnvironment(members!.Flow.WhenTrue);
+                                           memberLocal = _createPatternTemporary("member\\value");
+                                           _patternSubjectLocals.Push(memberLocal); .)
+        Pattern<out memberPattern>      (. _patternSubjectLocals.Pop();
+                                           _popCaptureEnvironment();
+                                           members = _combinePatternAnd(position, members,
+                                               _propertyMemberPattern(position, subject, memberName, memberLocal, memberPattern)); .)
+      }
+    ] rbrace                            (. var nonNull = _patternHelper(position, "pattern\\non_null", subject);
+                                           pattern = new AstExpressionPattern(position, nonNull);
+                                           if(members != null)
+                                               pattern = new AstPatternAnd(position, pattern, members); .)
+.
+
+PatternMemberName<out string name>
+                                        (. name = ""; .)
+=
+    Id<out name>
+|   String<out name>
 .
 
 PrefixUnaryExpr<out AstExpr? expr>
@@ -281,8 +560,11 @@ PrefixUnaryExpr<out AstExpr? expr>
                                                     var prefix = prefixes.Pop();
                                                     if(prefix.IsSplice) 
                                                         expr = Create.ArgumentSplice(position, expr);
-                                                    else
+                                                    else {
+                                                        if(prefix.Op == UnaryOperator.PreIncrement || prefix.Op == UnaryOperator.PreDecrement)
+                                                            _rejectPatternCaptureMutation(expr, position);
                                                         expr = Create.UnaryOperation(position, prefix.Op, expr);
+                                                    }
                                                 }
                                             }
                                         .)
@@ -448,6 +730,7 @@ implementation
                                             if(errors.count == 0)
                                             {
                                                 try {
+                                                    _reportUnusedPatternBindings(ft);
                                                     //Emit code for top-level block
                                                     Ast[func].EmitCode(ft,true,StackSemantics.Effect);
                                                     ft.FinishTarget();

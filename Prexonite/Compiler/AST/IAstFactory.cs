@@ -36,6 +36,20 @@ public interface IAstFactory : IMessageSink
     AstExpr LogicalAnd(ISourcePosition position, IEnumerable<AstExpr> clauses);
     AstExpr LogicalOr(ISourcePosition position, IEnumerable<AstExpr> clauses);
     AstExpr Null(ISourcePosition position);
+
+    AstPattern PatternWildcard(ISourcePosition position);
+    AstPattern PatternBind(ISourcePosition position, PatternCapture capture);
+    AstPattern PatternExpression(ISourcePosition position, AstExpr condition);
+    AstPattern PatternAnd(ISourcePosition position, AstPattern left, AstPattern right);
+    AstPattern PatternOr(ISourcePosition position, AstPattern left, AstPattern right);
+    AstPattern PatternNot(ISourcePosition position, AstPattern operand);
+    AstExpr PatternTest(
+        ISourcePosition position,
+        AstExpr subject,
+        string subjectLocal,
+        AstPattern pattern,
+        IEnumerable<PatternCapture> captures
+    );
     AstObjectCreation CreateObject(ISourcePosition position, AstTypeExpr type);
     AstExpr Typecheck(ISourcePosition position, AstExpr operand, AstTypeExpr type);
     AstExpr Typecast(ISourcePosition position, AstExpr operand, AstTypeExpr type);

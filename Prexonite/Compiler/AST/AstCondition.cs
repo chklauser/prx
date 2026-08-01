@@ -22,6 +22,9 @@ public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
     public AstScopedBlock ElseBlock;
     public AstExpr Condition;
     public bool IsNegative;
+    public IReadOnlyCollection<PatternCapture> PatternCaptures { get; set; } = [];
+    public BindingOutcome IfCaptureOutcome { get; set; } = BindingOutcome.Empty;
+    public BindingOutcome ElseCaptureOutcome { get; set; } = BindingOutcome.Empty;
     static int _depth;
 
     #region IAstHasBlocks Members
@@ -70,7 +73,7 @@ public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
             return;
         }
         //Conditions with empty blocks
-        if (IfBlock.IsEmpty && ElseBlock.IsEmpty)
+        if (IfBlock.IsEmpty && ElseBlock.IsEmpty && PatternCaptures.Count == 0)
         {
             Condition.EmitEffectCode(target);
             return;
@@ -79,7 +82,7 @@ public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
         ;
 
         //Switch If and Else block in case the if-block is empty
-        if (IfBlock.IsEmpty)
+        if (IfBlock.IsEmpty && PatternCaptures.Count == 0)
         {
             IsNegative = !IsNegative;
             var tmp = IfBlock;
@@ -95,7 +98,7 @@ public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
         var ifGoto = IfBlock.IsSingleStatement ? IfBlock[0] as AstExplicitGoTo : null;
         var elseGoto = ElseBlock.IsSingleStatement ? ElseBlock[0] as AstExplicitGoTo : null;
 
-        if (ifGoto != null && elseGoto != null)
+        if (PatternCaptures.Count == 0 && ifGoto != null && elseGoto != null)
         {
             //only jumps
             AstLazyLogical.EmitJumpCondition(
@@ -106,13 +109,13 @@ public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
                 !IsNegative
             );
         }
-        else if (ifGoto != null)
+        else if (PatternCaptures.Count == 0 && ifGoto != null)
         {
             //if => jump / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, ifGoto.Destination, !IsNegative);
             ElseBlock.EmitEffectCode(target);
         }
-        else if (elseGoto != null)
+        else if (PatternCaptures.Count == 0 && elseGoto != null)
         {
             //if => block / else => jump
             AstLazyLogical.EmitJumpCondition(target, Condition, elseGoto.Destination, IsNegative); //inverted
@@ -122,9 +125,11 @@ public class AstCondition : AstNode, IAstHasBlocks, IAstHasExpressions
         {
             //if => block / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
+            AstPattern.EmitConsumerCopies(target, Position, PatternCaptures, IfCaptureOutcome);
             IfBlock.EmitEffectCode(target);
             target.EmitJump(Position, endLabel);
             target.EmitLabel(Position, elseLabel);
+            AstPattern.EmitConsumerCopies(target, Position, PatternCaptures, ElseCaptureOutcome);
             ElseBlock.EmitEffectCode(target);
             target.EmitLabel(Position, endLabel);
         }

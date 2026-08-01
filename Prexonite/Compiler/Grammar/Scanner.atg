@@ -53,6 +53,9 @@ TOKENS
 	question // ?
 	pointer// ->
 	implementation // =>
+	symbolicAnd // &&
+	symbolicOr // ||
+	symbolicNot // !
 	at     // @
 	appendleft // <<
 	appendright // >>

@@ -190,8 +190,8 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "="    { return tok(Parser._assign); }
      "<|"   { return tok(Parser._deltaleft); }
      "|>"   { return tok(Parser._deltaright); }
-    "&&"    { return tok(Parser._and); }
-    "||"    { return tok(Parser._or); }
+    "&&"    { return tok(Parser._symbolicAnd); }
+    "||"    { return tok(Parser._symbolicOr); }
     "|"     { return tok(Parser._bitOr); }
     "&"     { return tok(Parser._bitAnd); }
     "=="    { return tok(Parser._eq); }
@@ -215,7 +215,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     "@"     { return tok(Parser._at); }
     ">>"	{ return tok(Parser._appendright); }
     "<<"	{ return tok(Parser._appendleft); }
-    "!"     { return tok(Parser._not); }
+    "!"     { return tok(Parser._symbolicNot); }
 
     .|\n    { throw new PrexoniteException(System.String.Format("Invalid character \"{0}\" detected on line {1} in {2}.", yytext(), yyline, File)); }
 }

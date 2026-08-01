@@ -124,6 +124,31 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         );
     }
 
+    public AstPattern PatternWildcard(ISourcePosition position) => new AstWildcardPattern(position);
+
+    public AstPattern PatternBind(ISourcePosition position, PatternCapture capture) =>
+        new AstBindPattern(position, capture);
+
+    public AstPattern PatternExpression(ISourcePosition position, AstExpr condition) =>
+        new AstExpressionPattern(position, condition);
+
+    public AstPattern PatternAnd(ISourcePosition position, AstPattern left, AstPattern right) =>
+        new AstPatternAnd(position, left, right);
+
+    public AstPattern PatternOr(ISourcePosition position, AstPattern left, AstPattern right) =>
+        new AstPatternOr(position, left, right);
+
+    public AstPattern PatternNot(ISourcePosition position, AstPattern operand) =>
+        new AstPatternNot(position, operand);
+
+    public AstExpr PatternTest(
+        ISourcePosition position,
+        AstExpr subject,
+        string subjectLocal,
+        AstPattern pattern,
+        IEnumerable<PatternCapture> captures
+    ) => new AstPatternTest(position, subject, subjectLocal, pattern, captures.ToArray());
+
     public AstTypeExpr DynamicType(
         ISourcePosition position,
         string typeId,
