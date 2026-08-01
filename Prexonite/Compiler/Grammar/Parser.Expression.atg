@@ -458,6 +458,8 @@ ListPattern<out AstPattern pattern>
                                            var subject = _currentPatternSubject(position);
                                            AstPattern? elements = null;
                                            AstPattern elementPattern;
+                                           AstExtractPattern extraction;
+                                           var listExtractions = new List<AstExtractPattern>();
                                            string elementLocal;
                                            int elementIndex = 0;
                                            bool hasRest = false; .)
@@ -469,13 +471,17 @@ ListPattern<out AstPattern pattern>
         Pattern<out elementPattern>     (. _patternSubjectLocals.Pop();
                                            var slice = _patternHelper(position, "pattern\\list\\slice",
                                                subject, Create.Constant(position, elementIndex));
-                                           elements = _extractPattern(position, slice, elementLocal, elementPattern, false); .)
+                                           extraction = _extractPattern(position, slice, elementLocal, elementPattern, false);
+                                           listExtractions.Add(extraction);
+                                           elements = extraction; .)
       |                                 (. elementLocal = _createPatternTemporary("list\\element");
                                            _patternSubjectLocals.Push(elementLocal); .)
         Pattern<out elementPattern>     (. _patternSubjectLocals.Pop();
                                            var at = _patternHelper(position, "pattern\\output\\at",
                                                subject, Create.Constant(position, elementIndex++));
-                                           elements = _extractPattern(position, at, elementLocal, elementPattern, false); .)
+                                           extraction = _extractPattern(position, at, elementLocal, elementPattern, false);
+                                           listExtractions.Add(extraction);
+                                           elements = extraction; .)
         { comma
           ( times                       (. hasRest = true;
                                            _pushCaptureEnvironment(elements!.Flow.WhenTrue);
@@ -485,8 +491,10 @@ ListPattern<out AstPattern pattern>
                                            _popCaptureEnvironment();
                                            var slice = _patternHelper(position, "pattern\\list\\slice",
                                                subject, Create.Constant(position, elementIndex));
+                                           extraction = _extractPattern(position, slice, elementLocal, elementPattern, false);
+                                           listExtractions.Add(extraction);
                                            elements = _combinePatternAnd(position, elements,
-                                               _extractPattern(position, slice, elementLocal, elementPattern, false)); .)
+                                               extraction); .)
           |                             (. _pushCaptureEnvironment(elements!.Flow.WhenTrue);
                                            elementLocal = _createPatternTemporary("list\\element");
                                            _patternSubjectLocals.Push(elementLocal); .)
@@ -494,16 +502,19 @@ ListPattern<out AstPattern pattern>
                                            _popCaptureEnvironment();
                                            var nextAt = _patternHelper(position, "pattern\\output\\at",
                                                subject, Create.Constant(position, elementIndex++));
+                                           extraction = _extractPattern(position, nextAt, elementLocal, elementPattern, false);
+                                           listExtractions.Add(extraction);
                                            elements = _combinePatternAnd(position, elements,
-                                               _extractPattern(position, nextAt, elementLocal, elementPattern, false)); .)
+                                               extraction); .)
           )
         }
       )
     ] rbrack                            (. var shape = _patternHelper(position, "pattern\\list\\shape",
                                                subject, Create.Constant(position, elementIndex), Create.Constant(position, hasRest));
-                                           pattern = new AstExpressionPattern(position, shape);
+                                           AstPattern body = new AstExpressionPattern(position, shape);
                                            if(elements != null)
-                                               pattern = new AstPatternAnd(position, pattern, elements); .)
+                                               body = new AstPatternAnd(position, body, elements);
+                                           pattern = new AstListPattern(position, body, listExtractions); .)
 .
 
 PropertyPattern<out AstPattern pattern>

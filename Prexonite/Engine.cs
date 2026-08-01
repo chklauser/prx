@@ -782,6 +782,7 @@ public partial class Engine
         Commands.AddEngineCommand(GetUnscopedAstFactory.Alias, GetUnscopedAstFactory.Instance);
 
         Commands.AddEngineCommand(PatternMemberProbe.Alias, PatternMemberProbe.Instance);
+        Commands.AddEngineCommand(PatternMemberPresent.Alias, PatternMemberPresent.Instance);
         Commands.AddEngineCommand(PatternOutputAt.Alias, PatternOutputAt.Instance);
         Commands.AddEngineCommand(PatternListShape.Alias, PatternListShape.Instance);
         Commands.AddEngineCommand(PatternListSlice.Alias, PatternListSlice.Instance);

@@ -65,3 +65,34 @@ The emitter now:
 The last point is deliberate. An A/B run of direct evaluation-stack joining made the complex hit
 slower and increased allocation by roughly 40--64 B per match. Restoring the result local improved
 both complex paths, so the two extra bytecode instructions are retained for generated-CIL quality.
+
+## Direct CIL helpers and extraction caching
+
+The next round extended the suite with a loop-only control, a list-shape-only pattern, an isolated
+property pattern, and an isolated user view. This separates the fixed invocation/loop cost from the
+cost of each pattern facility. The pre-change figures below were measured at parent change
+`268dfbe7`; the view was added as a characterization case but its pre-change run was not completed.
+
+| Case | Before | After | Time change | Before allocation | After allocation | Allocation change |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Loop-only control | 25.60 ns | 24.17 ns | -5.6% | 129 B | 129 B | unchanged |
+| Three-element list shape | 73.07 ns | 45.71 ns | -37.4% | 433 B | 257 B | -40.6% |
+| Three-element list pattern, hit | 94.27 ns | 51.82 ns | -45.0% | 537 B | 257 B | -52.1% |
+| Property pattern, hit | 537.04 ns | 482.85 ns | -10.1% | 2,041 B | 1,697 B | -16.9% |
+| User view pattern, hit | — | 235.94 ns | — | — | 1,121 B | — |
+| Complex `match`, late miss | 1,475 ns | 1,258.71 ns | -14.7% | 5,161 B | 4,185 B | -18.9% |
+| Complex `match`, first-arm hit | 1,553 ns | 1,281.96 ns | -17.5% | 5,665 B | 4,337 B | -23.4% |
+
+The CIL compiler now recognizes the internal pattern helpers as extensions when their structural
+arguments are compile-time constants. It calls statically callable implementations directly,
+without constructing a `PValue[]` argument vector or routing through command dispatch. Property
+probes return either the actual member value or a private missing-member sentinel, so the common
+property path no longer constructs a two-element `[handled, value]` list and then extracts it twice.
+
+List patterns also emit a CIL hint associating their shape test with their element and rest
+extractors. The shape helper unwraps and validates `List<PValue>` once, stores the typed list in a
+compiler local, and subsequent extractors index or slice that local directly. Wildcard-only list
+patterns omit the hint because they have no extractors to reuse. Nested list patterns receive
+independent caches. The cache local is declared lazily, after the CIL compiler has laid out its own
+locals; declaring it during hint discovery can perturb the compiler's local layout and produce
+invalid CIL.

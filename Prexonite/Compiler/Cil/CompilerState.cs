@@ -49,6 +49,7 @@ public sealed class CompilerState : StackContext
         TryBlocks = new();
 
         _ForeachHints = [];
+        _ListPatternLocations = [];
         _CilExtensionOffsets = new();
         if (source.Meta.TryGetValue(Loader.CilHintsKey, out var cilHints))
         {
@@ -69,6 +70,15 @@ public sealed class CompilerState : StackContext
                     case ForeachHint.Key:
                         _ForeachHints.Add(ForeachHint.FromMetaEntry(hint));
                         break;
+                    case ListPatternHint.Key:
+                    {
+                        var listHint = new ListPatternHint(hint);
+                        var storage = new ListPatternStorage();
+                        _ListPatternLocations.Add(listHint.ShapeAddress, new(storage, true));
+                        foreach (var address in listHint.ExtractionAddresses)
+                            _ListPatternLocations.Add(address, new(storage, false));
+                        break;
+                    }
                 }
             }
             if (cilExtensionOffsets != null)
@@ -169,6 +179,30 @@ public sealed class CompilerState : StackContext
     /// </summary>
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Internal")]
     internal List<ForeachHint> _ForeachHints { get; }
+
+    internal sealed class ListPatternStorage
+    {
+        internal LocalBuilder? Local { get; set; }
+    }
+
+    internal readonly record struct ListPatternLocation(ListPatternStorage Storage, bool IsShape)
+    {
+        internal LocalBuilder Local =>
+            Storage.Local
+            ?? throw new InvalidOperationException("The list-pattern local has not been declared.");
+    }
+
+    internal Dictionary<int, ListPatternLocation> _ListPatternLocations { get; }
+
+    internal int CurrentInstructionIndex { get; set; } = -1;
+
+    internal bool TryGetListPatternLocation(out ListPatternLocation location)
+    {
+        if (!_ListPatternLocations.TryGetValue(CurrentInstructionIndex, out location))
+            return false;
+        location.Storage.Local ??= Il.DeclareLocal(typeof(List<PValue>));
+        return true;
+    }
 
     /// <summary>
     ///     List of addresses where valid CIL extension code begins.
