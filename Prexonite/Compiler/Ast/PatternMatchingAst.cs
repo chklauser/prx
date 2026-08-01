@@ -668,6 +668,113 @@ public sealed class AstPatternTest : AstExpr, IAstJumpCondition, IAstHasExpressi
     }
 }
 
+public sealed class AstMatchArm : AstNode, IAstHasExpressions
+{
+    public AstMatchArm(ISourcePosition position, AstPattern pattern, AstExpr expression)
+        : base(position)
+    {
+        Pattern = pattern ?? throw new ArgumentNullException(nameof(pattern));
+        Expression = expression ?? throw new ArgumentNullException(nameof(expression));
+        Captures = pattern.GetCaptures().Distinct().ToArray();
+    }
+
+    public AstPattern Pattern { get; }
+    public AstExpr Expression { get; internal set; }
+    public IReadOnlyCollection<PatternCapture> Captures { get; }
+    public AstExpr[] Expressions => [Expression];
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics) =>
+        throw new NotSupportedException(
+            "Match arms are emitted only as part of a match expression."
+        );
+}
+
+public sealed class AstMatchExpression : AstExpr, IAstHasExpressions
+{
+    public AstMatchExpression(
+        ISourcePosition position,
+        AstExpr subject,
+        string subjectLocal,
+        string resultLocal,
+        IEnumerable<AstMatchArm>? arms = null
+    )
+        : base(position)
+    {
+        Subject = subject ?? throw new ArgumentNullException(nameof(subject));
+        SubjectLocal = subjectLocal ?? throw new ArgumentNullException(nameof(subjectLocal));
+        ResultLocal = resultLocal ?? throw new ArgumentNullException(nameof(resultLocal));
+        if (arms != null)
+            Arms.AddRange(arms);
+    }
+
+    public AstExpr Subject { get; internal set; }
+    public string SubjectLocal { get; }
+    public string ResultLocal { get; }
+    public List<AstMatchArm> Arms { get; } = new();
+    public AstExpr[] Expressions => [Subject, .. Arms.Select(arm => arm.Expression)];
+
+    public override bool TryOptimize(CompilerTarget target, [NotNullWhen(true)] out AstExpr? expr)
+    {
+        var subject = Subject;
+        _OptimizeNode(target, ref subject);
+        Subject = subject;
+        foreach (var arm in Arms)
+        {
+            var armExpression = arm.Expression;
+            _OptimizeNode(target, ref armExpression);
+            arm.Expression = armExpression;
+        }
+        expr = null;
+        return false;
+    }
+
+    protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+    {
+        Subject.EmitValueCode(target);
+        target.EmitStoreLocal(Position, SubjectLocal);
+
+        var id = Guid.NewGuid().ToString("N");
+        var end = $"match\\end\\{id}";
+        for (var i = 0; i < Arms.Count; i++)
+        {
+            var arm = Arms[i];
+            var selected = $"match\\selected\\{i}\\{id}";
+            var next = $"match\\next\\{i}\\{id}";
+
+            AstPattern.Normalize(target, arm.Position, arm.Captures, BindingOutcome.Empty);
+            arm.Pattern.EmitBranch(target, SubjectLocal, selected, next);
+
+            target.EmitLabel(arm.Position, selected);
+            AstPattern.Normalize(target, arm.Position, arm.Captures, arm.Pattern.Flow.WhenTrue);
+            AstPattern.EmitConsumerCopies(
+                target,
+                arm.Position,
+                arm.Captures,
+                arm.Pattern.Flow.WhenTrue
+            );
+            arm.Expression.EmitCode(target, stackSemantics);
+            if (stackSemantics == StackSemantics.Value)
+                target.EmitStoreLocal(arm.Position, ResultLocal);
+            target.EmitJump(arm.Position, end);
+
+            target.EmitLabel(arm.Position, next);
+            AstPattern.Normalize(target, arm.Position, arm.Captures, BindingOutcome.Empty);
+            target.FreeLabel(selected);
+            target.FreeLabel(next);
+        }
+
+        if (stackSemantics == StackSemantics.Value)
+        {
+            target.EmitNull(Position);
+            target.EmitStoreLocal(Position, ResultLocal);
+        }
+        target.EmitLabel(Position, end);
+        if (stackSemantics == StackSemantics.Value)
+            target.EmitLoadLocal(Position, ResultLocal);
+        target.FreeLabel(end);
+    }
+}
+
 public abstract class AstBindingBinary : AstExpr, IAstJumpCondition, IAstHasExpressions
 {
     protected AstBindingBinary(

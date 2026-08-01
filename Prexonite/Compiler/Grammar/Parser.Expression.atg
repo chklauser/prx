@@ -573,7 +573,9 @@ PrefixUnaryExpr<out AstExpr? expr>
 Primary<out AstExpr? expr>
                                         (.  expr = null;
                                         .)
-=   IF(isLambdaExpression())
+=   IF(PatternMatchingEnabled && _isMatchExpression())
+    MatchExpression<out expr>
+|   IF(isLambdaExpression())
     LambdaExpression<out expr>
 |	HashLiteral<out expr>
 |	LoopExpr<out expr>
@@ -586,6 +588,31 @@ Primary<out AstExpr? expr>
                                             //well as injecting the necessary plus operator.
                                             _popLexerState(); _inject(_plus); .)
     rpar
+.
+
+MatchExpression<out AstExpr? expr>
+                                        (.  var position = GetPosition();
+                                            string matchId;
+                                            AstExpr subject;
+                                            AstMatchExpression matchExpression;
+                                        .)
+=
+    Id<out matchId> lpar Expr<out subject> rpar
+                                        (.  matchExpression = _createMatchExpression(position, subject);
+                                            expr = matchExpression; .)
+    lbrace MatchArm<matchExpression>
+    { semicolon [ IF(la.kind != _rbrace) MatchArm<matchExpression> ] }
+    rbrace
+.
+
+MatchArm<AstMatchExpression matchExpression>
+                                        (.  var position = GetPosition();
+                                            AstPattern pattern;
+                                            AstExpr value;
+                                            _beginMatchArm(matchExpression); .)
+=
+    Pattern<out pattern> pointer        (.  _beginMatchArmExpression(pattern); .)
+    Expr<out value>                     (.  _finishMatchArm(matchExpression, position, pattern, value); .)
 .
 
 // These are primary expressions that are suitable to use as the LHS of `LHS.method(call)` or `LHS[index]`.

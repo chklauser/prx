@@ -54,6 +54,7 @@ partial class Parser
 
     PatternBindingRoot? _bindingRoot;
     int _bindingRootDepth;
+    readonly Stack<(PatternBindingRoot? Root, int Depth)> _suspendedBindingRoots = new();
     readonly Stack<SymbolStore> _captureOverlays = new();
     readonly Stack<BindingOutcome> _captureEnvironments = new();
     readonly Stack<string> _patternSubjectLocals = new();
@@ -96,6 +97,20 @@ partial class Parser
     {
         if (--_bindingRootDepth == 0)
             _bindingRoot = null;
+    }
+
+    void _enterIsolatedBindingRoot()
+    {
+        _suspendedBindingRoots.Push((_bindingRoot, _bindingRootDepth));
+        _bindingRoot = new PatternBindingRoot();
+        _bindingRootDepth = 1;
+    }
+
+    void _leaveIsolatedBindingRoot()
+    {
+        if (_bindingRootDepth != 1 || _suspendedBindingRoots.Count == 0)
+            throw new PrexoniteException("Unbalanced isolated pattern binding root.");
+        (_bindingRoot, _bindingRootDepth) = _suspendedBindingRoots.Pop();
     }
 
     BindingFlow _bindingFlowOf(AstExpr expression) => AstBindingAnd.BindingFlowFor(expression);
@@ -244,6 +259,61 @@ partial class Parser
     bool _isWildcardPattern() => la.kind == _id && la.val == "_";
 
     bool _isContextualWhen() => la.kind == _id && Engine.StringsAreEqual(la.val, "when");
+
+    bool _isMatchExpression()
+    {
+        if (la.kind != _id || !Engine.StringsAreEqual(la.val, "match"))
+            return false;
+
+        scanner.ResetPeek();
+        var next = scanner.Peek();
+        if (next.kind != _lpar)
+            return false;
+
+        var depth = 1;
+        while (depth > 0)
+        {
+            next = scanner.Peek();
+            if (next.kind == _EOF)
+                return false;
+            if (next.kind == _lpar)
+                depth++;
+            else if (next.kind == _rpar)
+                depth--;
+        }
+        return scanner.Peek().kind == _lbrace;
+    }
+
+    AstMatchExpression _createMatchExpression(ISourcePosition position, AstExpr subject)
+    {
+        var subjectLocal = _createPatternTemporary("match\\subject");
+        var resultLocal = _createPatternTemporary("match\\result");
+        return new AstMatchExpression(position, subject, subjectLocal, resultLocal);
+    }
+
+    void _beginMatchArm(AstMatchExpression expression)
+    {
+        _enterIsolatedBindingRoot();
+        _patternSubjectLocals.Push(expression.SubjectLocal);
+    }
+
+    void _beginMatchArmExpression(AstPattern pattern)
+    {
+        _patternSubjectLocals.Pop();
+        _pushCaptureEnvironment(pattern.Flow.WhenTrue, true);
+    }
+
+    void _finishMatchArm(
+        AstMatchExpression expression,
+        ISourcePosition position,
+        AstPattern pattern,
+        AstExpr value
+    )
+    {
+        _popCaptureEnvironment();
+        expression.Arms.Add(new AstMatchArm(position, pattern, value));
+        _leaveIsolatedBindingRoot();
+    }
 
     bool _isShiftedPatternName()
     {

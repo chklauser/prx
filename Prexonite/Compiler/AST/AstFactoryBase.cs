@@ -149,6 +149,17 @@ public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
         IEnumerable<PatternCapture> captures
     ) => new AstPatternTest(position, subject, subjectLocal, pattern, captures.ToArray());
 
+    public AstMatchArm MatchArm(ISourcePosition position, AstPattern pattern, AstExpr expression) =>
+        new(position, pattern, expression);
+
+    public AstExpr MatchExpression(
+        ISourcePosition position,
+        AstExpr subject,
+        string subjectLocal,
+        string resultLocal,
+        IEnumerable<AstMatchArm> arms
+    ) => new AstMatchExpression(position, subject, subjectLocal, resultLocal, arms);
+
     public AstTypeExpr DynamicType(
         ISourcePosition position,
         string typeId,

@@ -89,6 +89,22 @@ public class AstFactoryBridge : IObject, IIndirectCall
         }
     }
 
+    static bool _requireSequence<T>(
+        StackContext sctx,
+        ReadOnlySpan<PValue> args,
+        ref int index,
+        [NotNullWhen(true)] out IEnumerable<T>? values
+    )
+    {
+        if (_require(args, ref index, out var raw))
+        {
+            values = Map._ToEnumerable(sctx, raw).Select(x => x.ConvertTo<T>(sctx, true));
+            return true;
+        }
+        values = null;
+        return false;
+    }
+
     [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Local")]
     static bool _takeOptional<T>(
         StackContext sctx,
@@ -442,6 +458,36 @@ public class AstFactoryBridge : IObject, IIndirectCall
                     return false;
                 }
                 node = _base.PatternNot(position, operand);
+                break;
+            }
+            case "matcharm":
+            {
+                if (
+                    !_require(sctx, args, ref i, out AstPattern? pattern)
+                    || !_require(sctx, args, ref i, out AstExpr? expression)
+                )
+                {
+                    detailedError =
+                        "MatchArm(position, pattern~AstPattern, expression~AstExpr), argument is missing.";
+                    return false;
+                }
+                node = _base.MatchArm(position, pattern, expression);
+                break;
+            }
+            case "matchexpression":
+            {
+                if (
+                    !_require(sctx, args, ref i, out AstExpr? subject)
+                    || !_require(sctx, args, ref i, out string? subjectLocal)
+                    || !_require(sctx, args, ref i, out string? resultLocal)
+                    || !_requireSequence(sctx, args, ref i, out IEnumerable<AstMatchArm>? arms)
+                )
+                {
+                    detailedError =
+                        "MatchExpression(position, subject~AstExpr, subjectLocal~String, resultLocal~String, arms~List<AstMatchArm>), argument is missing.";
+                    return false;
+                }
+                node = _base.MatchExpression(position, subject, subjectLocal, resultLocal, arms);
                 break;
             }
 
