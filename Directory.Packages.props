@@ -9,7 +9,7 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
 
     <!-- Runtime dependencies -->
-    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.10" />
 
     <!-- Test dependencies -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
