@@ -35,6 +35,9 @@ dotnet run -c Release --no-build --project Prexonite.Benchmarks -- --filter '*Pr
 ```
 
 Use `--filter '*CilObjectMemberCallBenchmarks*'` to run only the CIL-generated function suite.
+Use `--filter '*PatternMatchingCilBenchmarks*'` to run only the fully statically linked pattern
+matching suite. Each benchmark invokes a generated CIL function that performs 256 matches; the
+reported time and allocation columns are normalized to one match.
 
 The default configuration is intended for a desktop that may experience unrelated load:
 

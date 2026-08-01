@@ -247,6 +247,8 @@ partial class Parser
     )
     {
         _bindingRoot ??= new PatternBindingRoot();
+        if (_prepareDirectPattern(pattern, subject))
+            target!.Function.Variables.Remove(subjectLocal);
         return new(
             position,
             subject,
@@ -254,6 +256,34 @@ partial class Parser
             pattern,
             pattern.GetCaptures().Distinct().ToArray()
         );
+    }
+
+    bool _prepareDirectPattern(AstPattern pattern, AstExpr subject)
+    {
+        switch (pattern)
+        {
+            case AstWildcardPattern:
+            case AstBindPattern:
+                return true;
+            case AstRelationalPattern relational:
+                relational.DirectCondition = Create.BinaryOperation(
+                    relational.Position,
+                    subject,
+                    relational.Operator,
+                    relational.Operand
+                );
+                return true;
+            case AstPatternNot not:
+                return _prepareDirectPattern(not.Operand, subject);
+            case AstPatternAnd
+            {
+                Left: AstBindPattern,
+                Right: AstExpressionPattern { UsesSubjectLocal: false }
+            }:
+                return true;
+            default:
+                return false;
+        }
     }
 
     bool _isWildcardPattern() => la.kind == _id && la.val == "_";
@@ -340,6 +370,33 @@ partial class Parser
     AstPattern _combinePatternAnd(ISourcePosition position, AstPattern? left, AstPattern right) =>
         left == null ? right : new AstPatternAnd(position, left, right);
 
+    AstPattern _extractPattern(
+        ISourcePosition position,
+        AstExpr extractor,
+        string outputLocal,
+        AstPattern outputPattern,
+        bool rejectNull
+    )
+    {
+        if (!rejectNull && _prepareDirectPattern(outputPattern, extractor))
+            target!.Function.Variables.Remove(outputLocal);
+        var extractorMayBeElided =
+            !rejectNull
+            && outputPattern is AstWildcardPattern
+            && (
+                extractor.IsCommandCall(PatternOutputAt.Alias, out _)
+                || extractor.IsCommandCall(PatternListSlice.Alias, out _)
+            );
+        return new AstExtractPattern(
+            position,
+            extractor,
+            outputLocal,
+            outputPattern,
+            rejectNull,
+            extractorMayBeElided
+        );
+    }
+
     AstPattern _relationalPattern(ISourcePosition position, BinaryOperator op, AstExpr operand)
     {
         var condition = Create.BinaryOperation(
@@ -348,7 +405,7 @@ partial class Parser
             op,
             operand
         );
-        return new AstExpressionPattern(position, condition);
+        return new AstRelationalPattern(position, condition, op, operand);
     }
 
     AstPattern _predicateEscapePattern(ISourcePosition position, AstExpr callable)
@@ -450,9 +507,9 @@ partial class Parser
         var body = new AstPatternAnd(
             position,
             new AstExpressionPattern(position, handled),
-            new AstExtractPattern(position, value, valueLocal, valuePattern, false)
+            _extractPattern(position, value, valueLocal, valuePattern, false)
         );
-        return new AstExtractPattern(position, probe, probeLocal, body, false);
+        return _extractPattern(position, probe, probeLocal, body, false);
     }
 
     bool _tryCreatePatternMacro(
