@@ -486,7 +486,16 @@ With the current architecture, `is_generated_order` remains an `AstExpand` until
 
 This is not limited to schema generation. A compiler hook that adds a property binder, renames a binder, or reassociates it across `or`/`not` changes the outward `(T, F)` capture signature after dependent source has resolved.
 
-The adopted first implementation freezes a macro's *outward* capture signature during parsing. A macro or factory that exports captures must synchronously declare each logical name, its physical `PatternCapture` handle, and whether it is available on the macro boundary's true and false continuations. Dependent source resolves against that declaration. Late expansion may rewrite the internal implementation only while preserving the declared signature. An existing or forward-declared macro that provides no synchronous signature is capture-neutral at its boundary, but may still allocate and use expansion-private captures internally.
+The adopted first implementation freezes a macro's *outward* capture signature during parsing. Macros used in pattern position follow a dedicated ABI/calling convention, analogous to the separate partial-application path for macros but distinct from ordinary expression expansion. The ABI has two phases:
+
+```text
+DescribePattern(invocation, parseContext) -> PatternMacroSignature
+ExpandPattern(invocation, expansionContext) -> AstPattern
+```
+
+`DescribePattern` runs once while the invocation is parsed, before any dependent operand or consumer scope. It declares each exported logical name, allocates its physical `PatternCapture` handle, and states whether it is available on the macro boundary's true and false continuations. The compiler stores that immutable signature and resolves dependent source against it. `ExpandPattern` runs through the normal macro-expansion machinery later, receives the frozen exported handles plus a private-capture allocator, and must return a pattern whose projected flow matches the stored signature.
+
+For .NET macro commands this can be represented by a dedicated `PatternMacroCommand`/`IPatternMacroCommand` contract alongside `PartialMacroCommand`, rather than overloading `DoExpand`. Script macro functions use an equivalent pattern-position calling convention and context discriminator. A macro declaration or forward declaration that cannot service `DescribePattern` has the empty outward signature and is therefore capture-neutral at its boundary; it may still allocate and use expansion-private captures during `ExpandPattern`. A capture-exporting macro must make its pattern ABI available before use. A merely separate expansion entry point invoked at `DoEmitCode` time would not solve the problem, because dependent names would already be resolved.
 
 This does **not** prohibit a macro from binding and using captures inside its own expansion. For example, the expansion may contain:
 
@@ -581,9 +590,9 @@ The CIL compiler consumes `PFunction.Code`, not the source AST. By the time it r
 - ordinary return/break/continue instructions;
 - calls to reserved pattern helper commands.
 
-No pattern-generated `try`/`catch` is required. All pattern-internal branches emitted within one source exception region remain within that region. Exits from `try` and `catch` reuse the existing `StructuredExceptionHandling` choice of `br` or `leave`, and exceptions from predicates, views, or getters propagate through the source program's normal regions.
+No pattern-generated `try`/`catch` is required. Pattern lowering has a strict region-preservation invariant: every label and jump introduced solely to test a pattern, select/fail an arm, normalize hidden slots, or converge a match result remains inside the source exception region that contains the matching construct. In particular, lowering a pattern or `match` inside `finally` must never manufacture a jump to a label outside that `finally`. Exits explicitly present in source `try` or `catch` continue to use the existing `StructuredExceptionHandling` choice of `br` or `leave`, and exceptions from predicates, views, or getters propagate through the source program's normal regions.
 
-This proposal must not overstate the existing CIL support for abrupt exits *from a `finally` body*. `StructuredExceptionHandling` can translate the block's natural exit to `endfinally`, but classifies another jump from `finally` to the outside as invalid; `CilCompilerTests.ReturnFromFinally` deliberately expects an SEH deficiency. Matching inside a `finally` is therefore CIL-compatible when its own branches remain in the region, but a matching guard whose selected source branch executes `return`, `break`, or `continue` from that `finally` retains the language's existing CIL limitation. Closing that gap would require a separate pending-control-transfer lowering that records the requested return/jump and dispatches it outside the exception region; pattern lowering does not solve it merely by using ordinary jumps.
+`StructuredExceptionHandling` still classifies a source-level abrupt exit *from a `finally` body* as invalid unless it is the block's natural `EndTry`; `CilCompilerTests.ReturnFromFinally` deliberately expects that existing SEH deficiency. A user-written `return`, `break`, or `continue` in a selected branch or arm inside `finally` remains such a source-level exit and is not a pattern-matching defect. For example, `return match (x) { ... };` first converges the matcher to an in-region result and then executes the user's return. Pattern matching is CIL-compatible when it preserves the invariant above; this project does not need to repair the independent abrupt-exit deficiency.
 
 Reserved pattern helpers must offer a statically callable implementation wherever their contract permits it. In particular, `pattern\member\probe` implements `ICilCompilerAware` with `PrefersRunStatically` in the first CIL-compatible version, so compiled patterns call `RunStatically` directly rather than going through `Runtime.CallCommand`. Tolerant view-output access and List shape/slice helpers should follow the same model.
 
@@ -591,7 +600,7 @@ The next optimization tier is a custom CIL implementation for the member probe t
 
 A foreach-style CIL hint or an encoded compiled-pattern region is not proposed initially. Such a hint would only be useful for recognizing and optimizing a multi-instruction pattern as a unit; it is unnecessary for correctness and would couple the CIL compiler to source-pattern structure. Reconsider it only after bytecode-level optimization measurements.
 
-The CIL parity suite must separately cover patterns whose internal branches stay inside `try`, `catch`, and `finally`; guard clauses whose branches leave `try` or `catch`; and the known-deficiency behavior for abrupt exits from `finally`. If full parity for the last category is made part of the pattern-matching milestone, the pending-control-transfer work must be an explicit prerequisite rather than an incidental pattern task.
+The CIL parity suite must cover matcher-generated control flow inside `try`, `catch`, and `finally`, including multi-arm match convergence and pattern failure in `finally`, and verify that no generated jump crosses the containing region. Separate regression tests may retain the known-deficiency expectation for user-written abrupt exits from `finally`, but those do not gate pattern-matching compatibility.
 
 ## Existing macro pattern library
 
@@ -616,7 +625,7 @@ The legacy library remains loadable while matching is disabled so existing progr
 3. Integrate consumer-edge copies, branch valid/error overlays, and post-`if` public-local promotion. Add `while`/`until` and conditional-expression scopes, and reject exporting acquisitions in `for` conditions.
 4. Add aliases, relational patterns, `when`, and `?(...)` predicates.
 5. Add shifted views and the tolerant output helper, followed by List and property patterns. Give reserved helpers stable command ABIs and statically callable implementations from the start.
-6. Expose the AST through factories and macro bridges, including frozen outward signatures, exported `PatternCapture` handles, hygienic private handles, expansion-flow projection, and signature-mismatch diagnostics. Document the old macro library as deprecated and add migration views.
+6. Add the dedicated two-phase pattern-macro ABI (`DescribePattern`/`ExpandPattern`) for command and script macros. Expose the AST through factories and macro bridges, including frozen outward signatures, exported `PatternCapture` handles, hygienic private handles, expansion-flow projection, and signature-mismatch diagnostics. Document the old macro library as deprecated and add migration views.
 7. Optionally add `AstMatchExpression` and the contextual `match` grammar.
 8. Run the same semantic suite interpreted and CIL-compiled; verify direct static helper calls, then add and benchmark the allocation-free member-probe CIL implementation.
 
@@ -639,8 +648,8 @@ At minimum, the implementation needs tests for:
 - subject/view/predicate evaluation exactly once, left-to-right effects, and exception propagation;
 - view results with zero, too few, exact, and excess outputs, including a successfully extracted null;
 - exact and rest List patterns; empty property patterns; handled and unhandled `IObject`, CLR, and structure messages; missing and null-valued members; indexed/unreadable members; observable getter effects; throwing getters; direct CIL calls to `RunStatically`; and parity of the later allocation-free probe;
-- `return`, `break`, and `continue` from branches, separating exits from `try`/`catch` from the existing CIL deficiency for exits from `finally`;
-- macro inspection/construction of the enabled AST and unchanged disabled AST nodes; exported captures used internally; expansion-private captures; projected-signature equality; and diagnostics for missing, extra, rerouted, physically mismatched, escaping, and use-before-availability captures;
+- matcher-generated labels and jumps staying within their containing `try`/`catch`/`finally`, including match convergence and failure in `finally`; source `return`, `break`, and `continue` from branches; and separate retention of the existing CIL-deficiency expectation for user-written exits from `finally`;
+- macro inspection/construction of the enabled AST and unchanged disabled AST nodes; early `DescribePattern` before dependent parsing; late `ExpandPattern`; capture-neutral forward declarations without a descriptor; exported captures used internally; expansion-private captures; projected-signature equality; and diagnostics for missing, extra, rerouted, physically mismatched, escaping, and use-before-availability captures;
 - interpreted/CIL parity for the entire enabled suite when CIL support is switched on.
 
 ## Deliberate exclusions

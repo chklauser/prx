@@ -16,7 +16,7 @@ The following findings had a factual or locally determined resolution and have b
 | Code-first M4: non-operator uses of `not` | Enabled mode restricts word operators only in expression/statement operator productions. Existing metadata and directive uses remain valid. |
 | Proposal-first m2, contextual `match` and member names | `match` is recognized only by balanced-subject-plus-brace lookahead; otherwise it is an ordinary identifier. Member names accept identifiers and compile-time string literals. |
 | Proposal-first m3 plus the follow-up property-pattern requirement | Property patterns are specified as observable zero-argument `PCall.Get` message sends through an always-registered `pattern\member\probe` engine command. The `[handled, value]` ABI distinguishes missing from handled-null. Its first CIL implementation calls `RunStatically` directly; a later custom implementation removes the temporary List allocation. |
-| Code-first M2 versus proposal-first N4: CIL exception handling | The general bytecode/CIL strategy remains sound, but abrupt exits from a `finally` body are explicitly identified as the existing `ReturnFromFinally` SEH deficiency. Matching does not silently claim to repair it. |
+| Code-first M2 versus proposal-first N4: CIL exception handling | The general bytecode/CIL strategy remains sound. Matcher-generated labels and jumps must stay inside the source construct's exception region. A user-written abrupt exit from `finally` remains the independent `ReturnFromFinally` deficiency and does not gate pattern matching. |
 
 ## Accepted design decisions
 
@@ -24,7 +24,7 @@ The following recommendations were accepted and are now incorporated into [`prop
 
 - **D1, BBE grammar:** matching-enabled expressions use a separate symbolic `!`/`&&`/`||` ladder. Relational-pattern operands stop before enclosing `&&`/`||`; a full boolean value operand requires parentheses.
 - **D2, capture roots and barriers:** each complete expression owns a private registry; only enumerated binding-aware edges transport captures; only enumerated control consumers export them. Acquisitions in either `for` condition form are rejected initially, and loop child symbol stores must be delayed or rebuilt.
-- **D3, macro captures:** a macro's outward capture signature is frozen synchronously. Late expansion may use predeclared exported captures internally and may allocate hygienic expansion-private captures, but its projected true/false signature must match exactly or compilation fails.
+- **D3, macro captures:** pattern-position macros use a dedicated two-phase ABI. `DescribePattern` freezes the outward signature before dependent parsing; `ExpandPattern` later receives those handles and may allocate hygienic expansion-private captures. Its projected true/false signature must match exactly or compilation fails. A declaration unable to service the early phase is outwardly capture-neutral.
 - **D4, capture mutability:** matching uses hidden, read-only/non-addressable acquisition slots. Exporting consumers copy valid values into ordinary mutable public locals and initialize invalid routes to `null`; normalization never overwrites user locals.
 - **D5, recursive mode inheritance:** effective mode is `own override > immediately enclosing effective mode > frozen module mode`, recursively through arbitrary levels of named functions and lambdas.
 
