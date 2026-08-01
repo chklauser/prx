@@ -153,24 +153,17 @@ public abstract class AstPattern : AstNode
         string falseLabel
     );
 
+    internal virtual bool TryEmitDirectBranch(
+        CompilerTarget target,
+        AstExpr subject,
+        string trueLabel,
+        string falseLabel
+    ) => false;
+
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics) =>
         throw new NotSupportedException("Patterns are emitted only as part of a pattern test.");
 
     internal virtual IEnumerable<PatternCapture> GetCaptures() => [];
-
-    internal static void Normalize(
-        CompilerTarget target,
-        ISourcePosition position,
-        IEnumerable<PatternCapture> registry,
-        BindingOutcome outcome
-    )
-    {
-        foreach (var capture in registry.Distinct().Where(c => !outcome.Captures.Contains(c)))
-        {
-            target.EmitNull(position);
-            target.EmitStoreLocal(position, capture.PhysicalId);
-        }
-    }
 
     internal static void EmitConsumerCopies(
         CompilerTarget target,
@@ -201,6 +194,18 @@ public sealed class AstWildcardPattern : AstPattern
         string trueLabel,
         string falseLabel
     ) => target.EmitJump(Position, trueLabel);
+
+    internal override bool TryEmitDirectBranch(
+        CompilerTarget target,
+        AstExpr subject,
+        string trueLabel,
+        string falseLabel
+    )
+    {
+        subject.EmitEffectCode(target);
+        target.EmitJump(Position, trueLabel);
+        return true;
+    }
 }
 
 public sealed class AstBindPattern : AstPattern
@@ -226,17 +231,36 @@ public sealed class AstBindPattern : AstPattern
         target.EmitStoreLocal(Position, Capture.PhysicalId);
         target.EmitJump(Position, trueLabel);
     }
+
+    internal override bool TryEmitDirectBranch(
+        CompilerTarget target,
+        AstExpr subject,
+        string trueLabel,
+        string falseLabel
+    )
+    {
+        subject.EmitValueCode(target);
+        target.EmitStoreLocal(Position, Capture.PhysicalId);
+        target.EmitJump(Position, trueLabel);
+        return true;
+    }
 }
 
 public sealed class AstExpressionPattern : AstPattern, IAstHasExpressions
 {
-    public AstExpressionPattern(ISourcePosition position, AstExpr condition)
+    public AstExpressionPattern(
+        ISourcePosition position,
+        AstExpr condition,
+        bool usesSubjectLocal = true
+    )
         : base(position, BindingFlow.Ordinary)
     {
         Condition = condition;
+        UsesSubjectLocal = usesSubjectLocal;
     }
 
     public AstExpr Condition { get; }
+    public bool UsesSubjectLocal { get; }
     public AstExpr[] Expressions => [Condition];
 
     internal override void EmitBranch(
@@ -245,6 +269,51 @@ public sealed class AstExpressionPattern : AstPattern, IAstHasExpressions
         string trueLabel,
         string falseLabel
     ) => AstLazyLogical.EmitJumpCondition(target, Condition, trueLabel, falseLabel);
+}
+
+/// <summary>
+///     A relational pattern whose direct condition can embed the original subject expression.
+/// </summary>
+public sealed class AstRelationalPattern : AstPattern, IAstHasExpressions
+{
+    public AstRelationalPattern(
+        ISourcePosition position,
+        AstExpr condition,
+        BinaryOperator @operator,
+        AstExpr operand
+    )
+        : base(position, BindingFlow.Ordinary)
+    {
+        Condition = condition;
+        Operator = @operator;
+        Operand = operand;
+    }
+
+    public AstExpr Condition { get; }
+    public BinaryOperator Operator { get; }
+    public AstExpr Operand { get; }
+    internal AstExpr? DirectCondition { get; set; }
+    public AstExpr[] Expressions => [Condition];
+
+    internal override void EmitBranch(
+        CompilerTarget target,
+        string subjectLocal,
+        string trueLabel,
+        string falseLabel
+    ) => AstLazyLogical.EmitJumpCondition(target, Condition, trueLabel, falseLabel);
+
+    internal override bool TryEmitDirectBranch(
+        CompilerTarget target,
+        AstExpr subject,
+        string trueLabel,
+        string falseLabel
+    )
+    {
+        if (DirectCondition == null)
+            return false;
+        AstLazyLogical.EmitJumpCondition(target, DirectCondition, trueLabel, falseLabel);
+        return true;
+    }
 }
 
 public sealed class AstPatternAnd : AstPattern
@@ -272,9 +341,29 @@ public sealed class AstPatternAnd : AstPattern
         var next = $"pattern\\and\\{Guid.NewGuid():N}";
         Left.EmitBranch(target, subjectLocal, next, falseLabel);
         target.EmitLabel(Position, next);
-        Normalize(target, Position, Left.GetCaptures(), Left.Flow.WhenTrue);
         Right.EmitBranch(target, subjectLocal, trueLabel, falseLabel);
         target.FreeLabel(next);
+    }
+
+    internal override bool TryEmitDirectBranch(
+        CompilerTarget target,
+        AstExpr subject,
+        string trueLabel,
+        string falseLabel
+    )
+    {
+        if (
+            Left is not AstBindPattern bind
+            || Right is not AstExpressionPattern { UsesSubjectLocal: false } guard
+        )
+            return false;
+
+        var next = $"pattern\\direct\\and\\{Guid.NewGuid():N}";
+        bind.TryEmitDirectBranch(target, subject, next, falseLabel);
+        target.EmitLabel(Position, next);
+        guard.EmitBranch(target, "", trueLabel, falseLabel);
+        target.FreeLabel(next);
+        return true;
     }
 }
 
@@ -303,7 +392,6 @@ public sealed class AstPatternOr : AstPattern
         var next = $"pattern\\or\\{Guid.NewGuid():N}";
         Left.EmitBranch(target, subjectLocal, trueLabel, next);
         target.EmitLabel(Position, next);
-        Normalize(target, Position, Left.GetCaptures(), Left.Flow.WhenFalse);
         Right.EmitBranch(target, subjectLocal, trueLabel, falseLabel);
         target.FreeLabel(next);
     }
@@ -327,6 +415,13 @@ public sealed class AstPatternNot : AstPattern
         string trueLabel,
         string falseLabel
     ) => Operand.EmitBranch(target, subjectLocal, falseLabel, trueLabel);
+
+    internal override bool TryEmitDirectBranch(
+        CompilerTarget target,
+        AstExpr subject,
+        string trueLabel,
+        string falseLabel
+    ) => Operand.TryEmitDirectBranch(target, subject, falseLabel, trueLabel);
 }
 
 public sealed class AstPatternMacro : AstPattern
@@ -428,28 +523,7 @@ public sealed class AstPatternMacro : AstPattern
                 return;
             }
 
-            foreach (var capture in context.PrivateCaptures)
-            {
-                target.EmitNull(Position);
-                target.EmitStoreLocal(Position, capture.PhysicalId);
-            }
-            var rawTrue = $"pattern\\macro\\true\\{Guid.NewGuid():N}";
-            var rawFalse = $"pattern\\macro\\false\\{Guid.NewGuid():N}";
-            expanded.EmitBranch(target, SubjectLocal, rawTrue, rawFalse);
-            target.EmitLabel(Position, rawTrue);
-            foreach (var capture in context.PrivateCaptures)
-            {
-                target.EmitNull(Position);
-                target.EmitStoreLocal(Position, capture.PhysicalId);
-            }
-            target.EmitJump(Position, trueLabel);
-            target.EmitLabel(Position, rawFalse);
-            foreach (var capture in context.PrivateCaptures)
-            {
-                target.EmitNull(Position);
-                target.EmitStoreLocal(Position, capture.PhysicalId);
-            }
-            target.EmitJump(Position, falseLabel);
+            expanded.EmitBranch(target, SubjectLocal, trueLabel, falseLabel);
         }
         catch (Exception exception)
         {
@@ -483,6 +557,8 @@ public sealed class AstPatternMacro : AstPattern
                 return true;
             case AstExpressionPattern expression:
                 return _validateReads(expression.Condition, available, knownHandles, out error);
+            case AstRelationalPattern relational:
+                return _validateReads(relational.Condition, available, knownHandles, out error);
             case AstPatternAnd and:
                 if (!_validateExpansion(and.Left, available, knownHandles, out error))
                     return false;
@@ -554,7 +630,8 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
         AstExpr extractor,
         string outputLocal,
         AstPattern outputPattern,
-        bool rejectNull
+        bool rejectNull,
+        bool extractorMayBeElided = false
     )
         : base(
             position,
@@ -568,12 +645,14 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
         OutputLocal = outputLocal;
         OutputPattern = outputPattern;
         RejectNull = rejectNull;
+        ExtractorMayBeElided = extractorMayBeElided;
     }
 
     public AstExpr Extractor { get; }
     public string OutputLocal { get; }
     public AstPattern OutputPattern { get; }
     public bool RejectNull { get; }
+    public bool ExtractorMayBeElided { get; }
     public AstExpr[] Expressions => [Extractor];
 
     internal override IEnumerable<PatternCapture> GetCaptures() => OutputPattern.GetCaptures();
@@ -585,6 +664,18 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
         string falseLabel
     )
     {
+        if (ExtractorMayBeElided && OutputPattern is AstWildcardPattern)
+        {
+            target.EmitJump(Position, trueLabel);
+            return;
+        }
+
+        if (
+            !RejectNull
+            && OutputPattern.TryEmitDirectBranch(target, Extractor, trueLabel, falseLabel)
+        )
+            return;
+
         Extractor.EmitValueCode(target);
         target.EmitStoreLocal(Position, OutputLocal);
         if (RejectNull)
@@ -623,22 +714,12 @@ public sealed class AstPatternTest : AstExpr, IAstJumpCondition, IAstHasExpressi
 
     public void EmitJumpCondition(CompilerTarget target, string trueLabel, string falseLabel)
     {
-        foreach (var capture in Captures)
+        if (!Pattern.TryEmitDirectBranch(target, Subject, trueLabel, falseLabel))
         {
-            target.EmitNull(Position);
-            target.EmitStoreLocal(Position, capture.PhysicalId);
+            Subject.EmitValueCode(target);
+            target.EmitStoreLocal(Position, SubjectLocal);
+            Pattern.EmitBranch(target, SubjectLocal, trueLabel, falseLabel);
         }
-        Subject.EmitValueCode(target);
-        target.EmitStoreLocal(Position, SubjectLocal);
-        var rawTrue = $"pattern\\raw\\true\\{Guid.NewGuid():N}";
-        var rawFalse = $"pattern\\raw\\false\\{Guid.NewGuid():N}";
-        Pattern.EmitBranch(target, SubjectLocal, rawTrue, rawFalse);
-        target.EmitLabel(Position, rawTrue);
-        AstPattern.Normalize(target, Position, Captures, Flow.WhenTrue);
-        target.EmitJump(Position, trueLabel);
-        target.EmitLabel(Position, rawFalse);
-        AstPattern.Normalize(target, Position, Captures, Flow.WhenFalse);
-        target.EmitJump(Position, falseLabel);
     }
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -709,6 +790,7 @@ public sealed class AstMatchExpression : AstExpr, IAstHasExpressions
 
     public AstExpr Subject { get; internal set; }
     public string SubjectLocal { get; }
+
     public string ResultLocal { get; }
     public List<AstMatchArm> Arms { get; } = new();
     public AstExpr[] Expressions => [Subject, .. Arms.Select(arm => arm.Expression)];
@@ -741,11 +823,9 @@ public sealed class AstMatchExpression : AstExpr, IAstHasExpressions
             var selected = $"match\\selected\\{i}\\{id}";
             var next = $"match\\next\\{i}\\{id}";
 
-            AstPattern.Normalize(target, arm.Position, arm.Captures, BindingOutcome.Empty);
             arm.Pattern.EmitBranch(target, SubjectLocal, selected, next);
 
             target.EmitLabel(arm.Position, selected);
-            AstPattern.Normalize(target, arm.Position, arm.Captures, arm.Pattern.Flow.WhenTrue);
             AstPattern.EmitConsumerCopies(
                 target,
                 arm.Position,
@@ -758,7 +838,6 @@ public sealed class AstMatchExpression : AstExpr, IAstHasExpressions
             target.EmitJump(arm.Position, end);
 
             target.EmitLabel(arm.Position, next);
-            AstPattern.Normalize(target, arm.Position, arm.Captures, BindingOutcome.Empty);
             target.FreeLabel(selected);
             target.FreeLabel(next);
         }
@@ -795,19 +874,8 @@ public abstract class AstBindingBinary : AstExpr, IAstJumpCondition, IAstHasExpr
     public BindingFlow Flow { get; }
     public AstExpr[] Expressions => [Left, Right];
 
-    public void EmitJumpCondition(CompilerTarget target, string trueLabel, string falseLabel)
-    {
-        var rawTrue = $"bbe\\raw\\true\\{Guid.NewGuid():N}";
-        var rawFalse = $"bbe\\raw\\false\\{Guid.NewGuid():N}";
-        DoEmitJumpCondition(target, rawTrue, rawFalse);
-        var captures = AstBindingAnd.CapturesFor(this);
-        target.EmitLabel(Position, rawTrue);
-        AstPattern.Normalize(target, Position, captures, Flow.WhenTrue);
-        target.EmitJump(Position, trueLabel);
-        target.EmitLabel(Position, rawFalse);
-        AstPattern.Normalize(target, Position, captures, Flow.WhenFalse);
-        target.EmitJump(Position, falseLabel);
-    }
+    public void EmitJumpCondition(CompilerTarget target, string trueLabel, string falseLabel) =>
+        DoEmitJumpCondition(target, trueLabel, falseLabel);
 
     protected abstract void DoEmitJumpCondition(
         CompilerTarget target,
@@ -912,19 +980,8 @@ public sealed class AstBindingNot : AstExpr, IAstJumpCondition, IAstHasExpressio
     public BindingFlow Flow { get; }
     public AstExpr[] Expressions => [Operand];
 
-    public void EmitJumpCondition(CompilerTarget target, string trueLabel, string falseLabel)
-    {
-        var rawTrue = $"bbe\\not\\raw\\true\\{Guid.NewGuid():N}";
-        var rawFalse = $"bbe\\not\\raw\\false\\{Guid.NewGuid():N}";
-        AstLazyLogical.EmitJumpCondition(target, Operand, rawFalse, rawTrue);
-        var captures = AstBindingAnd.CapturesFor(Operand);
-        target.EmitLabel(Position, rawTrue);
-        AstPattern.Normalize(target, Position, captures, Flow.WhenTrue);
-        target.EmitJump(Position, trueLabel);
-        target.EmitLabel(Position, rawFalse);
-        AstPattern.Normalize(target, Position, captures, Flow.WhenFalse);
-        target.EmitJump(Position, falseLabel);
-    }
+    public void EmitJumpCondition(CompilerTarget target, string trueLabel, string falseLabel) =>
+        AstLazyLogical.EmitJumpCondition(target, Operand, falseLabel, trueLabel);
 
     protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
     {

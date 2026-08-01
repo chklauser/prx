@@ -336,7 +336,7 @@ Pattern<out AstPattern pattern>
       Id<out whenId>                    (. var position = GetPosition();
                                            _pushCaptureEnvironment(pattern.Flow.WhenTrue); .)
       BindingBooleanExpr<out guard>     (. _popCaptureEnvironment();
-                                           guardPattern = new AstExpressionPattern(position, guard);
+                                           guardPattern = new AstExpressionPattern(position, guard, false);
                                            pattern = new AstPatternAnd(position, pattern, guardPattern); .)
     ]
 .
@@ -438,7 +438,7 @@ ViewPattern<out AstPattern pattern>
                                            var nextExtraction = _patternHelper(position, "pattern\\output\\at",
                                                _patternLocalReference(position, resultLocal), Create.Constant(position, outputIndex++));
                                            outputs = _combinePatternAnd(position, outputs,
-                                               new AstExtractPattern(position, nextExtraction, outputLocal, outputPattern, false)); .)
+                                               _extractPattern(position, nextExtraction, outputLocal, outputPattern, false)); .)
       { comma                           (. _pushCaptureEnvironment(outputs!.Flow.WhenTrue);
                                            outputLocal = _createPatternTemporary("view\\output");
                                            _patternSubjectLocals.Push(outputLocal); .)
@@ -447,10 +447,10 @@ ViewPattern<out AstPattern pattern>
                                            var extraction = _patternHelper(position, "pattern\\output\\at",
                                                _patternLocalReference(position, resultLocal), Create.Constant(position, outputIndex++));
                                            outputs = _combinePatternAnd(position, outputs,
-                                               new AstExtractPattern(position, extraction, outputLocal, outputPattern, false)); .)
+                                               _extractPattern(position, extraction, outputLocal, outputPattern, false)); .)
       }
     ] rpar                              (. outputs ??= new AstWildcardPattern(position);
-                                           pattern = new AstExtractPattern(position, call, resultLocal, outputs, true); .)
+                                           pattern = _extractPattern(position, call, resultLocal, outputs, true); .)
 .
 
 ListPattern<out AstPattern pattern>
@@ -469,13 +469,13 @@ ListPattern<out AstPattern pattern>
         Pattern<out elementPattern>     (. _patternSubjectLocals.Pop();
                                            var slice = _patternHelper(position, "pattern\\list\\slice",
                                                subject, Create.Constant(position, elementIndex));
-                                           elements = new AstExtractPattern(position, slice, elementLocal, elementPattern, false); .)
+                                           elements = _extractPattern(position, slice, elementLocal, elementPattern, false); .)
       |                                 (. elementLocal = _createPatternTemporary("list\\element");
                                            _patternSubjectLocals.Push(elementLocal); .)
         Pattern<out elementPattern>     (. _patternSubjectLocals.Pop();
                                            var at = _patternHelper(position, "pattern\\output\\at",
                                                subject, Create.Constant(position, elementIndex++));
-                                           elements = new AstExtractPattern(position, at, elementLocal, elementPattern, false); .)
+                                           elements = _extractPattern(position, at, elementLocal, elementPattern, false); .)
         { comma
           ( times                       (. hasRest = true;
                                            _pushCaptureEnvironment(elements!.Flow.WhenTrue);
@@ -486,7 +486,7 @@ ListPattern<out AstPattern pattern>
                                            var slice = _patternHelper(position, "pattern\\list\\slice",
                                                subject, Create.Constant(position, elementIndex));
                                            elements = _combinePatternAnd(position, elements,
-                                               new AstExtractPattern(position, slice, elementLocal, elementPattern, false)); .)
+                                               _extractPattern(position, slice, elementLocal, elementPattern, false)); .)
           |                             (. _pushCaptureEnvironment(elements!.Flow.WhenTrue);
                                            elementLocal = _createPatternTemporary("list\\element");
                                            _patternSubjectLocals.Push(elementLocal); .)
@@ -495,7 +495,7 @@ ListPattern<out AstPattern pattern>
                                            var nextAt = _patternHelper(position, "pattern\\output\\at",
                                                subject, Create.Constant(position, elementIndex++));
                                            elements = _combinePatternAnd(position, elements,
-                                               new AstExtractPattern(position, nextAt, elementLocal, elementPattern, false)); .)
+                                               _extractPattern(position, nextAt, elementLocal, elementPattern, false)); .)
           )
         }
       )
