@@ -84,7 +84,7 @@ public sealed class PatternMacroExpansionContext
     {
         var physicalId = _target.GenerateLocalId("pattern\\macro\\private\\" + debugName);
         _target.Function.Variables.Add(physicalId);
-        var capture = new PatternCapture(debugName, physicalId, physicalId, position, true);
+        var capture = new PatternCapture(debugName, physicalId, physicalId, position, true, false);
         _privateCaptures.Add(capture);
         return capture;
     }

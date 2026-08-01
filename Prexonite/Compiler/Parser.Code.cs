@@ -45,7 +45,14 @@ partial class Parser
             var publicId = parser.generateLocalId("pattern\\public\\" + name);
             parser.target.Function.Variables.Add(physicalId);
             parser.target.Function.Variables.Add(publicId);
-            var capture = new PatternCapture(name, physicalId, publicId, position, isExplicit);
+            var capture = new PatternCapture(
+                name,
+                physicalId,
+                publicId,
+                position,
+                isExplicit,
+                parser.target.WarnUnusedPatternBindings
+            );
             _captures.Add(name, capture);
             parser.target.PatternCaptures.Add(capture);
             return capture;
@@ -202,30 +209,47 @@ partial class Parser
     AstExpr _currentPatternSubject(ISourcePosition position) =>
         _patternLocalReference(position, _patternSubjectLocals.Peek());
 
-    bool _isPatternAcquisitionSlot(AstExpr? expression, out PatternCapture? capture)
+    bool _isPatternCaptureSlot(
+        AstExpr? expression,
+        [NotNullWhen(true)] out PatternCapture? capture,
+        out bool usesPublicSlot
+    )
     {
         capture = null;
+        usesPublicSlot = false;
         var reference = expression switch
         {
             AstIndirectCall { Subject: AstReference indirectReference } => indirectReference,
             AstReference directReference => directReference,
             _ => null,
         };
-        if (
-            _bindingRoot == null
-            || reference == null
-            || !reference.Entity.TryGetLocalVariable(out var local)
-        )
+        if (reference == null || !reference.Entity.TryGetLocalVariable(out var local))
             return false;
-        capture = _bindingRoot.Captures.FirstOrDefault(c =>
-            Engine.StringsAreEqual(c.PhysicalId, local.Id)
-        );
-        return capture != null;
+
+        for (
+            var compilerTarget = target;
+            compilerTarget != null;
+            compilerTarget = compilerTarget.ParentTarget
+        )
+        {
+            capture = compilerTarget.PatternCaptures.FirstOrDefault(c =>
+                Engine.StringsAreEqual(c.PhysicalId, local.Id)
+                || Engine.StringsAreEqual(c.PublicId, local.Id)
+            );
+            if (capture == null)
+                continue;
+            usesPublicSlot = Engine.StringsAreEqual(capture.PublicId, local.Id);
+            return true;
+        }
+        return false;
     }
 
     void _rejectPatternCaptureMutation(AstExpr? expression, ISourcePosition position)
     {
-        if (!_isPatternAcquisitionSlot(expression, out var capture))
+        if (
+            !_isPatternCaptureSlot(expression, out var capture, out var usesPublicSlot)
+            || usesPublicSlot
+        )
             return;
         Loader.ReportMessage(
             Message.Error(
@@ -234,6 +258,15 @@ partial class Parser
                 MessageClasses.PatternBindingReadOnly
             )
         );
+    }
+
+    void _discardPatternCaptureReadForPlainAssignment(AstGetSet expression, BinaryOperator modifier)
+    {
+        if (
+            modifier == BinaryOperator.None
+            && _isPatternCaptureSlot(expression, out var capture, out _)
+        )
+            capture.DiscardSourceRead(expression);
     }
 
     AstExpr _patternHelper(ISourcePosition position, string id, params AstExpr[] arguments) =>
@@ -689,21 +722,20 @@ partial class Parser
             symbols.Declare(capture.Name, capture.CreateReadSymbol(GetPosition(), true));
     }
 
-    void _reportUnusedPatternBindings(CompilerTarget compilerTarget)
+    internal void ReportUnusedPatternBindings(CompilerTarget compilerTarget)
     {
-        const string warningKey = "warn_unused_pattern_bindings";
-        var enabled = compilerTarget.Function.Meta.ContainsKey(warningKey)
-            ? compilerTarget.Function.Meta[warningKey].Switch
-            : TargetApplication.Meta[warningKey].Switch;
-        if (!enabled)
-            return;
-
         foreach (
             var capture in compilerTarget
-                .PatternCaptures.Where(c => !c.IsExplicit && c.SourceReadCount == 0)
+                .PatternCaptures.Where(c =>
+                    c.WarnIfUnused
+                    && !c.IsExplicit
+                    && c.SourceReadCount == 0
+                    && !c.UnusedWarningReported
+                )
                 .Distinct()
         )
         {
+            capture.UnusedWarningReported = true;
             Loader.ReportMessage(
                 Message.Warning(
                     $"Implicit pattern binding {capture.Name} is never read. Use var {capture.Name} to document an intentional binding or _ to discard it.",
@@ -1266,6 +1298,7 @@ partial class Parser
         //Emit code for top-level build block
         try
         {
+            ReportUnusedPatternBindings(buildBlockTarget);
             buildBlockTarget.Ast.EmitCode(buildBlockTarget, true, StackSemantics.Effect);
 
             buildBlockTarget.Function.Meta[nameof(File)] = scanner.File;

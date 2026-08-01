@@ -17,12 +17,15 @@ public interface IAstJumpCondition
 /// <summary>A compiler-owned capture. Names are source-facing; physical ids are hygienic locals.</summary>
 public sealed class PatternCapture
 {
+    readonly HashSet<AstExpr> _sourceReads = [];
+
     internal PatternCapture(
         string name,
         string physicalId,
         string publicId,
         ISourcePosition position,
-        bool isExplicit
+        bool isExplicit,
+        bool warnIfUnused
     )
     {
         Name = name;
@@ -30,6 +33,7 @@ public sealed class PatternCapture
         PublicId = publicId;
         Position = position;
         IsExplicit = isExplicit;
+        WarnIfUnused = warnIfUnused;
     }
 
     public string Name { get; }
@@ -37,7 +41,9 @@ public sealed class PatternCapture
     public string PublicId { get; }
     public ISourcePosition Position { get; }
     public bool IsExplicit { get; internal set; }
-    public int SourceReadCount { get; private set; }
+    internal bool WarnIfUnused { get; }
+    internal bool UnusedWarningReported { get; set; }
+    public int SourceReadCount => _sourceReads.Count;
 
     public Symbol CreateReadSymbol(ISourcePosition position, bool usePublicSlot = false) =>
         new PatternCaptureSymbol(
@@ -52,7 +58,9 @@ public sealed class PatternCapture
             position
         );
 
-    internal void RecordSourceRead() => SourceReadCount++;
+    internal void RecordSourceRead(AstExpr expression) => _sourceReads.Add(expression);
+
+    internal void DiscardSourceRead(AstExpr expression) => _sourceReads.Remove(expression);
 }
 
 sealed class PatternCaptureSymbol : Symbol
@@ -74,8 +82,14 @@ sealed class PatternCaptureSymbol : Symbol
         TArg argument
     )
     {
-        _capture.RecordSourceRead();
-        return _inner.HandleWith(handler, argument);
+        var result = _inner.HandleWith(handler, argument);
+        if (result is AstExpr expression)
+            _capture.RecordSourceRead(expression);
+        else if (result is Symbol symbol)
+            // AstFactoryBase first normalizes a symbol and only then assembles its AST.
+            // Preserve the capture marker across that normalization pass.
+            return (TResult)(object)new PatternCaptureSymbol(_capture, symbol, Position);
+        return result;
     }
 
     public override bool Equals(Symbol? other) =>

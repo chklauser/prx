@@ -274,6 +274,7 @@ AssignExpr<out AstExpr? expr>     (.  AstGetSet assignment; BinaryOperator setMo
 	                                    (.  expr = typeExpr ?? Create.Null(GetPosition()); .)
 	    )                               
 	                                    (.  assignment.Arguments.Add(expr); 
+	                                        _discardPatternCaptureReadForPlainAssignment(assignment, setModifier);
 	                                        if(setModifier == BinaryOperator.None)
 	                                            expr = assignment;
 	                                        else
@@ -768,7 +769,7 @@ implementation
                                             if(errors.count == 0)
                                             {
                                                 try {
-                                                    _reportUnusedPatternBindings(ft);
+                                                    ReportUnusedPatternBindings(ft);
                                                     //Emit code for top-level block
                                                     Ast[func].EmitCode(ft,true,StackSemantics.Effect);
                                                     ft.FinishTarget();

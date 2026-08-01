@@ -370,6 +370,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
                                         lvalue.Arguments.Add(expr);
                                     }
 									lvalue.Call = PCall.Set; 
+									_discardPatternCaptureReadForPlainAssignment(lvalue, setModifier);
 									if(setModifier != BinaryOperator.None)
 									    node = Create.ModifyingAssignment(position,lvalue,setModifier);
 								.)

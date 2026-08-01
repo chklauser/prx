@@ -170,7 +170,8 @@ GlobalVariableDefinition    (.
                                     Symbols.Declare(primaryAlias, entry);
                           .)
   [                          (.  _pushLexerState(LocalState); .)
-      assign              (.  _PushScope(FunctionTargets[Application.InitializationId]!);
+      assign              (.  FunctionTargets[Application.InitializationId]!.RefreshPatternMatchingMode();
+                              _PushScope(FunctionTargets[Application.InitializationId]!);
                               ensureHasTarget();
                               AstExpr expr;
                           .)
@@ -731,7 +732,7 @@ FunctionDefinition<out PFunction func>
                                             else
                                             {
                                                 try {
-                                                _reportUnusedPatternBindings(FunctionTargets[func]!);
+                                                ReportUnusedPatternBindings(FunctionTargets[func]!);
                                                 //Apply compiler hooks for all kinds of functions
                                                 FunctionTargets[func]!.ExecuteCompilerHooks();
                                                 //Emit code for top-level block

@@ -888,6 +888,8 @@ public class Loader : StackContext, IMessageSink
                 "Internal error: initialization function does not have a compiler target."
             );
         }
+        if (parser.errors.count == 0)
+            parser.ReportUnusedPatternBindings(target);
         _EmitPartialInitializationCode();
         target.FinishTarget();
 

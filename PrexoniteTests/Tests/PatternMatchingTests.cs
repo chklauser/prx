@@ -459,7 +459,23 @@ public sealed class PatternMatchingTests : VMTestsBase
     }
 
     [Test]
-    public void OptionalUnusedImplicitBindingWarningDoesNotApplyToExplicitVar()
+    public void UnusedImplicitBindingWarningIsDisabledByDefault()
+    {
+        var loader = Compile(
+            """
+            pattern_matching enabled;
+
+            function main(x) = x is unused_while_disabled;
+            """
+        );
+        Assert.That(
+            loader.Warnings.Any(w => w.MessageClass == MessageClasses.UnusedPatternBinding),
+            Is.False
+        );
+    }
+
+    [Test]
+    public void ExplicitVarSuppressesUnusedImplicitBindingWarning()
     {
         var loader = Compile(
             """
@@ -477,6 +493,144 @@ public sealed class PatternMatchingTests : VMTestsBase
             """
         );
 
+        Assert.That(
+            loader.Warnings.Count(w => w.MessageClass == MessageClasses.UnusedPatternBinding),
+            Is.EqualTo(1)
+        );
+    }
+
+    [Test]
+    public void AlternativeAcquisitionsProduceOneUnusedBindingWarning()
+    {
+        var loader = Compile(
+            """
+            pattern_matching enabled;
+            warn_unused_pattern_bindings enabled;
+
+            function main(x) = x is (shared_unused or shared_unused);
+            """
+        );
+
+        var warnings = loader
+            .Warnings.Where(w => w.MessageClass == MessageClasses.UnusedPatternBinding)
+            .ToArray();
+        Assert.That(warnings, Has.Length.EqualTo(1));
+        Assert.That(warnings[0].Text, Does.Contain("shared_unused"));
+    }
+
+    [Test]
+    public void FlowValidPatternBindingConsumersSuppressUnusedWarnings()
+    {
+        var loader = Compile(
+            """
+            pattern_matching enabled;
+            warn_unused_pattern_bindings enabled;
+
+            function main(x)
+            {
+                if (x is [later_subpattern, == later_subpattern])
+                {
+                }
+                if (x is guarded when guarded != null)
+                {
+                }
+                if (x is conjunct && conjunct != null)
+                {
+                }
+                if (x is not disjunct || disjunct != null)
+                {
+                }
+                if (x is selected_branch)
+                    return selected_branch;
+
+                var selected_arm = match (x) { arm_binding -> arm_binding };
+                if (x is not exported_after_if)
+                    return null;
+                return [selected_arm, exported_after_if];
+            }
+            """
+        );
+
+        Assert.That(
+            loader.Warnings.Where(w => w.MessageClass == MessageClasses.UnusedPatternBinding),
+            Is.Empty
+        );
+    }
+
+    [Test]
+    public void PlainWritesDoNotCountAsPatternBindingReads()
+    {
+        var loader = Compile(
+            """
+            pattern_matching enabled;
+            warn_unused_pattern_bindings enabled;
+
+            function main(x)
+            {
+                if (x is statement_write_only)
+                    statement_write_only = 1;
+                if (x is compound_read)
+                    compound_read += 1;
+                return if (x is expression_write_only)
+                    (expression_write_only = 2)
+                else null;
+            }
+            """
+        );
+
+        var warnings = loader
+            .Warnings.Where(w => w.MessageClass == MessageClasses.UnusedPatternBinding)
+            .Select(w => w.Text)
+            .ToArray();
+        Assert.That(warnings, Has.Length.EqualTo(2));
+        Assert.That(warnings, Has.Some.Contains("statement_write_only"));
+        Assert.That(warnings, Has.Some.Contains("expression_write_only"));
+    }
+
+    [Test]
+    public void NestedFunctionsInheritUnusedBindingWarningOverrides()
+    {
+        var loader = Compile(
+            """
+            pattern_matching enabled;
+            warn_unused_pattern_bindings enabled;
+
+            function suppressed(x) [warn_unused_pattern_bindings disabled]
+            {
+                function nested(y) = y is nested_suppressed;
+                return x is outer_suppressed;
+            }
+
+            function warned(x) = x is misspelled_view;
+            """
+        );
+
+        var warnings = loader
+            .Warnings.Where(w => w.MessageClass == MessageClasses.UnusedPatternBinding)
+            .Select(w => w.Text)
+            .ToArray();
+        Assert.That(warnings, Has.Length.EqualTo(1));
+        Assert.That(warnings[0], Does.Contain("misspelled_view"));
+    }
+
+    [Test]
+    public void GlobalInitializerUnusedBindingWarningsAreReportedOnce()
+    {
+        var loader = new Loader(options);
+        loader.LoadFromString(
+            """
+            pattern_matching enabled;
+            warn_unused_pattern_bindings enabled;
+            var initialized = if (1 is initializer_unused) true else false;
+            """
+        );
+
+        Assert.That(
+            loader.Warnings.Count(w => w.MessageClass == MessageClasses.UnusedPatternBinding),
+            Is.EqualTo(1)
+        );
+
+        loader.LoadFromString("function main = initialized;");
         Assert.That(
             loader.Warnings.Count(w => w.MessageClass == MessageClasses.UnusedPatternBinding),
             Is.EqualTo(1)

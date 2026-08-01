@@ -95,11 +95,18 @@ public class CompilerTarget : IHasMetaTable
 
     public bool PatternMatchingEnabled { get; private set; }
 
+    internal const string WarnUnusedPatternBindingsKey = "warn_unused_pattern_bindings";
+    internal bool WarnUnusedPatternBindings { get; private set; }
+
     internal void RefreshPatternMatchingMode()
     {
         PatternMatchingEnabled = Function.Meta.ContainsKey(Loader.PatternMatchingKey)
             ? Function.Meta[Loader.PatternMatchingKey].Switch
             : ParentTarget?.PatternMatchingEnabled ?? Loader.PatternMatchingEnabled;
+        WarnUnusedPatternBindings = Function.Meta.ContainsKey(WarnUnusedPatternBindingsKey)
+            ? Function.Meta[WarnUnusedPatternBindingsKey].Switch
+            : ParentTarget?.WarnUnusedPatternBindings
+                ?? Loader.ParentApplication.Meta[WarnUnusedPatternBindingsKey].Switch;
     }
 
     int _nestedIdCounter;
