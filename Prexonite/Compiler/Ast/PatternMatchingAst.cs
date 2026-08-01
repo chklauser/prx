@@ -1,4 +1,7 @@
 using System.Collections.Immutable;
+using System.Globalization;
+using Prexonite.Commands;
+using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
@@ -581,6 +584,8 @@ public sealed class AstPatternMacro : AstPattern
                         knownHandles,
                         out error
                     );
+            case AstListPattern list:
+                return _validateExpansion(list.Body, available, knownHandles, out error);
             default:
                 return true;
         }
@@ -654,6 +659,7 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
     public bool RejectNull { get; }
     public bool ExtractorMayBeElided { get; }
     public AstExpr[] Expressions => [Extractor];
+    internal int? LastExtractorCommandAddress { get; private set; }
 
     internal override IEnumerable<PatternCapture> GetCaptures() => OutputPattern.GetCaptures();
 
@@ -664,6 +670,7 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
         string falseLabel
     )
     {
+        var extractorStart = target.Code.Count;
         if (ExtractorMayBeElided && OutputPattern is AstWildcardPattern)
         {
             target.EmitJump(Position, trueLabel);
@@ -674,9 +681,13 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
             !RejectNull
             && OutputPattern.TryEmitDirectBranch(target, Extractor, trueLabel, falseLabel)
         )
+        {
+            _recordExtractorCommand(target, extractorStart);
             return;
+        }
 
         Extractor.EmitValueCode(target);
+        _recordExtractorCommand(target, extractorStart);
         target.EmitStoreLocal(Position, OutputLocal);
         if (RejectNull)
         {
@@ -685,6 +696,119 @@ public sealed class AstExtractPattern : AstPattern, IAstHasExpressions
             target.EmitJumpIfTrue(Position, falseLabel);
         }
         OutputPattern.EmitBranch(target, OutputLocal, trueLabel, falseLabel);
+    }
+
+    void _recordExtractorCommand(CompilerTarget target, int start)
+    {
+        string? alias = null;
+        if (Extractor.IsCommandCall(PatternOutputAt.Alias, out _))
+            alias = PatternOutputAt.Alias;
+        else if (Extractor.IsCommandCall(PatternListSlice.Alias, out _))
+            alias = PatternListSlice.Alias;
+        if (alias == null)
+            return;
+
+        for (var address = target.Code.Count - 1; address >= start; address--)
+        {
+            var instruction = target.Code[address];
+            if (instruction.OpCode == OpCode.cmd && Engine.StringsAreEqual(instruction.Id, alias))
+            {
+                LastExtractorCommandAddress = address;
+                return;
+            }
+        }
+    }
+}
+
+/// <summary>
+///     Retains the relationship between a list shape test and its element extractions for CIL.
+/// </summary>
+public sealed class AstListPattern : AstPattern
+{
+    public AstListPattern(
+        ISourcePosition position,
+        AstPattern body,
+        IReadOnlyList<AstExtractPattern> extractions
+    )
+        : base(position, body.Flow)
+    {
+        Body = body;
+        Extractions = extractions;
+    }
+
+    public AstPattern Body { get; }
+    public IReadOnlyList<AstExtractPattern> Extractions { get; }
+
+    internal override IEnumerable<PatternCapture> GetCaptures() => Body.GetCaptures();
+
+    internal override void EmitBranch(
+        CompilerTarget target,
+        string subjectLocal,
+        string trueLabel,
+        string falseLabel
+    )
+    {
+        var start = target.Code.Count;
+        Body.EmitBranch(target, subjectLocal, trueLabel, falseLabel);
+
+        int? shapeAddress = null;
+        for (var address = start; address < target.Code.Count; address++)
+        {
+            var instruction = target.Code[address];
+            if (
+                instruction.OpCode == OpCode.cmd
+                && Engine.StringsAreEqual(instruction.Id, PatternListShape.Alias)
+            )
+            {
+                shapeAddress = address;
+                break;
+            }
+        }
+        if (shapeAddress == null)
+            return;
+
+        var extractionAddresses = Extractions
+            .Select(extraction => extraction.LastExtractorCommandAddress)
+            .Where(address => address.HasValue)
+            .Select(address => address!.Value)
+            .ToArray();
+        if (extractionAddresses.Length == 0)
+            return;
+        var hint = new ListPatternHint(shapeAddress.Value, extractionAddresses);
+        Cil.Compiler.AddCilHint(target, hint);
+        _watchAddress(target, 0, shapeAddress.Value);
+        for (var i = 0; i < extractionAddresses.Length; i++)
+            _watchAddress(target, i + 1, extractionAddresses[i]);
+    }
+
+    static void _watchAddress(CompilerTarget target, int fieldIndex, int initialAddress)
+    {
+        var currentAddress = initialAddress;
+        AddressChangeHook? hook = null;
+        hook = new(
+            initialAddress,
+            newAddress =>
+            {
+                foreach (var hintEntry in target.Meta[Loader.CilHintsKey].List)
+                {
+                    var entry = hintEntry.List;
+                    var metaIndex = fieldIndex + 1;
+                    if (
+                        entry.Length > metaIndex
+                        && entry[0] == ListPatternHint.Key
+                        && entry[metaIndex].Text
+                            == currentAddress.ToString(CultureInfo.InvariantCulture)
+                    )
+                    {
+                        entry[metaIndex] = newAddress.ToString(CultureInfo.InvariantCulture);
+                        hook!.InstructionIndex = newAddress;
+                        currentAddress = newAddress;
+                        return;
+                    }
+                }
+            }
+        );
+        target.AddressChangeHooks.Add(hook);
     }
 }
 

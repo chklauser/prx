@@ -370,7 +370,7 @@ partial class Parser
     AstPattern _combinePatternAnd(ISourcePosition position, AstPattern? left, AstPattern right) =>
         left == null ? right : new AstPatternAnd(position, left, right);
 
-    AstPattern _extractPattern(
+    AstExtractPattern _extractPattern(
         ISourcePosition position,
         AstExpr extractor,
         string outputLocal,
@@ -492,22 +492,21 @@ partial class Parser
             subject,
             Create.Constant(position, memberName)
         );
-        var handled = _patternHelper(
+        var present = _patternHelper(
             position,
-            PatternOutputAt.Alias,
-            _patternLocalReference(position, probeLocal),
-            Create.Constant(position, 0)
-        );
-        var value = _patternHelper(
-            position,
-            PatternOutputAt.Alias,
-            _patternLocalReference(position, probeLocal),
-            Create.Constant(position, 1)
+            PatternMemberPresent.Alias,
+            _patternLocalReference(position, probeLocal)
         );
         var body = new AstPatternAnd(
             position,
-            new AstExpressionPattern(position, handled),
-            _extractPattern(position, value, valueLocal, valuePattern, false)
+            new AstExpressionPattern(position, present),
+            _extractPattern(
+                position,
+                _patternLocalReference(position, probeLocal),
+                valueLocal,
+                valuePattern,
+                false
+            )
         );
         return _extractPattern(position, probe, probeLocal, body, false);
     }

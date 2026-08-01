@@ -1056,6 +1056,7 @@ public static class Compiler
             state.MarkInstruction(instructionIndex);
 
             var ins = sourceCode[instructionIndex];
+            state.CurrentInstructionIndex = instructionIndex;
 
             #region CIL hints
 
